@@ -6491,6 +6491,46 @@ class Spin2ObjectCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testStructureModifiers() throws Exception {
+        String text = ""
+            + "CON\n"
+            + "    sPoint(x, y)\n"
+            + "    sLine(sPoint a, sPoint b, BYTE color)\n"
+            + "\n"
+            + "VAR\n"
+            + "\n"
+            + "    sPoint point\n"
+            + "    sLine  line\n"
+            + "\n"
+            + "PUB start() | a\n"
+            + "\n"
+            + "    a := @line\n"
+            + "    a := @line.a\n"
+            + "    a := @line.b\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 32)\n"
+            + "00000 00000       08 00 00 80    Method start @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       13 00 00 00    End\n"
+            + "' PUB start() | a\n"
+            + "00008 00008       01             (stack size)\n"
+            + "'     a := @line\n"
+            + "00009 00009       C3 7F          VAR_ADDRESS VBASE+$00003 (short)\n"
+            + "0000B 0000B       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     a := @line.a\n"
+            + "0000C 0000C       C3 7F          VAR_ADDRESS VBASE+$00003 (short)\n"
+            + "0000E 0000E       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     a := @line.b\n"
+            + "0000F 0000F       C5 7F          VAR_ADDRESS VBASE+$00005 (short)\n"
+            + "00011 00011       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00012 00012       04             RETURN\n"
+            + "00013 00013       00             Padding\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }

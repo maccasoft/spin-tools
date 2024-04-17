@@ -1108,6 +1108,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                                 tokens.add(new TokenMarker(token.start, token.start + dot, leftId));
                             }
 
+                            dot = token.getText().lastIndexOf('.');
                             switch (token.getText().substring(dot + 1).toUpperCase()) {
                                 case "LONG":
                                 case "WORD":

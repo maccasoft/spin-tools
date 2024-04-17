@@ -257,7 +257,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             }
 
             String[] ar = node.getText().split("[\\.]");
-            if (ar.length == 2 && ("BYTE".equalsIgnoreCase(ar[1]) || "WORD".equalsIgnoreCase(ar[1]) || "LONG".equalsIgnoreCase(ar[1]))) {
+            if (ar.length >= 2 && ("BYTE".equalsIgnoreCase(ar[ar.length - 1]) || "WORD".equalsIgnoreCase(ar[ar.length - 1]) || "LONG".equalsIgnoreCase(ar[ar.length - 1]))) {
                 int index = 0;
                 boolean popIndex = false;
                 Spin2StatementNode indexNode = null;
@@ -274,6 +274,17 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 if (expression instanceof ObjectContextLiteral) {
                     expression = context.getLocalSymbol(ar[0].substring(1));
                 }
+
+                if (expression instanceof StructureVariable) {
+                    int i = 1;
+                    while (i < ar.length - 1) {
+                        expression = ((StructureVariable) expression).getVariable(ar[i++]);
+                        if (!(expression instanceof StructureVariable)) {
+                            break;
+                        }
+                    }
+                }
+
                 if (expression != null) {
                     int n = 0;
                     if (n < node.getChildCount() && (node.getChild(n) instanceof Spin2StatementNode.Index)) {
@@ -300,10 +311,10 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     }
 
                     MemoryOp.Size ss = MemoryOp.Size.Long;
-                    if ("BYTE".equalsIgnoreCase(ar[1])) {
+                    if ("BYTE".equalsIgnoreCase(ar[ar.length - 1])) {
                         ss = MemoryOp.Size.Byte;
                     }
-                    else if ("WORD".equalsIgnoreCase(ar[1])) {
+                    else if ("WORD".equalsIgnoreCase(ar[ar.length - 1])) {
                         ss = MemoryOp.Size.Word;
                     }
                     MemoryOp.Base bb = MemoryOp.Base.PBase;
@@ -381,46 +392,58 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     expression = context.getLocalSymbol(node.getText().substring(1));
                 }
 
-                if (expression == null) {
-                    String[] segments = node.getText().split("\\.");
-                    if (segments != null && segments.length > 1) {
-                        int i = 0;
-                        expression = context.getLocalSymbol(segments[i++]);
+                if (expression instanceof SpinObject) {
+                    source.addAll(compileMethodCall(context, method, expression, node, push, false));
+                    return source;
+                }
+                if (expression instanceof Method) {
+                    if (isAddress(node.getText())) {
+                        Method methodExpression = (Method) expression;
+                        source.add(new SubAddress(context, methodExpression));
+                        Spin2Method calledMethod = (Spin2Method) methodExpression.getData(Spin2Method.class.getName());
+                        calledMethod.setCalledBy(method);
+                    }
+                    else {
+                        source.addAll(compileMethodCall(context, method, expression, node, push, false));
+                    }
+                    return source;
+                }
+
+                if (expression instanceof StructureVariable) {
+                    int i = 1;
+                    while (i < ar.length) {
+                        expression = ((StructureVariable) expression).getVariable(ar[i++]);
                         if (!(expression instanceof StructureVariable)) {
-                            throw new CompilerException("syntax error", node.getToken());
+                            break;
                         }
-                        while (i < segments.length) {
-                            expression = ((StructureVariable) expression).getVariable(segments[i++]);
+                    }
+                }
+
+                if (expression == null && ar.length > 0) {
+                    expression = context.getLocalSymbol(ar[0]);
+                    if (expression == null && isAbsoluteAddress(ar[0])) {
+                        expression = context.getLocalSymbol(ar[0].substring(2));
+                    }
+                    if (expression == null && isAddress(ar[0])) {
+                        expression = context.getLocalSymbol(ar[0].substring(1));
+                    }
+                    if (expression instanceof ObjectContextLiteral) {
+                        expression = context.getLocalSymbol(ar[0].substring(1));
+                    }
+
+                    if (expression instanceof StructureVariable) {
+                        int i = 1;
+                        while (i < ar.length) {
+                            expression = ((StructureVariable) expression).getVariable(ar[i++]);
                             if (!(expression instanceof StructureVariable)) {
                                 break;
                             }
-                        }
-                        if ((expression instanceof StructureVariable)) {
-                            throw new CompilerException("syntax error", node.getToken());
-                        }
-                        if (i < segments.length) {
-                            throw new CompilerException("syntax error", node.getToken());
                         }
                     }
                 }
 
                 if (expression != null) {
-                    if (expression instanceof SpinObject) {
-                        source.addAll(compileMethodCall(context, method, expression, node, push, false));
-                        return source;
-                    }
-                    else if (expression instanceof Method) {
-                        if (isAddress(node.getText())) {
-                            Method methodExpression = (Method) expression;
-                            source.add(new SubAddress(context, methodExpression));
-                            Spin2Method calledMethod = (Spin2Method) methodExpression.getData(Spin2Method.class.getName());
-                            calledMethod.setCalledBy(method);
-                        }
-                        else {
-                            source.addAll(compileMethodCall(context, method, expression, node, push, false));
-                        }
-                    }
-                    else if (expression instanceof Variable) {
+                    if (expression instanceof Variable) {
                         if (isAddress(node.getText())) {
                             int index = 0;
                             boolean popIndex = false;
@@ -1593,9 +1616,20 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             throw new CompilerException("syntax error", node.getToken());
         }
 
-        String[] s = node.getText().split("[\\.]");
-        if (s.length == 2 && ("BYTE".equalsIgnoreCase(s[1]) || "WORD".equalsIgnoreCase(s[1]) || "LONG".equalsIgnoreCase(s[1]))) {
-            Expression expression = context.getLocalSymbol(s[0]);
+        String[] ar = node.getText().split("[\\.]");
+        if (ar.length >= 2 && ("BYTE".equalsIgnoreCase(ar[ar.length - 1]) || "WORD".equalsIgnoreCase(ar[ar.length - 1]) || "LONG".equalsIgnoreCase(ar[ar.length - 1]))) {
+            Expression expression = context.getLocalSymbol(ar[0]);
+
+            if (expression instanceof StructureVariable) {
+                int i = 1;
+                while (i < ar.length - 1) {
+                    expression = ((StructureVariable) expression).getVariable(ar[i++]);
+                    if (!(expression instanceof StructureVariable)) {
+                        break;
+                    }
+                }
+            }
+
             if (expression == null) {
                 throw new CompilerException("undefined symbol " + node.getText(), node.getToken());
             }
@@ -1643,10 +1677,10 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             }
 
             MemoryOp.Size ss = MemoryOp.Size.Long;
-            if ("BYTE".equalsIgnoreCase(s[1])) {
+            if ("BYTE".equalsIgnoreCase(ar[1])) {
                 ss = MemoryOp.Size.Byte;
             }
-            else if ("WORD".equalsIgnoreCase(s[1])) {
+            else if ("WORD".equalsIgnoreCase(ar[1])) {
                 ss = MemoryOp.Size.Word;
             }
             MemoryOp.Base bb = MemoryOp.Base.PBase;
@@ -1871,30 +1905,20 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             }
         }
         else {
-            Expression expression = null;
+            Expression expression = context.getLocalSymbol(node.getText());
 
-            String[] segments = node.getText().split("\\.");
-            if (segments != null && segments.length > 1) {
-                int i = 0;
-                expression = context.getLocalSymbol(segments[i++]);
-                if (!(expression instanceof StructureVariable)) {
-                    throw new CompilerException("syntax error", node.getToken());
-                }
-                while (i < segments.length) {
-                    expression = ((StructureVariable) expression).getVariable(segments[i++]);
-                    if (!(expression instanceof StructureVariable)) {
-                        break;
+            if (expression == null && ar.length > 0) {
+                expression = context.getLocalSymbol(ar[0]);
+
+                if (expression instanceof StructureVariable) {
+                    int i = 1;
+                    while (i < ar.length) {
+                        expression = ((StructureVariable) expression).getVariable(ar[i++]);
+                        if (!(expression instanceof StructureVariable)) {
+                            break;
+                        }
                     }
                 }
-                if ((expression instanceof StructureVariable)) {
-                    throw new CompilerException("syntax error", node.getToken());
-                }
-                if (i < segments.length) {
-                    throw new CompilerException("syntax error", node.getToken());
-                }
-            }
-            else {
-                expression = context.getLocalSymbol(node.getText());
             }
 
             if (expression == null) {
@@ -2373,34 +2397,14 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             }
         }
 
+        int index = 0;
+        boolean hasIndex = false;
+        boolean popIndex = false;
         boolean field = node.getText().startsWith("^@");
 
         int n = 0;
         if (n < node.getChildCount() && (node.getChild(n) instanceof Spin2StatementNode.Index)) {
             indexNode = node.getChild(n++);
-        }
-        if (n < node.getChildCount() && ".".equals(node.getChild(n).getText())) {
-            n++;
-            if (n >= node.getChildCount()) {
-                throw new CompilerException("expected bitfield expression", node.getChild(n - 1));
-            }
-            if (!(node.getChild(n) instanceof Spin2StatementNode.Index)) {
-                throw new CompilerException("invalid bitfield expression", node.getChild(n));
-            }
-            bitfieldNode = node.getChild(n++);
-        }
-        if (n < node.getChildCount() && isPostEffect(node.getChild(n))) {
-            postEffectNode = node.getChild(n++);
-        }
-        if (n < node.getChildCount()) {
-            throw new CompilerException("unexpected " + node.getChild(n).getText(), node.getChild(n));
-        }
-
-        int index = 0;
-        boolean hasIndex = false;
-        boolean popIndex = false;
-
-        if (indexNode != null) {
             popIndex = true;
             try {
                 Expression exp = buildConstantExpression(context, indexNode);
@@ -2412,6 +2416,36 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             } catch (Exception e) {
                 // Do nothing
             }
+        }
+        if (n < node.getChildCount() && ".".equals(node.getChild(n).getText())) {
+            n++;
+            if (n >= node.getChildCount()) {
+                throw new CompilerException("expected bitfield expression", node.getChild(n - 1));
+            }
+            if (!(node.getChild(n) instanceof Spin2StatementNode.Index)) {
+                throw new CompilerException("invalid bitfield expression", node.getChild(n));
+            }
+            bitfieldNode = node.getChild(n++);
+        }
+        if (expression instanceof StructureVariable) {
+            if (n < node.getChildCount() && node.getChild(n).getText().startsWith(".")) {
+                String[] ar = node.getChild(n).getText().split("[\\.]");
+
+                int i = 1;
+                while (i < ar.length) {
+                    expression = ((StructureVariable) expression).getVariable(ar[i++]);
+                    if (!(expression instanceof StructureVariable)) {
+                        break;
+                    }
+                }
+                n++;
+            }
+        }
+        if (n < node.getChildCount() && isPostEffect(node.getChild(n))) {
+            postEffectNode = node.getChild(n++);
+        }
+        if (n < node.getChildCount()) {
+            throw new CompilerException("unexpected " + node.getChild(n).getText(), node.getChild(n));
         }
 
         if (bitfieldNode != null) {
