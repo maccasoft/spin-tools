@@ -2300,6 +2300,22 @@ public class SpinTools {
             }
         });
 
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Make skip pattern\tShift+Alt+P");
+        item.setAccelerator(SWT.MOD2 + SWT.MOD3 + 'P');
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                CTabItem tabItem = tabFolder.getSelection();
+                if (tabItem == null) {
+                    return;
+                }
+                EditorTab editorTab = (EditorTab) tabItem.getData();
+                editorTab.getEditor().makeSkipPattern();
+            }
+        });
+
         new MenuItem(menu, SWT.SEPARATOR);
 
         item = new MenuItem(menu, SWT.PUSH);

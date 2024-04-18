@@ -21,6 +21,7 @@ import java.util.Stack;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.jface.bindings.keys.KeyStroke;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.fieldassist.IContentProposal;
 import org.eclipse.jface.fieldassist.IContentProposalProvider;
 import org.eclipse.jface.resource.JFaceResources;
@@ -41,6 +42,9 @@ import org.eclipse.swt.custom.TextChangeListener;
 import org.eclipse.swt.custom.TextChangedEvent;
 import org.eclipse.swt.custom.TextChangingEvent;
 import org.eclipse.swt.custom.VerifyKeyListener;
+import org.eclipse.swt.dnd.Clipboard;
+import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.FocusAdapter;
@@ -90,6 +94,7 @@ import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.internal.HTMLStyledTextDecorator;
 import com.maccasoft.propeller.internal.IContentProposalListener2;
 import com.maccasoft.propeller.internal.StyledTextContentAdapter;
+import com.maccasoft.propeller.internal.Utils;
 import com.maccasoft.propeller.model.ConstantNode;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
@@ -2579,6 +2584,30 @@ public class SourceEditor {
     public void setIndentLinesForeground(Color color) {
         indentLinesForeground = color;
         styledText.redraw();
+    }
+
+    public void makeSkipPattern() {
+        String text = styledText.getSelectionText();
+        String pattern = Utils.makeSkipPattern(text);
+
+        if (pattern.length() == 0) {
+            MessageDialog.openWarning(styledText.getShell(), SpinTools.APP_TITLE, "No pattern detected");
+            return;
+        }
+
+        Clipboard clipboard = new Clipboard(display);
+        try {
+            clipboard.setContents(new Object[] {
+                pattern,
+            }, new Transfer[] {
+                TextTransfer.getInstance(),
+            });
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        clipboard.dispose();
+
+        MessageDialog.openInformation(styledText.getShell(), SpinTools.APP_TITLE, "Skip pattern copied to clipboard:" + styledText.getLineDelimiter() + styledText.getLineDelimiter() + pattern);
     }
 
 }
