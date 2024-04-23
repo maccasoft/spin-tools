@@ -64,4 +64,23 @@ class UtilsTest {
         Assertions.assertEquals("%01_0100", Utils.makeSkipPattern(subject));
     }
 
+    @Test
+    void testSplitArguments() {
+        String[] result = Utils.splitArguments("-2 -L/home/marco/lib source.spin2");
+        Assertions.assertEquals(3, result.length);
+        Assertions.assertEquals("-2", result[0]);
+        Assertions.assertEquals("-L/home/marco/lib", result[1]);
+        Assertions.assertEquals("source.spin2", result[2]);
+    }
+
+    @Test
+    void testSplitStringDelimitedArguments() {
+        String[] result = Utils.splitArguments("-2 -L \"/home/marco/lib\" source.spin2");
+        Assertions.assertEquals(4, result.length);
+        Assertions.assertEquals("-2", result[0]);
+        Assertions.assertEquals("-L", result[1]);
+        Assertions.assertEquals("/home/marco/lib", result[2]);
+        Assertions.assertEquals("source.spin2", result[3]);
+    }
+
 }

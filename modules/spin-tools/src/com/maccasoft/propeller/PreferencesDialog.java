@@ -14,12 +14,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Objects;
+import java.util.function.Consumer;
 
+import org.eclipse.core.databinding.observable.Realm;
+import org.eclipse.jface.databinding.swt.DisplayRealm;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.resource.StringConverter;
+import org.eclipse.jface.viewers.ArrayContentProvider;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.ListViewer;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.events.DisposeEvent;
@@ -50,6 +58,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Spinner;
 import org.eclipse.swt.widgets.Text;
 
+import com.maccasoft.propeller.Preferences.ExternalTool;
 import com.maccasoft.propeller.internal.ColorRegistry;
 import com.maccasoft.propeller.internal.ImageRegistry;
 import com.maccasoft.propeller.model.ConstantsNode;
@@ -104,6 +113,8 @@ public class PreferencesDialog extends Dialog {
     Button consoleFontBrowse;
     Spinner consoleMaxLines;
     Button consoleWriteLogFile;
+
+    ToolsList externalTools;
 
     Preferences preferences;
     FontData defaultFont;
@@ -432,6 +443,7 @@ public class PreferencesDialog extends Dialog {
         createSpin1CompilerPage(stack);
         createSpin2CompilerPage(stack);
         createTerminalPage(stack);
+        createToolsPage(stack);
 
         stackLayout.topControl = stack.getChildren()[lastPage];
 
@@ -1071,6 +1083,135 @@ public class PreferencesDialog extends Dialog {
         consoleWriteLogFile.setSelection(preferences.getConsoleWriteLogFile());
     }
 
+    class ToolsList {
+
+        Composite group;
+
+        ListViewer viewer;
+        Button add;
+        Button edit;
+        Button remove;
+
+        java.util.List<ExternalTool> elements = new ArrayList<>();
+
+        public ToolsList(Composite parent) {
+            group = new Composite(parent, SWT.NONE);
+            GridLayout layout = new GridLayout(2, false);
+            layout.marginWidth = layout.marginHeight = 0;
+            group.setLayout(layout);
+
+            viewer = new ListViewer(group, SWT.SINGLE | SWT.BORDER | SWT.V_SCROLL);
+            viewer.setContentProvider(new ArrayContentProvider());
+            viewer.setLabelProvider(new LabelProvider());
+            GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
+            gridData.widthHint = convertWidthInCharsToPixels(50);
+            gridData.heightHint = convertHeightInCharsToPixels(10) + viewer.getList().getBorderWidth() * 2;
+            viewer.getControl().setLayoutData(gridData);
+            viewer.addSelectionChangedListener(new ISelectionChangedListener() {
+
+                @Override
+                public void selectionChanged(SelectionChangedEvent event) {
+                    updateButtons();
+                }
+            });
+            viewer.setInput(elements);
+
+            Composite container = new Composite(group, SWT.NONE);
+            layout = new GridLayout(1, true);
+            layout.marginWidth = layout.marginHeight = 0;
+            container.setLayout(layout);
+            container.setLayoutData(new GridData(SWT.FILL, SWT.TOP, false, false));
+
+            add = new Button(container, SWT.PUSH);
+            add.setImage(ImageRegistry.getImageFromResources("add.png"));
+            add.setToolTipText("Add");
+            add.addSelectionListener(new SelectionAdapter() {
+
+                @Override
+                public void widgetSelected(SelectionEvent e) {
+                    ExternalToolDialog dlg = new ExternalToolDialog(parent.getShell());
+                    if (dlg.open() == ExternalToolDialog.OK) {
+                        elements.add(dlg.getExternalTool());
+                        viewer.refresh();
+                        updateButtons();
+                    }
+                }
+
+            });
+
+            edit = new Button(container, SWT.PUSH);
+            edit.setImage(ImageRegistry.getImageFromResources("pencil.png"));
+            edit.setToolTipText("Edit");
+            edit.addSelectionListener(new SelectionAdapter() {
+
+                @Override
+                public void widgetSelected(SelectionEvent e) {
+                    ExternalTool selection = (ExternalTool) viewer.getStructuredSelection().getFirstElement();
+                    ExternalToolDialog dlg = new ExternalToolDialog(parent.getShell(), selection);
+                    if (dlg.open() == ExternalToolDialog.OK) {
+                        viewer.refresh();
+                    }
+                }
+
+            });
+            edit.setEnabled(false);
+
+            remove = new Button(container, SWT.PUSH);
+            remove.setImage(ImageRegistry.getImageFromResources("delete.png"));
+            remove.setToolTipText("Remove");
+            remove.addSelectionListener(new SelectionAdapter() {
+
+                @Override
+                public void widgetSelected(SelectionEvent e) {
+                    elements.remove(viewer.getStructuredSelection().getFirstElement());
+                    viewer.refresh();
+                    updateButtons();
+                }
+
+            });
+            remove.setEnabled(false);
+        }
+
+        void updateButtons() {
+            boolean emptySelection = viewer.getStructuredSelection().isEmpty();
+            remove.setEnabled(!emptySelection);
+            edit.setEnabled(!emptySelection);
+        }
+
+        public void setLayoutData(Object layoutData) {
+            group.setLayoutData(layoutData);
+        }
+
+        public Object getLayoutData() {
+            return group.getLayoutData();
+        }
+
+        public void setItems(ExternalTool[] items) {
+            elements.clear();
+            for (int i = 0; i < items.length; i++) {
+                elements.add(new ExternalTool(items[i].name, items[i].program, items[i].arguments));
+            }
+            viewer.refresh();
+        }
+
+        public ExternalTool[] getItems() {
+            return elements.toArray(new ExternalTool[elements.size()]);
+        }
+
+    }
+
+    void createToolsPage(Composite parent) {
+        Composite composite = createPage(parent, "Tools");
+
+        Label label = new Label(composite, SWT.NONE);
+        label.setText("External Tools");
+        label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
+
+        externalTools = new ToolsList(composite);
+        externalTools.setItems(preferences.getExternalTools());
+        externalTools.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 2, 1));
+    }
+
     Composite createPage(Composite parent, String text) {
         Composite composite = new Composite(parent, SWT.NONE);
         GridLayout layout = new GridLayout(2, false);
@@ -1224,10 +1365,52 @@ public class PreferencesDialog extends Dialog {
         preferences.setConsoleMaxLines(consoleMaxLines.getSelection());
         preferences.setConsoleWriteLogFile(consoleWriteLogFile.getSelection());
 
+        preferences.setExternalTools(externalTools.getItems());
+
         if (!Objects.equals(oldTheme, preferences.getTheme())) {
             MessageDialog.openWarning(getShell(), SpinTools.APP_TITLE, "Close and reopen the application for the theme changes to take full effect.");
         }
 
         super.okPressed();
     }
+
+    public static void main(String[] args) {
+        final Display display = new Display();
+
+        display.setErrorHandler(new Consumer<Error>() {
+
+            @Override
+            public void accept(Error t) {
+                t.printStackTrace();
+            }
+
+        });
+        display.setRuntimeExceptionHandler(new Consumer<RuntimeException>() {
+
+            @Override
+            public void accept(RuntimeException t) {
+                t.printStackTrace();
+            }
+
+        });
+
+        Realm.runWithDefault(DisplayRealm.getRealm(display), new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+
+                    PreferencesDialog dialog = new PreferencesDialog(null, new Preferences());
+                    dialog.open();
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return;
+                }
+            }
+        });
+
+        display.dispose();
+    }
+
 }

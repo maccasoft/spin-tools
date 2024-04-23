@@ -18,6 +18,7 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
@@ -62,6 +63,7 @@ import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.FocusAdapter;
 import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.MenuAdapter;
 import org.eclipse.swt.events.MenuEvent;
 import org.eclipse.swt.events.MenuListener;
 import org.eclipse.swt.events.MouseAdapter;
@@ -91,12 +93,14 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 
+import com.maccasoft.propeller.Preferences.ExternalTool;
 import com.maccasoft.propeller.Preferences.SearchPreferences;
 import com.maccasoft.propeller.internal.BusyIndicator;
 import com.maccasoft.propeller.internal.ColorRegistry;
 import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.internal.ImageRegistry;
 import com.maccasoft.propeller.internal.InternalErrorDialog;
+import com.maccasoft.propeller.internal.Utils;
 import com.maccasoft.propeller.model.DirectiveNode;
 import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.VariableNode;
@@ -1576,7 +1580,7 @@ public class SpinTools {
 
         consoleToolItem = new ToolItem(toolBar, SWT.CHECK);
         consoleToolItem.setImage(ImageRegistry.getImageFromResources("application-text.png"));
-        consoleToolItem.setToolTipText("Toggle Debug Console");
+        consoleToolItem.setToolTipText("Toggle Console");
         consoleToolItem.addSelectionListener(new SelectionAdapter() {
 
             @Override
@@ -2458,7 +2462,7 @@ public class SpinTools {
         });
 
         consoleItem = new MenuItem(menu, SWT.CHECK);
-        consoleItem.setText("Toggle Debug Console");
+        consoleItem.setText("Toggle Console");
         consoleItem.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -2468,6 +2472,10 @@ public class SpinTools {
                 centralSashForm.layout();
             }
         });
+
+        new MenuItem(menu, SWT.SEPARATOR);
+
+        createRunMenu(menu);
 
         new MenuItem(menu, SWT.SEPARATOR);
 
@@ -2502,6 +2510,142 @@ public class SpinTools {
         createPortMenu(menu);
 
         return menu;
+    }
+
+    void createRunMenu(Menu parent) {
+        final Menu menu = new Menu(parent.getParent(), SWT.DROP_DOWN);
+        menu.addMenuListener(new MenuAdapter() {
+
+            @Override
+            public void menuShown(MenuEvent e) {
+                MenuItem[] items = menu.getItems();
+                for (int i = 0; i < items.length; i++) {
+                    items[i].dispose();
+                }
+
+                ExternalTool[] tools = preferences.getExternalTools();
+                for (int i = 0; i < tools.length; i++) {
+                    String name = tools[i].getName();
+                    String program = tools[i].getProgram();
+                    String arguments = tools[i].getArguments();
+
+                    MenuItem item = new MenuItem(menu, SWT.PUSH);
+                    item.setText(name);
+                    item.addListener(SWT.Selection, new Listener() {
+
+                        @Override
+                        public void handleEvent(Event event) {
+                            consoleView.clear();
+                            if (!consoleView.getVisible()) {
+                                consoleView.setVisible(true);
+                                consoleItem.setSelection(true);
+                                consoleToolItem.setSelection(true);
+                                centralSashForm.layout();
+                            }
+                            consoleView.setSerialPort(null);
+                            consoleView.closeLogFile();
+                            consoleView.setEnabled(true);
+
+                            EditorTab editorTab = getTargetObjectEditorTab();
+                            if (editorTab == null) {
+                                return;
+                            }
+
+                            if (editorTab.isDirty()) {
+                                int style = SWT.APPLICATION_MODAL | SWT.ICON_QUESTION | SWT.YES | SWT.NO | SWT.CANCEL;
+                                MessageBox messageBox = new MessageBox(shell, style);
+                                messageBox.setText(APP_TITLE);
+                                messageBox.setMessage("Editor contains unsaved changes.  Save before running external tool?");
+                                switch (messageBox.open()) {
+                                    case SWT.CANCEL:
+                                        return;
+                                    case SWT.YES:
+                                        try {
+                                            doFileSave(editorTab);
+                                            if (editorTab.isDirty()) {
+                                                return;
+                                            }
+                                        } catch (Exception e) {
+                                            e.printStackTrace();
+                                        }
+                                        break;
+                                }
+                            }
+
+                            List<String> cmd = new ArrayList<>();
+                            cmd.add(program);
+
+                            if (arguments != null) {
+                                String cmdline = arguments.replace("${file}", "\"" + editorTab.getFile().getAbsolutePath() + "\"");
+
+                                String[] args = Utils.splitArguments(cmdline);
+                                cmd.addAll(Arrays.asList(args));
+                            }
+
+                            try {
+                                runCommand(cmd, editorTab.getFile().getParentFile(), consoleView.getOutputStream());
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
+
+                }
+
+            }
+
+        });
+
+        MenuItem item = new MenuItem(parent, SWT.CASCADE);
+        item.setText("Run");
+        item.setMenu(menu);
+    }
+
+    protected int runCommand(List<String> cmd, File outDir, OutputStream stdout) throws IOException, InterruptedException {
+        ProcessBuilder builder = new ProcessBuilder(cmd);
+        builder.redirectErrorStream(true);
+        builder.directory(outDir);
+
+        StringBuilder sb = new StringBuilder();
+        for (String s : cmd) {
+            if (sb.length() != 0) {
+                sb.append(" ");
+            }
+            sb.append(s);
+        }
+        sb.append("\n");
+        stdout.write(sb.toString().getBytes());
+
+        final Process p = builder.start();
+
+        Thread ioStream = new Thread() {
+
+            int count;
+            byte[] buf = new byte[1024];
+
+            @Override
+            public void run() {
+                try {
+                    InputStream out = p.getInputStream();
+
+                    do {
+                        count = out.read(buf);
+                        for (int i = 0; i < count; i++) {
+                            stdout.write(buf[i]);
+                        }
+                    } while (count != -1);
+
+                    out.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        ioStream.start();
+
+        return p.waitFor();
     }
 
     void createPortMenu(Menu parent) {

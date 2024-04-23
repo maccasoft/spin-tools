@@ -137,11 +137,13 @@ public class ConsoleView {
                     utf_buf[utf_buf_index++] = b;
                     utf_ch_count = 4;
                 }
-                else if (b == '\n') {
-                    append(lineBuilder.toString());
-                    lineBuilder = new StringBuilder();
+                else if (b == '\n' || b == '\r') {
+                    if (lineBuilder.length() != 0) {
+                        append(lineBuilder.toString());
+                        lineBuilder = new StringBuilder();
+                    }
                 }
-                else if (b != '\r') {
+                else {
                     lineBuilder.append((char) b);
                 }
             }
@@ -193,11 +195,13 @@ public class ConsoleView {
                     utf_buf[utf_buf_index++] = (byte) b;
                     utf_ch_count = 4;
                 }
-                else if (b == '\n') {
-                    append(lineBuilder.toString());
-                    lineBuilder = new StringBuilder();
+                else if (b == '\n' || b == '\r') {
+                    if (lineBuilder.length() != 0) {
+                        append(lineBuilder.toString());
+                        lineBuilder = new StringBuilder();
+                    }
                 }
-                else if (b != '\r') {
+                else {
                     lineBuilder.append((char) b);
                 }
             }
@@ -211,22 +215,20 @@ public class ConsoleView {
         }
 
         @Override
-        public void write(byte[] b, int off, int len) throws IOException {
-            write(b);
-        }
-
-        @Override
         public void flush() throws IOException {
 
         }
 
         @Override
         public void close() throws IOException {
-            flush();
+            if (lineBuilder.length() != 0) {
+                append(lineBuilder.toString());
+                lineBuilder = new StringBuilder();
+            }
         }
 
         private void append(String text) {
-            display.asyncExec(new Runnable() {
+            display.syncExec(new Runnable() {
 
                 @Override
                 public void run() {

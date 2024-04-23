@@ -204,6 +204,8 @@ public class Preferences {
 
         public String theme;
 
+        public ExternalTool[] externalTools;
+
     }
 
     @JsonInclude(Include.NON_DEFAULT)
@@ -300,6 +302,54 @@ public class Preferences {
         public boolean wrapSearch;
         public boolean wholeWordSearch;
         public boolean regexSearch;
+
+    }
+
+    @JsonInclude(Include.NON_DEFAULT)
+    public static class ExternalTool {
+
+        public String name;
+        public String program;
+        public String arguments;
+
+        public ExternalTool() {
+
+        }
+
+        public ExternalTool(String name, String program, String arguments) {
+            this.name = name;
+            this.program = program;
+            this.arguments = arguments;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getProgram() {
+            return program;
+        }
+
+        public void setProgram(String program) {
+            this.program = program;
+        }
+
+        public String getArguments() {
+            return arguments;
+        }
+
+        public void setArguments(String arguments) {
+            this.arguments = arguments;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
 
     }
 
@@ -818,6 +868,17 @@ public class Preferences {
 
     public void setTheme(String theme) {
         changeSupport.firePropertyChange(PROP_THEME, preferences.theme, preferences.theme = theme);
+    }
+
+    public ExternalTool[] getExternalTools() {
+        if (preferences.externalTools == null) {
+            return new ExternalTool[0];
+        }
+        return preferences.externalTools;
+    }
+
+    public void setExternalTools(ExternalTool[] externalTools) {
+        preferences.externalTools = externalTools.length != 0 ? externalTools : null;
     }
 
     public void save() throws IOException {

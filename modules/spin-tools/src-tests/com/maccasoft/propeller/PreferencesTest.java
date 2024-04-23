@@ -27,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.maccasoft.propeller.Preferences.ExternalTool;
 import com.maccasoft.propeller.Preferences.SerializedPreferences;
 import com.maccasoft.propeller.model.MethodNode;
 
@@ -495,6 +496,55 @@ class PreferencesTest {
             + "    \"KEY\" : \"VALUE\"\n"
             + "  }\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
+    }
+
+    @Test
+    void testSetExternalTools() throws Exception {
+        Preferences subject = new Preferences();
+
+        ExternalTool tool = new ExternalTool("flexspin", "/usr/bin/flexpin", "-2");
+        subject.setExternalTools(new ExternalTool[] {
+            tool
+        });
+
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+        mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
+        mapper.setSerializationInclusion(Include.NON_DEFAULT);
+        mapper.writeValue(os, subject.preferences);
+
+        Assertions.assertEquals(""
+            + "{\n"
+            + "  \"externalTools\" : [ {\n"
+            + "    \"name\" : \"flexspin\",\n"
+            + "    \"program\" : \"/usr/bin/flexpin\",\n"
+            + "    \"arguments\" : \"-2\"\n"
+            + "  } ]\n"
+            + "}", os.toString().replaceAll("\\r\\n", "\n"));
+    }
+
+    @Test
+    void testGetExternalTools() throws Exception {
+        Preferences subject = new Preferences();
+        StringReader is = new StringReader(""
+            + "{\n"
+            + "  \"externalTools\" : [ {\n"
+            + "    \"name\" : \"flexspin\",\n"
+            + "    \"program\" : \"/usr/bin/flexpin\",\n"
+            + "    \"arguments\" : \"-2\"\n"
+            + "  } ]\n"
+            + "}");
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        subject.preferences = mapper.readValue(is, SerializedPreferences.class);
+
+        ExternalTool[] tools = subject.getExternalTools();
+
+        Assertions.assertEquals(1, tools.length);
+        Assertions.assertEquals("flexspin", tools[0].name);
     }
 
 }

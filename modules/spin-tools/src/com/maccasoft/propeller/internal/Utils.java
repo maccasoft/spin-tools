@@ -11,6 +11,9 @@
 
 package com.maccasoft.propeller.internal;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Utils {
 
     public static String makeSkipPattern(String text) {
@@ -60,6 +63,41 @@ public class Utils {
         }
 
         return pattern.toString();
+    }
+
+    public static String[] splitArguments(String args) {
+        List<String> result = new ArrayList<>();
+        int s = 0, e, nested = 0;
+
+        while (s < args.length()) {
+            if (args.charAt(s) == ' ') {
+                s++;
+                continue;
+            }
+            e = s;
+            while (e < args.length()) {
+                if (nested == 0) {
+                    if (args.charAt(e) == ' ') {
+                        break;
+                    }
+                    if (args.charAt(e) == '"' || args.charAt(e) == '\'') {
+                        nested++;
+                    }
+                }
+                else if (args.charAt(e) == '"' || args.charAt(e) == '\'') {
+                    nested--;
+                }
+                e++;
+            }
+            String str = args.substring(s, e);
+            if (str.startsWith("\"") && str.endsWith("\"")) {
+                str = str.substring(1, str.length() - 1);
+            }
+            result.add(str);
+            s = e + 1;
+        }
+
+        return result.toArray(new String[result.size()]);
     }
 
 }
