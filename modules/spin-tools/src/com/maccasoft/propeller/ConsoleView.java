@@ -14,6 +14,8 @@ package com.maccasoft.propeller;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintStream;
 
 import org.eclipse.jface.resource.JFaceResources;
@@ -55,6 +57,9 @@ public class ConsoleView {
 
     File logFile;
     StringBuilder lineBuilder = new StringBuilder();
+
+    private int utf_buf_index = 0, utf_ch_count = 0;
+    private byte[] utf_buf = new byte[4];
 
     final PropertyChangeListener preferencesChangeListener = new PropertyChangeListener() {
 
@@ -102,9 +107,6 @@ public class ConsoleView {
 
     SerialPortEventListener serialEventListener = new SerialPortEventListener() {
 
-        int index = 0, max = 0;
-        byte[] buf = new byte[4];
-
         @Override
         public void serialEvent(SerialPortEvent event) {
             switch (event.getEventType()) {
@@ -112,58 +114,131 @@ public class ConsoleView {
                     try {
                         byte[] rx = serialPort.readBytes();
                         for (int i = 0; i < rx.length; i++) {
-                            byte b = rx[i];
-                            if (index == 0) {
-                                if ((b & 0b111_00000) == 0b110_00000) {
-                                    buf[index++] = b;
-                                    max = 2;
-                                }
-                                else if ((b & 0b1111_0000) == 0b1110_0000) {
-                                    buf[index++] = b;
-                                    max = 3;
-                                }
-                                else if ((b & 0b11111_000) == 0b11110_000) {
-                                    buf[index++] = b;
-                                    max = 4;
-                                }
-                                else if (b == '\n') {
-                                    String text = lineBuilder.toString();
-                                    if (os != null) {
-                                        os.println(text);
-                                        os.flush();
-                                    }
-                                    display.asyncExec(new Runnable() {
-
-                                        @Override
-                                        public void run() {
-                                            console.append(text);
-                                            console.append(System.lineSeparator());
-                                            while (console.getLineCount() > maxLines) {
-                                                int length = console.getOffsetAtLine(console.getLineCount() - maxLines);
-                                                console.replaceTextRange(0, length, "");
-                                            }
-                                            console.invokeAction(ST.TEXT_END);
-                                        }
-                                    });
-                                    lineBuilder = new StringBuilder();
-                                }
-                                else if (b != '\r') {
-                                    lineBuilder.append((char) b);
-                                }
-                            }
-                            else {
-                                buf[index++] = b;
-                                if (index >= max) {
-                                    lineBuilder.append(new String(buf, 0, max));
-                                    index = 0;
-                                }
-                            }
+                            write(rx[i]);
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                     break;
             }
+        }
+
+        private void write(byte b) {
+            if (utf_buf_index == 0) {
+                if ((b & 0b111_00000) == 0b110_00000) {
+                    utf_buf[utf_buf_index++] = b;
+                    utf_ch_count = 2;
+                }
+                else if ((b & 0b1111_0000) == 0b1110_0000) {
+                    utf_buf[utf_buf_index++] = b;
+                    utf_ch_count = 3;
+                }
+                else if ((b & 0b11111_000) == 0b11110_000) {
+                    utf_buf[utf_buf_index++] = b;
+                    utf_ch_count = 4;
+                }
+                else if (b == '\n') {
+                    append(lineBuilder.toString());
+                    lineBuilder = new StringBuilder();
+                }
+                else if (b != '\r') {
+                    lineBuilder.append((char) b);
+                }
+            }
+            else {
+                utf_buf[utf_buf_index++] = b;
+                if (utf_buf_index >= utf_ch_count) {
+                    lineBuilder.append(new String(utf_buf, 0, utf_ch_count));
+                    utf_buf_index = 0;
+                }
+            }
+        }
+
+        private void append(String text) {
+            if (os != null) {
+                os.println(text);
+                os.flush();
+            }
+            display.asyncExec(new Runnable() {
+
+                @Override
+                public void run() {
+                    console.append(text);
+                    console.append(System.lineSeparator());
+                    while (console.getLineCount() > maxLines) {
+                        int length = console.getOffsetAtLine(console.getLineCount() - maxLines);
+                        console.replaceTextRange(0, length, "");
+                    }
+                    console.invokeAction(ST.TEXT_END);
+                }
+            });
+        }
+
+    };
+
+    OutputStream consoleOutputStream = new OutputStream() {
+
+        @Override
+        public void write(int b) throws IOException {
+            if (utf_buf_index == 0) {
+                if ((b & 0b111_00000) == 0b110_00000) {
+                    utf_buf[utf_buf_index++] = (byte) b;
+                    utf_ch_count = 2;
+                }
+                else if ((b & 0b1111_0000) == 0b1110_0000) {
+                    utf_buf[utf_buf_index++] = (byte) b;
+                    utf_ch_count = 3;
+                }
+                else if ((b & 0b11111_000) == 0b11110_000) {
+                    utf_buf[utf_buf_index++] = (byte) b;
+                    utf_ch_count = 4;
+                }
+                else if (b == '\n') {
+                    append(lineBuilder.toString());
+                    lineBuilder = new StringBuilder();
+                }
+                else if (b != '\r') {
+                    lineBuilder.append((char) b);
+                }
+            }
+            else {
+                utf_buf[utf_buf_index++] = (byte) b;
+                if (utf_buf_index >= utf_ch_count) {
+                    lineBuilder.append(new String(utf_buf, 0, utf_ch_count));
+                    utf_buf_index = 0;
+                }
+            }
+        }
+
+        @Override
+        public void write(byte[] b, int off, int len) throws IOException {
+            write(b);
+        }
+
+        @Override
+        public void flush() throws IOException {
+
+        }
+
+        @Override
+        public void close() throws IOException {
+            flush();
+        }
+
+        private void append(String text) {
+            display.asyncExec(new Runnable() {
+
+                @Override
+                public void run() {
+                    console.append(text);
+                    console.append(System.lineSeparator());
+                    while (console.getLineCount() > maxLines) {
+                        int length = console.getOffsetAtLine(console.getLineCount() - maxLines);
+                        console.replaceTextRange(0, length, "");
+                    }
+                    console.invokeAction(ST.TEXT_END);
+                }
+            });
         }
 
     };
@@ -312,6 +387,10 @@ public class ConsoleView {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public OutputStream getOutputStream() {
+        return consoleOutputStream;
     }
 
     public void setBackground(Color color) {

@@ -128,7 +128,7 @@ public class SpinTools {
     CTabFolder tabFolder;
     ToolBar tabFolderToolBar;
     OutlineViewStack outlineViewStack;
-    ConsoleView debugConsoleView;
+    ConsoleView consoleView;
 
     StatusLine statusLine;
 
@@ -137,8 +137,8 @@ public class SpinTools {
     ToolItem topObjectToolItem;
     MenuItem topObjectTabItem;
 
-    MenuItem debugConsoleItem;
-    ToolItem debugConsoleToolItem;
+    MenuItem consoleItem;
+    ToolItem consoleToolItem;
 
     SourcePool sourcePool;
     SerialPortList serialPortList;
@@ -410,8 +410,8 @@ public class SpinTools {
         outlineViewStack = new OutlineViewStack(editorSashForm, SWT.BORDER);
         outlineViewStack.setVisible(preferences.getShowEditorOutline());
 
-        debugConsoleView = new ConsoleView(centralSashForm);
-        debugConsoleView.setVisible(false);
+        consoleView = new ConsoleView(centralSashForm);
+        consoleView.setVisible(false);
 
         statusLine = new StatusLine(container);
         GridData layoutData = new GridData(SWT.FILL, SWT.FILL, true, false);
@@ -773,8 +773,8 @@ public class SpinTools {
         outlineViewStack.setBackground(listBackground);
         outlineViewStack.setForeground(listForeground);
 
-        debugConsoleView.setBackground(listBackground);
-        debugConsoleView.setForeground(widgetForeground);
+        consoleView.setBackground(listBackground);
+        consoleView.setForeground(widgetForeground);
 
         statusLine.setForeground(widgetForeground);
         statusLine.setBackground(widgetBackground);
@@ -1574,15 +1574,15 @@ public class SpinTools {
             }
         });
 
-        debugConsoleToolItem = new ToolItem(toolBar, SWT.CHECK);
-        debugConsoleToolItem.setImage(ImageRegistry.getImageFromResources("application-text.png"));
-        debugConsoleToolItem.setToolTipText("Toggle Debug Console");
-        debugConsoleToolItem.addSelectionListener(new SelectionAdapter() {
+        consoleToolItem = new ToolItem(toolBar, SWT.CHECK);
+        consoleToolItem.setImage(ImageRegistry.getImageFromResources("application-text.png"));
+        consoleToolItem.setToolTipText("Toggle Debug Console");
+        consoleToolItem.addSelectionListener(new SelectionAdapter() {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
-                debugConsoleView.setVisible(debugConsoleToolItem.getSelection());
-                debugConsoleItem.setSelection(debugConsoleToolItem.getSelection());
+                consoleView.setVisible(consoleToolItem.getSelection());
+                consoleItem.setSelection(consoleToolItem.getSelection());
                 centralSashForm.layout();
             }
         });
@@ -2457,14 +2457,14 @@ public class SpinTools {
             }
         });
 
-        debugConsoleItem = new MenuItem(menu, SWT.CHECK);
-        debugConsoleItem.setText("Toggle Debug Console");
-        debugConsoleItem.addListener(SWT.Selection, new Listener() {
+        consoleItem = new MenuItem(menu, SWT.CHECK);
+        consoleItem.setText("Toggle Debug Console");
+        consoleItem.addListener(SWT.Selection, new Listener() {
 
             @Override
             public void handleEvent(Event e) {
-                debugConsoleView.setVisible(debugConsoleItem.getSelection());
-                debugConsoleToolItem.setSelection(debugConsoleItem.getSelection());
+                consoleView.setVisible(consoleItem.getSelection());
+                consoleToolItem.setSelection(consoleItem.getSelection());
                 centralSashForm.layout();
             }
         });
@@ -2595,15 +2595,15 @@ public class SpinTools {
         }
 
         if (isDebug) {
-            debugConsoleView.clear();
-            if (!debugConsoleView.getVisible()) {
-                debugConsoleView.setVisible(true);
-                debugConsoleItem.setSelection(true);
-                debugConsoleToolItem.setSelection(true);
+            consoleView.clear();
+            if (!consoleView.getVisible()) {
+                consoleView.setVisible(true);
+                consoleItem.setSelection(true);
+                consoleToolItem.setSelection(true);
                 centralSashForm.layout();
             }
         }
-        debugConsoleView.setEnabled(isDebug);
+        consoleView.setEnabled(isDebug);
 
         SerialTerminal serialTerminal = getSerialTerminal();
         if (openTerminal) {
@@ -2614,7 +2614,7 @@ public class SpinTools {
             serialTerminal.setFocus();
         }
 
-        serialPort = debugConsoleView.getSerialPort();
+        serialPort = consoleView.getSerialPort();
         if (serialPort == null && serialTerminal != null) {
             serialPort = serialTerminal.getSerialPort();
         }
@@ -2622,8 +2622,8 @@ public class SpinTools {
             serialPort = new SerialPort(serialPortList.getSelection());
         }
 
-        debugConsoleView.setSerialPort(null);
-        debugConsoleView.closeLogFile();
+        consoleView.setSerialPort(null);
+        consoleView.closeLogFile();
 
         if (serialTerminal != null) {
             serialTerminal.setSerialPort(null);
@@ -2640,8 +2640,8 @@ public class SpinTools {
             String fileName = editorTab.getText();
             Date date = Calendar.getInstance().getTime();
             DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd.HHmmss");
-            debugConsoleView.setLogFile(debugFolder, String.format("%s.%s.log", fileName, dateFormat.format(date)));
-            debugConsoleView.setSerialPort(uploadPort != null ? uploadPort : serialPort);
+            consoleView.setLogFile(debugFolder, String.format("%s.%s.log", fileName, dateFormat.format(date)));
+            consoleView.setSerialPort(uploadPort != null ? uploadPort : serialPort);
         }
         else if (serialTerminal != null) {
             serialTerminal.setSerialPort(uploadPort != null ? uploadPort : serialPort);
