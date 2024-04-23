@@ -831,22 +831,6 @@ public class EditorTab implements FindReplaceTarget {
         return tabItem;
     }
 
-    public void cut() {
-        editor.cut();
-    }
-
-    public void copy() {
-        editor.copy();
-    }
-
-    public void paste() {
-        editor.paste();
-    }
-
-    public void selectAll() {
-        editor.selectAll();
-    }
-
     public void undo() {
         editor.undo();
     }

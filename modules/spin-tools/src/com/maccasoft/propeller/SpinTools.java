@@ -82,6 +82,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.program.Program;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
@@ -1271,10 +1272,9 @@ public class SpinTools {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
-                CTabItem tabItem = tabFolder.getSelection();
-                if (tabItem != null) {
-                    EditorTab editorTab = (EditorTab) tabItem.getData();
-                    editorTab.cut();
+                Control focusControl = shell.getDisplay().getFocusControl();
+                if (focusControl instanceof StyledText) {
+                    ((StyledText) focusControl).cut();
                 }
             }
         });
@@ -1286,10 +1286,9 @@ public class SpinTools {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
-                CTabItem tabItem = tabFolder.getSelection();
-                if (tabItem != null) {
-                    EditorTab editorTab = (EditorTab) tabItem.getData();
-                    editorTab.copy();
+                Control focusControl = shell.getDisplay().getFocusControl();
+                if (focusControl instanceof StyledText) {
+                    ((StyledText) focusControl).copy();
                 }
             }
         });
@@ -1301,10 +1300,9 @@ public class SpinTools {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
-                CTabItem tabItem = tabFolder.getSelection();
-                if (tabItem != null) {
-                    EditorTab editorTab = (EditorTab) tabItem.getData();
-                    editorTab.paste();
+                Control focusControl = shell.getDisplay().getFocusControl();
+                if (focusControl instanceof StyledText) {
+                    ((StyledText) focusControl).paste();
                 }
             }
         });
@@ -2133,10 +2131,9 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                CTabItem tabItem = tabFolder.getSelection();
-                if (tabItem != null) {
-                    EditorTab editorTab = (EditorTab) tabItem.getData();
-                    editorTab.cut();
+                Control focusControl = shell.getDisplay().getFocusControl();
+                if (focusControl instanceof StyledText) {
+                    ((StyledText) focusControl).cut();
                 }
             }
         });
@@ -2148,10 +2145,9 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                CTabItem tabItem = tabFolder.getSelection();
-                if (tabItem != null) {
-                    EditorTab editorTab = (EditorTab) tabItem.getData();
-                    editorTab.copy();
+                Control focusControl = shell.getDisplay().getFocusControl();
+                if (focusControl instanceof StyledText) {
+                    ((StyledText) focusControl).copy();
                 }
             }
         });
@@ -2163,10 +2159,9 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                CTabItem tabItem = tabFolder.getSelection();
-                if (tabItem != null) {
-                    EditorTab editorTab = (EditorTab) tabItem.getData();
-                    editorTab.paste();
+                Control focusControl = shell.getDisplay().getFocusControl();
+                if (focusControl instanceof StyledText) {
+                    ((StyledText) focusControl).paste();
                 }
             }
         });
@@ -2178,10 +2173,9 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                CTabItem tabItem = tabFolder.getSelection();
-                if (tabItem != null) {
-                    EditorTab editorTab = (EditorTab) tabItem.getData();
-                    editorTab.selectAll();
+                Control focusControl = shell.getDisplay().getFocusControl();
+                if (focusControl instanceof StyledText) {
+                    ((StyledText) focusControl).selectAll();
                 }
             }
         });
