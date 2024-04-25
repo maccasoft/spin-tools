@@ -9,6 +9,8 @@
 
 package com.maccasoft.propeller;
 
+import java.io.File;
+
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.swt.SWT;
@@ -117,6 +119,14 @@ public class ExternalToolDialog extends Dialog {
                 String fileName = dlg.open();
                 if (fileName != null) {
                     program.setText(fileName);
+                    if (name.getText().isBlank()) {
+                        String s = new File(fileName).getName();
+                        int i = s.lastIndexOf('.');
+                        if (i != -1) {
+                            s = s.substring(0, i);
+                        }
+                        name.setText(s);
+                    }
                 }
             }
 
