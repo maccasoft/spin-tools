@@ -63,7 +63,6 @@ import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.FocusAdapter;
 import org.eclipse.swt.events.FocusEvent;
-import org.eclipse.swt.events.MenuAdapter;
 import org.eclipse.swt.events.MenuEvent;
 import org.eclipse.swt.events.MenuListener;
 import org.eclipse.swt.events.MouseAdapter;
@@ -136,6 +135,8 @@ public class SpinTools {
     ConsoleView consoleView;
 
     StatusLine statusLine;
+
+    Menu runMenu;
 
     MenuItem topObjectItem;
     MenuItem blockSelectionItem;
@@ -302,6 +303,9 @@ public class SpinTools {
                     break;
                 case Preferences.PROP_THEME:
                     applyTheme((String) evt.getNewValue());
+                    break;
+                case Preferences.PROP_EXTERNAL_TOOLS:
+                    populateRunMenu();
                     break;
             }
         }
@@ -2507,94 +2511,97 @@ public class SpinTools {
     }
 
     void createRunMenu(Menu parent) {
-        final Menu menu = new Menu(parent.getParent(), SWT.DROP_DOWN);
-        menu.addMenuListener(new MenuAdapter() {
+        runMenu = new Menu(parent.getParent(), SWT.DROP_DOWN);
 
-            @Override
-            public void menuShown(MenuEvent e) {
-                MenuItem[] items = menu.getItems();
-                for (int i = 0; i < items.length; i++) {
-                    items[i].dispose();
-                }
-
-                ExternalTool[] tools = preferences.getExternalTools();
-                for (int i = 0; i < tools.length; i++) {
-                    String name = tools[i].getName();
-                    String program = tools[i].getProgram();
-                    String arguments = tools[i].getArguments();
-
-                    MenuItem item = new MenuItem(menu, SWT.PUSH);
-                    item.setText(name);
-                    item.addListener(SWT.Selection, new Listener() {
-
-                        @Override
-                        public void handleEvent(Event event) {
-                            consoleView.clear();
-                            if (!consoleView.getVisible()) {
-                                consoleView.setVisible(true);
-                                consoleItem.setSelection(true);
-                                consoleToolItem.setSelection(true);
-                                centralSashForm.layout();
-                            }
-                            consoleView.setSerialPort(null);
-                            consoleView.closeLogFile();
-                            consoleView.setEnabled(true);
-
-                            EditorTab editorTab = getTargetObjectEditorTab();
-                            if (editorTab == null) {
-                                return;
-                            }
-
-                            if (editorTab.isDirty()) {
-                                int style = SWT.APPLICATION_MODAL | SWT.ICON_QUESTION | SWT.YES | SWT.NO | SWT.CANCEL;
-                                MessageBox messageBox = new MessageBox(shell, style);
-                                messageBox.setText(APP_TITLE);
-                                messageBox.setMessage("Editor contains unsaved changes.  Save before running external tool?");
-                                switch (messageBox.open()) {
-                                    case SWT.CANCEL:
-                                        return;
-                                    case SWT.YES:
-                                        try {
-                                            doFileSave(editorTab);
-                                            if (editorTab.isDirty()) {
-                                                return;
-                                            }
-                                        } catch (Exception e) {
-                                            e.printStackTrace();
-                                        }
-                                        break;
-                                }
-                            }
-
-                            List<String> cmd = new ArrayList<>();
-                            cmd.add(program);
-
-                            if (arguments != null) {
-                                String cmdline = arguments.replace("${file}", "\"" + editorTab.getFile().getAbsolutePath() + "\"");
-
-                                String[] args = Utils.splitArguments(cmdline);
-                                cmd.addAll(Arrays.asList(args));
-                            }
-
-                            try {
-                                runCommand(cmd, editorTab.getFile().getParentFile(), consoleView.getOutputStream());
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    });
-
-                }
-
-            }
-
-        });
+        populateRunMenu();
 
         MenuItem item = new MenuItem(parent, SWT.CASCADE);
         item.setText("Run");
-        item.setMenu(menu);
+        item.setMenu(runMenu);
+    }
+
+    void populateRunMenu() {
+        MenuItem[] items = runMenu.getItems();
+        for (int i = 0; i < items.length; i++) {
+            items[i].dispose();
+        }
+
+        ExternalTool[] tools = preferences.getExternalTools();
+        for (int i = 0; i < tools.length; i++) {
+            String name = tools[i].getName();
+            String program = tools[i].getProgram();
+            String arguments = tools[i].getArguments();
+
+            MenuItem item = new MenuItem(runMenu, SWT.PUSH);
+            if (i < 9) {
+                item.setText(name + "\tAlt+" + ('1' + i));
+                item.setAccelerator(SWT.MOD3 + '1' + i);
+            }
+            else {
+                item.setText(name);
+            }
+            item.addListener(SWT.Selection, new Listener() {
+
+                @Override
+                public void handleEvent(Event event) {
+                    consoleView.clear();
+                    if (!consoleView.getVisible()) {
+                        consoleView.setVisible(true);
+                        consoleItem.setSelection(true);
+                        consoleToolItem.setSelection(true);
+                        centralSashForm.layout();
+                    }
+                    consoleView.setSerialPort(null);
+                    consoleView.closeLogFile();
+                    consoleView.setEnabled(true);
+
+                    EditorTab editorTab = getTargetObjectEditorTab();
+                    if (editorTab == null) {
+                        return;
+                    }
+
+                    if (editorTab.isDirty()) {
+                        int style = SWT.APPLICATION_MODAL | SWT.ICON_QUESTION | SWT.YES | SWT.NO | SWT.CANCEL;
+                        MessageBox messageBox = new MessageBox(shell, style);
+                        messageBox.setText(APP_TITLE);
+                        messageBox.setMessage("Editor contains unsaved changes.  Save before running external tool?");
+                        switch (messageBox.open()) {
+                            case SWT.CANCEL:
+                                return;
+                            case SWT.YES:
+                                try {
+                                    doFileSave(editorTab);
+                                    if (editorTab.isDirty()) {
+                                        return;
+                                    }
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                                break;
+                        }
+                    }
+
+                    List<String> cmd = new ArrayList<>();
+                    cmd.add(program);
+
+                    if (arguments != null) {
+                        String cmdline = arguments.replace("${file}", "\"" + editorTab.getFile().getAbsolutePath() + "\"");
+
+                        String[] args = Utils.splitArguments(cmdline);
+                        cmd.addAll(Arrays.asList(args));
+                    }
+
+                    try {
+                        runCommand(cmd, editorTab.getFile().getParentFile(), consoleView.getOutputStream());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+
+        }
     }
 
     protected int runCommand(List<String> cmd, File outDir, OutputStream stdout) throws IOException, InterruptedException {

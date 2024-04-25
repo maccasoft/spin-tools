@@ -62,6 +62,7 @@ public class Preferences {
     public static final String PROP_CONSOLE_MAX_LINES = "consoleMaxLines";
     public static final String PROP_CONSOLE_WRITE_LOG_FILE = "consoleWriteLogFile";
     public static final String PROP_THEME = "theme";
+    public static final String PROP_EXTERNAL_TOOLS = "externalTools";
 
     public static final String PREFERENCES_NAME = ".spin-tools";
 
@@ -878,7 +879,7 @@ public class Preferences {
     }
 
     public void setExternalTools(ExternalTool[] externalTools) {
-        preferences.externalTools = externalTools.length != 0 ? externalTools : null;
+        changeSupport.firePropertyChange(PROP_EXTERNAL_TOOLS, preferences.externalTools, preferences.externalTools = externalTools.length != 0 ? externalTools : null);
     }
 
     public void save() throws IOException {
