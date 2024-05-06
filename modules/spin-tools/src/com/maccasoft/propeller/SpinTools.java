@@ -2534,7 +2534,7 @@ public class SpinTools {
 
             MenuItem item = new MenuItem(runMenu, SWT.PUSH);
             if (i < 9) {
-                item.setText(name + "\tAlt+" + ('1' + i));
+                item.setText(name + "\tAlt+" + (char) ('1' + i));
                 item.setAccelerator(SWT.MOD3 + '1' + i);
             }
             else {

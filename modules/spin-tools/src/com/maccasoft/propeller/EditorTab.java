@@ -810,7 +810,9 @@ public class EditorTab implements FindReplaceTarget {
     }
 
     public void setFocus() {
-        editor.getControl().setFocus();
+        if (!editor.getControl().isDisposed()) {
+            editor.getControl().setFocus();
+        }
     }
 
     public void setText(String text) {
