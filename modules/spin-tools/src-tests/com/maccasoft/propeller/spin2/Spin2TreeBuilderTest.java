@@ -694,6 +694,42 @@ class Spin2TreeBuilderTest {
             + "", parse(text));
     }
 
+    @Test
+    void testStructureAssignment() {
+        String text = "a := b.c";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + " +-- [b.c]\n"
+            + "", parse(text));
+    }
+
+    @Test
+    void testStructureIndexAssignment() {
+        String text = "a := b[1].c";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + " +-- [b]\n"
+            + "      +-- [1]\n"
+            + "      +-- [.c]\n"
+            + "", parse(text));
+    }
+
+    @Test
+    void testStructureMultiIndexAssignment() {
+        String text = "a := b[1].c.d[2].e";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + " +-- [b]\n"
+            + "      +-- [1]\n"
+            + "      +-- [.c.d]\n"
+            + "           +-- [2]\n"
+            + "           +-- [.e]\n"
+            + "", parse(text));
+    }
+
     String parse(String text) {
         Spin2TreeBuilder builder = new Spin2TreeBuilder(new Context());
 
