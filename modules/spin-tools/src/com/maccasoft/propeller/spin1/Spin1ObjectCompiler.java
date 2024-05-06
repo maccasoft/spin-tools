@@ -1580,6 +1580,15 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                         token = childIter.next();
 
                         if ("OTHER".equalsIgnoreCase(token.getText())) {
+                            if (!childIter.hasNext()) {
+                                logMessage(new CompilerException("expecting ':'", token));
+                            }
+                            else {
+                                token = childIter.next();
+                                if (!":".equals(token.getText())) {
+                                    logMessage(new CompilerException("expecting ':'", token));
+                                }
+                            }
                             line.addChild(0, caseLine);
                             hasOther = true;
                         }
@@ -1593,9 +1602,15 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                                 }
                                 builder.addToken(token);
                             }
+                            if (!":".equals(token.getText())) {
+                                logMessage(new CompilerException("expecting ':'", token));
+                            }
                             compileCase(method, line, builder.getRoot(), caseLine);
 
                             line.addChild(caseLine);
+                        }
+                        if (childIter.hasNext()) {
+                            logMessage(new CompilerException("unexpected", childIter.next()));
                         }
 
                         Spin1MethodLine doneLine = new Spin1MethodLine(context);

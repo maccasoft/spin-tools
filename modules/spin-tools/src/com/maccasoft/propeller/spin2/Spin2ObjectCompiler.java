@@ -1944,6 +1944,15 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         token = childIter.next();
 
                         if ("OTHER".equalsIgnoreCase(token.getText())) {
+                            if (!childIter.hasNext()) {
+                                logMessage(new CompilerException("expecting ':'", token));
+                            }
+                            else {
+                                token = childIter.next();
+                                if (!":".equals(token.getText())) {
+                                    logMessage(new CompilerException("expecting ':'", token));
+                                }
+                            }
                             line.addChild(0, caseLine);
                             hasOther = true;
                         }
@@ -1957,9 +1966,15 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                                 }
                                 builder.addToken(token);
                             }
+                            if (!":".equals(token.getText())) {
+                                logMessage(new CompilerException("expecting ':'", token));
+                            }
                             compileCase(method, line, builder.getRoot(), caseLine);
 
                             line.addChild(caseLine);
+                        }
+                        if (childIter.hasNext()) {
+                            logMessage(new CompilerException("unexpected", childIter.next()));
                         }
 
                         Spin2MethodLine doneLine = new Spin2MethodLine(context);
@@ -2007,6 +2022,15 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         token = childIter.next();
 
                         if ("OTHER".equalsIgnoreCase(token.getText())) {
+                            if (!childIter.hasNext()) {
+                                logMessage(new CompilerException("expecting ':'", token));
+                            }
+                            else {
+                                token = childIter.next();
+                                if (!":".equals(token.getText())) {
+                                    logMessage(new CompilerException("expecting ':'", token));
+                                }
+                            }
                             otherLine = caseLine;
                         }
                         else {
@@ -2018,6 +2042,9 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                                     break;
                                 }
                                 builder.addToken(token);
+                            }
+                            if (!":".equals(token.getText())) {
+                                logMessage(new CompilerException("expecting ':'", token));
                             }
                             for (Entry<Integer, Spin2MethodLine> entry : compileCaseFast(line, builder.getRoot(), caseLine).entrySet()) {
                                 if (map.containsKey(entry.getKey())) {
@@ -2032,6 +2059,10 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                             }
 
                         }
+                        if (childIter.hasNext()) {
+                            logMessage(new CompilerException("unexpected", childIter.next()));
+                        }
+
                         line.addChild(caseLine);
 
                         doneLine = new Spin2MethodLine(context);
