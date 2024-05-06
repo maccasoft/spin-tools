@@ -2585,7 +2585,11 @@ public class SpinTools {
                     cmd.add(program);
 
                     if (arguments != null) {
-                        String cmdline = arguments.replace("${file}", "\"" + editorTab.getFile().getAbsolutePath() + "\"");
+                        String file = editorTab.getFile().getName();
+                        String fileName = file.lastIndexOf('.') != -1 ? file.substring(0, file.lastIndexOf('.')) : file;
+                        String fileLoc = editorTab.getFile().getParentFile().getAbsolutePath();
+
+                        String cmdline = arguments.replace("${file}", file).replace("${file.name}", fileName).replace("${file.loc}", fileLoc).replace("${serial}", serialPortList.getSelection());
 
                         String[] args = Utils.splitArguments(cmdline);
                         cmd.addAll(Arrays.asList(args));

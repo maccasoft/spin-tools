@@ -141,7 +141,11 @@ public class ExternalToolDialog extends Dialog {
         arguments.addFocusListener(textFocusListener);
 
         label = new Label(composite, SWT.NONE);
-        label.setText("${file} insert the currently selected editor's file or pinned top file.");
+        label.setText("" +
+            "${file} insert the currently selected editor's file or pinned top file.\n" +
+            "${file.name} insert the currently selected editor's file or pinned top file name.\n" +
+            "${file.loc} insert the currently selected editor's file or pinned top file location.\n" +
+            "${serial} insert the selected serial port.");
         label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false, 2, 1));
 
         if (externalTool != null) {
