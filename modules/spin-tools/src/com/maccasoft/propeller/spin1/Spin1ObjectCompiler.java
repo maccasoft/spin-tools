@@ -615,8 +615,9 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                 stringDataLine.writeTo(object);
             }
 
-            object.alignToLong();
         }
+
+        object.alignToLong();
 
         objectSize.setValue(object.getSize());
 

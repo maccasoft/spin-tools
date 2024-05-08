@@ -279,7 +279,7 @@ class Spin1PAsmCompilerTest {
 
         Assertions.assertEquals(""
             + "' Object header (var size 0)\n"
-            + "00000 00000       0B 00          Object size\n"
+            + "00000 00000       0C 00          Object size\n"
             + "00002 00002       01             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004   000                                    org     $000\n"
@@ -287,6 +287,7 @@ class Spin1PAsmCompilerTest {
             + "00005 00005   000 02                                 byte    2\n"
             + "00006 00006   000 03 03 04 04                        byte    3[2], 4[3]\n"
             + "0000A 0000A   001 04                     byte    3[2], 4[3]\n"
+            + "0000B 0000B       00             Padding\n"
             + "", compile(text));
     }
 
@@ -301,7 +302,7 @@ class Spin1PAsmCompilerTest {
 
         Assertions.assertEquals(""
             + "' Object header (var size 0)\n"
-            + "00000 00000       12 00          Object size\n"
+            + "00000 00000       14 00          Object size\n"
             + "00002 00002       01             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004   000                                    org     $000\n"
@@ -310,6 +311,7 @@ class Spin1PAsmCompilerTest {
             + "00008 00008   001 03 00 03 00                        word    3[2], 4[3]\n"
             + "0000C 0000C   002 04 00 04 00   \n"
             + "00010 00010   003 04 00\n"
+            + "00012 00012       00 00          Padding\n"
             + "", compile(text));
     }
 
@@ -326,7 +328,7 @@ class Spin1PAsmCompilerTest {
 
         Assertions.assertEquals(""
             + "' Object header (var size 0)\n"
-            + "00000 00000       09 00          Object size\n"
+            + "00000 00000       0C 00          Object size\n"
             + "00002 00002       01             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004   000                                    org     $000\n"
@@ -335,6 +337,7 @@ class Spin1PAsmCompilerTest {
             + "00006 00006   000 02                                 bytefit $02\n"
             + "00007 00007   000 80                                 bytefit -$80\n"
             + "00008 00008   001 FF                                 bytefit $FF\n"
+            + "00009 00009       00 00 00       Padding\n"
             + "", compile(text));
 
         Assertions.assertThrows(CompilerException.class, new Executable() {
@@ -373,7 +376,7 @@ class Spin1PAsmCompilerTest {
 
         Assertions.assertEquals(""
             + "' Object header (var size 0)\n"
-            + "00000 00000       0E 00          Object size\n"
+            + "00000 00000       10 00          Object size\n"
             + "00002 00002       01             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004   000                                    org     $000\n"
@@ -382,6 +385,7 @@ class Spin1PAsmCompilerTest {
             + "00008 00008   001 02 00                              wordfit $0002\n"
             + "0000A 0000A   001 00 80                              wordfit -$8000\n"
             + "0000C 0000C   002 FF FF                              wordfit $FFFF\n"
+            + "0000E 0000E       00 00          Padding\n"
             + "", compile(text));
 
         Assertions.assertThrows(CompilerException.class, new Executable() {
@@ -468,7 +472,7 @@ class Spin1PAsmCompilerTest {
 
         Assertions.assertEquals(""
             + "' Object header (var size 0)\n"
-            + "00000 00000       1E 00          Object size\n"
+            + "00000 00000       20 00          Object size\n"
             + "00002 00002       01             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004   000                                    org     $000\n"
@@ -481,6 +485,7 @@ class Spin1PAsmCompilerTest {
             + "00016 00016   004 99 BB\n"
             + "00018 00018   005 AA FF 11 55                        wordfit $FFAA, long $BB995511\n"
             + "0001C 0001C   006 99 BB\n"
+            + "0001E 0001E       00 00          Padding\n"
             + "", compile(text));
     }
 

@@ -688,9 +688,9 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
             if (index > 0) {
                 methodData.get(index).setValue(object.getSize());
             }
-
-            object.alignToLong();
         }
+
+        object.alignToLong();
 
         return object;
     }

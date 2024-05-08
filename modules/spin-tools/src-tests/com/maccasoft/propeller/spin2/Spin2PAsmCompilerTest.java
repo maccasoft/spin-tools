@@ -352,6 +352,7 @@ class Spin2PAsmCompilerTest {
             + "00001 00001   000 02                                 byte    2\n"
             + "00002 00002   000 03 03 04 04                        byte    3[2], 4[3]\n"
             + "00006 00006   001 04                     byte    3[2], 4[3]\n"
+            + "00007 00007       00             Padding\n"
             + "", compile(text));
     }
 
@@ -372,6 +373,7 @@ class Spin2PAsmCompilerTest {
             + "00004 00004   001 03 00 03 00                        word    3[2], 4[3]\n"
             + "00008 00008   002 04 00 04 00   \n"
             + "0000C 0000C   003 04 00\n"
+            + "0000E 0000E       00 00          Padding\n"
             + "", compile(text));
     }
 
@@ -416,6 +418,7 @@ class Spin2PAsmCompilerTest {
             + "00002 00002   000 02                                 bytefit $02\n"
             + "00003 00003   000 80                                 bytefit -$80\n"
             + "00004 00004   001 FF                                 bytefit $FF\n"
+            + "00005 00005       00 00 00       Padding\n"
             + "", compile(text));
 
         Assertions.assertThrows(CompilerException.class, new Executable() {
@@ -460,6 +463,7 @@ class Spin2PAsmCompilerTest {
             + "00004 00004   001 02 00                              wordfit $0002\n"
             + "00006 00006   001 00 80                              wordfit -$8000\n"
             + "00008 00008   002 FF FF                              wordfit $FFFF\n"
+            + "0000A 0000A       00 00          Padding\n"
             + "", compile(text));
 
         Assertions.assertThrows(CompilerException.class, new Executable() {
@@ -847,6 +851,7 @@ class Spin2PAsmCompilerTest {
             + "00012 00012   004 99 BB\n"
             + "00014 00014   005 AA FF 11 55                        wordfit $FFAA, long $BB995511\n"
             + "00018 00018   006 99 BB\n"
+            + "0001A 0001A       00 00          Padding\n"
             + "", compile(text));
     }
 
@@ -873,6 +878,7 @@ class Spin2PAsmCompilerTest {
             + "00009 00009 00009 11 1A 00 F6                        mov     a, b\n"
             + "0000D 0000D 0000D 01 00 00 00    a                   long    1\n"
             + "00011 00011 00011 01 00 00 00    b                   long    1\n"
+            + "00015 00015       00 00 00       Padding\n"
             + "", compile(text));
     }
 
@@ -919,6 +925,7 @@ class Spin2PAsmCompilerTest {
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000 63 63                              byte    99, fvar 99\n"
             + "00002 00002   000 9D 9D 7F                           byte    -99, fvars -99\n"
+            + "00005 00005       00 00 00       Padding\n"
             + "", compile(text));
     }
 
