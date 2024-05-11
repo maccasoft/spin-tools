@@ -228,7 +228,7 @@ public class ConsoleView {
         }
 
         private void append(String text) {
-            display.syncExec(new Runnable() {
+            display.asyncExec(new Runnable() {
 
                 @Override
                 public void run() {

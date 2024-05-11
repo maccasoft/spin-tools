@@ -33,6 +33,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Stack;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
@@ -114,7 +115,7 @@ import jssc.SerialPortException;
 public class SpinTools {
 
     public static final String APP_TITLE = "Spin Tools IDE";
-    public static final String APP_VERSION = "0.36.0";
+    public static final String APP_VERSION = "0.36.1";
 
     static final File defaultSpin1Examples = new File(System.getProperty("APP_DIR"), "examples/P1").getAbsoluteFile();
     static final File defaultSpin2Examples = new File(System.getProperty("APP_DIR"), "examples/P2").getAbsoluteFile();
@@ -137,6 +138,7 @@ public class SpinTools {
     StatusLine statusLine;
 
     Menu runMenu;
+    Process process;
 
     MenuItem topObjectItem;
     MenuItem blockSelectionItem;
@@ -567,7 +569,10 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event event) {
-                event.doit = handleUnsavedContent();
+                event.doit = handleRunningProcess();
+                if (event.doit) {
+                    event.doit = handleUnsavedContent();
+                }
             }
         });
         shell.addDisposeListener(new DisposeListener() {
@@ -2544,6 +2549,10 @@ public class SpinTools {
 
                 @Override
                 public void handleEvent(Event event) {
+                    if (!handleRunningProcess()) {
+                        return;
+                    }
+
                     consoleView.clear();
                     if (!consoleView.getVisible()) {
                         consoleView.setVisible(true);
@@ -2608,7 +2617,30 @@ public class SpinTools {
         }
     }
 
-    protected int runCommand(List<String> cmd, File outDir, OutputStream stdout) throws IOException, InterruptedException {
+    private boolean handleRunningProcess() {
+        if (process != null && process.isAlive()) {
+            int style = SWT.APPLICATION_MODAL | SWT.ICON_QUESTION | SWT.YES | SWT.NO;
+            MessageBox messageBox = new MessageBox(shell, style);
+            messageBox.setText(APP_TITLE);
+            messageBox.setMessage("An external tool is still running.  Terminate?");
+            if (messageBox.open() != SWT.YES) {
+                return false;
+            }
+            try {
+                process.destroyForcibly();
+                process.waitFor(10, TimeUnit.SECONDS);
+            } catch (Exception e) {
+                // Do nothing
+            }
+            if (process.isAlive()) {
+                MessageDialog.openError(shell, APP_TITLE, "Can't terminate process " + process.pid());
+                return false;
+            }
+        }
+        return true;
+    }
+
+    protected void runCommand(List<String> cmd, File outDir, OutputStream stdout) throws IOException, InterruptedException {
         ProcessBuilder builder = new ProcessBuilder(cmd);
         builder.redirectErrorStream(true);
         builder.directory(outDir);
@@ -2623,17 +2655,17 @@ public class SpinTools {
         sb.append("\n");
         stdout.write(sb.toString().getBytes());
 
-        final Process p = builder.start();
+        process = builder.start();
 
-        Thread ioStream = new Thread() {
+        Thread ioThread = new Thread() {
 
             int count;
-            byte[] buf = new byte[1024];
+            byte[] buf = new byte[4096];
 
             @Override
             public void run() {
                 try {
-                    InputStream out = p.getInputStream();
+                    InputStream out = process.getInputStream();
 
                     do {
                         count = out.read(buf);
@@ -2648,9 +2680,7 @@ public class SpinTools {
                 }
             }
         };
-        ioStream.start();
-
-        return p.waitFor();
+        ioThread.start();
     }
 
     void createPortMenu(Menu parent) {
