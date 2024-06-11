@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-12, macos-14]
+        os: [ubuntu-latest, windows-latest, macos-12, macos-14, self-host]
 
     runs-on: ${{ matrix.os }}
 
@@ -24,7 +24,7 @@ jobs:
     - run: |
         mvn --batch-mode -DskipTests package
 
-    - uses: softprops/action-gh-release@v1
+    - uses: softprops/action-gh-release@v2
       with:
         files: |
           target/spin-tools*
