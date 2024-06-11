@@ -630,6 +630,7 @@ public class SpinTools {
                                 editorTab.addCaretListener(caretListener);
                                 editorTab.addPropertyChangeListener(editorChangeListener);
                                 editorTab.getEditor().addSourceListener(sourceListener);
+                                editorTab.getEditor().getStyledText().setMenu(createContextMenu());
                                 editorTab.getTabItem().addDisposeListener(tabItemDisposeListener);
                             }
 
@@ -672,6 +673,7 @@ public class SpinTools {
                                     editorTab.addCaretListener(caretListener);
                                     editorTab.addPropertyChangeListener(editorChangeListener);
                                     editorTab.getEditor().addSourceListener(sourceListener);
+                                    editorTab.getEditor().getStyledText().setMenu(createContextMenu());
                                     editorTab.getTabItem().addDisposeListener(tabItemDisposeListener);
                                 }
 
@@ -1795,6 +1797,7 @@ public class SpinTools {
         editorTab.addCaretListener(caretListener);
         editorTab.addPropertyChangeListener(editorChangeListener);
         editorTab.getEditor().addSourceListener(sourceListener);
+        editorTab.getEditor().getStyledText().setMenu(createContextMenu());
         editorTab.getTabItem().addDisposeListener(tabItemDisposeListener);
 
         tabFolder.getDisplay().asyncExec(new Runnable() {
@@ -1816,6 +1819,189 @@ public class SpinTools {
         return editorTab;
     }
 
+    Menu createContextMenu() {
+        Menu menu = new Menu(shell, SWT.POP_UP);
+
+        MenuItem item = new MenuItem(menu, SWT.CASCADE);
+        item.setText("New");
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                handleFileNew();
+            }
+        });
+
+        new MenuItem(menu, SWT.SEPARATOR);
+
+        item = new MenuItem(menu, SWT.CASCADE);
+        item.setText("Save");
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                handleFileSave();
+            }
+        });
+
+        item = new MenuItem(menu, SWT.CASCADE);
+        item.setText("Save All");
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                handleFileSaveAll();
+            }
+        });
+
+        new MenuItem(menu, SWT.SEPARATOR);
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Close");
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                closeCurrentEditor();
+            }
+        });
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Close All");
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                e.display.asyncExec(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        if (tabFolder.getItemCount() > 0) {
+                            if (closeEditor(tabFolder.getItem(0))) {
+                                e.display.asyncExec(this);
+                            }
+                        }
+                    }
+
+                });
+            }
+        });
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Close All Others");
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                CTabItem currentTabItem = tabFolder.getSelection();
+                e.display.asyncExec(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        CTabItem tabItem = null;
+
+                        if (tabFolder.getItem(0) != currentTabItem) {
+                            tabItem = tabFolder.getItem(0);
+                        }
+                        else if (tabFolder.getItemCount() > 1) {
+                            tabItem = tabFolder.getItem(1);
+                        }
+
+                        if (tabItem != null) {
+                            if (closeEditor(tabItem)) {
+                                e.display.asyncExec(this);
+                            }
+                        }
+                    }
+
+                });
+            }
+        });
+
+        new MenuItem(menu, SWT.SEPARATOR);
+
+        item = new MenuItem(menu, SWT.CASCADE);
+        item.setText("Cut");
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                Control focusControl = shell.getDisplay().getFocusControl();
+                if (focusControl instanceof StyledText) {
+                    ((StyledText) focusControl).cut();
+                }
+            }
+        });
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Copy");
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                Control focusControl = shell.getDisplay().getFocusControl();
+                if (focusControl instanceof StyledText) {
+                    ((StyledText) focusControl).copy();
+                }
+            }
+        });
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Paste");
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                Control focusControl = shell.getDisplay().getFocusControl();
+                if (focusControl instanceof StyledText) {
+                    ((StyledText) focusControl).paste();
+                }
+            }
+        });
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Select All");
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                Control focusControl = shell.getDisplay().getFocusControl();
+                if (focusControl instanceof StyledText) {
+                    ((StyledText) focusControl).selectAll();
+                }
+            }
+        });
+
+        new MenuItem(menu, SWT.SEPARATOR);
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Find / Replace...");
+        item.setAccelerator(SWT.MOD1 + 'F');
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                CTabItem tabItem = tabFolder.getSelection();
+                if (tabItem == null) {
+                    return;
+                }
+
+                if (findReplaceDialog != null && !findReplaceDialog.isDisposed()) {
+                    findReplaceDialog.getShell().setFocus();
+                    return;
+                }
+
+                findReplaceDialog = new FindReplaceDialog(shell);
+                findReplaceDialog.setTheme(preferences.getTheme());
+                findReplaceDialog.setTarget((EditorTab) tabItem.getData());
+                findReplaceDialog.open();
+            }
+
+        });
+
+        return menu;
+    }
+
     EditorTab openNewTab(String name, String text) {
         EditorTab editorTab = new EditorTab(tabFolder, name, sourcePool);
 
@@ -1826,6 +2012,7 @@ public class SpinTools {
         editorTab.addCaretListener(caretListener);
         editorTab.addPropertyChangeListener(editorChangeListener);
         editorTab.getEditor().addSourceListener(sourceListener);
+        editorTab.getEditor().getStyledText().setMenu(createContextMenu());
         editorTab.getTabItem().addDisposeListener(tabItemDisposeListener);
 
         blockSelectionItem.setSelection(editorTab.isBlockSelection());
