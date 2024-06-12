@@ -244,6 +244,10 @@ public abstract class Formatter {
                     }
                     break;
                 case 4:
+                    if ("(".equals(token.getText()) || ")".equals(token.getText())) {
+                        sb.append(token);
+                        break;
+                    }
                     if ("=".equals(token.getText())) {
                         sb.append(" ");
                         sb.append(token);
@@ -260,7 +264,7 @@ public abstract class Formatter {
                         state = 6;
                         break;
                     }
-                    if (sb.lastChar() != ' ') {
+                    if (sb.lastChar() != ' ' && sb.lastChar() != '(') {
                         sb.append(" ");
                     }
                     sb.append(token);

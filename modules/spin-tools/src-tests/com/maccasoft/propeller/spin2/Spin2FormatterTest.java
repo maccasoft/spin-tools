@@ -582,4 +582,18 @@ class Spin2FormatterTest {
             + "", text);
     }
 
+    @Test
+    void testStructureDefinition() {
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
+            + "CON point(x,y)\n"
+            + " line(point a,point b,color)\n"
+            + "");
+        Assertions.assertEquals(""
+            + "CON\n"
+            + "    point(x, y)\n"
+            + "    line(point a, point b, color)\n"
+            + "", text);
+    }
+
 }
