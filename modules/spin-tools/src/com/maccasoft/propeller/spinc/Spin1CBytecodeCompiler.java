@@ -50,7 +50,6 @@ import com.maccasoft.propeller.expressions.Ror;
 import com.maccasoft.propeller.expressions.Sar;
 import com.maccasoft.propeller.expressions.ShiftLeft;
 import com.maccasoft.propeller.expressions.SpinObject;
-import com.maccasoft.propeller.expressions.StructureVariable;
 import com.maccasoft.propeller.expressions.Subtract;
 import com.maccasoft.propeller.expressions.Trunc;
 import com.maccasoft.propeller.expressions.Variable;
@@ -888,8 +887,8 @@ public abstract class Spin1CBytecodeCompiler extends Spin1PAsmCompiler {
                             }
                         }
                     }
-                    else if (expression instanceof StructureVariable) {
-                        expression = ((StructureVariable) expression).getVariable(m.group(2));
+                    else if (expression instanceof Variable) {
+                        expression = ((Variable) expression).getMember(m.group(2));
                         if (expression == null) {
                             throw new CompilerException("undefined symbol " + node.getText(), node.getToken());
                         }
@@ -1135,8 +1134,8 @@ public abstract class Spin1CBytecodeCompiler extends Spin1PAsmCompiler {
                     else {
                         int n = 0;
 
-                        if (variable instanceof StructureVariable) {
-                            StructureVariable structure = (StructureVariable) variable;
+                        if ((variable instanceof Variable) && variable.hasMembers()) {
+                            Variable structure = variable;
                             if (n < node.getChildCount() && (node.getChild(n) instanceof Spin1StatementNode.Index)) {
                                 Spin1StatementNode offsetNode = new Spin1StatementNode(new Token(Token.OPERATOR, "*"));
                                 offsetNode.addChild(node.getChild(n++));
@@ -1145,7 +1144,7 @@ public abstract class Spin1CBytecodeCompiler extends Spin1PAsmCompiler {
                             }
                             if (n < node.getChildCount()) {
                                 Spin1StatementNode elementNode = node.getChild(n++);
-                                expression = ((StructureVariable) expression).getVariable(elementNode.getText().substring(1));
+                                expression = structure.getMember(elementNode.getText().substring(1));
                                 if (expression == null) {
                                     throw new CompilerException("undefined symbol " + node.getText(), node.getToken());
                                 }
@@ -1454,8 +1453,8 @@ public abstract class Spin1CBytecodeCompiler extends Spin1PAsmCompiler {
             Matcher m = Pattern.compile("(.+)\\.(.+)").matcher(node.getText());
             if (m.matches()) {
                 expression = context.getLocalSymbol(m.group(1));
-                if (expression instanceof StructureVariable) {
-                    expression = ((StructureVariable) expression).getVariable(m.group(2));
+                if (expression instanceof Variable) {
+                    expression = ((Variable) expression).getMember(m.group(2));
                 }
                 else if (("BYTE".equals(m.group(2)) || "WORD".equals(m.group(2)) || "LONG".equals(m.group(2)))) {
                     Spin1StatementNode postEffect = null;
@@ -1526,12 +1525,12 @@ public abstract class Spin1CBytecodeCompiler extends Spin1PAsmCompiler {
                     source.add(new RegisterOp(context, push ? RegisterOp.Op.Assign : RegisterOp.Op.Write, expression.getNumber().intValue()));
                 }
             }
-            else if (expression instanceof StructureVariable) {
+            else if ((expression instanceof Variable) && ((Variable) expression).hasMembers()) {
                 int n = 0;
                 Spin1StatementNode postEffectNode = null;
                 boolean popIndex = false;
 
-                StructureVariable structure = (StructureVariable) expression;
+                Variable structure = (Variable) expression;
                 if (n < node.getChildCount() && (node.getChild(n) instanceof Spin1StatementNode.Index)) {
                     Spin1StatementNode offsetNode = new Spin1StatementNode(new Token(Token.OPERATOR, "*"));
                     offsetNode.addChild(node.getChild(n++));
@@ -1540,7 +1539,7 @@ public abstract class Spin1CBytecodeCompiler extends Spin1PAsmCompiler {
                 }
                 if (n < node.getChildCount()) {
                     Spin1StatementNode elementNode = node.getChild(n++);
-                    expression = ((StructureVariable) expression).getVariable(elementNode.getText().substring(1));
+                    expression = structure.getMember(elementNode.getText().substring(1));
                     if (expression == null) {
                         throw new CompilerException("undefined symbol " + node.getText(), node.getToken());
                     }

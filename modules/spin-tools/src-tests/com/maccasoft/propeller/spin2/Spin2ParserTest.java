@@ -474,20 +474,6 @@ class Spin2ParserTest {
     }
 
     @Test
-    void testMethodInvalidLocalVariables() throws Exception {
-        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
-            + "PRI FFT1024() | a b\n"
-            + ""));
-
-        Node root = subject.parse();
-        Assertions.assertEquals(""
-            + "Node []\n"
-            + "+-- MethodNode type=PRI name=FFT1024 [PRI FFT1024() | a b]\n"
-            + "    +-- LocalVariableNode identifier=a [a b]\n"
-            + "", tree(root));
-    }
-
-    @Test
     void testMethodLocalVariableType() throws Exception {
         Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
             + "PRI FFT1024() | LONG a, WORD b\n"
@@ -566,44 +552,9 @@ class Spin2ParserTest {
     }
 
     @Test
-    void testMethodUnexpectedTokens3() throws Exception {
-        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
-            + "PUB go(a,b) | d, e to\n"
-            + ""));
-
-        Node root = subject.parse();
-        Assertions.assertEquals(""
-            + "Node []\n"
-            + "+-- MethodNode type=PUB name=go [PUB go(a,b) | d, e to]\n"
-            + "    +-- ParameterNode identifier=a [a]\n"
-            + "    +-- ParameterNode identifier=b [b]\n"
-            + "    +-- LocalVariableNode identifier=d [d]\n"
-            + "    +-- LocalVariableNode identifier=e [e to]\n"
-            + "", tree(root));
-    }
-
-    @Test
-    void testMethodUnexpectedTokens4() throws Exception {
-        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
-            + "PUB go(a,b) : c | d, e to\n"
-            + ""));
-
-        Node root = subject.parse();
-        Assertions.assertEquals(""
-            + "Node []\n"
-            + "+-- MethodNode type=PUB name=go [PUB go(a,b) : c | d, e to]\n"
-            + "    +-- ParameterNode identifier=a [a]\n"
-            + "    +-- ParameterNode identifier=b [b]\n"
-            + "    +-- ReturnNode identifier=c [c]\n"
-            + "    +-- LocalVariableNode identifier=d [d]\n"
-            + "    +-- LocalVariableNode identifier=e [e to]\n"
-            + "", tree(root));
-    }
-
-    @Test
     void testMethodInlinePAsm() throws Exception {
         Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
-            + "PUB go(a,b) : c | d, e to\n"
+            + "PUB go(a,b) : c | d, e\n"
             + "  org\n"
             + "      mov d, a\n"
             + "      and d, e wz\n"
@@ -613,12 +564,12 @@ class Spin2ParserTest {
         Node root = subject.parse();
         Assertions.assertEquals(""
             + "Node []\n"
-            + "+-- MethodNode type=PUB name=go [PUB go(a,b) : c | d, e to]\n"
+            + "+-- MethodNode type=PUB name=go [PUB go(a,b) : c | d, e]\n"
             + "    +-- ParameterNode identifier=a [a]\n"
             + "    +-- ParameterNode identifier=b [b]\n"
             + "    +-- ReturnNode identifier=c [c]\n"
             + "    +-- LocalVariableNode identifier=d [d]\n"
-            + "    +-- LocalVariableNode identifier=e [e to]\n"
+            + "    +-- LocalVariableNode identifier=e [e]\n"
             + "    +-- DataLineNode instruction=org [  org]\n"
             + "    +-- DataLineNode instruction=mov [      mov d, a]\n"
             + "        +-- ParameterNode [d]\n"

@@ -41,7 +41,6 @@ import com.maccasoft.propeller.expressions.Multiply;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.expressions.Register;
 import com.maccasoft.propeller.expressions.SpinObject;
-import com.maccasoft.propeller.expressions.StructureVariable;
 import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.model.ConstantNode;
 import com.maccasoft.propeller.model.ConstantsNode;
@@ -1007,14 +1006,13 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     }
 
                     try {
-                        Variable var;
-                        Spin2Struct struct = structures.get(type);
-                        if (struct != null) {
-                            var = new StructureVariable(type, identifier.getText(), varSize, objectVarSize, false);
-                            compileStructureVariable((StructureVariable) var, struct);
-                        }
-                        else {
-                            var = new Variable(type, identifier.getText(), varSize, objectVarSize);
+                        Variable var = new Variable(type, identifier.getText(), varSize, objectVarSize);
+                        if (!Spin2Model.isType(type)) {
+                            Spin2Struct memberStruct = structures.get(type);
+                            if (memberStruct == null) {
+                                logMessage(new CompilerException("undefined type " + type, var.getType()));
+                            }
+                            compileStructureVariable(var, memberStruct);
                         }
 
                         scope.addSymbol(identifier.getText(), var);
@@ -1034,7 +1032,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
         }
     }
 
-    void compileStructureVariable(StructureVariable target, Spin2Struct struct) {
+    void compileStructureVariable(Variable target, Spin2Struct struct) {
         for (Spin2StructMember member : struct.getMembers()) {
             String memberType = "LONG";
             if (member.getType() != null) {
@@ -1057,17 +1055,13 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 }
             }
 
+            Variable var = target.addMember(memberType, member.getIdentifier().getText(), memberSize);
             if (!Spin2Model.isType(memberType)) {
                 Spin2Struct memberStruct = structures.get(memberType);
                 if (memberStruct == null) {
                     logMessage(new CompilerException("undefined type " + memberType, member.getType()));
                 }
-                StructureVariable var = new StructureVariable(memberType, member.getIdentifier().getText(), memberSize, target.getOffset() + target.getTypeSize(), false);
                 compileStructureVariable(var, memberStruct);
-                target.addVariable(var);
-            }
-            else {
-                target.addVariable(memberType, member.getIdentifier().getText(), memberSize);
             }
         }
     }
@@ -1376,10 +1370,17 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     Token identifier = iter.next();
 
                     String type = "LONG";
-                    if (Spin1Model.isType(identifier.getText())) {
+                    if (Spin2Model.isType(identifier.getText())) {
                         type = identifier.getText().toUpperCase();
                         if (!iter.hasNext()) {
                             logMessage(new CompilerException("expecting identifier", token.substring(token.stop - token.start)));
+                        }
+                        identifier = iter.next();
+                    }
+                    else if (structures.containsKey(identifier.getText())) {
+                        type = identifier.getText();
+                        if (!iter.hasNext()) {
+                            throw new CompilerException("expecting identifier", token.substring(token.stop - token.start));
                         }
                         identifier = iter.next();
                     }
@@ -1421,6 +1422,10 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                                 logMessage(new CompilerException(CompilerException.WARNING, "local variable '" + identifier + "' hides global variable", identifier));
                             }
                             LocalVariable var = method.addLocalVariable(type, identifier.getText(), size.getNumber().intValue()); // new LocalVariable(type, identifier.getText(), size, offset);
+                            Spin2Struct struct = structures.get(type);
+                            if (struct != null) {
+                                compileStructureVariable(var, struct);
+                            }
                             var.setData(identifier);
                         }
                     }

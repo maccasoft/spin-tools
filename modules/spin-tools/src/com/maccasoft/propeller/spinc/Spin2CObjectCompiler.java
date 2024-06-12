@@ -37,7 +37,6 @@ import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.expressions.SpinObject;
-import com.maccasoft.propeller.expressions.StructureVariable;
 import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DirectiveNode;
@@ -172,7 +171,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                                 logMessage(new CompilerException("structure " + symbol + " redefinition", typeNode.getIdentifier()));
                             }
 
-                            StructureVariable var = new StructureVariable("BYTE", "struct " + symbol, 1, 0, false);
+                            Variable var = new Variable("BYTE", "struct " + symbol, 1, 0, false);
                             for (Node child : node.getChilds()) {
                                 if (child instanceof TypeDefinitionNode.Definition) {
                                     compileStructureDefinition(var, child);
@@ -575,7 +574,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
         }
     }
 
-    void compileStructureDefinition(StructureVariable target, Node node) {
+    void compileStructureDefinition(Variable target, Node node) {
         TokenIterator iter = node.iterator();
 
         Token token = iter.next();
@@ -607,10 +606,10 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                 size = buildIndexExpression(iter);
             }
 
-            if (target.getVariable(identifier.getText()) != null) {
+            if (target.getMember(identifier.getText()) != null) {
                 logMessage(new CompilerException("symbol '" + identifier.getText() + "' already defined", identifier));
             }
-            target.addVariable(type, identifier.getText(), size.getNumber().intValue());
+            target.addMember(type, identifier.getText(), size.getNumber().intValue());
 
             if (iter.hasNext()) {
                 token = iter.next();
@@ -657,7 +656,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                 size = buildIndexExpression(iter);
             }
 
-            StructureVariable var = new StructureVariable("BYTE", identifier.getText(), size.getNumber().intValue(), objectVarSize, false);
+            Variable var = new Variable("BYTE", identifier.getText(), size.getNumber().intValue(), objectVarSize, false);
             scope.addSymbol(identifier.getText(), var);
             variables.add(var);
             var.setData(node.getIdentifier());

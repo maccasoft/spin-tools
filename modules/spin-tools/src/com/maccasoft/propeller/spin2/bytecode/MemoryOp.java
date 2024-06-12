@@ -40,6 +40,13 @@ public class MemoryOp extends Spin2Bytecode {
     public Expression expression;
     public int index;
 
+    public MemoryOp(Context context, Size ss, Base bb, Op op) {
+        super(context);
+        this.ss = ss;
+        this.base = bb;
+        this.op = op;
+    }
+
     public MemoryOp(Context context, Size ss, Base bb, Op op, Expression expression) {
         super(context);
         this.ss = ss;

@@ -654,6 +654,15 @@ public class Spin2Parser extends Parser {
                         state = 10;
                         break;
                     }
+                    else if (token.type == 0 || token.type == Token.KEYWORD) {
+                        Token next = stream.peekNext();
+                        if (next != null && (next.type == 0 || next.type == Token.KEYWORD)) {
+                            local.type = token;
+                            local.addToken(token);
+                            state = 10;
+                            break;
+                        }
+                    }
                     // fall-through
                 case 10:
                     local.identifier = token;

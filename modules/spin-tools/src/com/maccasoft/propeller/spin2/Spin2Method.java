@@ -101,14 +101,7 @@ public class Spin2Method {
                     if (var == this) {
                         break;
                     }
-                    int typeSize = 4;
-                    if ("WORD".equalsIgnoreCase(var.getType())) {
-                        typeSize = 2;
-                    }
-                    else if ("BYTE".equalsIgnoreCase(var.getType())) {
-                        typeSize = 1;
-                    }
-                    offset += typeSize * var.getSize();
+                    offset += var.getTypeSize() * var.getSize();
                 }
 
                 return offset;
