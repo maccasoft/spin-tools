@@ -166,7 +166,7 @@ public class SerialTerminal {
         @Override
         public void run() {
             Rectangle rect = redrawRectangle.getAndSet(null);
-            if (rect != null) {
+            if (rect != null && !canvas.isDisposed()) {
                 canvas.redraw(rect.x, rect.y, rect.width, rect.height, false);
                 canvas.update();
             }
@@ -243,7 +243,9 @@ public class SerialTerminal {
 
                         @Override
                         public void run() {
-                            dsr.setSelection((serialPortEvent.getEventValue() & SerialPort.MASK_DSR) != 0);
+                            if (!canvas.isDisposed()) {
+                                dsr.setSelection((serialPortEvent.getEventValue() & SerialPort.MASK_DSR) != 0);
+                            }
                         }
 
                     });
@@ -253,7 +255,9 @@ public class SerialTerminal {
 
                         @Override
                         public void run() {
-                            cts.setSelection((serialPortEvent.getEventValue() & SerialPort.MASK_CTS) != 0);
+                            if (!canvas.isDisposed()) {
+                                cts.setSelection((serialPortEvent.getEventValue() & SerialPort.MASK_CTS) != 0);
+                            }
                         }
 
                     });
@@ -1521,7 +1525,9 @@ public class SerialTerminal {
     }
 
     public void write(char c) {
-        emulation.write(c);
+        if (!canvas.isDisposed()) {
+            emulation.write(c);
+        }
     }
 
     public SerialPort getSerialPort() {

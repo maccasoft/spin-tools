@@ -161,10 +161,16 @@ public class ConsoleView {
                 os.println(text);
                 os.flush();
             }
+            if (console.isDisposed()) {
+                return;
+            }
             display.asyncExec(new Runnable() {
 
                 @Override
                 public void run() {
+                    if (console.isDisposed()) {
+                        return;
+                    }
                     console.append(text);
                     console.append(System.lineSeparator());
                     while (console.getLineCount() > maxLines) {
@@ -228,10 +234,16 @@ public class ConsoleView {
         }
 
         private void append(String text) {
+            if (console.isDisposed()) {
+                return;
+            }
             display.asyncExec(new Runnable() {
 
                 @Override
                 public void run() {
+                    if (console.isDisposed()) {
+                        return;
+                    }
                     console.append(text);
                     console.append(System.lineSeparator());
                     while (console.getLineCount() > maxLines) {
