@@ -120,6 +120,21 @@ public class Context {
         return exp;
     }
 
+    public Expression getSystemSymbol(String name) {
+        Expression exp = caseInsensitiveSymbols.get(name);
+        if (exp == null) {
+            for (Map.Entry<String, Expression> entry : symbols.entrySet()) {
+                if (name.equalsIgnoreCase(entry.getKey())) {
+                    return entry.getValue();
+                }
+            }
+        }
+        if (exp == null && parent != null) {
+            exp = parent.getSystemSymbol(name);
+        }
+        return exp;
+    }
+
     public boolean isDefined(String identifier) {
         boolean result = defines.containsKey(identifier);
         if (result == false) {

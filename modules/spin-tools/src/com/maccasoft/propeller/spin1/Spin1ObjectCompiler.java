@@ -1905,9 +1905,9 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
     }
 
     void determineClock() {
-        Expression _clkmode = scope.getLocalSymbol("_CLKMODE");
-        Expression _clkfreq = scope.getLocalSymbol("_CLKFREQ");
-        Expression _xinfreq = scope.getLocalSymbol("_XINFREQ");
+        Expression _clkmode = scope.getSystemSymbol("_CLKMODE");
+        Expression _clkfreq = scope.getSystemSymbol("_CLKFREQ");
+        Expression _xinfreq = scope.getSystemSymbol("_XINFREQ");
 
         if (_clkmode == null && _clkfreq == null && _xinfreq == null) {
             clkMode = 0;

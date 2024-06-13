@@ -495,24 +495,30 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
     public Spin2Object generateObject(int memoryOffset) {
         Spin2Object object = new Spin2Object();
 
-        if (scope.hasSymbol("CLKFREQ_")) {
-            object.setClkFreq(scope.getSymbol("CLKFREQ_").getNumber().intValue());
+        Expression exp = scope.getSystemSymbol("CLKFREQ_");
+        if (exp != null) {
+            object.setClkFreq(exp.getNumber().intValue());
         }
-        if (scope.hasSymbol("CLKMODE_")) {
-            object.setClkMode(scope.getSymbol("CLKMODE_").getNumber().intValue());
+        exp = scope.getSystemSymbol("CLKMODE_");
+        if (exp != null) {
+            object.setClkMode(exp.getNumber().intValue());
         }
 
-        if (scope.hasSymbol("DEBUG_PIN")) {
-            object.setDebugRxPin(scope.getSymbol("DEBUG_PIN").getNumber().intValue() & 0x3F);
+        exp = scope.getSystemSymbol("DEBUG_PIN");
+        if (exp != null) {
+            object.setDebugRxPin(exp.getNumber().intValue() & 0x3F);
         }
-        if (scope.hasSymbol("DEBUG_PIN_RX")) {
-            object.setDebugRxPin(scope.getSymbol("DEBUG_PIN_RX").getNumber().intValue() & 0x3F);
+        exp = scope.getSystemSymbol("DEBUG_PIN_RX");
+        if (exp != null) {
+            object.setDebugRxPin(exp.getNumber().intValue() & 0x3F);
         }
-        if (scope.hasSymbol("DEBUG_PIN_TX")) {
-            object.setDebugTxPin(scope.getSymbol("DEBUG_PIN_TX").getNumber().intValue() & 0x3F);
+        exp = scope.getSystemSymbol("DEBUG_PIN_TX");
+        if (exp != null) {
+            object.setDebugTxPin(exp.getNumber().intValue() & 0x3F);
         }
-        if (scope.hasSymbol("DEBUG_BAUD")) {
-            object.setDebugBaud(scope.getSymbol("DEBUG_BAUD").getNumber().intValue());
+        exp = scope.getSystemSymbol("DEBUG_BAUD");
+        if (exp != null) {
+            object.setDebugBaud(exp.getNumber().intValue());
         }
 
         object.writeComment("Object header (var size " + objectVarSize + ")");
@@ -2502,11 +2508,11 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
     }
 
     void computeClockMode() {
-        Expression clkMode = scope.getLocalSymbol("_CLKMODE");
-        Expression clkFreq = scope.getLocalSymbol("_CLKFREQ");
-        Expression xtlFreq = scope.getLocalSymbol("_XTLFREQ");
-        Expression xinFreq = scope.getLocalSymbol("_XINFREQ");
-        Expression errFreq = scope.getLocalSymbol("_ERRFREQ");
+        Expression clkMode = scope.getSystemSymbol("_CLKMODE");
+        Expression clkFreq = scope.getSystemSymbol("_CLKFREQ");
+        Expression xtlFreq = scope.getSystemSymbol("_XTLFREQ");
+        Expression xinFreq = scope.getSystemSymbol("_XINFREQ");
+        Expression errFreq = scope.getSystemSymbol("_ERRFREQ");
 
         double clkfreq;
         double xinfreq = 20000000.0; // default crystal frequency
