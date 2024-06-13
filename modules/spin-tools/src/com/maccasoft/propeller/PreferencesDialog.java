@@ -113,6 +113,7 @@ public class PreferencesDialog extends Dialog {
     Button consoleFontBrowse;
     Spinner consoleMaxLines;
     Button consoleWriteLogFile;
+    Button consoleResetDeviceOnClose;
 
     ToolsList externalTools;
 
@@ -1081,6 +1082,11 @@ public class PreferencesDialog extends Dialog {
         consoleWriteLogFile = new Button(composite, SWT.CHECK);
         consoleWriteLogFile.setText("Write to Log File");
         consoleWriteLogFile.setSelection(preferences.getConsoleWriteLogFile());
+
+        new Label(composite, SWT.NONE);
+        consoleResetDeviceOnClose = new Button(composite, SWT.CHECK);
+        consoleResetDeviceOnClose.setText("Reset Device on Close");
+        consoleResetDeviceOnClose.setSelection(preferences.getConsoleResetDeviceOnClose());
     }
 
     class ToolsList {
@@ -1364,6 +1370,7 @@ public class PreferencesDialog extends Dialog {
 
         preferences.setConsoleMaxLines(consoleMaxLines.getSelection());
         preferences.setConsoleWriteLogFile(consoleWriteLogFile.getSelection());
+        preferences.setConsoleResetDeviceOnClose(consoleResetDeviceOnClose.getSelection());
 
         preferences.setExternalTools(externalTools.getItems());
 

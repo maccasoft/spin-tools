@@ -262,10 +262,11 @@ public class Preferences {
         public String font;
         public int maxLines;
         public boolean writeLogFile;
+        public boolean resetDeviceOnClose;
 
         @Override
         public int hashCode() {
-            return Objects.hash(font, maxLines, writeLogFile);
+            return Objects.hash(font, maxLines, writeLogFile, resetDeviceOnClose);
         }
 
         @Override
@@ -280,7 +281,7 @@ public class Preferences {
                 return false;
             }
             ConsolePreferences other = (ConsolePreferences) obj;
-            return Objects.equals(font, other.font) && maxLines == other.maxLines && writeLogFile == other.writeLogFile;
+            return Objects.equals(font, other.font) && maxLines == other.maxLines && writeLogFile == other.writeLogFile && resetDeviceOnClose == other.resetDeviceOnClose;
         }
 
     }
@@ -854,6 +855,14 @@ public class Preferences {
 
     public void setConsoleWriteLogFile(boolean writeLogFile) {
         changeSupport.firePropertyChange(PROP_CONSOLE_WRITE_LOG_FILE, preferences.console.writeLogFile, preferences.console.writeLogFile = writeLogFile);
+    }
+
+    public boolean getConsoleResetDeviceOnClose() {
+        return preferences.console.resetDeviceOnClose;
+    }
+
+    public void setConsoleResetDeviceOnClose(boolean resetDeviceOnClose) {
+        preferences.console.resetDeviceOnClose = resetDeviceOnClose;
     }
 
     public SearchPreferences getSearchPreferences() {

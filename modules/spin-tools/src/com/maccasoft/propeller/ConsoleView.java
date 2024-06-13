@@ -333,6 +333,20 @@ public class ConsoleView {
     }
 
     public void setVisible(boolean visible) {
+        if (enabled && console.getVisible() && !visible && preferences.getConsoleResetDeviceOnClose()) {
+            if (serialPort != null && serialPort.isOpened()) {
+                try {
+                    serialPort.setDTR(true);
+                    serialPort.setRTS(true);
+                    Thread.sleep(25);
+                    serialPort.setDTR(false);
+                    serialPort.setRTS(false);
+                    Thread.sleep(25);
+                } catch (Exception e) {
+                    // Do nothing
+                }
+            }
+        }
         console.setVisible(visible);
     }
 
