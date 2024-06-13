@@ -56,7 +56,7 @@ import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseMoveListener;
-import org.eclipse.swt.events.MouseTrackListener;
+import org.eclipse.swt.events.MouseTrackAdapter;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -243,6 +243,7 @@ public class SourceEditor {
 
     Shell popupWindow;
     Rectangle popupMouseBounds;
+    Point mousePosition;
 
     boolean hoverHighlight;
     NavigationTarget hoverTarget;
@@ -416,11 +417,23 @@ public class SourceEditor {
             @Override
             public void keyPressed(KeyEvent e) {
                 if (e.keyCode == SWT.CTRL) {
-                    if (hoverTarget != null) {
-                        styledText.setCursor(display.getSystemCursor(SWT.CURSOR_HAND));
+                    if (popupWindow != null) {
+                        popupWindow.dispose();
+                        popupWindow = null;
+                        popupMouseBounds = null;
+                        styledText.setFocus();
                     }
-                    hoverHighlight = true;
-                    styledText.redraw();
+
+                    if (mousePosition != null) {
+                        hoverHighlight = true;
+                        hoverTarget = getNavigationTarget(mousePosition);
+
+                        Cursor cursor = hoverTarget != null ? display.getSystemCursor(SWT.CURSOR_HAND) : null;
+                        if (cursor != styledText.getCursor()) {
+                            styledText.setCursor(cursor);
+                        }
+                        styledText.redraw();
+                    }
                 }
             }
 
@@ -430,6 +443,12 @@ public class SourceEditor {
                     hoverHighlight = false;
                     styledText.setCursor(null);
                     styledText.redraw();
+                    if (mousePosition != null) {
+                        Event event = new Event();
+                        event.x = mousePosition.x;
+                        event.y = mousePosition.y;
+                        styledText.notifyListeners(SWT.MouseHover, event);
+                    }
                 }
             }
         });
@@ -590,6 +609,8 @@ public class SourceEditor {
 
             @Override
             public void mouseMove(MouseEvent e) {
+                mousePosition = new Point(e.x, e.y);
+
                 if (popupWindow != null) {
                     if (popupMouseBounds != null && !popupMouseBounds.contains(e.x, e.y)) {
                         popupWindow.dispose();
@@ -604,7 +625,7 @@ public class SourceEditor {
                 hoverTarget = null;
 
                 if (hoverHighlight) {
-                    hoverTarget = getNavigationTarget(new Point(e.x, e.y));
+                    hoverTarget = getNavigationTarget(mousePosition);
 
                     Cursor cursor = hoverTarget != null ? display.getSystemCursor(SWT.CURSOR_HAND) : null;
                     if (cursor != styledText.getCursor()) {
@@ -612,11 +633,12 @@ public class SourceEditor {
                     }
                     styledText.redraw();
                 }
+
             }
 
         });
 
-        styledText.addMouseTrackListener(new MouseTrackListener() {
+        styledText.addMouseTrackListener(new MouseTrackAdapter() {
 
             @Override
             public void mouseHover(MouseEvent e) {
@@ -749,15 +771,6 @@ public class SourceEditor {
 
             }
 
-            @Override
-            public void mouseExit(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mouseEnter(MouseEvent e) {
-
-            }
         });
 
         KeyStroke keyStroke = null;
@@ -783,6 +796,7 @@ public class SourceEditor {
             });
         proposalAdapter.setPopupSize(new Point(200, 300));
         proposalAdapter.setPropagateKeys(true);
+        proposalAdapter.setAutoActivationDelay(500);
         proposalAdapter.setProposalAcceptanceStyle(ContentProposalAdapter.PROPOSAL_REPLACE);
         proposalAdapter.addContentProposalListener(new IContentProposalListener2() {
 
