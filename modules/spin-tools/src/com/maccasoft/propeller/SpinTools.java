@@ -2968,6 +2968,7 @@ public class SpinTools {
                 consoleToolItem.setSelection(true);
                 centralSashForm.layout();
             }
+            consoleView.setSerialBaudRate(((Spin2Object) obj).getDebugBaud());
         }
         consoleView.setEnabled(isDebug);
 

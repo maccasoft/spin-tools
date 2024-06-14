@@ -44,6 +44,7 @@ public class ConsoleView {
     StyledText console;
 
     SerialPort serialPort;
+    int serialBaudRate;
     PrintStream os;
 
     Preferences preferences;
@@ -383,12 +384,23 @@ public class ConsoleView {
                 if (this.serialPort != serialPort) {
                     serialPort.addEventListener(serialEventListener);
                 }
+                serialPort.setParams(
+                    serialBaudRate,
+                    SerialPort.DATABITS_8,
+                    SerialPort.STOPBITS_1,
+                    SerialPort.PARITY_NONE,
+                    false,
+                    false);
             }
 
             this.serialPort = serialPort;
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public void setSerialBaudRate(int serialBaudRate) {
+        this.serialBaudRate = serialBaudRate;
     }
 
     public void setLogFile(File location, String fileName) {
