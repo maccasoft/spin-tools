@@ -508,7 +508,7 @@ class Spin2PAsmCompilerTest {
     }
 
     @Test
-    void testPAsmDebug() throws Exception {
+    void testDebug() throws Exception {
         String text = ""
             + "DAT             org   $000\n"
             + "                mov   a, #1\n"
@@ -521,7 +521,7 @@ class Spin2PAsmCompilerTest {
             + "' Object header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000 01 06 04 F6                        mov     a, #1\n"
-            + "00004 00004   001 36 02 64 FD                        debug   #1\n"
+            + "00004 00004   001 36 02 64 FD                        debug(udec(a))\n"
             + "00008 00008   002 2D 00 64 FD                        ret\n"
             + "0000C 0000C   003                a                   res     1\n"
             + "' Debug data\n"
@@ -533,7 +533,7 @@ class Spin2PAsmCompilerTest {
     }
 
     @Test
-    void testIgnorePAsmDebug() throws Exception {
+    void testIgnoreDebug() throws Exception {
         String text = ""
             + "DAT             org   $000\n"
             + "                mov   a, #1\n"
@@ -546,17 +546,34 @@ class Spin2PAsmCompilerTest {
             + "' Object header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000 01 04 04 F6                        mov     a, #1\n"
+            + "00004 00004   001                                    debug(udec(a))\n"
             + "00004 00004   001 2D 00 64 FD                        ret\n"
             + "00008 00008   002                a                   res     1\n"
             + "", compile(text, false));
     }
 
     @Test
-    void testKeepPAsmDebugLabel() throws Exception {
+    void testThrowDebugException() throws Exception {
         String text = ""
             + "DAT             org   $000\n"
             + "                mov   a, #1\n"
+            + "                debug(udec(b))\n"
+            + "                ret\n"
+            + "a               res   1\n"
+            + "";
+
+        Assertions.assertThrows(CompilerException.class, () -> {
+            compile(text, false);
+        });
+    }
+
+    @Test
+    void testKeepDebugLabel() throws Exception {
+        String text = ""
+            + "DAT             org   $000\n"
+            + "                mov   a, #label\n"
             + "label           debug(udec(a))\n"
+            + "                mov   a, #label + 1\n"
             + "                ret\n"
             + "a               res   1\n"
             + "";
@@ -564,10 +581,11 @@ class Spin2PAsmCompilerTest {
         Assertions.assertEquals(""
             + "' Object header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
-            + "00000 00000   000 01 04 04 F6                        mov     a, #1\n"
-            + "00004 00004   001                label               \n"
-            + "00004 00004   001 2D 00 64 FD                        ret\n"
-            + "00008 00008   002                a                   res     1\n"
+            + "00000 00000   000 01 06 04 F6                        mov     a, #label\n"
+            + "00004 00004   001                label               debug(udec(a))\n"
+            + "00004 00004   001 02 06 04 F6                        mov     a, #label + 1\n"
+            + "00008 00008   002 2D 00 64 FD                        ret\n"
+            + "0000C 0000C   003                a                   res     1\n"
             + "", compile(text, false));
     }
 

@@ -149,26 +149,34 @@ public class Spin2PAsmLine {
         while (sb.length() < 20) {
             sb.append(" ");
         }
-        if (mnemonic != null) {
-            sb.append(mnemonic);
-        }
-        if (arguments.size() != 0) {
-            while (sb.length() < 28) {
-                sb.append(" ");
+        if ("DEBUG".equalsIgnoreCase(mnemonic)) {
+            Spin2PAsmDebugLine debugLine = (Spin2PAsmDebugLine) getData("debug");
+            if (debugLine != null) {
+                sb.append(debugLine.toString());
             }
-            for (int i = 0; i < arguments.size(); i++) {
-                if (i != 0) {
-                    sb.append(", ");
+        }
+        else {
+            if (mnemonic != null) {
+                sb.append(mnemonic);
+            }
+            if (arguments.size() != 0) {
+                while (sb.length() < 28) {
+                    sb.append(" ");
                 }
-                sb.append(arguments.get(i).toString());
+                for (int i = 0; i < arguments.size(); i++) {
+                    if (i != 0) {
+                        sb.append(", ");
+                    }
+                    sb.append(arguments.get(i).toString());
+                }
             }
-        }
-        if (effect != null) {
-            sb.append(" ");
-            while (sb.length() < 44) {
+            if (effect != null) {
                 sb.append(" ");
+                while (sb.length() < 44) {
+                    sb.append(" ");
+                }
+                sb.append(effect);
             }
-            sb.append(effect);
         }
         return sb.toString();
     }

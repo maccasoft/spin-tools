@@ -165,6 +165,8 @@ public class Spin2Compiler extends Compiler {
             }
         }
 
+        Spin2Object debugObject = generateDebugData();
+
         int stackFree = 512 * 1024;
 
         if (interpreter != null) {
@@ -176,7 +178,6 @@ public class Spin2Compiler extends Compiler {
 
         if (debugEnabled) {
             debugger = new Spin2Debugger();
-            Spin2Object debugObject = generateDebugData();
             object.setDebugData(debugObject);
             stackFree -= debugger.getSize() + debugObject.getSize();
         }
@@ -223,10 +224,8 @@ public class Spin2Compiler extends Compiler {
                     object.writeWord(pos);
                     pos += data.length;
                 }
-            } catch (CompilerException e) {
-                logMessage(e);
             } catch (Exception e) {
-                logMessage(new CompilerException(e, node));
+                // Do nothing, exception are catched at the object compiler level
             }
         }
         for (DataObject data : l) {

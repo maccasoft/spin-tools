@@ -75,6 +75,7 @@ import com.maccasoft.propeller.spin2.bytecode.Jz;
 import com.maccasoft.propeller.spin2.bytecode.Tjz;
 import com.maccasoft.propeller.spin2.instructions.Alignl;
 import com.maccasoft.propeller.spin2.instructions.Alignw;
+import com.maccasoft.propeller.spin2.instructions.Debug;
 import com.maccasoft.propeller.spin2.instructions.Empty;
 import com.maccasoft.propeller.spin2.instructions.Fit;
 import com.maccasoft.propeller.spin2.instructions.Org;
@@ -494,6 +495,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
     @Override
     public Spin2Object generateObject(int memoryOffset) {
         Spin2Object object = new Spin2Object();
+        Spin2Debug debug = new Spin2Debug();
 
         Expression exp = scope.getSystemSymbol("CLKFREQ_");
         if (exp != null) {
@@ -556,8 +558,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
         boolean spinMode = methods.size() != 0;
 
         for (Spin2PAsmLine line : source) {
-            if (!hubMode && isInstruction(line.getMnemonic())
-                && !(line.getInstructionFactory() instanceof com.maccasoft.propeller.spin2.instructions.Long)) {
+            if (!hubMode && isInstruction(line.getMnemonic()) && !(line.getInstructionFactory() instanceof com.maccasoft.propeller.spin2.instructions.Long)) {
                 if (hubAddress != -1) {
                     hubAddress = (hubAddress + 3) & ~3;
                 }
@@ -591,31 +592,36 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         throw new CompilerException("cog symbols must be long-aligned", line.getData());
                     }
                 }
-                address = line.resolve(address, hubMode);
-                if (line.getInstructionFactory() instanceof Alignl) {
-                    if (hubAddress != -1) {
-                        hubAddress = (hubAddress + 3) & ~3;
+                if (isDebugEnabled() || !(line.getInstructionFactory() instanceof Debug)) {
+                    address = line.resolve(address, hubMode);
+                    if (line.getInstructionFactory() instanceof Alignl) {
+                        if (hubAddress != -1) {
+                            hubAddress = (hubAddress + 3) & ~3;
+                        }
+                        objectAddress = (objectAddress + 3) & ~3;
                     }
-                    objectAddress = (objectAddress + 3) & ~3;
-                }
-                else if (line.getInstructionFactory() instanceof Alignw) {
-                    if (hubAddress != -1) {
-                        hubAddress = (hubAddress + 1) & ~1;
+                    else if (line.getInstructionFactory() instanceof Alignw) {
+                        if (hubAddress != -1) {
+                            hubAddress = (hubAddress + 1) & ~1;
+                        }
+                        objectAddress = (objectAddress + 1) & ~1;
                     }
-                    objectAddress = (objectAddress + 1) & ~1;
+                    else {
+                        objectAddress += line.getInstructionObject().getSize();
+                        if (hubAddress != -1) {
+                            hubAddress += line.getInstructionObject().getSize();
+                        }
+                    }
+                    if ((line.getInstructionFactory() instanceof Org)) {
+                        cogCode = address < 0x200 * 4;
+                        fitAddress = cogCode ? 0x1F8 * 4 : 0x400 * 4;
+                        if (line.getArguments().size() > 1) {
+                            fitAddress = line.getArguments().get(1).getInteger() * 4;
+                        }
+                    }
                 }
                 else {
-                    objectAddress += line.getInstructionObject().getSize();
-                    if (hubAddress != -1) {
-                        hubAddress += line.getInstructionObject().getSize();
-                    }
-                }
-                if ((line.getInstructionFactory() instanceof Org)) {
-                    cogCode = address < 0x200 * 4;
-                    fitAddress = cogCode ? 0x1F8 * 4 : 0x400 * 4;
-                    if (line.getArguments().size() > 1) {
-                        fitAddress = line.getArguments().get(1).getInteger() * 4;
-                    }
+                    line.resolve(address, hubMode);
                 }
             } catch (CompilerException e) {
                 logMessage(e);
@@ -651,7 +657,16 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 if ((line.getInstructionFactory() instanceof Org) || (line.getInstructionFactory() instanceof Res)) {
                     hubMode = false;
                 }
-                object.writeBytes(line.getScope().getAddress(), hubMode, line.getInstructionObject().getBytes(), line.toString());
+                byte[] code = line.getInstructionObject().getBytes();
+                if (!isDebugEnabled() && (line.getInstructionFactory() instanceof Debug)) {
+                    code = new byte[0];
+                }
+                object.writeBytes(line.getScope().getAddress(), hubMode, code, line.toString());
+
+                Spin2PAsmDebugLine debugLine = (Spin2PAsmDebugLine) line.getData("debug");
+                if (debugLine != null) {
+                    debug.compilePAsmDebugStatement(debugLine);
+                }
             } catch (CompilerException e) {
                 logMessage(e);
             } catch (Exception e) {
@@ -2106,10 +2121,6 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 line.addChild(endLine);
             }
             else {
-                if (!isDebugEnabled() && "DEBUG".equalsIgnoreCase(token.getText())) {
-                    return null;
-                }
-
                 Spin2TreeBuilder builder = new Spin2TreeBuilder(context);
                 builder.addToken(token);
                 while (iter.hasNext()) {

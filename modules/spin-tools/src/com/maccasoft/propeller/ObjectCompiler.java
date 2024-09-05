@@ -84,7 +84,9 @@ public abstract class ObjectCompiler {
             if (message.type == CompilerException.ERROR) {
                 errors = true;
             }
-            messages.add(message);
+            if (!messages.contains(message)) {
+                messages.add(message);
+            }
         }
     }
 

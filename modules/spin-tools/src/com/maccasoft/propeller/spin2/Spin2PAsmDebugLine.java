@@ -63,6 +63,21 @@ public class Spin2PAsmDebugLine {
             return arguments;
         }
 
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append(token.getText());
+            sb.append("(");
+            for (int i = 0; i < arguments.size(); i++) {
+                if (i != 0) {
+                    sb.append(", ");
+                }
+                sb.append(arguments.get(i).toString());
+            }
+            sb.append(")");
+            return sb.toString();
+        }
+
     }
 
     public static class Spin2DebugExpression {
@@ -205,6 +220,20 @@ public class Spin2PAsmDebugLine {
 
     public List<Spin2DebugCommand> getStatements() {
         return statements;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("debug(");
+        for (int i = 0; i < statements.size(); i++) {
+            if (i != 0) {
+                sb.append(", ");
+            }
+            sb.append(statements.get(i).toString());
+        }
+        sb.append(")");
+        return sb.toString();
     }
 
 }

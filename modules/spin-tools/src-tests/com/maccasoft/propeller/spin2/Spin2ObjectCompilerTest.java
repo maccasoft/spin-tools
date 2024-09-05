@@ -2517,35 +2517,36 @@ class Spin2ObjectCompilerTest {
     @Test
     void testDebug() throws Exception {
         String text = ""
-            + "PUB main()\n"
+            + "PUB main() | a\n"
             + "\n"
-            + "    debug()\n"
+            + "    debug(udec(a))\n"
             + "\n"
             + "";
 
         Assertions.assertEquals(""
             + "' Object header (var size 4)\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
-            + "00004 00004       0D 00 00 00    End\n"
-            + "' PUB main()\n"
-            + "00008 00008       00             (stack size)\n"
-            + "'     debug()\n"
-            + "00009 00009       43 00 01       DEBUG #1\n"
-            + "0000C 0000C       04             RETURN\n"
-            + "0000D 0000D       00 00 00       Padding\n"
+            + "00004 00004       0E 00 00 00    End\n"
+            + "' PUB main() | a\n"
+            + "00008 00008       01             (stack size)\n"
+            + "'     debug(udec(a))\n"
+            + "00009 00009       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000A 0000A       43 04 01       DEBUG #1\n"
+            + "0000D 0000D       04             RETURN\n"
+            + "0000E 0000E       00 00          Padding\n"
             + "' Debug data\n"
-            + "00B24 00000       06 00         \n"
+            + "00B24 00000       09 00         \n"
             + "00B26 00002       04 00         \n"
-            + "00B28 00004       04 00         \n"
+            + "00B28 00004       04 41 61 00 00\n"
             + "", compile(text, true));
     }
 
     @Test
     void testIgnoreDebug() throws Exception {
         String text = ""
-            + "PUB main()\n"
+            + "PUB main() | a\n"
             + "\n"
-            + "    debug()\n"
+            + "    debug(udec(a))\n"
             + "\n"
             + "";
 
@@ -2553,11 +2554,26 @@ class Spin2ObjectCompilerTest {
             + "' Object header (var size 4)\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       0A 00 00 00    End\n"
-            + "' PUB main()\n"
-            + "00008 00008       00             (stack size)\n"
+            + "' PUB main() | a\n"
+            + "00008 00008       01             (stack size)\n"
+            + "'     debug(udec(a))\n"
             + "00009 00009       04             RETURN\n"
             + "0000A 0000A       00 00          Padding\n"
             + "", compile(text));
+    }
+
+    @Test
+    void testThrowDebugException() throws Exception {
+        String text = ""
+            + "PUB main()\n"
+            + "\n"
+            + "    debug(udec(a))\n"
+            + "\n"
+            + "";
+
+        Assertions.assertThrows(CompilerException.class, () -> {
+            compile(text);
+        });
     }
 
     @Test

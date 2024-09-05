@@ -750,48 +750,51 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         }
                     }
                     node.setData("context", context);
-                    method.debugNodes.add(node);
-                    compiler.debugStatements.add(node);
+                    if (isDebugEnabled()) {
+                        method.debugNodes.add(node);
+                        compiler.debugStatements.add(node);
 
-                    int pop = stack;
-                    source.add(new Bytecode(context, 0x43, "") {
+                        int pop = stack;
+                        source.add(new Bytecode(context, 0x43, "") {
 
-                        int index;
+                            int index;
 
-                        @Override
-                        public int resolve(int address) {
-                            index = compiler.debugStatements.indexOf(node) + 1;
-                            if (index >= 255) {
-                                throw new CompilerException("too much debug statements", node);
+                            @Override
+                            public int resolve(int address) {
+                                index = compiler.debugStatements.indexOf(node) + 1;
+                                if (index >= 255) {
+                                    throw new CompilerException("too much debug statements", node);
+                                }
+                                return super.resolve(address);
                             }
-                            return super.resolve(address);
-                        }
 
-                        @Override
-                        public int getSize() {
-                            return index == -1 ? 0 : 3;
-                        }
-
-                        @Override
-                        public byte[] getBytes() {
-                            if (index == -1) {
-                                return new byte[0];
+                            @Override
+                            public int getSize() {
+                                return index == -1 ? 0 : 3;
                             }
-                            return new byte[] {
-                                0x43, (byte) pop, (byte) index
-                            };
-                        }
 
-                        @Override
-                        public String toString() {
-                            if (index == -1) {
-                                return "";
+                            @Override
+                            public byte[] getBytes() {
+                                if (index == -1) {
+                                    return new byte[0];
+                                }
+                                return new byte[] {
+                                    0x43, (byte) pop, (byte) index
+                                };
                             }
-                            return node.getText().toUpperCase() + " #" + index;
-                        }
 
-                    });
-                    return source;
+                            @Override
+                            public String toString() {
+                                if (index == -1) {
+                                    return "";
+                                }
+                                return node.getText().toUpperCase() + " #" + index;
+                            }
+
+                        });
+                        return source;
+                    }
+                    return new ArrayList<Spin2Bytecode>();
                 }
             }
 

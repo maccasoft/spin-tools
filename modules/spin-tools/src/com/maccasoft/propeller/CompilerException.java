@@ -12,6 +12,7 @@ package com.maccasoft.propeller;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.Token;
@@ -171,6 +172,26 @@ public class CompilerException extends RuntimeException {
 
     public CompilerException[] getChilds() {
         return childs.toArray(new CompilerException[0]);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(childs, column, fileName, line, type);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        CompilerException other = (CompilerException) obj;
+        return Objects.equals(childs, other.childs) && column == other.column && Objects.equals(fileName, other.fileName) && line == other.line && type == other.type;
     }
 
     public String getText() {
