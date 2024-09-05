@@ -975,6 +975,28 @@ public class SpinTools {
             }
         });
 
+        final Menu saveToMenu = new Menu(parent.getParent(), SWT.DROP_DOWN);
+        saveToMenu.addMenuListener(new MenuListener() {
+
+            @Override
+            public void menuShown(MenuEvent e) {
+                MenuItem[] item = saveToMenu.getItems();
+                for (int i = 0; i < item.length; i++) {
+                    item[i].dispose();
+                }
+                populateSaveToMenu(saveToMenu);
+            }
+
+            @Override
+            public void menuHidden(MenuEvent e) {
+
+            }
+
+        });
+        item = new MenuItem(menu, SWT.CASCADE);
+        item.setText("Save To...");
+        item.setMenu(saveToMenu);
+
         item = new MenuItem(menu, SWT.PUSH);
         item.setText("Save All\tShift+Ctrl+S");
         item.setAccelerator(SWT.MOD2 + SWT.MOD1 + 'S');
@@ -1061,7 +1083,6 @@ public class SpinTools {
     }
 
     void populateOpenFromMenu(Menu menu) {
-        boolean addSeparator;
         List<String> list = new ArrayList<String>();
         List<String> defaultList = Arrays.asList(new String[] {
             new File(System.getProperty("APP_DIR"), "examples/P1").getAbsolutePath(),
@@ -1082,10 +1103,11 @@ public class SpinTools {
             });
         }
 
-        addSeparator = true;
+        boolean addSeparator = true;
+
         List<File> libraryPath = new ArrayList<>();
-        libraryPath.addAll(Arrays.asList(Preferences.getInstance().getSpin1LibraryPath()));
-        libraryPath.addAll(Arrays.asList(Preferences.getInstance().getSpin2LibraryPath()));
+        libraryPath.addAll(Arrays.asList(preferences.getSpin1LibraryPath()));
+        libraryPath.addAll(Arrays.asList(preferences.getSpin2LibraryPath()));
         Collections.sort(libraryPath, (o1, o2) -> o1.getAbsolutePath().compareToIgnoreCase(o2.getAbsolutePath()));
         for (File file : libraryPath) {
             String folder = file.getAbsolutePath();
@@ -1107,13 +1129,39 @@ public class SpinTools {
             }
         }
 
-        List<String> lru = new ArrayList<String>(Preferences.getInstance().getLru());
-        Collections.sort(lru, (o1, o2) -> o1.compareToIgnoreCase(o2));
+        if (!Arrays.equals(preferences.getRoots(), Preferences.defaultVisiblePaths)) {
+            addSeparator = true;
+
+            List<File> visibleFolders = Arrays.asList(preferences.getRoots());
+            Collections.sort(visibleFolders, (o1, o2) -> o1.getAbsolutePath().compareToIgnoreCase(o2.getAbsolutePath()));
+            for (File file : visibleFolders) {
+                String folder = file.getAbsolutePath();
+                if (!list.contains(folder) && !defaultList.contains(folder)) {
+                    if (addSeparator) {
+                        new MenuItem(menu, SWT.SEPARATOR);
+                        addSeparator = false;
+                    }
+                    MenuItem item = new MenuItem(menu, SWT.PUSH);
+                    item.setText(folder);
+                    item.addListener(SWT.Selection, new Listener() {
+
+                        @Override
+                        public void handleEvent(Event event) {
+                            handleFileOpenFrom(folder);
+                        }
+
+                    });
+                    list.add(folder);
+                }
+            }
+        }
 
         addSeparator = true;
-        Iterator<String> iter = lru.iterator();
-        while (iter.hasNext()) {
-            String folder = new File(iter.next()).getParent();
+
+        List<String> lru = new ArrayList<String>(preferences.getLru());
+        Collections.sort(lru, (o1, o2) -> o1.compareToIgnoreCase(o2));
+        for (String file : lru) {
+            String folder = new File(file).getParent();
             if (!list.contains(folder) && !defaultList.contains(folder)) {
                 if (addSeparator) {
                     new MenuItem(menu, SWT.SEPARATOR);
@@ -1133,10 +1181,107 @@ public class SpinTools {
         }
     }
 
+    void populateSaveToMenu(Menu menu) {
+        List<String> list = new ArrayList<String>();
+        List<String> defaultList = Arrays.asList(new String[] {
+            new File(System.getProperty("APP_DIR"), "examples/P1").getAbsolutePath(),
+            new File(System.getProperty("APP_DIR"), "examples/P2").getAbsolutePath(),
+            Preferences.defaultSpin1LibraryPath.getAbsolutePath(),
+            Preferences.defaultSpin2LibraryPath.getAbsolutePath()
+        });
+
+        boolean addSeparator = false;
+
+        List<File> libraryPath = new ArrayList<>();
+        libraryPath.addAll(Arrays.asList(preferences.getSpin1LibraryPath()));
+        libraryPath.addAll(Arrays.asList(preferences.getSpin2LibraryPath()));
+        Collections.sort(libraryPath, (o1, o2) -> o1.getAbsolutePath().compareToIgnoreCase(o2.getAbsolutePath()));
+        for (File file : libraryPath) {
+            String folder = file.getAbsolutePath();
+            if (!list.contains(folder) && !defaultList.contains(folder)) {
+                if (addSeparator) {
+                    new MenuItem(menu, SWT.SEPARATOR);
+                    addSeparator = false;
+                }
+                MenuItem item = new MenuItem(menu, SWT.PUSH);
+                item.setText(folder);
+                item.addListener(SWT.Selection, new Listener() {
+
+                    @Override
+                    public void handleEvent(Event event) {
+                        handleFileSaveTo(folder);
+                    }
+
+                });
+                list.add(folder);
+            }
+        }
+
+        if (!Arrays.equals(preferences.getRoots(), Preferences.defaultVisiblePaths)) {
+            addSeparator = true;
+
+            List<File> visibleFolders = Arrays.asList(preferences.getRoots());
+            Collections.sort(visibleFolders, (o1, o2) -> o1.getAbsolutePath().compareToIgnoreCase(o2.getAbsolutePath()));
+            for (File file : visibleFolders) {
+                String folder = file.getAbsolutePath();
+                if (!list.contains(folder) && !defaultList.contains(folder)) {
+                    if (addSeparator) {
+                        new MenuItem(menu, SWT.SEPARATOR);
+                        addSeparator = false;
+                    }
+                    MenuItem item = new MenuItem(menu, SWT.PUSH);
+                    item.setText(folder);
+                    item.addListener(SWT.Selection, new Listener() {
+
+                        @Override
+                        public void handleEvent(Event event) {
+                            handleFileSaveTo(folder);
+                        }
+
+                    });
+                    list.add(folder);
+                }
+            }
+        }
+
+        addSeparator = true;
+
+        List<String> lru = new ArrayList<String>(preferences.getLru());
+        Collections.sort(lru, (o1, o2) -> o1.compareToIgnoreCase(o2));
+        for (String file : lru) {
+            String folder = new File(file).getParent();
+            if (!list.contains(folder) && !defaultList.contains(folder)) {
+                if (addSeparator) {
+                    new MenuItem(menu, SWT.SEPARATOR);
+                    addSeparator = false;
+                }
+                MenuItem item = new MenuItem(menu, SWT.PUSH);
+                item.setText(folder);
+                item.addListener(SWT.Selection, new Listener() {
+
+                    @Override
+                    public void handleEvent(Event event) {
+                        handleFileSaveTo(folder);
+                    }
+
+                });
+                list.add(folder);
+            }
+        }
+    }
+
+    private void handleFileSaveTo(String filterPath) {
+        CTabItem tabItem = tabFolder.getSelection();
+        if (tabItem != null) {
+            EditorTab editorTab = (EditorTab) tabItem.getData();
+            doFileSaveAs(editorTab, new File(filterPath, editorTab.getText()));
+        }
+    }
+
     void populateLruFiles(Menu menu, int itemIndex, List<MenuItem> list) {
         int index = 0;
 
-        Iterator<String> iter = Preferences.getInstance().getLru().iterator();
+        Iterator<String> iter = preferences.getLru().iterator();
         while (iter.hasNext()) {
             final File fileToOpen = new File(iter.next());
 
@@ -1153,7 +1298,7 @@ public class SpinTools {
                 public void handleEvent(Event event) {
                     if (!fileToOpen.exists()) {
                         MessageDialog.openError(shell, APP_TITLE, "File " + fileToOpen + " not found");
-                        Preferences.getInstance().getLru().remove(fileToOpen.toString());
+                        preferences.getLru().remove(fileToOpen.toString());
 
                         File parentFile = fileToOpen.getParentFile();
                         while (parentFile != null) {
@@ -1715,35 +1860,35 @@ public class SpinTools {
         String suffix = tabName.substring(tabName.lastIndexOf('.'));
 
         if (".spin".equals(suffix)) {
-            editorTab = openOrSwitchToTab(name + suffix, Preferences.getInstance().getSpin1LibraryPath());
+            editorTab = openOrSwitchToTab(name + suffix, preferences.getSpin1LibraryPath());
             if (editorTab == null) {
-                editorTab = openOrSwitchToTab(name, Preferences.getInstance().getSpin1LibraryPath());
+                editorTab = openOrSwitchToTab(name, preferences.getSpin1LibraryPath());
             }
         }
         else if (".spin2".equals(suffix)) {
-            editorTab = openOrSwitchToTab(name + suffix, Preferences.getInstance().getSpin2LibraryPath());
+            editorTab = openOrSwitchToTab(name + suffix, preferences.getSpin2LibraryPath());
             if (editorTab == null) {
-                editorTab = openOrSwitchToTab(name, Preferences.getInstance().getSpin2LibraryPath());
+                editorTab = openOrSwitchToTab(name, preferences.getSpin2LibraryPath());
             }
         }
         else if (".c".equals(suffix)) {
             CTokenMarker tokenMarker = (CTokenMarker) currentTab.getTokenMarker();
             if (tokenMarker.isP1()) {
-                editorTab = openOrSwitchToTab(name + suffix, Preferences.getInstance().getSpin1LibraryPath());
+                editorTab = openOrSwitchToTab(name + suffix, preferences.getSpin1LibraryPath());
                 if (editorTab == null) {
-                    editorTab = openOrSwitchToTab(name + ".spin", Preferences.getInstance().getSpin1LibraryPath());
+                    editorTab = openOrSwitchToTab(name + ".spin", preferences.getSpin1LibraryPath());
                 }
                 if (editorTab == null) {
-                    editorTab = openOrSwitchToTab(name, Preferences.getInstance().getSpin1LibraryPath());
+                    editorTab = openOrSwitchToTab(name, preferences.getSpin1LibraryPath());
                 }
             }
             else {
-                editorTab = openOrSwitchToTab(name + suffix, Preferences.getInstance().getSpin2LibraryPath());
+                editorTab = openOrSwitchToTab(name + suffix, preferences.getSpin2LibraryPath());
                 if (editorTab == null) {
-                    editorTab = openOrSwitchToTab(name + ".spin2", Preferences.getInstance().getSpin2LibraryPath());
+                    editorTab = openOrSwitchToTab(name + ".spin2", preferences.getSpin2LibraryPath());
                 }
                 if (editorTab == null) {
-                    editorTab = openOrSwitchToTab(name, Preferences.getInstance().getSpin2LibraryPath());
+                    editorTab = openOrSwitchToTab(name, preferences.getSpin2LibraryPath());
                 }
             }
         }
@@ -2049,18 +2194,18 @@ public class SpinTools {
     private void doFileSave(EditorTab editorTab) {
         File fileToSave = editorTab.getFile();
         if (fileToSave == null) {
-            doFileSaveAs(editorTab);
+            doFileSaveAs(editorTab, editorTab.getFile());
             return;
         }
         else {
             File parentFile = fileToSave.getParentFile();
             if (parentFile != null) {
                 if (parentFile.equals(Preferences.defaultSpin1LibraryPath) || parentFile.equals(Preferences.defaultSpin2LibraryPath)) {
-                    doFileSaveAs(editorTab);
+                    doFileSaveAs(editorTab, editorTab.getFile());
                     return;
                 }
                 if (parentFile.equals(defaultSpin1Examples) || parentFile.equals(defaultSpin2Examples)) {
-                    doFileSaveAs(editorTab);
+                    doFileSaveAs(editorTab, editorTab.getFile());
                     return;
                 }
             }
@@ -2079,11 +2224,11 @@ public class SpinTools {
         CTabItem tabItem = tabFolder.getSelection();
         if (tabItem != null) {
             EditorTab editorTab = (EditorTab) tabItem.getData();
-            doFileSaveAs(editorTab);
+            doFileSaveAs(editorTab, editorTab.getFile());
         }
     }
 
-    private void doFileSaveAs(EditorTab editorTab) {
+    private void doFileSaveAs(EditorTab editorTab, File filterPath) {
         FileDialog dlg = new FileDialog(shell, SWT.SAVE);
         dlg.setText("Save Source File");
         dlg.setFilterNames(filterNames);
@@ -2093,7 +2238,6 @@ public class SpinTools {
         dlg.setFileName(editorTab.getText());
         dlg.setOverwrite(true);
 
-        File filterPath = editorTab.getFile();
         if (filterPath == null && preferences.getLru().size() != 0) {
             filterPath = new File(preferences.getLru().get(0));
         }
