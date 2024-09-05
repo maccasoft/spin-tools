@@ -137,12 +137,6 @@ public class EditorTab implements FindReplaceTarget {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-            if (evt.getPropertyName().equals(SourcePool.PROP_DEBUG_ENABLED)) {
-                if (tabItemText.toLowerCase().endsWith(".spin2") || tabItemText.toLowerCase().endsWith(".c")) {
-                    scheduleCompile();
-                }
-                return;
-            }
             File localFile = file != null ? file : new File(tabItemText);
             if (evt.getPropertyName().equals(localFile.getAbsolutePath())) {
                 if (evt.getNewValue() != null) {
@@ -556,7 +550,7 @@ public class EditorTab implements FindReplaceTarget {
                         }
                         if (compiler != null) {
                             compiler.setRemoveUnusedMethods(true);
-                            compiler.setDebugEnabled(debug || sourcePool.isDebugEnabled());
+                            compiler.setDebugEnabled(debug);
 
                             try {
                                 object = compiler.compile(localFile, root);

@@ -115,7 +115,7 @@ import jssc.SerialPortException;
 public class SpinTools {
 
     public static final String APP_TITLE = "Spin Tools IDE";
-    public static final String APP_VERSION = "0.37.0";
+    public static final String APP_VERSION = "0.38.0";
 
     static final File defaultSpin1Examples = new File(System.getProperty("APP_DIR"), "examples/P1").getAbsoluteFile();
     static final File defaultSpin2Examples = new File(System.getProperty("APP_DIR"), "examples/P2").getAbsoluteFile();
@@ -1548,7 +1548,7 @@ public class SpinTools {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 boolean openTerminal = (e.stateMask & SWT.MOD2) != 0;
-                handleUpload(false, openTerminal, sourcePool.isDebugEnabled());
+                handleUpload(false, openTerminal, false);
             }
         });
 
@@ -1560,7 +1560,7 @@ public class SpinTools {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 boolean openTerminal = (e.stateMask & SWT.MOD2) != 0;
-                handleUpload(true, openTerminal, sourcePool.isDebugEnabled());
+                handleUpload(true, openTerminal, false);
             }
         });
 
@@ -2578,7 +2578,7 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                handleUpload(false, false, sourcePool.isDebugEnabled());
+                handleUpload(false, false, false);
             }
         });
 
@@ -2589,7 +2589,7 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                handleUpload(false, true, sourcePool.isDebugEnabled());
+                handleUpload(false, true, false);
             }
         });
 
@@ -2611,7 +2611,7 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                handleUpload(true, false, sourcePool.isDebugEnabled());
+                handleUpload(true, false, false);
             }
         });
 
@@ -2622,7 +2622,7 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                handleUpload(true, true, sourcePool.isDebugEnabled());
+                handleUpload(true, true, false);
             }
         });
 
@@ -2638,18 +2638,6 @@ public class SpinTools {
         });
 
         new MenuItem(menu, SWT.SEPARATOR);
-
-        item = new MenuItem(menu, SWT.CHECK);
-        item.setText("Enable P2 DEBUG\tCtrl+D");
-        item.setAccelerator(SWT.MOD1 + 'D');
-        item.addListener(SWT.Selection, new Listener() {
-
-            @Override
-            public void handleEvent(Event e) {
-                boolean enabled = ((MenuItem) e.widget).getSelection();
-                sourcePool.setDebugEnabled(enabled);
-            }
-        });
 
         consoleItem = new MenuItem(menu, SWT.CHECK);
         consoleItem.setText("Toggle Console");
