@@ -254,7 +254,8 @@ public class P2MemoryDialog extends Dialog {
     @Override
     protected void createButtonsForButtonBar(Composite parent) {
         createButton(parent, IDialogConstants.CLIENT_ID + 1, "Save Binary", false);
-        createButton(parent, IDialogConstants.CLIENT_ID + 2, "Save Listing", false);
+        createButton(parent, IDialogConstants.CLIENT_ID + 2, "Save Flash Binary", false);
+        createButton(parent, IDialogConstants.CLIENT_ID + 3, "Save Listing", false);
         super.createButtonsForButtonBar(parent);
     }
 
@@ -816,6 +817,10 @@ public class P2MemoryDialog extends Dialog {
             return;
         }
         if (buttonId == IDialogConstants.CLIENT_ID + 2) {
+            doSaveFlashBinary();
+            return;
+        }
+        if (buttonId == IDialogConstants.CLIENT_ID + 3) {
             doSaveListing();
             return;
         }
@@ -823,7 +828,13 @@ public class P2MemoryDialog extends Dialog {
     }
 
     protected void doSaveBinary() {
-        File fileToSave = getFileToWrite();
+        String[] filterNames = new String[] {
+            "Binary Files"
+        };
+        String[] filterExtensions = new String[] {
+            "*.bin;*.binary"
+        };
+        File fileToSave = getFileToWrite("Save Binary File", filterNames, filterExtensions, ".binary");
         try {
             FileOutputStream os = new FileOutputStream(fileToSave);
             object.setClockSetter(Preferences.getInstance().getSpin2ClockSetter());
@@ -834,8 +845,34 @@ public class P2MemoryDialog extends Dialog {
         }
     }
 
+    protected void doSaveFlashBinary() {
+        String[] filterNames = new String[] {
+            "Flash Binary Files",
+            "Binary Files"
+        };
+        String[] filterExtensions = new String[] {
+            "*.p2img",
+            "*.bin;*.binary"
+        };
+        File fileToSave = getFileToWrite("Save Flash Binary File", filterNames, filterExtensions, ".p2img");
+        try {
+            FileOutputStream os = new FileOutputStream(fileToSave);
+            object.setClockSetter(Preferences.getInstance().getSpin2ClockSetter());
+            os.write(object.getEEPromBinary());
+            os.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     protected void doSaveListing() {
-        File fileToSave = getFileToWrite();
+        String[] filterNames = new String[] {
+            "Listing Files"
+        };
+        String[] filterExtensions = new String[] {
+            "*.lst;*.txt"
+        };
+        File fileToSave = getFileToWrite("Save Listing File", filterNames, filterExtensions, ".lst");
         try {
             PrintStream os = new PrintStream(new FileOutputStream(fileToSave));
             object.generateListing(os);
@@ -845,22 +882,16 @@ public class P2MemoryDialog extends Dialog {
         }
     }
 
-    protected File getFileToWrite() {
+    protected File getFileToWrite(String title, String[] filterNames, String[] filterExtensions, String defaultExtension) {
         FileDialog dlg = new FileDialog(getShell(), SWT.SAVE);
         dlg.setOverwrite(true);
-        dlg.setText("Save Binary File");
-        String[] filterNames = new String[] {
-            "Binary Files"
-        };
-        String[] filterExtensions = new String[] {
-            "*.bin;*.binary"
-        };
+        dlg.setText(title);
         dlg.setFilterNames(filterNames);
         dlg.setFilterExtensions(filterExtensions);
 
         String name = tree.getName();
         int i = name.lastIndexOf('.');
-        dlg.setFileName(name.substring(0, i) + ".binary");
+        dlg.setFileName(name.substring(0, i) + defaultExtension);
 
         List<String> lru = Preferences.getInstance().getLru();
 

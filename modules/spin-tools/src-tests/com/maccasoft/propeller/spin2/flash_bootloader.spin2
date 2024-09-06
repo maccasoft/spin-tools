@@ -1,0 +1,98 @@
+' *** SPI FLASH BOOT LOADER
+'
+CON     spi_cs = 61
+        spi_ck = 60
+        spi_di = 59
+        spi_do = 58
+
+
+' The ROM booter reads this code from the 8-pin SPI flash from $000000..$0003FF, into cog
+' registers $000..$0FF. If the booter verifies the 'Prop' checksum, it does a 'JMP #0' to
+' execute this loader code.
+'
+' The initial application data trailing this code in registers app_start..$0FF are moved to
+' hub RAM, starting at $00000. Then, any additional application data are read from the flash
+' and stored into the hub, continuing from where the initial application data left off.
+'
+' On entry, both spi_cs and spi_ck are low outputs and the flash is outputting bit 7 of the
+' byte at address $400 on spi_do. By cycling spi_ck, any additional application data can be
+' received from spi_do.
+'
+' Once all application data is in the hub, an application checksum is verified, after which
+' cog 0 is restarted by a 'COGINIT #0,#$00000' to execute the application. If that checksum
+' fails, due to some data corruption, the SPI pins will be floated and the clock stopped
+' until the next reset. As well, a checksum is verified upon initial download of all data,
+' before programming the flash. This all ensures that no errant application code will boot.
+'
+DAT             org
+'
+'
+' First, move application data in cog app_start..$0FF into hub $00000+
+'
+loader          setq    #$100-app_start-1       'move code from cog app_start..$0FF to hub $00000+
+                wrlong  app_start,#0
+
+                sub     app_longs,#$100-app_start  wcz  'if app longs met or exceeded, run application
+        if_be   coginit #0,#$00000                      '(small applications verified by 'Prop' checksum)
+'
+'
+' Read in remaining application longs
+'
+                wrpin   #%01_00101_0,#spi_ck    'set spi_ck smart pin for transitions, drives low
+                fltl    #spi_ck                 'reset smart pin
+                wxpin   #1,#spi_ck              'set transition timebase to clk/1
+                drvl    #spi_ck                 'enable smart pin
+
+                setxfrq clk2                    'set streamer rate to clk/2
+
+                wrfast  #0,##$400-app_start*4   'ready to write to hub at application continuation
+
+.block          bmask   x,#10                   'try max streamer block size for longs ($7FF)
+                fle     x,app_longs             'limit to number of longs left
+                sub     app_longs,x             'update number of longs left
+
+                shl     x,#5                    'get number of bits
+                setword wmode,x,#0              'insert into streamer command
+                shl     x,#1                    'double for number of spi_ck transitions
+
+                wypin   x,#spi_ck               '2      start spi_ck transitions
+                waitx   #3                      '2+3    align spi_ck transitions with spi_do sampling
+                xinit   wmode,#0                '2      start inputting spi_do bits to hub, bytes-msb-first
+                waitxfi                         '?      wait for streamer to finish
+
+                tjnz    app_longs,#.block       'if more longs left, read another block
+
+                wrpin   #0,#spi_ck              'clear spi_ck smart pin mode
+'
+'
+' Verify application checksum
+'
+                rdfast  #0,#0                   'sum all application longs
+                rep     #2,app_longs2
+                rflong  x
+                add     app_sum,x       wz      'z=1 if verified
+
+stop    if_nz   fltl    #spi_di addpins 2       'if checksum failed, float spi_cs/spi_ck/spi_di pins
+        if_nz   hubset  #%0010                  '..and stop clock until next reset
+
+                coginit #0,#$00000              'checksum verified, run application
+'
+'
+' Data
+'
+clk2            long    $4000_0000              'clk/2 nco value for streamer
+wmode           long    $C081_0000 + spi_do<<17 'streamer mode, 1-pin input, bytes-msb-first, bytes to hub
+
+zeroa                                           '(used by programmer as long 0)
+app_longs       long    0                       'number of longs in application         (set by programmer)
+zerob                                           '(used by programmer as long 0)
+app_longs2      long    0                       'number of longs in application         (set by programmer)
+zeroc                                           '(used by programmer as long 0)
+app_sum         long    0                       '-sum of application longs              (set by programmer)
+x                                               '(used by loader as variable)
+loader_sum      byte    -"P",!"r",!"o",!"p"     '"Prop" - sum of $100 loader longs      (set by programmer)
+'
+'
+' Application start
+'
+app_start                                       'append application bytes after this label

@@ -182,6 +182,11 @@ class Spin2ExamplesTest {
     }
 
     @Test
+    void test_flash_bootloader() throws Exception {
+        compileAndCompare(new File("flash_bootloader.spin2"), new File("flash_bootloader.binary"));
+    }
+
+    @Test
     void test_flash_loader() throws Exception {
         compileAndCompare(new File("flash_loader.spin2"), new File("flash_loader.binary"));
     }

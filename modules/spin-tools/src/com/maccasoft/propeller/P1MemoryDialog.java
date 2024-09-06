@@ -805,7 +805,13 @@ public class P1MemoryDialog extends Dialog {
     }
 
     protected void doSaveBinary() {
-        File fileToSave = getFileToWrite();
+        String[] filterNames = new String[] {
+            "Binary Files"
+        };
+        String[] filterExtensions = new String[] {
+            "*.bin;*.binary"
+        };
+        File fileToSave = getFileToWrite("Save Binary File", filterNames, filterExtensions, ".binary");
         try {
             FileOutputStream os = new FileOutputStream(fileToSave);
             os.write(object.getBinary());
@@ -816,7 +822,13 @@ public class P1MemoryDialog extends Dialog {
     }
 
     protected void doSaveListing() {
-        File fileToSave = getFileToWrite();
+        String[] filterNames = new String[] {
+            "Listing Files"
+        };
+        String[] filterExtensions = new String[] {
+            "*.lst;*.txt"
+        };
+        File fileToSave = getFileToWrite("Save Listing File", filterNames, filterExtensions, ".lst");
         try {
             PrintStream os = new PrintStream(new FileOutputStream(fileToSave));
             object.generateListing(os);
@@ -826,22 +838,16 @@ public class P1MemoryDialog extends Dialog {
         }
     }
 
-    protected File getFileToWrite() {
+    protected File getFileToWrite(String title, String[] filterNames, String[] filterExtensions, String defaultExtension) {
         FileDialog dlg = new FileDialog(getShell(), SWT.SAVE);
         dlg.setOverwrite(true);
-        dlg.setText("Save Binary File");
-        String[] filterNames = new String[] {
-            "Binary Files"
-        };
-        String[] filterExtensions = new String[] {
-            "*.bin;*.binary"
-        };
+        dlg.setText(title);
         dlg.setFilterNames(filterNames);
         dlg.setFilterExtensions(filterExtensions);
 
         String name = tree.getName();
         int i = name.lastIndexOf('.');
-        dlg.setFileName(name.substring(0, i) + ".binary");
+        dlg.setFileName(name.substring(0, i) + defaultExtension);
 
         List<String> lru = Preferences.getInstance().getLru();
 

@@ -26,7 +26,7 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
-import org.apache.commons.cli.UnrecognizedOptionException;
+import org.apache.commons.cli.ParseException;
 
 import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.model.DirectiveNode;
@@ -64,8 +64,11 @@ public class SpinCompiler {
 
             options.addOption(Option.builder("o").desc("output file name").hasArg().argName("file").build());
 
-            options.addOption(new Option("b", false, "output binary file"));
-            options.addOption(new Option("c", false, "output only DAT sections"));
+            OptionGroup binaryOptions = new OptionGroup();
+            binaryOptions.addOption(new Option("b", false, "output binary file"));
+            binaryOptions.addOption(new Option("e", false, "output flash binary file (P2 only)"));
+            binaryOptions.addOption(new Option("c", false, "output only DAT sections"));
+            options.addOptionGroup(binaryOptions);
             options.addOption(new Option("l", false, "output listing file"));
             options.addOption(new Option("d", false, "enable debug (P2 only)"));
 
@@ -133,15 +136,6 @@ public class SpinCompiler {
                 binaryFile = new File(outName);
                 if (outName.lastIndexOf('.') != -1) {
                     listingFile = new File(outName.substring(0, outName.lastIndexOf('.')) + ".lst");
-                }
-            }
-
-            if (binaryFile == null) {
-                if (cmd.hasOption('c')) {
-                    binaryFile = new File(fileToCompile.getParentFile(), outName + ".dat");
-                }
-                else {
-                    binaryFile = new File(fileToCompile.getParentFile(), outName + ".binary");
                 }
             }
 
@@ -231,14 +225,35 @@ public class SpinCompiler {
             byte[] binaryData = null;
             if (cmd.hasOption('b')) {
                 binaryData = object.getBinary();
+                if (binaryFile == null) {
+                    binaryFile = new File(fileToCompile.getParentFile(), outName + ".binary");
+                }
             }
-            if (cmd.hasOption('c')) {
+            else if (cmd.hasOption('e')) {
+                binaryData = object.getEEPromBinary();
+                if (binaryFile == null) {
+                    if ((compiler instanceof Spin2Compiler) || (compiler instanceof Spin2CCompiler)) {
+                        binaryFile = new File(fileToCompile.getParentFile(), outName + ".p2img");
+                    }
+                    else {
+                        binaryFile = new File(fileToCompile.getParentFile(), outName + ".eeprom");
+                    }
+                }
+            }
+            else if (cmd.hasOption('c')) {
                 binaryData = object.getDatBinary();
+                if (binaryFile == null) {
+                    binaryFile = new File(fileToCompile.getParentFile(), outName + ".dat");
+                }
             }
             if (binaryData != null) {
                 FileOutputStream os = new FileOutputStream(binaryFile);
                 os.write(binaryData);
                 os.close();
+            }
+
+            if (binaryData == null && (cmd.hasOption('r') || cmd.hasOption('f'))) {
+                binaryData = object.getBinary();
             }
 
             if (cmd.hasOption('l')) {
@@ -557,7 +572,7 @@ public class SpinCompiler {
                 println("Done.");
             }
 
-        } catch (UnrecognizedOptionException e) {
+        } catch (ParseException e) {
             System.out.println(e.getMessage());
         } catch (CompilerException e) {
             println(e);

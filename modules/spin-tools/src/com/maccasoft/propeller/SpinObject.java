@@ -469,6 +469,12 @@ public abstract class SpinObject {
         return os.toByteArray();
     }
 
+    public byte[] getEEPromBinary() throws IOException {
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        generateBinary(os);
+        return os.toByteArray();
+    }
+
     public void generateDatBinary(OutputStream os) throws IOException {
         for (DataObject obj : data) {
             if (obj instanceof ObjectDataObject) {

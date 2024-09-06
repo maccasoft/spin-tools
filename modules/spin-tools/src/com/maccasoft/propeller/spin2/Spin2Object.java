@@ -158,6 +158,67 @@ public class Spin2Object extends SpinObject {
     }
 
     @Override
+    public byte[] getEEPromBinary() throws IOException {
+        InputStream is = getClass().getResourceAsStream("flash_bootloader.binary");
+        byte[] loader = new byte[is.available()];
+        is.read(loader);
+        is.close();
+
+        byte[] code = getBinary();
+
+        int appLongs = code.length / 4;
+        loader[0x80] = loader[0x84] = (byte) appLongs;
+        loader[0x81] = loader[0x85] = (byte) (appLongs >> 8);
+        loader[0x82] = loader[0x86] = (byte) (appLongs >> 16);
+        loader[0x83] = loader[0x87] = (byte) (appLongs >> 24);
+
+        int sum = 0;
+        for (int n = 0; n < code.length; n += 4) {
+            int data = code[n] & 0xFF;
+            if ((n + 1) < code.length) {
+                data |= (code[n + 1] << 8) & 0xFF00;
+                if ((n + 2) < code.length) {
+                    data |= (code[n + 2] << 16) & 0xFF0000;
+                    if ((n + 3) < code.length) {
+                        data |= (code[n + 3] << 24) & 0xFF000000;
+                    }
+                }
+            }
+            sum -= data;
+        }
+        loader[0x88] = (byte) sum;
+        loader[0x89] = (byte) (sum >> 8);
+        loader[0x8A] = (byte) (sum >> 16);
+        loader[0x8B] = (byte) (sum >> 24);
+
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        os.write(loader);
+        os.write(code);
+        byte[] binaryImage = os.toByteArray();
+
+        int loaderSum = 0;
+        for (int n = 0; n < binaryImage.length && n < 0x400; n += 4) {
+            int data = binaryImage[n] & 0xFF;
+            if ((n + 1) < binaryImage.length) {
+                data |= (binaryImage[n + 1] << 8) & 0xFF00;
+                if ((n + 2) < binaryImage.length) {
+                    data |= (binaryImage[n + 2] << 16) & 0xFF0000;
+                    if ((n + 3) < binaryImage.length) {
+                        data |= (binaryImage[n + 3] << 24) & 0xFF000000;
+                    }
+                }
+            }
+            loaderSum -= data;
+        }
+        binaryImage[0x8C] = (byte) loaderSum;
+        binaryImage[0x8D] = (byte) (loaderSum >> 8);
+        binaryImage[0x8E] = (byte) (loaderSum >> 16);
+        binaryImage[0x8F] = (byte) (loaderSum >> 24);
+
+        return binaryImage;
+    }
+
+    @Override
     public void generateListing(PrintStream ps) {
         int offset = 0;
         if (interpreter != null) {
