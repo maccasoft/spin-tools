@@ -493,6 +493,10 @@ public abstract class SpinObject {
         return os.toByteArray();
     }
 
+    public byte[] getRAM() throws IOException {
+        return getBinary();
+    }
+
     public void generateListing(PrintStream ps) {
         generateListing(0, ps);
     }

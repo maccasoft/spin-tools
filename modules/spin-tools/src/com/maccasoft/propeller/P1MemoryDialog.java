@@ -766,7 +766,7 @@ public class P1MemoryDialog extends Dialog {
         this.object = object;
 
         try {
-            data = object.getEEprom();
+            data = object.getRAM();
 
             clkfreq = object.getClkFreq();
             clkmode = object.getClkMode();

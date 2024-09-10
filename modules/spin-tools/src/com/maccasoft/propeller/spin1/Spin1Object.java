@@ -61,7 +61,7 @@ public class Spin1Object extends SpinObject {
         this.dcurr = dcurr;
     }
 
-    public byte[] getEEprom() throws IOException {
+    public byte[] getRAM() throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         generateBinary(os);
 

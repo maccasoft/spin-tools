@@ -100,6 +100,7 @@ public class PreferencesDialog extends Dialog {
     PathList spin2Paths;
     Button spin2CaseSensitive;
     Button spin2ClockSetter;
+    Button spin2Compress;
     FileSelector spin2Template;
 
     Text terminalFont;
@@ -139,6 +140,8 @@ public class PreferencesDialog extends Dialog {
     boolean oldShowEditorOutline;
     boolean oldSpin1CaseSensitive;
     boolean oldSpin2CaseSensitive;
+    boolean oldSpin2ClockSetter;
+    boolean oldSpin2Compress;
     String oldTerminalFont;
     boolean oldTerminalLineInput;
     boolean oldTerminalLocalEcho;
@@ -471,6 +474,8 @@ public class PreferencesDialog extends Dialog {
         oldShowSectionsBackground = preferences.getShowSectionsBackground();
         oldSpin1CaseSensitive = preferences.getSpin1CaseSensitiveSymbols();
         oldSpin2CaseSensitive = preferences.getSpin2CaseSensitiveSymbols();
+        oldSpin2ClockSetter = preferences.getSpin2ClockSetter();
+        oldSpin2Compress = preferences.getSpin2Compress();
         oldTerminalFont = preferences.getTerminalFont();
         oldTerminalLineInput = preferences.getTerminalLineInput();
         oldTerminalLocalEcho = preferences.getTerminalLocalEcho();
@@ -655,6 +660,20 @@ public class PreferencesDialog extends Dialog {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 preferences.setSpin2ClockSetter(((Button) e.widget).getSelection());
+            }
+
+        });
+
+        new Label(composite, SWT.NONE);
+        spin2Compress = new Button(composite, SWT.CHECK);
+        spin2Compress.setText("Compress binary");
+        spin2Compress.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+        spin2Compress.setSelection(preferences.getSpin2Compress());
+        spin2Compress.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                preferences.setSpin2Compress(((Button) e.widget).getSelection());
             }
 
         });
@@ -1337,7 +1356,10 @@ public class PreferencesDialog extends Dialog {
         preferences.setShowSectionsBackground(oldShowSectionsBackground);
 
         preferences.setSpin1CaseSensitiveSymbols(oldSpin1CaseSensitive);
+
         preferences.setSpin2CaseSensitiveSymbols(oldSpin2CaseSensitive);
+        preferences.setSpin2ClockSetter(oldSpin2ClockSetter);
+        preferences.setSpin2Compress(oldSpin2Compress);
 
         preferences.setTerminalFont(oldTerminalFont);
         preferences.setTerminalLineInput(oldTerminalLineInput);
@@ -1365,6 +1387,7 @@ public class PreferencesDialog extends Dialog {
 
         preferences.setSpin1LibraryPath(spin1Paths.getFileItems());
         preferences.setSpin1Template(spin1Template.getSelection());
+
         preferences.setSpin2LibraryPath(spin2Paths.getFileItems());
         preferences.setSpin2Template(spin2Template.getSelection());
 

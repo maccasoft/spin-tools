@@ -191,6 +191,11 @@ class Spin2ExamplesTest {
         compileAndCompare(new File("flash_loader.spin2"), new File("flash_loader.binary"));
     }
 
+    @Test
+    void test_lz4stub() throws Exception {
+        compileAndCompare(new File("lz4stub.spin2"), new File("lz4stub.binary"));
+    }
+
     void compileAndCompare(File source, File binary) throws Exception {
         String text = FileUtils.replaceTabs(loadFromFile(source), 8);
         byte[] expected = loadBinaryFromFile(binary);

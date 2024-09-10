@@ -21,6 +21,9 @@ import org.apache.commons.lang3.BitField;
 import com.maccasoft.propeller.Propeller2Loader;
 import com.maccasoft.propeller.SpinObject;
 
+import net.jpountz.lz4.LZ4Compressor;
+import net.jpountz.lz4.LZ4Factory;
+
 public class Spin2Object extends SpinObject {
 
     public static BitField cm_pll = new BitField(0b0000_000_1_000000_0000000000_0000_00_00);
@@ -54,6 +57,8 @@ public class Spin2Object extends SpinObject {
 
     public Spin2Object debugData;
     public boolean clockSetter;
+
+    public boolean compress;
 
     public int debugTxPin = 62;
     public int debugRxPin = 63;
@@ -155,6 +160,56 @@ public class Spin2Object extends SpinObject {
             writeClockSetter(os);
         }
         super.generateBinary(os);
+    }
+
+    public void setCompress(boolean compress) {
+        this.compress = compress;
+    }
+
+    @Override
+    public byte[] getBinary() throws IOException {
+        byte[] code = super.getBinary();
+        if (compress) {
+            code = compressBinary(code);
+        }
+        return code;
+    }
+
+    byte[] compressBinary(byte[] data) throws IOException {
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+
+        LZ4Factory factory = LZ4Factory.nativeInstance();
+        LZ4Compressor compressor = factory.highCompressor(12); // same as p2crunch
+
+        byte[] compressed = new byte[512 * 1024];
+        int compressedLength = compressor.compress(data, 0, data.length, compressed, 0, compressed.length);
+
+        InputStream is = Spin2Object.class.getResourceAsStream("lz4stub.binary");
+        try {
+            byte[] stub = new byte[is.available()];
+            is.read(stub);
+
+            os.write(stub, 0, stub.length - 4);
+            os.write(compressedLength & 0xFF);
+            os.write((compressedLength >> 8) & 0xFF);
+            os.write((compressedLength >> 16) & 0xFF);
+            os.write((compressedLength >> 24) & 0xFF);
+
+            os.write(compressed, 0, compressedLength);
+
+            while ((os.size() % 4) != 0) {
+                os.write(0x00);
+            }
+
+        } finally {
+            try {
+                is.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        return os.toByteArray();
     }
 
     @Override
@@ -273,7 +328,8 @@ public class Spin2Object extends SpinObject {
         code[index + 3] = (byte) (value >> 24);
     }
 
-    public byte[] getFlash() throws IOException {
+    @Override
+    public byte[] getRAM() throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         generateBinary(os);
 

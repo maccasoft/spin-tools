@@ -776,7 +776,7 @@ public class P2MemoryDialog extends Dialog {
         this.object = object;
 
         try {
-            data = object.getFlash();
+            data = object.getRAM();
 
             clkfreq = object.getClkFreq();
             clkmode = object.getClkMode();

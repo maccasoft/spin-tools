@@ -71,6 +71,7 @@ public class SpinCompiler {
             options.addOptionGroup(binaryOptions);
             options.addOption(new Option("l", false, "output listing file"));
             options.addOption(new Option("d", false, "enable debug (P2 only)"));
+            options.addOption(new Option("z", false, "compress binary (P2 only)"));
 
             OptionGroup targetOptions = new OptionGroup();
             targetOptions.addOption(new Option("p1", false, "compile for P1 target (C source only)"));
@@ -192,12 +193,18 @@ public class SpinCompiler {
             }
             else {
                 compiler = new Spin1Compiler();
-                ((Spin1Compiler) compiler).setOpenspinCompatible(cmd.hasOption("x-openspin"));
             }
             compiler.setCaseSensitive(cmd.hasOption("C") || cmd.hasOption("x-case"));
             compiler.setSourceProvider(new Compiler.FileSourceProvider(libraryPaths.toArray(new File[libraryPaths.size()])));
             compiler.setDebugEnabled(cmd.hasOption('d'));
             compiler.setRemoveUnusedMethods(cmd.hasOption('u'));
+
+            if (compiler instanceof Spin1Compiler) {
+                ((Spin1Compiler) compiler).setOpenspinCompatible(cmd.hasOption("x-openspin"));
+            }
+            if (compiler instanceof Spin2Compiler) {
+                ((Spin2Compiler) compiler).setCompress(cmd.hasOption('z'));
+            }
 
             if (cmd.hasOption('D')) {
                 Pattern p1 = Pattern.compile("([A-Za-z_][A-Za-z0-9_]+)=(.+)");

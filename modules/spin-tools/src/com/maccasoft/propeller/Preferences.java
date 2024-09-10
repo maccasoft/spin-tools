@@ -55,6 +55,7 @@ public class Preferences {
     public static final String PROP_SPIN1_CASE_SENSITIVE_SYMBOLS = "spin1CaseSensitiveSymbols";
     public static final String PROP_SPIN2_LIBRARY_PATH = "spin2LibraryPath";
     public static final String PROP_SPIN2_CASE_SENSITIVE_SYMBOLS = "spin2CaseSensitiveSymbols";
+    public static final String PROP_SPIN2_COMPRESS = "spin2Compress";
     public static final String PROP_TERMINAL_FONT = "terminalFont";
     public static final String PROP_TERMINAL_LINE_INPUT = "terminalLineInput";
     public static final String PROP_TERMINAL_LOCAL_ECHO = "terminalLocalEcho";
@@ -187,6 +188,7 @@ public class Preferences {
         public String spin2Template;
         @JsonInclude(Include.NON_ABSENT)
         public Map<String, String> spin2Defines;
+        public boolean spin2Compress;
 
         public List<String> lru;
 
@@ -720,6 +722,14 @@ public class Preferences {
             }
             preferences.spin2Defines.putAll(spin2Defines);
         }
+    }
+
+    public boolean getSpin2Compress() {
+        return preferences.spin2Compress;
+    }
+
+    public void setSpin2Compress(boolean spin2Compress) {
+        changeSupport.firePropertyChange(PROP_SPIN2_COMPRESS, preferences.spin2Compress, preferences.spin2Compress = spin2Compress);
     }
 
     public int[] getTabStops(Class<?> clazz) {

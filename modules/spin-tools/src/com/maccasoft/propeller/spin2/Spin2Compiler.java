@@ -47,6 +47,8 @@ public class Spin2Compiler extends Compiler {
     protected boolean errors;
     protected List<CompilerException> messages = new ArrayList<CompilerException>();
 
+    boolean compress;
+
     public Spin2Compiler() {
 
     }
@@ -68,6 +70,14 @@ public class Spin2Compiler extends Compiler {
     @Override
     public void setDebugEnabled(boolean enabled) {
         this.debugEnabled = enabled;
+    }
+
+    public boolean isCompress() {
+        return compress;
+    }
+
+    public void setCompress(boolean compress) {
+        this.compress = compress;
     }
 
     @Override
@@ -106,10 +116,10 @@ public class Spin2Compiler extends Compiler {
         if (interpreter != null) {
             obj.setInterpreter(interpreter);
         }
-
         if (debugger != null) {
             obj.setDebugger(debugger);
         }
+        obj.setCompress(compress);
 
         return obj;
     }

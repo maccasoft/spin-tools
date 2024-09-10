@@ -3090,6 +3090,7 @@ public class SpinTools {
 
         if (obj instanceof Spin2Object) {
             ((Spin2Object) obj).setClockSetter(preferences.getSpin2ClockSetter());
+            ((Spin2Object) obj).setCompress(preferences.getSpin2Compress());
         }
 
         if (isDebug) {

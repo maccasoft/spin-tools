@@ -120,6 +120,7 @@ public class EditorTab implements FindReplaceTarget {
                 case Preferences.PROP_SPIN2_CASE_SENSITIVE_SYMBOLS:
                     tokenMarker.setCaseSensitive((Boolean) evt.getNewValue());
                 case Preferences.PROP_SPIN2_LIBRARY_PATH:
+                case Preferences.PROP_SPIN2_COMPRESS:
                     if (tabItemText.toLowerCase().endsWith(".spin2") || tabItemText.toLowerCase().endsWith(".c")) {
                         scheduleCompile();
                     }
@@ -551,6 +552,10 @@ public class EditorTab implements FindReplaceTarget {
                         if (compiler != null) {
                             compiler.setRemoveUnusedMethods(true);
                             compiler.setDebugEnabled(debug);
+
+                            if (compiler instanceof Spin2Compiler) {
+                                ((Spin2Compiler) compiler).setCompress(preferences.getSpin2Compress());
+                            }
 
                             try {
                                 object = compiler.compile(localFile, root);
