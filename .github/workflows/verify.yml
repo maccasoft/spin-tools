@@ -12,8 +12,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-java@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-java@v4
       with:
         distribution: 'oracle'
         java-version: '17'
@@ -24,7 +24,7 @@ jobs:
         xvfb-run --auto-servernum mvn --batch-mode verify
 
     - name: Create Tests Summary
-      uses: test-summary/action@dist
+      uses: test-summary/action@v2.3
       with:
         paths: modules/spin-tools/target/surefire-reports/**/*.xml
       if: always()
