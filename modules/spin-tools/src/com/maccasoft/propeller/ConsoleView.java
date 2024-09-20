@@ -17,6 +17,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.resource.StringConverter;
@@ -33,6 +37,9 @@ import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
+
+import com.maccasoft.propeller.debug.DebugWindow;
+import com.maccasoft.propeller.debug.KeywordIterator;
 
 import jssc.SerialPort;
 import jssc.SerialPortEvent;
@@ -61,6 +68,8 @@ public class ConsoleView {
 
     private int utf_buf_index = 0, utf_ch_count = 0;
     private byte[] utf_buf = new byte[4];
+
+    Map<String, DebugWindow> map = new HashMap<>();
 
     final PropertyChangeListener preferencesChangeListener = new PropertyChangeListener() {
 
@@ -177,6 +186,9 @@ public class ConsoleView {
                     while (console.getLineCount() > maxLines) {
                         int length = console.getOffsetAtLine(console.getLineCount() - maxLines);
                         console.replaceTextRange(0, length, "");
+                    }
+                    if (text.startsWith("`")) {
+                        handleDebugWindowCommand(text.substring(1));
                     }
                     console.invokeAction(ST.TEXT_END);
                 }
@@ -306,9 +318,11 @@ public class ConsoleView {
             @Override
             public void widgetDisposed(DisposeEvent event) {
                 preferences.removePropertyChangeListener(preferencesChangeListener);
+
                 if (os != null) {
                     os.close();
                 }
+
                 if (serialPort != null) {
                     try {
                         serialPort.removeEventListener();
@@ -319,6 +333,12 @@ public class ConsoleView {
 
                     }
                 }
+
+                for (DebugWindow window : new ArrayList<>(map.values())) {
+                    window.dispose();
+                }
+                map.clear();
+
                 font.dispose();
             }
         });
@@ -364,6 +384,10 @@ public class ConsoleView {
     }
 
     public void clear() {
+        for (DebugWindow window : new ArrayList<>(map.values())) {
+            window.dispose();
+        }
+        map.clear();
         console.setText("");
     }
 
@@ -448,6 +472,56 @@ public class ConsoleView {
         disabledForeground = color;
         if (!enabled) {
             console.setForeground(color);
+        }
+    }
+
+    void handleDebugWindowCommand(String text) {
+        DebugWindow window = null;
+
+        KeywordIterator iter = new KeywordIterator(text);
+        if (iter.hasNext()) {
+            String key = iter.next();
+            window = DebugWindow.createType(key);
+            if (window != null) {
+                if (iter.hasNext()) {
+                    String id = iter.next();
+
+                    window.create();
+                    window.setText(id);
+                    window.addDisposeListener(new DisposeListener() {
+
+                        @Override
+                        public void widgetDisposed(DisposeEvent e) {
+                            map.remove(id);
+                        }
+
+                    });
+                    window.setup(iter);
+                    window.open();
+
+                    map.put(id, window);
+                }
+            }
+            else {
+                List<DebugWindow> list = new ArrayList<>();
+                window = map.get(key);
+                if (window != null) {
+                    list.add(window);
+                    while (iter.hasNext()) {
+                        window = map.get(iter.peekNext());
+                        if (window == null) {
+                            break;
+                        }
+                        list.add(window);
+                        iter.next();
+                    }
+                    for (DebugWindow w : list) {
+                        int index = iter.getIndex();
+                        w.update(iter);
+                        iter.setIndex(index);
+                    }
+                }
+            }
         }
     }
 
