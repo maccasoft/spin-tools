@@ -31,6 +31,8 @@ import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.VerifyEvent;
+import org.eclipse.swt.events.VerifyListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
@@ -312,6 +314,15 @@ public class ConsoleView {
         writeLogFile = preferences.getConsoleWriteLogFile();
 
         preferences.addPropertyChangeListener(preferencesChangeListener);
+
+        console.addVerifyListener(new VerifyListener() {
+
+            @Override
+            public void verifyText(VerifyEvent e) {
+                e.text = e.text.replaceAll("\u001B\\[[;\\d]*m", "");
+            }
+
+        });
 
         console.addDisposeListener(new DisposeListener() {
 
