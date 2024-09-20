@@ -49,18 +49,27 @@ public class Spin2Debug {
     boolean first;
 
     public byte[] compileDebugStatement(Spin2StatementNode root) {
+        boolean skipCogN = false;
         ByteArrayOutputStream os = new ByteArrayOutputStream();
 
-        boolean conditionFirst = false;
-
         if (root.getChildCount() != 0) {
-            String cmd = root.getChild(0).getText().toUpperCase();
-            if ("IF".equals(cmd) || "IFNOT".equals(cmd)) {
-                conditionFirst = true;
+            Spin2StatementNode node = root.getChild(0);
+            String cmd = node.getText();
+
+            if (node.getType() == Token.STRING) {
+                if (cmd.startsWith("\"")) {
+                    cmd = cmd.substring(1);
+                }
+                if (cmd.startsWith("`")) {
+                    skipCogN = true;
+                }
+            }
+            else if ("IF".equalsIgnoreCase(cmd) || "IFNOT".equalsIgnoreCase(cmd)) {
+                skipCogN = true;
             }
         }
 
-        if (!conditionFirst) {
+        if (!skipCogN) {
             os.write(DBC_COGN);
         }
 
@@ -245,16 +254,16 @@ public class Spin2Debug {
 
                         case "IF":
                             os.write(DBC_IF);
-                            if (conditionFirst) {
+                            if (skipCogN) {
                                 os.write(DBC_COGN);
-                                conditionFirst = false;
+                                skipCogN = false;
                             }
                             break;
                         case "IFNOT":
                             os.write(DBC_IFNOT);
-                            if (conditionFirst) {
+                            if (skipCogN) {
                                 os.write(DBC_COGN);
-                                conditionFirst = false;
+                                skipCogN = false;
                             }
                             break;
 
@@ -309,20 +318,29 @@ public class Spin2Debug {
     }
 
     public byte[] compilePAsmDebugStatement(Spin2PAsmDebugLine root) {
+        boolean skipCogN = false;
         ByteArrayOutputStream os = new ByteArrayOutputStream();
 
         os.write(DBC_ASMMODE);
 
-        boolean conditionFirst = false;
-
         if (root.getStatementsCount() != 0) {
-            String cmd = root.getStatement(0).getText().toUpperCase();
-            if ("IF".equals(cmd) || "IFNOT".equals(cmd)) {
-                conditionFirst = true;
+            Spin2DebugCommand node = root.getStatement(0);
+            String cmd = node.getText();
+
+            if (node.getType() == Token.STRING) {
+                if (cmd.startsWith("\"")) {
+                    cmd = cmd.substring(1);
+                }
+                if (cmd.startsWith("`")) {
+                    skipCogN = true;
+                }
+            }
+            else if ("IF".equalsIgnoreCase(cmd) || "IFNOT".equalsIgnoreCase(cmd)) {
+                skipCogN = true;
             }
         }
 
-        if (!conditionFirst) {
+        if (!skipCogN) {
             os.write(DBC_COGN);
         }
 
@@ -536,9 +554,9 @@ public class Spin2Debug {
                                 throw new CompilerException("expecting one argument", node.getToken());
                             }
                             compileArgument(node.getArgument(0), os);
-                            if (conditionFirst) {
+                            if (skipCogN) {
                                 os.write(DBC_COGN);
-                                conditionFirst = false;
+                                skipCogN = false;
                             }
                             break;
                         case "IFNOT":
@@ -547,9 +565,9 @@ public class Spin2Debug {
                                 throw new CompilerException("expecting one argument", node.getToken());
                             }
                             compileArgument(node.getArgument(0), os);
-                            if (conditionFirst) {
+                            if (skipCogN) {
                                 os.write(DBC_COGN);
-                                conditionFirst = false;
+                                skipCogN = false;
                             }
                             break;
 

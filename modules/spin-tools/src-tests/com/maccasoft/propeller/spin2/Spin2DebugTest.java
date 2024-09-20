@@ -50,13 +50,13 @@ class Spin2DebugTest {
             + "00010 00010       04             RETURN\n"
             + "00011 00011       00 00 00       Padding\n"
             + "' Debug data\n"
-            + "00B24 00000       1A 00         \n"
+            + "00B24 00000       19 00         \n"
             + "00B26 00002       04 00         \n"
-            + "00B28 00004       04 06 60 69 6E\n"
-            + "00B2D 00009       64 65 78 3D 00\n"
-            + "00B32 0000E       41 6C 6F 6E 67\n"
-            + "00B37 00013       5B 61 2B 2B 5D\n"
-            + "00B3C 00018       00 00\n"
+            + "00B28 00004       06 60 69 6E 64\n"
+            + "00B2D 00009       65 78 3D 00 41\n"
+            + "00B32 0000E       6C 6F 6E 67 5B\n"
+            + "00B37 00013       61 2B 2B 5D 00\n"
+            + "00B3C 00018       00\n"
             + "", compile(text));
     }
 
@@ -358,7 +358,7 @@ class Spin2DebugTest {
 
         Spin2Debug subject = new Spin2Debug();
         String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
-        Assertions.assertEquals("01 04 06 60 31 32 33 34 35 00 00", actual);
+        Assertions.assertEquals("01 06 60 31 32 33 34 35 00 00", actual);
     }
 
     @Test
@@ -371,7 +371,7 @@ class Spin2DebugTest {
 
         Spin2Debug subject = new Spin2Debug();
         String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
-        Assertions.assertEquals("01 04 06 60 31 32 33 34 35 00 00", actual);
+        Assertions.assertEquals("01 06 60 31 32 33 34 35 00 00", actual);
     }
 
     @Test
