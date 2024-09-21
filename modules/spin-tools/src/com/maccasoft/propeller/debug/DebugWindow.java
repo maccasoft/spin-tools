@@ -42,7 +42,7 @@ public abstract class DebugWindow {
             case "LOGIC":
                 break;
             case "SCOPE":
-                break;
+                return new DebugScopeWindow();
             case "SCOPE_XY":
                 break;
             case "FFT":
