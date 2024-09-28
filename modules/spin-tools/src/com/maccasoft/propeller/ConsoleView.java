@@ -65,8 +65,8 @@ public class ConsoleView {
     boolean writeLogFile;
     boolean enabled;
 
+    StringBuilder pendingText;
     File logFile;
-    StringBuilder lineBuilder = new StringBuilder();
 
     private int utf_buf_index = 0, utf_ch_count = 0;
     private byte[] utf_buf = new byte[4];
@@ -119,14 +119,18 @@ public class ConsoleView {
 
     SerialPortEventListener serialEventListener = new SerialPortEventListener() {
 
+        StringBuilder lineBuilder = new StringBuilder(128);
+
         @Override
         public void serialEvent(SerialPortEvent event) {
             switch (event.getEventType()) {
                 case SerialPort.MASK_RXCHAR:
                     try {
                         byte[] rx = serialPort.readBytes();
-                        for (int i = 0; i < rx.length; i++) {
-                            write(rx[i]);
+                        if (rx != null) {
+                            for (int i = 0; i < rx.length; i++) {
+                                write(rx[i]);
+                            }
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -152,7 +156,7 @@ public class ConsoleView {
                 else if (b == '\n' || b == '\r') {
                     if (lineBuilder.length() != 0) {
                         append(lineBuilder.toString());
-                        lineBuilder = new StringBuilder();
+                        lineBuilder.setLength(0);
                     }
                 }
                 else {
@@ -168,38 +172,11 @@ public class ConsoleView {
             }
         }
 
-        private void append(String text) {
-            if (os != null) {
-                os.println(text);
-                os.flush();
-            }
-            if (console.isDisposed()) {
-                return;
-            }
-            display.asyncExec(new Runnable() {
-
-                @Override
-                public void run() {
-                    if (console.isDisposed()) {
-                        return;
-                    }
-                    console.append(text);
-                    console.append(System.lineSeparator());
-                    while (console.getLineCount() > maxLines) {
-                        int length = console.getOffsetAtLine(console.getLineCount() - maxLines);
-                        console.replaceTextRange(0, length, "");
-                    }
-                    if (text.startsWith("`")) {
-                        handleDebugWindowCommand(text.substring(1));
-                    }
-                    console.invokeAction(ST.TEXT_END);
-                }
-            });
-        }
-
     };
 
     OutputStream consoleOutputStream = new OutputStream() {
+
+        StringBuilder lineBuilder = new StringBuilder(128);
 
         @Override
         public void write(int b) throws IOException {
@@ -219,7 +196,7 @@ public class ConsoleView {
                 else if (b == '\n' || b == '\r') {
                     if (lineBuilder.length() != 0) {
                         append(lineBuilder.toString());
-                        lineBuilder = new StringBuilder();
+                        lineBuilder.setLength(0);
                     }
                 }
                 else {
@@ -248,33 +225,13 @@ public class ConsoleView {
             }
         }
 
-        private void append(String text) {
-            if (console.isDisposed()) {
-                return;
-            }
-            display.asyncExec(new Runnable() {
-
-                @Override
-                public void run() {
-                    if (console.isDisposed()) {
-                        return;
-                    }
-                    console.append(text);
-                    console.append(System.lineSeparator());
-                    while (console.getLineCount() > maxLines) {
-                        int length = console.getOffsetAtLine(console.getLineCount() - maxLines);
-                        console.replaceTextRange(0, length, "");
-                    }
-                    console.invokeAction(ST.TEXT_END);
-                }
-            });
-        }
-
     };
 
     public ConsoleView(Composite parent) {
         display = parent.getDisplay();
         preferences = Preferences.getInstance();
+
+        pendingText = new StringBuilder();
 
         enabled = false;
 
@@ -395,6 +352,7 @@ public class ConsoleView {
     }
 
     public void clear() {
+        pendingText = new StringBuilder();
         for (DebugWindow window : new ArrayList<>(map.values())) {
             window.dispose();
         }
@@ -414,7 +372,6 @@ public class ConsoleView {
                 }
             }
 
-            lineBuilder = new StringBuilder();
             if (serialPort != null) {
                 if (this.serialPort != serialPort) {
                     serialPort.addEventListener(serialEventListener);
@@ -484,6 +441,51 @@ public class ConsoleView {
         if (!enabled) {
             console.setForeground(color);
         }
+    }
+
+    void append(String text) {
+        if (os != null) {
+            os.println(text);
+            os.flush();
+        }
+
+        if (console.isDisposed()) {
+            return;
+        }
+
+        display.asyncExec(new Runnable() {
+
+            @Override
+            public void run() {
+                if (console.isDisposed()) {
+                    return;
+                }
+
+                if (text.startsWith("`")) {
+                    handleDebugWindowCommand(text);
+                }
+
+                if (pendingText.length() == 0) {
+                    display.asyncExec(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            console.append(pendingText.toString());
+                            if (console.getLineCount() > maxLines) {
+                                int length = console.getOffsetAtLine(console.getLineCount() - maxLines);
+                                console.replaceTextRange(0, length, "");
+                            }
+                            console.invokeAction(ST.TEXT_END);
+                            pendingText.setLength(0);
+                        }
+
+                    });
+                }
+                pendingText.append(text);
+                pendingText.append(System.lineSeparator());
+            }
+
+        });
     }
 
     void handleDebugWindowCommand(String text) {

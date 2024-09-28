@@ -19,18 +19,21 @@ public class KeywordIterator {
     int index;
 
     public KeywordIterator(String s) {
-        int idx = 0, state = 0;
+        int idx = 0, state = 0, start = 0;
         List<String> list = new ArrayList<>();
 
-        StringBuilder sb = new StringBuilder();
+        if (idx < s.length() && s.charAt(idx) == '`') {
+            idx++;
+        }
+
         while (idx < s.length()) {
-            char ch = s.charAt(idx++);
+            char ch = s.charAt(idx);
             switch (state) {
                 case 0:
                     if (ch == ',' || ch == ' ' || ch == '\t') {
                         break;
                     }
-                    sb.append(ch);
+                    start = idx;
                     if (ch == '\'') {
                         state = 2;
                         break;
@@ -39,26 +42,23 @@ public class KeywordIterator {
                     break;
                 case 1:
                     if (ch == ',' || ch == ' ' || ch == '\t') {
-                        list.add(sb.toString());
-                        sb = new StringBuilder();
+                        list.add(s.substring(start, idx));
                         state = 0;
                         break;
                     }
-                    sb.append(ch);
                     break;
                 case 2:
-                    sb.append(ch);
                     if (ch == '\'') {
-                        list.add(sb.toString());
-                        sb = new StringBuilder();
+                        list.add(s.substring(start, idx + 1));
                         state = 0;
                         break;
                     }
                     break;
             }
+            idx++;
         }
-        if (sb.length() != 0) {
-            list.add(sb.toString());
+        if (state != 0) {
+            list.add(s.substring(start, idx));
         }
 
         ar = list.toArray(new String[list.size()]);

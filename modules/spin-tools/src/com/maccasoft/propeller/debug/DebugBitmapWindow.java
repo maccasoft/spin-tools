@@ -632,7 +632,7 @@ public class DebugBitmapWindow extends DebugWindow {
 
         GC gc = new GC(target);
         try {
-            Image temp = new Image(display, target, SWT.IMAGE_COPY);
+            Image temp = new Image(display, imageData);
             gc.drawImage(temp, 1, 0, imageData.width - 1, imageData.height, 0, 0, imageData.width - 1, imageData.height);
             gc.drawImage(temp, 0, 0, 1, imageData.height, imageData.width - 1, 0, 1, imageData.height);
             temp.dispose();
@@ -648,7 +648,7 @@ public class DebugBitmapWindow extends DebugWindow {
 
         GC gc = new GC(target);
         try {
-            Image temp = new Image(display, target, SWT.IMAGE_COPY);
+            Image temp = new Image(display, imageData);
             gc.drawImage(temp, 0, 0, imageData.width - 1, imageData.height, 1, 0, imageData.width - 1, imageData.height);
             gc.drawImage(temp, imageData.width - 1, 0, 1, imageData.height, 0, 0, 1, imageData.height);
             temp.dispose();
@@ -664,7 +664,7 @@ public class DebugBitmapWindow extends DebugWindow {
 
         GC gc = new GC(target);
         try {
-            Image temp = new Image(display, target, SWT.IMAGE_COPY);
+            Image temp = new Image(display, imageData);
             gc.drawImage(temp, 0, 0, imageData.width, imageData.height - 1, 0, 1, imageData.width, imageData.height - 1);
             gc.drawImage(temp, 0, imageData.height - 1, imageData.width, 1, 0, 0, imageData.width, 1);
             temp.dispose();
@@ -680,7 +680,7 @@ public class DebugBitmapWindow extends DebugWindow {
 
         GC gc = new GC(target);
         try {
-            Image temp = new Image(display, target, SWT.IMAGE_COPY);
+            Image temp = new Image(display, imageData);
             gc.drawImage(temp, 0, 1, imageData.width, imageData.height - 1, 0, 0, imageData.width, imageData.height - 1);
             gc.drawImage(temp, 0, 0, imageData.width, 1, 0, imageData.height - 1, imageData.width, 1);
             temp.dispose();
