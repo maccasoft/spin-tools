@@ -50,7 +50,7 @@ public abstract class DebugWindow {
             case "SPECTRO":
                 break;
             case "PLOT":
-                break;
+                return new DebugPlotWindow();
             case "TERM":
                 break;
             case "BITMAP":
