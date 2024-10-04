@@ -29,44 +29,6 @@ import org.eclipse.swt.widgets.Display;
 
 public class DebugBitmapWindow extends DebugWindow {
 
-    enum Pack {
-        LONGS_1BIT(0b1, 32, 1),
-        LONGS_2BIT(0b11, 16, 2),
-        LONGS_4BIT(0b1111, 8, 4),
-        LONGS_8BIT(0b11111111, 4, 8),
-        LONGS_16BIT(0b1111111111111111, 2, 16),
-
-        WORDS_1BIT(0b1, 16, 1),
-        WORDS_2BIT(0b11, 8, 2),
-        WORDS_4BIT(0b1111, 4, 4),
-        WORDS_8BIT(0b11111111, 2, 8),
-
-        BYTES_1BIT(0b1, 8, 1),
-        BYTES_2BIT(0b11, 4, 2),
-        BYTES_4BIT(0b1111, 2, 4);
-
-        public final int mask;
-        public final int size;
-        public final int shift;
-
-        Pack(int mask, int size, int shift) {
-            this.mask = mask;
-            this.size = size;
-            this.shift = shift;
-        }
-    }
-
-    enum RGBColor {
-        ORANGE,
-        BLUE,
-        GREEN,
-        CYAN,
-        RED,
-        MAGENTA,
-        YELLOW,
-        GREY
-    }
-
     ImageData imageData;
     Image image;
 
@@ -399,8 +361,9 @@ public class DebugBitmapWindow extends DebugWindow {
                                 }
                                 key = iter.next();
                             }
-
-                            doSaveBitmap(image, key, window);
+                            if (isString(key)) {
+                                doSaveBitmap(image, stringStrip(key), window);
+                            }
                         }
                         break;
 

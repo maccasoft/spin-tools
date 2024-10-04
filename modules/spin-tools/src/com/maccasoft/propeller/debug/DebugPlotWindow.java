@@ -31,8 +31,6 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 
-import com.maccasoft.propeller.debug.DebugBitmapWindow.RGBColor;
-
 public class DebugPlotWindow extends DebugWindow {
 
     Image image;
@@ -580,8 +578,9 @@ public class DebugPlotWindow extends DebugWindow {
                             }
                             key = iter.next();
                         }
-
-                        doSaveBitmap(image, key, window);
+                        if (isString(key)) {
+                            doSaveBitmap(image, stringStrip(key), window);
+                        }
                     }
                     break;
 

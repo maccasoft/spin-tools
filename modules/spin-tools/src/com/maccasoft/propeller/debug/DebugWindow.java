@@ -14,6 +14,7 @@ import java.io.File;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
@@ -29,6 +30,62 @@ import org.eclipse.swt.widgets.Shell;
 
 public abstract class DebugWindow {
 
+    public static final Color RED = new Color(0xFF, 0x00, 0x00);
+    public static final Color LIME = new Color(0x00, 0xFF, 0x00);
+    public static final Color BLUE = new Color(0x3F, 0x3F, 0xFF);
+    public static final Color YELLOW = new Color(0xFF, 0xFF, 0x00);
+    public static final Color MAGENTA = new Color(0xFF, 0x00, 0xFF);
+    public static final Color CYAN = new Color(0x00, 0xFF, 0xFF);
+    public static final Color ORANGE = new Color(0xFF, 0x7F, 0x00);
+    public static final Color OLIVE = new Color(0x7F, 0x7F, 0x00);
+    public static final Color WHITE = new Color(0xFF, 0xFF, 0xFF);
+    public static final Color BLACK = new Color(0x00, 0x00, 0x00);
+    public static final Color GRAY = new Color(0x40, 0x40, 0x40);
+    public static final Color GRAY2 = new Color(0x80, 0x80, 0x80);
+    public static final Color GRAY3 = new Color(0xD0, 0xD0, 0xD0);
+
+    public static final Color[] defaultColors = {
+        LIME, RED, CYAN, YELLOW, MAGENTA, BLUE, ORANGE, OLIVE
+    };
+
+    public static enum Pack {
+        LONGS_1BIT(0b1, 32, 1),
+        LONGS_2BIT(0b11, 16, 2),
+        LONGS_4BIT(0b1111, 8, 4),
+        LONGS_8BIT(0b11111111, 4, 8),
+        LONGS_16BIT(0b1111111111111111, 2, 16),
+
+        WORDS_1BIT(0b1, 16, 1),
+        WORDS_2BIT(0b11, 8, 2),
+        WORDS_4BIT(0b1111, 4, 4),
+        WORDS_8BIT(0b11111111, 2, 8),
+
+        BYTES_1BIT(0b1, 8, 1),
+        BYTES_2BIT(0b11, 4, 2),
+        BYTES_4BIT(0b1111, 2, 4);
+
+        public final int mask;
+        public final int size;
+        public final int shift;
+
+        Pack(int mask, int size, int shift) {
+            this.mask = mask;
+            this.size = size;
+            this.shift = shift;
+        }
+    }
+
+    public static enum RGBColor {
+        ORANGE,
+        BLUE,
+        GREEN,
+        CYAN,
+        RED,
+        MAGENTA,
+        YELLOW,
+        GREY
+    }
+
     protected Display display;
     protected Shell shell;
 
@@ -40,7 +97,7 @@ public abstract class DebugWindow {
     public static DebugWindow createType(String key) {
         switch (key.toUpperCase()) {
             case "LOGIC":
-                break;
+                return new DebugLogicWindow();
             case "SCOPE":
                 return new DebugScopeWindow();
             case "SCOPE_XY":
@@ -115,6 +172,14 @@ public abstract class DebugWindow {
 
     public void update(KeywordIterator iter) {
 
+    }
+
+    protected boolean isString(String s) {
+        return s.startsWith("'") && s.endsWith("'");
+    }
+
+    protected String stringStrip(String s) {
+        return s.substring(1, s.length() - 1);
     }
 
     protected boolean isNumber(String s) {
@@ -217,6 +282,9 @@ public abstract class DebugWindow {
         }
         else if (fileName.toLowerCase().endsWith(".jpg")) {
             format = SWT.IMAGE_JPEG;
+        }
+        else if (!fileName.toLowerCase().endsWith(".bmp")) {
+            fileName = fileName + ".bmp";
         }
 
         ImageLoader loader = new ImageLoader();

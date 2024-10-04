@@ -28,9 +28,6 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 
-import com.maccasoft.propeller.debug.DebugBitmapWindow.Pack;
-import com.maccasoft.propeller.debug.DebugBitmapWindow.RGBColor;
-
 public class DebugScopeWindow extends DebugWindow {
 
     Image image;
@@ -76,6 +73,7 @@ public class DebugScopeWindow extends DebugWindow {
         Color color;
 
         int[] data;
+        int dataIndex;
 
         public Channel(String name, int min, int max, boolean auto, int y_size, int y_base, int legend, Color color) {
             this.name = name;
@@ -91,13 +89,18 @@ public class DebugScopeWindow extends DebugWindow {
             this.color = color;
 
             this.data = new int[samples];
+            this.dataIndex = 0;
         }
 
         public void add(int sample) {
+            data[dataIndex++] = sample;
+            if (dataIndex >= data.length) {
+                dataIndex = 0;
+            }
             if (auto) {
-                min = sample;
-                max = sample;
-                for (int i = 1; i < data.length; i++) {
+                min = Integer.MAX_VALUE;
+                max = Integer.MIN_VALUE;
+                for (int i = 0; i < data.length; i++) {
                     int d = data[i];
                     if (d < min) {
                         min = d;
@@ -105,25 +108,22 @@ public class DebugScopeWindow extends DebugWindow {
                     if (d > max) {
                         max = d;
                     }
-                    data[i - 1] = d;
                 }
             }
-            else {
-                System.arraycopy(data, 1, data, 0, data.length - 1);
-            }
-            data[data.length - 1] = sample;
         }
 
         public void plot(GC gc) {
             double sx = (double) imageSize.x / (double) samples;
             double sy = (double) y_size / (double) (max - min);
             int[] array = new int[data.length * 2];
+            int index = (dataIndex + triggerOffset + data.length / 2) % data.length;
 
             double x = 0;
-            int index = 0;
+            int idx = 0;
             for (int i = 0; i < data.length; i++) {
-                array[index++] = (int) Math.round(x);
-                array[index++] = (imageSize.y - y_base) - (int) Math.round((data[i] - min) * sy);
+                array[idx++] = (int) Math.round(x);
+                array[idx++] = (imageSize.y - y_base) - (int) Math.round((data[index] - min) * sy);
+                index = (index + 1) % data.length;
                 x += sx;
             }
 
@@ -164,14 +164,7 @@ public class DebugScopeWindow extends DebugWindow {
     protected void createContents(Composite parent) {
         super.createContents(parent);
 
-        image = new Image(display, new ImageData(imageSize.x, imageSize.y, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF)));
-        imageGc = new GC(image);
-
-        imageGc.setAdvanced(true);
-        imageGc.setAntialias(SWT.ON);
-        imageGc.setInterpolation(SWT.NONE);
-        imageGc.setBackground(backColor);
-        imageGc.fillRectangle(0, 0, imageSize.x, imageSize.y);
+        resize();
 
         canvas.addPaintListener(new PaintListener() {
 
@@ -283,15 +276,29 @@ public class DebugScopeWindow extends DebugWindow {
     @Override
     protected void size(KeywordIterator iter) {
         super.size(iter);
+        resize();
+    }
 
-        imageGc.dispose();
-        image.dispose();
+    void resize() {
+        if (imageGc != null) {
+            imageGc.dispose();
+        }
+        if (image != null) {
+            image.dispose();
+        }
         image = new Image(display, new ImageData(imageSize.x, imageSize.y, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF)));
         imageGc = new GC(image);
 
         imageGc.setAdvanced(true);
-        imageGc.setAntialias(SWT.ON);
+        imageGc.setAdvanced(true);
+        imageGc.setAntialias(SWT.OFF);
+        imageGc.setTextAntialias(SWT.ON);
         imageGc.setInterpolation(SWT.NONE);
+        imageGc.setLineCap(SWT.CAP_SQUARE);
+        imageGc.setLineDash(new int[] {
+            3, 3
+        });
+
         imageGc.setBackground(backColor);
         imageGc.fillRectangle(0, 0, imageSize.x, imageSize.y);
     }
@@ -388,8 +395,9 @@ public class DebugScopeWindow extends DebugWindow {
                                 }
                                 key = iter.next();
                             }
-
-                            doSaveBitmap(image, key, window);
+                            if (isString(key)) {
+                                doSaveBitmap(image, stringStrip(key), window);
+                            }
                         }
                         break;
 
@@ -470,7 +478,8 @@ public class DebugScopeWindow extends DebugWindow {
                 if (triggerChannel != -1) {
                     triggered = false;
 
-                    sample = channelData[triggerChannel].data[triggerOffset];
+                    Channel ch = channelData[triggerChannel];
+                    sample = ch.data[(ch.dataIndex + triggerOffset - 1) % ch.data.length];
                     if (armed) {
                         if (triggerFire >= triggerArm) {
                             if (sample >= triggerFire) {
@@ -548,7 +557,7 @@ public class DebugScopeWindow extends DebugWindow {
             double sx = (double) imageSize.x / (double) samples;
             x = (int) Math.round(triggerOffset * sx);
             imageGc.setForeground(new Color(64, 64, 64));
-            imageGc.setLineStyle(SWT.LINE_DASH);
+            imageGc.setLineStyle(SWT.LINE_CUSTOM);
             imageGc.drawLine(x, 0, x, imageSize.y);
         }
 
