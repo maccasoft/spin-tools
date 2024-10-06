@@ -74,7 +74,7 @@ public abstract class DebugWindow {
             case "SCOPE":
                 return new DebugScopeWindow();
             case "SCOPE_XY":
-                break;
+                return new DebugScopeXYWindow();
             case "FFT":
                 break;
             case "SPECTRO":
