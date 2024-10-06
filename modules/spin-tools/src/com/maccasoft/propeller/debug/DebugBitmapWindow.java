@@ -24,7 +24,7 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Display;
 
 public class DebugBitmapWindow extends DebugWindow {
@@ -40,8 +40,7 @@ public class DebugBitmapWindow extends DebugWindow {
     int colorTune;
     int[] lutColors;
 
-    Pack packMode;
-    boolean altPack;
+    PackMode packMode;
 
     int rate;
     int rateCount;
@@ -55,45 +54,11 @@ public class DebugBitmapWindow extends DebugWindow {
         colorTune = 0;
         lutColors = new int[256];
 
-        packMode = null;
-        altPack = false;
+        packMode = PackMode.NONE();
 
         rate = -1;
         rateCount = 0;
         autoUpdate = true;
-    }
-
-    @Override
-    protected void createContents(Composite parent) {
-        super.createContents(parent);
-
-        imageData = new ImageData(imageSize.x, imageSize.y, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF));
-        image = new Image(display, imageData);
-
-        canvas.addPaintListener(new PaintListener() {
-
-            @Override
-            public void paintControl(PaintEvent e) {
-                e.gc.setAdvanced(true);
-                e.gc.setAntialias(SWT.ON);
-                e.gc.setInterpolation(SWT.OFF);
-                if (image.isDisposed()) {
-                    image = new Image(e.display, imageData);
-                }
-                Point canvasSize = canvas.getSize();
-                e.gc.drawImage(image, 0, 0, imageSize.x, imageSize.y, 0, 0, canvasSize.x, canvasSize.y);
-            }
-
-        });
-
-        canvas.addDisposeListener(new DisposeListener() {
-
-            @Override
-            public void widgetDisposed(DisposeEvent e) {
-                image.dispose();
-            }
-
-        });
     }
 
     @Override
@@ -171,7 +136,7 @@ public class DebugBitmapWindow extends DebugWindow {
                 case "BYTES_1BIT":
                 case "BYTES_2BIT":
                 case "BYTES_4BIT":
-                    packedMode(cmd, iter);
+                    packMode = packedMode(cmd, iter);
                     break;
 
                 case "UPDATE":
@@ -182,14 +147,41 @@ public class DebugBitmapWindow extends DebugWindow {
                     break;
             }
         }
-    }
 
-    @Override
-    protected void size(KeywordIterator iter) {
-        super.size(iter);
-
-        image.dispose();
         imageData = new ImageData(imageSize.x, imageSize.y, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF));
+        image = new Image(display, imageData);
+
+        canvas.addPaintListener(new PaintListener() {
+
+            @Override
+            public void paintControl(PaintEvent e) {
+                e.gc.setAdvanced(true);
+                e.gc.setAntialias(SWT.ON);
+                e.gc.setInterpolation(SWT.OFF);
+                if (image.isDisposed()) {
+                    image = new Image(e.display, imageData);
+                }
+                Point canvasSize = canvas.getSize();
+                e.gc.drawImage(image, 0, 0, imageSize.x, imageSize.y, 0, 0, canvasSize.x, canvasSize.y);
+            }
+
+        });
+
+        canvas.addDisposeListener(new DisposeListener() {
+
+            @Override
+            public void widgetDisposed(DisposeEvent e) {
+                image.dispose();
+            }
+
+        });
+
+        GridData gridData = (GridData) canvas.getLayoutData();
+        gridData.widthHint = imageSize.x * dotSize.x;
+        gridData.heightHint = imageSize.y * dotSize.y;
+
+        shell.pack();
+        shell.redraw();
     }
 
     void trace(KeywordIterator iter) {
@@ -229,15 +221,6 @@ public class DebugBitmapWindow extends DebugWindow {
         }
     }
 
-    void packedMode(String cmd, KeywordIterator iter) {
-        packMode = Pack.valueOf(cmd.toUpperCase());
-        altPack = false;
-        if (iter.hasNext() && "ALT".equalsIgnoreCase(iter.peekNext())) {
-            altPack = true;
-            iter.next();
-        }
-    }
-
     @Override
     public void update(KeywordIterator iter) {
         int pixel, color;
@@ -249,29 +232,10 @@ public class DebugBitmapWindow extends DebugWindow {
             if (isNumber(cmd)) {
                 try {
                     pixel = stringToNumber(cmd);
-                    if (packMode != null) {
-                        if (altPack) {
-                            if (packMode.shift <= 1) {
-                                pixel = ((pixel >> 1) & 0x55555555) | ((pixel << 1) & 0xAAAAAAAA);
-                            }
-                            if (packMode.shift <= 2) {
-                                pixel = ((pixel >> 2) & 0x33333333) | ((pixel << 2) & 0xCCCCCCCC);
-                            }
-                            if (packMode.shift <= 4) {
-                                pixel = ((pixel >> 4) & 0x0F0F0F0F) | ((pixel << 4) & 0xF0F0F0F0);
-                            }
-                        }
-                        for (int i = 0; i < packMode.size; i++) {
-                            color = translateColor(pixel & packMode.mask, colorMode);
-                            imageData.setPixel(x, y, color);
-                            stepTrace();
-                            pixel >>= packMode.shift;
-                        }
-                    }
-                    else {
-                        color = translateColor(pixel, colorMode);
-                        imageData.setPixel(x, y, color);
-                        stepTrace();
+                    packMode.newPack(pixel);
+                    for (int i = 0; i < packMode.size; i++) {
+                        color = translateColor(packMode.unpack(), colorMode);
+                        stepTrace(color);
                     }
                 } catch (Exception e) {
                     // Do nothing
@@ -450,11 +414,11 @@ public class DebugBitmapWindow extends DebugWindow {
         }
     }
 
-    void stepTrace() {
+    void stepTrace(int color) {
         switch (traceMode) {
             case 0:
             case 0 | 8:
-                if (++x >= imageData.width) {
+                if (x >= imageData.width) {
                     x = 0;
                     if ((traceMode & 8) != 0) {
                         scrollDown();
@@ -462,6 +426,13 @@ public class DebugBitmapWindow extends DebugWindow {
                     else if (++y >= imageData.height) {
                         y = 0;
                     }
+                    if (autoUpdate && rate == -1) {
+                        image.dispose();
+                        canvas.redraw();
+                    }
+                }
+                imageData.setPixel(x, y, color);
+                if (++x >= imageData.width) {
                     if (autoUpdate && rate == -1) {
                         image.dispose();
                         canvas.redraw();
@@ -470,7 +441,7 @@ public class DebugBitmapWindow extends DebugWindow {
                 break;
             case 1:
             case 1 | 8:
-                if (--x < 0) {
+                if (x < 0) {
                     x = imageData.width - 1;
                     if ((traceMode & 8) != 0) {
                         scrollDown();
@@ -483,10 +454,17 @@ public class DebugBitmapWindow extends DebugWindow {
                         canvas.redraw();
                     }
                 }
+                imageData.setPixel(x, y, color);
+                if (--x < 0) {
+                    if (autoUpdate && rate == -1) {
+                        image.dispose();
+                        canvas.redraw();
+                    }
+                }
                 break;
             case 2:
             case 2 | 8:
-                if (++x >= imageData.width) {
+                if (x >= imageData.width) {
                     x = 0;
                     if ((traceMode & 8) != 0) {
                         scrollUp();
@@ -499,10 +477,17 @@ public class DebugBitmapWindow extends DebugWindow {
                         canvas.redraw();
                     }
                 }
+                imageData.setPixel(x, y, color);
+                if (++x >= imageData.width) {
+                    if (autoUpdate && rate == -1) {
+                        image.dispose();
+                        canvas.redraw();
+                    }
+                }
                 break;
             case 3:
             case 3 | 8:
-                if (--x < 0) {
+                if (x < 0) {
                     x = imageData.width - 1;
                     if ((traceMode & 8) != 0) {
                         scrollUp();
@@ -515,10 +500,16 @@ public class DebugBitmapWindow extends DebugWindow {
                         canvas.redraw();
                     }
                 }
+                if (--x < 0) {
+                    if (autoUpdate && rate == -1) {
+                        image.dispose();
+                        canvas.redraw();
+                    }
+                }
                 break;
             case 4:
             case 4 | 8:
-                if (++y >= imageData.height) {
+                if (y >= imageData.height) {
                     y = 0;
                     if ((traceMode & 8) != 0) {
                         scrollRight();
@@ -531,10 +522,17 @@ public class DebugBitmapWindow extends DebugWindow {
                         canvas.redraw();
                     }
                 }
+                imageData.setPixel(x, y, color);
+                if (++y >= imageData.height) {
+                    if (autoUpdate && rate == -1) {
+                        image.dispose();
+                        canvas.redraw();
+                    }
+                }
                 break;
             case 5:
             case 5 | 8:
-                if (--y < 0) {
+                if (y < 0) {
                     y = imageData.height - 1;
                     if ((traceMode & 8) != 0) {
                         scrollRight();
@@ -547,10 +545,17 @@ public class DebugBitmapWindow extends DebugWindow {
                         canvas.redraw();
                     }
                 }
+                imageData.setPixel(x, y, color);
+                if (--y < 0) {
+                    if (autoUpdate && rate == -1) {
+                        image.dispose();
+                        canvas.redraw();
+                    }
+                }
                 break;
             case 6:
             case 6 | 8:
-                if (++y >= imageData.height) {
+                if (y >= imageData.height) {
                     y = 0;
                     if ((traceMode & 8) != 0) {
                         scrollLeft();
@@ -563,9 +568,16 @@ public class DebugBitmapWindow extends DebugWindow {
                         canvas.redraw();
                     }
                 }
+                imageData.setPixel(x, y, color);
+                if (++y >= imageData.height) {
+                    if (autoUpdate && rate == -1) {
+                        image.dispose();
+                        canvas.redraw();
+                    }
+                }
                 break;
             case 7 | 8:
-                if (--y < 0) {
+                if (y < 0) {
                     y = imageData.height - 1;
                     if ((traceMode & 8) != 0) {
                         scrollRight();
@@ -573,6 +585,13 @@ public class DebugBitmapWindow extends DebugWindow {
                     else if (--x < 0) {
                         x = imageData.width - 1;
                     }
+                    if (autoUpdate && rate == -1) {
+                        image.dispose();
+                        canvas.redraw();
+                    }
+                }
+                imageData.setPixel(x, y, color);
+                if (--y < 0) {
                     if (autoUpdate && rate == -1) {
                         image.dispose();
                         canvas.redraw();

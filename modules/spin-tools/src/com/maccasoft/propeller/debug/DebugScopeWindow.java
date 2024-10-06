@@ -14,19 +14,25 @@ import java.util.function.Consumer;
 
 import org.eclipse.core.databinding.observable.Realm;
 import org.eclipse.jface.databinding.swt.DisplayRealm;
+import org.eclipse.jface.resource.JFaceResources;
+import org.eclipse.jface.resource.StringConverter;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Display;
+
+import com.maccasoft.propeller.Preferences;
 
 public class DebugScopeWindow extends DebugWindow {
 
@@ -40,14 +46,17 @@ public class DebugScopeWindow extends DebugWindow {
     int colorTune;
     Color[] lutColors;
 
-    Pack packMode;
-    boolean altPack;
+    int lineSize;
+    int textSize;
 
-    int samples = 256;
-    int channel = 0;
+    PackMode packMode;
+
+    int samples;
+    int channelIndex;
     Channel[] channelData;
 
     int sampleCount;
+    int sampleIndex;
 
     int triggerChannel;
     int triggerArm;
@@ -58,6 +67,9 @@ public class DebugScopeWindow extends DebugWindow {
 
     int rate;
     int rateCount;
+
+    Font font;
+    int charHeight;
 
     class Channel {
         String name;
@@ -72,10 +84,10 @@ public class DebugScopeWindow extends DebugWindow {
         int legend;
         Color color;
 
-        int[] data;
-        int dataIndex;
+        int[] sampleData;
+        int[] array;
 
-        public Channel(String name, int min, int max, boolean auto, int y_size, int y_base, int legend, Color color) {
+        Channel(String name, int min, int max, boolean auto, int y_size, int y_base, int legend, Color color) {
             this.name = name;
 
             this.min = min;
@@ -88,20 +100,16 @@ public class DebugScopeWindow extends DebugWindow {
             this.legend = legend;
             this.color = color;
 
-            this.data = new int[samples];
-            this.dataIndex = 0;
+            this.sampleData = new int[samples];
+            this.array = new int[sampleData.length * 2];
         }
 
-        public void add(int sample) {
-            data[dataIndex++] = sample;
-            if (dataIndex >= data.length) {
-                dataIndex = 0;
-            }
+        void plot(GC gc) {
             if (auto) {
                 min = Integer.MAX_VALUE;
                 max = Integer.MIN_VALUE;
-                for (int i = 0; i < data.length; i++) {
-                    int d = data[i];
+                for (int i = 0; i < sampleData.length; i++) {
+                    int d = sampleData[i];
                     if (d < min) {
                         min = d;
                     }
@@ -110,20 +118,16 @@ public class DebugScopeWindow extends DebugWindow {
                     }
                 }
             }
-        }
 
-        public void plot(GC gc) {
             double sx = (double) imageSize.x / (double) samples;
             double sy = (double) y_size / (double) (max - min);
-            int[] array = new int[data.length * 2];
-            int index = (dataIndex + triggerOffset + data.length / 2) % data.length;
+            int index = (sampleIndex + triggerOffset + sampleData.length / 2) % sampleData.length;
 
             double x = 0;
-            int idx = 0;
-            for (int i = 0; i < data.length; i++) {
+            for (int i = 0, idx = 0; i < sampleData.length; i++) {
                 array[idx++] = (int) Math.round(x);
-                array[idx++] = (imageSize.y - y_base) - (int) Math.round((data[index] - min) * sy);
-                index = (index + 1) % data.length;
+                array[idx++] = (imageSize.y - y_base) - (int) Math.round((sampleData[index] - min) * sy);
+                index = (index + 1) % sampleData.length;
                 x += sx;
             }
 
@@ -135,17 +139,19 @@ public class DebugScopeWindow extends DebugWindow {
 
     public DebugScopeWindow() {
         backColor = new Color(0, 0, 0);
-        gridColor = new Color(192, 192, 192);
+        gridColor = new Color(64, 64, 64);
 
         colorMode = ColorMode.RGB24;
         colorTune = 0;
         lutColors = new Color[256];
 
-        packMode = null;
-        altPack = false;
+        lineSize = 1;
+        textSize = 0;
+
+        packMode = PackMode.NONE();
 
         samples = 256;
-        channel = 0;
+        channelIndex = 0;
         channelData = new Channel[0];
 
         sampleCount = 0;
@@ -158,38 +164,6 @@ public class DebugScopeWindow extends DebugWindow {
 
         rate = 1;
         rateCount = 0;
-    }
-
-    @Override
-    protected void createContents(Composite parent) {
-        super.createContents(parent);
-
-        resize();
-
-        canvas.addPaintListener(new PaintListener() {
-
-            @Override
-            public void paintControl(PaintEvent e) {
-                Point canvasSize = canvas.getSize();
-
-                e.gc.setAdvanced(true);
-                e.gc.setAntialias(SWT.ON);
-                e.gc.setInterpolation(SWT.HIGH);
-
-                e.gc.drawImage(image, 0, 0, imageSize.x, imageSize.y, 0, 0, canvasSize.x, canvasSize.y);
-            }
-
-        });
-
-        canvas.addDisposeListener(new DisposeListener() {
-
-            @Override
-            public void widgetDisposed(DisposeEvent e) {
-                imageGc.dispose();
-                image.dispose();
-            }
-
-        });
     }
 
     @Override
@@ -227,13 +201,13 @@ public class DebugScopeWindow extends DebugWindow {
 
                 case "LINESIZE":
                     if (iter.hasNextNumber()) {
-                        iter.nextNumber();
+                        lineSize = iter.nextNumber();
                     }
                     break;
 
                 case "TEXTSIZE":
                     if (iter.hasNextNumber()) {
-                        iter.nextNumber();
+                        textSize = iter.nextNumber();
                     }
                     break;
 
@@ -246,7 +220,6 @@ public class DebugScopeWindow extends DebugWindow {
                     }
                     break;
 
-                case "LONGS":
                 case "LONGS_1BIT":
                 case "LONGS_2BIT":
                 case "LONGS_4BIT":
@@ -259,33 +232,38 @@ public class DebugScopeWindow extends DebugWindow {
                 case "BYTES_1BIT":
                 case "BYTES_2BIT":
                 case "BYTES_4BIT":
-                    packMode = Pack.valueOf(cmd);
-                    altPack = false;
-                    if (iter.hasNext() && "ALT".equalsIgnoreCase(iter.peekNext())) {
-                        altPack = true;
-                        iter.next();
-                    }
+                    packMode = packedMode(cmd, iter);
                     break;
 
                 case "HIDEXY":
                     break;
             }
         }
-    }
 
-    @Override
-    protected void size(KeywordIterator iter) {
-        super.size(iter);
-        resize();
-    }
+        Font textFont = JFaceResources.getTextFont();
+        FontData fontData = textFont.getFontData()[0];
+        if (Preferences.getInstance().getEditorFont() != null) {
+            fontData = StringConverter.asFontData(Preferences.getInstance().getEditorFont());
+        }
+        fontData.setStyle(SWT.NONE);
+        font = new Font(display, fontData.getName(), textSize != 0 ? textSize : fontData.getHeight(), SWT.NONE);
 
-    void resize() {
-        if (imageGc != null) {
-            imageGc.dispose();
+        GC gc = new GC(canvas);
+        try {
+            gc.setFont(font);
+            charHeight = gc.stringExtent("X").y;
+            for (Channel ch : channelData) {
+                Point extent = gc.stringExtent(ch.name);
+                if (extent.y > charHeight) {
+                    charHeight = extent.y;
+                }
+            }
+        } finally {
+            gc.dispose();
         }
-        if (image != null) {
-            image.dispose();
-        }
+        charHeight += 5;
+        imageSize.y += charHeight;
+
         image = new Image(display, new ImageData(imageSize.x, imageSize.y, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF)));
         imageGc = new GC(image);
 
@@ -295,12 +273,43 @@ public class DebugScopeWindow extends DebugWindow {
         imageGc.setTextAntialias(SWT.ON);
         imageGc.setInterpolation(SWT.NONE);
         imageGc.setLineCap(SWT.CAP_SQUARE);
-        imageGc.setLineDash(new int[] {
-            3, 3
-        });
+        imageGc.setLineWidth(lineSize);
+        imageGc.setFont(font);
 
         imageGc.setBackground(backColor);
         imageGc.fillRectangle(0, 0, imageSize.x, imageSize.y);
+
+        canvas.addPaintListener(new PaintListener() {
+
+            @Override
+            public void paintControl(PaintEvent e) {
+                Point canvasSize = canvas.getSize();
+
+                e.gc.setAdvanced(true);
+                e.gc.setAntialias(SWT.ON);
+                e.gc.setInterpolation(SWT.HIGH);
+
+                e.gc.drawImage(image, 0, 0, imageSize.x, imageSize.y, 0, 0, canvasSize.x, canvasSize.y);
+            }
+
+        });
+
+        canvas.addDisposeListener(new DisposeListener() {
+
+            @Override
+            public void widgetDisposed(DisposeEvent e) {
+                imageGc.dispose();
+                image.dispose();
+            }
+
+        });
+
+        GridData gridData = (GridData) canvas.getLayoutData();
+        gridData.widthHint = imageSize.x * dotSize.x;
+        gridData.heightHint = imageSize.y * dotSize.y;
+
+        shell.pack();
+        shell.redraw();
     }
 
     void rate(KeywordIterator iter) {
@@ -322,25 +331,9 @@ public class DebugScopeWindow extends DebugWindow {
             if (isNumber(cmd)) {
                 try {
                     sample = stringToNumber(cmd);
-                    if (packMode != null) {
-                        if (altPack) {
-                            if (packMode.shift <= 1) {
-                                sample = ((sample >> 1) & 0x55555555) | ((sample << 1) & 0xAAAAAAAA);
-                            }
-                            if (packMode.shift <= 2) {
-                                sample = ((sample >> 2) & 0x33333333) | ((sample << 2) & 0xCCCCCCCC);
-                            }
-                            if (packMode.shift <= 4) {
-                                sample = ((sample >> 4) & 0x0F0F0F0F) | ((sample << 4) & 0xF0F0F0F0);
-                            }
-                        }
-                        for (int i = 0; i < packMode.size; i++) {
-                            processSample(sample & packMode.mask);
-                            sample >>= packMode.shift;
-                        }
-                    }
-                    else {
-                        processSample(sample);
+                    packMode.newPack(sample);
+                    for (int i = 0; i < packMode.size; i++) {
+                        processSample(packMode.unpack());
                     }
                 } catch (Exception e) {
                     // Do nothing
@@ -469,17 +462,23 @@ public class DebugScopeWindow extends DebugWindow {
     }
 
     void processSample(int sample) {
-        channelData[channel].add(sample);
+        channelData[channelIndex].sampleData[sampleIndex] = sample;
 
-        channel++;
-        if (channel >= channelData.length) {
-            sampleCount++;
-            if (sampleCount >= samples) {
+        channelIndex++;
+        if (channelIndex >= channelData.length) {
+            sampleIndex++;
+            if (sampleIndex >= samples) {
+                sampleIndex = 0;
+            }
+
+            if (sampleCount < samples) {
+                sampleCount++;
+            }
+            else {
                 if (triggerChannel != -1) {
                     triggered = false;
 
-                    Channel ch = channelData[triggerChannel];
-                    sample = ch.data[(ch.dataIndex + triggerOffset - 1) % ch.data.length];
+                    sample = channelData[triggerChannel].sampleData[(sampleIndex + triggerOffset - 1) % samples];
                     if (armed) {
                         if (triggerFire >= triggerArm) {
                             if (sample >= triggerFire) {
@@ -511,7 +510,6 @@ public class DebugScopeWindow extends DebugWindow {
                         rateCount++;
                         if (rateCount >= rate) {
                             update();
-                            canvas.redraw();
                             rateCount = 0;
                         }
                     }
@@ -520,13 +518,12 @@ public class DebugScopeWindow extends DebugWindow {
                     rateCount++;
                     if (rateCount >= rate) {
                         update();
-                        canvas.redraw();
                         rateCount = 0;
                     }
                 }
             }
 
-            channel = 0;
+            channelIndex = 0;
         }
     }
 
@@ -551,17 +548,20 @@ public class DebugScopeWindow extends DebugWindow {
     void update() {
         int x;
 
+        imageGc.setBackground(backColor);
         imageGc.fillRectangle(0, 0, imageSize.x, imageSize.y);
+
+        imageGc.setLineStyle(SWT.LINE_SOLID);
+        imageGc.setForeground(gridColor);
+
+        imageGc.drawLine(0, charHeight, imageSize.x, charHeight);
 
         if (triggerChannel != -1) {
             double sx = (double) imageSize.x / (double) samples;
             x = (int) Math.round(triggerOffset * sx);
-            imageGc.setForeground(new Color(64, 64, 64));
-            imageGc.setLineStyle(SWT.LINE_CUSTOM);
-            imageGc.drawLine(x, 0, x, imageSize.y);
+            imageGc.drawLine(x, charHeight, x, imageSize.y);
         }
 
-        imageGc.setLineStyle(SWT.LINE_SOLID);
         for (int i = 0; i < channelData.length; i++) {
             channelData[i].plot(imageGc);
         }
@@ -573,6 +573,8 @@ public class DebugScopeWindow extends DebugWindow {
             x += imageGc.stringExtent(channelData[i].name).x;
             x += imageGc.stringExtent("A").x;
         }
+
+        canvas.redraw();
     }
 
     static String[] data = new String[] {

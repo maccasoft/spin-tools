@@ -30,7 +30,6 @@ import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 
 import com.maccasoft.propeller.Preferences;
@@ -44,14 +43,13 @@ public class DebugLogicWindow extends DebugWindow {
     int sampleDataIndex;
 
     int spacing;
-    int rate;
     int lineSize;
+    int textSize;
 
     Color backColor;
     Color gridColor;
 
-    Pack packMode;
-    boolean altPack;
+    PackMode packMode;
 
     Channel channelData[];
 
@@ -61,12 +59,16 @@ public class DebugLogicWindow extends DebugWindow {
     boolean armed;
     boolean triggered;
 
+    int rate;
+    int rateCount;
+
     int holdOff;
     int holdOffCount;
 
     int sampleCount;
 
     Font font;
+    int textWidth;
     int charHeight;
 
     class Channel {
@@ -82,9 +84,9 @@ public class DebugLogicWindow extends DebugWindow {
             this.color = color;
         }
 
-        public void plot(GC gc, int lineY) {
+        void plot(GC gc, int lineY) {
             int y;
-            int x = 0;
+            int x = textWidth + 5;
             int index = (sampleDataIndex + triggerOffset + sampleData.length / 2) % sampleData.length;
 
             gc.setForeground(color);
@@ -120,12 +122,14 @@ public class DebugLogicWindow extends DebugWindow {
         sampleData = new int[32];
         sampleDataIndex = 0;
 
-        spacing = 8;
-        rate = 1;
-        lineSize = 1;
+        packMode = PackMode.NONE();
 
-        backColor = BLACK;
-        gridColor = GRAY3;
+        spacing = 8;
+        lineSize = 1;
+        textSize = 0;
+
+        backColor = new Color(0, 0, 0);
+        gridColor = new Color(64, 64, 64);
 
         channelData = new Channel[0];
 
@@ -135,51 +139,13 @@ public class DebugLogicWindow extends DebugWindow {
         armed = false;
         triggered = false;
 
+        rate = 1;
+        rateCount = 0;
+
         holdOff = 0;
         holdOffCount = holdOff;
 
         sampleCount = 0;
-    }
-
-    @Override
-    protected void createContents(Composite parent) {
-        super.createContents(parent);
-
-        Font textFont = JFaceResources.getTextFont();
-        FontData fontData = textFont.getFontData()[0];
-        if (Preferences.getInstance().getEditorFont() != null) {
-            fontData = StringConverter.asFontData(Preferences.getInstance().getEditorFont());
-        }
-        fontData.setStyle(SWT.NONE);
-        font = new Font(display, fontData.getName(), fontData.getHeight(), SWT.NONE);
-
-        resize();
-
-        canvas.addPaintListener(new PaintListener() {
-
-            @Override
-            public void paintControl(PaintEvent e) {
-                Point canvasSize = canvas.getSize();
-
-                e.gc.setAdvanced(true);
-                e.gc.setAntialias(SWT.ON);
-                e.gc.setInterpolation(SWT.HIGH);
-
-                e.gc.drawImage(image, 0, 0, imageSize.x, imageSize.y, 0, 0, canvasSize.x, canvasSize.y);
-            }
-
-        });
-
-        canvas.addDisposeListener(new DisposeListener() {
-
-            @Override
-            public void widgetDisposed(DisposeEvent e) {
-                imageGc.dispose();
-                image.dispose();
-                font.dispose();
-            }
-
-        });
     }
 
     @Override
@@ -207,20 +173,19 @@ public class DebugLogicWindow extends DebugWindow {
                         if (iter.hasNextNumber()) {
                             sampleData = new int[iter.nextNumber()];
                             triggerOffset = sampleData.length / 2;
-                            resize();
                         }
                         break;
 
                     case "SPACING":
                         if (iter.hasNextNumber()) {
                             spacing = iter.nextNumber();
-                            resize();
                         }
                         break;
 
                     case "RATE":
                         if (iter.hasNextNumber()) {
-                            iter.nextNumber();
+                            rate = iter.nextNumber();
+                            rateCount = 0;
                         }
                         break;
 
@@ -232,7 +197,7 @@ public class DebugLogicWindow extends DebugWindow {
 
                     case "TEXTSIZE":
                         if (iter.hasNextNumber()) {
-                            iter.nextNumber();
+                            textSize = iter.nextNumber();
                         }
                         break;
 
@@ -261,7 +226,7 @@ public class DebugLogicWindow extends DebugWindow {
                     case "BYTES_1BIT":
                     case "BYTES_2BIT":
                     case "BYTES_4BIT":
-                        packedMode(cmd, iter);
+                        packMode = packedMode(cmd, iter);
                         break;
 
                     case "HIDEXY":
@@ -269,17 +234,33 @@ public class DebugLogicWindow extends DebugWindow {
                 }
             }
         }
-    }
 
-    void resize() {
-        if (imageGc != null) {
-            imageGc.dispose();
+        Font textFont = JFaceResources.getTextFont();
+        FontData fontData = textFont.getFontData()[0];
+        if (Preferences.getInstance().getEditorFont() != null) {
+            fontData = StringConverter.asFontData(Preferences.getInstance().getEditorFont());
         }
-        if (image != null) {
-            image.dispose();
+        fontData.setStyle(SWT.NONE);
+        font = new Font(display, fontData.getName(), textSize != 0 ? textSize : fontData.getHeight(), SWT.NONE);
+
+        GC gc = new GC(canvas);
+        try {
+            gc.setFont(font);
+            charHeight = gc.stringExtent("X").y;
+
+            textWidth = 0;
+            for (Channel ch : channelData) {
+                Point extent = gc.stringExtent(ch.name);
+                if (extent.x > textWidth) {
+                    textWidth = extent.x;
+                }
+            }
+        } finally {
+            gc.dispose();
         }
 
-        imageSize.x = sampleData.length * spacing;
+        imageSize.x = textWidth + 5 + sampleData.length * spacing;
+        imageSize.y = 5 + (charHeight + 5) * channelData.length;
         image = new Image(display, new ImageData(imageSize.x, imageSize.y, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF)));
 
         imageGc = new GC(image);
@@ -288,16 +269,41 @@ public class DebugLogicWindow extends DebugWindow {
         imageGc.setTextAntialias(SWT.ON);
         imageGc.setInterpolation(SWT.NONE);
         imageGc.setLineCap(SWT.CAP_SQUARE);
+        imageGc.setLineWidth(lineSize);
         imageGc.setFont(font);
-        imageGc.setLineDash(new int[] {
-            3, 3
+
+        canvas.addPaintListener(new PaintListener() {
+
+            @Override
+            public void paintControl(PaintEvent e) {
+                Point canvasSize = canvas.getSize();
+
+                e.gc.setAdvanced(true);
+                e.gc.setAntialias(SWT.ON);
+                e.gc.setInterpolation(SWT.HIGH);
+
+                e.gc.drawImage(image, 0, 0, imageSize.x, imageSize.y, 0, 0, canvasSize.x, canvasSize.y);
+            }
+
         });
 
-        charHeight = imageGc.stringExtent("X").y;
+        canvas.addDisposeListener(new DisposeListener() {
+
+            @Override
+            public void widgetDisposed(DisposeEvent e) {
+                imageGc.dispose();
+                image.dispose();
+                font.dispose();
+            }
+
+        });
 
         GridData gridData = (GridData) canvas.getLayoutData();
         gridData.widthHint = imageSize.x;
         gridData.heightHint = imageSize.y;
+
+        shell.pack();
+        shell.redraw();
     }
 
     void channel(String name, KeywordIterator iter) {
@@ -344,21 +350,6 @@ public class DebugLogicWindow extends DebugWindow {
         }
         newArray[i] = new Channel(1 << i, name, bitCount, color);
         channelData = newArray;
-
-        imageSize.y = 5 + (charHeight + 5) * channelData.length;
-        resize();
-
-        shell.pack();
-        shell.redraw();
-    }
-
-    void packedMode(String cmd, KeywordIterator iter) {
-        packMode = Pack.valueOf(cmd.toUpperCase());
-        altPack = false;
-        if (iter.hasNext() && "ALT".equalsIgnoreCase(iter.peekNext())) {
-            altPack = true;
-            iter.next();
-        }
     }
 
     Color color(KeywordIterator iter) {
@@ -412,25 +403,9 @@ public class DebugLogicWindow extends DebugWindow {
             if (isNumber(cmd)) {
                 try {
                     pixel = stringToNumber(cmd);
-                    if (packMode != null) {
-                        if (altPack) {
-                            if (packMode.shift <= 1) {
-                                pixel = ((pixel >> 1) & 0x55555555) | ((pixel << 1) & 0xAAAAAAAA);
-                            }
-                            if (packMode.shift <= 2) {
-                                pixel = ((pixel >> 2) & 0x33333333) | ((pixel << 2) & 0xCCCCCCCC);
-                            }
-                            if (packMode.shift <= 4) {
-                                pixel = ((pixel >> 4) & 0x0F0F0F0F) | ((pixel << 4) & 0xF0F0F0F0);
-                            }
-                        }
-                        for (int i = 0; i < packMode.size; i++) {
-                            processSample(pixel & packMode.mask);
-                            pixel >>= packMode.shift;
-                        }
-                    }
-                    else {
-                        processSample(pixel);
+                    packMode.newPack(pixel);
+                    for (int i = 0; i < packMode.size; i++) {
+                        processSample(packMode.unpack());
                     }
                 } catch (Exception e) {
                     // Do nothing
@@ -505,35 +480,44 @@ public class DebugLogicWindow extends DebugWindow {
         if (sampleCount < sampleData.length) {
             sampleCount++;
         }
-
-        if (triggerMask != 0) {
-            triggered = false;
-            if (sampleCount >= sampleData.length) {
-                sample = sampleData[(sampleDataIndex + triggerOffset - 1) % sampleData.length];
-                if (armed) {
-                    if (((sample ^ triggerMatch) & triggerMask) == 0) {
-                        triggered = true;
-                        armed = false;
+        else {
+            if (triggerMask != 0) {
+                triggered = false;
+                if (sampleCount >= sampleData.length) {
+                    sample = sampleData[(sampleDataIndex + triggerOffset - 1) % sampleData.length];
+                    if (armed) {
+                        if (((sample ^ triggerMatch) & triggerMask) == 0) {
+                            triggered = true;
+                            armed = false;
+                        }
                     }
-                }
-                else {
-                    if (((sample ^ triggerMatch) & triggerMask) != 0) {
-                        armed = true;
+                    else {
+                        if (((sample ^ triggerMatch) & triggerMask) != 0) {
+                            armed = true;
+                        }
                     }
-                }
-                if (triggered) {
-                    if (holdOffCount > 0) {
-                        holdOffCount--;
-                    }
-                    if (holdOffCount == 0) {
-                        update();
-                        holdOffCount = holdOff;
+                    if (triggered) {
+                        if (holdOffCount > 0) {
+                            holdOffCount--;
+                        }
+                        if (holdOffCount == 0) {
+                            rateCount++;
+                            if (rateCount >= rate) {
+                                update();
+                                rateCount = 0;
+                            }
+                            holdOffCount = holdOff;
+                        }
                     }
                 }
             }
-        }
-        else if (sampleCount >= sampleData.length) {
-            update();
+            else {
+                rateCount++;
+                if (rateCount >= rate) {
+                    update();
+                    rateCount = 0;
+                }
+            }
         }
     }
 
@@ -543,14 +527,12 @@ public class DebugLogicWindow extends DebugWindow {
         imageGc.setBackground(backColor);
         imageGc.fillRectangle(0, 0, imageSize.x, imageSize.y);
 
-        int x = (sampleData.length * spacing / 2) - spacing / 2;
-        if (x >= 0) {
-            imageGc.setForeground(new Color(64, 64, 64));
-            imageGc.setLineStyle(SWT.LINE_CUSTOM);
-            imageGc.drawLine(x, 0, x, imageSize.y);
-        }
-
         imageGc.setLineStyle(SWT.LINE_SOLID);
+
+        int x = textWidth + 5 + (sampleData.length * spacing / 2) - spacing / 2;
+        imageGc.setForeground(new Color(64, 64, 64));
+        imageGc.drawLine(textWidth + 5, 0, textWidth + 5, imageSize.y);
+        imageGc.drawLine(x, 0, x, imageSize.y);
 
         y = imageSize.y - charHeight - 5;
         for (int i = 0; i < channelData.length; i++) {

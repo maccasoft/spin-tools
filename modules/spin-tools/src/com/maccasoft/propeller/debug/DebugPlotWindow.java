@@ -28,7 +28,7 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Display;
 
 public class DebugPlotWindow extends DebugWindow {
@@ -63,6 +63,11 @@ public class DebugPlotWindow extends DebugWindow {
         x = y = 0;
         origin = new Point(0, 0);
 
+        color = new Color(255, 255, 255);
+        textColor = new Color(255, 255, 255);
+        backColor = new Color(0, 0, 0);
+        opacity = 255;
+
         colorMode = ColorMode.RGB24;
         colorTune = 0;
         lutColors = new Color[256];
@@ -76,42 +81,6 @@ public class DebugPlotWindow extends DebugWindow {
         theta = 0;
 
         autoUpdate = true;
-    }
-
-    @Override
-    protected void createContents(Composite parent) {
-        super.createContents(parent);
-
-        color = new Color(255, 255, 255);
-        textColor = new Color(255, 255, 255);
-        backColor = new Color(0, 0, 0);
-        opacity = 255;
-
-        image = new Image(display, new ImageData(imageSize.x, imageSize.y, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF)));
-        imageGc = new GC(image);
-
-        canvas.addPaintListener(new PaintListener() {
-
-            @Override
-            public void paintControl(PaintEvent e) {
-                e.gc.setAdvanced(true);
-                e.gc.setAntialias(SWT.ON);
-                e.gc.setInterpolation(SWT.OFF);
-                Point canvasSize = canvas.getSize();
-                e.gc.drawImage(image, 0, 0, imageSize.x, imageSize.y, 0, 0, canvasSize.x, canvasSize.y);
-            }
-
-        });
-
-        canvas.addDisposeListener(new DisposeListener() {
-
-            @Override
-            public void widgetDisposed(DisposeEvent e) {
-                imageGc.dispose();
-                image.dispose();
-            }
-
-        });
     }
 
     @Override
@@ -180,16 +149,42 @@ public class DebugPlotWindow extends DebugWindow {
                     break;
             }
         }
-    }
 
-    @Override
-    protected void size(KeywordIterator iter) {
-        super.size(iter);
-
-        imageGc.dispose();
-        image.dispose();
         image = new Image(display, new ImageData(imageSize.x, imageSize.y, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF)));
+
         imageGc = new GC(image);
+        imageGc.setBackground(backColor);
+        imageGc.fillRectangle(0, 0, imageSize.x, imageSize.y);
+
+        canvas.addPaintListener(new PaintListener() {
+
+            @Override
+            public void paintControl(PaintEvent e) {
+                e.gc.setAdvanced(true);
+                e.gc.setAntialias(SWT.ON);
+                e.gc.setInterpolation(SWT.OFF);
+                Point canvasSize = canvas.getSize();
+                e.gc.drawImage(image, 0, 0, imageSize.x, imageSize.y, 0, 0, canvasSize.x, canvasSize.y);
+            }
+
+        });
+
+        canvas.addDisposeListener(new DisposeListener() {
+
+            @Override
+            public void widgetDisposed(DisposeEvent e) {
+                imageGc.dispose();
+                image.dispose();
+            }
+
+        });
+
+        GridData gridData = (GridData) canvas.getLayoutData();
+        gridData.widthHint = imageSize.x * dotSize.x;
+        gridData.heightHint = imageSize.y * dotSize.y;
+
+        shell.pack();
+        shell.redraw();
     }
 
     void colorMode(String cmd, KeywordIterator iter) {
@@ -257,7 +252,6 @@ public class DebugPlotWindow extends DebugWindow {
         while (iter.hasNext()) {
             cmd = iter.next().toUpperCase();
             switch (cmd) {
-
                 case "LUT1":
                 case "LUT2":
                 case "LUT4":
@@ -553,10 +547,8 @@ public class DebugPlotWindow extends DebugWindow {
                     break;
 
                 case "CLEAR":
-                    imageGc.setForeground(backColor);
                     imageGc.setBackground(backColor);
                     imageGc.fillRectangle(0, 0, imageSize.x, imageSize.y);
-                    imageGc.drawRectangle(0, 0, imageSize.x, imageSize.y);
                     if (autoUpdate) {
                         canvas.redraw();
                     }

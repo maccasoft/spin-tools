@@ -48,33 +48,6 @@ public abstract class DebugWindow {
         LIME, RED, CYAN, YELLOW, MAGENTA, BLUE, ORANGE, OLIVE
     };
 
-    public static enum Pack {
-        LONGS_1BIT(0b1, 32, 1),
-        LONGS_2BIT(0b11, 16, 2),
-        LONGS_4BIT(0b1111, 8, 4),
-        LONGS_8BIT(0b11111111, 4, 8),
-        LONGS_16BIT(0b1111111111111111, 2, 16),
-
-        WORDS_1BIT(0b1, 16, 1),
-        WORDS_2BIT(0b11, 8, 2),
-        WORDS_4BIT(0b1111, 4, 4),
-        WORDS_8BIT(0b11111111, 2, 8),
-
-        BYTES_1BIT(0b1, 8, 1),
-        BYTES_2BIT(0b11, 4, 2),
-        BYTES_4BIT(0b1111, 2, 4);
-
-        public final int mask;
-        public final int size;
-        public final int shift;
-
-        Pack(int mask, int size, int shift) {
-            this.mask = mask;
-            this.size = size;
-            this.shift = shift;
-        }
-    }
-
     public static enum RGBColor {
         ORANGE,
         BLUE,
@@ -245,13 +218,6 @@ public abstract class DebugWindow {
             if (iter.hasNextNumber()) {
                 imageSize.x = width;
                 imageSize.y = iter.nextNumber();
-
-                GridData gridData = (GridData) canvas.getLayoutData();
-                gridData.widthHint = imageSize.x * dotSize.x;
-                gridData.heightHint = imageSize.y * dotSize.y;
-
-                shell.pack();
-                shell.redraw();
             }
         }
     }
@@ -263,14 +229,51 @@ public abstract class DebugWindow {
             if (iter.hasNextNumber()) {
                 dotSize.y = iter.nextNumber();
             }
-
-            GridData gridData = (GridData) canvas.getLayoutData();
-            gridData.widthHint = imageSize.x * dotSize.x;
-            gridData.heightHint = imageSize.y * dotSize.y;
-
-            shell.pack();
-            shell.redraw();
         }
+    }
+
+    protected PackMode packedMode(String cmd, KeywordIterator iter) {
+        boolean alt = false;
+        boolean signx = false;
+
+        if (iter.hasNext() && "ALT".equalsIgnoreCase(iter.peekNext())) {
+            alt = true;
+            iter.next();
+        }
+
+        if (iter.hasNext() && "SIGNX".equalsIgnoreCase(iter.peekNext())) {
+            signx = true;
+            iter.next();
+        }
+
+        switch (cmd.toUpperCase()) {
+            case "LONGS_1BIT":
+                return PackMode.LONGS_1BIT(alt, signx);
+            case "LONGS_2BIT":
+                return PackMode.LONGS_2BIT(alt, signx);
+            case "LONGS_4BIT":
+                return PackMode.LONGS_4BIT(alt, signx);
+            case "LONGS_8BIT":
+                return PackMode.LONGS_8BIT(alt, signx);
+            case "LONGS_16BIT":
+                return PackMode.LONGS_16BIT(alt, signx);
+            case "WORDS_1BIT":
+                return PackMode.WORDS_1BIT(alt, signx);
+            case "WORDS_2BIT":
+                return PackMode.WORDS_2BIT(alt, signx);
+            case "WORDS_4BIT":
+                return PackMode.WORDS_4BIT(alt, signx);
+            case "WORDS_8BIT":
+                return PackMode.WORDS_8BIT(alt, signx);
+            case "BYTES_1BIT":
+                return PackMode.BYTES_1BIT(alt, signx);
+            case "BYTES_2BIT":
+                return PackMode.BYTES_2BIT(alt, signx);
+            case "BYTES_4BIT":
+                return PackMode.BYTES_4BIT(alt, signx);
+        }
+
+        return PackMode.NONE();
     }
 
     protected void doSaveBitmap(Image image, String name, boolean window) {
