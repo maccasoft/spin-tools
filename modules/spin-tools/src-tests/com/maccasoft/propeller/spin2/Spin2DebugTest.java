@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.SpinObject.DataObject;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.model.Node;
@@ -52,11 +53,13 @@ class Spin2DebugTest {
             + "' Debug data\n"
             + "00B24 00000       19 00         \n"
             + "00B26 00002       04 00         \n"
-            + "00B28 00004       06 60 69 6E 64\n"
-            + "00B2D 00009       65 78 3D 00 41\n"
-            + "00B32 0000E       6C 6F 6E 67 5B\n"
-            + "00B37 00013       61 2B 2B 5D 00\n"
-            + "00B3C 00018       00\n"
+            + "' #1\n"
+            + "00B28 00004       06 60 69 6E 64 STRING (`index=)\n"
+            + "00B2D 00009       65 78 3D 00\n"
+            + "00B31 0000D       41 6C 6F 6E 67 UDEC(long[a++])\n"
+            + "00B36 00012       5B 61 2B 2B 5D\n"
+            + "00B3B 00017       00\n"
+            + "00B3C 00018       00             DONE\n"
             + "", compile(text));
     }
 
@@ -89,7 +92,10 @@ class Spin2DebugTest {
             + "' Debug data\n"
             + "00B24 00000       09 00         \n"
             + "00B26 00002       04 00         \n"
-            + "00B28 00004       04 41 61 00 00\n"
+            + "' #1\n"
+            + "00B28 00004       04             COGN\n"
+            + "00B29 00005       41 61 00       UDEC(a)\n"
+            + "00B2C 00008       00             DONE\n"
             + "", compile(text));
     }
 
@@ -105,7 +111,13 @@ class Spin2DebugTest {
 
         Spin2Debug subject = new Spin2Debug();
         String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
-        Assertions.assertEquals("01 04 41 72 65 67 61 00 80 01 00", actual);
+        Assertions.assertEquals(""
+            + "00000 00000       01             ASMMODE\n"
+            + "00001 00001       04             COGN\n"
+            + "00002 00002       41 72 65 67 61 UDEC(rega)\n"
+            + "00007 00007       00 80 01\n"
+            + "0000A 0000A       00             DONE\n"
+            + "", actual);
     }
 
     @Test
@@ -120,7 +132,13 @@ class Spin2DebugTest {
 
         Spin2Debug subject = new Spin2Debug();
         String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
-        Assertions.assertEquals("01 04 41 23 72 65 67 61 00 00 01 00", actual);
+        Assertions.assertEquals(""
+            + "00000 00000       01             ASMMODE\n"
+            + "00001 00001       04             COGN\n"
+            + "00002 00002       41 23 72 65 67 UDEC(#rega)\n"
+            + "00007 00007       61 00 00 01\n"
+            + "0000B 0000B       00             DONE\n"
+            + "", actual);
     }
 
     @Test
@@ -135,7 +153,13 @@ class Spin2DebugTest {
 
         Spin2Debug subject = new Spin2Debug();
         String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
-        Assertions.assertEquals("01 04 41 40 72 65 67 61 00 80 04 00", actual);
+        Assertions.assertEquals(""
+            + "00000 00000       01             ASMMODE\n"
+            + "00001 00001       04             COGN\n"
+            + "00002 00002       41 40 72 65 67 UDEC(@rega)\n"
+            + "00007 00007       61 00 80 04\n"
+            + "0000B 0000B       00             DONE\n"
+            + "", actual);
     }
 
     @Test
@@ -150,7 +174,13 @@ class Spin2DebugTest {
 
         Spin2Debug subject = new Spin2Debug();
         String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
-        Assertions.assertEquals("01 04 41 23 40 72 65 67 61 00 00 04 00", actual);
+        Assertions.assertEquals(""
+            + "00000 00000       01             ASMMODE\n"
+            + "00001 00001       04             COGN\n"
+            + "00002 00002       41 23 40 72 65 UDEC(#@rega)\n"
+            + "00007 00007       67 61 00 00 04\n"
+            + "0000C 0000C       00             DONE\n"
+            + "", actual);
     }
 
     @Test
@@ -165,7 +195,13 @@ class Spin2DebugTest {
 
         Spin2Debug subject = new Spin2Debug();
         String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
-        Assertions.assertEquals("01 04 51 72 65 67 61 00 80 01 80 04 00", actual);
+        Assertions.assertEquals(""
+            + "00000 00000       01             ASMMODE\n"
+            + "00001 00001       04             COGN\n"
+            + "00002 00002       51 72 65 67 61 UDEC_ARRAY(rega)\n"
+            + "00007 00007       00 80 01 80 04\n"
+            + "0000C 0000C       00             DONE\n"
+            + "", actual);
     }
 
     @Test
@@ -180,7 +216,13 @@ class Spin2DebugTest {
 
         Spin2Debug subject = new Spin2Debug();
         String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
-        Assertions.assertEquals("01 04 51 72 65 67 61 00 80 01 00 04 00", actual);
+        Assertions.assertEquals(""
+            + "00000 00000       01             ASMMODE\n"
+            + "00001 00001       04             COGN\n"
+            + "00002 00002       51 72 65 67 61 UDEC_ARRAY(rega)\n"
+            + "00007 00007       00 80 01 00 04\n"
+            + "0000C 0000C       00             DONE\n"
+            + "", actual);
     }
 
     @Test
@@ -194,7 +236,12 @@ class Spin2DebugTest {
 
         Spin2Debug subject = new Spin2Debug();
         String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
-        Assertions.assertEquals("01 04 43 80 0A 00", actual);
+        Assertions.assertEquals(""
+            + "00000 00000       01             ASMMODE\n"
+            + "00001 00001       04             COGN\n"
+            + "00002 00002       43 80 0A       UDEC\n"
+            + "00005 00005       00             DONE\n"
+            + "", actual);
     }
 
     @Test
@@ -207,7 +254,12 @@ class Spin2DebugTest {
 
         Spin2Debug subject = new Spin2Debug();
         String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
-        Assertions.assertEquals("01 04 07 00 64 00", actual);
+        Assertions.assertEquals(""
+            + "00000 00000       01             ASMMODE\n"
+            + "00001 00001       04             COGN\n"
+            + "00002 00002       07 00 64       DLY\n"
+            + "00005 00005       00             DONE\n"
+            + "", actual);
     }
 
     @Test
@@ -223,7 +275,17 @@ class Spin2DebugTest {
 
         Spin2Debug subject = new Spin2Debug();
         String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
-        Assertions.assertEquals("01 04 41 72 65 67 31 00 80 0A 40 72 65 67 32 00 80 0B 40 72 65 67 33 00 80 0C 00", actual);
+        Assertions.assertEquals(""
+            + "00000 00000       01             ASMMODE\n"
+            + "00001 00001       04             COGN\n"
+            + "00002 00002       41 72 65 67 31 UDEC(reg1)\n"
+            + "00007 00007       00 80 0A\n"
+            + "0000A 0000A       40 72 65 67 32 UDEC(reg2)\n"
+            + "0000F 0000F       00 80 0B\n"
+            + "00012 00012       40 72 65 67 33 UDEC(reg3)\n"
+            + "00017 00017       00 80 0C\n"
+            + "0001A 0001A       00             DONE\n"
+            + "", actual);
     }
 
     @Test
@@ -239,7 +301,17 @@ class Spin2DebugTest {
 
         Spin2Debug subject = new Spin2Debug();
         String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
-        Assertions.assertEquals("01 04 41 72 65 67 31 00 80 0A 40 72 65 67 32 00 80 0B 40 72 65 67 33 00 80 0C 00", actual);
+        Assertions.assertEquals(""
+            + "00000 00000       01             ASMMODE\n"
+            + "00001 00001       04             COGN\n"
+            + "00002 00002       41 72 65 67 31 UDEC(reg1)\n"
+            + "00007 00007       00 80 0A\n"
+            + "0000A 0000A       40 72 65 67 32 UDEC(reg2)\n"
+            + "0000F 0000F       00 80 0B\n"
+            + "00012 00012       40 72 65 67 33 UDEC(reg3)\n"
+            + "00017 00017       00 80 0C\n"
+            + "0001A 0001A       00             DONE\n"
+            + "", actual);
     }
 
     @Test
@@ -248,7 +320,12 @@ class Spin2DebugTest {
 
         Spin2Debug subject = new Spin2Debug();
         String actual = dumpDebugData(subject.compileDebugStatement(parse(text)));
-        Assertions.assertEquals("04 06 73 74 61 72 74 00 00", actual);
+        Assertions.assertEquals(""
+            + "00000 00000       04             COGN\n"
+            + "00001 00001       06 73 74 61 72 STRING (start)\n"
+            + "00006 00006       74 00\n"
+            + "00008 00008       00             DONE\n"
+            + "", actual);
     }
 
     @Test
@@ -257,7 +334,18 @@ class Spin2DebugTest {
 
         Spin2Debug subject = new Spin2Debug();
         String actual = dumpDebugData(subject.compileDebugStatement(parse(text)));
-        Assertions.assertEquals("04 41 72 65 67 31 00 06 73 74 61 72 74 00 41 72 65 67 32 00 40 72 65 67 33 00 00", actual);
+        Assertions.assertEquals(""
+            + "00000 00000       04             COGN\n"
+            + "00001 00001       41 72 65 67 31 UDEC(reg1)\n"
+            + "00006 00006       00\n"
+            + "00007 00007       06 73 74 61 72 STRING (start)\n"
+            + "0000C 0000C       74 00\n"
+            + "0000E 0000E       41 72 65 67 32 UDEC(reg2)\n"
+            + "00013 00013       00\n"
+            + "00014 00014       40 72 65 67 33 UDEC(reg3)\n"
+            + "00019 00019       00\n"
+            + "0001A 0001A       00             DONE\n"
+            + "", actual);
     }
 
     @Test
@@ -270,7 +358,13 @@ class Spin2DebugTest {
 
         Spin2Debug subject = new Spin2Debug();
         String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
-        Assertions.assertEquals("01 04 06 73 74 61 72 74 00 00", actual);
+        Assertions.assertEquals(""
+            + "00000 00000       01             ASMMODE\n"
+            + "00001 00001       04             COGN\n"
+            + "00002 00002       06 73 74 61 72 STRING (start)\n"
+            + "00007 00007       74 00\n"
+            + "00009 00009       00             DONE\n"
+            + "", actual);
     }
 
     @Test
@@ -286,7 +380,19 @@ class Spin2DebugTest {
 
         Spin2Debug subject = new Spin2Debug();
         String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
-        Assertions.assertEquals("01 04 41 72 65 67 31 00 80 0A 06 73 74 61 72 74 00 41 72 65 67 32 00 80 0B 40 72 65 67 33 00 80 0C 00", actual);
+        Assertions.assertEquals(""
+            + "00000 00000       01             ASMMODE\n"
+            + "00001 00001       04             COGN\n"
+            + "00002 00002       41 72 65 67 31 UDEC(reg1)\n"
+            + "00007 00007       00 80 0A\n"
+            + "0000A 0000A       06 73 74 61 72 STRING (start)\n"
+            + "0000F 0000F       74 00\n"
+            + "00011 00011       41 72 65 67 32 UDEC(reg2)\n"
+            + "00016 00016       00 80 0B\n"
+            + "00019 00019       40 72 65 67 33 UDEC(reg3)\n"
+            + "0001E 0001E       00 80 0C\n"
+            + "00021 00021       00             DONE\n"
+            + "", actual);
     }
 
     @Test
@@ -301,7 +407,13 @@ class Spin2DebugTest {
 
         Spin2Debug subject = new Spin2Debug();
         String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
-        Assertions.assertEquals("01 04 25 72 65 67 61 00 80 01 00", actual);
+        Assertions.assertEquals(""
+            + "00000 00000       01             ASMMODE\n"
+            + "00001 00001       04             COGN\n"
+            + "00002 00002       25 72 65 67 61 ZSTR(rega)\n"
+            + "00007 00007       00 80 01\n"
+            + "0000A 0000A       00             DONE\n"
+            + "", actual);
     }
 
     @Test
@@ -316,7 +428,13 @@ class Spin2DebugTest {
 
         Spin2Debug subject = new Spin2Debug();
         String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
-        Assertions.assertEquals("01 04 25 40 72 65 67 61 00 80 04 00", actual);
+        Assertions.assertEquals(""
+            + "00000 00000       01             ASMMODE\n"
+            + "00001 00001       04             COGN\n"
+            + "00002 00002       25 40 72 65 67 ZSTR(@rega)\n"
+            + "00007 00007       61 00 80 04\n"
+            + "0000B 0000B       00             DONE\n"
+            + "", actual);
     }
 
     @Test
@@ -331,7 +449,13 @@ class Spin2DebugTest {
 
         Spin2Debug subject = new Spin2Debug();
         String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
-        Assertions.assertEquals("01 04 25 23 72 65 67 61 00 00 01 00", actual);
+        Assertions.assertEquals(""
+            + "00000 00000       01             ASMMODE\n"
+            + "00001 00001       04             COGN\n"
+            + "00002 00002       25 23 72 65 67 ZSTR(#rega)\n"
+            + "00007 00007       61 00 00 01\n"
+            + "0000B 0000B       00             DONE\n"
+            + "", actual);
     }
 
     @Test
@@ -345,7 +469,13 @@ class Spin2DebugTest {
 
         Spin2Debug subject = new Spin2Debug();
         String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
-        Assertions.assertEquals("01 04 35 70 74 72 00 80 0A 00 0C 00", actual);
+        Assertions.assertEquals(""
+            + "00000 00000       01             ASMMODE\n"
+            + "00001 00001       04             COGN\n"
+            + "00002 00002       35 70 74 72 00 LSTR(ptr)\n"
+            + "00007 00007       80 0A 00 0C\n"
+            + "0000B 0000B       00             DONE\n"
+            + "", actual);
     }
 
     @Test
@@ -358,7 +488,12 @@ class Spin2DebugTest {
 
         Spin2Debug subject = new Spin2Debug();
         String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
-        Assertions.assertEquals("01 06 60 31 32 33 34 35 00 00", actual);
+        Assertions.assertEquals(""
+            + "00000 00000       01             ASMMODE\n"
+            + "00001 00001       06 60 31 32 33 STRING (`12345)\n"
+            + "00006 00006       34 35 00\n"
+            + "00009 00009       00             DONE\n"
+            + "", actual);
     }
 
     @Test
@@ -371,7 +506,12 @@ class Spin2DebugTest {
 
         Spin2Debug subject = new Spin2Debug();
         String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
-        Assertions.assertEquals("01 06 60 31 32 33 34 35 00 00", actual);
+        Assertions.assertEquals(""
+            + "00000 00000       01             ASMMODE\n"
+            + "00001 00001       06 60 31 32 33 STRING (`12345)\n"
+            + "00006 00006       34 35 00\n"
+            + "00009 00009       00             DONE\n"
+            + "", actual);
     }
 
     @Test
@@ -380,7 +520,11 @@ class Spin2DebugTest {
 
         Spin2Debug subject = new Spin2Debug();
         String actual = dumpDebugData(subject.compileDebugStatement(parse(text)));
-        Assertions.assertEquals("04 41 72 65 67 00 00", actual);
+        Assertions.assertEquals(""
+            + "00000 00000       04             COGN\n"
+            + "00001 00001       41 72 65 67 00 UDEC(reg)\n"
+            + "00006 00006       00             DONE\n"
+            + "", actual);
     }
 
     @Test
@@ -389,7 +533,11 @@ class Spin2DebugTest {
 
         Spin2Debug subject = new Spin2Debug();
         String actual = dumpDebugData(subject.compileDebugStatement(parse(text)));
-        Assertions.assertEquals("04 5D 72 65 67 00 00", actual);
+        Assertions.assertEquals(""
+            + "00000 00000       04             COGN\n"
+            + "00001 00001       5D 72 65 67 00 UDEC_LONG_ARRAY(reg)\n"
+            + "00006 00006       00             DONE\n"
+            + "", actual);
     }
 
     @Test
@@ -398,7 +546,12 @@ class Spin2DebugTest {
 
         Spin2Debug subject = new Spin2Debug();
         String actual = dumpDebugData(subject.compileDebugStatement(parse(text)));
-        Assertions.assertEquals("02 04 41 72 65 67 00 00", actual);
+        Assertions.assertEquals(""
+            + "00000 00000       02             IF\n"
+            + "00001 00001       04             COGN\n"
+            + "00002 00002       41 72 65 67 00 UDEC(reg)\n"
+            + "00007 00007       00             DONE\n"
+            + "", actual);
     }
 
     @Test
@@ -407,7 +560,13 @@ class Spin2DebugTest {
 
         Spin2Debug subject = new Spin2Debug();
         String actual = dumpDebugData(subject.compileDebugStatement(parse(text)));
-        Assertions.assertEquals("04 41 72 65 67 00 02 40 61 00 00", actual);
+        Assertions.assertEquals(""
+            + "00000 00000       04             COGN\n"
+            + "00001 00001       41 72 65 67 00 UDEC(reg)\n"
+            + "00006 00006       02             IF\n"
+            + "00007 00007       40 61 00       UDEC(a)\n"
+            + "0000A 0000A       00             DONE\n"
+            + "", actual);
     }
 
     @Test
@@ -422,7 +581,14 @@ class Spin2DebugTest {
 
         Spin2Debug subject = new Spin2Debug();
         String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
-        Assertions.assertEquals("01 02 80 01 04 41 72 65 67 00 80 0A 00", actual);
+        Assertions.assertEquals(""
+            + "00000 00000       01             ASMMODE\n"
+            + "00001 00001       02 80 01       IF\n"
+            + "00004 00004       04             COGN\n"
+            + "00005 00005       41 72 65 67 00 UDEC(reg)\n"
+            + "0000A 0000A       80 0A\n"
+            + "0000C 0000C       00             DONE\n"
+            + "", actual);
     }
 
     @Test
@@ -437,7 +603,15 @@ class Spin2DebugTest {
 
         Spin2Debug subject = new Spin2Debug();
         String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
-        Assertions.assertEquals("01 04 41 72 65 67 00 80 0A 02 80 01 40 61 00 80 01 00", actual);
+        Assertions.assertEquals(""
+            + "00000 00000       01             ASMMODE\n"
+            + "00001 00001       04             COGN\n"
+            + "00002 00002       41 72 65 67 00 UDEC(reg)\n"
+            + "00007 00007       80 0A\n"
+            + "00009 00009       02 80 01       IF\n"
+            + "0000C 0000C       40 61 00 80 01 UDEC(a)\n"
+            + "00011 00011       00             DONE\n"
+            + "", actual);
     }
 
     List<Token> parseTokens(String text) {
@@ -489,14 +663,16 @@ class Spin2DebugTest {
     }
 
     String dumpDebugData(byte[] data) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < data.length; i++) {
-            if (i != 0) {
-                sb.append(" ");
-            }
-            sb.append(String.format("%02X", data[i] & 0xFF));
+        Spin2Object object = new Spin2Object();
+
+        List<DataObject> l = Spin2Debugger.decodeDebugData(data);
+        for (DataObject obj : l) {
+            object.write(obj);
         }
-        return sb.toString();
+
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        object.generateListing(new PrintStream(os));
+        return os.toString().replaceAll("\\r\\n", "\n");
     }
 
     String compile(String text) throws Exception {

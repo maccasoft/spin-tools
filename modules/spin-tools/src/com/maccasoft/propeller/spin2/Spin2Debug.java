@@ -21,30 +21,30 @@ import com.maccasoft.propeller.spin2.Spin2PAsmDebugLine.Spin2DebugExpression;
 
 public class Spin2Debug {
 
-    private static final int DBC_DONE = 0;
-    private static final int DBC_ASMMODE = 1; // Switches into PASM mode...
-    private static final int DBC_IF = 2;
-    private static final int DBC_IFNOT = 3;
-    private static final int DBC_COGN = 4;
-    //private static final int DBC_CHAR = 5;
-    private static final int DBC_STRING = 6;
-    private static final int DBC_DELAY = 7;
+    public static final int DBC_DONE = 0;
+    public static final int DBC_ASMMODE = 1; // Switches into PASM mode...
+    public static final int DBC_IF = 2;
+    public static final int DBC_IFNOT = 3;
+    public static final int DBC_COGN = 4;
+    public static final int DBC_CHAR = 5;
+    public static final int DBC_STRING = 6;
+    public static final int DBC_DELAY = 7;
 
     // Flags
-    private static final int DBC_FLAG_NOCOMMA = 0x01;
-    private static final int DBC_FLAG_NOEXPR = 0x02;
-    private static final int DBC_FLAG_ARRAY = 0x10;
-    private static final int DBC_FLAG_SIGNED = 0x20;
+    public static final int DBC_FLAG_NOCOMMA = 0x01;
+    public static final int DBC_FLAG_NOEXPR = 0x02;
+    public static final int DBC_FLAG_ARRAY = 0x10;
+    public static final int DBC_FLAG_SIGNED = 0x20;
     // Numeric sizes
-    private static final int DBC_SIZE_BYTE = 0x04;
-    private static final int DBC_SIZE_WORD = 0x08;
-    private static final int DBC_SIZE_LONG = 0x0C;
+    public static final int DBC_SIZE_BYTE = 0x04;
+    public static final int DBC_SIZE_WORD = 0x08;
+    public static final int DBC_SIZE_LONG = 0x0C;
     // Output type
-    private static final int DBC_TYPE_STR = 0x20 | DBC_SIZE_BYTE;
-    private static final int DBC_TYPE_FLP = 0x20; // Note the overlap with the signed flag and the string type
-    private static final int DBC_TYPE_DEC = 0x40;
-    private static final int DBC_TYPE_HEX = 0x80;
-    private static final int DBC_TYPE_BIN = 0xC0;
+    public static final int DBC_TYPE_STR = 0x20 | DBC_SIZE_BYTE;
+    public static final int DBC_TYPE_FLP = 0x20; // Note the overlap with the signed flag and the string type
+    public static final int DBC_TYPE_DEC = 0x40;
+    public static final int DBC_TYPE_HEX = 0x80;
+    public static final int DBC_TYPE_BIN = 0xC0;
 
     boolean first;
 

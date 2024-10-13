@@ -21,6 +21,7 @@ import com.maccasoft.propeller.Compiler;
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.ObjectCompiler;
 import com.maccasoft.propeller.SpinObject;
+import com.maccasoft.propeller.SpinObject.CommentDataObject;
 import com.maccasoft.propeller.SpinObject.DataObject;
 import com.maccasoft.propeller.SpinObject.LinkDataObject;
 import com.maccasoft.propeller.SpinObject.WordDataObject;
@@ -218,19 +219,26 @@ public class Spin2Compiler extends Compiler {
         object.writeComment("Debug data");
         WordDataObject sizeWord = object.writeWord(2);
 
+        int index = 1;
         int pos = (debugStatements.size() + 1) * 2;
         List<DataObject> l = new ArrayList<DataObject>();
         for (Object node : debugStatements) {
             try {
                 if (node instanceof Spin2StatementNode) {
                     byte[] data = debug.compileDebugStatement((Spin2StatementNode) node);
-                    l.add(new DataObject(data));
+
+                    l.add(new CommentDataObject(String.format("#%d", index++)));
+                    l.addAll(Spin2Debugger.decodeDebugData(data));
+
                     object.writeWord(pos);
                     pos += data.length;
                 }
                 else if (node instanceof Spin2PAsmDebugLine) {
                     byte[] data = debug.compilePAsmDebugStatement((Spin2PAsmDebugLine) node);
-                    l.add(new DataObject(data));
+
+                    l.add(new CommentDataObject(String.format("#%d", index++)));
+                    l.addAll(Spin2Debugger.decodeDebugData(data));
+
                     object.writeWord(pos);
                     pos += data.length;
                 }

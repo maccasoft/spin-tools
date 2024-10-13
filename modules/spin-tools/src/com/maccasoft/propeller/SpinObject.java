@@ -382,7 +382,9 @@ public abstract class SpinObject {
 
     public void write(DataObject object) {
         data.add(object);
-        size += object.bytes.length;
+        if (object.bytes != null) {
+            size += object.bytes.length;
+        }
     }
 
     public DataObject getObject(int index) {

@@ -2537,7 +2537,10 @@ class Spin2ObjectCompilerTest {
             + "' Debug data\n"
             + "00B24 00000       09 00         \n"
             + "00B26 00002       04 00         \n"
-            + "00B28 00004       04 41 61 00 00\n"
+            + "' #1\n"
+            + "00B28 00004       04             COGN\n"
+            + "00B29 00005       41 61 00       UDEC(a)\n"
+            + "00B2C 00008       00             DONE\n"
             + "", compile(text, true));
     }
 
