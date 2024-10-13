@@ -730,6 +730,40 @@ class Spin2TreeBuilderTest {
             + "", parse(text));
     }
 
+    @Test
+    void testDebug() {
+        String text = "debug(``(letter) lutcolors `uhex_long_array_(image_address, lut_size) longs_2bit)";
+        Assertions.assertEquals(""
+            + "[debug]\n"
+            + " +-- [`]\n"
+            + " +-- [`]\n"
+            + "      +-- [letter]\n"
+            + " +-- [ lutcolors ]\n"
+            + " +-- [`uhex_long_array_]\n"
+            + "      +-- [image_address]\n"
+            + "      +-- [lut_size]\n"
+            + " +-- [ longs_2bit]\n"
+            + "", parse(text));
+    }
+
+    @Test
+    void testDebugBacktickExpression() {
+        String text = "debug(`MyBitmap `uhex_(flag[i++ & $1F]) `dly(100))";
+        Assertions.assertEquals(""
+            + "[debug]\n"
+            + " +-- [`MyBitmap ]\n"
+            + " +-- [`uhex_]\n"
+            + "      +-- [flag]\n"
+            + "           +-- [&]\n"
+            + "                +-- [i]\n"
+            + "                     +-- [++]\n"
+            + "                +-- [$1F]\n"
+            + " +-- [ ]\n"
+            + " +-- [`dly]\n"
+            + "      +-- [100]\n"
+            + "", parse(text));
+    }
+
     String parse(String text) {
         Spin2TreeBuilder builder = new Spin2TreeBuilder(new Context());
 

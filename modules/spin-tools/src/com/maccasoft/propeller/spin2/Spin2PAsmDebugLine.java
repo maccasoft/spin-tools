@@ -133,6 +133,7 @@ public class Spin2PAsmDebugLine {
             throw new CompilerException("expected '(' got '" + token.getText() + "'", token);
         }
 
+        boolean isBacktickExpression = false;
         while (index < tokens.size() - 1) {
             token = tokens.get(index++);
             switch (state) {
@@ -142,7 +143,12 @@ public class Spin2PAsmDebugLine {
                     }
                     if (token.type == Token.STRING) {
                         root.addStatement(new Spin2DebugCommand(token));
-                        state = 3;
+                        if (token.getText().startsWith("`")) {
+                            isBacktickExpression = true;
+                        }
+                        else {
+                            state = 3;
+                        }
                         break;
                     }
                     if (token.type != 0) {
@@ -176,7 +182,7 @@ public class Spin2PAsmDebugLine {
                         list = new ArrayList<Token>();
 
                         if (")".equals(token.getText())) {
-                            state = 3;
+                            state = isBacktickExpression ? 0 : 3;
                         }
                         break;
                     }

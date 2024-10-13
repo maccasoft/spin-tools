@@ -422,6 +422,7 @@ public class Spin2TreeBuilder {
                         }
                         return node;
                     }
+                    boolean isBacktickString = false;
                     for (;;) {
                         Spin2StatementNode child = new Spin2StatementNode.Argument(parseLevel(parseAtom(), 0, false));
                         if (node.getChildCount() == 1 && ":".equals(node.getChild(0).getText())) {
@@ -446,7 +447,10 @@ public class Spin2TreeBuilder {
                             }
                             return node;
                         }
-                        if (child.getToken().type == Token.STRING && child.getToken().getText().startsWith("`")) {
+                        if (child.getToken().getText().startsWith("`")) {
+                            isBacktickString = true;
+                        }
+                        if (isBacktickString) {
                             continue;
                         }
                         if (!",".equals(token.getText()) && !":".equals(token.getText())) {

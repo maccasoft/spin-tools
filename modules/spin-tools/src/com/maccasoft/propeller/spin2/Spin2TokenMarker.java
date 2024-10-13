@@ -892,7 +892,12 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                                 tokens.add(new TokenMarker(token, TokenId.STRING));
                             }
                             else {
-                                TokenId id = debugKeywords.get(token.getText().toUpperCase());
+                                TokenId id;
+                                String s = token.getText().toUpperCase();
+                                id = debugKeywords.get(s);
+                                if (id == null && s.startsWith("`")) {
+                                    id = debugKeywords.get(s.substring(1));
+                                }
                                 if (id != null) {
                                     tokens.add(new TokenMarker(token, id));
                                 }
@@ -1083,7 +1088,11 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                         }
                         if (id == null) {
                             if (debug) {
-                                id = debugKeywords.get(token.getText());
+                                String s = token.getText().toUpperCase();
+                                id = debugKeywords.get(s);
+                                if (id == null && s.startsWith("`")) {
+                                    id = debugKeywords.get(s.substring(1));
+                                }
                             }
                             else {
                                 id = keywords.get(token.getText());

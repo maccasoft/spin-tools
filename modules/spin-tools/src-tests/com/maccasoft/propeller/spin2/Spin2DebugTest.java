@@ -51,15 +51,13 @@ class Spin2DebugTest {
             + "00010 00010       04             RETURN\n"
             + "00011 00011       00 00 00       Padding\n"
             + "' Debug data\n"
-            + "00B24 00000       19 00         \n"
+            + "00B24 00000       0F 00         \n"
             + "00B26 00002       04 00         \n"
             + "' #1\n"
             + "00B28 00004       06 60 69 6E 64 STRING (`index=)\n"
             + "00B2D 00009       65 78 3D 00\n"
-            + "00B31 0000D       61 6C 6F 6E 67 SDEC(long[a++])\n"
-            + "00B36 00012       5B 61 2B 2B 5D\n"
-            + "00B3B 00017       00\n"
-            + "00B3C 00018       00             DONE\n"
+            + "00B31 0000D       43             UDEC\n"
+            + "00B32 0000E       00             DONE\n"
             + "", compile(text));
     }
 
@@ -497,6 +495,28 @@ class Spin2DebugTest {
     }
 
     @Test
+    void testBacktickCommand() {
+        Context context = new Context();
+        context.addSymbol("a", new NumberLiteral(1));
+        context.addSymbol("b", new NumberLiteral(2));
+
+        String text = "debug(`12345 `(a,b))";
+
+        Spin2PAsmDebugLine root = Spin2PAsmDebugLine.buildFrom(context, parseTokens(text));
+
+        Spin2Debug subject = new Spin2Debug();
+        String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
+        Assertions.assertEquals(""
+            + "00000 00000       01             ASMMODE\n"
+            + "00001 00001       06 60 31 32 33 STRING (`12345 )\n"
+            + "00006 00006       34 35 20 00\n"
+            + "0000A 0000A       63 80 01       SDEC\n"
+            + "0000D 0000D       62 80 02       SDEC\n"
+            + "00010 00010       00             DONE\n"
+            + "", actual);
+    }
+
+    @Test
     void testStringBacktick() {
         Context context = new Context();
 
@@ -515,6 +535,26 @@ class Spin2DebugTest {
     }
 
     @Test
+    void testStringBacktickCommand() {
+        Context context = new Context();
+        context.addSymbol("a", new NumberLiteral(1));
+
+        String text = "debug(`12345`(a))";
+
+        Spin2PAsmDebugLine root = Spin2PAsmDebugLine.buildFrom(context, parseTokens(text));
+
+        Spin2Debug subject = new Spin2Debug();
+        String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
+        Assertions.assertEquals(""
+            + "00000 00000       01             ASMMODE\n"
+            + "00001 00001       06 60 31 32 33 STRING (`12345)\n"
+            + "00006 00006       34 35 00\n"
+            + "00009 00009       63 80 01       SDEC\n"
+            + "0000C 0000C       00             DONE\n"
+            + "", actual);
+    }
+
+    @Test
     void testSpin() {
         String text = "debug(udec(reg))";
 
@@ -524,6 +564,53 @@ class Spin2DebugTest {
             + "00000 00000       04             COGN\n"
             + "00001 00001       41 72 65 67 00 UDEC(reg)\n"
             + "00006 00006       00             DONE\n"
+            + "", actual);
+    }
+
+    @Test
+    void testSpinBacktickCommand() {
+        String text = "debug(`12345 `uhex_(a,b))";
+
+        Spin2Debug subject = new Spin2Debug();
+        String actual = dumpDebugData(subject.compileDebugStatement(parse(text)));
+        Assertions.assertEquals(""
+            + "00000 00000       06 60 31 32 33 STRING (`12345 )\n"
+            + "00005 00005       34 35 20 00\n"
+            + "00009 00009       83             UHEX\n"
+            + "0000A 0000A       82             UHEX\n"
+            + "0000B 0000B       00             DONE\n"
+            + "", actual);
+    }
+
+    @Test
+    void testSpinBacktickShortCommand() {
+        String text = "debug(`12345 `(a,b))";
+
+        Spin2Debug subject = new Spin2Debug();
+        String actual = dumpDebugData(subject.compileDebugStatement(parse(text)));
+        Assertions.assertEquals(""
+            + "00000 00000       06 60 31 32 33 STRING (`12345 )\n"
+            + "00005 00005       34 35 20 00\n"
+            + "00009 00009       63             SDEC\n"
+            + "0000A 0000A       62             SDEC\n"
+            + "0000B 0000B       00             DONE\n"
+            + "", actual);
+    }
+
+    @Test
+    void testSpinBacktickCommandConcatenate() {
+        String text = "debug(`a = `(a) b = `(b))";
+
+        Spin2Debug subject = new Spin2Debug();
+        String actual = dumpDebugData(subject.compileDebugStatement(parse(text)));
+        Assertions.assertEquals(""
+            + "00000 00000       06 60 61 20 3D STRING (`a = )\n"
+            + "00005 00005       20 00\n"
+            + "00007 00007       63             SDEC\n"
+            + "00008 00008       06 20 62 20 3D STRING ( b = )\n"
+            + "0000D 0000D       20 00\n"
+            + "0000F 0000F       63             SDEC\n"
+            + "00010 00010       00             DONE\n"
             + "", actual);
     }
 
@@ -611,6 +698,44 @@ class Spin2DebugTest {
             + "00009 00009       02 80 01       IF\n"
             + "0000C 0000C       40 61 00 80 01 UDEC(a)\n"
             + "00011 00011       00             DONE\n"
+            + "", actual);
+    }
+
+    @Test
+    void testChar() {
+        String text = "debug(``#(letter) lutcolors)";
+
+        Spin2Debug subject = new Spin2Debug();
+        String actual = dumpDebugData(subject.compileDebugStatement(parse(text)));
+        Assertions.assertEquals(""
+            + "00000 00000       06 60 00       STRING (`)\n"
+            + "00003 00003       05             CHAR\n"
+            + "00004 00004       06 20 6C 75 74 STRING ( lutcolors)\n"
+            + "00009 00009       63 6F 6C 6F 72\n"
+            + "0000E 0000E       73 00\n"
+            + "00010 00010       00             DONE\n"
+            + "", actual);
+    }
+
+    @Test
+    void testPAsmChar() {
+        Context context = new Context();
+        context.addSymbol("letter", new NumberLiteral(1));
+
+        String text = "debug(``#(letter) lutcolors)";
+
+        Spin2PAsmDebugLine root = Spin2PAsmDebugLine.buildFrom(context, parseTokens(text));
+
+        Spin2Debug subject = new Spin2Debug();
+        String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
+        Assertions.assertEquals(""
+            + "00000 00000       01             ASMMODE\n"
+            + "00001 00001       06 60 00       STRING (`)\n"
+            + "00004 00004       05 80 01       CHAR\n"
+            + "00007 00007       06 20 6C 75 74 STRING ( lutcolors)\n"
+            + "0000C 0000C       63 6F 6C 6F 72\n"
+            + "00011 00011       73 00\n"
+            + "00013 00013       00             DONE\n"
             + "", actual);
     }
 

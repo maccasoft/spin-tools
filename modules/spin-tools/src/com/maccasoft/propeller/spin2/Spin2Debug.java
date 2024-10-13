@@ -80,11 +80,11 @@ public class Spin2Debug {
             try {
                 if (node.getType() == Token.STRING) {
                     try {
-                        os.write(DBC_STRING);
                         String s = node.getText();
                         if (s.startsWith("\"")) {
                             s = s.substring(1, s.length() - 1);
                         }
+                        os.write(DBC_STRING);
                         os.write(s.getBytes());
                         os.write(0x00);
                     } catch (IOException e) {
@@ -96,12 +96,23 @@ public class Spin2Debug {
                     int flags = 0;
 
                     String cmd = node.getText().toUpperCase();
+                    if (cmd.startsWith("`")) {
+                        flags |= DBC_FLAG_NOEXPR;
+                        cmd = cmd.substring(1);
+                    }
                     if (cmd.endsWith("_")) {
                         flags |= DBC_FLAG_NOEXPR;
                         cmd = cmd.substring(0, cmd.length() - "_".length());
                     }
 
                     switch (cmd) {
+                        case "#":
+                            for (int i = 0; i < node.getChildCount(); i++) {
+                                os.write(DBC_CHAR);
+                            }
+                            break;
+
+                        case ".":
                         case "FDEC":
                             compileSpinStatement(node, os, DBC_TYPE_FLP | DBC_SIZE_LONG | flags);
                             break;
@@ -153,6 +164,7 @@ public class Spin2Debug {
                             compileSpinArrayStatement(node, os, DBC_TYPE_DEC | DBC_SIZE_LONG | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags);
                             break;
 
+                        case "$":
                         case "UHEX":
                             compileSpinStatement(node, os, DBC_TYPE_HEX | flags);
                             break;
@@ -197,6 +209,7 @@ public class Spin2Debug {
                             compileSpinArrayStatement(node, os, DBC_TYPE_HEX | DBC_SIZE_LONG | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags);
                             break;
 
+                        case "%":
                         case "UBIN":
                             compileSpinStatement(node, os, DBC_TYPE_BIN | flags);
                             break;
@@ -270,7 +283,6 @@ public class Spin2Debug {
                         default:
                             compileSpinStatement(node, os, DBC_TYPE_DEC | DBC_FLAG_SIGNED | flags);
                             break;
-                        //throw new CompilerException("Unknown debug statement '" + node.getText() + "'", node.getToken());
                     }
                 }
             } catch (IOException e) {
@@ -351,11 +363,11 @@ public class Spin2Debug {
             try {
                 if (node.getType() == Token.STRING) {
                     try {
-                        os.write(DBC_STRING);
                         String s = node.getText();
                         if (s.startsWith("\"")) {
                             s = s.substring(1, s.length() - 1);
                         }
+                        os.write(DBC_STRING);
                         os.write(s.getBytes());
                         os.write(0x00);
                     } catch (IOException e) {
@@ -367,12 +379,24 @@ public class Spin2Debug {
                     int flags = 0;
 
                     String cmd = node.getText().toUpperCase();
+                    if (cmd.startsWith("`")) {
+                        flags |= DBC_FLAG_NOEXPR;
+                        cmd = cmd.substring(1);
+                    }
                     if (cmd.endsWith("_")) {
                         flags |= DBC_FLAG_NOEXPR;
                         cmd = cmd.substring(0, cmd.length() - "_".length());
                     }
 
                     switch (cmd) {
+                        case "#":
+                            for (Spin2DebugExpression child : node.getArguments()) {
+                                os.write(DBC_CHAR);
+                                compileArgument(child, os);
+                            }
+                            break;
+
+                        case ".":
                         case "FDEC":
                             compileSimpleStatement(node, os, DBC_TYPE_FLP | DBC_SIZE_LONG | flags);
                             break;
@@ -433,6 +457,7 @@ public class Spin2Debug {
                             compileArrayStatement(node, os, DBC_TYPE_DEC | DBC_SIZE_LONG | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags);
                             break;
 
+                        case "$":
                         case "UHEX":
                             compileSimpleStatement(node, os, DBC_TYPE_HEX | flags);
                             break;
@@ -483,6 +508,7 @@ public class Spin2Debug {
                             compileArrayStatement(node, os, DBC_TYPE_HEX | DBC_SIZE_LONG | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags);
                             break;
 
+                        case "%":
                         case "UBIN":
                             compileSimpleStatement(node, os, DBC_TYPE_BIN | flags);
                             break;
@@ -572,7 +598,8 @@ public class Spin2Debug {
                             break;
 
                         default:
-                            throw new CompilerException("unknown debug statement '" + node.getText() + "'", node.getToken());
+                            compileSimpleStatement(node, os, DBC_TYPE_DEC | DBC_FLAG_SIGNED | flags);
+                            break;
                     }
                 }
             } catch (IOException e) {
