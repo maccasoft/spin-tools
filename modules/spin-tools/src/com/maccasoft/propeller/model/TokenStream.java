@@ -12,6 +12,26 @@ package com.maccasoft.propeller.model;
 
 public abstract class TokenStream {
 
+    public static class Position {
+
+        final int index;
+        final int line;
+        final int column;
+
+        public Position(TokenStream stream) {
+            this.index = stream.index;
+            this.line = stream.line;
+            this.column = stream.column;
+        }
+
+        public void restore(TokenStream stream) {
+            stream.index = this.index;
+            stream.line = this.line;
+            stream.column = this.column;
+        }
+
+    }
+
     protected final String text;
 
     protected int index = 0;
@@ -26,17 +46,12 @@ public abstract class TokenStream {
     }
 
     public Token peekNext() {
-        int saveIndex = index;
-        int saveLine = line;
-        int saveColumn = column;
-
-        Token token = nextToken();
-
-        index = saveIndex;
-        line = saveLine;
-        column = saveColumn;
-
-        return token;
+        Position pos = new Position(this);
+        try {
+            return nextToken();
+        } finally {
+            pos.restore(this);
+        }
     }
 
     public abstract Token nextToken();

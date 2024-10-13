@@ -59,6 +59,25 @@ public class Token {
         this.stream = stream;
     }
 
+    public Token(TokenStream stream, int start, int line, int column, int type) {
+        this.stream = stream;
+        this.start = start;
+        this.stop = start;
+        this.line = line;
+        this.column = column;
+        this.type = type;
+    }
+
+    public Token(TokenStream stream, int start, int line, int column, int type, String text) {
+        this.stream = stream;
+        this.start = start;
+        this.stop = start + text.length() - 1;
+        this.line = line;
+        this.column = column;
+        this.type = type;
+        this.text = text;
+    }
+
     public String getText() {
         if (type == EOF || type == NL) {
             return "";

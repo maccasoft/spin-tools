@@ -848,15 +848,38 @@ class Spin2TokenStreamTest {
     }
 
     @Test
-    void testBacktickStrings() {
-        Spin2TokenStream subject = new Spin2TokenStream("`#(letter) lutcolors `uhex_long_array_(image_address, lut_size)");
+    void testBacktickString() {
+        Spin2TokenStream subject = new Spin2TokenStream("``(letter) lutcolors `uhex_long_array_(image_address, lut_size) longs_2bit");
 
-        assertEquals("`#(letter) lutcolors ", subject.nextToken().getText());
-        assertEquals("uhex_long_array_", subject.nextToken().getText());
+        assertEquals("`", subject.nextToken().getText());
+        assertEquals("`", subject.nextToken().getText());
+        assertEquals("(", subject.nextToken().getText());
+        assertEquals("letter", subject.nextToken().getText());
+        assertEquals(")", subject.nextToken().getText());
+        assertEquals(" lutcolors ", subject.nextToken().getText());
+        assertEquals("`uhex_long_array_", subject.nextToken().getText());
         assertEquals("(", subject.nextToken().getText());
         assertEquals("image_address", subject.nextToken().getText());
         assertEquals(",", subject.nextToken().getText());
         assertEquals("lut_size", subject.nextToken().getText());
+        assertEquals(")", subject.nextToken().getText());
+        assertEquals(" longs_2bit", subject.nextToken().getText());
+    }
+
+    @Test
+    void testA() {
+        Spin2TokenStream subject = new Spin2TokenStream("`MyBitmap `uhex_(flag[i++ & $1F]) `dly(100)");
+
+        assertEquals("`MyBitmap ", subject.nextToken().getText());
+        assertEquals("`uhex_", subject.nextToken().getText());
+        assertEquals("(", subject.nextToken().getText());
+        assertEquals("flag", subject.nextToken().getText());
+        assertEquals("[", subject.nextToken().getText());
+        assertEquals("i", subject.nextToken().getText());
+        assertEquals("++", subject.nextToken().getText());
+        assertEquals("&", subject.nextToken().getText());
+        assertEquals("$1F", subject.nextToken().getText());
+        assertEquals("]", subject.nextToken().getText());
         assertEquals(")", subject.nextToken().getText());
     }
 

@@ -12,522 +12,680 @@ package com.maccasoft.propeller.spin2;
 
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenStream;
+import com.maccasoft.propeller.spin2.bytecode.MathOp;
 
 public class Spin2TokenStream extends TokenStream {
 
+    int backtickState;
+    int backtickNestedParens;
+    Token eofToken;
+
     public Spin2TokenStream(String text) {
         super(text);
+        backtickState = 0;
+        backtickNestedParens = 0;
+        eofToken = new Token(this, text.length() - 1, Token.EOF);
     }
 
     @Override
     public Token nextToken() {
-        int nested = 0;
-        int state = Token.START;
-        boolean escape = false;
-        Token token = null;
+        if (backtickState == 1) {
+            return parseBacktickString();
+        }
+        if (backtickState == 2) {
+            return parseBacktickKeyword();
+        }
+        if (backtickState == 3) {
+            return parseBacktickNext();
+        }
+        return parseNext();
+    }
 
-        for (; index < text.length(); index++, column++) {
-            char ch = text.charAt(index);
-            switch (state) {
-                case Token.START:
-                    if (ch == ' ' || ch == '\t') { // Skip white spaces
-                        if (ch == '\t') {
-                            column = ((column + 7) & 7) - 1;
-                        }
-                        break;
-                    }
-                    token = new Token(this, index);
-                    token.column = column;
-                    token.line = line;
-                    if (ch == '\r') {
-                        column = 0;
-                        line++;
-                        index++;
-                        if (index < text.length()) {
-                            if (text.charAt(index) == '\n') {
-                                index++;
-                            }
-                        }
-                        token.type = Token.NL;
-                        return token;
-                    }
-                    else if (ch == '\n') {
-                        column = 0;
-                        line++;
-                        index++;
-                        token.type = Token.NL;
-                        return token;
-                    }
-                    else if (ch == '\'') { // Comment
-                        state = token.type = Token.COMMENT;
-                    }
-                    else if (ch == '{') { // Block comment
-                        nested = 0;
-                        state = token.type = Token.BLOCK_COMMENT;
-                    }
-                    else if (ch == '"') { // String
-                        state = token.type = Token.STRING;
-                    }
-                    else if (ch == '`') { // Debug command
-                        token.type = Token.STRING;
-                        //nested = 1;
-                        state = Token.DEBUG;
-                    }
-                    else if (ch == '$') { // Hex number
-                        state = token.type = Token.NUMBER;
-                    }
-                    else if (ch == '%') { // Bin/Quad number
-                        if ((index + 1) < text.length()) {
-                            if (text.charAt(index + 1) == '%') {
-                                token.stop++;
-                                index++;
-                                column++;
-                            }
-                        }
-                        state = token.type = Token.NUMBER;
-                    }
-                    else if (ch >= '0' && ch <= '9') { // Decimal
-                        state = token.type = Token.NUMBER;
-                    }
-                    else if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch == '_') { // Keyword
-                        state = Token.KEYWORD;
-                    }
-                    else { // operator
-                        state = token.type = Token.OPERATOR;
-                    }
-                    break;
-                case Token.COMMENT:
-                    if (ch == '\r' || ch == '\n') {
-                        return token;
-                    }
-                    token.stop++;
-                    break;
-                case Token.BLOCK_COMMENT:
-                    token.stop++;
-                    if (ch == '\r' && index + 1 < text.length()) {
-                        if (text.charAt(index + 1) == '\n') {
-                            token.stop++;
-                            index++;
-                        }
-                    }
-                    if (ch == '\r' || ch == '\n') {
-                        column = 0;
-                        line++;
-                    }
-                    else if (ch == '{') {
-                        nested++;
-                    }
-                    else if (ch == '}') {
-                        if (nested == 0) {
-                            index++;
-                            column++;
-                            return token;
-                        }
-                        nested--;
-                    }
-                    break;
-                case Token.NUMBER:
-                    if ((ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || ch == '_') {
-                        token.stop++;
-                        break;
-                    }
+    Token parseNext() {
+        while (index < text.length()) {
+            char ch = Character.toUpperCase(text.charAt(index));
+            if (ch == ' ') {
+                index++;
+                column++;
+            }
+            else if (ch == '\t') {
+                index++;
+                column = ((column + 7) & 7) - 1;
+            }
+            else if (ch == '\r') {
+                int startIndex = index++;
+                int startColumn = column;
+                int startLine = line;
 
-                    if ((ch == '+' || ch == '-') && (text.charAt(index - 1) == 'e' || text.charAt(index - 1) == 'E')) {
-                        if (text.charAt(token.start) == '$' || text.charAt(token.start) == '%') {
-                            return token;
-                        }
-                        token.stop++;
-                        break;
-                    }
+                if (index < text.length() && text.charAt(index) == '\n') {
+                    index++;
+                }
+                column = 0;
+                line++;
 
-                    if (ch == '.' && index + 1 < text.length()) {
-                        char ch1 = text.charAt(index + 1);
-                        if ((ch1 >= '0' && ch1 <= '9') || (ch1 >= 'A' && ch1 <= 'Z') || (ch1 >= 'a' && ch1 <= 'z') || ch1 == '_') {
-                            token.stop++;
-                            break;
-                        }
-                    }
+                return new Token(this, startIndex, startLine, startColumn, Token.NL);
+            }
+            else if (ch == '\n') {
+                int startIndex = index++;
+                int startColumn = column;
+                int startLine = line;
 
-                    return token;
-                case Token.STRING:
-                    if (ch == '\r' || ch == '\n') {
-                        return token;
-                    }
-                    token.stop++;
-                    if (escape) {
-                        escape = false;
-                        break;
-                    }
-                    if (ch == '"') {
-                        index++;
-                        column++;
-                        return token;
-                    }
-                    break;
-                case Token.KEYWORD:
-                    if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '_') {
-                        token.stop++;
-                        break;
-                    }
+                column = 0;
+                line++;
 
-                    if ((ch == '.' || ch == '#')) {
-                        if (index + 1 < text.length()) {
-                            char ch1 = text.charAt(index + 1);
-                            if ((ch1 >= '0' && ch1 <= '9') || (ch1 >= 'A' && ch1 <= 'Z') || (ch1 >= 'a' && ch1 <= 'z') || ch1 == '_') {
-                                token.stop++;
-                                break;
-                            }
-                        }
-                        return token;
+                return new Token(this, startIndex, startLine, startColumn, Token.NL);
+            }
+            else if (ch == '\'') {
+                return parseComment();
+            }
+            else if (ch == '{') {
+                return parseBlockComment();
+            }
+            else if (ch == '"') {
+                return parseString();
+            }
+            else if (ch == '$') {
+                return parseHexNumber();
+            }
+            else if (ch == '%') {
+                return parseBinQuadNumber();
+            }
+            else if ((ch >= '0' && ch <= '9')) {
+                return parseNumber();
+            }
+            else if ((ch >= 'A' && ch <= 'Z') || ch == '_') {
+                return parseKeyword();
+            }
+            else if (ch == '`') {
+                return parseBacktickString();
+            }
+            else {
+                /*if (ch == '.' && index + 1 < text.length()) {
+                    char ch1 = Character.toUpperCase(text.charAt(index + 1));
+                    if ((ch1 >= 'A' && ch1 <= 'Z') || ch1 == '_') {
+                        return parseKeyword();
                     }
-                    if (ch == '=') {
-                        if ((token.stop - token.start) == 6) {
-                            if (Character.toUpperCase(text.charAt(token.start)) == 'A') {
-                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'D') {
-                                    if (Character.toUpperCase(text.charAt(token.start + 2)) == 'D') {
-                                        if (Character.toUpperCase(text.charAt(token.start + 3)) == 'B') {
-                                            if (Character.toUpperCase(text.charAt(token.start + 4)) == 'I') {
-                                                if (Character.toUpperCase(text.charAt(token.start + 5)) == 'T') {
-                                                    if (Character.toUpperCase(text.charAt(token.start + 6)) == 'S') {
-                                                        token.stop++;
-                                                        token.type = Token.OPERATOR;
-                                                        index++;
-                                                        column++;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        if (Character.toUpperCase(text.charAt(token.start + 3)) == 'P') {
-                                            if (Character.toUpperCase(text.charAt(token.start + 4)) == 'I') {
-                                                if (Character.toUpperCase(text.charAt(token.start + 5)) == 'N') {
-                                                    if (Character.toUpperCase(text.charAt(token.start + 6)) == 'S') {
-                                                        token.stop++;
-                                                        token.type = Token.OPERATOR;
-                                                        index++;
-                                                        column++;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        else if ((token.stop - token.start) == 4) {
-                            if (Character.toUpperCase(text.charAt(token.start)) == 'Z') {
-                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'E') {
-                                    if (Character.toUpperCase(text.charAt(token.start + 2)) == 'R') {
-                                        if (Character.toUpperCase(text.charAt(token.start + 3)) == 'O') {
-                                            if (Character.toUpperCase(text.charAt(token.start + 4)) == 'X') {
-                                                token.stop++;
-                                                token.type = Token.OPERATOR;
-                                                index++;
-                                                column++;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            if (Character.toUpperCase(text.charAt(token.start)) == 'S') {
-                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'I') {
-                                    if (Character.toUpperCase(text.charAt(token.start + 2)) == 'G') {
-                                        if (Character.toUpperCase(text.charAt(token.start + 3)) == 'N') {
-                                            if (Character.toUpperCase(text.charAt(token.start + 4)) == 'X') {
-                                                token.stop++;
-                                                token.type = Token.OPERATOR;
-                                                index++;
-                                                column++;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            if (Character.toUpperCase(text.charAt(token.start)) == 'T') {
-                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'R') {
-                                    if (Character.toUpperCase(text.charAt(token.start + 2)) == 'U') {
-                                        if (Character.toUpperCase(text.charAt(token.start + 3)) == 'N') {
-                                            if (Character.toUpperCase(text.charAt(token.start + 4)) == 'C') {
-                                                token.stop++;
-                                                token.type = Token.OPERATOR;
-                                                index++;
-                                                column++;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        else if ((token.stop - token.start) == 3) {
-                            if (Character.toUpperCase(text.charAt(token.start)) == 'S') {
-                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'C') {
-                                    if (Character.toUpperCase(text.charAt(token.start + 2)) == 'A') {
-                                        if (Character.toUpperCase(text.charAt(token.start + 3)) == 'S') {
-                                            token.stop++;
-                                            token.type = Token.OPERATOR;
-                                            index++;
-                                            column++;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        else if ((token.stop - token.start) == 2) {
-                            if (Character.toUpperCase(text.charAt(token.start)) == 'A') {
-                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'N') {
-                                    if (Character.toUpperCase(text.charAt(token.start + 2)) == 'D') {
-                                        token.stop++;
-                                        token.type = Token.OPERATOR;
-                                        index++;
-                                        column++;
-                                    }
-                                }
-                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'B') {
-                                    if (Character.toUpperCase(text.charAt(token.start + 2)) == 'S') {
-                                        token.stop++;
-                                        token.type = Token.OPERATOR;
-                                        index++;
-                                        column++;
-                                    }
-                                }
-                            }
-                            if (Character.toUpperCase(text.charAt(token.start)) == 'X') {
-                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'O') {
-                                    if (Character.toUpperCase(text.charAt(token.start + 2)) == 'R') {
-                                        token.stop++;
-                                        token.type = Token.OPERATOR;
-                                        index++;
-                                        column++;
-                                    }
-                                }
-                            }
-                            if (Character.toUpperCase(text.charAt(token.start)) == 'S') {
-                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'A') {
-                                    if (Character.toUpperCase(text.charAt(token.start + 2)) == 'R') {
-                                        token.stop++;
-                                        token.type = Token.OPERATOR;
-                                        index++;
-                                        column++;
-                                    }
-                                }
-                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'C') {
-                                    if (Character.toUpperCase(text.charAt(token.start + 2)) == 'A') {
-                                        token.stop++;
-                                        token.type = Token.OPERATOR;
-                                        index++;
-                                        column++;
-                                    }
-                                }
-                            }
-                            if (Character.toUpperCase(text.charAt(token.start)) == 'R') {
-                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'O') {
-                                    if (Character.toUpperCase(text.charAt(token.start + 2)) == 'R') {
-                                        token.stop++;
-                                        token.type = Token.OPERATOR;
-                                        index++;
-                                        column++;
-                                    }
-                                    if (Character.toUpperCase(text.charAt(token.start + 2)) == 'L') {
-                                        token.stop++;
-                                        token.type = Token.OPERATOR;
-                                        index++;
-                                        column++;
-                                    }
-                                }
-                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'E') {
-                                    if (Character.toUpperCase(text.charAt(token.start + 2)) == 'V') {
-                                        token.stop++;
-                                        token.type = Token.OPERATOR;
-                                        index++;
-                                        column++;
-                                    }
-                                }
-                            }
-                        }
-                        else if ((token.stop - token.start) == 1) {
-                            if (Character.toUpperCase(text.charAt(token.start)) == 'O') {
-                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'R') {
-                                    token.stop++;
-                                    token.type = Token.OPERATOR;
-                                    index++;
-                                    column++;
-                                }
-                            }
-                        }
-                    }
-                    return token;
-                case Token.OPERATOR:
-                    if ((token.stop - token.start + 1) == 1) {
-                        char ch0 = text.charAt(token.start);
-                        if (ch0 == '!' && (ch == '!' || ch == '=')) {
-                            token.stop++;
-                            break;
-                        }
-                        if (ch0 == '.' && (ch == '.')) {
-                            token.stop++;
-                            break;
-                        }
-                        if (ch0 == '#' && (ch == '>' || ch == '#')) {
-                            token.stop++;
-                            break;
-                        }
-                        if (ch0 == '&' && (ch == '&' || ch == '=')) {
-                            token.stop++;
-                            break;
-                        }
-                        if (ch0 == '*' && (ch == '=' || ch == '.')) {
-                            token.stop++;
-                            break;
-                        }
-                        if (ch0 == '+' && (ch == '+' || ch == '/' || ch == '<' || ch == '=' || ch == '>' || ch == '.')) {
-                            token.stop++;
-                            break;
-                        }
-                        if (ch0 == '-' && (ch == '-' || ch == '=' || ch == '.')) {
-                            token.stop++;
-                            break;
-                        }
-                        if (ch0 == '/' && (ch == '/' || ch == '=' || ch == '.')) {
-                            token.stop++;
-                            break;
-                        }
-                        if (ch0 == ':' && (ch == '=')) {
-                            token.stop++;
-                            break;
-                        }
-                        if (ch0 == '<' && (ch == '#' || ch == '<' || ch == '=' || ch == '>' || ch == '.')) {
-                            token.stop++;
-                            break;
-                        }
-                        if (ch0 == '=' && (ch == '=')) {
-                            token.stop++;
-                            break;
-                        }
-                        if (ch0 == '>' && (ch == '=' || ch == '>' || ch == '.')) {
-                            token.stop++;
-                            break;
-                        }
-                        if (ch0 == '?' && (ch == '?')) {
-                            token.stop++;
-                            break;
-                        }
-                        if (ch0 == '^' && (ch == '^' || ch == '=' || ch == '@')) {
-                            token.stop++;
-                            break;
-                        }
-                        if (ch0 == '|' && (ch == '|' || ch == '=')) {
-                            token.stop++;
-                            break;
-                        }
-                        if (ch0 == '~' && (ch == '~')) {
-                            token.stop++;
-                            break;
-                        }
-                        if (ch0 == '@' && (ch == '@')) {
-                            token.stop++;
-                            break;
-                        }
-                    }
-                    else if ((token.stop - token.start + 1) == 2) {
-                        char ch0 = text.charAt(token.start);
-                        char ch1 = text.charAt(token.start + 1);
-                        if (ch0 == '+' && ch1 == '/' && ch == '/') {
-                            token.stop++;
-                            break;
-                        }
-                        if (ch0 == '+' && ch1 == '<' && ch == '/') {
-                            token.stop++;
-                            break;
-                        }
-                        if (ch0 == '<' && ch1 == '=' && (ch == '>' || ch == '.')) {
-                            token.stop++;
-                            break;
-                        }
-                        if (ch0 == '>' && ch1 == '=' && (ch == '.')) {
-                            token.stop++;
-                            break;
-                        }
-                        if (ch0 == '<' && ch1 == '>' && (ch == '.')) {
-                            token.stop++;
-                            break;
-                        }
-                        if (ch0 == '=' && ch1 == '=' && (ch == '.')) {
-                            token.stop++;
-                            break;
-                        }
-                        if (ch0 == '.' && ch1 == '.' && ch == '.') {
-                            token.stop++;
-                            token.type = state = Token.NEXT_LINE;
-                            break;
-                        }
-                        if (ch == '=') {
-                            token.stop++;
-                            index++;
-                            column++;
-                        }
-                    }
-                    else if ((token.stop - token.start + 1) == 3) {
-                        if (ch == '=') {
-                            token.stop++;
-                            index++;
-                            column++;
-                        }
-                    }
-                    return token;
-                case Token.NEXT_LINE:
-                    token.stop++;
-                    if (ch == '\r' && index + 1 < text.length()) {
-                        if (text.charAt(index + 1) == '\n') {
-                            token.stop++;
-                            index++;
-                        }
-                    }
-                    if (ch == '\r' || ch == '\n') {
-                        column = 0;
-                        line++;
-                        if (nested == 0) {
-                            index++;
-                            return token;
-                        }
-                    }
-                    else if (ch == '{') {
-                        nested++;
-                    }
-                    else if (ch == '}') {
-                        if (nested == 0) {
-                            index++;
-                            column++;
-                            return token;
-                        }
-                        nested--;
-                    }
-                    break;
-                case Token.DEBUG:
-                    if (ch == '(') {
-                        nested++;
-                    }
-                    else if (ch == ')') {
-                        if (nested == 0) {
-                            return token;
-                        }
-                        if (nested > 0) {
-                            nested--;
-                        }
-                    }
-                    if (nested == 0 && ch == '`') {
-                        index++;
-                        column++;
-                        return token;
-                    }
-                    token.stop++;
-                    break;
+                }*/
+                return parseOperator();
             }
         }
 
-        if (token == null) {
-            token = new Token(this, text.length() - 1, Token.EOF);
+        return eofToken;
+    }
+
+    Token parseComment() {
+        int startIndex = index++;
+        int startColumn = column++;
+
+        while (index < text.length()) {
+            char ch = text.charAt(index);
+            if (ch == '\r' || ch == '\n') {
+                break;
+            }
+            index++;
+            column++;
         }
 
-        return token;
+        return new Token(this, startIndex, line, startColumn, Token.COMMENT, text.substring(startIndex, index));
+    }
+
+    Token parseBlockComment() {
+        int startIndex = index++;
+        int startLine = line;
+        int startColumn = column++;
+        int nested = 0;
+
+        while (index < text.length()) {
+            char ch = text.charAt(index);
+            index++;
+            column++;
+            if (ch == '{') {
+                nested++;
+            }
+            else if (ch == '}') {
+                if (nested == 0) {
+                    break;
+                }
+                nested--;
+            }
+            if (ch == '\r' || ch == '\n') {
+                line++;
+                column = 0;
+                if (ch == '\r' && index < text.length() && text.charAt(index) == '\n') {
+                    index++;
+                }
+            }
+        }
+
+        return new Token(this, startIndex, startLine, startColumn, Token.BLOCK_COMMENT, text.substring(startIndex, index));
+    }
+
+    Token parseString() {
+        int startIndex = index++;
+        int startColumn = column++;
+
+        while (index < text.length()) {
+            char ch = text.charAt(index);
+            if (ch == '\n' || ch == '\n') {
+                break;
+            }
+            index++;
+            column++;
+            if (ch == '"') {
+                break;
+            }
+        }
+
+        return new Token(this, startIndex, line, startColumn, Token.STRING, text.substring(startIndex, index));
+    }
+
+    Token parseNumber() {
+        int startIndex = index;
+        int startColumn = column;
+
+        index++;
+        column++;
+
+        while (index < text.length()) {
+            char ch = Character.toUpperCase(text.charAt(index));
+            if (ch == '.') {
+                if (index + 1 < text.length()) {
+                    char ch1 = text.charAt(index + 1);
+                    if (!((ch1 >= '0' && ch1 <= '9'))) {
+                        break;
+                    }
+                }
+            }
+            else if (ch == 'E') {
+                if (index + 1 < text.length()) {
+                    if (text.charAt(index + 1) == '+' || text.charAt(index + 1) == '-') {
+                        index++;
+                        column++;
+                    }
+                }
+            }
+            else if (!((ch >= '0' && ch <= '9') || ch == '_')) {
+                break;
+            }
+            index++;
+            column++;
+        }
+
+        return new Token(this, startIndex, line, startColumn, Token.NUMBER, text.substring(startIndex, index));
+    }
+
+    Token parseHexNumber() {
+        int startIndex = index;
+        int startColumn = column;
+        char ch = text.charAt(index);
+
+        index++;
+        column++;
+
+        while (index < text.length()) {
+            ch = Character.toUpperCase(text.charAt(index));
+            if (!((ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F') || ch == '_')) {
+                break;
+            }
+            index++;
+            column++;
+        }
+
+        return new Token(this, startIndex, line, startColumn, Token.NUMBER, text.substring(startIndex, index));
+    }
+
+    Token parseBinQuadNumber() {
+        int startIndex = index;
+        int startColumn = column;
+        char ch = text.charAt(index);
+
+        index++;
+        column++;
+
+        if (ch == '%' && index < text.length()) {
+            if (text.charAt(index) == '%') {
+                index++;
+                column++;
+
+                while (index < text.length()) {
+                    ch = Character.toUpperCase(text.charAt(index));
+                    if (!((ch >= '0' && ch <= '3') || ch == '_')) {
+                        break;
+                    }
+                    index++;
+                    column++;
+                }
+
+                return new Token(this, startIndex, line, startColumn, Token.NUMBER, text.substring(startIndex, index));
+            }
+        }
+
+        while (index < text.length()) {
+            ch = Character.toUpperCase(text.charAt(index));
+            if (!((ch >= '0' && ch <= '1') || ch == '_')) {
+                break;
+            }
+            index++;
+            column++;
+        }
+
+        return new Token(this, startIndex, line, startColumn, Token.NUMBER, text.substring(startIndex, index));
+    }
+
+    Token parseKeyword() {
+        int startIndex = index++;
+        int startColumn = column++;
+
+        while (index < text.length()) {
+            char ch = Character.toUpperCase(text.charAt(index));
+            if ((ch == '.' || ch == '#') && index + 1 < text.length()) {
+                ch = Character.toUpperCase(text.charAt(index + 1));
+                if (!((ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9'))) {
+                    break;
+                }
+            }
+            else if (!((ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || ch == '_')) {
+                break;
+            }
+            index++;
+            column++;
+        }
+
+        String s = text.substring(startIndex, index);
+        if (MathOp.isMathOp(s) || MathOp.isUnaryMathOp(s)) {
+            if (index < text.length() && text.charAt(index) == '=') {
+                index++;
+                column++;
+            }
+        }
+
+        return new Token(this, startIndex, line, startColumn, 0, text.substring(startIndex, index));
+    }
+
+    Token parseOperator() {
+        int startIndex = index;
+        int startColumn = column;
+
+        char ch0 = text.charAt(index);
+        char ch1 = index + 1 < text.length() ? text.charAt(index + 1) : 0;
+        char ch2 = index + 2 < text.length() ? text.charAt(index + 2) : 0;
+        char ch3 = index + 3 < text.length() ? text.charAt(index + 3) : 0;
+
+        if (ch0 == '+' && ch1 == '/' && ch2 == '/') {
+            index += 3 + (ch3 == '=' ? 1 : 0);
+            column += 3 + (ch3 == '=' ? 1 : 0);
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+        if (ch0 == '+' && ch1 == '>' && ch2 == '=') {
+            index += 3;
+            column += 3;
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+        if (ch0 == '<' && ch1 == '=' && ch2 == '>') {
+            index += 3;
+            column += 3;
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+        if (ch0 == '.' && ch1 == '.' && ch2 == '.') {
+            return skipToNextLine();
+        }
+
+        if (ch0 == '+' && ch1 == '+') {
+            index += 2;
+            column += 2;
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+        if (ch0 == '-' && ch1 == '-') {
+            index += 2;
+            column += 2;
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+        if (ch0 == '?' && ch1 == '?') {
+            index += 2;
+            column += 2;
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+
+        if (ch0 == '!' && ch1 == '!') {
+            index += 2 + (ch2 == '=' ? 1 : 0);
+            column += 2 + (ch2 == '=' ? 1 : 0);
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+        if (ch0 == '~' && ch1 == '~') {
+            index += 2;
+            column += 2;
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+
+        if (ch0 == '^' && ch1 == '@') {
+            index += 2;
+            column += 2;
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+        if (ch0 == '@' && ch1 == '@') {
+            index += 2;
+            column += 2;
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+
+        if (ch0 == '-' && ch1 == '.') {
+            index += 2;
+            column += 2;
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+        if (ch0 == '>' && ch1 == '>') {
+            index += 2 + (ch2 == '=' ? 1 : 0);
+            column += 2 + (ch2 == '=' ? 1 : 0);
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+        if (ch0 == '<' && ch1 == '<') {
+            index += 2 + (ch2 == '=' ? 1 : 0);
+            column += 2 + (ch2 == '=' ? 1 : 0);
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+        if (ch0 == '*' && ch1 == '.') {
+            index += 2;
+            column += 2;
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+        if (ch0 == '/' && ch1 == '.') {
+            index += 2;
+            column += 2;
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+        if (ch0 == '+' && ch1 == '/') {
+            index += 2 + (ch2 == '=' ? 1 : 0);
+            column += 2 + (ch2 == '=' ? 1 : 0);
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+        if (ch0 == '/' && ch1 == '/') {
+            index += 2 + (ch2 == '=' ? 1 : 0);
+            column += 2 + (ch2 == '=' ? 1 : 0);
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+        if (ch0 == '+' && ch1 == '.') {
+            index += 2;
+            column += 2;
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+        if (ch0 == '#' && ch1 == '>') {
+            index += 2 + (ch2 == '=' ? 1 : 0);
+            column += 2 + (ch2 == '=' ? 1 : 0);
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+        if (ch0 == '<' && ch1 == '#') {
+            index += 2 + (ch2 == '=' ? 1 : 0);
+            column += 2 + (ch2 == '=' ? 1 : 0);
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+        if (ch0 == '+' && ch1 == '<') {
+            index += 2 + (ch2 == '=' ? 1 : 0);
+            column += 2 + (ch2 == '=' ? 1 : 0);
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+        if (ch0 == '<' && ch1 == '.') {
+            index += 2;
+            column += 2;
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+        if (ch0 == '<' && ch1 == '=') {
+            index += 2 + (ch2 == '.' ? 1 : 0);
+            column += 2 + (ch2 == '.' ? 1 : 0);
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+        if (ch0 == '=' && ch1 == '=') {
+            index += 2 + (ch2 == '.' ? 1 : 0);
+            column += 2 + (ch2 == '.' ? 1 : 0);
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+        if (ch0 == '<' && ch1 == '>') {
+            index += 2 + (ch2 == '.' ? 1 : 0);
+            column += 2 + (ch2 == '.' ? 1 : 0);
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+        if (ch0 == '>' && ch1 == '=') {
+            index += 2 + (ch2 == '.' ? 1 : 0);
+            column += 2 + (ch2 == '.' ? 1 : 0);
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+        if (ch0 == '+' && ch1 == '>') {
+            index += 2;
+            column += 2;
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+        if (ch0 == '>' && ch1 == '.') {
+            index += 2;
+            column += 2;
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+        if (ch0 == '&' && ch1 == '&') {
+            index += 2 + (ch2 == '=' ? 1 : 0);
+            column += 2 + (ch2 == '=' ? 1 : 0);
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+        if (ch0 == '^' && ch1 == '^') {
+            index += 2 + (ch2 == '=' ? 1 : 0);
+            column += 2 + (ch2 == '=' ? 1 : 0);
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+        if (ch0 == '|' && ch1 == '|') {
+            index += 2 + (ch2 == '=' ? 1 : 0);
+            column += 2 + (ch2 == '=' ? 1 : 0);
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+        if (ch0 == ':' && ch1 == '=') {
+            index += 2;
+            column += 2;
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+        if (ch0 == '.' && ch1 == '.') {
+            index += 2;
+            column += 2;
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+        if (ch0 == '#' && ch1 == '#') {
+            index += 2;
+            column += 2;
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+
+        if (ch0 == '!' || ch0 == '&' || ch0 == '^' || ch0 == '|' || ch0 == '*' || ch0 == '/' || ch0 == '+' || ch0 == '-') {
+            index += 1 + (ch1 == '=' ? 1 : 0);
+            column += 1 + (ch1 == '=' ? 1 : 0);
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+
+        index++;
+        column++;
+
+        return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+    }
+
+    Token skipToNextLine() {
+        int startIndex = index++;
+        int startLine = line;
+        int startColumn = column++;
+        int nested = 0;
+
+        while (index < text.length()) {
+            char ch = text.charAt(index);
+            if (ch == '\n') {
+                column = 0;
+                line++;
+                index++;
+                if (nested == 0) {
+                    break;
+                }
+            }
+            else if (ch == '\r') {
+                if (index + 1 < text.length()) {
+                    if (text.charAt(index + 1) == '\n') {
+                        index++;
+                    }
+                }
+                column = 0;
+                line++;
+                index++;
+                if (nested == 0) {
+                    break;
+                }
+            }
+            else {
+                if (ch == '{') {
+                    nested++;
+                }
+                else if (ch == '}') {
+                    if (nested > 0) {
+                        nested--;
+                    }
+                }
+                index++;
+                column++;
+            }
+        }
+
+        return new Token(this, startIndex, startLine, startColumn, Token.NEXT_LINE, text.substring(startIndex, index));
+    }
+
+    Token parseBacktickString() {
+        char ch;
+        int nested = 0;
+        int startIndex = index;
+        int startColumn = column;
+
+        if ((ch = text.charAt(index)) == '`') {
+            index++;
+            column++;
+        }
+        backtickState = 1;
+
+        while (index < text.length()) {
+            ch = text.charAt(index);
+            if (ch == '\t') {
+                index++;
+                column = ((column + 7) & 7) - 1;
+            }
+            else if (ch == '\r' || ch == '\n') {
+                break;
+            }
+            else if (ch == '`') {
+                backtickState = 2;
+                return new Token(this, startIndex, line, startColumn, Token.STRING, text.substring(startIndex, index));
+            }
+            else {
+                if (ch == '(') {
+                    nested++;
+                }
+                if (ch == ')') {
+                    if (nested == 0) {
+                        if (index == startIndex) {
+                            index++;
+                            column++;
+                            backtickState = 0;
+                            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+                        }
+                        break;
+                    }
+                    nested--;
+                }
+                index++;
+                column++;
+            }
+        }
+
+        backtickState = 0;
+
+        return new Token(this, startIndex, line, startColumn, Token.STRING, text.substring(startIndex, index));
+    }
+
+    Token parseBacktickKeyword() {
+        char ch;
+        int startIndex = index;
+        int startColumn = column;
+
+        ch = text.charAt(index);
+        index++;
+        column++;
+
+        if (ch == '`') {
+            if (index < text.length()) {
+                ch = text.charAt(index);
+                if (ch == '$' || ch == '%' || ch == '.' || ch == '#') {
+                    index++;
+                    column++;
+                }
+            }
+            if (index < text.length()) {
+                ch = text.charAt(index);
+                if (ch == '(') {
+                    backtickState = 3;
+                    return new Token(this, startIndex, line, startColumn, 0, text.substring(startIndex, index));
+                }
+            }
+        }
+
+        while (index < text.length()) {
+            ch = Character.toUpperCase(text.charAt(index));
+            if (!((ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || ch == '_')) {
+                break;
+            }
+            index++;
+            column++;
+        }
+
+        backtickState = 3;
+
+        return new Token(this, startIndex, line, startColumn, 0, text.substring(startIndex, index));
+    }
+
+    Token parseBacktickNext() {
+        char ch;
+
+        while (index < text.length()) {
+            ch = Character.toUpperCase(text.charAt(index));
+            if (ch == ' ') {
+                index++;
+                column++;
+            }
+            else if (ch == '\t') {
+                index++;
+                column = ((column + 7) & 7) - 1;
+            }
+            else if (ch == '\r' || ch == '\n') {
+                break;
+            }
+            else if (ch == '{') {
+                return parseBlockComment();
+            }
+            else if (ch == '$') {
+                return parseHexNumber();
+            }
+            else if (ch == '%') {
+                return parseBinQuadNumber();
+            }
+            else if ((ch >= '0' && ch <= '9')) {
+                return parseNumber();
+            }
+            else if ((ch >= 'A' && ch <= 'Z') || ch == '_') {
+                return parseKeyword();
+            }
+            else {
+                if (ch == '(') {
+                    backtickNestedParens++;
+                }
+                if (ch == ')') {
+                    if (backtickNestedParens > 0) {
+                        backtickNestedParens--;
+                    }
+                    if (backtickNestedParens == 0) {
+                        backtickState = 1;
+                    }
+                }
+                return parseOperator();
+            }
+        }
+
+        return eofToken;
     }
 
 }

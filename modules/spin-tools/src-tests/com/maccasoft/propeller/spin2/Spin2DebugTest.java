@@ -56,7 +56,7 @@ class Spin2DebugTest {
             + "' #1\n"
             + "00B28 00004       06 60 69 6E 64 STRING (`index=)\n"
             + "00B2D 00009       65 78 3D 00\n"
-            + "00B31 0000D       41 6C 6F 6E 67 UDEC(long[a++])\n"
+            + "00B31 0000D       61 6C 6F 6E 67 SDEC(long[a++])\n"
             + "00B36 00012       5B 61 2B 2B 5D\n"
             + "00B3B 00017       00\n"
             + "00B3C 00018       00             DONE\n"
