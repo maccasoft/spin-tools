@@ -18,6 +18,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.SpinObject.DataObject;
@@ -323,6 +324,21 @@ class Spin2DebugTest {
             + "00001 00001       06 73 74 61 72 STRING (start)\n"
             + "00006 00006       74 00\n"
             + "00008 00008       00             DONE\n"
+            + "", actual);
+    }
+
+    @Test
+    void testSpinStringConcatenate() {
+        String text = "debug(\"start\", 13, 10, \"end\", 13, 10)";
+
+        Spin2Debug subject = new Spin2Debug();
+        String actual = dumpDebugData(subject.compileDebugStatement(parse(text)));
+        Assertions.assertEquals(""
+            + "00000 00000       04             COGN\n"
+            + "00001 00001       06 73 74 61 72 STRING (start..end..)\n"
+            + "00006 00006       74 0D 0A 65 6E\n"
+            + "0000B 0000B       64 0D 0A 00\n"
+            + "0000F 0000F       00             DONE\n"
             + "", actual);
     }
 
@@ -737,6 +753,21 @@ class Spin2DebugTest {
             + "00011 00011       73 00\n"
             + "00013 00013       00             DONE\n"
             + "", actual);
+    }
+
+    @Test
+    void testUnknownDebugCommand() {
+        String text = "debug(`MyPlot `unknown_command(a))";
+
+        Spin2Debug subject = new Spin2Debug();
+        Assertions.assertThrows(CompilerException.class, new Executable() {
+
+            @Override
+            public void execute() throws Throwable {
+                subject.compileDebugStatement(parse(text));
+            }
+
+        });
     }
 
     List<Token> parseTokens(String text) {

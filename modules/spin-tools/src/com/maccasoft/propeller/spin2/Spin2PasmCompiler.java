@@ -35,6 +35,7 @@ import com.maccasoft.propeller.spin2.instructions.FileInc;
 public abstract class Spin2PasmCompiler extends ObjectCompiler {
 
     protected Spin2Compiler compiler;
+    protected Spin2Debug debug = new Spin2Debug();
 
     private Map<Spin2PAsmLine, Context> pendingAlias = new HashMap<Spin2PAsmLine, Context>();
 
@@ -218,6 +219,7 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
                     tokens.remove(node.label);
                 }
                 Spin2PAsmDebugLine debugLine = Spin2PAsmDebugLine.buildFrom(pasmLine.getScope(), tokens);
+
                 debugSource.add(debugLine);
                 compiler.debugStatements.add(debugLine);
                 pasmLine.setData("debug", debugLine);

@@ -495,7 +495,6 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
     @Override
     public Spin2Object generateObject(int memoryOffset) {
         Spin2Object object = new Spin2Object();
-        Spin2Debug debug = new Spin2Debug();
 
         Expression exp = scope.getSystemSymbol("CLKFREQ_");
         if (exp != null) {

@@ -749,6 +749,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                             stack += 4;
                         }
                     }
+                    debug.compileDebugStatement(node);
                     node.setData("context", context);
                     if (isDebugEnabled()) {
                         method.debugNodes.add(node);

@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.spin2.Spin2PAsmDebugLine.Spin2DebugCommand;
 import com.maccasoft.propeller.spin2.Spin2PAsmDebugLine.Spin2DebugExpression;
@@ -50,6 +51,7 @@ public class Spin2Debug {
 
     public byte[] compileDebugStatement(Spin2StatementNode root) {
         boolean skipCogN = false;
+        StringBuilder sb = new StringBuilder();
         ByteArrayOutputStream os = new ByteArrayOutputStream();
 
         if (root.getChildCount() != 0) {
@@ -76,26 +78,30 @@ public class Spin2Debug {
         first = true;
 
         for (Spin2StatementNode node : root.getChilds()) {
-
             try {
                 if (node.getType() == Token.STRING) {
-                    try {
-                        String s = node.getText();
-                        if (s.startsWith("\"")) {
-                            s = s.substring(1, s.length() - 1);
-                        }
-                        os.write(DBC_STRING);
-                        os.write(s.getBytes());
-                        os.write(0x00);
-                    } catch (IOException e) {
-
+                    String s = node.getText();
+                    if (s.startsWith("\"")) {
+                        s = s.substring(1, s.length() - 1);
                     }
-                    first = true;
+                    sb.append(s);
+                }
+                else if (node.getType() == Token.NUMBER) {
+                    NumberLiteral v = new NumberLiteral(node.getText());
+                    sb.append((char) v.getNumber().intValue());
                 }
                 else {
                     int flags = 0;
 
-                    String cmd = node.getText().toUpperCase();
+                    if (sb.length() != 0) {
+                        os.write(DBC_STRING);
+                        os.write(sb.toString().getBytes());
+                        os.write(0x00);
+                        sb = new StringBuilder();
+                        first = true;
+                    }
+
+                    String cmd = node.getText();
                     if (cmd.startsWith("`")) {
                         flags |= DBC_FLAG_NOEXPR;
                         cmd = cmd.substring(1);
@@ -105,7 +111,7 @@ public class Spin2Debug {
                         cmd = cmd.substring(0, cmd.length() - "_".length());
                     }
 
-                    switch (cmd) {
+                    switch (cmd.toUpperCase()) {
                         case "#":
                             for (int i = 0; i < node.getChildCount(); i++) {
                                 os.write(DBC_CHAR);
@@ -142,6 +148,7 @@ public class Spin2Debug {
                             compileSpinArrayStatement(node, os, DBC_TYPE_DEC | DBC_SIZE_LONG | DBC_FLAG_ARRAY | flags);
                             break;
 
+                        case "":
                         case "SDEC":
                             compileSpinStatement(node, os, DBC_TYPE_DEC | DBC_FLAG_SIGNED | flags);
                             break;
@@ -281,11 +288,20 @@ public class Spin2Debug {
                             break;
 
                         default:
-                            compileSpinStatement(node, os, DBC_TYPE_DEC | DBC_FLAG_SIGNED | flags);
-                            break;
+                            throw new CompilerException("Unknown debug statement '" + cmd + "'", node.getToken());
                     }
                 }
             } catch (IOException e) {
+                // Do nothing
+            }
+        }
+
+        if (sb.length() != 0) {
+            try {
+                os.write(DBC_STRING);
+                os.write(sb.toString().getBytes());
+                os.write(0x00);
+            } catch (Exception e) {
                 // Do nothing
             }
         }
@@ -331,6 +347,7 @@ public class Spin2Debug {
 
     public byte[] compilePAsmDebugStatement(Spin2PAsmDebugLine root) {
         boolean skipCogN = false;
+        StringBuilder sb = new StringBuilder();
         ByteArrayOutputStream os = new ByteArrayOutputStream();
 
         os.write(DBC_ASMMODE);
@@ -359,26 +376,30 @@ public class Spin2Debug {
         first = true;
 
         for (Spin2DebugCommand node : root.getStatements()) {
-
             try {
                 if (node.getType() == Token.STRING) {
-                    try {
-                        String s = node.getText();
-                        if (s.startsWith("\"")) {
-                            s = s.substring(1, s.length() - 1);
-                        }
-                        os.write(DBC_STRING);
-                        os.write(s.getBytes());
-                        os.write(0x00);
-                    } catch (IOException e) {
-
+                    String s = node.getText();
+                    if (s.startsWith("\"")) {
+                        s = s.substring(1, s.length() - 1);
                     }
-                    first = true;
+                    sb.append(s);
+                }
+                else if (node.getType() == Token.NUMBER) {
+                    NumberLiteral v = new NumberLiteral(node.getText());
+                    sb.append((char) v.getNumber().intValue());
                 }
                 else {
                     int flags = 0;
 
-                    String cmd = node.getText().toUpperCase();
+                    if (sb.length() != 0) {
+                        os.write(DBC_STRING);
+                        os.write(sb.toString().getBytes());
+                        os.write(0x00);
+                        sb = new StringBuilder();
+                        first = true;
+                    }
+
+                    String cmd = node.getText();
                     if (cmd.startsWith("`")) {
                         flags |= DBC_FLAG_NOEXPR;
                         cmd = cmd.substring(1);
@@ -388,7 +409,7 @@ public class Spin2Debug {
                         cmd = cmd.substring(0, cmd.length() - "_".length());
                     }
 
-                    switch (cmd) {
+                    switch (cmd.toUpperCase()) {
                         case "#":
                             for (Spin2DebugExpression child : node.getArguments()) {
                                 os.write(DBC_CHAR);
@@ -432,6 +453,7 @@ public class Spin2Debug {
                             compileArrayStatement(node, os, DBC_TYPE_DEC | DBC_SIZE_LONG | DBC_FLAG_ARRAY | flags);
                             break;
 
+                        case "":
                         case "SDEC":
                             compileSimpleStatement(node, os, DBC_TYPE_DEC | DBC_FLAG_SIGNED | flags);
                             break;
@@ -598,11 +620,20 @@ public class Spin2Debug {
                             break;
 
                         default:
-                            compileSimpleStatement(node, os, DBC_TYPE_DEC | DBC_FLAG_SIGNED | flags);
-                            break;
+                            throw new CompilerException("Unknown debug statement '" + cmd + "'", node.getToken());
                     }
                 }
             } catch (IOException e) {
+                // Do nothing
+            }
+        }
+
+        if (sb.length() != 0) {
+            try {
+                os.write(DBC_STRING);
+                os.write(sb.toString().getBytes());
+                os.write(0x00);
+            } catch (Exception e) {
                 // Do nothing
             }
         }
