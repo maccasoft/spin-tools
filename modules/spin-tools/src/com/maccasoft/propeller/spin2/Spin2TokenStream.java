@@ -292,10 +292,11 @@ public class Spin2TokenStream extends TokenStream {
         }
 
         String s = text.substring(startIndex, index);
-        if (MathOp.isMathOp(s) || MathOp.isUnaryMathOp(s)) {
-            if (index < text.length() && text.charAt(index) == '=') {
+        if (index < text.length() && text.charAt(index) == '=') {
+            if (MathOp.isAssignMathOp(s + "=")) {
                 index++;
                 column++;
+                return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
             }
         }
 

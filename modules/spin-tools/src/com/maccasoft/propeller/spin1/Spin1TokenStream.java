@@ -279,9 +279,6 @@ public class Spin1TokenStream extends TokenStream {
                 return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
             }
         }
-        if (MathOp.isMathOp(s)) {
-            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
-        }
 
         return new Token(this, startIndex, line, startColumn, 0, text.substring(startIndex, index));
     }
