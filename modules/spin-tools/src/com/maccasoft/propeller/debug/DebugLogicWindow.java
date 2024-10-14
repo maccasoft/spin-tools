@@ -51,6 +51,7 @@ public class DebugLogicWindow extends DebugWindow {
 
     PackMode packMode;
 
+    int defaultColorIndex;
     Channel channelData[];
 
     int triggerMask;
@@ -74,13 +75,11 @@ public class DebugLogicWindow extends DebugWindow {
     class Channel {
         int mask;
         String name;
-        int bitCount;
         Color color;
 
-        Channel(int mask, String name, int bitCount, Color color) {
+        Channel(int mask, String name, Color color) {
             this.mask = mask;
             this.name = name;
-            this.bitCount = bitCount;
             this.color = color;
         }
 
@@ -90,7 +89,7 @@ public class DebugLogicWindow extends DebugWindow {
             int index = (sampleDataIndex + triggerOffset + sampleData.length / 2) % sampleData.length;
 
             gc.setForeground(color);
-            gc.drawText(name, 0, lineY, true);
+            gc.drawText(name, textWidth - gc.stringExtent(name).x, lineY, true);
 
             gc.setLineWidth(lineSize);
 
@@ -131,6 +130,7 @@ public class DebugLogicWindow extends DebugWindow {
         backColor = new Color(0, 0, 0);
         gridColor = new Color(64, 64, 64);
 
+        defaultColorIndex = 0;
         channelData = new Channel[0];
 
         triggerMask = 0;
@@ -307,7 +307,10 @@ public class DebugLogicWindow extends DebugWindow {
     }
 
     void channel(String name, KeywordIterator iter) {
-        Color color = defaultColors[channelData.length % defaultColors.length];
+        Color color = defaultColors[defaultColorIndex++];
+        if (defaultColorIndex >= defaultColors.length) {
+            defaultColorIndex = 0;
+        }
 
         int bitCount = iter.hasNextNumber() ? iter.nextNumber() : 1;
 
@@ -343,12 +346,27 @@ public class DebugLogicWindow extends DebugWindow {
             }
         }
 
+        if (bitCount == 1) {
+            add(new Channel(1 << channelData.length, name, color));
+        }
+        else {
+            int i = 0;
+            add(new Channel(1 << channelData.length, String.format("%s %d", name, i), color));
+            i++;
+            while (i < bitCount) {
+                add(new Channel(1 << channelData.length, String.format("%d", i), color));
+                i++;
+            }
+        }
+    }
+
+    void add(Channel channel) {
         int i = 0;
         Channel[] newArray = new Channel[channelData.length + 1];
         while (i < channelData.length) {
             newArray[i] = channelData[i++];
         }
-        newArray[i] = new Channel(1 << i, name, bitCount, color);
+        newArray[i] = channel;
         channelData = newArray;
     }
 
