@@ -142,7 +142,7 @@ public class DebugLogicWindow extends DebugWindow {
         rate = 1;
         rateCount = 0;
 
-        holdOff = 0;
+        holdOff = sampleData.length;
         holdOffCount = holdOff;
 
         sampleCount = 0;
@@ -173,6 +173,7 @@ public class DebugLogicWindow extends DebugWindow {
                         if (iter.hasNextNumber()) {
                             sampleData = new int[iter.nextNumber()];
                             triggerOffset = sampleData.length / 2;
+                            holdOff = sampleData.length;
                         }
                         break;
 
@@ -452,6 +453,7 @@ public class DebugLogicWindow extends DebugWindow {
                         if (iter.hasNextNumber()) {
                             holdOff = iter.nextNumber();
                         }
+                        holdOffCount = holdOff;
                         break;
 
                     case "CLEAR":
@@ -498,43 +500,41 @@ public class DebugLogicWindow extends DebugWindow {
         if (sampleCount < sampleData.length) {
             sampleCount++;
         }
-        else {
-            if (triggerMask != 0) {
-                triggered = false;
-                if (sampleCount >= sampleData.length) {
-                    sample = sampleData[(sampleDataIndex + triggerOffset - 1) % sampleData.length];
-                    if (armed) {
-                        if (((sample ^ triggerMatch) & triggerMask) == 0) {
-                            triggered = true;
-                            armed = false;
-                        }
+
+        triggered = false;
+
+        if (triggerMask != 0) {
+            if (sampleCount >= sampleData.length) {
+                sample = sampleData[(sampleDataIndex + triggerOffset - 1) % sampleData.length];
+                if (armed) {
+                    if (((sample ^ triggerMatch) & triggerMask) == 0) {
+                        triggered = true;
+                        armed = false;
                     }
-                    else {
-                        if (((sample ^ triggerMatch) & triggerMask) != 0) {
-                            armed = true;
-                        }
+                }
+                else {
+                    if (((sample ^ triggerMatch) & triggerMask) != 0) {
+                        armed = true;
                     }
-                    if (triggered) {
-                        if (holdOffCount > 0) {
-                            holdOffCount--;
-                        }
-                        if (holdOffCount == 0) {
-                            rateCount++;
-                            if (rateCount >= rate) {
-                                update();
-                                rateCount = 0;
-                            }
-                            holdOffCount = holdOff;
-                        }
+                }
+                if (holdOffCount > 0) {
+                    holdOffCount--;
+                }
+                if (triggered && holdOffCount == 0) {
+                    rateCount++;
+                    if (rateCount >= rate) {
+                        update();
+                        rateCount = 0;
                     }
+                    holdOffCount = holdOff;
                 }
             }
-            else {
-                rateCount++;
-                if (rateCount >= rate) {
-                    update();
-                    rateCount = 0;
-                }
+        }
+        else {
+            rateCount++;
+            if (rateCount >= rate) {
+                update();
+                rateCount = 0;
             }
         }
     }

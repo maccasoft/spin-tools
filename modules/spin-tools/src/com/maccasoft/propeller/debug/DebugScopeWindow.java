@@ -65,6 +65,9 @@ public class DebugScopeWindow extends DebugWindow {
     boolean armed;
     boolean triggered;
 
+    int holdOff;
+    int holdOffCount;
+
     int rate;
     int rateCount;
 
@@ -162,6 +165,9 @@ public class DebugScopeWindow extends DebugWindow {
         armed = false;
         triggered = false;
 
+        holdOff = samples;
+        holdOffCount = holdOff;
+
         rate = 1;
         rateCount = 0;
     }
@@ -188,6 +194,7 @@ public class DebugScopeWindow extends DebugWindow {
                 case "SAMPLES":
                     if (iter.hasNextNumber()) {
                         samples = iter.nextNumber();
+                        holdOff = samples;
                     }
                     break;
 
@@ -368,9 +375,11 @@ public class DebugScopeWindow extends DebugWindow {
                         break;
 
                     case "HOLDOFF":
+                        holdOff = samples;
                         if (iter.hasNextNumber()) {
-                            iter.nextNumber();
+                            holdOff = iter.nextNumber();
                         }
+                        holdOffCount = holdOff;
                         break;
 
                     case "CLEAR":
@@ -474,52 +483,55 @@ public class DebugScopeWindow extends DebugWindow {
             if (sampleCount < samples) {
                 sampleCount++;
             }
-            else {
-                if (triggerChannel != -1) {
-                    triggered = false;
 
-                    sample = channelData[triggerChannel].sampleData[(sampleIndex + triggerOffset - 1) % samples];
-                    if (armed) {
-                        if (triggerFire >= triggerArm) {
-                            if (sample >= triggerFire) {
-                                triggered = true;
-                                armed = false;
-                            }
-                        }
-                        else {
-                            if (sample <= triggerFire) {
-                                triggered = true;
-                                armed = false;
-                            }
+            triggered = false;
+
+            if (triggerChannel >= 0) {
+                sample = channelData[triggerChannel].sampleData[(sampleIndex + triggerOffset - 1) % samples];
+                if (armed) {
+                    if (triggerFire >= triggerArm) {
+                        if (sample >= triggerFire) {
+                            triggered = true;
+                            armed = false;
                         }
                     }
                     else {
-                        if (triggerFire >= triggerArm) {
-                            if (sample <= triggerFire) {
-                                armed = true;
-                            }
-                        }
-                        else {
-                            if (sample >= triggerFire) {
-                                armed = true;
-                            }
-                        }
-                    }
-
-                    if (triggered) {
-                        rateCount++;
-                        if (rateCount >= rate) {
-                            update();
-                            rateCount = 0;
+                        if (sample <= triggerFire) {
+                            triggered = true;
+                            armed = false;
                         }
                     }
                 }
                 else {
+                    if (triggerFire >= triggerArm) {
+                        if (sample <= triggerFire) {
+                            armed = true;
+                        }
+                    }
+                    else {
+                        if (sample >= triggerFire) {
+                            armed = true;
+                        }
+                    }
+                }
+                if (holdOffCount > 0) {
+                    holdOffCount--;
+                }
+
+                if (triggered && holdOffCount == 0) {
                     rateCount++;
                     if (rateCount >= rate) {
                         update();
                         rateCount = 0;
                     }
+                    holdOffCount = holdOff;
+                }
+            }
+            else {
+                rateCount++;
+                if (rateCount >= rate) {
+                    update();
+                    rateCount = 0;
                 }
             }
 
