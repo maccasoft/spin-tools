@@ -97,7 +97,7 @@ class Spin1ParserTest {
     }
 
     @Test
-    void testSpin1LocalLabel() throws Exception {
+    void testSpinLocalLabel() throws Exception {
         Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + ":label\n"
             + ""));
