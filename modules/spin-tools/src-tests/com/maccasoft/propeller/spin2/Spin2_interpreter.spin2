@@ -1,5 +1,5 @@
 '************************************
-'*  Spin2 Interpreter - 2023.09.25  *
+'*  Spin2 Interpreter - 2023.11.11  *
 '************************************
 '
 CON	bc_setup_reg_1D8_1F8	= $B0
@@ -2125,7 +2125,6 @@ getcrc_		setq	#2-1			'pop ptr into buff+14
 getcrc_buff	rdfast	#0,buff+14		'compute crc of bytes
 .loop		rfbyte	w
 		shl	w,#24
-		rep	#3,#1
 		setq	w
 		crcnib	x,buff+15
 		crcnib	x,buff+15

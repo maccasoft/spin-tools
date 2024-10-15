@@ -1082,24 +1082,25 @@ bp_handler	mov	z,#cogn			'send cogn..freq
 		rep	@.hubsum2,x		'compute and send hub checksums of y blocks of x*64 bytes @ptra
 		setq	#16-1
 		rdlong	buff,ptra++
-		sumc	pa,buff+0	wc
-		sumc	pa,buff+1	wc
-		sumnc	pa,buff+2	wc
-		sumc	pa,buff+3	wc
-		sumnc	pa,buff+4	wc
-		sumnc	pa,buff+5	wc
-		sumc	pa,buff+6	wc
-		sumnc	pa,buff+7	wc
-		sumc	pa,buff+8	wc
-		sumnc	pa,buff+9	wc
-		sumnc	pa,buff+10	wc
-		sumc	pa,buff+11	wc
-		sumc	pa,buff+12	wc
-		sumc	pa,buff+13	wc
-		sumnc	pa,buff+14	wc
-		sumnc	pa,buff+15	wc
+		add	pa,buff+0
+		add	pa,buff+1
+		add	pa,buff+2
+		add	pa,buff+3
+		add	pa,buff+4
+		add	pa,buff+5
+		add	pa,buff+6
+		add	pa,buff+7
+		add	pa,buff+8
+		add	pa,buff+9
+		add	pa,buff+10
+		add	pa,buff+11
+		add	pa,buff+12
+		add	pa,buff+13
+		add	pa,buff+14
+		add	pa,buff+15
+		seussf	pa
 .hubsum2	getword	pb,pa,#1		'add upper and lower words
-		sumc	pa,pb
+		add	pa,pb
 		call	#txword			'send checksum word
 	_ret_	djnz	y,#.hubsum		'another block?
 

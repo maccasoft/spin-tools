@@ -52,13 +52,13 @@ class Spin2DebugTest {
             + "00010 00010       04             RETURN\n"
             + "00011 00011       00 00 00       Padding\n"
             + "' Debug data\n"
-            + "00B24 00000       0F 00         \n"
-            + "00B26 00002       04 00         \n"
+            + "00B28 00000       0F 00         \n"
+            + "00B2A 00002       04 00         \n"
             + "' #1\n"
-            + "00B28 00004       06 60 69 6E 64 STRING (`index=)\n"
-            + "00B2D 00009       65 78 3D 00\n"
-            + "00B31 0000D       43             UDEC\n"
-            + "00B32 0000E       00             DONE\n"
+            + "00B2C 00004       06 60 69 6E 64 STRING (`index=)\n"
+            + "00B31 00009       65 78 3D 00\n"
+            + "00B35 0000D       43             UDEC\n"
+            + "00B36 0000E       00             DONE\n"
             + "", compile(text));
     }
 
@@ -89,12 +89,12 @@ class Spin2DebugTest {
             + "00011 00011       04             RETURN\n"
             + "00012 00012       00 00          Padding\n"
             + "' Debug data\n"
-            + "00B24 00000       09 00         \n"
-            + "00B26 00002       04 00         \n"
+            + "00B28 00000       09 00         \n"
+            + "00B2A 00002       04 00         \n"
             + "' #1\n"
-            + "00B28 00004       04             COGN\n"
-            + "00B29 00005       41 61 00       UDEC(a)\n"
-            + "00B2C 00008       00             DONE\n"
+            + "00B2C 00004       04             COGN\n"
+            + "00B2D 00005       41 61 00       UDEC(a)\n"
+            + "00B30 00008       00             DONE\n"
             + "", compile(text));
     }
 

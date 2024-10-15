@@ -525,13 +525,13 @@ class Spin2PAsmCompilerTest {
             + "00008 00008   002 2D 00 64 FD                        ret\n"
             + "0000C 0000C   003                a                   res     1\n"
             + "' Debug data\n"
-            + "00B24 00000       0C 00         \n"
-            + "00B26 00002       04 00         \n"
+            + "00B28 00000       0C 00         \n"
+            + "00B2A 00002       04 00         \n"
             + "' #1\n"
-            + "00B28 00004       01             ASMMODE\n"
-            + "00B29 00005       04             COGN\n"
-            + "00B2A 00006       41 61 00 80 03 UDEC(a)\n"
-            + "00B2F 0000B       00             DONE\n"
+            + "00B2C 00004       01             ASMMODE\n"
+            + "00B2D 00005       04             COGN\n"
+            + "00B2E 00006       41 61 00 80 03 UDEC(a)\n"
+            + "00B33 0000B       00             DONE\n"
             + "", compile(text, true));
     }
 
