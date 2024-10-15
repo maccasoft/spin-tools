@@ -66,6 +66,10 @@ public abstract class SpinObject {
             return index;
         }
 
+        public int size() {
+            return bytes != null ? bytes.length : 0;
+        }
+
         @Override
         public int hashCode() {
             final int prime = 31;

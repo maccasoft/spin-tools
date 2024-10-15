@@ -13,8 +13,11 @@ package com.maccasoft.propeller.spin2;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.SpinObject.DataObject;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.spin2.Spin2PAsmDebugLine.Spin2DebugCommand;
@@ -49,10 +52,10 @@ public class Spin2Debug {
 
     boolean first;
 
-    public byte[] compileDebugStatement(Spin2StatementNode root) {
+    public List<DataObject> compileDebugStatement(Spin2StatementNode root) {
         boolean skipCogN = false;
         StringBuilder sb = new StringBuilder();
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        List<DataObject> list = new ArrayList<>();
 
         if (root.getChildCount() != 0) {
             Spin2StatementNode node = root.getChild(0);
@@ -72,7 +75,9 @@ public class Spin2Debug {
         }
 
         if (!skipCogN) {
-            os.write(DBC_COGN);
+            list.add(new DataObject(new byte[] {
+                DBC_COGN
+            }, "COGN"));
         }
 
         first = true;
@@ -94,9 +99,11 @@ public class Spin2Debug {
                     int flags = 0;
 
                     if (sb.length() != 0) {
+                        ByteArrayOutputStream os = new ByteArrayOutputStream();
                         os.write(DBC_STRING);
                         os.write(sb.toString().getBytes());
                         os.write(0x00);
+                        list.add(new DataObject(os.toByteArray(), "STRING (" + sanitizeString(sb.toString().getBytes()) + ")"));
                         sb = new StringBuilder();
                         first = true;
                     }
@@ -114,175 +121,187 @@ public class Spin2Debug {
                     switch (cmd.toUpperCase()) {
                         case "#":
                             for (int i = 0; i < node.getChildCount(); i++) {
-                                os.write(DBC_CHAR);
+                                list.add(new DataObject(new byte[] {
+                                    DBC_CHAR
+                                }, "CHAR"));
                             }
                             break;
 
                         case ".":
                         case "FDEC":
-                            compileSpinStatement(node, os, DBC_TYPE_FLP | DBC_SIZE_LONG | flags);
+                            list.addAll(compileSpinStatement(node, DBC_TYPE_FLP | DBC_SIZE_LONG | flags, "FDEC"));
                             break;
                         case "FDEC_ARRAY":
-                            compileSpinArrayStatement(node, os, DBC_TYPE_FLP | DBC_SIZE_LONG | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileSpinArrayStatement(node, DBC_TYPE_FLP | DBC_SIZE_LONG | DBC_FLAG_ARRAY | flags, cmd));
                             break;
 
                         case "UDEC":
-                            compileSpinStatement(node, os, DBC_TYPE_DEC | flags);
+                            list.addAll(compileSpinStatement(node, DBC_TYPE_DEC | flags, cmd));
                             break;
                         case "UDEC_BYTE":
-                            compileSpinStatement(node, os, DBC_TYPE_DEC | DBC_SIZE_BYTE | flags);
+                            list.addAll(compileSpinStatement(node, DBC_TYPE_DEC | DBC_SIZE_BYTE | flags, cmd));
                             break;
                         case "UDEC_WORD":
-                            compileSpinStatement(node, os, DBC_TYPE_DEC | DBC_SIZE_WORD | flags);
+                            list.addAll(compileSpinStatement(node, DBC_TYPE_DEC | DBC_SIZE_WORD | flags, cmd));
                             break;
                         case "UDEC_LONG":
-                            compileSpinStatement(node, os, DBC_TYPE_DEC | DBC_SIZE_LONG | flags);
+                            list.addAll(compileSpinStatement(node, DBC_TYPE_DEC | DBC_SIZE_LONG | flags, cmd));
                             break;
                         case "UDEC_BYTE_ARRAY":
-                            compileSpinArrayStatement(node, os, DBC_TYPE_DEC | DBC_SIZE_BYTE | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileSpinArrayStatement(node, DBC_TYPE_DEC | DBC_SIZE_BYTE | DBC_FLAG_ARRAY | flags, cmd));
                             break;
                         case "UDEC_WORD_ARRAY":
-                            compileSpinArrayStatement(node, os, DBC_TYPE_DEC | DBC_SIZE_WORD | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileSpinArrayStatement(node, DBC_TYPE_DEC | DBC_SIZE_WORD | DBC_FLAG_ARRAY | flags, cmd));
                             break;
                         case "UDEC_LONG_ARRAY":
-                            compileSpinArrayStatement(node, os, DBC_TYPE_DEC | DBC_SIZE_LONG | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileSpinArrayStatement(node, DBC_TYPE_DEC | DBC_SIZE_LONG | DBC_FLAG_ARRAY | flags, cmd));
                             break;
 
                         case "":
                         case "SDEC":
-                            compileSpinStatement(node, os, DBC_TYPE_DEC | DBC_FLAG_SIGNED | flags);
+                            list.addAll(compileSpinStatement(node, DBC_TYPE_DEC | DBC_FLAG_SIGNED | flags, "SDEC"));
                             break;
                         case "SDEC_BYTE":
-                            compileSpinStatement(node, os, DBC_TYPE_DEC | DBC_SIZE_BYTE | DBC_FLAG_SIGNED | flags);
+                            list.addAll(compileSpinStatement(node, DBC_TYPE_DEC | DBC_SIZE_BYTE | DBC_FLAG_SIGNED | flags, cmd));
                             break;
                         case "SDEC_WORD":
-                            compileSpinStatement(node, os, DBC_TYPE_DEC | DBC_SIZE_WORD | DBC_FLAG_SIGNED | flags);
+                            list.addAll(compileSpinStatement(node, DBC_TYPE_DEC | DBC_SIZE_WORD | DBC_FLAG_SIGNED | flags, cmd));
                             break;
                         case "SDEC_LONG":
-                            compileSpinStatement(node, os, DBC_TYPE_DEC | DBC_SIZE_LONG | DBC_FLAG_SIGNED | flags);
+                            list.addAll(compileSpinStatement(node, DBC_TYPE_DEC | DBC_SIZE_LONG | DBC_FLAG_SIGNED | flags, cmd));
                             break;
                         case "SDEC_BYTE_ARRAY":
-                            compileSpinArrayStatement(node, os, DBC_TYPE_DEC | DBC_SIZE_BYTE | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileSpinArrayStatement(node, DBC_TYPE_DEC | DBC_SIZE_BYTE | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags, cmd));
                             break;
                         case "SDEC_WORD_ARRAY":
-                            compileSpinArrayStatement(node, os, DBC_TYPE_DEC | DBC_SIZE_WORD | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileSpinArrayStatement(node, DBC_TYPE_DEC | DBC_SIZE_WORD | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags, cmd));
                             break;
                         case "SDEC_LONG_ARRAY":
-                            compileSpinArrayStatement(node, os, DBC_TYPE_DEC | DBC_SIZE_LONG | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileSpinArrayStatement(node, DBC_TYPE_DEC | DBC_SIZE_LONG | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags, cmd));
                             break;
 
                         case "$":
                         case "UHEX":
-                            compileSpinStatement(node, os, DBC_TYPE_HEX | flags);
+                            list.addAll(compileSpinStatement(node, DBC_TYPE_HEX | flags, "UHEX"));
                             break;
                         case "UHEX_BYTE":
-                            compileSpinStatement(node, os, DBC_TYPE_HEX | DBC_SIZE_BYTE | flags);
+                            list.addAll(compileSpinStatement(node, DBC_TYPE_HEX | DBC_SIZE_BYTE | flags, cmd));
                             break;
                         case "UHEX_WORD":
-                            compileSpinStatement(node, os, DBC_TYPE_HEX | DBC_SIZE_WORD | flags);
+                            list.addAll(compileSpinStatement(node, DBC_TYPE_HEX | DBC_SIZE_WORD | flags, cmd));
                             break;
                         case "UHEX_LONG":
-                            compileSpinStatement(node, os, DBC_TYPE_HEX | DBC_SIZE_LONG | flags);
+                            list.addAll(compileSpinStatement(node, DBC_TYPE_HEX | DBC_SIZE_LONG | flags, cmd));
                             break;
                         case "UHEX_BYTE_ARRAY":
-                            compileSpinArrayStatement(node, os, DBC_TYPE_HEX | DBC_SIZE_BYTE | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileSpinArrayStatement(node, DBC_TYPE_HEX | DBC_SIZE_BYTE | DBC_FLAG_ARRAY | flags, cmd));
                             break;
                         case "UHEX_WORD_ARRAY":
-                            compileSpinArrayStatement(node, os, DBC_TYPE_HEX | DBC_SIZE_WORD | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileSpinArrayStatement(node, DBC_TYPE_HEX | DBC_SIZE_WORD | DBC_FLAG_ARRAY | flags, cmd));
                             break;
                         case "UHEX_LONG_ARRAY":
-                            compileSpinArrayStatement(node, os, DBC_TYPE_HEX | DBC_SIZE_LONG | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileSpinArrayStatement(node, DBC_TYPE_HEX | DBC_SIZE_LONG | DBC_FLAG_ARRAY | flags, cmd));
                             break;
 
                         case "SHEX":
-                            compileSpinStatement(node, os, DBC_TYPE_HEX | DBC_FLAG_SIGNED | flags);
+                            list.addAll(compileSpinStatement(node, DBC_TYPE_HEX | DBC_FLAG_SIGNED | flags, cmd));
                             break;
                         case "SHEX_BYTE":
-                            compileSpinStatement(node, os, DBC_TYPE_HEX | DBC_SIZE_BYTE | DBC_FLAG_SIGNED | flags);
+                            list.addAll(compileSpinStatement(node, DBC_TYPE_HEX | DBC_SIZE_BYTE | DBC_FLAG_SIGNED | flags, cmd));
                             break;
                         case "SHEX_WORD":
-                            compileSpinStatement(node, os, DBC_TYPE_HEX | DBC_SIZE_WORD | DBC_FLAG_SIGNED | flags);
+                            list.addAll(compileSpinStatement(node, DBC_TYPE_HEX | DBC_SIZE_WORD | DBC_FLAG_SIGNED | flags, cmd));
                             break;
                         case "SHEX_LONG":
-                            compileSpinStatement(node, os, DBC_TYPE_HEX | DBC_SIZE_LONG | DBC_FLAG_SIGNED | flags);
+                            list.addAll(compileSpinStatement(node, DBC_TYPE_HEX | DBC_SIZE_LONG | DBC_FLAG_SIGNED | flags, cmd));
                             break;
                         case "SHEX_BYTE_ARRAY":
-                            compileSpinArrayStatement(node, os, DBC_TYPE_HEX | DBC_SIZE_BYTE | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileSpinArrayStatement(node, DBC_TYPE_HEX | DBC_SIZE_BYTE | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags, cmd));
                             break;
                         case "SHEX_WORD_ARRAY":
-                            compileSpinArrayStatement(node, os, DBC_TYPE_HEX | DBC_SIZE_WORD | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileSpinArrayStatement(node, DBC_TYPE_HEX | DBC_SIZE_WORD | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags, cmd));
                             break;
                         case "SHEX_LONG_ARRAY":
-                            compileSpinArrayStatement(node, os, DBC_TYPE_HEX | DBC_SIZE_LONG | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileSpinArrayStatement(node, DBC_TYPE_HEX | DBC_SIZE_LONG | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags, cmd));
                             break;
 
                         case "%":
                         case "UBIN":
-                            compileSpinStatement(node, os, DBC_TYPE_BIN | flags);
+                            list.addAll(compileSpinStatement(node, DBC_TYPE_BIN | flags, "UBIN"));
                             break;
                         case "UBIN_BYTE":
-                            compileSpinStatement(node, os, DBC_TYPE_BIN | DBC_SIZE_BYTE | flags);
+                            list.addAll(compileSpinStatement(node, DBC_TYPE_BIN | DBC_SIZE_BYTE | flags, cmd));
                             break;
                         case "UBIN_WORD":
-                            compileSpinStatement(node, os, DBC_TYPE_BIN | DBC_SIZE_WORD | flags);
+                            list.addAll(compileSpinStatement(node, DBC_TYPE_BIN | DBC_SIZE_WORD | flags, cmd));
                             break;
                         case "UBIN_LONG":
-                            compileSpinStatement(node, os, DBC_TYPE_BIN | DBC_SIZE_LONG | flags);
+                            list.addAll(compileSpinStatement(node, DBC_TYPE_BIN | DBC_SIZE_LONG | flags, cmd));
                             break;
                         case "UBIN_BYTE_ARRAY":
-                            compileSpinArrayStatement(node, os, DBC_TYPE_BIN | DBC_SIZE_BYTE | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileSpinArrayStatement(node, DBC_TYPE_BIN | DBC_SIZE_BYTE | DBC_FLAG_ARRAY | flags, cmd));
                             break;
                         case "UBIN_WORD_ARRAY":
-                            compileSpinArrayStatement(node, os, DBC_TYPE_BIN | DBC_SIZE_WORD | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileSpinArrayStatement(node, DBC_TYPE_BIN | DBC_SIZE_WORD | DBC_FLAG_ARRAY | flags, cmd));
                             break;
                         case "UBIN_LONG_ARRAY":
-                            compileSpinArrayStatement(node, os, DBC_TYPE_BIN | DBC_SIZE_LONG | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileSpinArrayStatement(node, DBC_TYPE_BIN | DBC_SIZE_LONG | DBC_FLAG_ARRAY | flags, cmd));
                             break;
 
                         case "SBIN":
-                            compileSpinStatement(node, os, DBC_TYPE_BIN | DBC_FLAG_SIGNED | flags);
+                            list.addAll(compileSpinStatement(node, DBC_TYPE_BIN | DBC_FLAG_SIGNED | flags, cmd));
                             break;
                         case "SBIN_BYTE":
-                            compileSpinStatement(node, os, DBC_TYPE_BIN | DBC_SIZE_BYTE | DBC_FLAG_SIGNED | flags);
+                            list.addAll(compileSpinStatement(node, DBC_TYPE_BIN | DBC_SIZE_BYTE | DBC_FLAG_SIGNED | flags, cmd));
                             break;
                         case "SBIN_WORD":
-                            compileSpinStatement(node, os, DBC_TYPE_BIN | DBC_SIZE_WORD | DBC_FLAG_SIGNED | flags);
+                            list.addAll(compileSpinStatement(node, DBC_TYPE_BIN | DBC_SIZE_WORD | DBC_FLAG_SIGNED | flags, cmd));
                             break;
                         case "SBIN_LONG":
-                            compileSpinStatement(node, os, DBC_TYPE_BIN | DBC_SIZE_LONG | DBC_FLAG_SIGNED | flags);
+                            list.addAll(compileSpinStatement(node, DBC_TYPE_BIN | DBC_SIZE_LONG | DBC_FLAG_SIGNED | flags, cmd));
                             break;
                         case "SBIN_BYTE_ARRAY":
-                            compileSpinArrayStatement(node, os, DBC_TYPE_BIN | DBC_SIZE_BYTE | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileSpinArrayStatement(node, DBC_TYPE_BIN | DBC_SIZE_BYTE | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags, cmd));
                             break;
                         case "SBIN_WORD_ARRAY":
-                            compileSpinArrayStatement(node, os, DBC_TYPE_BIN | DBC_SIZE_WORD | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileSpinArrayStatement(node, DBC_TYPE_BIN | DBC_SIZE_WORD | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags, cmd));
                             break;
                         case "SBIN_LONG_ARRAY":
-                            compileSpinArrayStatement(node, os, DBC_TYPE_BIN | DBC_SIZE_LONG | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileSpinArrayStatement(node, DBC_TYPE_BIN | DBC_SIZE_LONG | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags, cmd));
                             break;
 
                         case "ZSTR":
-                            compileSpinStatement(node, os, DBC_TYPE_STR | flags);
+                            list.addAll(compileSpinStatement(node, DBC_TYPE_STR | flags, cmd));
                             break;
                         case "LSTR":
-                            compileSpinStatement(node, os, DBC_TYPE_STR | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileSpinStatement(node, DBC_TYPE_STR | DBC_FLAG_ARRAY | flags, cmd));
                             break;
 
                         case "DLY":
-                            os.write(DBC_DELAY);
+                            list.add(new DataObject(new byte[] {
+                                DBC_DELAY
+                            }, cmd.toUpperCase()));
                             break;
 
                         case "IF":
-                            os.write(DBC_IF);
+                            list.add(new DataObject(new byte[] {
+                                DBC_IF
+                            }, cmd.toUpperCase()));
                             if (skipCogN) {
-                                os.write(DBC_COGN);
+                                list.add(new DataObject(new byte[] {
+                                    DBC_COGN
+                                }, "COGN"));
                                 skipCogN = false;
                             }
                             break;
                         case "IFNOT":
-                            os.write(DBC_IFNOT);
+                            list.add(new DataObject(new byte[] {
+                                DBC_IFNOT
+                            }, cmd.toUpperCase()));
                             if (skipCogN) {
-                                os.write(DBC_COGN);
+                                list.add(new DataObject(new byte[] {
+                                    DBC_COGN
+                                }, "COGN"));
                                 skipCogN = false;
                             }
                             break;
@@ -298,21 +317,30 @@ public class Spin2Debug {
 
         if (sb.length() != 0) {
             try {
+                ByteArrayOutputStream os = new ByteArrayOutputStream();
                 os.write(DBC_STRING);
                 os.write(sb.toString().getBytes());
                 os.write(0x00);
+                list.add(new DataObject(os.toByteArray(), "STRING (" + sanitizeString(sb.toString().getBytes()) + ")"));
             } catch (Exception e) {
                 // Do nothing
             }
         }
 
-        os.write(DBC_DONE);
+        list.add(new DataObject(new byte[] {
+            DBC_DONE
+        }, "DONE"));
 
-        return os.toByteArray();
+        return list;
     }
 
-    void compileSpinStatement(Spin2StatementNode node, OutputStream os, int op) throws IOException {
+    List<DataObject> compileSpinStatement(Spin2StatementNode node, int op, String cmd) throws IOException {
+        List<DataObject> l = new ArrayList<>();
+
         for (Spin2StatementNode child : node.getChilds()) {
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            StringBuilder sb = new StringBuilder();
+
             if (first) {
                 os.write(op | DBC_FLAG_NOCOMMA);
                 first = false;
@@ -320,16 +348,36 @@ public class Spin2Debug {
             else {
                 os.write(op);
             }
+            sb.append(cmd.toUpperCase());
 
             if ((op & DBC_FLAG_NOEXPR) == 0) {
-                os.write(child.toString().getBytes());
+                byte[] b = child.toString().getBytes();
+
+                os.write(b);
                 os.write(0x00);
+
+                sb.append("(");
+                sb.append(sanitizeString(b));
+                sb.append(")");
             }
+
+            l.add(new DataObject(os.toByteArray(), sb.toString()));
         }
+
+        return l;
     }
 
-    void compileSpinArrayStatement(Spin2StatementNode node, OutputStream os, int op) throws IOException {
+    List<DataObject> compileSpinArrayStatement(Spin2StatementNode node, int op, String cmd) throws IOException {
+        List<DataObject> l = new ArrayList<>();
+
+        if ((node.getChildCount() % 2) != 0) {
+            throw new CompilerException("expecting argument pairs", node.getToken());
+        }
+
         for (int index = 0; index < node.getChildCount(); index += 2) {
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            StringBuilder sb = new StringBuilder();
+
             if (first) {
                 os.write(op | DBC_FLAG_NOCOMMA);
                 first = false;
@@ -337,20 +385,33 @@ public class Spin2Debug {
             else {
                 os.write(op);
             }
+            sb.append(cmd.toUpperCase());
 
             if ((op & DBC_FLAG_NOEXPR) == 0) {
-                os.write(node.getChild(index).getText().getBytes());
+                byte[] b = node.getChild(index).getText().getBytes();
+
+                os.write(b);
                 os.write(0x00);
+
+                sb.append("(");
+                sb.append(sanitizeString(b));
+                sb.append(")");
             }
+
+            l.add(new DataObject(os.toByteArray(), sb.toString()));
         }
+
+        return l;
     }
 
-    public byte[] compilePAsmDebugStatement(Spin2PAsmDebugLine root) {
+    public List<DataObject> compilePAsmDebugStatement(Spin2PAsmDebugLine root) {
         boolean skipCogN = false;
         StringBuilder sb = new StringBuilder();
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        List<DataObject> list = new ArrayList<>();
 
-        os.write(DBC_ASMMODE);
+        list.add(new DataObject(new byte[] {
+            DBC_ASMMODE
+        }, "ASMMODE"));
 
         if (root.getStatementsCount() != 0) {
             Spin2DebugCommand node = root.getStatement(0);
@@ -370,7 +431,9 @@ public class Spin2Debug {
         }
 
         if (!skipCogN) {
-            os.write(DBC_COGN);
+            list.add(new DataObject(new byte[] {
+                DBC_COGN
+            }, "COGN"));
         }
 
         first = true;
@@ -392,9 +455,11 @@ public class Spin2Debug {
                     int flags = 0;
 
                     if (sb.length() != 0) {
+                        ByteArrayOutputStream os = new ByteArrayOutputStream();
                         os.write(DBC_STRING);
                         os.write(sb.toString().getBytes());
                         os.write(0x00);
+                        list.add(new DataObject(os.toByteArray(), "STRING (" + sanitizeString(sb.toString().getBytes()) + ")"));
                         sb = new StringBuilder();
                         first = true;
                     }
@@ -412,212 +477,227 @@ public class Spin2Debug {
                     switch (cmd.toUpperCase()) {
                         case "#":
                             for (Spin2DebugExpression child : node.getArguments()) {
+                                ByteArrayOutputStream os = new ByteArrayOutputStream();
                                 os.write(DBC_CHAR);
                                 compileArgument(child, os);
+                                list.add(new DataObject(os.toByteArray(), "CHAR"));
                             }
                             break;
 
                         case ".":
                         case "FDEC":
-                            compileSimpleStatement(node, os, DBC_TYPE_FLP | DBC_SIZE_LONG | flags);
+                            list.addAll(compileSimpleStatement(node, DBC_TYPE_FLP | DBC_SIZE_LONG | flags, "FDEC"));
                             break;
                         case "FDEC_REG_ARRAY":
-                            compileArrayStatement(node, os, DBC_TYPE_FLP | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileArrayStatement(node, DBC_TYPE_FLP | DBC_FLAG_ARRAY | flags, cmd));
                             break;
                         case "FDEC_ARRAY":
-                            compileArrayStatement(node, os, DBC_TYPE_FLP | DBC_SIZE_LONG | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileArrayStatement(node, DBC_TYPE_FLP | DBC_SIZE_LONG | DBC_FLAG_ARRAY | flags, cmd));
                             break;
 
                         case "UDEC":
-                            compileSimpleStatement(node, os, DBC_TYPE_DEC | flags);
+                            list.addAll(compileSimpleStatement(node, DBC_TYPE_DEC | flags, cmd));
                             break;
                         case "UDEC_BYTE":
-                            compileSimpleStatement(node, os, DBC_TYPE_DEC | DBC_SIZE_BYTE | flags);
+                            list.addAll(compileSimpleStatement(node, DBC_TYPE_DEC | DBC_SIZE_BYTE | flags, cmd));
                             break;
                         case "UDEC_WORD":
-                            compileSimpleStatement(node, os, DBC_TYPE_DEC | DBC_SIZE_WORD | flags);
+                            list.addAll(compileSimpleStatement(node, DBC_TYPE_DEC | DBC_SIZE_WORD | flags, cmd));
                             break;
                         case "UDEC_LONG":
-                            compileSimpleStatement(node, os, DBC_TYPE_DEC | DBC_SIZE_LONG | flags);
+                            list.addAll(compileSimpleStatement(node, DBC_TYPE_DEC | DBC_SIZE_LONG | flags, cmd));
                             break;
                         case "UDEC_REG_ARRAY":
-                            compileArrayStatement(node, os, DBC_TYPE_DEC | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileArrayStatement(node, DBC_TYPE_DEC | DBC_FLAG_ARRAY | flags, cmd));
                             break;
                         case "UDEC_BYTE_ARRAY":
-                            compileArrayStatement(node, os, DBC_TYPE_DEC | DBC_SIZE_BYTE | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileArrayStatement(node, DBC_TYPE_DEC | DBC_SIZE_BYTE | DBC_FLAG_ARRAY | flags, cmd));
                             break;
                         case "UDEC_WORD_ARRAY":
-                            compileArrayStatement(node, os, DBC_TYPE_DEC | DBC_SIZE_WORD | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileArrayStatement(node, DBC_TYPE_DEC | DBC_SIZE_WORD | DBC_FLAG_ARRAY | flags, cmd));
                             break;
                         case "UDEC_LONG_ARRAY":
-                            compileArrayStatement(node, os, DBC_TYPE_DEC | DBC_SIZE_LONG | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileArrayStatement(node, DBC_TYPE_DEC | DBC_SIZE_LONG | DBC_FLAG_ARRAY | flags, cmd));
                             break;
 
                         case "":
                         case "SDEC":
-                            compileSimpleStatement(node, os, DBC_TYPE_DEC | DBC_FLAG_SIGNED | flags);
+                            list.addAll(compileSimpleStatement(node, DBC_TYPE_DEC | DBC_FLAG_SIGNED | flags, "SDEC"));
                             break;
                         case "SDEC_BYTE":
-                            compileSimpleStatement(node, os, DBC_TYPE_DEC | DBC_SIZE_BYTE | DBC_FLAG_SIGNED | flags);
+                            list.addAll(compileSimpleStatement(node, DBC_TYPE_DEC | DBC_SIZE_BYTE | DBC_FLAG_SIGNED | flags, cmd));
                             break;
                         case "SDEC_WORD":
-                            compileSimpleStatement(node, os, DBC_TYPE_DEC | DBC_SIZE_WORD | DBC_FLAG_SIGNED | flags);
+                            list.addAll(compileSimpleStatement(node, DBC_TYPE_DEC | DBC_SIZE_WORD | DBC_FLAG_SIGNED | flags, cmd));
                             break;
                         case "SDEC_LONG":
-                            compileSimpleStatement(node, os, DBC_TYPE_DEC | DBC_SIZE_LONG | DBC_FLAG_SIGNED | flags);
+                            list.addAll(compileSimpleStatement(node, DBC_TYPE_DEC | DBC_SIZE_LONG | DBC_FLAG_SIGNED | flags, cmd));
                             break;
                         case "SDEC_REG_ARRAY":
-                            compileArrayStatement(node, os, DBC_TYPE_DEC | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileArrayStatement(node, DBC_TYPE_DEC | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags, cmd));
                             break;
                         case "SDEC_BYTE_ARRAY":
-                            compileArrayStatement(node, os, DBC_TYPE_DEC | DBC_SIZE_BYTE | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileArrayStatement(node, DBC_TYPE_DEC | DBC_SIZE_BYTE | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags, cmd));
                             break;
                         case "SDEC_WORD_ARRAY":
-                            compileArrayStatement(node, os, DBC_TYPE_DEC | DBC_SIZE_WORD | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileArrayStatement(node, DBC_TYPE_DEC | DBC_SIZE_WORD | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags, cmd));
                             break;
                         case "SDEC_LONG_ARRAY":
-                            compileArrayStatement(node, os, DBC_TYPE_DEC | DBC_SIZE_LONG | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileArrayStatement(node, DBC_TYPE_DEC | DBC_SIZE_LONG | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags, cmd));
                             break;
 
                         case "$":
                         case "UHEX":
-                            compileSimpleStatement(node, os, DBC_TYPE_HEX | flags);
+                            list.addAll(compileSimpleStatement(node, DBC_TYPE_HEX | flags, "UHEX"));
                             break;
                         case "UHEX_BYTE":
-                            compileSimpleStatement(node, os, DBC_TYPE_HEX | DBC_SIZE_BYTE | flags);
+                            list.addAll(compileSimpleStatement(node, DBC_TYPE_HEX | DBC_SIZE_BYTE | flags, cmd));
                             break;
                         case "UHEX_WORD":
-                            compileSimpleStatement(node, os, DBC_TYPE_HEX | DBC_SIZE_WORD | flags);
+                            list.addAll(compileSimpleStatement(node, DBC_TYPE_HEX | DBC_SIZE_WORD | flags, cmd));
                             break;
                         case "UHEX_LONG":
-                            compileSimpleStatement(node, os, DBC_TYPE_HEX | DBC_SIZE_LONG | flags);
+                            list.addAll(compileSimpleStatement(node, DBC_TYPE_HEX | DBC_SIZE_LONG | flags, cmd));
                             break;
                         case "UHEX_REG_ARRAY":
-                            compileArrayStatement(node, os, DBC_TYPE_HEX | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileArrayStatement(node, DBC_TYPE_HEX | DBC_FLAG_ARRAY | flags, cmd));
                             break;
                         case "UHEX_BYTE_ARRAY":
-                            compileArrayStatement(node, os, DBC_TYPE_HEX | DBC_SIZE_BYTE | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileArrayStatement(node, DBC_TYPE_HEX | DBC_SIZE_BYTE | DBC_FLAG_ARRAY | flags, cmd));
                             break;
                         case "UHEX_WORD_ARRAY":
-                            compileArrayStatement(node, os, DBC_TYPE_HEX | DBC_SIZE_WORD | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileArrayStatement(node, DBC_TYPE_HEX | DBC_SIZE_WORD | DBC_FLAG_ARRAY | flags, cmd));
                             break;
                         case "UHEX_LONG_ARRAY":
-                            compileArrayStatement(node, os, DBC_TYPE_HEX | DBC_SIZE_LONG | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileArrayStatement(node, DBC_TYPE_HEX | DBC_SIZE_LONG | DBC_FLAG_ARRAY | flags, cmd));
                             break;
 
                         case "SHEX":
-                            compileSimpleStatement(node, os, DBC_TYPE_HEX | DBC_FLAG_SIGNED | flags);
+                            list.addAll(compileSimpleStatement(node, DBC_TYPE_HEX | DBC_FLAG_SIGNED | flags, cmd));
                             break;
                         case "SHEX_BYTE":
-                            compileSimpleStatement(node, os, DBC_TYPE_HEX | DBC_SIZE_BYTE | DBC_FLAG_SIGNED | flags);
+                            list.addAll(compileSimpleStatement(node, DBC_TYPE_HEX | DBC_SIZE_BYTE | DBC_FLAG_SIGNED | flags, cmd));
                             break;
                         case "SHEX_WORD":
-                            compileSimpleStatement(node, os, DBC_TYPE_HEX | DBC_SIZE_WORD | DBC_FLAG_SIGNED | flags);
+                            list.addAll(compileSimpleStatement(node, DBC_TYPE_HEX | DBC_SIZE_WORD | DBC_FLAG_SIGNED | flags, cmd));
                             break;
                         case "SHEX_LONG":
-                            compileSimpleStatement(node, os, DBC_TYPE_HEX | DBC_SIZE_LONG | DBC_FLAG_SIGNED | flags);
+                            list.addAll(compileSimpleStatement(node, DBC_TYPE_HEX | DBC_SIZE_LONG | DBC_FLAG_SIGNED | flags, cmd));
                             break;
                         case "SHEX_REG_ARRAY":
-                            compileArrayStatement(node, os, DBC_TYPE_HEX | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileArrayStatement(node, DBC_TYPE_HEX | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags, cmd));
                             break;
                         case "SHEX_BYTE_ARRAY":
-                            compileArrayStatement(node, os, DBC_TYPE_HEX | DBC_SIZE_BYTE | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileArrayStatement(node, DBC_TYPE_HEX | DBC_SIZE_BYTE | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags, cmd));
                             break;
                         case "SHEX_WORD_ARRAY":
-                            compileArrayStatement(node, os, DBC_TYPE_HEX | DBC_SIZE_WORD | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileArrayStatement(node, DBC_TYPE_HEX | DBC_SIZE_WORD | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags, cmd));
                             break;
                         case "SHEX_LONG_ARRAY":
-                            compileArrayStatement(node, os, DBC_TYPE_HEX | DBC_SIZE_LONG | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileArrayStatement(node, DBC_TYPE_HEX | DBC_SIZE_LONG | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags, cmd));
                             break;
 
                         case "%":
                         case "UBIN":
-                            compileSimpleStatement(node, os, DBC_TYPE_BIN | flags);
+                            list.addAll(compileSimpleStatement(node, DBC_TYPE_BIN | flags, "UBIN"));
                             break;
                         case "UBIN_BYTE":
-                            compileSimpleStatement(node, os, DBC_TYPE_BIN | DBC_SIZE_BYTE | flags);
+                            list.addAll(compileSimpleStatement(node, DBC_TYPE_BIN | DBC_SIZE_BYTE | flags, cmd));
                             break;
                         case "UBIN_WORD":
-                            compileSimpleStatement(node, os, DBC_TYPE_BIN | DBC_SIZE_WORD | flags);
+                            list.addAll(compileSimpleStatement(node, DBC_TYPE_BIN | DBC_SIZE_WORD | flags, cmd));
                             break;
                         case "UBIN_LONG":
-                            compileSimpleStatement(node, os, DBC_TYPE_BIN | DBC_SIZE_LONG | flags);
+                            list.addAll(compileSimpleStatement(node, DBC_TYPE_BIN | DBC_SIZE_LONG | flags, cmd));
                             break;
                         case "UBIN_REG_ARRAY":
-                            compileArrayStatement(node, os, DBC_TYPE_BIN | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileArrayStatement(node, DBC_TYPE_BIN | DBC_FLAG_ARRAY | flags, cmd));
                             break;
                         case "UBIN_BYTE_ARRAY":
-                            compileArrayStatement(node, os, DBC_TYPE_BIN | DBC_SIZE_BYTE | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileArrayStatement(node, DBC_TYPE_BIN | DBC_SIZE_BYTE | DBC_FLAG_ARRAY | flags, cmd));
                             break;
                         case "UBIN_WORD_ARRAY":
-                            compileArrayStatement(node, os, DBC_TYPE_BIN | DBC_SIZE_WORD | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileArrayStatement(node, DBC_TYPE_BIN | DBC_SIZE_WORD | DBC_FLAG_ARRAY | flags, cmd));
                             break;
                         case "UBIN_LONG_ARRAY":
-                            compileArrayStatement(node, os, DBC_TYPE_BIN | DBC_SIZE_LONG | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileArrayStatement(node, DBC_TYPE_BIN | DBC_SIZE_LONG | DBC_FLAG_ARRAY | flags, cmd));
                             break;
 
                         case "SBIN":
-                            compileSimpleStatement(node, os, DBC_TYPE_BIN | DBC_FLAG_SIGNED | flags);
+                            list.addAll(compileSimpleStatement(node, DBC_TYPE_BIN | DBC_FLAG_SIGNED | flags, cmd));
                             break;
                         case "SBIN_BYTE":
-                            compileSimpleStatement(node, os, DBC_TYPE_BIN | DBC_SIZE_BYTE | DBC_FLAG_SIGNED | flags);
+                            list.addAll(compileSimpleStatement(node, DBC_TYPE_BIN | DBC_SIZE_BYTE | DBC_FLAG_SIGNED | flags, cmd));
                             break;
                         case "SBIN_WORD":
-                            compileSimpleStatement(node, os, DBC_TYPE_BIN | DBC_SIZE_WORD | DBC_FLAG_SIGNED | flags);
+                            list.addAll(compileSimpleStatement(node, DBC_TYPE_BIN | DBC_SIZE_WORD | DBC_FLAG_SIGNED | flags, cmd));
                             break;
                         case "SBIN_LONG":
-                            compileSimpleStatement(node, os, DBC_TYPE_BIN | DBC_SIZE_LONG | DBC_FLAG_SIGNED | flags);
+                            list.addAll(compileSimpleStatement(node, DBC_TYPE_BIN | DBC_SIZE_LONG | DBC_FLAG_SIGNED | flags, cmd));
                             break;
                         case "SBIN_REG_ARRAY":
-                            compileArrayStatement(node, os, DBC_TYPE_BIN | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileArrayStatement(node, DBC_TYPE_BIN | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags, cmd));
                             break;
                         case "SBIN_BYTE_ARRAY":
-                            compileArrayStatement(node, os, DBC_TYPE_BIN | DBC_SIZE_BYTE | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileArrayStatement(node, DBC_TYPE_BIN | DBC_SIZE_BYTE | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags, cmd));
                             break;
                         case "SBIN_WORD_ARRAY":
-                            compileArrayStatement(node, os, DBC_TYPE_BIN | DBC_SIZE_WORD | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileArrayStatement(node, DBC_TYPE_BIN | DBC_SIZE_WORD | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags, cmd));
                             break;
                         case "SBIN_LONG_ARRAY":
-                            compileArrayStatement(node, os, DBC_TYPE_BIN | DBC_SIZE_LONG | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileArrayStatement(node, DBC_TYPE_BIN | DBC_SIZE_LONG | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags, cmd));
                             break;
 
                         case "ZSTR":
-                            compileSimpleStatement(node, os, DBC_TYPE_STR | flags);
+                            list.addAll(compileSimpleStatement(node, DBC_TYPE_STR | flags, cmd));
                             break;
                         case "LSTR":
-                            compileArrayStatement(node, os, DBC_TYPE_STR | DBC_FLAG_ARRAY | flags);
+                            list.addAll(compileArrayStatement(node, DBC_TYPE_STR | DBC_FLAG_ARRAY | flags, cmd));
                             break;
 
-                        case "DLY":
+                        case "DLY": {
+                            ByteArrayOutputStream os = new ByteArrayOutputStream();
                             os.write(DBC_DELAY);
                             if (node.getArgumentsCount() != 1) {
                                 throw new CompilerException("expecting one argument", node.getToken());
                             }
                             compileArgument(node.getArgument(0), os);
+                            list.add(new DataObject(os.toByteArray(), cmd.toUpperCase()));
                             break;
+                        }
 
-                        case "IF":
+                        case "IF": {
+                            ByteArrayOutputStream os = new ByteArrayOutputStream();
                             os.write(DBC_IF);
                             if (node.getArgumentsCount() != 1) {
                                 throw new CompilerException("expecting one argument", node.getToken());
                             }
                             compileArgument(node.getArgument(0), os);
+                            list.add(new DataObject(os.toByteArray(), cmd.toUpperCase()));
                             if (skipCogN) {
-                                os.write(DBC_COGN);
+                                list.add(new DataObject(new byte[] {
+                                    DBC_COGN
+                                }, "COGN"));
                                 skipCogN = false;
                             }
                             break;
-                        case "IFNOT":
+                        }
+                        case "IFNOT": {
+                            ByteArrayOutputStream os = new ByteArrayOutputStream();
                             os.write(DBC_IFNOT);
                             if (node.getArgumentsCount() != 1) {
                                 throw new CompilerException("expecting one argument", node.getToken());
                             }
                             compileArgument(node.getArgument(0), os);
+                            list.add(new DataObject(os.toByteArray(), cmd.toUpperCase()));
                             if (skipCogN) {
-                                os.write(DBC_COGN);
+                                list.add(new DataObject(new byte[] {
+                                    DBC_COGN
+                                }, "COGN"));
                                 skipCogN = false;
                             }
                             break;
+                        }
 
                         default:
                             throw new CompilerException("Unknown debug statement '" + cmd + "'", node.getToken());
@@ -630,21 +710,30 @@ public class Spin2Debug {
 
         if (sb.length() != 0) {
             try {
+                ByteArrayOutputStream os = new ByteArrayOutputStream();
                 os.write(DBC_STRING);
                 os.write(sb.toString().getBytes());
                 os.write(0x00);
+                list.add(new DataObject(os.toByteArray(), "STRING (" + sanitizeString(sb.toString().getBytes()) + ")"));
             } catch (Exception e) {
                 // Do nothing
             }
         }
 
-        os.write(DBC_DONE);
+        list.add(new DataObject(new byte[] {
+            DBC_DONE
+        }, "DONE"));
 
-        return os.toByteArray();
+        return list;
     }
 
-    void compileSimpleStatement(Spin2DebugCommand node, OutputStream os, int op) throws IOException {
+    List<DataObject> compileSimpleStatement(Spin2DebugCommand node, int op, String cmd) throws IOException {
+        List<DataObject> l = new ArrayList<>();
+
         for (Spin2DebugExpression child : node.getArguments()) {
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            StringBuilder sb = new StringBuilder();
+
             if (first) {
                 os.write(op | DBC_FLAG_NOCOMMA);
                 first = false;
@@ -652,21 +741,38 @@ public class Spin2Debug {
             else {
                 os.write(op);
             }
+            sb.append(cmd.toUpperCase());
 
             if ((op & DBC_FLAG_NOEXPR) == 0) {
-                os.write(child.toString().getBytes());
+                byte[] b = child.toString().getBytes();
+
+                os.write(b);
                 os.write(0x00);
+
+                sb.append("(");
+                sb.append(sanitizeString(b));
+                sb.append(")");
             }
 
             compileArgument(child, os);
+
+            l.add(new DataObject(os.toByteArray(), sb.toString()));
         }
+
+        return l;
     }
 
-    void compileArrayStatement(Spin2DebugCommand node, OutputStream os, int op) throws IOException {
+    List<DataObject> compileArrayStatement(Spin2DebugCommand node, int op, String cmd) throws IOException {
+        List<DataObject> l = new ArrayList<>();
+
         if ((node.getArgumentsCount() % 2) != 0) {
             throw new CompilerException("expecting argument pairs", node.getToken());
         }
+
         for (int index = 0; index < node.getArgumentsCount(); index += 2) {
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            StringBuilder sb = new StringBuilder();
+
             if (first) {
                 os.write(op | DBC_FLAG_NOCOMMA);
                 first = false;
@@ -674,15 +780,26 @@ public class Spin2Debug {
             else {
                 os.write(op);
             }
+            sb.append(cmd.toUpperCase());
 
             if ((op & DBC_FLAG_NOEXPR) == 0) {
-                os.write(node.getArgument(index).toString().getBytes());
+                byte[] b = node.getArgument(index).toString().getBytes();
+
+                os.write(b);
                 os.write(0x00);
+
+                sb.append("(");
+                sb.append(sanitizeString(b));
+                sb.append(")");
             }
 
             compileArgument(node.getArgument(index), os);
             compileArgument(node.getArgument(index + 1), os);
+
+            l.add(new DataObject(os.toByteArray(), sb.toString()));
         }
+
+        return l;
     }
 
     void compileArgument(Spin2DebugExpression node, OutputStream os) throws IOException {
@@ -707,6 +824,14 @@ public class Spin2Debug {
             os.write(0x80 | (value >> 8));
             os.write(value);
         }
+    }
+
+    String sanitizeString(byte[] b) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < b.length; i++) {
+            sb.append((char) ((b[i] >= ' ' && b[i] <= 0x7F) ? b[i] : '.'));
+        }
+        return sb.toString();
     }
 
 }

@@ -197,7 +197,7 @@ class Spin2DebugTest {
         Assertions.assertEquals(""
             + "00000 00000       01             ASMMODE\n"
             + "00001 00001       04             COGN\n"
-            + "00002 00002       51 72 65 67 61 UDEC_ARRAY(rega)\n"
+            + "00002 00002       51 72 65 67 61 UDEC_REG_ARRAY(rega)\n"
             + "00007 00007       00 80 01 80 04\n"
             + "0000C 0000C       00             DONE\n"
             + "", actual);
@@ -218,7 +218,7 @@ class Spin2DebugTest {
         Assertions.assertEquals(""
             + "00000 00000       01             ASMMODE\n"
             + "00001 00001       04             COGN\n"
-            + "00002 00002       51 72 65 67 61 UDEC_ARRAY(rega)\n"
+            + "00002 00002       51 72 65 67 61 UDEC_REG_ARRAY(rega)\n"
             + "00007 00007       00 80 01 00 04\n"
             + "0000C 0000C       00             DONE\n"
             + "", actual);
@@ -818,10 +818,9 @@ class Spin2DebugTest {
         return builder.getRoot();
     }
 
-    String dumpDebugData(byte[] data) {
+    String dumpDebugData(List<DataObject> l) {
         Spin2Object object = new Spin2Object();
 
-        List<DataObject> l = Spin2Debugger.decodeDebugData(data);
         for (DataObject obj : l) {
             object.write(obj);
         }

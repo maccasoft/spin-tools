@@ -20,6 +20,7 @@ import java.util.Map.Entry;
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.ObjectCompiler;
 import com.maccasoft.propeller.SpinObject;
+import com.maccasoft.propeller.SpinObject.CommentDataObject;
 import com.maccasoft.propeller.SpinObject.DataObject;
 import com.maccasoft.propeller.SpinObject.LinkDataObject;
 import com.maccasoft.propeller.SpinObject.WordDataObject;
@@ -142,21 +143,25 @@ public class Spin2CCompiler extends Spin2Compiler {
         object.writeComment("Debug data");
         WordDataObject sizeWord = object.writeWord(2);
 
+        int index = 1;
         int pos = (debugStatements.size() + 1) * 2;
         List<DataObject> l = new ArrayList<DataObject>();
         for (Object node : debugStatements) {
             try {
+                List<DataObject> list = null;
                 if (node instanceof Spin2StatementNode) {
-                    byte[] data = debug.compileDebugStatement((Spin2StatementNode) node);
-                    l.add(new DataObject(data));
-                    object.writeWord(pos);
-                    pos += data.length;
+                    list = debug.compileDebugStatement((Spin2StatementNode) node);
                 }
                 else if (node instanceof Spin2PAsmDebugLine) {
-                    byte[] data = debug.compilePAsmDebugStatement((Spin2PAsmDebugLine) node);
-                    l.add(new DataObject(data));
+                    list = debug.compilePAsmDebugStatement((Spin2PAsmDebugLine) node);
+                }
+                if (list != null) {
+                    l.add(new CommentDataObject(String.format("#%d", index++)));
                     object.writeWord(pos);
-                    pos += data.length;
+                    for (DataObject o : list) {
+                        l.add(o);
+                        pos += o.size();
+                    }
                 }
             } catch (CompilerException e) {
                 logMessage(e);
