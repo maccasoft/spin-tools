@@ -19,7 +19,6 @@ import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
-import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
@@ -158,9 +157,6 @@ public class DebugBitmapWindow extends DebugWindow {
                 e.gc.setAdvanced(true);
                 e.gc.setAntialias(SWT.ON);
                 e.gc.setInterpolation(SWT.OFF);
-                if (image.isDisposed()) {
-                    image = new Image(e.display, imageData);
-                }
                 Point canvasSize = canvas.getSize();
                 e.gc.drawImage(image, 0, 0, imageSize.x, imageSize.y, 0, 0, canvasSize.x, canvasSize.y);
             }
@@ -185,6 +181,7 @@ public class DebugBitmapWindow extends DebugWindow {
     }
 
     void trace(KeywordIterator iter) {
+        traceMode = 0;
         if (iter.hasNextNumber()) {
             traceMode = iter.nextNumber() & 15;
             switch (traceMode & 7) {
@@ -304,13 +301,11 @@ public class DebugBitmapWindow extends DebugWindow {
                                 imageData.setPixel(x, y, color);
                             }
                         }
-                        image.dispose();
-                        canvas.redraw();
+                        update();
                         break;
 
                     case "UPDATE":
-                        image.dispose();
-                        canvas.redraw();
+                        update();
                         break;
 
                     case "SAVE":
@@ -337,6 +332,12 @@ public class DebugBitmapWindow extends DebugWindow {
                 }
             }
         }
+    }
+
+    void update() {
+        image.dispose();
+        image = new Image(canvas.getDisplay(), imageData);
+        canvas.redraw();
     }
 
     void colorMode(String cmd, KeywordIterator iter) {
@@ -427,15 +428,13 @@ public class DebugBitmapWindow extends DebugWindow {
                         y = 0;
                     }
                     if (autoUpdate && rate == -1) {
-                        image.dispose();
-                        canvas.redraw();
+                        update();
                     }
                 }
                 imageData.setPixel(x, y, color);
                 if (++x >= imageData.width) {
                     if (autoUpdate && rate == -1) {
-                        image.dispose();
-                        canvas.redraw();
+                        update();
                     }
                 }
                 break;
@@ -450,15 +449,13 @@ public class DebugBitmapWindow extends DebugWindow {
                         y = 0;
                     }
                     if (autoUpdate && rate == -1) {
-                        image.dispose();
-                        canvas.redraw();
+                        update();
                     }
                 }
                 imageData.setPixel(x, y, color);
                 if (--x < 0) {
                     if (autoUpdate && rate == -1) {
-                        image.dispose();
-                        canvas.redraw();
+                        update();
                     }
                 }
                 break;
@@ -473,15 +470,13 @@ public class DebugBitmapWindow extends DebugWindow {
                         y = imageData.height - 1;
                     }
                     if (autoUpdate && rate == -1) {
-                        image.dispose();
-                        canvas.redraw();
+                        update();
                     }
                 }
                 imageData.setPixel(x, y, color);
                 if (++x >= imageData.width) {
                     if (autoUpdate && rate == -1) {
-                        image.dispose();
-                        canvas.redraw();
+                        update();
                     }
                 }
                 break;
@@ -496,14 +491,12 @@ public class DebugBitmapWindow extends DebugWindow {
                         y = imageData.height - 1;
                     }
                     if (autoUpdate && rate == -1) {
-                        image.dispose();
-                        canvas.redraw();
+                        update();
                     }
                 }
                 if (--x < 0) {
                     if (autoUpdate && rate == -1) {
-                        image.dispose();
-                        canvas.redraw();
+                        update();
                     }
                 }
                 break;
@@ -518,15 +511,13 @@ public class DebugBitmapWindow extends DebugWindow {
                         x = 0;
                     }
                     if (autoUpdate && rate == -1) {
-                        image.dispose();
-                        canvas.redraw();
+                        update();
                     }
                 }
                 imageData.setPixel(x, y, color);
                 if (++y >= imageData.height) {
                     if (autoUpdate && rate == -1) {
-                        image.dispose();
-                        canvas.redraw();
+                        update();
                     }
                 }
                 break;
@@ -541,15 +532,13 @@ public class DebugBitmapWindow extends DebugWindow {
                         x = 0;
                     }
                     if (autoUpdate && rate == -1) {
-                        image.dispose();
-                        canvas.redraw();
+                        update();
                     }
                 }
                 imageData.setPixel(x, y, color);
                 if (--y < 0) {
                     if (autoUpdate && rate == -1) {
-                        image.dispose();
-                        canvas.redraw();
+                        update();
                     }
                 }
                 break;
@@ -564,15 +553,13 @@ public class DebugBitmapWindow extends DebugWindow {
                         x = imageData.width - 1;
                     }
                     if (autoUpdate && rate == -1) {
-                        image.dispose();
-                        canvas.redraw();
+                        update();
                     }
                 }
                 imageData.setPixel(x, y, color);
                 if (++y >= imageData.height) {
                     if (autoUpdate && rate == -1) {
-                        image.dispose();
-                        canvas.redraw();
+                        update();
                     }
                 }
                 break;
@@ -586,15 +573,13 @@ public class DebugBitmapWindow extends DebugWindow {
                         x = imageData.width - 1;
                     }
                     if (autoUpdate && rate == -1) {
-                        image.dispose();
-                        canvas.redraw();
+                        update();
                     }
                 }
                 imageData.setPixel(x, y, color);
                 if (--y < 0) {
                     if (autoUpdate && rate == -1) {
-                        image.dispose();
-                        canvas.redraw();
+                        update();
                     }
                 }
                 break;
@@ -602,75 +587,46 @@ public class DebugBitmapWindow extends DebugWindow {
 
         if (autoUpdate && rate != -1) {
             if (rateCount++ >= rate) {
-                image.dispose();
-                canvas.redraw();
+                update();
                 rateCount = 0;
             }
         }
     }
 
     void scrollLeft() {
-        Image target = new Image(display, imageData);
-
-        GC gc = new GC(target);
-        try {
-            Image temp = new Image(display, imageData);
-            gc.drawImage(temp, 1, 0, imageData.width - 1, imageData.height, 0, 0, imageData.width - 1, imageData.height);
-            gc.drawImage(temp, 0, 0, 1, imageData.height, imageData.width - 1, 0, 1, imageData.height);
-            temp.dispose();
-        } finally {
-            gc.dispose();
+        for (int x = 1; x < imageData.width; x++) {
+            for (int y = 0; y < imageData.height; y++) {
+                int pixel = imageData.getPixel(x, y);
+                imageData.setPixel(x - 1, y, pixel);
+            }
         }
-
-        imageData = target.getImageData();
     }
 
     void scrollRight() {
-        Image target = new Image(display, imageData);
-
-        GC gc = new GC(target);
-        try {
-            Image temp = new Image(display, imageData);
-            gc.drawImage(temp, 0, 0, imageData.width - 1, imageData.height, 1, 0, imageData.width - 1, imageData.height);
-            gc.drawImage(temp, imageData.width - 1, 0, 1, imageData.height, 0, 0, 1, imageData.height);
-            temp.dispose();
-        } finally {
-            gc.dispose();
+        for (int x = imageData.width - 1; x >= 1; x--) {
+            for (int y = 0; y < imageData.height; y++) {
+                int pixel = imageData.getPixel(x - 1, y);
+                imageData.setPixel(x, y, pixel);
+            }
         }
-
-        imageData = target.getImageData();
     }
 
     void scrollDown() {
-        Image target = new Image(display, imageData);
-
-        GC gc = new GC(target);
-        try {
-            Image temp = new Image(display, imageData);
-            gc.drawImage(temp, 0, 0, imageData.width, imageData.height - 1, 0, 1, imageData.width, imageData.height - 1);
-            gc.drawImage(temp, 0, imageData.height - 1, imageData.width, 1, 0, 0, imageData.width, 1);
-            temp.dispose();
-        } finally {
-            gc.dispose();
+        for (int y = imageData.height - 1; y >= 1; y--) {
+            for (int x = 0; x < imageData.width; x++) {
+                int pixel = imageData.getPixel(x, y - 1);
+                imageData.setPixel(x, y, pixel);
+            }
         }
-
-        imageData = target.getImageData();
     }
 
     void scrollUp() {
-        Image target = new Image(display, imageData);
-
-        GC gc = new GC(target);
-        try {
-            Image temp = new Image(display, imageData);
-            gc.drawImage(temp, 0, 1, imageData.width, imageData.height - 1, 0, 0, imageData.width, imageData.height - 1);
-            gc.drawImage(temp, 0, 0, imageData.width, 1, 0, imageData.height - 1, imageData.width, 1);
-            temp.dispose();
-        } finally {
-            gc.dispose();
+        for (int y = 1; y < imageData.height; y++) {
+            for (int x = 0; x < imageData.width; x++) {
+                int pixel = imageData.getPixel(x, y);
+                imageData.setPixel(x, y - 1, pixel);
+            }
         }
-
-        imageData = target.getImageData();
     }
 
     static String[] data = new String[] {

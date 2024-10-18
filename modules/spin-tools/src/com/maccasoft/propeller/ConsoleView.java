@@ -528,8 +528,8 @@ public class ConsoleView {
                         list.add(window);
                         iter.next();
                     }
+                    int index = iter.getIndex();
                     for (DebugWindow w : list) {
-                        int index = iter.getIndex();
                         w.update(iter);
                         iter.setIndex(index);
                     }
