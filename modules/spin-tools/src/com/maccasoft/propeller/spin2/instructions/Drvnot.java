@@ -42,6 +42,7 @@ public class Drvnot extends Spin2PAsmInstructionFactory {
             this.condition = condition;
             this.dst = dst;
             this.effect = effect;
+            this.effect = effect;
         }
 
         @Override

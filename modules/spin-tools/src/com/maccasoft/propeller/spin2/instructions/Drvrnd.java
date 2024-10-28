@@ -42,6 +42,7 @@ public class Drvrnd extends Spin2PAsmInstructionFactory {
             super(context);
             this.condition = condition;
             this.dst = dst;
+            this.effect = effect;
         }
 
         @Override
