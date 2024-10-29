@@ -3812,13 +3812,23 @@ public class SpinTools {
         display.dispose();
     }
 
+    static boolean internalErrorRunning;
+
     public static void openInternalError(Shell shell, String message, Throwable details) {
-        details.printStackTrace();
-        InternalErrorDialog dlg = new InternalErrorDialog(shell, APP_TITLE, null, "An unexpected error has occured.", details, MessageDialog.ERROR, new String[] {
-            IDialogConstants.OK_LABEL, IDialogConstants.SHOW_DETAILS_LABEL
-        }, 0);
-        dlg.setDetailButton(1);
-        dlg.open();
+        if (internalErrorRunning) {
+            return;
+        }
+        internalErrorRunning = true;
+        try {
+            details.printStackTrace();
+            InternalErrorDialog dlg = new InternalErrorDialog(shell, APP_TITLE, null, "An unexpected error has occured.", details, MessageDialog.ERROR, new String[] {
+                IDialogConstants.OK_LABEL, IDialogConstants.SHOW_DETAILS_LABEL
+            }, 0);
+            dlg.setDetailButton(1);
+            dlg.open();
+        } finally {
+            internalErrorRunning = false;
+        }
     }
 
 }
