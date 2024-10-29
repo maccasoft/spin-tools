@@ -31,7 +31,7 @@ class CircularBufferTest {
     @Test
     void testRead() throws IOException {
         CircularBuffer subject = new CircularBuffer(10);
-        subject.fifo[subject.head++] = 'A';
+        subject.buffer[subject.head++] = 'A';
         Assertions.assertEquals('A', subject.read());
         Assertions.assertEquals(1, subject.head);
         Assertions.assertEquals(1, subject.tail);

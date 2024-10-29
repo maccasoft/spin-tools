@@ -29,6 +29,8 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Display;
 
+import com.maccasoft.propeller.internal.CircularBuffer;
+
 public class DebugScopeXYWindow extends DebugWindow {
 
     Image image;
@@ -82,7 +84,9 @@ public class DebugScopeXYWindow extends DebugWindow {
 
     }
 
-    public DebugScopeXYWindow() {
+    public DebugScopeXYWindow(CircularBuffer transmitBuffer) {
+        super(transmitBuffer);
+
         backColor = new Color(0, 0, 0);
         gridColor = new Color(64, 64, 64);
 
@@ -367,6 +371,14 @@ public class DebugScopeXYWindow extends DebugWindow {
 
                     case "CLOSE":
                         shell.dispose();
+                        break;
+
+                    case "PC_KEY":
+                        sendKeyPress();
+                        break;
+
+                    case "PC_MOUSE":
+                        sendMouse();
                         break;
                 }
             }
@@ -760,7 +772,7 @@ public class DebugScopeXYWindow extends DebugWindow {
             @Override
             public void run() {
                 try {
-                    DebugWindow window = new DebugScopeXYWindow();
+                    DebugWindow window = new DebugScopeXYWindow(new CircularBuffer(128));
                     window.create();
                     window.setup(new KeywordIterator(data[0]));
                     window.open();

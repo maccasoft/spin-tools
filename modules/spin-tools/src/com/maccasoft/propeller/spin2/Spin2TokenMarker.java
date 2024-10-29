@@ -581,6 +581,9 @@ public class Spin2TokenMarker extends SourceTokenMarker {
 
         debugKeywords.put("IF", TokenId.FUNCTION);
         debugKeywords.put("IFNOT", TokenId.FUNCTION);
+
+        debugKeywords.put("PC_KEY", TokenId.FUNCTION);
+        debugKeywords.put("PC_MOUSE", TokenId.FUNCTION);
     }
 
     static Map<String, TokenId> spinKeywords = new CaseInsensitiveMap<>();

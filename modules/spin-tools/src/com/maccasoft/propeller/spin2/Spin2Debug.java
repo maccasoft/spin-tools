@@ -33,6 +33,8 @@ public class Spin2Debug {
     public static final int DBC_CHAR = 5;
     public static final int DBC_STRING = 6;
     public static final int DBC_DELAY = 7;
+    public static final int DBC_PC_KEY = 8;
+    public static final int DBC_PC_MOUSE = 9;
 
     // Flags
     public static final int DBC_FLAG_NOCOMMA = 0x01;
@@ -303,6 +305,21 @@ public class Spin2Debug {
                                     DBC_COGN
                                 }, "COGN"));
                                 skipCogN = false;
+                            }
+                            break;
+
+                        case "PC_KEY":
+                            for (int i = 0; i < node.getChildCount(); i++) {
+                                list.add(new DataObject(new byte[] {
+                                    DBC_PC_KEY
+                                }, cmd.toUpperCase()));
+                            }
+                            break;
+                        case "PC_MOUSE":
+                            for (int i = 0; i < node.getChildCount(); i++) {
+                                list.add(new DataObject(new byte[] {
+                                    DBC_PC_MOUSE
+                                }, cmd.toUpperCase()));
                             }
                             break;
 
@@ -698,6 +715,23 @@ public class Spin2Debug {
                             }
                             break;
                         }
+
+                        case "PC_KEY":
+                            for (Spin2DebugExpression child : node.getArguments()) {
+                                ByteArrayOutputStream os = new ByteArrayOutputStream();
+                                os.write(DBC_PC_KEY);
+                                compileArgument(child, os);
+                                list.add(new DataObject(os.toByteArray(), cmd.toUpperCase()));
+                            }
+                            break;
+                        case "PC_MOUSE":
+                            for (Spin2DebugExpression child : node.getArguments()) {
+                                ByteArrayOutputStream os = new ByteArrayOutputStream();
+                                os.write(DBC_PC_MOUSE);
+                                compileArgument(child, os);
+                                list.add(new DataObject(os.toByteArray(), cmd.toUpperCase()));
+                            }
+                            break;
 
                         default:
                             throw new CompilerException("Unknown debug statement '" + cmd + "'", node.getToken());

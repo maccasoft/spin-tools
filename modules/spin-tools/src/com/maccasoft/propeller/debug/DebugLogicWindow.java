@@ -33,6 +33,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Display;
 
 import com.maccasoft.propeller.Preferences;
+import com.maccasoft.propeller.internal.CircularBuffer;
 
 public class DebugLogicWindow extends DebugWindow {
 
@@ -117,7 +118,9 @@ public class DebugLogicWindow extends DebugWindow {
 
     }
 
-    public DebugLogicWindow() {
+    public DebugLogicWindow(CircularBuffer transmitBuffer) {
+        super(transmitBuffer);
+
         sampleData = new int[32];
         sampleDataIndex = 0;
 
@@ -486,6 +489,14 @@ public class DebugLogicWindow extends DebugWindow {
                     case "CLOSE":
                         shell.dispose();
                         break;
+
+                    case "PC_KEY":
+                        sendKeyPress();
+                        break;
+
+                    case "PC_MOUSE":
+                        sendMouse();
+                        break;
                 }
             }
         }
@@ -595,7 +606,7 @@ public class DebugLogicWindow extends DebugWindow {
             @Override
             public void run() {
                 try {
-                    DebugWindow window = new DebugLogicWindow();
+                    DebugWindow window = new DebugLogicWindow(new CircularBuffer(128));
                     window.create();
                     window.setup(new KeywordIterator(data[0]));
                     window.open();

@@ -11,9 +11,17 @@
 package com.maccasoft.propeller.debug;
 
 import java.io.File;
+import java.io.IOException;
 
+import org.apache.commons.lang3.BitField;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.events.KeyAdapter;
+import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.MouseAdapter;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseMoveListener;
+import org.eclipse.swt.events.MouseWheelListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
@@ -27,6 +35,8 @@ import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
+
+import com.maccasoft.propeller.internal.CircularBuffer;
 
 public abstract class DebugWindow {
 
@@ -67,31 +77,45 @@ public abstract class DebugWindow {
     protected Point imageSize;
     protected Point dotSize;
 
-    public static DebugWindow createType(String key) {
+    protected CircularBuffer transmitBuffer;
+
+    int keyPress;
+    int mousePack;
+    int mousePixel;
+
+    public static final BitField mouseX = new BitField(0b0000000000000000001111111111111);
+    public static final BitField mouseY = new BitField(0b0000011111111111110000000000000);
+    public static final BitField mouseWheel = new BitField(0b0001100000000000000000000000000);
+    public static final BitField mouseLeft = new BitField(0b0010000000000000000000000000000);
+    public static final BitField mouseMiddle = new BitField(0b0100000000000000000000000000000);
+    public static final BitField mouseRight = new BitField(0b1000000000000000000000000000000);
+
+    public static DebugWindow createType(String key, CircularBuffer transmitBuffer) {
         switch (key.toUpperCase()) {
             case "LOGIC":
-                return new DebugLogicWindow();
+                return new DebugLogicWindow(transmitBuffer);
             case "SCOPE":
-                return new DebugScopeWindow();
+                return new DebugScopeWindow(transmitBuffer);
             case "SCOPE_XY":
-                return new DebugScopeXYWindow();
+                return new DebugScopeXYWindow(transmitBuffer);
             case "FFT":
                 break;
             case "SPECTRO":
                 break;
             case "PLOT":
-                return new DebugPlotWindow();
+                return new DebugPlotWindow(transmitBuffer);
             case "TERM":
                 break;
             case "BITMAP":
-                return new DebugBitmapWindow();
+                return new DebugBitmapWindow(transmitBuffer);
             case "MIDI":
                 break;
         }
         return null;
     }
 
-    public DebugWindow() {
+    public DebugWindow(CircularBuffer transmitBuffer) {
+        this.transmitBuffer = transmitBuffer;
         imageSize = new Point(256, 256);
         dotSize = new Point(1, 1);
     }
@@ -108,7 +132,7 @@ public abstract class DebugWindow {
     public void create() {
         display = Display.getDefault();
 
-        shell = new Shell(display);
+        shell = new Shell(display, SWT.CLOSE | SWT.MIN | SWT.TITLE);
         shell.setData(this);
 
         FillLayout layout = new FillLayout();
@@ -133,6 +157,116 @@ public abstract class DebugWindow {
         gridData.widthHint = imageSize.x * dotSize.x;
         gridData.heightHint = imageSize.y * dotSize.y;
         canvas.setLayoutData(gridData);
+
+        canvas.addKeyListener(new KeyAdapter() {
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                switch (e.keyCode) {
+                    case SWT.ARROW_LEFT:
+                        keyPress = 1;
+                        break;
+                    case SWT.ARROW_RIGHT:
+                        keyPress = 2;
+                        break;
+                    case SWT.ARROW_UP:
+                        keyPress = 3;
+                        break;
+                    case SWT.ARROW_DOWN:
+                        keyPress = 4;
+                        break;
+                    case SWT.HOME:
+                        keyPress = 5;
+                        break;
+                    case SWT.END:
+                        keyPress = 6;
+                        break;
+                    case SWT.INSERT:
+                        keyPress = 10;
+                        break;
+                    case SWT.PAGE_UP:
+                        keyPress = 11;
+                        break;
+                    case SWT.PAGE_DOWN:
+                        keyPress = 12;
+                        break;
+                    default:
+                        if (e.character == SWT.DEL) {
+                            keyPress = 7;
+                        }
+                        else if (e.character < 127) {
+                            keyPress = e.character & 0xFF;
+                        }
+                        break;
+                }
+            }
+
+        });
+
+        canvas.addMouseMoveListener(new MouseMoveListener() {
+
+            @Override
+            public void mouseMove(MouseEvent e) {
+                mousePack = mouseX.setValue(mousePack, e.x);
+                mousePack = mouseY.setValue(mousePack, imageSize.y - e.y);
+            }
+
+        });
+        canvas.addMouseListener(new MouseAdapter() {
+
+            @Override
+            public void mouseDown(MouseEvent e) {
+                if (e.button == 1) {
+                    mousePack = mouseLeft.setValue(mousePack, 1);
+                }
+                if (e.button == 2) {
+                    mousePack = mouseMiddle.setValue(mousePack, 1);
+                }
+                if (e.button == 3) {
+                    mousePack = mouseRight.setValue(mousePack, 1);
+                }
+            }
+
+            @Override
+            public void mouseUp(MouseEvent e) {
+                if (e.button == 1) {
+                    mousePack = mouseLeft.setValue(mousePack, 0);
+                }
+                if (e.button == 2) {
+                    mousePack = mouseMiddle.setValue(mousePack, 0);
+                }
+                if (e.button == 3) {
+                    mousePack = mouseRight.setValue(mousePack, 0);
+                }
+            }
+        });
+
+        canvas.addMouseWheelListener(new MouseWheelListener() {
+
+            @Override
+            public void mouseScrolled(MouseEvent e) {
+                mousePack = mouseWheel.setValue(mousePack, e.count);
+            }
+        });
+    }
+
+    protected void sendKeyPress() {
+        try {
+            transmitBuffer.writeLong(keyPress);
+        } catch (IOException e) {
+            // Do nothing
+        }
+        keyPress = 0;
+    }
+
+    protected void sendMouse() {
+        try {
+            transmitBuffer.writeLong(mousePack);
+            transmitBuffer.writeLong(mousePixel);
+        } catch (IOException e) {
+            // Do nothing
+        }
+        mousePack = mouseWheel.setValue(mousePack, 0);
     }
 
     public void setText(String text) {

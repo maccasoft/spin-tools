@@ -26,6 +26,8 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Display;
 
+import com.maccasoft.propeller.internal.CircularBuffer;
+
 public class DebugBitmapWindow extends DebugWindow {
 
     ImageData imageData;
@@ -45,7 +47,9 @@ public class DebugBitmapWindow extends DebugWindow {
     int rateCount;
     boolean autoUpdate;
 
-    public DebugBitmapWindow() {
+    public DebugBitmapWindow(CircularBuffer transmitBuffer) {
+        super(transmitBuffer);
+
         x = y = 0;
         traceMode = 0;
 
@@ -328,6 +332,14 @@ public class DebugBitmapWindow extends DebugWindow {
 
                     case "CLOSE":
                         shell.dispose();
+                        break;
+
+                    case "PC_KEY":
+                        sendKeyPress();
+                        break;
+
+                    case "PC_MOUSE":
+                        sendMouse();
                         break;
                 }
             }
@@ -691,7 +703,7 @@ public class DebugBitmapWindow extends DebugWindow {
             @Override
             public void run() {
                 try {
-                    DebugWindow window = new DebugBitmapWindow();
+                    DebugWindow window = new DebugBitmapWindow(new CircularBuffer(128));
                     window.create();
                     window.setup(new KeywordIterator(data[0]));
                     window.open();

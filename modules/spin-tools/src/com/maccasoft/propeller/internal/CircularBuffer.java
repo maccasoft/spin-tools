@@ -16,13 +16,13 @@ import java.util.Objects;
 
 public class CircularBuffer {
 
-    byte[] fifo;
     int head;
     int tail;
+    byte[] buffer;
 
     public CircularBuffer(int size) {
-        fifo = new byte[size];
         head = tail = 0;
+        buffer = new byte[size];
     }
 
     public void flush() {
@@ -33,8 +33,8 @@ public class CircularBuffer {
         if (head == tail) {
             return -1;
         }
-        int rc = fifo[tail++] & 0xFF;
-        if (tail >= fifo.length) {
+        int rc = buffer[tail++] & 0xFF;
+        if (tail >= buffer.length) {
             tail = 0;
         }
         return rc;
@@ -49,8 +49,8 @@ public class CircularBuffer {
 
         int i = off;
         while (len > 0 && head != tail) {
-            b[i++] = fifo[tail++];
-            if (tail >= fifo.length) {
+            b[i++] = buffer[tail++];
+            if (tail >= buffer.length) {
                 tail = 0;
             }
             len--;
@@ -62,14 +62,14 @@ public class CircularBuffer {
     public int available() throws IOException {
         int rc = head - tail;
         if (rc < 0) {
-            rc += fifo.length;
+            rc += buffer.length;
         }
         return rc;
     }
 
     public void write(int b) throws IOException {
-        fifo[head++] = (byte) b;
-        if (head >= fifo.length) {
+        buffer[head++] = (byte) b;
+        if (head >= buffer.length) {
             head = 0;
         }
     }
@@ -81,12 +81,67 @@ public class CircularBuffer {
     public void write(byte[] b, int off, int len) throws IOException {
         Objects.checkFromIndexSize(off, len, b.length);
         while (len > 0) {
-            fifo[head++] = b[off++];
-            if (head >= fifo.length) {
+            buffer[head++] = b[off++];
+            if (head >= buffer.length) {
                 head = 0;
             }
             len--;
         }
+    }
+
+    public void writeWord(int b) throws IOException {
+        write(b & 0xFF);
+        write((b >> 8) & 0xFF);
+    }
+
+    public void writeLong(int b) throws IOException {
+        write(b & 0xFF);
+        write((b >> 8) & 0xFF);
+        write((b >> 16) & 0xFF);
+        write((b >> 24) & 0xFF);
+    }
+
+    public int read(int timeout) throws IOException, InterruptedException {
+        if (head == tail) {
+            long now = System.currentTimeMillis();
+            do {
+                if ((System.currentTimeMillis() - now) > timeout) {
+                    throw new InterruptedException();
+                }
+                Thread.sleep(1);
+            } while (head == tail);
+        }
+        int rc = buffer[tail++] & 0xFF;
+        if (tail >= buffer.length) {
+            tail = 0;
+        }
+        return rc;
+    }
+
+    public int readWord(int timeout) throws IOException, InterruptedException {
+        if (available() < 2) {
+            long now = System.currentTimeMillis();
+            do {
+                if ((System.currentTimeMillis() - now) > timeout) {
+                    throw new InterruptedException();
+                }
+                Thread.sleep(1);
+            } while (available() < 2);
+        }
+        return read() | (read() << 8);
+    }
+
+    public int readLong(int timeout) throws IOException, InterruptedException {
+        if (available() < 4) {
+            long now = System.currentTimeMillis();
+            do {
+                if ((System.currentTimeMillis() - now) > timeout) {
+                    throw new InterruptedException();
+                }
+                Thread.sleep(1);
+            } while (available() < 4);
+        }
+        return read() | (read() << 8) | (read() << 16) | (read() << 24);
     }
 
 }

@@ -66,6 +66,7 @@ public class ConsoleView {
     boolean enabled;
 
     CircularBuffer receiveBuffer;
+    CircularBuffer transmitBuffer;
 
     StringBuilder pendingText;
     File logFile;
@@ -180,7 +181,7 @@ public class ConsoleView {
 
     boolean consoleThreadRun;
 
-    Runnable consoleThread = new Runnable() {
+    Runnable receiveThread = new Runnable() {
 
         int utf_buf_index = 0, utf_ch_count = 0;
         byte[] utf_buf = new byte[4];
@@ -264,6 +265,35 @@ public class ConsoleView {
 
     };
 
+    Runnable transmitThread = new Runnable() {
+
+        @Override
+        public void run() {
+            int count, b;
+
+            while (consoleThreadRun) {
+                try {
+                    count = transmitBuffer.available();
+                    while (count > 0 && consoleThreadRun) {
+                        b = transmitBuffer.read();
+                        if (serialPort.isOpened()) {
+                            while (!serialPort.writeInt(b) && consoleThreadRun) {
+                                Thread.sleep(1);
+                            }
+                        }
+                        count--;
+                    }
+                    Thread.sleep(1);
+                } catch (InterruptedException e) {
+                    // Do nothing
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+    };
+
     Runnable textUpdateRunnable = new Runnable() {
 
         @Override
@@ -287,6 +317,7 @@ public class ConsoleView {
         preferences = Preferences.getInstance();
 
         receiveBuffer = new CircularBuffer(8192);
+        transmitBuffer = new CircularBuffer(4096);
         pendingText = new StringBuilder();
 
         enabled = false;
@@ -370,7 +401,8 @@ public class ConsoleView {
         });
 
         consoleThreadRun = true;
-        new Thread(consoleThread).start();
+        new Thread(receiveThread).start();
+        new Thread(transmitThread).start();
     }
 
     public void setEnabled(boolean enabled) {
@@ -511,7 +543,7 @@ public class ConsoleView {
         KeywordIterator iter = new KeywordIterator(text);
         if (iter.hasNext()) {
             String key = iter.next();
-            window = DebugWindow.createType(key);
+            window = DebugWindow.createType(key, transmitBuffer);
             if (window != null) {
                 if (iter.hasNext()) {
                     String id = iter.next();
