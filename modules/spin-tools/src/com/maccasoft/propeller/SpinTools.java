@@ -2988,8 +2988,8 @@ public class SpinTools {
 
                     do {
                         count = out.read(buf);
-                        for (int i = 0; i < count; i++) {
-                            stdout.write(buf[i]);
+                        if (count > 0) {
+                            stdout.write(buf, 0, count);
                         }
                     } while (count != -1);
 

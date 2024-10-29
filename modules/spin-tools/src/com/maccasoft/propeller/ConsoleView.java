@@ -42,6 +42,7 @@ import org.eclipse.swt.widgets.Display;
 
 import com.maccasoft.propeller.debug.DebugWindow;
 import com.maccasoft.propeller.debug.KeywordIterator;
+import com.maccasoft.propeller.internal.CircularBuffer;
 
 import jssc.SerialPort;
 import jssc.SerialPortEvent;
@@ -54,7 +55,6 @@ public class ConsoleView {
 
     SerialPort serialPort;
     int serialBaudRate;
-    PrintStream os;
 
     Preferences preferences;
 
@@ -65,11 +65,11 @@ public class ConsoleView {
     boolean writeLogFile;
     boolean enabled;
 
+    CircularBuffer receiveBuffer;
+
     StringBuilder pendingText;
     File logFile;
-
-    private int utf_buf_index = 0, utf_ch_count = 0;
-    private byte[] utf_buf = new byte[4];
+    PrintStream os;
 
     Map<String, DebugWindow> map = new HashMap<>();
 
@@ -119,8 +119,6 @@ public class ConsoleView {
 
     SerialPortEventListener serialEventListener = new SerialPortEventListener() {
 
-        StringBuilder lineBuilder = new StringBuilder(128);
-
         @Override
         public void serialEvent(SerialPortEvent event) {
             switch (event.getEventType()) {
@@ -128,9 +126,10 @@ public class ConsoleView {
                     try {
                         byte[] rx = serialPort.readBytes();
                         if (rx != null) {
-                            for (int i = 0; i < rx.length; i++) {
-                                write(rx[i]);
+                            if (os != null) {
+                                os.write(rx, 0, rx.length);
                             }
+                            receiveBuffer.write(rx);
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -139,7 +138,87 @@ public class ConsoleView {
             }
         }
 
-        private void write(byte b) {
+    };
+
+    OutputStream consoleOutputStream = new OutputStream() {
+
+        @Override
+        public void write(int b) throws IOException {
+            if (os != null) {
+                os.write(b);
+            }
+            receiveBuffer.write(b);
+        }
+
+        @Override
+        public void write(byte[] b) throws IOException {
+            if (os != null) {
+                os.write(b, 0, b.length);
+            }
+            receiveBuffer.write(b);
+        }
+
+        @Override
+        public void write(byte[] b, int off, int len) throws IOException {
+            if (os != null) {
+                os.write(b, off, len);
+            }
+            receiveBuffer.write(b, off, len);
+        }
+
+        @Override
+        public void flush() throws IOException {
+
+        }
+
+        @Override
+        public void close() throws IOException {
+
+        }
+
+    };
+
+    boolean consoleThreadRun;
+
+    Runnable consoleThread = new Runnable() {
+
+        int utf_buf_index = 0, utf_ch_count = 0;
+        byte[] utf_buf = new byte[4];
+
+        StringBuilder lineBuilder = new StringBuilder(128);
+
+        @Override
+        public void run() {
+            while (consoleThreadRun) {
+                try {
+                    int count = receiveBuffer.available();
+                    if (count != 0) {
+                        byte[] rx = new byte[count];
+                        receiveBuffer.read(rx);
+                        display.asyncExec(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                if (console.isDisposed()) {
+                                    return;
+                                }
+                                for (int i = 0; i < rx.length; i++) {
+                                    writeByte(rx[i]);
+                                }
+                            }
+
+                        });
+                    }
+                    Thread.sleep(1);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    // Do nothing
+                }
+            }
+        }
+
+        void writeByte(byte b) {
             if (utf_buf_index == 0) {
                 if ((b & 0b111_00000) == 0b110_00000) {
                     utf_buf[utf_buf_index++] = b;
@@ -155,7 +234,18 @@ public class ConsoleView {
                 }
                 else if (b == '\n' || b == '\r') {
                     if (lineBuilder.length() != 0) {
-                        append(lineBuilder.toString());
+                        String text = lineBuilder.toString();
+
+                        if (text.startsWith("`")) {
+                            handleDebugWindowCommand(text);
+                        }
+
+                        if (pendingText.length() == 0) {
+                            display.asyncExec(textUpdateRunnable);
+                        }
+                        pendingText.append(text);
+                        pendingText.append(System.lineSeparator());
+
                         lineBuilder.setLength(0);
                     }
                 }
@@ -174,55 +264,20 @@ public class ConsoleView {
 
     };
 
-    OutputStream consoleOutputStream = new OutputStream() {
-
-        StringBuilder lineBuilder = new StringBuilder(128);
+    Runnable textUpdateRunnable = new Runnable() {
 
         @Override
-        public void write(int b) throws IOException {
-            if (utf_buf_index == 0) {
-                if ((b & 0b111_00000) == 0b110_00000) {
-                    utf_buf[utf_buf_index++] = (byte) b;
-                    utf_ch_count = 2;
-                }
-                else if ((b & 0b1111_0000) == 0b1110_0000) {
-                    utf_buf[utf_buf_index++] = (byte) b;
-                    utf_ch_count = 3;
-                }
-                else if ((b & 0b11111_000) == 0b11110_000) {
-                    utf_buf[utf_buf_index++] = (byte) b;
-                    utf_ch_count = 4;
-                }
-                else if (b == '\n' || b == '\r') {
-                    if (lineBuilder.length() != 0) {
-                        append(lineBuilder.toString());
-                        lineBuilder.setLength(0);
-                    }
-                }
-                else {
-                    lineBuilder.append((char) b);
-                }
+        public void run() {
+            if (console.isDisposed()) {
+                return;
             }
-            else {
-                utf_buf[utf_buf_index++] = (byte) b;
-                if (utf_buf_index >= utf_ch_count) {
-                    lineBuilder.append(new String(utf_buf, 0, utf_ch_count));
-                    utf_buf_index = 0;
-                }
+            console.append(pendingText.toString());
+            if (console.getLineCount() > maxLines) {
+                int length = console.getOffsetAtLine(console.getLineCount() - maxLines);
+                console.replaceTextRange(0, length, "");
             }
-        }
-
-        @Override
-        public void flush() throws IOException {
-
-        }
-
-        @Override
-        public void close() throws IOException {
-            if (lineBuilder.length() != 0) {
-                append(lineBuilder.toString());
-                lineBuilder = new StringBuilder();
-            }
+            console.invokeAction(ST.TEXT_END);
+            pendingText.setLength(0);
         }
 
     };
@@ -231,6 +286,7 @@ public class ConsoleView {
         display = parent.getDisplay();
         preferences = Preferences.getInstance();
 
+        receiveBuffer = new CircularBuffer(8192);
         pendingText = new StringBuilder();
 
         enabled = false;
@@ -285,6 +341,8 @@ public class ConsoleView {
 
             @Override
             public void widgetDisposed(DisposeEvent event) {
+                consoleThreadRun = false;
+
                 preferences.removePropertyChangeListener(preferencesChangeListener);
 
                 if (os != null) {
@@ -310,6 +368,9 @@ public class ConsoleView {
                 font.dispose();
             }
         });
+
+        consoleThreadRun = true;
+        new Thread(consoleThread).start();
     }
 
     public void setEnabled(boolean enabled) {
@@ -352,6 +413,7 @@ public class ConsoleView {
     }
 
     public void clear() {
+        receiveBuffer.flush();
         pendingText = new StringBuilder();
         for (DebugWindow window : new ArrayList<>(map.values())) {
             window.dispose();
@@ -441,51 +503,6 @@ public class ConsoleView {
         if (!enabled) {
             console.setForeground(color);
         }
-    }
-
-    void append(String text) {
-        if (os != null) {
-            os.println(text);
-            os.flush();
-        }
-
-        if (console.isDisposed()) {
-            return;
-        }
-
-        display.asyncExec(new Runnable() {
-
-            @Override
-            public void run() {
-                if (console.isDisposed()) {
-                    return;
-                }
-
-                if (text.startsWith("`")) {
-                    handleDebugWindowCommand(text);
-                }
-
-                if (pendingText.length() == 0) {
-                    display.asyncExec(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            console.append(pendingText.toString());
-                            if (console.getLineCount() > maxLines) {
-                                int length = console.getOffsetAtLine(console.getLineCount() - maxLines);
-                                console.replaceTextRange(0, length, "");
-                            }
-                            console.invokeAction(ST.TEXT_END);
-                            pendingText.setLength(0);
-                        }
-
-                    });
-                }
-                pendingText.append(text);
-                pendingText.append(System.lineSeparator());
-            }
-
-        });
     }
 
     void handleDebugWindowCommand(String text) {
