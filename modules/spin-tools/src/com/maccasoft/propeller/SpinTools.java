@@ -1666,7 +1666,8 @@ public class SpinTools {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 try {
-                    handleShowInfo();
+                    boolean forceDebug = (e.stateMask & SWT.MOD1) != 0;
+                    handleShowInfo(forceDebug);
                 } catch (Exception e1) {
                     e1.printStackTrace();
                 }
@@ -2711,7 +2712,18 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                handleShowInfo();
+                handleShowInfo(false);
+            }
+        });
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Show Info with Debug\tCtrl+F8");
+        item.setAccelerator(SWT.MOD1 | SWT.F8);
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                handleShowInfo(true);
             }
         });
 
@@ -3022,7 +3034,7 @@ public class SpinTools {
         item.setMenu(menu);
     }
 
-    private void handleShowInfo() {
+    private void handleShowInfo(boolean forceDebug) {
         EditorTab editorTab = getTargetObjectEditorTab();
         if (editorTab == null) {
             return;
@@ -3034,21 +3046,35 @@ public class SpinTools {
             return;
         }
 
-        SpinObject object = editorTab.getObject();
-        if (object == null) {
+        SpinObject obj = editorTab.getObject();
+        if (obj == null) {
             return;
         }
+        if (obj instanceof Spin1Object) {
+            forceDebug = false;
+        }
 
-        if (object instanceof Spin1Object) {
+        boolean isDebug = (obj instanceof Spin2Object) && ((Spin2Object) obj).getDebugger() != null;
+        if (isDebug != forceDebug) {
+            editorTab.runCompile(forceDebug);
+            if (editorTab.hasErrors()) {
+                MessageDialog.openError(shell, APP_TITLE, "Program has errors.");
+                editorTab.goToFirstError();
+                return;
+            }
+            obj = editorTab.getObject();
+        }
+
+        if (obj instanceof Spin1Object) {
             P1MemoryDialog dlg = new P1MemoryDialog(shell);
             dlg.setTheme(preferences.getTheme());
-            dlg.setObject((Spin1Object) object, editorTab.getObjectTree(), editorTab.isTopObject());
+            dlg.setObject((Spin1Object) obj, editorTab.getObjectTree(), editorTab.isTopObject());
             dlg.open();
         }
-        else if (object instanceof Spin2Object) {
+        else if (obj instanceof Spin2Object) {
             P2MemoryDialog dlg = new P2MemoryDialog(shell);
             dlg.setTheme(preferences.getTheme());
-            dlg.setObject((Spin2Object) object, editorTab.getObjectTree(), editorTab.isTopObject());
+            dlg.setObject((Spin2Object) obj, editorTab.getObjectTree(), editorTab.isTopObject());
             dlg.open();
         }
     }
