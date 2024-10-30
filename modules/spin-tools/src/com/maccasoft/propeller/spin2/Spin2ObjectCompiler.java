@@ -521,6 +521,22 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
         if (exp != null) {
             object.setDebugBaud(exp.getNumber().intValue());
         }
+        exp = scope.getSystemSymbol("DEBUG_DELAY");
+        if (exp != null) {
+            object.setDebugDelay(exp.getNumber().intValue());
+        }
+        exp = scope.getSystemSymbol("DEBUG_COGINIT");
+        if (exp != null) {
+            object.setDebugBrkCond(0x110);
+        }
+        exp = scope.getSystemSymbol("DEBUG_MAIN");
+        if (exp != null) {
+            object.setDebugBrkCond(0x001);
+        }
+        exp = scope.getSystemSymbol("DEBUG_COGS");
+        if (exp != null) {
+            object.setDebugCogs(exp.getNumber().intValue());
+        }
 
         object.writeComment("Object header (var size " + objectVarSize + ")");
 

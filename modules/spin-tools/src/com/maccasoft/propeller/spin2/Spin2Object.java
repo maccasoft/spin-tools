@@ -63,6 +63,9 @@ public class Spin2Object extends SpinObject {
     public int debugTxPin = 62;
     public int debugRxPin = 63;
     public int debugBaud = Propeller2Loader.UPLOAD_BAUD_RATE;
+    public Integer debugCogs;
+    public Integer debugBrkCond;
+    public Integer debugDelay;
 
     public Spin2Object() {
 
@@ -112,6 +115,18 @@ public class Spin2Object extends SpinObject {
         this.debugBaud = debugBaud;
     }
 
+    public void setDebugBrkCond(int debugBrkCond) {
+        this.debugBrkCond = debugBrkCond;
+    }
+
+    public void setDebugCogs(Integer debugCogs) {
+        this.debugCogs = debugCogs;
+    }
+
+    public void setDebugDelay(int debugDelay) {
+        this.debugDelay = debugDelay;
+    }
+
     public Spin2Object getDebugData() {
         return debugData;
     }
@@ -134,11 +149,17 @@ public class Spin2Object extends SpinObject {
             }
             debugger.setAppSize(appSize);
 
-            debugger.setDelay(getClkFreq() / 10);
+            debugger.setDelay(debugDelay != null ? debugDelay : (getClkFreq() / 10));
 
             debugger.setRxPin(debugRxPin);
             debugger.setTxPin(debugTxPin);
             debugger.setBaud(debugBaud);
+            if (debugBrkCond != null) {
+                debugger.setBrkCond(debugBrkCond);
+            }
+            if (debugCogs != null) {
+                debugger.setCogs(debugCogs);
+            }
 
             os.write(debugger.getCode());
         }

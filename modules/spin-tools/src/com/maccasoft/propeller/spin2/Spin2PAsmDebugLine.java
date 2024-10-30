@@ -123,10 +123,11 @@ public class Spin2PAsmDebugLine {
             throw new CompilerException("invalid statement '" + token.getText() + "'", token);
         }
 
-        Spin2PAsmDebugLine root = new Spin2PAsmDebugLine(context);
         if (index >= tokens.size()) {
-            return root;
+            return null;
         }
+
+        Spin2PAsmDebugLine root = new Spin2PAsmDebugLine(context);
 
         token = tokens.get(index++);
         if (!"(".equals(token.getText())) {

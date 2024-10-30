@@ -13,6 +13,7 @@ package com.maccasoft.propeller;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -40,6 +41,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 
+import com.maccasoft.propeller.debug.DebugPAsmWindow;
 import com.maccasoft.propeller.debug.DebugWindow;
 import com.maccasoft.propeller.debug.KeywordIterator;
 import com.maccasoft.propeller.internal.CircularBuffer;
@@ -73,6 +75,7 @@ public class ConsoleView {
     PrintStream os;
 
     Map<String, DebugWindow> map = new HashMap<>();
+    DebugPAsmWindow[] debugger = new DebugPAsmWindow[8];
 
     final PropertyChangeListener preferencesChangeListener = new PropertyChangeListener() {
 
@@ -190,12 +193,22 @@ public class ConsoleView {
 
         @Override
         public void run() {
+            int count, b = 0;
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+
             while (consoleThreadRun) {
                 try {
-                    int count = receiveBuffer.available();
-                    if (count != 0) {
-                        byte[] rx = new byte[count];
-                        receiveBuffer.read(rx);
+                    count = receiveBuffer.available();
+                    while (count > 0) {
+                        b = receiveBuffer.read();
+                        if (b < 8) {
+                            break;
+                        }
+                        os.write(b);
+                        count--;
+                    }
+                    if (os.size() > 0) {
+                        byte[] rx = os.toByteArray();
                         display.asyncExec(new Runnable() {
 
                             @Override
@@ -209,12 +222,24 @@ public class ConsoleView {
                             }
 
                         });
+                        os.reset();
+                    }
+                    if (count > 0) {
+                        int cogn = b | (receiveBuffer.read() << 8) | (receiveBuffer.read() << 16) | (receiveBuffer.read() << 24);
+                        display.syncExec(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                handleDebuggerData(cogn);
+                            }
+
+                        });
                     }
                     Thread.sleep(1);
-                } catch (IOException e) {
-                    e.printStackTrace();
                 } catch (InterruptedException e) {
                     // Do nothing
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         }
@@ -391,6 +416,12 @@ public class ConsoleView {
                     }
                 }
 
+                for (int i = 0; i < debugger.length; i++) {
+                    if (debugger[i] != null) {
+                        debugger[i].dispose();
+                    }
+                }
+
                 for (DebugWindow window : new ArrayList<>(map.values())) {
                     window.dispose();
                 }
@@ -447,10 +478,18 @@ public class ConsoleView {
     public void clear() {
         receiveBuffer.flush();
         pendingText = new StringBuilder();
+
+        for (int i = 0; i < debugger.length; i++) {
+            if (debugger[i] != null) {
+                debugger[i].dispose();
+                debugger[i] = null;
+            }
+        }
         for (DebugWindow window : new ArrayList<>(map.values())) {
             window.dispose();
         }
         map.clear();
+
         console.setText("");
     }
 
@@ -585,6 +624,21 @@ public class ConsoleView {
                 }
             }
         }
+    }
+
+    void handleDebuggerData(int cogn) {
+        DebugPAsmWindow window = debugger[cogn];
+        if (window == null) {
+            window = new DebugPAsmWindow(cogn);
+            window.create();
+            window.open();
+            debugger[cogn] = window;
+        }
+        window.breakPoint(receiveBuffer, transmitBuffer);
+        if (window.isDisposed()) {
+            return;
+        }
+        window.update();
     }
 
 }

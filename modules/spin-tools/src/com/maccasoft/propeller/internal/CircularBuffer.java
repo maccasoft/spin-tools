@@ -16,6 +16,8 @@ import java.util.Objects;
 
 public class CircularBuffer {
 
+    static final int TIMEOUT = 500;
+
     int head;
     int tail;
     byte[] buffer;
@@ -27,17 +29,6 @@ public class CircularBuffer {
 
     public void flush() {
         head = tail = 0;
-    }
-
-    public int read() throws IOException {
-        if (head == tail) {
-            return -1;
-        }
-        int rc = buffer[tail++] & 0xFF;
-        if (tail >= buffer.length) {
-            tail = 0;
-        }
-        return rc;
     }
 
     public int read(byte b[]) throws IOException {
@@ -101,11 +92,11 @@ public class CircularBuffer {
         write((b >> 24) & 0xFF);
     }
 
-    public int read(int timeout) throws IOException, InterruptedException {
+    public int read() throws IOException, InterruptedException {
         if (head == tail) {
             long now = System.currentTimeMillis();
             do {
-                if ((System.currentTimeMillis() - now) > timeout) {
+                if ((System.currentTimeMillis() - now) > TIMEOUT) {
                     throw new InterruptedException();
                 }
                 Thread.sleep(1);
@@ -118,11 +109,11 @@ public class CircularBuffer {
         return rc;
     }
 
-    public int readWord(int timeout) throws IOException, InterruptedException {
+    public int readWord() throws IOException, InterruptedException {
         if (available() < 2) {
             long now = System.currentTimeMillis();
             do {
-                if ((System.currentTimeMillis() - now) > timeout) {
+                if ((System.currentTimeMillis() - now) > TIMEOUT) {
                     throw new InterruptedException();
                 }
                 Thread.sleep(1);
@@ -131,11 +122,11 @@ public class CircularBuffer {
         return read() | (read() << 8);
     }
 
-    public int readLong(int timeout) throws IOException, InterruptedException {
+    public int readLong() throws IOException, InterruptedException {
         if (available() < 4) {
             long now = System.currentTimeMillis();
             do {
-                if ((System.currentTimeMillis() - now) > timeout) {
+                if ((System.currentTimeMillis() - now) > TIMEOUT) {
                     throw new InterruptedException();
                 }
                 Thread.sleep(1);

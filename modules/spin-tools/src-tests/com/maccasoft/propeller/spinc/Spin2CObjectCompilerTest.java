@@ -960,11 +960,10 @@ class Spin2CObjectCompilerTest {
             + "0000C 0000C       04             RETURN\n"
             + "0000D 0000D       00 00 00       Padding\n"
             + "' Debug data\n"
-            + "00B28 00000       06 00         \n"
+            + "00B28 00000       05 00         \n"
             + "00B2A 00002       04 00         \n"
             + "' #1\n"
-            + "00B2C 00004       04             COGN\n"
-            + "00B2D 00005       00             DONE\n"
+            + "00B2C 00004       00             DONE\n"
             + "", compile(text, true));
     }
 

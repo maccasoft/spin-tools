@@ -11,15 +11,13 @@
 
 package com.maccasoft.propeller.internal;
 
-import java.io.IOException;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 class CircularBufferTest {
 
     @Test
-    void testWrite() throws IOException {
+    void testWrite() throws Exception {
         CircularBuffer subject = new CircularBuffer(10);
         Assertions.assertEquals(0, subject.head);
         Assertions.assertEquals(0, subject.tail);
@@ -29,7 +27,7 @@ class CircularBufferTest {
     }
 
     @Test
-    void testRead() throws IOException {
+    void testRead() throws Exception {
         CircularBuffer subject = new CircularBuffer(10);
         subject.buffer[subject.head++] = 'A';
         Assertions.assertEquals('A', subject.read());
@@ -38,7 +36,7 @@ class CircularBufferTest {
     }
 
     @Test
-    void testReadBuffer() throws IOException {
+    void testReadBuffer() throws Exception {
         CircularBuffer subject = new CircularBuffer(10);
 
         String text = "ABCDEF";
@@ -47,28 +45,40 @@ class CircularBufferTest {
         byte[] rc = new byte[100];
         int size = subject.read(rc);
         Assertions.assertEquals(text.length(), size);
-
         Assertions.assertEquals(text, new String(rc, 0, size));
     }
 
     @Test
-    void testWriteWrap() throws IOException {
-        CircularBuffer subject = new CircularBuffer(5);
+    void testWriteWrap() throws Exception {
+        CircularBuffer subject = new CircularBuffer(10);
+        subject.head = subject.tail = 8;
 
         subject.write("ABCDEF".getBytes());
 
         byte[] rc = new byte[100];
         int size = subject.read(rc);
-        Assertions.assertEquals(1, size);
-
-        Assertions.assertEquals("F", new String(rc, 0, size));
+        Assertions.assertEquals(6, size);
+        Assertions.assertEquals("ABCDEF", new String(rc, 0, size));
     }
 
     @Test
-    void testAvailable() throws IOException {
+    void testAvailable() throws Exception {
         CircularBuffer subject = new CircularBuffer(10);
         Assertions.assertEquals(0, subject.available());
+
         subject.write("ABCDEF".getBytes());
+
+        Assertions.assertEquals(6, subject.available());
+    }
+
+    @Test
+    void testWrapAvailable() throws Exception {
+        CircularBuffer subject = new CircularBuffer(10);
+        subject.head = subject.tail = 8;
+        Assertions.assertEquals(0, subject.available());
+
+        subject.write("ABCDEF".getBytes());
+
         Assertions.assertEquals(6, subject.available());
     }
 

@@ -154,6 +154,9 @@ public class Spin2PAsmLine {
             if (debugLine != null) {
                 sb.append(debugLine.toString());
             }
+            else {
+                sb.append(mnemonic);
+            }
         }
         else {
             if (mnemonic != null) {

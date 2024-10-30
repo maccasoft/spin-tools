@@ -219,23 +219,27 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
                     tokens.remove(node.label);
                 }
                 Spin2PAsmDebugLine debugLine = Spin2PAsmDebugLine.buildFrom(pasmLine.getScope(), tokens);
+                if (debugLine != null) {
+                    debugSource.add(debugLine);
+                    compiler.debugStatements.add(debugLine);
+                    pasmLine.setData("debug", debugLine);
 
-                debugSource.add(debugLine);
-                compiler.debugStatements.add(debugLine);
-                pasmLine.setData("debug", debugLine);
+                    parameters.add(new Spin2PAsmExpression("#", new NumberLiteral(0) {
 
-                parameters.add(new Spin2PAsmExpression("#", new NumberLiteral(0) {
-
-                    @Override
-                    public Number getNumber() {
-                        int index = compiler.debugStatements.indexOf(debugLine) + 1;
-                        if (index >= 255) {
-                            throw new CompilerException("too much debug statements", node);
+                        @Override
+                        public Number getNumber() {
+                            int index = compiler.debugStatements.indexOf(debugLine) + 1;
+                            if (index >= 255) {
+                                throw new CompilerException("too much debug statements", node);
+                            }
+                            return Long.valueOf(index);
                         }
-                        return Long.valueOf(index);
-                    }
 
-                }, null));
+                    }, null));
+                }
+                else {
+                    parameters.add(new Spin2PAsmExpression("#", new NumberLiteral(0), null));
+                }
             }
         } catch (CompilerException e) {
             throw e;

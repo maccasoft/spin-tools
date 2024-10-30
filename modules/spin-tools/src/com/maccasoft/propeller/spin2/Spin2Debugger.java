@@ -71,6 +71,14 @@ public class Spin2Debugger {
         writeLong(0xE8, set);
     }
 
+    public void setBrkCond(int set) {
+        writeLong(0x11C, set);
+    }
+
+    public void setCogs(int set) {
+        code[0xE8] = (byte) set;
+    }
+
     public int getSize() {
         return code.length;
     }

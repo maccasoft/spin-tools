@@ -1316,6 +1316,32 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
 
                 return source;
             }
+            if ("DEBUG".equalsIgnoreCase(node.getText())) {
+                if (isDebugEnabled()) {
+                    source.add(new Bytecode(context, 0x43, "") {
+
+                        @Override
+                        public int getSize() {
+                            return 3;
+                        }
+
+                        @Override
+                        public byte[] getBytes() {
+                            return new byte[] {
+                                0x43, 0x00, 0x00
+                            };
+                        }
+
+                        @Override
+                        public String toString() {
+                            return node.getText().toUpperCase() + " #" + 0;
+                        }
+
+                    });
+                    return source;
+                }
+                return new ArrayList<Spin2Bytecode>();
+            }
             throw new CompilerException("undefined symbol " + node.getText(), node.getToken());
         } catch (CompilerException e) {
             logMessage(e);

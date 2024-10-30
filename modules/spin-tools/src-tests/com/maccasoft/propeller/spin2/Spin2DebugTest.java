@@ -770,6 +770,110 @@ class Spin2DebugTest {
         });
     }
 
+    @Test
+    void testEmptyDebug() throws Exception {
+        String text = ""
+            + "PUB main()\n"
+            + "\n"
+            + "    debug()\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       0D 00 00 00    End\n"
+            + "' PUB main()\n"
+            + "00008 00008       00             (stack size)\n"
+            + "'     debug()\n"
+            + "00009 00009       43 00 01       DEBUG #1\n"
+            + "0000C 0000C       04             RETURN\n"
+            + "0000D 0000D       00 00 00       Padding\n"
+            + "' Debug data\n"
+            + "00B28 00000       05 00         \n"
+            + "00B2A 00002       04 00         \n"
+            + "' #1\n"
+            + "00B2C 00004       00             DONE\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testDebugWithoutParenthesis() throws Exception {
+        String text = ""
+            + "PUB main()\n"
+            + "\n"
+            + "    debug\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       0D 00 00 00    End\n"
+            + "' PUB main()\n"
+            + "00008 00008       00             (stack size)\n"
+            + "'     debug\n"
+            + "00009 00009       43 00 00       DEBUG #0\n"
+            + "0000C 0000C       04             RETURN\n"
+            + "0000D 0000D       00 00 00       Padding\n"
+            + "' Debug data\n"
+            + "00B28 00000       02 00         \n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testEmptyPAsmDebug() throws Exception {
+        String text = ""
+            + "PUB main()\n"
+            + "\n"
+            + "DAT\n"
+            + "\n"
+            + "    debug()\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
+            + "00004 00004       0E 00 00 00    End\n"
+            + "00008 00008 00000 36 02 64 FD                        debug()\n"
+            + "' PUB main()\n"
+            + "0000C 0000C       00             (stack size)\n"
+            + "0000D 0000D       04             RETURN\n"
+            + "0000E 0000E       00 00          Padding\n"
+            + "' Debug data\n"
+            + "00B28 00000       05 00         \n"
+            + "00B2A 00002       04 00         \n"
+            + "' #1\n"
+            + "00B2C 00004       00             DONE\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testPAsmDebugWithoutParenthesis() throws Exception {
+        String text = ""
+            + "PUB main()\n"
+            + "\n"
+            + "DAT\n"
+            + "\n"
+            + "    debug\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
+            + "00004 00004       0E 00 00 00    End\n"
+            + "00008 00008 00000 36 00 64 FD                        debug\n"
+            + "' PUB main()\n"
+            + "0000C 0000C       00             (stack size)\n"
+            + "0000D 0000D       04             RETURN\n"
+            + "0000E 0000E       00 00          Padding\n"
+            + "' Debug data\n"
+            + "00B28 00000       02 00         \n"
+            + "", compile(text));
+    }
+
     List<Token> parseTokens(String text) {
         List<Token> tokens = new ArrayList<Token>();
 
