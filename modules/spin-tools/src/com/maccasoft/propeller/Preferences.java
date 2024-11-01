@@ -47,6 +47,7 @@ public class Preferences {
     public static final String PROP_SHOW_INDENT_LINES = "showIndentLines";
     public static final String PROP_INDENT_LINES_SIZE = "showLinesSize";
     public static final String PROP_SHOW_SECTIONS_BACKGROUND = "showSectionsBackground";
+    public static final String PROP_HIGHLIGHT_CURRENT_LINE = "highlightCurrentLine";
     public static final String PROP_SHOW_EDITOR_OUTLINE = "showEditorOutline";
     public static final String PROP_LRU = "lru";
     public static final String PROP_TOP_OBJECT = "topObject";
@@ -152,6 +153,7 @@ public class Preferences {
             showLineNumbers = true;
             showIndentLines = true;
             showEditorOutline = true;
+            highlightCurrentLine = true;
             reloadOpenTabs = true;
 
             terminal = new TerminalPreferences();
@@ -174,6 +176,7 @@ public class Preferences {
         public Boolean showSectionsBackground;
         public int indentLinesSize;
         public boolean showEditorOutline;
+        public boolean highlightCurrentLine;
         public String port;
 
         public String[] spin1LibraryPath;
@@ -540,6 +543,14 @@ public class Preferences {
 
     public void setShowEditorOutline(boolean showEditorOutline) {
         changeSupport.firePropertyChange(PROP_SHOW_EDITOR_OUTLINE, preferences.showEditorOutline, preferences.showEditorOutline = showEditorOutline);
+    }
+
+    public boolean getHighlightCurrentLine() {
+        return preferences.highlightCurrentLine;
+    }
+
+    public void setHighlightCurrentLine(boolean highlightCurrentLine) {
+        changeSupport.firePropertyChange(PROP_HIGHLIGHT_CURRENT_LINE, preferences.highlightCurrentLine, preferences.highlightCurrentLine = highlightCurrentLine);
     }
 
     public List<String> getLru() {

@@ -135,6 +135,7 @@ public class SourceEditor {
 
     int currentLine;
     Color currentLineBackground;
+    boolean highlightCurrentLine;
 
     Caret insertCaret;
     Caret overwriteCaret;
@@ -233,6 +234,10 @@ public class SourceEditor {
                 case Preferences.PROP_SHOW_SECTIONS_BACKGROUND:
                     styledText.redraw();
                     break;
+                case Preferences.PROP_HIGHLIGHT_CURRENT_LINE:
+                    highlightCurrentLine = (Boolean) evt.getNewValue();
+                    styledText.redraw();
+                    break;
                 case Preferences.PROP_THEME:
                     applyTheme((String) evt.getNewValue());
                     styledText.redraw();
@@ -324,6 +329,7 @@ public class SourceEditor {
 
         showIndentLines = preferences.getShowIndentLines();
         indentLinesSize = preferences.getIndentLinesSize();
+        highlightCurrentLine = preferences.getHighlightCurrentLine();
 
         preferences.addPropertyChangeListener(preferencesChangeListener);
 
@@ -569,12 +575,14 @@ public class SourceEditor {
                         event.lineBackground = getLineBackground(tokenMarker.getRoot(), event.lineOffset);
                     }
                 }
-                if (styledText.getLineAtOffset(event.lineOffset) == currentLine) {
-                    if (event.lineBackground != null) {
-                        event.lineBackground = ColorRegistry.getDimColor(event.lineBackground, -12);
-                    }
-                    else {
-                        event.lineBackground = currentLineBackground;
+                if (highlightCurrentLine) {
+                    if (styledText.getLineAtOffset(event.lineOffset) == currentLine) {
+                        if (event.lineBackground != null) {
+                            event.lineBackground = ColorRegistry.getDimColor(event.lineBackground, -12);
+                        }
+                        else {
+                            event.lineBackground = currentLineBackground;
+                        }
                     }
                 }
             }

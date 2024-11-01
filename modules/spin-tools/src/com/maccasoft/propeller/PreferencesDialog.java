@@ -86,6 +86,7 @@ public class PreferencesDialog extends Dialog {
     Button showIndentLines;
     Spinner indentLinesSize;
     Button showEditorOutline;
+    Button highlightCurrentLine;
     TabStops conTabStops;
     TabStops varTabStops;
     TabStops objTabStops;
@@ -138,6 +139,7 @@ public class PreferencesDialog extends Dialog {
     int oldIndentLinesSize;
     boolean oldShowSectionsBackground;
     boolean oldShowEditorOutline;
+    boolean oldHighlightCurrentLine;
     boolean oldSpin1CaseSensitive;
     boolean oldSpin2CaseSensitive;
     boolean oldSpin2ClockSetter;
@@ -471,6 +473,7 @@ public class PreferencesDialog extends Dialog {
         oldShowIndentLines = preferences.getShowIndentLines();
         oldIndentLinesSize = preferences.getIndentLinesSize();
         oldShowEditorOutline = preferences.getShowEditorOutline();
+        oldHighlightCurrentLine = preferences.getHighlightCurrentLine();
         oldShowSectionsBackground = preferences.getShowSectionsBackground();
         oldSpin1CaseSensitive = preferences.getSpin1CaseSensitiveSymbols();
         oldSpin2CaseSensitive = preferences.getSpin2CaseSensitiveSymbols();
@@ -840,6 +843,19 @@ public class PreferencesDialog extends Dialog {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 preferences.setShowSectionsBackground(showSectionsBackground.getSelection());
+            }
+        });
+
+        new Label(composite, SWT.NONE);
+
+        highlightCurrentLine = new Button(composite, SWT.CHECK);
+        highlightCurrentLine.setText("Highlight current line");
+        highlightCurrentLine.setSelection(preferences.getHighlightCurrentLine());
+        highlightCurrentLine.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                preferences.setHighlightCurrentLine(highlightCurrentLine.getSelection());
             }
         });
 
@@ -1354,6 +1370,7 @@ public class PreferencesDialog extends Dialog {
         preferences.setIndentLinesSize(oldIndentLinesSize);
         preferences.setShowEditorOutline(oldShowEditorOutline);
         preferences.setShowSectionsBackground(oldShowSectionsBackground);
+        preferences.setHighlightCurrentLine(oldHighlightCurrentLine);
 
         preferences.setSpin1CaseSensitiveSymbols(oldSpin1CaseSensitive);
 
