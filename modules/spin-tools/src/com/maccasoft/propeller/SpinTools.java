@@ -120,6 +120,7 @@ public class SpinTools {
     static final File defaultSpin1Examples = new File(System.getProperty("APP_DIR"), "examples/P1").getAbsoluteFile();
     static final File defaultSpin2Examples = new File(System.getProperty("APP_DIR"), "examples/P2").getAbsoluteFile();
 
+    Display display;
     Shell shell;
     ToolBar toolBar;
 
@@ -353,6 +354,7 @@ public class SpinTools {
     };
 
     public SpinTools(Shell shell) {
+        this.display = shell.getDisplay();
         this.shell = shell;
         this.shell.setData(this);
 
@@ -1722,7 +1724,7 @@ public class SpinTools {
                 try {
                     SerialTerminal serialTerminal = getSerialTerminal();
                     if (serialTerminal == null) {
-                        serialTerminal = new SerialTerminal();
+                        serialTerminal = new SerialTerminal(display, preferences);
                         serialTerminal.open();
                         serialTerminal.setSerialPort(new SerialPort(serialPortList.getSelection()));
                     }
@@ -2822,7 +2824,7 @@ public class SpinTools {
             public void handleEvent(Event e) {
                 SerialTerminal serialTerminal = getSerialTerminal();
                 if (serialTerminal == null) {
-                    serialTerminal = new SerialTerminal();
+                    serialTerminal = new SerialTerminal(display, preferences);
                     serialTerminal.open();
                     serialTerminal.setSerialPort(new SerialPort(serialPortList.getSelection()));
                 }
@@ -3134,7 +3136,7 @@ public class SpinTools {
         SerialTerminal serialTerminal = getSerialTerminal();
         if (openTerminal) {
             if (serialTerminal == null) {
-                serialTerminal = new SerialTerminal();
+                serialTerminal = new SerialTerminal(display, preferences);
                 serialTerminal.open();
             }
             serialTerminal.setFocus();

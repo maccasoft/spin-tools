@@ -16,11 +16,8 @@ import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
-import org.eclipse.core.databinding.observable.Realm;
-import org.eclipse.jface.databinding.swt.DisplayRealm;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.resource.JFaceResources;
@@ -56,7 +53,6 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.internal.Platform;
 import org.eclipse.swt.layout.FillLayout;
@@ -70,6 +66,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.ScrollBar;
 import org.eclipse.swt.widgets.Shell;
 
 import com.maccasoft.propeller.internal.ColorRegistry;
@@ -96,6 +93,8 @@ public class SerialTerminal {
 
     public static final int FRAME_TIMER = 16;
 
+    public static final int BACKBUFFER_LINES = 500;
+
     Display display;
     Shell shell;
 
@@ -118,8 +117,6 @@ public class SerialTerminal {
     int characterWidth;
     int characterHeight;
 
-    PaletteData paletteData;
-
     int cx;
     int cy;
     int screenWidth;
@@ -141,23 +138,57 @@ public class SerialTerminal {
         230400, 250000, 460800, 921600, 1000000, 1500000, 1843200, 2000000, 3000000
     });
 
+    Color[] colors = new Color[] {
+        new Color(0, 0, 0),
+        new Color(170, 0, 0),
+        new Color(0, 170, 0),
+        new Color(170, 170, 0),
+        new Color(0, 0, 170),
+        new Color(170, 0, 170),
+        new Color(0, 170, 170),
+        new Color(170, 170, 170),
+        new Color(85, 85, 85),
+        new Color(255, 0, 0),
+        new Color(0, 255, 0),
+        new Color(255, 255, 0),
+        new Color(0, 0, 255),
+        new Color(255, 0, 255),
+        new Color(0, 255, 255),
+        new Color(255, 255, 255),
+    };
+
     TerminalEmulation emulation;
 
-    class Cell {
+    static class Cell {
         char character;
         Color foreground;
         Color background;
 
-        public Cell(Color foreground, Color background) {
+        Cell(Color foreground, Color background) {
             this.character = ' ';
             this.foreground = foreground;
             this.background = background;
         }
 
+        void set(char character, Color foreground, Color background) {
+            this.character = character;
+            this.foreground = foreground;
+            this.background = background;
+        }
+
+        void set(Cell cell) {
+            this.character = cell.character;
+            this.foreground = cell.foreground;
+            this.background = cell.background;
+        }
+
     }
 
+    int topRow;
     Cell[][] screen = new Cell[0][0];
     Rectangle selectionRectangle;
+
+    int frameCounter;
 
     final AtomicReference<Rectangle> redrawRectangle = new AtomicReference<Rectangle>();
 
@@ -167,7 +198,11 @@ public class SerialTerminal {
         public void run() {
             Rectangle rect = redrawRectangle.getAndSet(null);
             if (rect != null && !canvas.isDisposed()) {
-                canvas.redraw(rect.x, rect.y, rect.width, rect.height, false);
+                int x = rect.x * characterWidth;
+                int width = Math.min(rect.width, screenWidth) * characterWidth;
+                int top = (rect.y - topRow) * characterHeight;
+                int bottom = top + (rect.height * characterHeight);
+                canvas.redraw(x, top, width, bottom - top, false);
                 canvas.update();
             }
         }
@@ -176,21 +211,18 @@ public class SerialTerminal {
 
     final Runnable screenUpdateRunnable = new Runnable() {
 
-        int counter;
-
         @Override
         public void run() {
             if (canvas.isDisposed()) {
                 return;
             }
-            counter++;
-            if (counter >= 15) {
+            frameCounter++;
+            if (frameCounter >= 15) {
                 if ((cursorState & CURSOR_FLASH) != 0) {
-                    if ((cursorState ^= CURSOR_DISPLAY) != 0) {
-                        redraw(Math.min(cx, screenWidth - 1) * characterWidth, cy * characterHeight, characterWidth, characterHeight);
-                    }
+                    cursorState ^= CURSOR_DISPLAY;
+                    redraw(cx, cy, 1, 1);
                 }
-                counter = 0;
+                frameCounter = 0;
             }
             display.timerExec(FRAME_TIMER, this);
         }
@@ -266,16 +298,27 @@ public class SerialTerminal {
         }
     };
 
-    interface TerminalEmulation {
+    abstract class TerminalEmulation {
 
-        public void write(char c);
+        void write(String s) {
+            for (int i = 0; i < s.length(); i++) {
+                write(s.charAt(i));
+            }
+        }
+
+        abstract void write(char c);
     }
 
-    public class TTY implements TerminalEmulation {
+    class TTY extends TerminalEmulation {
+
+        public TTY() {
+            foreground = colors[7];
+            background = colors[0];
+        }
 
         @Override
         public void write(char c) {
-            redraw(Math.min(cx, screenWidth - 1) * characterWidth, cy * characterHeight, characterWidth, characterHeight);
+            redraw(cx, cy, 1, 1);
 
             switch (c) {
                 case 7:
@@ -303,31 +346,18 @@ public class SerialTerminal {
 
                 case 0x0A:
                     cy++;
-                    if (cy >= screenHeight) {
-                        int y;
-                        for (y = 1; y < screenHeight; y++) {
-                            for (int x = 0; x < screenWidth; x++) {
-                                screen[y - 1][x] = screen[y][x];
-                            }
-                        }
-                        for (int x = 0; x < screenWidth; x++) {
-                            screen[y - 1][x] = new Cell(foreground, background);
-                        }
+                    if (cy >= screen.length) {
+                        scrollUp(1);
                         cy--;
                         redraw();
                     }
                     break;
 
                 case 0x0C:
-                    for (int y = 0; y < screenHeight; y++) {
-                        for (int x = 0; x < screenWidth; x++) {
-                            screen[y][x].foreground = foreground;
-                            screen[y][x].background = background;
-                            screen[y][x].character = ' ';
-                        }
-                    }
-                    cx = cy = 0;
+                    scrollUp(screenHeight);
                     redraw();
+                    cx = 0;
+                    cy = screen.length - screenHeight;
                     break;
 
                 case 0x0D:
@@ -338,31 +368,19 @@ public class SerialTerminal {
                     if (cx >= screenWidth) {
                         cx = 0;
                         cy++;
-                        if (cy >= screenHeight) {
-                            int y;
-                            for (y = 1; y < screenHeight; y++) {
-                                for (int x = 0; x < screenWidth; x++) {
-                                    screen[y - 1][x] = screen[y][x];
-                                }
-                            }
-                            for (int x = 0; x < screenWidth; x++) {
-                                screen[y - 1][x] = new Cell(foreground, background);
-                            }
+                        if (cy >= screen.length) {
+                            scrollUp(1);
                             cy--;
                             redraw();
                         }
-                        else {
-                            redraw(Math.min(cx, screenWidth - 1) * characterWidth, cy * characterHeight, characterWidth, characterHeight);
-                        }
                     }
-                    screen[cy][cx].foreground = foreground;
-                    screen[cy][cx].background = background;
-                    screen[cy][cx].character = c;
+                    screen[cy][cx].set(c, foreground, background);
+                    redraw(cx, cy, 1, 1);
                     cx++;
                     break;
             }
 
-            redraw(Math.min(cx, screenWidth - 1) * characterWidth, cy * characterHeight, characterWidth, characterHeight);
+            redraw(cx, cy, 1, 1);
         }
     }
 
@@ -374,36 +392,17 @@ public class SerialTerminal {
         char prefix;
         int savedCx, savedCy;
 
-        RGB[] colors = new RGB[] {
-            new RGB(0, 0, 0),
-            new RGB(170, 0, 0),
-            new RGB(0, 170, 0),
-            new RGB(170, 170, 0),
-            new RGB(0, 0, 170),
-            new RGB(170, 0, 170),
-            new RGB(0, 170, 170),
-            new RGB(170, 170, 170),
-            new RGB(85, 85, 85),
-            new RGB(255, 0, 0),
-            new RGB(0, 255, 0),
-            new RGB(255, 255, 0),
-            new RGB(0, 0, 255),
-            new RGB(255, 0, 255),
-            new RGB(0, 255, 255),
-            new RGB(255, 255, 255),
-        };
-
         @Override
         public void write(char c) {
+            if (c == 0x1B) {
+                argc = idx = 0;
+                args[0] = 0;
+                prefix = 0;
+                state = 1;
+                return;
+            }
             switch (state) {
                 case 0:
-                    if (c == 0x1B) {
-                        argc = idx = 0;
-                        args[0] = 0;
-                        prefix = 0;
-                        state = 1;
-                        break;
-                    }
                     super.write(c);
                     break;
 
@@ -413,13 +412,13 @@ public class SerialTerminal {
                             state = 2;
                             break;
                         case 'A':
-                            if (cy > 0) {
+                            if (cy > screen.length) {
                                 cy--;
                             }
                             state = 0;
                             break;
                         case 'B':
-                            if (cy < screenHeight) {
+                            if (cy < (screen.length - screenHeight)) {
                                 cy++;
                             }
                             state = 0;
@@ -470,11 +469,11 @@ public class SerialTerminal {
                             break;
 
                         case 'A':
-                            cy = Math.max(cy - (argc == 0 || args[0] == 0 ? 1 : args[0]), 0);
+                            cy = screen.length - Math.max(cy - (argc == 0 || args[0] == 0 ? 1 : args[0]), 0);
                             state = 0;
                             break;
                         case 'B':
-                            cy = Math.min(cy + (argc == 0 || args[0] == 0 ? 1 : args[0]), screenHeight - 1);
+                            cy = screen.length - Math.min(cy + (argc == 0 || args[0] == 0 ? 1 : args[0]), screenHeight - 1);
                             state = 0;
                             break;
                         case 'C':
@@ -488,74 +487,75 @@ public class SerialTerminal {
 
                         case 'H':
                         case 'f':
+                            redraw(cx, cy, 1, 1);
                             if (argc == 0) {
-                                cx = cy = 0;
+                                cx = 0;
+                                cy = screen.length - screenHeight;
                             }
                             else if (argc >= 2) {
-                                cy = Math.min(args[0] > 0 ? (args[0] - 1) : 0, screenHeight - 1);
+                                cy = (screen.length - screenHeight) + Math.min(args[0] > 0 ? (args[0] - 1) : 0, screenHeight - 1);
                                 cx = Math.min(args[1] > 0 ? (args[1] - 1) : 0, screenWidth - 1);
                             }
+                            redraw(cx, cy, 1, 1);
                             state = 0;
                             break;
 
                         case 'J': {
-                            if (argc == 0 || args[0] == 0) {
-                                for (int y = cy; y < screenHeight; y++) {
+                            redraw(cx, cy, 1, 1);
+                            if (argc == 0 || args[0] == 0) { // Erase from cursor until end of screen
+                                for (int x = cx; x < screenWidth; x++) {
+                                    screen[cy][x].set(' ', foreground, background);
+                                }
+                                for (int y = cy + 1; y < screen.length; y++) {
                                     for (int x = cx; x < screenWidth; x++) {
-                                        screen[y][x].foreground = foreground;
-                                        screen[y][x].background = background;
-                                        screen[y][x].character = ' ';
+                                        screen[y][x].set(' ', foreground, background);
                                     }
                                 }
+                                redraw(0, cy, screenWidth, screen.length - cy);
                             }
-                            else if (args[0] == 1) {
-                                for (int y = 0; y <= cy; y++) {
-                                    for (int x = 0; x <= cx; x++) {
-                                        screen[y][x].foreground = foreground;
-                                        screen[y][x].background = background;
-                                        screen[y][x].character = ' ';
-                                    }
-                                }
-                            }
-                            else if (args[0] == 2) {
-                                for (int y = 0; y < screenHeight; y++) {
+                            else if (args[0] == 1) { // Erase from cursor to beginning of screen
+                                for (int y = screen.length - screenHeight; y < cy; y++) {
                                     for (int x = 0; x < screenWidth; x++) {
-                                        screen[y][x].foreground = foreground;
-                                        screen[y][x].background = background;
-                                        screen[y][x].character = ' ';
+                                        screen[y][x].set(' ', foreground, background);
                                     }
                                 }
-                                cx = cy = 0;
+                                for (int x = 0; x <= cx; x++) {
+                                    screen[cy][x].set(' ', foreground, background);
+                                }
+                                redraw(0, screen.length - screenHeight, screenWidth, cy - (screen.length - screenHeight) + 1);
                             }
-                            redraw();
+                            else if (args[0] == 2) { // Erase entire screen
+                                for (int y = screen.length - screenHeight; y < screen.length; y++) {
+                                    for (int x = 0; x < screenWidth; x++) {
+                                        screen[y][x].set(' ', foreground, background);
+                                    }
+                                }
+                                redraw(0, screen.length - screenHeight, screenWidth, screenHeight);
+                            }
                             state = 0;
                             break;
                         }
 
                         case 'K': {
-                            if (argc == 0 || args[0] == 0) {
+                            cursorState &= ~CURSOR_DISPLAY;
+                            frameCounter = 0;
+                            redraw(cx, cy, 1, 1);
+                            if (argc == 0 || args[0] == 0) { // Erase from cursor to end of line
                                 for (int x = cx; x < screenWidth; x++) {
-                                    screen[cy][x].foreground = foreground;
-                                    screen[cy][x].background = background;
-                                    screen[cy][x].character = ' ';
+                                    screen[cy][x].set(' ', foreground, background);
                                 }
                             }
-                            else if (args[0] == 1) {
+                            else if (args[0] == 1) { // Erase from start of line to cursor
                                 for (int x = 0; x <= cx; x++) {
-                                    screen[cy][x].foreground = foreground;
-                                    screen[cy][x].background = background;
-                                    screen[cy][x].character = ' ';
+                                    screen[cy][x].set(' ', foreground, background);
                                 }
                             }
-                            else if (args[0] == 2) {
+                            else if (args[0] == 2) { // Erase entire line
                                 for (int x = 0; x < screenWidth; x++) {
-                                    screen[cy][x].foreground = foreground;
-                                    screen[cy][x].background = background;
-                                    screen[cy][x].character = ' ';
+                                    screen[cy][x].set(' ', foreground, background);
                                 }
-                                cx = cy = 0;
                             }
-                            redraw(0 * characterWidth, cy * characterHeight, screenWidth * characterWidth, characterHeight);
+                            redraw(0, cy, screenWidth, 1);
                             state = 0;
                             break;
                         }
@@ -600,8 +600,8 @@ public class SerialTerminal {
                                 bg = 0;
                                 fg = 7;
                             }
-                            foreground = ColorRegistry.getColor(colors[fg]);
-                            background = ColorRegistry.getColor(colors[bg]);
+                            foreground = colors[fg];
+                            background = colors[bg];
                             state = 0;
                             break;
 
@@ -634,6 +634,17 @@ public class SerialTerminal {
                             }
                             break;
 
+                        case 'n':
+                            if (args[0] == 6) {
+                                try {
+                                    serialPort.writeString(String.format("\033[%d;%dR", cy - screenHeight, cx));
+                                } catch (SerialPortException e) {
+                                    // Do nothing
+                                }
+                                break;
+                            }
+                            break;
+
                         default:
                             state = 0;
                             break;
@@ -644,14 +655,19 @@ public class SerialTerminal {
 
     }
 
-    class ParallaxSerialTerminal implements TerminalEmulation {
+    class ParallaxSerialTerminal extends TerminalEmulation {
 
         int state = 0;
         int cmd, p0, p1;
 
+        public ParallaxSerialTerminal() {
+            foreground = colors[7];
+            background = colors[0];
+        }
+
         @Override
         public void write(char c) {
-            redraw(Math.min(cx, screenWidth - 1) * characterWidth, cy * characterHeight, characterWidth, characterHeight);
+            redraw(cx, cy, 1, 1);
 
             if (cmd == 2) { // PC: Position Cursor in x,y
                 if (state == 0) {
@@ -659,7 +675,7 @@ public class SerialTerminal {
                     state++;
                     return;
                 }
-                cy = Math.min(c, screenHeight - 1);
+                cy = (screen.length - screenHeight) + Math.min(c, screenHeight - 1);
                 cx = p0;
                 cmd = 0;
                 return;
@@ -670,14 +686,15 @@ public class SerialTerminal {
                 return;
             }
             else if (cmd == 15) { // PY: Position cursor in Y
-                cy = Math.min(c, screenHeight - 1);
+                cy = (screen.length - screenHeight) + Math.min(c, screenHeight - 1);
                 cmd = 0;
                 return;
             }
 
             switch (c) {
                 case 1: // HM: HoMe cursor
-                    cx = cy = 0;
+                    cx = 0;
+                    cy = screen.length - screenHeight;
                     break;
 
                 case 2: // PC: Position Cursor in x,y
@@ -706,7 +723,7 @@ public class SerialTerminal {
                     break;
 
                 case 6: // MR: Move cursor Down
-                    if (cy < screenHeight - 1) {
+                    if (cy < screen.length - (screenHeight - 1)) {
                         cy++;
                     }
                     break;
@@ -739,16 +756,8 @@ public class SerialTerminal {
                 case 13: // NL: New Line
                     cx = 0;
                     cy++;
-                    if (cy >= screenHeight) {
-                        int y;
-                        for (y = 1; y < screenHeight; y++) {
-                            for (int x = 0; x < screenWidth; x++) {
-                                screen[y - 1][x] = screen[y][x];
-                            }
-                        }
-                        for (int x = 0; x < screenWidth; x++) {
-                            screen[y - 1][x] = new Cell(foreground, background);
-                        }
+                    if (cy >= screen.length) {
+                        scrollUp(1);
                         cy--;
                         redraw();
                     }
@@ -756,31 +765,24 @@ public class SerialTerminal {
 
                 case 11: // CE: Clear To End of Line
                     for (int x = cx; x < screenWidth; x++) {
-                        screen[cy][x].foreground = foreground;
-                        screen[cy][x].background = background;
-                        screen[cy][x].character = ' ';
+                        screen[cy][x].set(' ', foreground, background);
                     }
+                    redraw(cx, cy, screenWidth - cx, 1);
                     break;
 
                 case 12: // CB: Clear Lines Below
-                    for (int y = cy; y < screenHeight; y++) {
+                    for (int y = cy; y < screen.length; y++) {
                         for (int x = 0; x < screenWidth; x++) {
-                            screen[y][x].foreground = foreground;
-                            screen[y][x].background = background;
-                            screen[y][x].character = ' ';
+                            screen[y][x].set(' ', foreground, background);
                         }
                     }
+                    redraw(0, cy, screenWidth, screen.length - cy + 1);
                     break;
 
                 case 16: // CS: Clear Screen
-                    for (int y = 0; y < screenHeight; y++) {
-                        for (int x = 0; x < screenWidth; x++) {
-                            screen[y][x].foreground = foreground;
-                            screen[y][x].background = background;
-                            screen[y][x].character = ' ';
-                        }
-                    }
-                    cx = cy = 0;
+                    scrollUp(screenHeight);
+                    cx = 0;
+                    cy = screen.length - screenHeight;
                     redraw();
                     break;
 
@@ -788,29 +790,19 @@ public class SerialTerminal {
                     if (cx >= screenWidth) {
                         cx = 0;
                         cy++;
-                        if (cy >= screenHeight) {
-                            int y;
-                            for (y = 1; y < screenHeight; y++) {
-                                for (int x = 0; x < screenWidth; x++) {
-                                    screen[y - 1][x] = screen[y][x];
-                                }
-                            }
-                            for (int x = 0; x < screenWidth; x++) {
-                                screen[y - 1][x] = new Cell(foreground, background);
-                            }
+                        if (cy >= screen.length) {
+                            scrollUp(1);
                             cy--;
                             redraw();
                         }
-                        else {
-                            redraw(Math.min(cx, screenWidth - 1) * characterWidth, cy * characterHeight, characterWidth, characterHeight);
-                        }
                     }
-                    screen[cy][cx].character = c;
+                    screen[cy][cx].set(c, foreground, background);
+                    redraw(cx, cy, 1, 1);
                     cx++;
                     break;
             }
 
-            redraw(Math.min(cx, screenWidth - 1) * characterWidth, cy * characterHeight, characterWidth, characterHeight);
+            redraw(cx, cy, 1, 1);
         }
     }
 
@@ -887,18 +879,39 @@ public class SerialTerminal {
         }
     };
 
-    public SerialTerminal() {
-
-    }
-
-    public void open() {
-        display = Display.getDefault();
-        preferences = Preferences.getInstance();
+    public SerialTerminal(Display display, Preferences preferences) {
+        this.display = display;
+        this.preferences = preferences;
 
         serialBaudRate = preferences.getTerminalBaudRate();
         localEcho = preferences.getTerminalLocalEcho();
 
         cursorState = CURSOR_DISPLAY | CURSOR_ON | CURSOR_FLASH | CURSOR_ULINE;
+
+        setTerminalType(preferences.getTerminalType());
+    }
+
+    public void open() {
+        create();
+
+        shell.pack();
+        shell.open();
+
+        shell.addShellListener(new ShellAdapter() {
+
+            @Override
+            public void shellActivated(ShellEvent e) {
+                setFocus();
+            }
+        });
+
+        display.timerExec(FRAME_TIMER, screenUpdateRunnable);
+    }
+
+    void create() {
+        shell = new Shell(display);
+        shell.setText(WINDOW_TITLE);
+        shell.setData(this);
 
         Font textFont = JFaceResources.getTextFont();
         FontData fontData = textFont.getFontData()[0];
@@ -906,12 +919,6 @@ public class SerialTerminal {
             fontData = StringConverter.asFontData(preferences.getTerminalFont());
         }
         font = new Font(display, fontData.getName(), fontData.getHeight(), SWT.NONE);
-
-        setTerminalType(preferences.getTerminalType());
-
-        shell = new Shell(display);
-        shell.setText(WINDOW_TITLE);
-        shell.setData(this);
 
         GC gc = new GC(shell);
         try {
@@ -963,19 +970,10 @@ public class SerialTerminal {
                 font.dispose();
             }
         });
+    }
 
-        shell.pack();
-        shell.open();
-
-        shell.addShellListener(new ShellAdapter() {
-
-            @Override
-            public void shellActivated(ShellEvent e) {
-                setFocus();
-            }
-        });
-
-        display.timerExec(FRAME_TIMER, screenUpdateRunnable);
+    public void dispose() {
+        shell.dispose();
     }
 
     protected void createContents(Composite parent) {
@@ -987,7 +985,7 @@ public class SerialTerminal {
 
         createLineInputGroup(container);
 
-        canvas = new Canvas(container, SWT.DOUBLE_BUFFERED);
+        canvas = new Canvas(container, SWT.DOUBLE_BUFFERED | SWT.V_SCROLL);
 
         GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
         Rectangle rect = preferences.getTerminalWindow();
@@ -1003,27 +1001,8 @@ public class SerialTerminal {
 
         createBottomControls(container);
 
-        paletteData = new PaletteData(new RGB[] {
-            new RGB(0, 0, 0),
-            new RGB(0, 0, 170),
-            new RGB(170, 0, 0),
-            new RGB(170, 0, 170),
-            new RGB(0, 170, 0),
-            new RGB(0, 170, 170),
-            new RGB(170, 170, 0),
-            new RGB(170, 170, 170),
-            new RGB(85, 85, 85),
-            new RGB(0, 0, 255),
-            new RGB(255, 0, 0),
-            new RGB(255, 0, 255),
-            new RGB(0, 255, 0),
-            new RGB(0, 255, 255),
-            new RGB(255, 255, 0),
-            new RGB(255, 255, 255),
-        });
-
-        foreground = ColorRegistry.getColor(paletteData.getRGB(7));
-        background = ColorRegistry.getColor(paletteData.getRGB(0));
+        foreground = colors[7];
+        background = colors[0];
         canvas.setBackground(background);
 
         canvas.addDisposeListener(new DisposeListener() {
@@ -1042,14 +1021,14 @@ public class SerialTerminal {
 
             @Override
             public void controlResized(ControlEvent e) {
-                Point size = canvas.getSize();
-                int width = size.x / characterWidth;
-                int height = size.y / characterHeight;
+                Rectangle rect = canvas.getClientArea();
+                int width = rect.width / characterWidth;
+                int height = rect.height / characterHeight;
 
-                Cell[][] newScreen = new Cell[height][width];
+                Cell[][] newScreen = new Cell[BACKBUFFER_LINES][width];
 
                 int y = 0;
-                while (y < Math.min(screenHeight, height)) {
+                while (y < newScreen.length) {
                     int x = 0;
                     while (x < Math.min(screenWidth, width)) {
                         newScreen[y][x] = screen[y][x];
@@ -1061,17 +1040,29 @@ public class SerialTerminal {
                     }
                     y++;
                 }
-                while (y < height) {
-                    for (int x = 0; x < width; x++) {
-                        newScreen[y][x] = new Cell(foreground, background);
-                    }
-                    y++;
-                }
 
                 screenWidth = width;
                 screenHeight = height;
                 screen = newScreen;
+
+                topRow = screen.length - screenHeight;
+                if (cy == 0) {
+                    cy = topRow;
+                }
+                canvas.getVerticalBar().setValues(topRow, 0, screen.length, screenHeight, 1, screenHeight);
             }
+        });
+
+        canvas.getVerticalBar().addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                cursorState &= ~CURSOR_DISPLAY;
+                frameCounter = 0;
+                topRow = ((ScrollBar) e.widget).getSelection();
+                redraw();
+            }
+
         });
 
         canvas.addKeyListener(new KeyAdapter() {
@@ -1113,7 +1104,7 @@ public class SerialTerminal {
 
                 for (int y = y1, cy = y * characterHeight; y >= y0; y--, cy -= characterHeight) {
                     for (int x = x1, cx = x * characterWidth; x >= x0; x--, cx -= characterWidth) {
-                        Cell cell = screen[y][x];
+                        Cell cell = screen[topRow + y][x];
                         e.gc.setForeground(cell.foreground);
                         e.gc.setBackground(cell.background);
                         e.gc.drawString(String.valueOf(cell.character), cx, cy, false);
@@ -1125,14 +1116,15 @@ public class SerialTerminal {
                     if ((cursorState & CURSOR_ULINE) != 0) {
                         h = characterHeight / 4;
                     }
-                    int y = (cy * characterHeight) + (characterHeight - h);
+                    int y = ((cy - topRow) * characterHeight) + (characterHeight - h);
+                    int x = cx * characterWidth;
                     e.gc.setBackground(e.gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
-                    e.gc.fillRectangle(Math.min(cx, screenWidth - 1) * characterWidth, y, characterWidth, h);
+                    e.gc.fillRectangle(x, y, characterWidth, h);
                 }
 
                 if (selectionRectangle != null && selectionRectangle.width != 0 && selectionRectangle.height != 0) {
                     int x = selectionRectangle.x * characterWidth;
-                    int y = selectionRectangle.y * characterHeight;
+                    int y = (selectionRectangle.y - topRow) * characterHeight;
                     int width = selectionRectangle.width * characterWidth - 1;
                     int height = selectionRectangle.height * characterHeight - 1;
                     e.gc.setAlpha(128);
@@ -1212,7 +1204,7 @@ public class SerialTerminal {
             @Override
             public void mouseDown(MouseEvent e) {
                 int cx = Math.min(e.x / characterWidth, screenWidth - 1);
-                int cy = Math.min(e.y / characterHeight, screenHeight - 1);
+                int cy = Math.min(topRow + (e.y / characterHeight), screen.length - 1);
                 selectionRectangle = new Rectangle(cx, cy, 0, 0);
                 canvas.redraw();
             }
@@ -1228,7 +1220,7 @@ public class SerialTerminal {
                     if (cx < selectionRectangle.x) {
                         return;
                     }
-                    int cy = Math.min(e.y / characterHeight, screenHeight - 1);
+                    int cy = Math.min(topRow + (e.y / characterHeight), screen.length - 1);
                     if (cy < selectionRectangle.y) {
                         return;
                     }
@@ -1530,6 +1522,34 @@ public class SerialTerminal {
         }
     }
 
+    public void write(String s) {
+        if (!canvas.isDisposed()) {
+            for (int i = 0; i < s.length(); i++) {
+                emulation.write(s.charAt(i));
+            }
+        }
+    }
+
+    void scrollUp(int lines) {
+        int srcY = lines;
+        int dstY = 0;
+
+        while (srcY < screen.length) {
+            for (int x = 0; x < screenWidth; x++) {
+                screen[dstY][x].set(screen[srcY][x]);
+            }
+            srcY++;
+            dstY++;
+        }
+
+        while (dstY < screen.length) {
+            for (int x = 0; x < screenWidth; x++) {
+                screen[dstY][x].set(' ', foreground, background);
+            }
+            dstY++;
+        }
+    }
+
     public SerialPort getSerialPort() {
         return serialPort;
     }
@@ -1590,9 +1610,9 @@ public class SerialTerminal {
             @Override
             public Rectangle apply(Rectangle t) {
                 if (t == null) {
-                    return new Rectangle(0, 0, screenWidth * characterWidth, screenHeight * characterHeight);
+                    return new Rectangle(0, topRow, screenWidth, screenHeight);
                 }
-                return t.union(new Rectangle(0, 0, screenWidth * characterWidth, screenHeight * characterHeight));
+                return t.union(new Rectangle(0, topRow, screenWidth, screenHeight));
             }
         });
         if (rect == null) {
@@ -1617,15 +1637,10 @@ public class SerialTerminal {
     }
 
     public void clear() {
-        for (int y = 0; y < screenHeight; y++) {
-            for (int x = 0; x < screenWidth; x++) {
-                screen[y][x].foreground = foreground;
-                screen[y][x].background = background;
-                screen[y][x].character = ' ';
-            }
-        }
-        cx = cy = 0;
+        scrollUp(screenHeight);
         redraw();
+        cx = 0;
+        cy = screen.length - screenHeight;
     }
 
     public void startMonitor() {
@@ -1780,63 +1795,6 @@ public class SerialTerminal {
         monitor.setForeground(widgetForeground);
         taqoz.setBackground(widgetBackground);
         taqoz.setForeground(widgetForeground);
-    }
-
-    public static void main(String[] args) {
-        final Display display = new Display();
-
-        display.setErrorHandler(new Consumer<Error>() {
-
-            @Override
-            public void accept(Error t) {
-                t.printStackTrace();
-            }
-
-        });
-        display.setRuntimeExceptionHandler(new Consumer<RuntimeException>() {
-
-            @Override
-            public void accept(RuntimeException t) {
-                t.printStackTrace();
-            }
-
-        });
-
-        for (int i = baudRates.size() - 1; i >= 0; i--) {
-            int dteRate = baudRates.get(i);
-            int brg1 = ((48000000 / 4) / dteRate) - 1; // (48000000 / (4 * dteRate)) - 1;
-            int brg2 = ((48000000 / 4) / dteRate) - 1; // (48000000 / (4 * dteRate)) - 1;
-            int actualRate1 = 48000000 / (4 * (brg1 + 1));
-            int actualRate2 = 48000000 / (4 * (brg2 + 1));
-            double diff1 = Math.abs((double) (actualRate1 - dteRate) / dteRate * 100.0);
-            double diff2 = Math.abs((double) (actualRate2 - dteRate) / dteRate * 100.0);
-            System.out.println(String.format("    { %8d, 0x%02X, 0x%02X, 0x%02X, 0x%02X }, // %8d %-2.2f %8d %-2.2f", dteRate, (brg1 >> 8) & 0xFF, brg1 & 0xFF, (brg2 >> 8) & 0xFF, brg2 & 0xFF,
-                actualRate1, diff1, actualRate2, diff2));
-        }
-        System.out.println(String.format("    { %8d, 0x%02X, 0x%02X }", 0, 0, 0));
-
-        Realm.runWithDefault(DisplayRealm.getRealm(display), new Runnable() {
-
-            @Override
-            public void run() {
-                try {
-                    SerialTerminal serialTerminal = new SerialTerminal();
-                    serialTerminal.open();
-
-                    while (display.getShells().length != 0) {
-                        if (!display.readAndDispatch()) {
-                            display.sleep();
-                        }
-                    }
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return;
-                }
-            }
-        });
-
-        display.dispose();
     }
 
 }

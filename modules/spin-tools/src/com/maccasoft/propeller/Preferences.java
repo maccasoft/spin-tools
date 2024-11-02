@@ -917,6 +917,8 @@ public class Preferences {
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
         mapper.setSerializationInclusion(Include.NON_DEFAULT);
-        mapper.writeValue(preferencesFile, preferences);
+        if (instance == this) {
+            mapper.writeValue(preferencesFile, preferences);
+        }
     }
 }
