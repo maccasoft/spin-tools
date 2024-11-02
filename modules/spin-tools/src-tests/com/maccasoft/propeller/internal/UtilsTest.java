@@ -75,11 +75,31 @@ class UtilsTest {
 
     @Test
     void testSplitStringDelimitedArguments() {
-        String[] result = Utils.splitArguments("-2 -L \"/home/marco/lib\" source.spin2");
+        String[] result = Utils.splitArguments("-2 -L \"/home/marco/lib\" source.spin2", true);
         Assertions.assertEquals(4, result.length);
         Assertions.assertEquals("-2", result[0]);
         Assertions.assertEquals("-L", result[1]);
         Assertions.assertEquals("/home/marco/lib", result[2]);
+        Assertions.assertEquals("source.spin2", result[3]);
+    }
+
+    @Test
+    void testSplitWindowsArguments() {
+        String[] result = Utils.splitArguments("/C START \"PST\" \"C:\\Program Files (x86)\\Parallax Inc\\Propeller Tool\\Parallax Serial Terminal.exe\"", false);
+        Assertions.assertEquals(4, result.length);
+        Assertions.assertEquals("/C", result[0]);
+        Assertions.assertEquals("START", result[1]);
+        Assertions.assertEquals("\"PST\"", result[2]);
+        Assertions.assertEquals("\"C:\\Program Files (x86)\\Parallax Inc\\Propeller Tool\\Parallax Serial Terminal.exe\"", result[3]);
+    }
+
+    @Test
+    void testSplitArgumentsEscapeQuotes() {
+        String[] result = Utils.splitArguments("-2 -L \\\"/home/marco/lib\\\" source.spin2");
+        Assertions.assertEquals(4, result.length);
+        Assertions.assertEquals("-2", result[0]);
+        Assertions.assertEquals("-L", result[1]);
+        Assertions.assertEquals("\"/home/marco/lib\"", result[2]);
         Assertions.assertEquals("source.spin2", result[3]);
     }
 

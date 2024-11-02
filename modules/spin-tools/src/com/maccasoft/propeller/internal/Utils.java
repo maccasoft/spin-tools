@@ -14,6 +14,8 @@ package com.maccasoft.propeller.internal;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.swt.internal.Platform;
+
 public class Utils {
 
     public static String makeSkipPattern(String text) {
@@ -66,35 +68,65 @@ public class Utils {
     }
 
     public static String[] splitArguments(String args) {
-        List<String> result = new ArrayList<>();
-        int s = 0, e, nested = 0;
+        return splitArguments(args, !"win32".equals(Platform.PLATFORM));
+    }
 
-        while (s < args.length()) {
-            if (args.charAt(s) == ' ') {
-                s++;
-                continue;
-            }
-            e = s;
-            while (e < args.length()) {
-                if (nested == 0) {
-                    if (args.charAt(e) == ' ') {
-                        break;
-                    }
-                    if (args.charAt(e) == '"' || args.charAt(e) == '\'') {
-                        nested++;
+    public static String[] splitArguments(String args, boolean stripQuotes) {
+        List<String> result = new ArrayList<>();
+        int i = 0, nested = 0;
+
+        StringBuilder sb = new StringBuilder();
+        while (i < args.length()) {
+            char ch = args.charAt(i++);
+            if (ch == '\\') {
+                if (i < args.length()) {
+                    char ch1 = args.charAt(i);
+                    if (ch1 == '"') {
+                        sb.append(ch1);
+                        i++;
+                        continue;
                     }
                 }
-                else if (args.charAt(e) == '"' || args.charAt(e) == '\'') {
+                sb.append(ch);
+            }
+            else if (nested == 0) {
+                if (ch == ' ') {
+                    if (sb.length() != 0) {
+                        result.add(sb.toString());
+                        sb = new StringBuilder();
+                    }
+                }
+                else if (ch == '"' || ch == '\'') {
+                    if (nested == 0 && !stripQuotes) {
+                        sb.append(ch);
+                    }
+                    nested++;
+                }
+                else {
+                    sb.append(ch);
+                }
+            }
+            else {
+                if (ch == '"' || ch == '\'') {
                     nested--;
+                    if (nested == 0) {
+                        if (!stripQuotes) {
+                            sb.append(ch);
+                        }
+                        if (sb.length() != 0) {
+                            result.add(sb.toString());
+                            sb = new StringBuilder();
+                        }
+                    }
                 }
-                e++;
+                else {
+                    sb.append(ch);
+                }
             }
-            String str = args.substring(s, e);
-            if (str.startsWith("\"") && str.endsWith("\"")) {
-                str = str.substring(1, str.length() - 1);
-            }
-            result.add(str);
-            s = e + 1;
+        }
+
+        if (sb.length() != 0) {
+            result.add(sb.toString());
         }
 
         return result.toArray(new String[result.size()]);
