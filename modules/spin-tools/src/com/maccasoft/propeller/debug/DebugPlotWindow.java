@@ -51,6 +51,8 @@ public class DebugPlotWindow extends DebugWindow {
     int colorTune;
     Color[] lutColors;
 
+    int lineSize;
+
     int textSize;
     int textStyle;
     int textAngle;
@@ -75,6 +77,8 @@ public class DebugPlotWindow extends DebugWindow {
         colorMode = ColorMode.RGB24;
         colorTune = 0;
         lutColors = new Color[256];
+
+        lineSize = 1;
 
         textSize = 10;
         textStyle = 0b00000001;
@@ -327,7 +331,7 @@ public class DebugPlotWindow extends DebugWindow {
 
                 case "LINESIZE":
                     if (iter.hasNextNumber()) {
-                        iter.nextNumber();
+                        lineSize = iter.nextNumber();
                     }
                     break;
 
@@ -357,19 +361,23 @@ public class DebugPlotWindow extends DebugWindow {
                     }
                     break;
 
-                case "DOT":
+                case "DOT": {
+                    int sizeOverride = lineSize;
+                    int opacityOverride = opacity;
                     if (iter.hasNextNumber()) { // line size
-                        iter.nextNumber();
+                        sizeOverride = iter.nextNumber();
                     }
                     if (iter.hasNextNumber()) { // opacity
-                        iter.nextNumber();
+                        opacityOverride = iter.nextNumber() & 255;
                     }
-                    imageGc.setForeground(color);
-                    imageGc.drawPoint(x, y);
+                    imageGc.setBackground(color);
+                    imageGc.setAlpha(opacityOverride);
+                    imageGc.fillOval(x - sizeOverride / 2, y - sizeOverride / 2, sizeOverride, sizeOverride);
                     if (autoUpdate) {
                         canvas.redraw();
                     }
                     break;
+                }
 
                 case "LINE":
                     if (iter.hasNextNumber()) {
@@ -383,7 +391,7 @@ public class DebugPlotWindow extends DebugWindow {
                             }
                             int dx = origin.x + newX;
                             int dy = imageSize.y - (origin.y + newY);
-                            int size = iter.hasNextNumber() ? iter.nextNumber() : 1;
+                            int size = iter.hasNextNumber() ? iter.nextNumber() : lineSize;
                             line(dx, dy, size, color);
                             if (autoUpdate) {
                                 canvas.redraw();
@@ -395,7 +403,7 @@ public class DebugPlotWindow extends DebugWindow {
                 case "CIRCLE":
                     if (iter.hasNextNumber()) {
                         int diameter = iter.nextNumber();
-                        int sizeOverride = iter.hasNextNumber() ? iter.nextNumber() : 0;
+                        int sizeOverride = iter.hasNextNumber() ? iter.nextNumber() : lineSize;
                         int opacityOverride = iter.hasNextNumber() ? iter.nextNumber() : opacity;
                         oval(diameter, diameter, sizeOverride, opacityOverride, color);
                         if (autoUpdate) {
@@ -409,7 +417,7 @@ public class DebugPlotWindow extends DebugWindow {
                         int width = iter.nextNumber();
                         if (iter.hasNext()) {
                             int height = iter.nextNumber();
-                            int sizeOverride = iter.hasNextNumber() ? iter.nextNumber() : 0;
+                            int sizeOverride = iter.hasNextNumber() ? iter.nextNumber() : lineSize;
                             int opacityOverride = iter.hasNextNumber() ? iter.nextNumber() : opacity;
                             oval(width, height, sizeOverride, opacityOverride, color);
                             if (autoUpdate) {
@@ -424,7 +432,7 @@ public class DebugPlotWindow extends DebugWindow {
                         int width = iter.nextNumber();
                         if (iter.hasNext()) {
                             int height = iter.nextNumber();
-                            int sizeOverride = iter.hasNextNumber() ? iter.nextNumber() : 0;
+                            int sizeOverride = iter.hasNextNumber() ? iter.nextNumber() : lineSize;
                             int opacityOverride = iter.hasNextNumber() ? iter.nextNumber() : opacity;
                             box(width, height, sizeOverride, opacityOverride, color);
                             if (autoUpdate) {
@@ -443,7 +451,7 @@ public class DebugPlotWindow extends DebugWindow {
                                 int radiusX = iter.nextNumber();
                                 if (iter.hasNext()) {
                                     int radiusY = iter.nextNumber();
-                                    int sizeOverride = iter.hasNextNumber() ? iter.nextNumber() : 0;
+                                    int sizeOverride = iter.hasNextNumber() ? iter.nextNumber() : lineSize;
                                     int opacityOverride = iter.hasNextNumber() ? iter.nextNumber() : opacity;
                                     obox(width, height, sizeOverride, radiusX, radiusY, opacityOverride, color);
                                     if (autoUpdate) {
