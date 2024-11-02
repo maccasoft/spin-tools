@@ -239,7 +239,7 @@ public class ExternalToolDialog extends Dialog {
         label = new Label(composite, SWT.NONE);
         label.setText("Arguments");
         label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
-        arguments = new Text(composite, SWT.MULTI | SWT.BORDER);
+        arguments = new Text(composite, SWT.WRAP | SWT.BORDER);
         arguments.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
         ((GridData) arguments.getLayoutData()).heightHint = convertHeightInCharsToPixels(5);
         arguments.addFocusListener(textFocusListener);

@@ -24,10 +24,14 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.resource.StringConverter;
 import org.eclipse.jface.viewers.ArrayContentProvider;
+import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.ListViewer;
+import org.eclipse.jface.viewers.OpenEvent;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.events.DisposeEvent;
@@ -1132,6 +1136,8 @@ public class PreferencesDialog extends Dialog {
         Button add;
         Button edit;
         Button remove;
+        Button moveUp;
+        Button moveDown;
 
         java.util.List<ExternalTool> elements = new ArrayList<>();
 
@@ -1154,6 +1160,19 @@ public class PreferencesDialog extends Dialog {
                 public void selectionChanged(SelectionChangedEvent event) {
                     updateButtons();
                 }
+
+            });
+            viewer.addOpenListener(new IOpenListener() {
+
+                @Override
+                public void open(OpenEvent event) {
+                    ExternalTool selection = (ExternalTool) viewer.getStructuredSelection().getFirstElement();
+                    ExternalToolDialog dlg = new ExternalToolDialog(parent.getShell(), selection);
+                    if (dlg.open() == ExternalToolDialog.OK) {
+                        viewer.refresh();
+                    }
+                }
+
             });
             viewer.setInput(elements);
 
@@ -1211,12 +1230,52 @@ public class PreferencesDialog extends Dialog {
 
             });
             remove.setEnabled(false);
+
+            moveUp = new Button(container, SWT.PUSH);
+            moveUp.setImage(ImageRegistry.getImageFromResources("arrow_up.png"));
+            moveUp.setToolTipText("Up");
+            moveUp.addSelectionListener(new SelectionAdapter() {
+
+                @Override
+                public void widgetSelected(SelectionEvent e) {
+                    ExternalTool selection = (ExternalTool) viewer.getStructuredSelection().getFirstElement();
+                    int index = elements.indexOf(selection);
+                    elements.remove(index);
+                    elements.add(index - 1, selection);
+                    viewer.refresh();
+                    viewer.setSelection(new StructuredSelection(selection));
+                    updateButtons();
+                }
+
+            });
+            moveUp.setEnabled(false);
+
+            moveDown = new Button(container, SWT.PUSH);
+            moveDown.setImage(ImageRegistry.getImageFromResources("arrow_down.png"));
+            moveDown.setToolTipText("Down");
+            moveDown.addSelectionListener(new SelectionAdapter() {
+
+                @Override
+                public void widgetSelected(SelectionEvent e) {
+                    ExternalTool selection = (ExternalTool) viewer.getStructuredSelection().getFirstElement();
+                    int index = elements.indexOf(selection);
+                    elements.add(index + 2, selection);
+                    elements.remove(index);
+                    viewer.refresh();
+                    viewer.setSelection(new StructuredSelection(selection));
+                    updateButtons();
+                }
+
+            });
+            moveDown.setEnabled(false);
         }
 
         void updateButtons() {
-            boolean emptySelection = viewer.getStructuredSelection().isEmpty();
-            remove.setEnabled(!emptySelection);
-            edit.setEnabled(!emptySelection);
+            IStructuredSelection selection = viewer.getStructuredSelection();
+            remove.setEnabled(!selection.isEmpty());
+            edit.setEnabled(!selection.isEmpty());
+            moveUp.setEnabled(!selection.isEmpty() && elements.indexOf(selection.getFirstElement()) > 0);
+            moveDown.setEnabled(!selection.isEmpty() && elements.indexOf(selection.getFirstElement()) < elements.size() - 1);
         }
 
         public void setLayoutData(Object layoutData) {
