@@ -10,6 +10,9 @@
 package com.maccasoft.propeller;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
@@ -47,6 +50,7 @@ public class ExternalToolDialog extends Dialog {
     Button browse;
     Text program;
     Text arguments;
+    Map<String, Button> editorAction;
 
     ExternalTool externalTool;
 
@@ -202,24 +206,24 @@ public class ExternalToolDialog extends Dialog {
         label.setText("Program");
         label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
 
-        Composite group = new Composite(composite, SWT.NONE);
+        Composite programGroup = new Composite(composite, SWT.NONE);
         layout = new GridLayout(2, false);
         layout.marginWidth = layout.marginHeight = 0;
-        group.setLayout(layout);
-        group.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
+        programGroup.setLayout(layout);
+        programGroup.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
 
-        program = new Text(group, SWT.BORDER);
+        program = new Text(programGroup, SWT.BORDER);
         program.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         ((GridData) program.getLayoutData()).widthHint = convertWidthInCharsToPixels(55);
         program.addFocusListener(textFocusListener);
 
-        browse = new Button(group, SWT.PUSH);
+        browse = new Button(programGroup, SWT.PUSH);
         browse.setImage(ImageRegistry.getImageFromResources("folder-horizontal-open.png"));
         browse.addSelectionListener(new SelectionAdapter() {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
-                FileDialog dlg = new FileDialog(group.getShell(), SWT.OPEN);
+                FileDialog dlg = new FileDialog(programGroup.getShell(), SWT.OPEN);
                 String fileName = dlg.open();
                 if (fileName != null) {
                     program.setText(fileName);
@@ -245,6 +249,30 @@ public class ExternalToolDialog extends Dialog {
         arguments.addFocusListener(textFocusListener);
 
         label = new Label(composite, SWT.NONE);
+        label.setText("Check editor state");
+        label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
+
+        Composite radioGroup = new Composite(composite, SWT.NONE);
+        radioGroup.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
+        radioGroup.setLayout(new GridLayout(3, false));
+        editorAction = new HashMap<>();
+
+        Button button = new Button(radioGroup, SWT.RADIO);
+        button.setText("None");
+        button.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+        editorAction.put(ExternalTool.EDITOR_NONE, button);
+
+        button = new Button(radioGroup, SWT.RADIO);
+        button.setText("Warn unsaved");
+        button.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+        editorAction.put(ExternalTool.EDITOR_WARN_UNSAVED, button);
+
+        button = new Button(radioGroup, SWT.RADIO);
+        button.setText("Auto-save");
+        button.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+        editorAction.put(ExternalTool.EDITOR_AUTOSAVE, button);
+
+        label = new Label(composite, SWT.NONE);
         label.setText("" +
             "${file} insert the currently selected editor's file or pinned top file.\n" +
             "${file.name} insert the currently selected editor's file or pinned top file name.\n" +
@@ -256,6 +284,17 @@ public class ExternalToolDialog extends Dialog {
             name.setText(externalTool.getName());
             program.setText(externalTool.getProgram());
             arguments.setText(externalTool.getArguments());
+
+            button = editorAction.get(externalTool.getEditorAction());
+            if (button != null) {
+                button.setSelection(true);
+            }
+        }
+        else {
+            button = editorAction.get(ExternalTool.DEFAULT_ACTION);
+            if (button != null) {
+                button.setSelection(true);
+            }
         }
 
         name.addModifyListener(textModifyListener);
@@ -272,7 +311,14 @@ public class ExternalToolDialog extends Dialog {
     }
 
     void validate() {
-        boolean ok = true;
+        boolean ok = false;
+
+        for (Button button : editorAction.values()) {
+            if (button.getSelection()) {
+                ok = true;
+                break;
+            }
+        }
 
         if (name.getText().trim().isEmpty()) {
             ok = false;
@@ -293,6 +339,12 @@ public class ExternalToolDialog extends Dialog {
             externalTool.setName(name.getText());
             externalTool.setProgram(program.getText());
             externalTool.setArguments(arguments.getText());
+        }
+        for (Entry<String, Button> entry : editorAction.entrySet()) {
+            if (entry.getValue().getSelection()) {
+                externalTool.setEditorAction(entry.getKey());
+                break;
+            }
         }
         super.okPressed();
     }

@@ -1289,7 +1289,7 @@ public class PreferencesDialog extends Dialog {
         public void setItems(ExternalTool[] items) {
             elements.clear();
             for (int i = 0; i < items.length; i++) {
-                elements.add(new ExternalTool(items[i].name, items[i].program, items[i].arguments));
+                elements.add(new ExternalTool(items[i]));
             }
             viewer.refresh();
         }

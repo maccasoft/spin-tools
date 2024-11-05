@@ -2864,19 +2864,15 @@ public class SpinTools {
             items[i].dispose();
         }
 
-        ExternalTool[] tools = preferences.getExternalTools();
-        for (int i = 0; i < tools.length; i++) {
-            String name = tools[i].getName();
-            String program = tools[i].getProgram();
-            String arguments = tools[i].getArguments();
-
+        int i = 0;
+        for (ExternalTool tool : preferences.getExternalTools()) {
             MenuItem item = new MenuItem(runMenu, SWT.PUSH);
             if (i < 9) {
-                item.setText(name + "\tAlt+" + (char) ('1' + i));
+                item.setText(tool.getName() + "\tAlt+" + (char) ('1' + i));
                 item.setAccelerator(SWT.MOD3 + '1' + i);
             }
             else {
-                item.setText(name);
+                item.setText(tool.getName());
             }
             item.addListener(SWT.Selection, new Listener() {
 
@@ -2885,68 +2881,91 @@ public class SpinTools {
                     if (!handleRunningProcess()) {
                         return;
                     }
+                    handleRunExternalTool(tool);
+                }
+            });
+            i++;
+        }
+    }
 
-                    consoleView.clear();
-                    if (!consoleView.getVisible()) {
-                        consoleView.setVisible(true);
-                        consoleItem.setSelection(true);
-                        consoleToolItem.setSelection(true);
-                        centralSashForm.layout();
-                    }
-                    consoleView.setSerialPort(null);
-                    consoleView.closeLogFile();
-                    consoleView.setEnabled(true);
+    private void handleRunExternalTool(ExternalTool tool) {
+        EditorTab editorTab = getTargetObjectEditorTab();
+        if (editorTab == null) {
+            return;
+        }
 
-                    EditorTab editorTab = getTargetObjectEditorTab();
-                    if (editorTab == null) {
-                        return;
-                    }
-
-                    if (editorTab.isDirty()) {
-                        int style = SWT.APPLICATION_MODAL | SWT.ICON_QUESTION | SWT.YES | SWT.NO | SWT.CANCEL;
-                        MessageBox messageBox = new MessageBox(shell, style);
-                        messageBox.setText(APP_TITLE);
-                        messageBox.setMessage("Editor contains unsaved changes.  Save before running external tool?");
-                        switch (messageBox.open()) {
-                            case SWT.CANCEL:
-                                return;
-                            case SWT.YES:
-                                try {
-                                    doFileSave(editorTab);
-                                    if (editorTab.isDirty()) {
-                                        return;
-                                    }
-                                } catch (Exception e) {
-                                    e.printStackTrace();
+        switch (tool.getEditorAction()) {
+            case ExternalTool.EDITOR_WARN_UNSAVED:
+                if (editorTab.isDirty()) {
+                    int style = SWT.APPLICATION_MODAL | SWT.ICON_QUESTION | SWT.YES | SWT.NO | SWT.CANCEL;
+                    MessageBox messageBox = new MessageBox(shell, style);
+                    messageBox.setText(APP_TITLE);
+                    messageBox.setMessage("Editor contains unsaved changes.  Save before running external tool?");
+                    switch (messageBox.open()) {
+                        case SWT.YES:
+                            try {
+                                doFileSave(editorTab);
+                                if (editorTab.isDirty()) {
+                                    return;
                                 }
-                                break;
-                        }
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                            break;
+                        case SWT.NO:
+                            break;
+                        default:
+                            return;
                     }
+                }
+                break;
 
-                    List<String> cmd = new ArrayList<>();
-                    cmd.add(program);
-
-                    if (arguments != null) {
-                        String file = editorTab.getFile().getName();
-                        String fileName = file.lastIndexOf('.') != -1 ? file.substring(0, file.lastIndexOf('.')) : file;
-                        String fileLoc = editorTab.getFile().getParentFile().getAbsolutePath();
-
-                        String cmdline = arguments.replace("${file}", file).replace("${file.name}", fileName).replace("${file.loc}", fileLoc).replace("${serial}", serialPortList.getSelection());
-
-                        String[] args = Utils.splitArguments(cmdline);
-                        cmd.addAll(Arrays.asList(args));
-                    }
-
+            case ExternalTool.EDITOR_AUTOSAVE:
+                if (editorTab.isDirty()) {
                     try {
-                        runCommand(cmd, editorTab.getFile().getParentFile(), consoleView.getOutputStream());
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } catch (InterruptedException e) {
+                        doFileSave(editorTab);
+                        if (editorTab.isDirty()) {
+                            return;
+                        }
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
-            });
+                break;
+        }
 
+        List<String> cmd = new ArrayList<>();
+        cmd.add(tool.getProgram());
+
+        String arguments = tool.getArguments();
+        if (arguments != null) {
+            String file = editorTab.getFile().getName();
+            String fileName = file.lastIndexOf('.') != -1 ? file.substring(0, file.lastIndexOf('.')) : file;
+            String fileLoc = editorTab.getFile().getParentFile().getAbsolutePath();
+
+            String cmdline = arguments.replace("${file}", file).replace("${file.name}", fileName).replace("${file.loc}", fileLoc).replace("${serial}", serialPortList.getSelection());
+
+            String[] args = Utils.splitArguments(cmdline);
+            cmd.addAll(Arrays.asList(args));
+        }
+
+        try {
+            consoleView.clear();
+            if (!consoleView.getVisible()) {
+                consoleView.setVisible(true);
+                consoleItem.setSelection(true);
+                consoleToolItem.setSelection(true);
+                centralSashForm.layout();
+            }
+            consoleView.setSerialPort(null);
+            consoleView.closeLogFile();
+            consoleView.setEnabled(true);
+
+            runCommand(cmd, editorTab.getFile().getParentFile(), consoleView.getOutputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
@@ -3604,8 +3623,6 @@ public class SpinTools {
             messageBox.setText(APP_TITLE);
             messageBox.setMessage("Editor contains unsaved changes.  Save before close?");
             switch (messageBox.open()) {
-                case SWT.CANCEL:
-                    return false;
                 case SWT.YES:
                     try {
                         doFileSave(editorTab);
@@ -3617,6 +3634,10 @@ public class SpinTools {
                         return false;
                     }
                     break;
+                case SWT.NO:
+                    break;
+                default:
+                    return false;
             }
         }
         if (editorTab.isTopObject()) {

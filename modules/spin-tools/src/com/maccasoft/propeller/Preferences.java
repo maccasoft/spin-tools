@@ -315,18 +315,33 @@ public class Preferences {
     @JsonInclude(Include.NON_DEFAULT)
     public static class ExternalTool {
 
+        public static final String EDITOR_NONE = "none";
+        public static final String EDITOR_WARN_UNSAVED = "warn-unsaved";
+        public static final String EDITOR_AUTOSAVE = "autosave";
+
+        public static final String DEFAULT_ACTION = EDITOR_WARN_UNSAVED;
+
         public String name;
         public String program;
         public String arguments;
+        public String editorAction;
 
         public ExternalTool() {
 
+        }
+
+        public ExternalTool(ExternalTool other) {
+            this.name = other.name;
+            this.program = other.program;
+            this.arguments = other.arguments;
+            this.editorAction = other.editorAction;
         }
 
         public ExternalTool(String name, String program, String arguments) {
             this.name = name;
             this.program = program;
             this.arguments = arguments;
+            this.editorAction = DEFAULT_ACTION;
         }
 
         public String getName() {
@@ -351,6 +366,14 @@ public class Preferences {
 
         public void setArguments(String arguments) {
             this.arguments = arguments;
+        }
+
+        public String getEditorAction() {
+            return editorAction != null ? editorAction : DEFAULT_ACTION;
+        }
+
+        public void setEditorAction(String editorAction) {
+            this.editorAction = editorAction;
         }
 
         @Override
