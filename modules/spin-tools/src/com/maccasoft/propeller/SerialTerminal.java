@@ -276,7 +276,7 @@ public class SerialTerminal {
                         @Override
                         public void run() {
                             if (!canvas.isDisposed()) {
-                                dsr.setSelection((serialPortEvent.getEventValue() & SerialPort.MASK_DSR) != 0);
+                                dsr.setSelection(serialPortEvent.getEventValue() != 0);
                             }
                         }
 
@@ -288,7 +288,7 @@ public class SerialTerminal {
                         @Override
                         public void run() {
                             if (!canvas.isDisposed()) {
-                                cts.setSelection((serialPortEvent.getEventValue() & SerialPort.MASK_CTS) != 0);
+                                cts.setSelection(serialPortEvent.getEventValue() != 0);
                             }
                         }
 
@@ -1366,8 +1366,20 @@ public class SerialTerminal {
                 setFocus();
             }
         });
-        dsr = new Button(container, SWT.RADIO);
+        dsr = new Button(container, SWT.CHECK);
         dsr.setText("DSR");
+        dsr.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                try {
+                    dsr.setSelection(serialPort.isDSR());
+                } catch (SerialPortException e1) {
+                    // Do nothing
+                }
+                setFocus();
+            }
+        });
         rts = new Button(container, SWT.CHECK);
         rts.setText("RTS");
         rts.addSelectionListener(new SelectionAdapter() {
@@ -1382,8 +1394,20 @@ public class SerialTerminal {
                 setFocus();
             }
         });
-        cts = new Button(container, SWT.RADIO);
+        cts = new Button(container, SWT.CHECK);
         cts.setText("CTS");
+        cts.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                try {
+                    cts.setSelection(serialPort.isCTS());
+                } catch (SerialPortException e1) {
+                    // Do nothing
+                }
+                setFocus();
+            }
+        });
 
         Label label = new Label(container, SWT.NONE);
         label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
@@ -1572,10 +1596,12 @@ public class SerialTerminal {
                     SerialPort.DATABITS_8,
                     SerialPort.STOPBITS_1,
                     SerialPort.PARITY_NONE,
-                    false,
-                    false);
+                    rts.getSelection(),
+                    dtr.getSelection());
+                dsr.setSelection(serialPort.isDSR());
+                cts.setSelection(serialPort.isCTS());
                 if (this.serialPort != serialPort) {
-                    serialPort.addEventListener(serialEventListener);
+                    serialPort.addEventListener(serialEventListener, SerialPort.MASK_RXCHAR | SerialPort.MASK_CTS | SerialPort.MASK_DSR);
                 }
             }
 
@@ -1644,6 +1670,9 @@ public class SerialTerminal {
     }
 
     public void startMonitor() {
+        setTerminalType(1);
+        terminalType.select(1);
+
         try {
             hwreset();
             serialPort.writeBytes(new byte[] {
@@ -1655,6 +1684,9 @@ public class SerialTerminal {
     }
 
     public void startTAQOZ() {
+        setTerminalType(1);
+        terminalType.select(1);
+
         try {
             hwreset();
             serialPort.writeBytes(new byte[] {
