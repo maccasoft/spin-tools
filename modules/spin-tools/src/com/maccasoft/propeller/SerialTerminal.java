@@ -1021,9 +1021,9 @@ public class SerialTerminal {
 
             @Override
             public void controlResized(ControlEvent e) {
-                Rectangle rect = canvas.getClientArea();
-                int width = rect.width / characterWidth;
-                int height = rect.height / characterHeight;
+                Point size = canvas.getSize();
+                int width = (size.x - canvas.getVerticalBar().getSize().x) / characterWidth;
+                int height = size.y / characterHeight;
 
                 Cell[][] newScreen = new Cell[BACKBUFFER_LINES][width];
 
