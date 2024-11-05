@@ -3140,18 +3140,6 @@ public class SpinTools {
             ((Spin2Object) obj).setCompress(preferences.getSpin2Compress());
         }
 
-        if (isDebug) {
-            consoleView.clear();
-            if (!consoleView.getVisible()) {
-                consoleView.setVisible(true);
-                consoleItem.setSelection(true);
-                consoleToolItem.setSelection(true);
-                centralSashForm.layout();
-            }
-            consoleView.setSerialBaudRate(((Spin2Object) obj).getDebugBaud());
-        }
-        consoleView.setEnabled(isDebug);
-
         SerialTerminal serialTerminal = getSerialTerminal();
         if (openTerminal) {
             if (serialTerminal == null) {
@@ -3169,12 +3157,23 @@ public class SpinTools {
             serialPort = new SerialPort(serialPortList.getSelection());
         }
 
-        consoleView.setSerialPort(null);
-        consoleView.closeLogFile();
-
         if (serialTerminal != null) {
             serialTerminal.setSerialPort(null);
         }
+
+        consoleView.setSerialPort(null);
+        consoleView.closeLogFile();
+        if (isDebug) {
+            consoleView.clear();
+            if (!consoleView.getVisible()) {
+                consoleView.setVisible(true);
+                consoleItem.setSelection(true);
+                consoleToolItem.setSelection(true);
+                centralSashForm.layout();
+            }
+            consoleView.setSerialBaudRate(((Spin2Object) obj).getDebugBaud());
+        }
+        consoleView.setEnabled(false);
 
         if (isDebug || serialTerminal != null) {
             serialPortShared = true;
@@ -3189,6 +3188,7 @@ public class SpinTools {
             DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd.HHmmss");
             consoleView.setLogFile(debugFolder, String.format("%s.%s.log", fileName, dateFormat.format(date)));
             consoleView.setSerialPort(uploadPort != null ? uploadPort : serialPort);
+            consoleView.setEnabled(true);
         }
         else if (serialTerminal != null) {
             serialTerminal.setSerialPort(uploadPort != null ? uploadPort : serialPort);
