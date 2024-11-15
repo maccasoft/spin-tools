@@ -52,10 +52,10 @@ public class CallSub extends Spin2Bytecode {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         try {
             if (objectIndex == -1) {
-                os.write(0x0A);
+                os.write(Spin2Bytecode.bc_call_sub);
             }
             else {
-                os.write(indexed ? 0x09 : 0x08);
+                os.write(indexed ? Spin2Bytecode.bc_call_obji_sub : Spin2Bytecode.bc_call_obj_sub);
                 os.write(Constant.wrVar(objectIndex));
             }
             os.write(Constant.wrVar(methodIndex));

@@ -52,10 +52,10 @@ public class SubAddress extends Spin2Bytecode {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         try {
             if (objectIndex == -1) {
-                os.write(0x11);
+                os.write(Spin2Bytecode.bc_mptr_sub);
             }
             else {
-                os.write(indexed ? 0x10 : 0x0F);
+                os.write(indexed ? Spin2Bytecode.bc_mptr_obji_sub : Spin2Bytecode.bc_mptr_obj_sub);
                 os.write(Constant.wrVar(objectIndex));
             }
             os.write(Constant.wrVar(methodIndex));

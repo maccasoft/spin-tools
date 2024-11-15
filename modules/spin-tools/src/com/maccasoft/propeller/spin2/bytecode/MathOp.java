@@ -52,85 +52,85 @@ public class MathOp extends Spin2Bytecode {
 
     static Map<String, Descriptor> operations = new HashMap<String, Descriptor>();
     static {
-        operations.put("<", new Descriptor(0x6C, "LESS_THAN"));
-        operations.put("+<", new Descriptor(0x6D, "LESS_THAN (unsigned)"));
-        operations.put("<=", new Descriptor(0x6E, "LESS_THAN_OR_EQUAL"));
-        operations.put("+<=", new Descriptor(0x6F, "LESS_THAN_OR_EQUAL (unsigned)"));
-        operations.put("==", new Descriptor(0x70, "EQUAL"));
-        operations.put("<>", new Descriptor(0x71, "NOT_EQUAL"));
-        operations.put(">=", new Descriptor(0x72, "GREATER_THAN_OR_EQUAL"));
-        operations.put("+>=", new Descriptor(0x73, "GREATER_THAN_OR_EQUAL (unsigned)"));
-        operations.put(">", new Descriptor(0x74, "GREATER_THAN"));
-        operations.put("+>", new Descriptor(0x75, "GREATER_THAN (unsigned)"));
-        operations.put("<=>", new Descriptor(0x76, "SIGNED_COMPARE"));
-        operations.put(">>", new Descriptor(0x82, "SHIFT_RIGHT"));
-        operations.put("<<", new Descriptor(0x83, "SHIFT_LEFT"));
-        operations.put("SAR", new Descriptor(0x84, "SAR"));
-        operations.put("ROR", new Descriptor(0x85, "ROR"));
-        operations.put("ROL", new Descriptor(0x86, "ROL"));
-        operations.put("REV", new Descriptor(0x87, "REV"));
-        operations.put("ZEROX", new Descriptor(0x88, "ZEROX"));
-        operations.put("SIGNX", new Descriptor(0x89, "SIGNX"));
-        operations.put("+", new Descriptor(0x8A, "ADD"));
-        operations.put("-", new Descriptor(0x8B, "SUBTRACT"));
-        operations.put("&&", new Descriptor(0x8C, "BOOLEAN_AND"));
-        operations.put("AND", new Descriptor(0x8C, "BOOLEAN_AND"));
-        operations.put("^^", new Descriptor(0x8D, "BOOLEAN_XOR"));
-        operations.put("XOR", new Descriptor(0x8D, "BOOLEAN_XOR"));
-        operations.put("||", new Descriptor(0x8E, "BOOLEAN_OR"));
-        operations.put("OR", new Descriptor(0x8E, "BOOLEAN_OR"));
-        operations.put("&", new Descriptor(0x8F, "BITAND"));
-        operations.put("^", new Descriptor(0x90, "BITXOR"));
-        operations.put("|", new Descriptor(0x91, "BITOR"));
-        operations.put("#>", new Descriptor(0x92, "LIMIT_MIN"));
-        operations.put("<#", new Descriptor(0x93, "LIMIT_MAX"));
-        operations.put("ADDBITS", new Descriptor(0x94, "ADDBITS"));
-        operations.put("ADDPINS", new Descriptor(0x95, "ADDPINS"));
-        operations.put("*", new Descriptor(0x96, "MULTIPLY"));
-        operations.put("/", new Descriptor(0x97, "DIVIDE"));
-        operations.put("+/", new Descriptor(0x98, "DIVIDE (unsigned)"));
-        operations.put("//", new Descriptor(0x99, "MODULO"));
-        operations.put("+//", new Descriptor(0x9A, "MODULO (unsigned)"));
-        operations.put("SCA", new Descriptor(0x9B, "SCA"));
-        operations.put("SCAS", new Descriptor(0x9C, "SCAS"));
-        operations.put("FRAC", new Descriptor(0x9D, "FRAC"));
+        operations.put("<", new Descriptor(bc_lt, "LESS_THAN"));
+        operations.put("+<", new Descriptor(bc_ltu, "LESS_THAN (unsigned)"));
+        operations.put("<=", new Descriptor(bc_lte, "LESS_THAN_OR_EQUAL"));
+        operations.put("+<=", new Descriptor(bc_lteu, "LESS_THAN_OR_EQUAL (unsigned)"));
+        operations.put("==", new Descriptor(bc_e, "EQUAL"));
+        operations.put("<>", new Descriptor(bc_ne, "NOT_EQUAL"));
+        operations.put(">=", new Descriptor(bc_gte, "GREATER_THAN_OR_EQUAL"));
+        operations.put("+>=", new Descriptor(bc_gteu, "GREATER_THAN_OR_EQUAL (unsigned)"));
+        operations.put(">", new Descriptor(bc_gt, "GREATER_THAN"));
+        operations.put("+>", new Descriptor(bc_gtu, "GREATER_THAN (unsigned)"));
+        operations.put("<=>", new Descriptor(bc_ltegt, "SIGNED_COMPARE"));
+        operations.put(">>", new Descriptor(bc_shr, "SHIFT_RIGHT"));
+        operations.put("<<", new Descriptor(bc_shl, "SHIFT_LEFT"));
+        operations.put("SAR", new Descriptor(bc_sar, "SAR"));
+        operations.put("ROR", new Descriptor(bc_ror, "ROR"));
+        operations.put("ROL", new Descriptor(bc_rol, "ROL"));
+        operations.put("REV", new Descriptor(bc_rev, "REV"));
+        operations.put("ZEROX", new Descriptor(bc_zerox, "ZEROX"));
+        operations.put("SIGNX", new Descriptor(bc_signx, "SIGNX"));
+        operations.put("+", new Descriptor(bc_add, "ADD"));
+        operations.put("-", new Descriptor(bc_sub, "SUBTRACT"));
+        operations.put("&&", new Descriptor(bc_logand, "BOOLEAN_AND"));
+        operations.put("AND", new Descriptor(bc_logand, "BOOLEAN_AND"));
+        operations.put("^^", new Descriptor(bc_logxor, "BOOLEAN_XOR"));
+        operations.put("XOR", new Descriptor(bc_logxor, "BOOLEAN_XOR"));
+        operations.put("||", new Descriptor(bc_logor, "BOOLEAN_OR"));
+        operations.put("OR", new Descriptor(bc_logor, "BOOLEAN_OR"));
+        operations.put("&", new Descriptor(bc_bitand, "BITAND"));
+        operations.put("^", new Descriptor(bc_bitxor, "BITXOR"));
+        operations.put("|", new Descriptor(bc_bitor, "BITOR"));
+        operations.put("#>", new Descriptor(bc_fge, "LIMIT_MIN"));
+        operations.put("<#", new Descriptor(bc_fle, "LIMIT_MAX"));
+        operations.put("ADDBITS", new Descriptor(bc_addbits, "ADDBITS"));
+        operations.put("ADDPINS", new Descriptor(bc_addpins, "ADDPINS"));
+        operations.put("*", new Descriptor(bc_mul, "MULTIPLY"));
+        operations.put("/", new Descriptor(bc_div, "DIVIDE"));
+        operations.put("+/", new Descriptor(bc_divu, "DIVIDE (unsigned)"));
+        operations.put("//", new Descriptor(bc_rem, "MODULO"));
+        operations.put("+//", new Descriptor(bc_remu, "MODULO (unsigned)"));
+        operations.put("SCA", new Descriptor(bc_sca, "SCA"));
+        operations.put("SCAS", new Descriptor(bc_scas, "SCAS"));
+        operations.put("FRAC", new Descriptor(bc_frac, "FRAC"));
         operations.put("..", new Descriptor(new byte[] {
-            (byte) 0x9F, (byte) 0x95
+            (byte) bc_bitrange, (byte) bc_addpins
         }, "ADDPINS_RANGE"));
 
         //operations.put("-.", new Descriptor(new byte[] {
-        //    0x19, (byte) 0x94
+        //    bc_hub_bytecode, (byte) bc_fneg
         //}, "FLOAT_NEG"));
 
         operations.put("+.", new Descriptor(new byte[] {
-            0x19, (byte) 0x9A
+            bc_hub_bytecode, (byte) bc_fadd
         }, "FLOAT_ADD"));
         operations.put("-.", new Descriptor(new byte[] {
-            0x19, (byte) 0x9C
+            bc_hub_bytecode, (byte) bc_fsub
         }, "FLOAT_SUBTRACT"));
         operations.put("*.", new Descriptor(new byte[] {
-            0x19, (byte) 0x9E
+            bc_hub_bytecode, (byte) bc_fmul
         }, "FLOAT_MULTIPLY"));
         operations.put("/.", new Descriptor(new byte[] {
-            0x19, (byte) 0xA0
+            bc_hub_bytecode, (byte) bc_fdiv
         }, "FLOAT_DIVIDE"));
         operations.put("<.", new Descriptor(new byte[] {
-            0x19, (byte) 0xA2
+            bc_hub_bytecode, (byte) bc_flt
         }, "FLOAT_LESS_THAN"));
         operations.put(">.", new Descriptor(new byte[] {
-            0x19, (byte) 0xA4
+            bc_hub_bytecode, (byte) bc_fgt
         }, "FLOAT_GREATER_THAN"));
         operations.put("<>.", new Descriptor(new byte[] {
-            0x19, (byte) 0xA6
+            bc_hub_bytecode, (byte) bc_fne
         }, "FLOAT_NOT_EQUAL"));
         operations.put("==.", new Descriptor(new byte[] {
-            0x19, (byte) 0xA8
+            bc_hub_bytecode, (byte) bc_fe
         }, "FLOAT_EQUAL"));
         operations.put("<=.", new Descriptor(new byte[] {
-            0x19, (byte) 0xAA
+            bc_hub_bytecode, (byte) bc_flte
         }, "FLOAT_LESS_THAN_OR_EQUAL"));
         operations.put(">=.", new Descriptor(new byte[] {
-            0x19, (byte) 0xAC
+            bc_hub_bytecode, (byte) bc_fgte
         }, "FLOAT_GREATER_THAN_OR_EQUAL"));
 
     }
@@ -141,18 +141,18 @@ public class MathOp extends Spin2Bytecode {
 
     static Map<String, Descriptor> unary = new HashMap<String, Descriptor>();
     static {
-        unary.put("!!", new Descriptor(0x77, "BOOLEAN_NOT"));
-        unary.put("NOT", new Descriptor(0x77, "BOOLEAN_NOT"));
-        unary.put("!", new Descriptor(0x78, "BITNOT"));
-        //unary.put("-", new Descriptor(0x79, "NEGATE"));
-        unary.put("ABS", new Descriptor(0x7A, "ABS"));
-        unary.put("ENCOD", new Descriptor(0x7B, "ENCOD"));
-        unary.put("DECOD", new Descriptor(0x7C, "DECOD"));
-        unary.put("BMASK", new Descriptor(0x7D, "BMASK"));
-        unary.put("ONES", new Descriptor(0x7E, "ONES"));
-        unary.put("SQRT", new Descriptor(0x7F, "SQRT"));
-        unary.put("QLOG", new Descriptor(0x80, "QLOG"));
-        unary.put("QEXP", new Descriptor(0x81, "QEXP"));
+        unary.put("!!", new Descriptor(bc_lognot, "BOOLEAN_NOT"));
+        unary.put("NOT", new Descriptor(bc_lognot, "BOOLEAN_NOT"));
+        unary.put("!", new Descriptor(bc_bitnot, "BITNOT"));
+        //unary.put("-", new Descriptor(bc_neg, "NEGATE"));
+        unary.put("ABS", new Descriptor(bc_abs, "ABS"));
+        unary.put("ENCOD", new Descriptor(bc_encod, "ENCOD"));
+        unary.put("DECOD", new Descriptor(bc_decod, "DECOD"));
+        unary.put("BMASK", new Descriptor(bc_bmask, "BMASK"));
+        unary.put("ONES", new Descriptor(bc_ones, "ONES"));
+        unary.put("SQRT", new Descriptor(bc_sqrt, "SQRT"));
+        unary.put("QLOG", new Descriptor(bc_qlog, "QLOG"));
+        unary.put("QEXP", new Descriptor(bc_qexp, "QEXP"));
     }
 
     public static boolean isUnaryMathOp(String s) {
@@ -161,49 +161,49 @@ public class MathOp extends Spin2Bytecode {
 
     static Map<String, Descriptor> assignOperations = new HashMap<String, Descriptor>();
     static {
-        assignOperations.put("!!=", new Descriptor(0x90, 0xB7, "BOOLEAN_NOT_ASSIGN"));
-        assignOperations.put("NOT=", new Descriptor(0x90, 0xB7, "BOOLEAN_NOT_ASSIGN"));
-        assignOperations.put("!=", new Descriptor(0x91, 0xB8, "BITNOT_ASSIGN"));
-        //assignOperations.put("-=", new Descriptor(0x92, 0xB9, "NEGATE_ASSIGN"));
-        assignOperations.put("ABS=", new Descriptor(0x93, 0xBA, "ABS_ASSIGN"));
-        assignOperations.put("ENCOD=", new Descriptor(0x94, 0xBB, "ENCOD_ASSIGN"));
-        assignOperations.put("DECOD=", new Descriptor(0x95, 0xBC, "DECOD_ASSIGN"));
-        assignOperations.put("BMASK=", new Descriptor(0x96, 0xBD, "BMASK_ASSIGN"));
-        assignOperations.put("ONES=", new Descriptor(0x97, 0xBE, "ONES_ASSIGN"));
-        assignOperations.put("SQRT=", new Descriptor(0x98, 0xBF, "SQRT_ASSIGN"));
-        assignOperations.put("QLOG=", new Descriptor(0x99, 0xC0, "QLOG_ASSIGN"));
-        assignOperations.put("QEXP=", new Descriptor(0x9A, 0xC1, "QEXP_ASSIGN"));
-        assignOperations.put(">>=", new Descriptor(0x9B, 0xC2, "SHIFT_RIGHT_ASSIGN"));
-        assignOperations.put("<<=", new Descriptor(0x9C, 0xC3, "SHIFT_LEFT_ASSIGN"));
-        assignOperations.put("SAR=", new Descriptor(0x9D, 0xC4, "SAR_ASSIGN"));
-        assignOperations.put("ROR=", new Descriptor(0x9E, 0xC5, "ROR_ASSIGN"));
-        assignOperations.put("ROL=", new Descriptor(0x9F, 0xC6, "ROL_ASSIGN"));
-        assignOperations.put("REV=", new Descriptor(0xA0, 0xC7, "REV_ASSIGN"));
-        assignOperations.put("ZEROX=", new Descriptor(0xA1, 0xC8, "ZEROX_ASSIGN"));
-        assignOperations.put("SIGNX=", new Descriptor(0xA2, 0xC9, "SIGNX_ASSIGN"));
-        assignOperations.put("+=", new Descriptor(0xA3, 0xCA, "ADD_ASSIGN"));
-        assignOperations.put("-=", new Descriptor(0xA4, 0xCB, "SUBTRACT_ASSIGN"));
-        assignOperations.put("&&=", new Descriptor(0xA5, 0xCC, "BOOLEAN_AND_ASSIGN"));
-        assignOperations.put("AND=", new Descriptor(0xA5, 0xCC, "BOOLEAN_AND_ASSIGN"));
-        assignOperations.put("^^=", new Descriptor(0xA6, 0xCD, "BOOLEAN_XOR_ASSIGN"));
-        assignOperations.put("XOR=", new Descriptor(0xA6, 0xCD, "BOOLEAN_XOR_ASSIGN"));
-        assignOperations.put("||=", new Descriptor(0xA7, 0xCE, "BOOLEAN_OR_ASSIGN"));
-        assignOperations.put("OR=", new Descriptor(0xA7, 0xCE, "BOOLEAN_OR_ASSIGN"));
-        assignOperations.put("&=", new Descriptor(0xA8, 0xCF, "BITAND_ASSIGN"));
-        assignOperations.put("^=", new Descriptor(0xA9, 0xD0, "BITXOR_ASSIGN"));
-        assignOperations.put("|=", new Descriptor(0xAA, 0xD1, "BITOR_ASSIGN"));
-        assignOperations.put("#>=", new Descriptor(0xAB, 0xD2, "LIMIT_MIN_ASSIGN"));
-        assignOperations.put("<#=", new Descriptor(0xAC, 0xD3, "LIMIT_MAX_ASSIGN"));
-        assignOperations.put("ADDBITS=", new Descriptor(0xAD, 0xD4, "ADDBITS_ASSIGN"));
-        assignOperations.put("ADDPINS=", new Descriptor(0xAE, 0xD5, "ADDPINS_ASSIGN"));
-        assignOperations.put("*=", new Descriptor(0xAF, 0xD6, "MULTIPLY_ASSIGN"));
-        assignOperations.put("/=", new Descriptor(0xB0, 0xD7, "DIVIDE_ASSIGN"));
-        assignOperations.put("+/=", new Descriptor(0xB1, 0xD8, "DIVIDE_ASSIGN (unsigned)"));
-        assignOperations.put("//=", new Descriptor(0xB2, 0xD9, "MODULO_ASSIGN"));
-        assignOperations.put("+//=", new Descriptor(0xB3, 0xDA, "MODULO_ASSIGN (unsigned)"));
-        assignOperations.put("SCA=", new Descriptor(0xB4, 0xDB, "SCA_ASSIGN"));
-        assignOperations.put("SCAS=", new Descriptor(0xB5, 0xDC, "SCAS_ASSIGN"));
-        assignOperations.put("FRAC=", new Descriptor(0xB6, 0xDD, "FRAC_ASSIGN"));
+        assignOperations.put("!!=", new Descriptor(bc_lognot_write, bc_lognot_write_push, "BOOLEAN_NOT_ASSIGN"));
+        assignOperations.put("NOT=", new Descriptor(bc_lognot_write, bc_lognot_write_push, "BOOLEAN_NOT_ASSIGN"));
+        assignOperations.put("!=", new Descriptor(bc_bitnot_write, bc_bitnot_write_push, "BITNOT_ASSIGN"));
+        //assignOperations.put("-=", new Descriptor(bc_neg_write, bc_neg_write_push, "NEGATE_ASSIGN"));
+        assignOperations.put("ABS=", new Descriptor(bc_abs_write, bc_abs_write_push, "ABS_ASSIGN"));
+        assignOperations.put("ENCOD=", new Descriptor(bc_encod_write, bc_encod_write_push, "ENCOD_ASSIGN"));
+        assignOperations.put("DECOD=", new Descriptor(bc_decod_write, bc_decod_write_push, "DECOD_ASSIGN"));
+        assignOperations.put("BMASK=", new Descriptor(bc_bmask_write, bc_bmask_write_push, "BMASK_ASSIGN"));
+        assignOperations.put("ONES=", new Descriptor(bc_ones_write, bc_ones_write_push, "ONES_ASSIGN"));
+        assignOperations.put("SQRT=", new Descriptor(bc_sqrt_write, bc_sqrt_write_push, "SQRT_ASSIGN"));
+        assignOperations.put("QLOG=", new Descriptor(bc_qlog_write, bc_qlog_write_push, "QLOG_ASSIGN"));
+        assignOperations.put("QEXP=", new Descriptor(bc_qexp_write, bc_qexp_write_push, "QEXP_ASSIGN"));
+        assignOperations.put(">>=", new Descriptor(bc_shr_write, bc_shr_write_push, "SHIFT_RIGHT_ASSIGN"));
+        assignOperations.put("<<=", new Descriptor(bc_shl_write, bc_shl_write_push, "SHIFT_LEFT_ASSIGN"));
+        assignOperations.put("SAR=", new Descriptor(bc_sar_write, bc_sar_write_push, "SAR_ASSIGN"));
+        assignOperations.put("ROR=", new Descriptor(bc_ror_write, bc_ror_write_push, "ROR_ASSIGN"));
+        assignOperations.put("ROL=", new Descriptor(bc_rol_write, bc_rol_write_push, "ROL_ASSIGN"));
+        assignOperations.put("REV=", new Descriptor(bc_rev_write, bc_rev_write_push, "REV_ASSIGN"));
+        assignOperations.put("ZEROX=", new Descriptor(bc_zerox_write, bc_zerox_write_push, "ZEROX_ASSIGN"));
+        assignOperations.put("SIGNX=", new Descriptor(bc_signx_write, bc_signx_write_push, "SIGNX_ASSIGN"));
+        assignOperations.put("+=", new Descriptor(bc_add_write, bc_add_write_push, "ADD_ASSIGN"));
+        assignOperations.put("-=", new Descriptor(bc_sub_write, bc_sub_write_push, "SUBTRACT_ASSIGN"));
+        assignOperations.put("&&=", new Descriptor(bc_logand_write, bc_logand_write_push, "BOOLEAN_AND_ASSIGN"));
+        assignOperations.put("AND=", new Descriptor(bc_logand_write, bc_logand_write_push, "BOOLEAN_AND_ASSIGN"));
+        assignOperations.put("^^=", new Descriptor(bc_logxor_write, bc_logxor_write_push, "BOOLEAN_XOR_ASSIGN"));
+        assignOperations.put("XOR=", new Descriptor(bc_logxor_write, bc_logxor_write_push, "BOOLEAN_XOR_ASSIGN"));
+        assignOperations.put("||=", new Descriptor(bc_logor_write, bc_logor_write_push, "BOOLEAN_OR_ASSIGN"));
+        assignOperations.put("OR=", new Descriptor(bc_logor_write, bc_logor_write_push, "BOOLEAN_OR_ASSIGN"));
+        assignOperations.put("&=", new Descriptor(bc_bitand_write, bc_bitand_write_push, "BITAND_ASSIGN"));
+        assignOperations.put("^=", new Descriptor(bc_bitxor_write, bc_bitxor_write_push, "BITXOR_ASSIGN"));
+        assignOperations.put("|=", new Descriptor(bc_bitor_write, bc_bitor_write_push, "BITOR_ASSIGN"));
+        assignOperations.put("#>=", new Descriptor(bc_fge_write, bc_fge_write_push, "LIMIT_MIN_ASSIGN"));
+        assignOperations.put("<#=", new Descriptor(bc_fle_write, bc_fle_write_push, "LIMIT_MAX_ASSIGN"));
+        assignOperations.put("ADDBITS=", new Descriptor(bc_addbits_write, bc_addbits_write_push, "ADDBITS_ASSIGN"));
+        assignOperations.put("ADDPINS=", new Descriptor(bc_addpins_write, bc_addpins_write_push, "ADDPINS_ASSIGN"));
+        assignOperations.put("*=", new Descriptor(bc_mul_write, bc_mul_write_push, "MULTIPLY_ASSIGN"));
+        assignOperations.put("/=", new Descriptor(bc_div_write, bc_div_write_push, "DIVIDE_ASSIGN"));
+        assignOperations.put("+/=", new Descriptor(bc_divu_write, bc_divu_write_push, "DIVIDE_ASSIGN (unsigned)"));
+        assignOperations.put("//=", new Descriptor(bc_rem_write, bc_rem_write_push, "MODULO_ASSIGN"));
+        assignOperations.put("+//=", new Descriptor(bc_remu_write, bc_remu_write_push, "MODULO_ASSIGN (unsigned)"));
+        assignOperations.put("SCA=", new Descriptor(bc_sca_write, bc_sca_write_push, "SCA_ASSIGN"));
+        assignOperations.put("SCAS=", new Descriptor(bc_scas_write, bc_scas_write_push, "SCAS_ASSIGN"));
+        assignOperations.put("FRAC=", new Descriptor(bc_frac_write, bc_frac_write_push, "FRAC_ASSIGN"));
     }
 
     public static boolean isAssignMathOp(String s) {

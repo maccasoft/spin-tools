@@ -124,46 +124,46 @@ public class MemoryOp extends Spin2Bytecode {
             switch (base) {
                 case PBase:
                     if (ss == Size.Byte) {
-                        os.write(pop ? 0x54 : 0x51);
+                        os.write(pop ? Spin2Bytecode.bc_setup_byte_pbase_pi : Spin2Bytecode.bc_setup_byte_pbase);
                     }
                     else if (ss == Size.Word) {
-                        os.write(pop ? 0x5A : 0x57);
+                        os.write(pop ? Spin2Bytecode.bc_setup_word_pbase_pi : Spin2Bytecode.bc_setup_word_pbase);
                     }
                     else {
-                        os.write(pop ? 0x60 : 0x5D);
+                        os.write(pop ? Spin2Bytecode.bc_setup_long_pbase_pi : Spin2Bytecode.bc_setup_long_pbase);
                     }
                     break;
                 case VBase:
                     if (ss == Size.Byte) {
-                        os.write(pop ? 0x55 : 0x52);
+                        os.write(pop ? Spin2Bytecode.bc_setup_byte_vbase_pi : Spin2Bytecode.bc_setup_byte_vbase);
                     }
                     else if (ss == Size.Word) {
-                        os.write(pop ? 0x5B : 0x58);
+                        os.write(pop ? Spin2Bytecode.bc_setup_word_vbase_pi : Spin2Bytecode.bc_setup_word_vbase);
                     }
                     else {
-                        os.write(pop ? 0x61 : 0x5E);
+                        os.write(pop ? Spin2Bytecode.bc_setup_long_vbase_pi : Spin2Bytecode.bc_setup_long_vbase);
                     }
                     break;
                 case DBase:
                     if (ss == Size.Byte) {
-                        os.write(pop ? 0x56 : 0x53);
+                        os.write(pop ? Spin2Bytecode.bc_setup_byte_dbase_pi : Spin2Bytecode.bc_setup_byte_dbase);
                     }
                     else if (ss == Size.Word) {
-                        os.write(pop ? 0x5C : 0x59);
+                        os.write(pop ? Spin2Bytecode.bc_setup_word_dbase_pi : Spin2Bytecode.bc_setup_word_dbase);
                     }
                     else {
-                        os.write(pop ? 0x62 : 0x5F);
+                        os.write(pop ? Spin2Bytecode.bc_setup_long_dbase_pi : Spin2Bytecode.bc_setup_long_dbase);
                     }
                     break;
                 case Pop:
                     if (ss == Size.Byte) {
-                        os.write(pop ? 0x63 : 0x66);
+                        os.write(pop ? Spin2Bytecode.bc_setup_byte_pb_pi : Spin2Bytecode.bc_setup_byte_pa);
                     }
                     else if (ss == Size.Word) {
-                        os.write(pop ? 0x64 : 0x67);
+                        os.write(pop ? Spin2Bytecode.bc_setup_word_pb_pi : Spin2Bytecode.bc_setup_word_pa);
                     }
                     else {
-                        os.write(pop ? 0x65 : 0x68);
+                        os.write(pop ? Spin2Bytecode.bc_setup_long_pb_pi : Spin2Bytecode.bc_setup_long_pa);
                     }
                     break;
             }
@@ -183,16 +183,16 @@ public class MemoryOp extends Spin2Bytecode {
             }
 
             if (op == Op.Field) {
-                os.write(0x7E);
+                os.write(Spin2Bytecode.bc_get_field);
             }
             else if (op == Op.Address) {
-                os.write(0x7F);
+                os.write(Spin2Bytecode.bc_get_addr);
             }
             else if (op == Op.Read) {
-                os.write(0x80);
+                os.write(Spin2Bytecode.bc_read);
             }
             else if (op == Op.Write) {
-                os.write(0x81);
+                os.write(Spin2Bytecode.bc_write);
             }
         } catch (IOException e) {
             // Do nothing

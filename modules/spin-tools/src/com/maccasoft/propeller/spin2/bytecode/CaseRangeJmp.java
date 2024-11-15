@@ -10,13 +10,14 @@
 
 package com.maccasoft.propeller.spin2.bytecode;
 
-import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.Context;
+import com.maccasoft.propeller.expressions.Expression;
+import com.maccasoft.propeller.spin2.Spin2Bytecode;
 
 public class CaseRangeJmp extends Jmp {
 
     public CaseRangeJmp(Context context, Expression expression) {
-        super(context, 0x1D, expression);
+        super(context, Spin2Bytecode.bc_case_range, expression);
     }
 
     @Override

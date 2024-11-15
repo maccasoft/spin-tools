@@ -137,7 +137,7 @@ public class Constant extends Spin2Bytecode {
         if (expression.getNumber() instanceof Double) {
             int value = Float.floatToIntBits(expression.getNumber().floatValue());
             return new byte[] {
-                0x48, (byte) value, (byte) (value >> 8), (byte) (value >> 16), (byte) (value >> 24)
+                Spin2Bytecode.bc_con_rflong, (byte) value, (byte) (value >> 8), (byte) (value >> 16), (byte) (value >> 24)
             };
         }
 
@@ -145,18 +145,18 @@ public class Constant extends Spin2Bytecode {
 
         if (value >= -1 && value <= 14) {
             return new byte[] {
-                (byte) (0xA0 + value + 1)
+                (byte) (Spin2Bytecode.bc_con_n + value + 1)
             };
         }
 
         if ((value & 0xFFFFFF00L) == 0) {
             return new byte[] {
-                0x44, (byte) value
+                Spin2Bytecode.bc_con_rfbyte, (byte) value
             };
         }
         if ((value & 0xFFFFFF00L) == 0xFFFFFF00L) {
             return new byte[] {
-                0x45, (byte) (value ^ 0xFF)
+                Spin2Bytecode.bc_con_rfbyte_not, (byte) (value ^ 0xFF)
             };
         }
 
@@ -165,13 +165,13 @@ public class Constant extends Spin2Bytecode {
         for (long i = 31, b = 0xFFFFFFFFL; i >= 0; i--, b >>= 1) {
             if (value == b) {
                 return new byte[] {
-                    (byte) 0x4B,
+                    (byte) Spin2Bytecode.bc_con_rfbyte_bmask,
                     (byte) i
                 };
             }
             if (value == (b ^ 0xFFFFFFFFL)) {
                 return new byte[] {
-                    (byte) 0x4C,
+                    (byte) Spin2Bytecode.bc_con_rfbyte_bmask_not,
                     (byte) i
                 };
             }
@@ -180,13 +180,13 @@ public class Constant extends Spin2Bytecode {
         for (long i = 0, b = 1; i < 32; i++, b <<= 1) {
             if (value == b) {
                 return new byte[] {
-                    (byte) 0x49,
+                    (byte) Spin2Bytecode.bc_con_rfbyte_decod,
                     (byte) i
                 };
             }
             if (value == (b ^ 0xFFFFFFFFL)) {
                 return new byte[] {
-                    (byte) 0x4A,
+                    (byte) Spin2Bytecode.bc_con_rfbyte_decod_not,
                     (byte) i
                 };
             }
@@ -194,18 +194,18 @@ public class Constant extends Spin2Bytecode {
 
         if ((value & 0xFFFF0000L) == 0) {
             return new byte[] {
-                0x46, (byte) value, (byte) (value >> 8)
+                Spin2Bytecode.bc_con_rfword, (byte) value, (byte) (value >> 8)
             };
         }
         if ((value & 0xFFFF0000L) == 0xFFFF0000L) {
             value ^= 0xFFFF;
             return new byte[] {
-                0x47, (byte) value, (byte) (value >> 8)
+                Spin2Bytecode.bc_con_rfword_not, (byte) value, (byte) (value >> 8)
             };
         }
 
         return new byte[] {
-            0x48, (byte) value, (byte) (value >> 8), (byte) (value >> 16), (byte) (value >> 24)
+            Spin2Bytecode.bc_con_rflong, (byte) value, (byte) (value >> 8), (byte) (value >> 16), (byte) (value >> 24)
         };
 
     }

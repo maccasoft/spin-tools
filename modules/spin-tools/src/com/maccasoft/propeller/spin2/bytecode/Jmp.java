@@ -13,9 +13,9 @@ package com.maccasoft.propeller.spin2.bytecode;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
-import com.maccasoft.propeller.expressions.Context;
 
 public class Jmp extends Spin2Bytecode {
 
@@ -24,7 +24,7 @@ public class Jmp extends Spin2Bytecode {
 
     public Jmp(Context context, Expression expression) {
         super(context);
-        this.code = 0x12;
+        this.code = Spin2Bytecode.bc_jmp;
         this.expression = expression;
     }
 

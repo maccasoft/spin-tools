@@ -54,29 +54,26 @@ public class BitField extends Spin2Bytecode {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         try {
             if (bitfield == -1) {
-                os.write(0xDE); // Read (pop)
+                os.write(Spin2Bytecode.bc_setup_bfield_pop); // Read (pop)
             }
             else {
-                if (bitfield >= 0 && bitfield <= 15) {
-                    os.write(0xE0 + bitfield);
-                }
-                else if (bitfield >= 16 && bitfield <= 31) {
-                    os.write(0xF0 + (bitfield - 16));
+                if (bitfield >= 0 && bitfield <= 31) {
+                    os.write(Spin2Bytecode.bc_setup_bfield_0_31 + bitfield);
                 }
                 else {
-                    os.write(0xDF);
+                    os.write(Spin2Bytecode.bc_setup_bfield_rfvar);
                     os.write(Constant.wrVar(bitfield));
                 }
             }
 
             if (op == Op.Field) {
-                os.write(0x7E);
+                os.write(Spin2Bytecode.bc_get_field);
             }
             else if (op == Op.Read) {
-                os.write(0x80);
+                os.write(Spin2Bytecode.bc_read);
             }
             else if (op == Op.Write) {
-                os.write(push ? 0x82 : 0x81);
+                os.write(push ? Spin2Bytecode.bc_write_push : Spin2Bytecode.bc_write);
             }
         } catch (IOException e) {
             // Do nothing
@@ -108,10 +105,7 @@ public class BitField extends Spin2Bytecode {
             sb.append(" (pop)");
         }
         else {
-            if (bitfield >= 0 && bitfield <= 15) {
-                sb.append(" (short)");
-            }
-            else if (bitfield >= 16 && bitfield <= 31) {
+            if (bitfield >= 0 && bitfield <= 31) {
                 sb.append(" (short)");
             }
         }

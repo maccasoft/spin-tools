@@ -13,9 +13,9 @@ package com.maccasoft.propeller.spin2.bytecode;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
-import com.maccasoft.propeller.expressions.Context;
 
 public class RegisterOp extends Spin2Bytecode {
 
@@ -48,24 +48,24 @@ public class RegisterOp extends Spin2Bytecode {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         try {
             if (!indexed && index == 0 && value >= 0x1D8 && value <= 0x1DF) {
-                os.write(0xB0 + (value - 0x1D8));
+                os.write(Spin2Bytecode.bc_setup_reg_1D8_1F8 + (value - 0x1D8));
             }
             else if (!indexed && index == 0 && value >= 0x1F8 && value <= 0x1FF) {
-                os.write(0xB0 + (value - 0x1F8) + 8);
+                os.write(Spin2Bytecode.bc_setup_reg_1D8_1F8 + (value - 0x1F8) + 8);
             }
             else {
-                os.write(indexed ? 0x50 : 0x4F);
+                os.write(indexed ? Spin2Bytecode.bc_setup_reg_pi : Spin2Bytecode.bc_setup_reg);
                 os.write(Constant.wrVars(value >= 0x100 ? (value - 0x200) : value));
             }
 
             if (op == Op.Field) {
-                os.write(0x7E);
+                os.write(Spin2Bytecode.bc_get_field);
             }
             else if (op == Op.Read) {
-                os.write(0x80);
+                os.write(Spin2Bytecode.bc_read);
             }
             else if (op == Op.Write) {
-                os.write(0x81);
+                os.write(Spin2Bytecode.bc_write);
             }
         } catch (IOException e) {
             // Do nothing

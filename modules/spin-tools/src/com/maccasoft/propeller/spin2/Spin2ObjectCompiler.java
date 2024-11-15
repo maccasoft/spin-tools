@@ -390,7 +390,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 method.addSource(line);
             }
             Spin2MethodLine line = new Spin2MethodLine(method.getScope(), "RETURN");
-            line.addSource(new Bytecode(line.getScope(), 0x04, line.getStatement()));
+            line.addSource(new Bytecode(line.getScope(), Spin2Bytecode.bc_return_results, line.getStatement()));
             method.addSource(line);
         }
     }
@@ -1620,10 +1620,10 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         builder.addToken(iter.next());
                     }
                     line.addSource(compileConstantExpression(context, method, builder.getRoot()));
-                    line.addSource(new Bytecode(line.getScope(), 0x07, text.toUpperCase()));
+                    line.addSource(new Bytecode(line.getScope(), Spin2Bytecode.bc_abort_arg, text.toUpperCase()));
                 }
                 else {
-                    line.addSource(new Bytecode(line.getScope(), 0x06, text.toUpperCase()));
+                    line.addSource(new Bytecode(line.getScope(), Spin2Bytecode.bc_abort_0, text.toUpperCase()));
                 }
             }
             else if ("IF".equals(text) || "IFNOT".equals(text)) {
@@ -1688,10 +1688,10 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         builder.addToken(iter.next());
                     }
                     line.addSource(compileConstantExpression(line.getScope(), method, builder.getRoot()));
-                    line.addSource(new Bytecode(line.getScope(), 0x05, text));
+                    line.addSource(new Bytecode(line.getScope(), Spin2Bytecode.bc_return_args, text));
                 }
                 else {
-                    line.addSource(new Bytecode(line.getScope(), 0x04, text));
+                    line.addSource(new Bytecode(line.getScope(), Spin2Bytecode.bc_return_results, text));
                 }
             }
             else if ("REPEAT".equals(text)) {
@@ -1799,7 +1799,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                             line.addSource(compileConstantExpression(line.getScope(), method, from));
 
                             line.addSource(leftAssign(context, method, counter, true, false));
-                            line.addSource(new Bytecode(line.getScope(), step != null ? 0x7C : 0x7B, "REPEAT"));
+                            line.addSource(new Bytecode(line.getScope(), step != null ? Spin2Bytecode.bc_repeat_var_init : Spin2Bytecode.bc_repeat_var_init_1, "REPEAT"));
 
                             Spin2MethodLine nextLine = new Spin2MethodLine(context);
                             line.setData("next", nextLine);
@@ -1808,7 +1808,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                             line.addChilds(compileStatement(new Context(context), method, line, node));
 
                             nextLine.addSource(leftAssign(context, method, counter, true, false));
-                            nextLine.addSource(new Bytecode(line.getScope(), 0x7D, "REPEAT_LOOP"));
+                            nextLine.addSource(new Bytecode(line.getScope(), Spin2Bytecode.bc_repeat_var_loop, "REPEAT_LOOP"));
                             line.addChild(nextLine);
                         }
                         else if (with != null) {
@@ -1826,7 +1826,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                             }
 
                             line.addSource(leftAssign(context, method, with, true, false));
-                            line.addSource(new Bytecode(line.getScope(), 0x7A, "REPEAT"));
+                            line.addSource(new Bytecode(line.getScope(), Spin2Bytecode.bc_repeat_var_init_n, "REPEAT"));
 
                             Spin2MethodLine nextLine = new Spin2MethodLine(context);
                             line.setData("next", nextLine);
@@ -1835,7 +1835,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                             line.addChilds(compileStatement(new Context(context), method, line, node));
 
                             nextLine.addSource(leftAssign(context, method, with, true, false));
-                            nextLine.addSource(new Bytecode(line.getScope(), 0x7D, "REPEAT_LOOP"));
+                            nextLine.addSource(new Bytecode(line.getScope(), Spin2Bytecode.bc_repeat_var_loop, "REPEAT_LOOP"));
                             line.addChild(nextLine);
                         }
                         else {
@@ -1934,10 +1934,10 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     try {
                         ByteArrayOutputStream os = new ByteArrayOutputStream();
                         if (pop == 4) {
-                            os.write(0x17);
+                            os.write(Spin2Bytecode.bc_pop);
                         }
                         else {
-                            os.write(0x18);
+                            os.write(Spin2Bytecode.bc_pop_rfvar);
                             os.write(Constant.wrVars(pop - 4));
                         }
                         line.addSource(new Bytecode(line.getScope(), os.toByteArray(), String.format("POP %d", pop)));
@@ -2019,13 +2019,13 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         }
 
                         Spin2MethodLine doneLine = new Spin2MethodLine(context);
-                        doneLine.addSource(new Bytecode(line.getScope(), 0x1E, "CASE_DONE"));
+                        doneLine.addSource(new Bytecode(line.getScope(), Spin2Bytecode.bc_case_done, "CASE_DONE"));
                         caseLine.addChild(doneLine);
                     }
                 }
 
                 if (!hasOther) {
-                    line.addSource(new Bytecode(line.getScope(), 0x1E, "CASE_DONE"));
+                    line.addSource(new Bytecode(line.getScope(), Spin2Bytecode.bc_case_done, "CASE_DONE"));
                 }
 
                 line.addChild(endLine);
@@ -2042,7 +2042,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     builder.addToken(iter.next());
                 }
                 line.addSource(compileBytecodeExpression(context, method, builder.getRoot(), true));
-                line.addSource(new Bytecode(line.getScope(), 0x1A, "CASE_FAST"));
+                line.addSource(new Bytecode(line.getScope(), Spin2Bytecode.bc_case_fast_init, "CASE_FAST"));
 
                 int min = Integer.MAX_VALUE;
                 int max = Integer.MIN_VALUE;
@@ -2107,7 +2107,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         line.addChild(caseLine);
 
                         doneLine = new Spin2MethodLine(context);
-                        doneLine.addSource(new Bytecode(line.getScope(), 0x1B, "CASE_FAST_DONE"));
+                        doneLine.addSource(new Bytecode(line.getScope(), Spin2Bytecode.bc_case_fast_done, "CASE_FAST_DONE"));
                         caseLine.addChild(doneLine);
                     }
                 }
@@ -2220,7 +2220,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
             (byte) (count >> 8),
         }, String.format("ORG=$%03x, %d", org, count + 1)));
         line.source.add(0, new Bytecode(line.getScope(), new byte[] {
-            0x19, 0x5E
+            Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_inline
         }, "INLINE-EXEC"));
     }
 

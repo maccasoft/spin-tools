@@ -100,34 +100,34 @@ public class VariableOp extends Spin2Bytecode {
 
                 if (variable instanceof LocalVariable) {
                     if (op == Op.Read || op == Op.PBaseAddress) {
-                        os.write(0xE0 + offset);
+                        os.write(bc_read_local_0_15 + offset);
                     }
                     else if (op == Op.Write) {
-                        os.write(0xF0 + offset);
+                        os.write(bc_write_local_0_15 + offset);
                     }
                     else {
-                        os.write(0xD0 + offset);
+                        os.write(bc_setup_local_0_15 + offset);
                         if (op == Op.Address) {
-                            os.write(0x7F);
+                            os.write(bc_get_addr);
                         }
                         else if (op == Op.Field) {
-                            os.write(0x7E);
+                            os.write(bc_get_field);
                         }
                     }
                 }
                 else {
-                    os.write(0xC0 + offset);
+                    os.write(bc_setup_var_0_15 + offset);
                     if (op == Op.Read || op == Op.PBaseAddress) {
-                        os.write(0x80);
+                        os.write(bc_read);
                     }
                     else if (op == Op.Write) {
-                        os.write(0x81);
+                        os.write(bc_write);
                     }
                     else if (op == Op.Address) {
-                        os.write(0x7F);
+                        os.write(bc_get_addr);
                     }
                     else if (op == Op.Field) {
-                        os.write(0x7E);
+                        os.write(bc_get_field);
                     }
                 }
             }
@@ -135,26 +135,26 @@ public class VariableOp extends Spin2Bytecode {
                 if (indexed) {
                     switch (ss) {
                         case Byte:
-                            os.write((variable instanceof LocalVariable) ? 0x56 : 0x55);
+                            os.write((variable instanceof LocalVariable) ? bc_setup_byte_dbase_pi : bc_setup_byte_vbase_pi);
                             break;
                         case Word:
-                            os.write((variable instanceof LocalVariable) ? 0x5C : 0x5B);
+                            os.write((variable instanceof LocalVariable) ? bc_setup_word_dbase_pi : bc_setup_word_vbase_pi);
                             break;
                         case Long:
-                            os.write((variable instanceof LocalVariable) ? 0x62 : 0x61);
+                            os.write((variable instanceof LocalVariable) ? bc_setup_long_dbase_pi : bc_setup_long_vbase_pi);
                             break;
                     }
                 }
                 else {
                     switch (ss) {
                         case Byte:
-                            os.write((variable instanceof LocalVariable) ? 0x53 : 0x52);
+                            os.write((variable instanceof LocalVariable) ? bc_setup_byte_dbase : bc_setup_byte_vbase);
                             break;
                         case Word:
-                            os.write((variable instanceof LocalVariable) ? 0x59 : 0x58);
+                            os.write((variable instanceof LocalVariable) ? bc_setup_word_dbase : bc_setup_word_vbase);
                             break;
                         case Long:
-                            os.write((variable instanceof LocalVariable) ? 0x5F : 0x5E);
+                            os.write((variable instanceof LocalVariable) ? bc_setup_long_dbase : bc_setup_long_vbase);
                             break;
                     }
                 }
@@ -162,20 +162,20 @@ public class VariableOp extends Spin2Bytecode {
                 os.write(Constant.wrVar(offset));
 
                 if (op == Op.Field) {
-                    os.write(0x7E);
+                    os.write(bc_get_field);
                 }
                 else if (op == Op.Address) {
-                    os.write(0x7F);
+                    os.write(bc_get_addr);
                 }
                 else if (op == Op.Read || op == Op.PBaseAddress) {
-                    os.write(0x80);
+                    os.write(bc_read);
                 }
                 else if (op == Op.Write) {
-                    os.write(0x81);
+                    os.write(bc_write);
                 }
             }
             if (op == Op.PBaseAddress) {
-                os.write(0x24);
+                os.write(bc_add_pbase);
             }
         } catch (IOException e) {
             // Do nothing

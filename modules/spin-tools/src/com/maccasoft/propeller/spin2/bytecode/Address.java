@@ -10,9 +10,9 @@
 
 package com.maccasoft.propeller.spin2.bytecode;
 
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
-import com.maccasoft.propeller.expressions.Context;
 
 public class Address extends Spin2Bytecode {
 
@@ -39,23 +39,23 @@ public class Address extends Spin2Bytecode {
 
         if ((value & 0xFFFFFF00L) == 0) {
             return new byte[] {
-                0x44, (byte) value
+                Spin2Bytecode.bc_con_rfbyte, (byte) value
             };
         }
         if ((value & 0xFFFF0000L) == 0) {
             return new byte[] {
-                0x46, (byte) value, (byte) (value >> 8)
+                Spin2Bytecode.bc_con_rfword, (byte) value, (byte) (value >> 8)
             };
         }
         if ((value & 0xFFFF0000L) == 0xFFFF0000L) {
             value ^= 0xFFFF;
             return new byte[] {
-                0x47, (byte) value, (byte) (value >> 8)
+                Spin2Bytecode.bc_con_rfword_not, (byte) value, (byte) (value >> 8)
             };
         }
 
         return new byte[] {
-            0x48, (byte) value, (byte) (value >> 8), (byte) (value >> 16), (byte) (value >> 24)
+            Spin2Bytecode.bc_con_rflong, (byte) value, (byte) (value >> 8), (byte) (value >> 16), (byte) (value >> 24)
         };
     }
 
