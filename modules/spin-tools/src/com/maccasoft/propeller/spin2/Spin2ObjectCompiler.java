@@ -94,7 +94,6 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
     List<LinkDataObject> objectLinks = new ArrayList<>();
 
     Map<String, Expression> parameters;
-    Map<String, Spin2Struct> structures;
 
     public Spin2ObjectCompiler(Spin2Compiler compiler, File file) {
         this(compiler, null, file, Collections.emptyMap());
@@ -119,8 +118,6 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
         this.parameters = compiler.isCaseSensitive() ? new HashMap<>() : new CaseInsensitiveMap<>();
         this.parameters.putAll(parameters);
-
-        structures = compiler.isCaseSensitive() ? new HashMap<>() : new CaseInsensitiveMap<>();
     }
 
     @Override
@@ -919,7 +916,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
             Token token = iter.next();
             if ("(".equals(token.getText())) {
-                if (structures.containsKey(identifier.getText())) {
+                if (scope.hasStructureDefinition(identifier.getText())) {
                     logMessage(new CompilerException("structure " + identifier.getText() + " already defined", identifier));
                 }
 
@@ -939,7 +936,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         }
                         token = iter.next();
                     }
-                    else if (structures.containsKey(token.getText())) {
+                    else if (scope.hasStructureDefinition(token.getText())) {
                         type = token;
                         if (!iter.hasNext()) {
                             logMessage(new CompilerException("expecting identifier", token));
@@ -963,7 +960,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         break;
                     }
                 }
-                structures.put(identifier.getText(), struct);
+                scope.addStructureDefinition(identifier.getText(), struct);
             }
             else {
                 logMessage(new CompilerException("unexpected '" + token.getText() + "'", token));
@@ -995,7 +992,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         }
                         token = iter.next();
                     }
-                    else if (structures.containsKey(token.getText())) {
+                    else if (scope.hasStructureDefinition(token.getText())) {
                         type = token.getText();
                         if (!iter.hasNext()) {
                             throw new CompilerException("expecting identifier", token);
@@ -1044,7 +1041,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     try {
                         Variable var = new Variable(type, identifier.getText(), varSize, objectVarSize);
                         if (!Spin2Model.isType(type)) {
-                            Spin2Struct memberStruct = structures.get(type);
+                            Spin2Struct memberStruct = scope.getStructureDefinition(type);
                             if (memberStruct == null) {
                                 logMessage(new CompilerException("undefined type " + type, var.getType()));
                             }
@@ -1093,7 +1090,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
             Variable var = target.addMember(memberType, member.getIdentifier().getText(), memberSize);
             if (!Spin2Model.isType(memberType)) {
-                Spin2Struct memberStruct = structures.get(memberType);
+                Spin2Struct memberStruct = scope.getStructureDefinition(memberType);
                 if (memberStruct == null) {
                     logMessage(new CompilerException("undefined type " + memberType, member.getType()));
                 }
@@ -1413,7 +1410,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         }
                         identifier = iter.next();
                     }
-                    else if (structures.containsKey(identifier.getText())) {
+                    else if (scope.hasStructureDefinition(identifier.getText())) {
                         type = identifier.getText();
                         if (!iter.hasNext()) {
                             throw new CompilerException("expecting identifier", token.substring(token.stop - token.start));
@@ -1458,7 +1455,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                                 logMessage(new CompilerException(CompilerException.WARNING, "local variable '" + identifier + "' hides global variable", identifier));
                             }
                             LocalVariable var = method.addLocalVariable(type, identifier.getText(), size.getNumber().intValue()); // new LocalVariable(type, identifier.getText(), size, offset);
-                            Spin2Struct struct = structures.get(type);
+                            Spin2Struct struct = scope.getStructureDefinition(type);
                             if (struct != null) {
                                 compileStructureVariable(var, struct);
                             }

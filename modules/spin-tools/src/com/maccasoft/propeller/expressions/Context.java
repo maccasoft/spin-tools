@@ -18,6 +18,7 @@ import java.util.Map;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
 
 import com.maccasoft.propeller.model.Token;
+import com.maccasoft.propeller.spin2.Spin2Struct;
 
 public class Context {
 
@@ -26,6 +27,9 @@ public class Context {
 
     Map<String, Expression> symbols = new HashMap<>();
     Map<String, Expression> caseInsensitiveSymbols = new CaseInsensitiveMap<>();
+
+    Map<String, Spin2Struct> structures = new HashMap<>();
+    Map<String, Spin2Struct> caseInsensitiveStructures = new CaseInsensitiveMap<>();
 
     Map<String, List<Token>> defines = new HashMap<>();
 
@@ -222,6 +226,43 @@ public class Context {
 
     public void setMemoryAddress(int address) {
         this.memoryAddress = address;
+    }
+
+    public boolean hasStructureDefinition(String name) {
+        boolean result = caseInsensitiveStructures.containsKey(name);
+        if (result == false && caseSensitive) {
+            result = structures.containsKey(name);
+        }
+        if (result == false && parent != null) {
+            result = parent.hasStructureDefinition(name);
+        }
+        return result;
+    }
+
+    public Spin2Struct getStructureDefinition(String name) {
+        Spin2Struct exp = caseInsensitiveStructures.get(name);
+        if (exp == null && caseSensitive) {
+            exp = structures.get(name);
+        }
+        if (exp == null && parent != null) {
+            exp = parent.getStructureDefinition(name);
+        }
+        return exp;
+    }
+
+    public void addStructureDefinition(String name, Spin2Struct value) {
+        if (caseInsensitiveStructures.containsKey(name)) {
+            throw new RuntimeException("structure " + name + " already defined");
+        }
+        if (caseSensitive) {
+            if (structures.containsKey(name)) {
+                throw new RuntimeException("structure " + name + " already defined");
+            }
+            structures.put(name, value);
+        }
+        else {
+            caseInsensitiveStructures.put(name, value);
+        }
     }
 
 }
