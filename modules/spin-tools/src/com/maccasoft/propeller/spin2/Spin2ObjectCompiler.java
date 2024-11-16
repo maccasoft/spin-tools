@@ -909,6 +909,13 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
             Iterator<Token> iter = node.getTokens().iterator();
 
             Token identifier = iter.next();
+            if ("struct".equalsIgnoreCase(identifier.getText())) {
+                if (!iter.hasNext()) {
+                    logMessage(new CompilerException("expecting identifier", identifier));
+                    return;
+                }
+                identifier = iter.next();
+            }
             if (identifier.type != 0) {
                 logMessage(new CompilerException("expecting identifier", identifier));
                 return;
@@ -928,6 +935,13 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     }
 
                     Token type = null;
+                    if ("struct".equalsIgnoreCase(token.getText())) {
+                        if (!iter.hasNext()) {
+                            logMessage(new CompilerException("expecting type", token));
+                            break;
+                        }
+                        token = iter.next();
+                    }
                     if (Spin2Model.isType(token.getText())) {
                         type = token;
                         if (!iter.hasNext()) {

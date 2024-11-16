@@ -53,6 +53,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         keywords.put("LONG", TokenId.TYPE);
         keywords.put("BYTEFIT", TokenId.TYPE);
         keywords.put("WORDFIT", TokenId.TYPE);
+        keywords.put("STRUCT", TokenId.TYPE);
 
         keywords.put("HUBSET", TokenId.FUNCTION);
         keywords.put("CLKSET", TokenId.FUNCTION);
@@ -775,6 +776,9 @@ public class Spin2TokenMarker extends SourceTokenMarker {
 
             @Override
             public void visitTypeDefinition(TypeDefinitionNode node) {
+                if (node.getType() != null) {
+                    tokens.add(new TokenMarker(node.getType(), TokenId.TYPE));
+                }
                 symbols.put(node.getIdentifier().getText(), TokenId.TYPE);
                 tokens.add(new TokenMarker(node.getIdentifier(), TokenId.CONSTANT));
             }
@@ -942,6 +946,9 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 List<Token> list = node.getTokens();
 
                 int i = 1;
+                if (node.getType() != null) {
+                    i++;
+                }
                 while (i < list.size()) {
                     Token token = list.get(i++);
                     if (token.type == Token.NUMBER) {

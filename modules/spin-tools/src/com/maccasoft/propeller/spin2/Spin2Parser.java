@@ -205,6 +205,20 @@ public class Spin2Parser extends Parser {
                         node = null;
                         break;
                     }
+                    if ("struct".equalsIgnoreCase(token.getText())) {
+                        typeDefinitionNode = new TypeDefinitionNode(parent, token, null);
+                        if ((token = nextToken()).type == Token.EOF || token.type == Token.NL) {
+                            break;
+                        }
+                        typeDefinitionNode.identifier = token;
+                        typeDefinitionNode.addToken(token);
+                        if ("(".equals(stream.peekNext().getText())) {
+                            typeDefinitionNode.addToken(nextToken());
+                        }
+                        node = null;
+                        state = 7;
+                        break;
+                    }
                     if ("#".equals(token.getText())) {
                         node = new ConstantNode(parent);
                         node.start = new ExpressionNode(node);

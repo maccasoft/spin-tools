@@ -6407,6 +6407,25 @@ class Spin2ObjectCompilerTest {
     }
 
     @Test
+    void testStructureDefinition() throws Exception {
+        String text = ""
+            + "CON\n"
+            + "    struct sPoint(x, y)\n"
+            + "    struct sLine(struct sPoint a, struct sPoint b, BYTE color)\n"
+            + "\n"
+            + "VAR\n"
+            + "\n"
+            + "    sPoint point\n"
+            + "    sLine  line\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 32)\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testStructureAssignments() throws Exception {
         String text = ""
             + "CON\n"
