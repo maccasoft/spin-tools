@@ -15,11 +15,11 @@ import java.util.Collections;
 import java.util.List;
 
 import com.maccasoft.propeller.expressions.And;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.Divide;
 import com.maccasoft.propeller.expressions.Identifier;
 import com.maccasoft.propeller.expressions.Not;
 import com.maccasoft.propeller.expressions.NumberLiteral;
-import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
 import com.maccasoft.propeller.spin2.Spin2PAsmInstructionFactory;
@@ -37,7 +37,7 @@ public class AsmClk extends Spin2PAsmInstructionFactory {
         List<Spin2PAsmLine> list = new ArrayList<Spin2PAsmLine>();
 
         list.add(new Spin2PAsmLine(
-            new Context(line.getScope()), line.getLabel(), line.getCondition(), "hubset",
+            line.getScope(), line.getLabel(), line.getCondition(), "hubset",
             Collections.singletonList(new Spin2PAsmExpression("##",
                 new And(
                     new Identifier("clkmode_", line.getScope()),
