@@ -626,12 +626,9 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     source.addAll(compileConstantExpression(context, method, node.getChild(2)));
 
                     source.add(new Bytecode(context, new byte[] {
-                        Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_cogspin
-                    }, node.getText().toUpperCase()));
-
-                    source.add(new Bytecode(context, new byte[] {
+                        Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_cogspin,
                         (byte) methodNode.getChildCount(), (byte) (push ? Spin2Bytecode.bc_coginit_push : Spin2Bytecode.bc_coginit)
-                    }, "POP_RETURN (???)"));
+                    }, node.getText().toUpperCase()));
 
                     return source;
                 }

@@ -123,104 +123,105 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
 
     static Map<String, FunctionDescriptor> descriptors = new HashMap<String, FunctionDescriptor>();
     static {
-        descriptors.put("hubset", new FunctionDescriptor(0x19, 0x54, 1, 0));
-        descriptors.put("clkset", new FunctionDescriptor(0x19, 0x56, 2, 0));
-        descriptors.put("clkfreq", new FunctionDescriptor(0x19, 0x58, 0, 1));
-        ////descriptors.put("cogspin", new Descriptor(0x19, 0x5A, 3));
-        descriptors.put("cogchk", new FunctionDescriptor(0x19, 0x5C, 1, 1));
-        descriptors.put("regexec", new FunctionDescriptor(0x19, 0x60, 1, 0));
-        descriptors.put("regload", new FunctionDescriptor(0x19, 0x62, 1, 0));
-        descriptors.put("call", new FunctionDescriptor(0x19, 0x64, 1, 0));
-        descriptors.put("getregs", new FunctionDescriptor(0x19, 0x66, 3, 0));
-        descriptors.put("setregs", new FunctionDescriptor(0x19, 0x68, 3, 0));
-        descriptors.put("bytemove", new FunctionDescriptor(0x19, 0x6A, 3, 0));
-        descriptors.put("bytefill", new FunctionDescriptor(0x19, 0x6C, 3, 0));
-        descriptors.put("wordmove", new FunctionDescriptor(0x19, 0x6E, 3, 0));
-        descriptors.put("wordfill", new FunctionDescriptor(0x19, 0x70, 3, 0));
-        descriptors.put("longmove", new FunctionDescriptor(0x19, 0x72, 3, 0));
-        descriptors.put("longfill", new FunctionDescriptor(0x19, 0x74, 3, 0));
-        descriptors.put("strsize", new FunctionDescriptor(0x19, 0x76, 1, 1));
-        descriptors.put("strcomp", new FunctionDescriptor(0x19, 0x78, 2, 1));
-        descriptors.put("strcopy", new FunctionDescriptor(0x19, 0x7A, 3, 0));
-        descriptors.put("getcrc", new FunctionDescriptor(0x19, 0x7C, 3, 1));
-        descriptors.put("waitus", new FunctionDescriptor(0x19, 0x7E, 1, 0));
-        descriptors.put("waitms", new FunctionDescriptor(0x19, 0x80, 1, 0));
-        descriptors.put("getms", new FunctionDescriptor(0x19, 0x82, 0, 1));
-        descriptors.put("getsec", new FunctionDescriptor(0x19, 0x84, 0, 1));
-        descriptors.put("muldiv64", new FunctionDescriptor(0x19, 0x86, 3, 1));
-        descriptors.put("qsin", new FunctionDescriptor(0x19, 0x88, 3, 1));
-        descriptors.put("qcos", new FunctionDescriptor(0x19, 0x8A, 3, 1));
-        //descriptors.put("rotxy", new FunctionDescriptor(0x19, 0x8C, 3, 2));
-        //descriptors.put("polxy", new FunctionDescriptor(0x19, 0x8E, 2, 2));
-        //descriptors.put("xypol", new FunctionDescriptor(0x19, 0x90, 2, 2));
+        descriptors.put("hubset", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_hubset, 1, 0));
+        descriptors.put("clkset", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_clkset, 2, 0));
+        descriptors.put("clkfreq", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_read_clkfreq, 0, 1));
+        ////descriptors.put("cogspin", new Descriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_cogspin, 3));
+        descriptors.put("cogchk", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_cogchk, 1, 1));
+        descriptors.put("regexec", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_regexec, 1, 0));
+        descriptors.put("regload", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_regload, 1, 0));
+        descriptors.put("call", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_call, 1, 0));
+        descriptors.put("getregs", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_getregs, 3, 0));
+        descriptors.put("setregs", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_setregs, 3, 0));
+        descriptors.put("bytemove", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_bytemove, 3, 0));
+        descriptors.put("bytefill", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_bytefill, 3, 0));
+        descriptors.put("wordmove", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_wordmove, 3, 0));
+        descriptors.put("wordfill", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_wordfill, 3, 0));
+        descriptors.put("longmove", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_longmove, 3, 0));
+        descriptors.put("longfill", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_longfill, 3, 0));
+        descriptors.put("strsize", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_strsize, 1, 1));
+        descriptors.put("strcomp", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_strcomp, 2, 1));
+        descriptors.put("strcopy", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_strcopy, 3, 0));
+        descriptors.put("getcrc", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_getcrc, 3, 1));
+        descriptors.put("waitus", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_waitus, 1, 0));
+        descriptors.put("waitms", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_waitms, 1, 0));
+        descriptors.put("getms", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_getms, 0, 1));
+        descriptors.put("getsec", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_getsec, 0, 1));
+        descriptors.put("muldiv64", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_muldiv64, 3, 1));
+        descriptors.put("qsin", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_qsin, 3, 1));
+        descriptors.put("qcos", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_qcos, 3, 1));
+        //descriptors.put("rotxy", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_rotxy, 3, 2));
+        //descriptors.put("polxy", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_polxy, 2, 2));
+        //descriptors.put("xypol", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_xypol, 2, 2));
 
-        descriptors.put("cogstop", new FunctionDescriptor(0x27, -1, 1, 0));
-        descriptors.put("cogid", new FunctionDescriptor(0x28, -1, 0, 1));
+        descriptors.put("cogstop", new FunctionDescriptor(Spin2Bytecode.bc_cogstop, -1, 1, 0));
+        descriptors.put("cogid", new FunctionDescriptor(Spin2Bytecode.bc_cogid, -1, 0, 1));
 
-        descriptors.put("locknew", new FunctionDescriptor(0x29, -1, 0, 1));
-        descriptors.put("lockret", new FunctionDescriptor(0x2A, -1, 1, 0));
-        descriptors.put("locktry", new FunctionDescriptor(0x2B, -1, 1, 1));
-        descriptors.put("lockrel", new FunctionDescriptor(0x2C, -1, 1, 0));
-        descriptors.put("lockchk", new FunctionDescriptor(0x2D, -1, 1, 1));
+        descriptors.put("locknew", new FunctionDescriptor(Spin2Bytecode.bc_locknew, -1, 0, 1));
+        descriptors.put("lockret", new FunctionDescriptor(Spin2Bytecode.bc_lockret, -1, 1, 0));
+        descriptors.put("locktry", new FunctionDescriptor(Spin2Bytecode.bc_locktry, -1, 1, 1));
+        descriptors.put("lockrel", new FunctionDescriptor(Spin2Bytecode.bc_lockrel, -1, 1, 0));
+        descriptors.put("lockchk", new FunctionDescriptor(Spin2Bytecode.bc_lockchk, -1, 1, 1));
 
-        descriptors.put("cogatn", new FunctionDescriptor(0x2E, -1, 1, 0));
-        descriptors.put("pollatn", new FunctionDescriptor(0x2F, -1, 0, 1));
-        descriptors.put("waitatn", new FunctionDescriptor(0x30, -1, 0, 0));
+        descriptors.put("cogatn", new FunctionDescriptor(Spin2Bytecode.bc_cogatn, -1, 1, 0));
+        descriptors.put("pollatn", new FunctionDescriptor(Spin2Bytecode.bc_pollatn, -1, 0, 1));
+        descriptors.put("waitatn", new FunctionDescriptor(Spin2Bytecode.bc_waitatn, -1, 0, 0));
 
-        descriptors.put("getrnd", new FunctionDescriptor(0x31, -1, 0, 1));
-        descriptors.put("getct", new FunctionDescriptor(0x32, -1, 0, 1));
-        descriptors.put("pollct", new FunctionDescriptor(0x33, -1, 1, 1));
-        descriptors.put("waitct", new FunctionDescriptor(0x34, -1, 1, 0));
+        descriptors.put("getrnd", new FunctionDescriptor(Spin2Bytecode.bc_getrnd, -1, 0, 1));
+        descriptors.put("getct", new FunctionDescriptor(Spin2Bytecode.bc_getct, -1, 0, 1));
+        descriptors.put("pollct", new FunctionDescriptor(Spin2Bytecode.bc_pollct, -1, 1, 1));
+        descriptors.put("waitct", new FunctionDescriptor(Spin2Bytecode.bc_waitct, -1, 1, 0));
 
-        descriptors.put("pinw", new FunctionDescriptor(0x35, -1, 2, 0));
-        descriptors.put("pinwrite", new FunctionDescriptor(0x35, -1, 2, 0));
-        descriptors.put("pinl", new FunctionDescriptor(0x36, -1, 1, 0));
-        descriptors.put("pinlow", new FunctionDescriptor(0x36, -1, 1, 0));
-        descriptors.put("pinh", new FunctionDescriptor(0x37, -1, 1, 0));
-        descriptors.put("pinhigh", new FunctionDescriptor(0x37, -1, 1, 0));
-        descriptors.put("pint", new FunctionDescriptor(0x38, -1, 1, 0));
-        descriptors.put("pintoggle", new FunctionDescriptor(0x38, -1, 1, 0));
-        descriptors.put("pinf", new FunctionDescriptor(0x39, -1, 1, 0));
-        descriptors.put("pinfloat", new FunctionDescriptor(0x39, -1, 1, 0));
-        descriptors.put("pinr", new FunctionDescriptor(0x3A, -1, 1, 1));
-        descriptors.put("pinread", new FunctionDescriptor(0x3A, -1, 1, 1));
+        descriptors.put("pinw", new FunctionDescriptor(Spin2Bytecode.bc_pinwrite, -1, 2, 0));
+        descriptors.put("pinwrite", new FunctionDescriptor(Spin2Bytecode.bc_pinwrite, -1, 2, 0));
+        descriptors.put("pinl", new FunctionDescriptor(Spin2Bytecode.bc_pinlow, -1, 1, 0));
+        descriptors.put("pinlow", new FunctionDescriptor(Spin2Bytecode.bc_pinlow, -1, 1, 0));
+        descriptors.put("pinh", new FunctionDescriptor(Spin2Bytecode.bc_pinhigh, -1, 1, 0));
+        descriptors.put("pinhigh", new FunctionDescriptor(Spin2Bytecode.bc_pinhigh, -1, 1, 0));
+        descriptors.put("pint", new FunctionDescriptor(Spin2Bytecode.bc_pintoggle, -1, 1, 0));
+        descriptors.put("pintoggle", new FunctionDescriptor(Spin2Bytecode.bc_pintoggle, -1, 1, 0));
+        descriptors.put("pinf", new FunctionDescriptor(Spin2Bytecode.bc_pinfloat, -1, 1, 0));
+        descriptors.put("pinfloat", new FunctionDescriptor(Spin2Bytecode.bc_pinfloat, -1, 1, 0));
+        descriptors.put("pinr", new FunctionDescriptor(Spin2Bytecode.bc_pinread, -1, 1, 1));
+        descriptors.put("pinread", new FunctionDescriptor(Spin2Bytecode.bc_pinread, -1, 1, 1));
 
-        descriptors.put("pinstart", new FunctionDescriptor(0x3B, -1, 4, 0));
-        descriptors.put("pinclear", new FunctionDescriptor(0x3C, -1, 1, 0));
+        descriptors.put("pinstart", new FunctionDescriptor(Spin2Bytecode.bc_pinstart, -1, 4, 0));
+        descriptors.put("pinclear", new FunctionDescriptor(Spin2Bytecode.bc_pinclear, -1, 1, 0));
 
-        descriptors.put("wrpin", new FunctionDescriptor(0x3D, -1, 2, 0));
-        descriptors.put("wxpin", new FunctionDescriptor(0x3E, -1, 2, 0));
-        descriptors.put("wypin", new FunctionDescriptor(0x3F, -1, 2, 0));
-        descriptors.put("akpin", new FunctionDescriptor(0x40, -1, 1, 0));
-        descriptors.put("rdpin", new FunctionDescriptor(0x41, -1, 1, 1));
-        descriptors.put("rqpin", new FunctionDescriptor(0x42, -1, 1, 1));
+        descriptors.put("wrpin", new FunctionDescriptor(Spin2Bytecode.bc_wrpin, -1, 2, 0));
+        descriptors.put("wxpin", new FunctionDescriptor(Spin2Bytecode.bc_wxpin, -1, 2, 0));
+        descriptors.put("wypin", new FunctionDescriptor(Spin2Bytecode.bc_wypin, -1, 2, 0));
+        descriptors.put("akpin", new FunctionDescriptor(Spin2Bytecode.bc_akpin, -1, 1, 0));
+        descriptors.put("rdpin", new FunctionDescriptor(Spin2Bytecode.bc_rdpin, -1, 1, 1));
+        descriptors.put("rqpin", new FunctionDescriptor(Spin2Bytecode.bc_rqpin, -1, 1, 1));
 
-        descriptors.put("encod", new FunctionDescriptor(0x7B, -1, 1, 1));
-        descriptors.put("decod", new FunctionDescriptor(0x7C, -1, 1, 1));
-        descriptors.put("bmask", new FunctionDescriptor(0x7D, -1, 1, 1));
-        descriptors.put("ones", new FunctionDescriptor(0x7E, -1, 1, 1));
-        descriptors.put("qlog", new FunctionDescriptor(0x80, -1, 1, 1));
-        descriptors.put("qexp", new FunctionDescriptor(0x81, -1, 1, 1));
+        descriptors.put("encod", new FunctionDescriptor(Spin2Bytecode.bc_encod, -1, 1, 1));
+        descriptors.put("decod", new FunctionDescriptor(Spin2Bytecode.bc_decod, -1, 1, 1));
+        descriptors.put("bmask", new FunctionDescriptor(Spin2Bytecode.bc_bmask, -1, 1, 1));
+        descriptors.put("ones", new FunctionDescriptor(Spin2Bytecode.bc_ones, -1, 1, 1));
+        descriptors.put("sqrt", new FunctionDescriptor(Spin2Bytecode.bc_sqrt, -1, 1, 1));
+        descriptors.put("qlog", new FunctionDescriptor(Spin2Bytecode.bc_qlog, -1, 1, 1));
+        descriptors.put("qexp", new FunctionDescriptor(Spin2Bytecode.bc_qexp, -1, 1, 1));
 
-        descriptors.put("sar", new FunctionDescriptor(0x84, -1, 2, 1));
-        descriptors.put("ror", new FunctionDescriptor(0x85, -1, 2, 1));
-        descriptors.put("rol", new FunctionDescriptor(0x86, -1, 2, 1));
-        descriptors.put("rev", new FunctionDescriptor(0x87, -1, 2, 1));
-        descriptors.put("zerox", new FunctionDescriptor(0x88, -1, 2, 1));
-        descriptors.put("signx", new FunctionDescriptor(0x89, -1, 2, 1));
-        descriptors.put("max", new FunctionDescriptor(0x92, -1, 2, 1));
-        descriptors.put("min", new FunctionDescriptor(0x93, -1, 2, 1));
-        descriptors.put("addbits", new FunctionDescriptor(0x94, -1, 2, 1));
-        descriptors.put("addpins", new FunctionDescriptor(0x95, -1, 2, 1));
-        descriptors.put("sca", new FunctionDescriptor(0x9B, -1, 2, 1));
-        descriptors.put("scas", new FunctionDescriptor(0x9C, -1, 2, 1));
-        descriptors.put("frac", new FunctionDescriptor(0x9D, -1, 2, 1));
+        descriptors.put("sar", new FunctionDescriptor(Spin2Bytecode.bc_sar, -1, 2, 1));
+        descriptors.put("ror", new FunctionDescriptor(Spin2Bytecode.bc_ror, -1, 2, 1));
+        descriptors.put("rol", new FunctionDescriptor(Spin2Bytecode.bc_rol, -1, 2, 1));
+        descriptors.put("rev", new FunctionDescriptor(Spin2Bytecode.bc_rev, -1, 2, 1));
+        descriptors.put("zerox", new FunctionDescriptor(Spin2Bytecode.bc_zerox, -1, 2, 1));
+        descriptors.put("signx", new FunctionDescriptor(Spin2Bytecode.bc_signx, -1, 2, 1));
+        descriptors.put("max", new FunctionDescriptor(Spin2Bytecode.bc_fge, -1, 2, 1));
+        descriptors.put("min", new FunctionDescriptor(Spin2Bytecode.bc_fle, -1, 2, 1));
+        descriptors.put("addbits", new FunctionDescriptor(Spin2Bytecode.bc_addbits, -1, 2, 1));
+        descriptors.put("addpins", new FunctionDescriptor(Spin2Bytecode.bc_addpins, -1, 2, 1));
+        descriptors.put("sca", new FunctionDescriptor(Spin2Bytecode.bc_sca, -1, 2, 1));
+        descriptors.put("scas", new FunctionDescriptor(Spin2Bytecode.bc_scas, -1, 2, 1));
+        descriptors.put("frac", new FunctionDescriptor(Spin2Bytecode.bc_frac, -1, 2, 1));
 
-        descriptors.put("strlen", new FunctionDescriptor(0x19, 0x76, 1, 1));
-        descriptors.put("strcmp", new FunctionDescriptor(0x19, 0x78, 2, 1));
-        descriptors.put("strcpy", new FunctionDescriptor(0x19, 0x7A, 3, 0));
-        descriptors.put("memmov", new FunctionDescriptor(0x19, 0x6A, 3, 0));
-        descriptors.put("memset", new FunctionDescriptor(0x19, 0x6C, 3, 0));
+        descriptors.put("strlen", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_strsize, 1, 1));
+        descriptors.put("strcmp", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_strcomp, 2, 1));
+        descriptors.put("strcpy", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_strcopy, 3, 0));
+        descriptors.put("memmov", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_bytemove, 3, 0));
+        descriptors.put("memset", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_bytefill, 3, 0));
     }
 
     static class Descriptor {
@@ -257,103 +258,103 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
 
     static Map<String, Descriptor> operators = new HashMap<String, Descriptor>();
     static {
-        operators.put("<", new Descriptor(0x6C, "LESS_THAN"));
-        //operators.put("+<", new Descriptor(0x6D, "LESS_THAN (unsigned)"));
-        operators.put("<=", new Descriptor(0x6E, "LESS_THAN_OR_EQUAL"));
-        //operators.put("+<=", new Descriptor(0x6F, "LESS_THAN_OR_EQUAL (unsigned)"));
-        operators.put("==", new Descriptor(0x70, "EQUAL"));
-        operators.put("!=", new Descriptor(0x71, "NOT_EQUAL"));
-        operators.put(">=", new Descriptor(0x72, "GREATER_THAN_OR_EQUAL"));
-        //operators.put("+>=", new Descriptor(0x73, "GREATER_THAN_OR_EQUAL (unsigned)"));
-        operators.put(">", new Descriptor(0x74, "GREATER_THAN"));
-        //operators.put("+>", new Descriptor(0x75, "GREATER_THAN (unsigned)"));
-        //operators.put("<=>", new Descriptor(0x76, ""));
-        //operators.put(">>", new Descriptor(0x82, "SHIFT_RIGHT"));
-        operators.put("<<", new Descriptor(0x83, "SHIFT_LEFT"));
-        operators.put(">>", new Descriptor(0x84, "SAR"));
-        //operators.put("ROR", new Descriptor(0x85, "ROR"));
-        //operators.put("ROL", new Descriptor(0x86, "ROL"));
-        //operators.put("REV", new Descriptor(0x87, "REV"));
-        //operators.put("ZEROX", new Descriptor(0x88, "ZEROX"));
-        //operators.put("SIGNX", new Descriptor(0x89, "SIGNX"));
-        operators.put("+", new Descriptor(0x8A, "ADD"));
-        operators.put("-", new Descriptor(0x8B, "SUBTRACT"));
-        operators.put("&&", new Descriptor(0x8C, "BOOLEAN_AND"));
-        //operators.put("AND", new Descriptor(0x8C, "BOOLEAN_AND"));
-        //operators.put("^^", new Descriptor(0x8D, "BOOLEAN_XOR"));
-        //operators.put("XOR", new Descriptor(0x8D, "BOOLEAN_XOR"));
-        operators.put("||", new Descriptor(0x8E, "BOOLEAN_OR"));
-        //operators.put("OR", new Descriptor(0x8E, "BOOLEAN_OR"));
-        operators.put("&", new Descriptor(0x8F, "BITAND"));
-        operators.put("^", new Descriptor(0x90, "BITXOR"));
-        operators.put("|", new Descriptor(0x91, "BITOR"));
-        //operators.put("#>", new Descriptor(0x92, "LIMIT_MIN"));
-        //operators.put("<#", new Descriptor(0x93, "LIMIT_MAX"));
-        //operators.put("ADDBITS", new Descriptor(0x94, "ADDBITS"));
-        //operators.put("ADDPINS", new Descriptor(0x95, "ADDPINS"));
-        operators.put("*", new Descriptor(0x96, "MULTIPLY"));
-        operators.put("/", new Descriptor(0x97, "DIVIDE"));
-        //operators.put("+/", new Descriptor(0x98, "DIVIDE (unsigned)"));
-        operators.put("%", new Descriptor(0x99, "MODULO"));
-        //operators.put("+//", new Descriptor(0x9A, "MODULO (unsigned)"));
-        //operators.put("SCA", new Descriptor(0x9B, "SCA"));
-        //operators.put("SCAS", new Descriptor(0x9C, "SCAS"));
-        //operators.put("FRAC", new Descriptor(0x9D, "FRAC"));
+        operators.put("<", new Descriptor(Spin2Bytecode.bc_lt, "LESS_THAN"));
+        //operators.put("+<", new Descriptor(Spin2Bytecode.bc_ltu, "LESS_THAN (unsigned)"));
+        operators.put("<=", new Descriptor(Spin2Bytecode.bc_lte, "LESS_THAN_OR_EQUAL"));
+        //operators.put("+<=", new Descriptor(Spin2Bytecode.bc_lteu, "LESS_THAN_OR_EQUAL (unsigned)"));
+        operators.put("==", new Descriptor(Spin2Bytecode.bc_e, "EQUAL"));
+        operators.put("!=", new Descriptor(Spin2Bytecode.bc_ne, "NOT_EQUAL"));
+        operators.put(">=", new Descriptor(Spin2Bytecode.bc_gte, "GREATER_THAN_OR_EQUAL"));
+        //operators.put("+>=", new Descriptor(Spin2Bytecode.bc_gteu, "GREATER_THAN_OR_EQUAL (unsigned)"));
+        operators.put(">", new Descriptor(Spin2Bytecode.bc_gt, "GREATER_THAN"));
+        //operators.put("+>", new Descriptor(Spin2Bytecode.bc_gtu, "GREATER_THAN (unsigned)"));
+        //operators.put("<=>", new Descriptor(Spin2Bytecode.bc_ltegt, "SIGNED_COMPARE"));
+        //operators.put(">>", new Descriptor(Spin2Bytecode.bc_shr, "SHIFT_RIGHT"));
+        operators.put("<<", new Descriptor(Spin2Bytecode.bc_shl, "SHIFT_LEFT"));
+        operators.put(">>", new Descriptor(Spin2Bytecode.bc_sar, "SAR"));
+        //operators.put("ROR", new Descriptor(Spin2Bytecode.bc_ror, "ROR"));
+        //operators.put("ROL", new Descriptor(Spin2Bytecode.bc_rol, "ROL"));
+        //operators.put("REV", new Descriptor(Spin2Bytecode.bc_rev, "REV"));
+        //operators.put("ZEROX", new Descriptor(Spin2Bytecode.bc_zerox, "ZEROX"));
+        //operators.put("SIGNX", new Descriptor(Spin2Bytecode.bc_signx, "SIGNX"));
+        operators.put("+", new Descriptor(Spin2Bytecode.bc_add, "ADD"));
+        operators.put("-", new Descriptor(Spin2Bytecode.bc_sub, "SUBTRACT"));
+        operators.put("&&", new Descriptor(Spin2Bytecode.bc_logand, "BOOLEAN_AND"));
+        //operators.put("AND", new Descriptor(Spin2Bytecode.bc_logand, "BOOLEAN_AND"));
+        //operators.put("^^", new Descriptor(Spin2Bytecode.bc_logxor, "BOOLEAN_XOR"));
+        //operators.put("XOR", new Descriptor(Spin2Bytecode.bc_logxor, "BOOLEAN_XOR"));
+        operators.put("||", new Descriptor(Spin2Bytecode.bc_logor, "BOOLEAN_OR"));
+        //operators.put("OR", new Descriptor(Spin2Bytecode.bc_logor, "BOOLEAN_OR"));
+        operators.put("&", new Descriptor(Spin2Bytecode.bc_bitand, "BITAND"));
+        operators.put("^", new Descriptor(Spin2Bytecode.bc_bitxor, "BITXOR"));
+        operators.put("|", new Descriptor(Spin2Bytecode.bc_bitor, "BITOR"));
+        //operators.put("#>", new Descriptor(Spin2Bytecode.bc_fge, "LIMIT_MIN"));
+        //operators.put("<#", new Descriptor(Spin2Bytecode.bc_fle, "LIMIT_MAX"));
+        //operators.put("ADDBITS", new Descriptor(Spin2Bytecode.bc_addbits, "ADDBITS"));
+        //operators.put("ADDPINS", new Descriptor(Spin2Bytecode.bc_addpins, "ADDPINS"));
+        operators.put("*", new Descriptor(Spin2Bytecode.bc_mul, "MULTIPLY"));
+        operators.put("/", new Descriptor(Spin2Bytecode.bc_div, "DIVIDE"));
+        //operators.put("+/", new Descriptor(Spin2Bytecode.bc_divu, "DIVIDE (unsigned)"));
+        operators.put("%", new Descriptor(Spin2Bytecode.bc_rem, "MODULO"));
+        //operators.put("+//", new Descriptor(Spin2Bytecode.bc_remu, "MODULO (unsigned)"));
+        //operators.put("SCA", new Descriptor(Spin2Bytecode.bc_sca, "SCA"));
+        //operators.put("SCAS", new Descriptor(Spin2Bytecode.bc_scas, "SCAS"));
+        //operators.put("FRAC", new Descriptor(Spin2Bytecode.bc_frac, "FRAC"));
     };
 
     static Map<String, Descriptor> floatOperators = new HashMap<String, Descriptor>();
     static {
         //floatOperators.put("-.", new Descriptor(new byte[] {
-        //    0x19, (byte) 0x94
+        //    Spin2Bytecode.bc_hub_bytecode, (byte) 0x94
         //}, "FLOAT_NEG"));
 
         floatOperators.put("+", new Descriptor(new byte[] {
-            0x19, (byte) 0x9A
+            Spin2Bytecode.bc_hub_bytecode, (byte) Spin2Bytecode.bc_fadd
         }, "FLOAT_ADD"));
         floatOperators.put("-", new Descriptor(new byte[] {
-            0x19, (byte) 0x9C
+            Spin2Bytecode.bc_hub_bytecode, (byte) Spin2Bytecode.bc_fsub
         }, "FLOAT_SUBTRACT"));
         floatOperators.put("*", new Descriptor(new byte[] {
-            0x19, (byte) 0x9E
+            Spin2Bytecode.bc_hub_bytecode, (byte) Spin2Bytecode.bc_fmul
         }, "FLOAT_MULTIPLY"));
         floatOperators.put("/", new Descriptor(new byte[] {
-            0x19, (byte) 0xA0
+            Spin2Bytecode.bc_hub_bytecode, (byte) Spin2Bytecode.bc_fdiv
         }, "FLOAT_DIVIDE"));
         floatOperators.put("<", new Descriptor(new byte[] {
-            0x19, (byte) 0xA2
+            Spin2Bytecode.bc_hub_bytecode, (byte) Spin2Bytecode.bc_flt
         }, "FLOAT_LESS_THAN"));
         floatOperators.put(">", new Descriptor(new byte[] {
-            0x19, (byte) 0xA4
+            Spin2Bytecode.bc_hub_bytecode, (byte) Spin2Bytecode.bc_fgt
         }, "FLOAT_GREATER_THAN"));
         floatOperators.put("!=", new Descriptor(new byte[] {
-            0x19, (byte) 0xA6
+            Spin2Bytecode.bc_hub_bytecode, (byte) Spin2Bytecode.bc_fne
         }, "FLOAT_NOT_EQUAL"));
         floatOperators.put("==", new Descriptor(new byte[] {
-            0x19, (byte) 0xA8
+            Spin2Bytecode.bc_hub_bytecode, (byte) Spin2Bytecode.bc_fe
         }, "FLOAT_EQUAL"));
         floatOperators.put("<=", new Descriptor(new byte[] {
-            0x19, (byte) 0xAA
+            Spin2Bytecode.bc_hub_bytecode, (byte) Spin2Bytecode.bc_flte
         }, "FLOAT_LESS_THAN_OR_EQUAL"));
         floatOperators.put(">=", new Descriptor(new byte[] {
-            0x19, (byte) 0xAC
+            Spin2Bytecode.bc_hub_bytecode, (byte) Spin2Bytecode.bc_fgte
         }, "FLOAT_GREATER_THAN_OR_EQUAL"));
 
     }
 
     static Map<String, Descriptor> unaryOperators = new HashMap<String, Descriptor>();
     static {
-        //unaryOperators.put("!!", new Descriptor(0x77, "BOOLEAN_NOT"));
-        unaryOperators.put("!", new Descriptor(0x77, "BOOLEAN_NOT"));
-        //unaryOperators.put("!", new Descriptor(0x78, "BITNOT"));
-        ////unary.put("-", new Descriptor(0x79, "NEGATE"));
-        //unaryOperators.put("ABS", new Descriptor(0x7A, "ABS"));
-        //unaryOperators.put("ENCOD", new Descriptor(0x7B, "ENCOD"));
-        //unaryOperators.put("DECOD", new Descriptor(0x7C, "DECOD"));
-        //unaryOperators.put("BMASK", new Descriptor(0x7D, "BMASK"));
-        //unaryOperators.put("ONES", new Descriptor(0x7E, "ONES"));
-        //unaryOperators.put("SQRT", new Descriptor(0x7F, "SQRT"));
-        //unaryOperators.put("QLOG", new Descriptor(0x80, "QLOG"));
-        //unaryOperators.put("QEXP", new Descriptor(0x81, "QEXP"));
+        //unaryOperators.put("!!", new Descriptor(bc_lognot, "BOOLEAN_NOT"));
+        unaryOperators.put("!", new Descriptor(Spin2Bytecode.bc_lognot, "BOOLEAN_NOT"));
+        //unaryOperators.put("!", new Descriptor(bc_bitnot, "BITNOT"));
+        ////unary.put("-", new Descriptor(bc_neg, "NEGATE"));
+        //unaryOperators.put("ABS", new Descriptor(bc_abs, "ABS"));
+        //unaryOperators.put("ENCOD", new Descriptor(bc_encod, "ENCOD"));
+        //unaryOperators.put("DECOD", new Descriptor(bc_decod, "DECOD"));
+        //unaryOperators.put("BMASK", new Descriptor(bc_bmask, "BMASK"));
+        //unaryOperators.put("ONES", new Descriptor(bc_ones, "ONES"));
+        //unaryOperators.put("SQRT", new Descriptor(bc_sqrt, "SQRT"));
+        //unaryOperators.put("QLOG", new Descriptor(bc_qlog, "QLOG"));
+        //unaryOperators.put("QEXP", new Descriptor(bc_qexp, "QEXP"));
     }
 
     static Map<String, Descriptor> assignOperators = new HashMap<String, Descriptor>();
@@ -371,32 +372,32 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
         //assignOperators.put("QLOG=", new Descriptor(0x99, 0xC0, "QLOG_ASSIGN"));
         //assignOperators.put("QEXP=", new Descriptor(0x9A, 0xC1, "QEXP_ASSIGN"));
         //assignOperators.put(">>=", new Descriptor(0x9B, 0xC2, "SHIFT_RIGHT_ASSIGN"));
-        assignOperators.put("<<=", new Descriptor(0x9C, 0xC3, "SHIFT_LEFT_ASSIGN"));
-        assignOperators.put(">>=", new Descriptor(0x9D, 0xC4, "SAR_ASSIGN"));
+        assignOperators.put("<<=", new Descriptor(Spin2Bytecode.bc_shl_write, Spin2Bytecode.bc_shl_write_push, "SHIFT_LEFT_ASSIGN"));
+        assignOperators.put(">>=", new Descriptor(Spin2Bytecode.bc_shr_write, Spin2Bytecode.bc_shr_write_push, "SAR_ASSIGN"));
         //assignOperators.put("ROR=", new Descriptor(0x9E, 0xC5, "ROR_ASSIGN"));
         //assignOperators.put("ROL=", new Descriptor(0x9F, 0xC6, "ROL_ASSIGN"));
         //assignOperators.put("REV=", new Descriptor(0xA0, 0xC7, "REV_ASSIGN"));
         //assignOperators.put("ZEROX=", new Descriptor(0xA1, 0xC8, "ZEROX_ASSIGN"));
         //assignOperators.put("SIGNX=", new Descriptor(0xA2, 0xC9, "SIGNX_ASSIGN"));
-        assignOperators.put("+=", new Descriptor(0xA3, 0xCA, "ADD_ASSIGN"));
-        assignOperators.put("-=", new Descriptor(0xA4, 0xCB, "SUBTRACT_ASSIGN"));
+        assignOperators.put("+=", new Descriptor(Spin2Bytecode.bc_add_write, Spin2Bytecode.bc_add_write_push, "ADD_ASSIGN"));
+        assignOperators.put("-=", new Descriptor(Spin2Bytecode.bc_sub_write, Spin2Bytecode.bc_sub_write_push, "SUBTRACT_ASSIGN"));
         //assignOperators.put("&&=", new Descriptor(0xA5, 0xCC, "BOOLEAN_AND_ASSIGN"));
         //assignOperators.put("AND=", new Descriptor(0xA5, 0xCC, "BOOLEAN_AND_ASSIGN"));
         //assignOperators.put("^^=", new Descriptor(0xA6, 0xCD, "BOOLEAN_XOR_ASSIGN"));
         //assignOperators.put("XOR=", new Descriptor(0xA6, 0xCD, "BOOLEAN_XOR_ASSIGN"));
         //assignOperators.put("||=", new Descriptor(0xA7, 0xCE, "BOOLEAN_OR_ASSIGN"));
         //assignOperators.put("OR=", new Descriptor(0xA7, 0xCE, "BOOLEAN_OR_ASSIGN"));
-        assignOperators.put("&=", new Descriptor(0xA8, 0xCF, "BITAND_ASSIGN"));
-        assignOperators.put("^=", new Descriptor(0xA9, 0xD0, "BITXOR_ASSIGN"));
-        assignOperators.put("|=", new Descriptor(0xAA, 0xD1, "BITOR_ASSIGN"));
+        assignOperators.put("&=", new Descriptor(Spin2Bytecode.bc_bitand_write, Spin2Bytecode.bc_bitand_write_push, "BITAND_ASSIGN"));
+        assignOperators.put("^=", new Descriptor(Spin2Bytecode.bc_bitxor_write, Spin2Bytecode.bc_bitxor_write_push, "BITXOR_ASSIGN"));
+        assignOperators.put("|=", new Descriptor(Spin2Bytecode.bc_bitor_write, Spin2Bytecode.bc_bitor_write_push, "BITOR_ASSIGN"));
         //assignOperators.put("#>=", new Descriptor(0xAB, 0xD2, "LIMIT_MIN_ASSIGN"));
         //assignOperators.put("<#=", new Descriptor(0xAC, 0xD3, "LIMIT_MAX_ASSIGN"));
         //assignOperators.put("ADDBITS=", new Descriptor(0xAD, 0xD4, "ADDBITS_ASSIGN"));
         //assignOperators.put("ADDPINS=", new Descriptor(0xAE, 0xD5, "ADDPINS_ASSIGN"));
-        assignOperators.put("*=", new Descriptor(0xAF, 0xD6, "MULTIPLY_ASSIGN"));
-        assignOperators.put("/=", new Descriptor(0xB0, 0xD7, "DIVIDE_ASSIGN"));
+        assignOperators.put("*=", new Descriptor(Spin2Bytecode.bc_mul_write, Spin2Bytecode.bc_mul_write_push, "MULTIPLY_ASSIGN"));
+        assignOperators.put("/=", new Descriptor(Spin2Bytecode.bc_div_write, Spin2Bytecode.bc_div_write_push, "DIVIDE_ASSIGN"));
         //assignOperators.put("+/=", new Descriptor(0xB1, 0xD8, "DIVIDE_ASSIGN (unsigned)"));
-        assignOperators.put("%=", new Descriptor(0xB2, 0xD9, "MODULO_ASSIGN"));
+        assignOperators.put("%=", new Descriptor(Spin2Bytecode.bc_rem_write, Spin2Bytecode.bc_rem_write_push, "MODULO_ASSIGN"));
         //assignOperators.put("+//=", new Descriptor(0xB3, 0xDA, "MODULO_ASSIGN (unsigned)"));
         //assignOperators.put("SCA=", new Descriptor(0xB4, 0xDB, "SCA_ASSIGN"));
         //assignOperators.put("SCAS=", new Descriptor(0xB5, 0xDC, "SCAS_ASSIGN"));
@@ -443,11 +444,11 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                     source.addAll(compileConstantExpression(context, method, node.getChild(0)));
                     if (isFloat(context, node.getChild(0))) {
                         source.add(new Bytecode(context, new byte[] {
-                            0x19, (byte) 0x86
+                            Spin2Bytecode.bc_hub_bytecode, (byte) Spin2Bytecode.bc_fabs
                         }, "FLOAT_" + node.getText().toUpperCase()));
                     }
                     else {
-                        source.add(new Bytecode(context, 0x7A, node.getText().toUpperCase()));
+                        source.add(new Bytecode(context, Spin2Bytecode.bc_abs, node.getText().toUpperCase()));
                     }
                 }
                 else if ("sqrt".equals(node.getText())) {
@@ -458,11 +459,11 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                     source.addAll(compileConstantExpression(context, method, node.getChild(0)));
                     if (isFloat(context, node.getChild(0))) {
                         source.add(new Bytecode(context, new byte[] {
-                            0x19, (byte) 0x98
+                            Spin2Bytecode.bc_hub_bytecode, (byte) Spin2Bytecode.bc_fsqrt
                         }, "FLOAT_" + node.getText().toUpperCase()));
                     }
                     else {
-                        source.add(new Bytecode(context, 0x7F, node.getText().toUpperCase()));
+                        source.add(new Bytecode(context, Spin2Bytecode.bc_sqrt, node.getText().toUpperCase()));
                     }
                 }
                 else if ("nan".equals(node.getText())) {
@@ -479,7 +480,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                         source.addAll(compileConstantExpression(context, method, node.getChild(0)));
                     }
                     source.add(new Bytecode(context, new byte[] {
-                        0x19, (byte) 0x92
+                        Spin2Bytecode.bc_hub_bytecode, (byte) Spin2Bytecode.bc_nan
                     }, node.getText().toUpperCase()));
                 }
                 else if ("round".equals(node.getText())) {
@@ -490,7 +491,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                     source.addAll(compileConstantExpression(context, method, node.getChild(0)));
                     if (isFloat(context, node.getChild(0))) {
                         source.add(new Bytecode(context, new byte[] {
-                            0x19, (byte) 0xAE
+                            Spin2Bytecode.bc_hub_bytecode, (byte) Spin2Bytecode.bc_round
                         }, node.getText().toUpperCase()));
                     }
                     else {
@@ -505,7 +506,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                     source.addAll(compileConstantExpression(context, method, node.getChild(0)));
                     if (isFloat(context, node.getChild(0))) {
                         source.add(new Bytecode(context, new byte[] {
-                            0x19, (byte) 0xB0
+                            Spin2Bytecode.bc_hub_bytecode, (byte) Spin2Bytecode.bc_trunc
                         }, node.getText().toUpperCase()));
                     }
                     else {
@@ -520,7 +521,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                     source.addAll(compileConstantExpression(context, method, node.getChild(0)));
                     if (!isFloat(context, node.getChild(0))) {
                         source.add(new Bytecode(context, new byte[] {
-                            0x19, (byte) 0xB2
+                            Spin2Bytecode.bc_hub_bytecode, (byte) Spin2Bytecode.bc_float
                         }, node.getText().toUpperCase()));
                     }
                     else {
@@ -534,7 +535,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                     for (int i = 0; i < node.getChildCount(); i++) {
                         source.addAll(compileBytecodeExpression(context, method, node.getChild(i), true));
                     }
-                    source.add(new Bytecode(context, push ? 0x26 : 0x25, node.getText().toUpperCase()));
+                    source.add(new Bytecode(context, push ? Spin2Bytecode.bc_coginit_push : Spin2Bytecode.bc_coginit, node.getText().toUpperCase()));
                 }
                 else if ("cognew".equals(node.getText())) {
                     if (node.getChildCount() != 2) {
@@ -544,7 +545,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                     for (int i = 0; i < node.getChildCount(); i++) {
                         source.addAll(compileBytecodeExpression(context, method, node.getChild(i), true));
                     }
-                    source.add(new Bytecode(context, push ? 0x26 : 0x25, node.getText().toUpperCase()));
+                    source.add(new Bytecode(context, push ? Spin2Bytecode.bc_coginit_push : Spin2Bytecode.bc_coginit, node.getText().toUpperCase()));
                 }
                 else if ("cogspin".equals(node.getText())) {
                     if (node.getChildCount() != 3) {
@@ -572,18 +573,15 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                     source.addAll(compileConstantExpression(context, method, node.getChild(2)));
 
                     source.add(new Bytecode(context, new byte[] {
-                        0x19, 0x5A
+                        Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_cogspin,
+                        (byte) methodNode.getChildCount(), (byte) (push ? Spin2Bytecode.bc_coginit_push : Spin2Bytecode.bc_coginit)
                     }, node.getText().toUpperCase()));
-
-                    source.add(new Bytecode(context, new byte[] {
-                        (byte) methodNode.getChildCount(), (byte) (push ? 0x26 : 0x25)
-                    }, "POP_RETURN (???)"));
                 }
                 else if ("recv".equals(node.getText())) {
                     if (node.getChildCount() != 0) {
                         throw new RuntimeException("expected " + 0 + " argument(s), found " + node.getChildCount());
                     }
-                    source.add(new Bytecode(context, 0x0C, node.getText().toUpperCase()));
+                    source.add(new Bytecode(context, Spin2Bytecode.bc_call_recv, node.getText().toUpperCase()));
                 }
                 else if ("send".equals(node.getText())) {
                     if (node.getChildCount() == 0) {
@@ -598,7 +596,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                     }
                     if (bytes) {
                         byte[] code = new byte[node.getChildCount() + 2];
-                        code[0] = 0x0E;
+                        code[0] = Spin2Bytecode.bc_call_send_bytes;
                         code[1] = (byte) node.getChildCount();
                         for (int i = 0; i < node.getChildCount(); i++) {
                             code[i + 2] = (byte) new NumberLiteral(node.getChild(i).getText()).getNumber().intValue();
@@ -608,7 +606,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                     else {
                         for (Spin2StatementNode child : node.getChilds()) {
                             source.addAll(compileBytecodeExpression(context, method, child, true));
-                            source.add(new Bytecode(context, 0x0D, node.getText().toUpperCase()));
+                            source.add(new Bytecode(context, Spin2Bytecode.bc_call_send, node.getText().toUpperCase()));
                         }
                     }
                 }
@@ -625,7 +623,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                     compiler.debugStatements.add(node);
 
                     int pop = stack;
-                    source.add(new Bytecode(context, 0x43, "") {
+                    source.add(new Bytecode(context, Spin2Bytecode.bc_debug, "") {
 
                         int index;
 
@@ -649,7 +647,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                                 return new byte[0];
                             }
                             return new byte[] {
-                                0x43, (byte) pop, (byte) index
+                                Spin2Bytecode.bc_debug, (byte) pop, (byte) index
                             };
                         }
 
@@ -675,11 +673,11 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                         throw new RuntimeException("invalid argument(s)");
                     }
 
-                    int code = 0x1F;
-                    int code_range = 0x21;
+                    int code = Spin2Bytecode.bc_lookup_value;
+                    int code_range = Spin2Bytecode.bc_lookup_range;
                     if ("lookdown".equals(node.getText()) || "lookdownz".equals(node.getText())) {
-                        code = 0x20;
-                        code_range = 0x22;
+                        code = Spin2Bytecode.bc_lookdown_value;
+                        code_range = Spin2Bytecode.bc_lookdown_range;
                     }
 
                     Spin2Bytecode end = new Spin2Bytecode(context);
@@ -709,7 +707,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                         }
                     }
 
-                    source.add(new Bytecode(context, 0x23, "LOOKDONE"));
+                    source.add(new Bytecode(context, Spin2Bytecode.bc_look_done, "LOOKDONE"));
                     source.add(end);
                 }
                 else if ("string".equals(node.getText())) {
@@ -739,7 +737,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
 
                     byte[] code = sb.toString().getBytes();
                     ByteArrayOutputStream os = new ByteArrayOutputStream();
-                    os.write(0x9E);
+                    os.write(Spin2Bytecode.bc_string);
                     os.write(code.length);
                     os.writeBytes(code);
                     source.add(new Bytecode(context, os.toByteArray(), node.getText().toUpperCase()));
@@ -823,7 +821,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
 
                 byte[] code = sb.toString().getBytes();
                 ByteArrayOutputStream os = new ByteArrayOutputStream();
-                os.write(0x9E);
+                os.write(Spin2Bytecode.bc_string);
                 os.write(code.length);
                 os.writeBytes(code);
                 source.add(new Bytecode(context, os.toByteArray(), "STRING"));
@@ -838,11 +836,11 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                 } catch (Exception e) {
                     if (isFloat(context, node.getChild(0))) {
                         source.add(new Bytecode(context, new byte[] {
-                            0x19, (byte) 0x94
+                            Spin2Bytecode.bc_hub_bytecode, (byte) Spin2Bytecode.bc_fneg
                         }, "FLOAT_NEGATE"));
                     }
                     else {
-                        source.add(new Bytecode(context, 0x79, "NEGATE"));
+                        source.add(new Bytecode(context, Spin2Bytecode.bc_neg, "NEGATE"));
                     }
                 }
             }
@@ -857,10 +855,10 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
             else if ("-=".equals(node.getText()) && node.getChildCount() == 1) {
                 source.addAll(leftAssign(context, method, node.getChild(0), true, false));
                 if (push) {
-                    source.add(new Bytecode(context, 0xB9, "NEGATE_ASSIGN (push)"));
+                    source.add(new Bytecode(context, Spin2Bytecode.bc_neg_write_push, "NEGATE_ASSIGN (push)"));
                 }
                 else {
-                    source.add(new Bytecode(context, 0x92, "NEGATE_ASSIGN"));
+                    source.add(new Bytecode(context, Spin2Bytecode.bc_neg_write, "NEGATE_ASSIGN"));
                 }
             }
             else if ("=".equals(node.getText())) {
@@ -961,7 +959,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                 source.addAll(compileBytecodeExpression(context, method, node.getChild(0), true));
                 source.addAll(compileBytecodeExpression(context, method, node.getChild(1).getChild(0), true));
                 source.addAll(compileBytecodeExpression(context, method, node.getChild(1).getChild(1), true));
-                source.add(new Bytecode(context, 0x6B, "TERNARY_IF_ELSE"));
+                source.add(new Bytecode(context, Spin2Bytecode.bc_ternary, "TERNARY_IF_ELSE"));
             }
             else if ("(".equals(node.getText())) {
                 source.addAll(compileBytecodeExpression(context, method, node.getChild(0), push));
@@ -970,7 +968,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                 if (node.getChildCount() == 2) {
                     source.addAll(compileConstantExpression(context, method, node.getChild(1)));
                     source.addAll(leftAssign(context, method, node.getChild(0), push, false));
-                    source.add(new Bytecode(context, 0x8D, "SWAP"));
+                    source.add(new Bytecode(context, Spin2Bytecode.bc_var_swap, "SWAP"));
                 }
                 else {
                     if (node.getChildCount() != 1) {
@@ -1055,10 +1053,10 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                     source.addAll(compileVariableSetup(context, method, expression, childNode));
                 }
                 if ("++".equals(node.getText())) {
-                    source.add(new Bytecode(context, push ? 0x85 : 0x83, "PRE_INC" + (push ? " (push)" : "")));
+                    source.add(new Bytecode(context, push ? Spin2Bytecode.bc_var_preinc_push : Spin2Bytecode.bc_var_inc, "PRE_INC" + (push ? " (push)" : "")));
                 }
                 else if ("--".equals(node.getText())) {
-                    source.add(new Bytecode(context, push ? 0x86 : 0x84, "PRE_DEC" + (push ? " (push)" : "")));
+                    source.add(new Bytecode(context, push ? Spin2Bytecode.bc_var_predec_push : Spin2Bytecode.bc_var_dec, "PRE_DEC" + (push ? " (push)" : "")));
                 }
             }
             else if ("BYTE".equals(node.getText()) || "WORD".equals(node.getText()) || "LONG".equals(node.getText())
@@ -1088,10 +1086,10 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
 
                 if (node.isMethod()) {
                     if (node.getParent() != null && node.getParent().getText().startsWith("\\")) {
-                        source.add(new Bytecode(context, push ? 0x03 : 0x02, "ANCHOR_TRAP"));
+                        source.add(new Bytecode(context, push ? Spin2Bytecode.bc_drop_trap_push : Spin2Bytecode.bc_drop_trap, "ANCHOR_TRAP"));
                     }
                     else {
-                        source.add(new Bytecode(context, push ? 0x01 : 0x00, "ANCHOR"));
+                        source.add(new Bytecode(context, push ? Spin2Bytecode.bc_drop_push : Spin2Bytecode.bc_drop, "ANCHOR"));
                     }
 
                     while (n < node.getChildCount()) {
@@ -1139,12 +1137,12 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                     }
                     source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, MemoryOp.Op.Read, indexNode != null));
                     source.add(new Bytecode(context, new byte[] {
-                        (byte) 0x0B,
+                        (byte) Spin2Bytecode.bc_call_ptr,
                     }, "CALL_PTR"));
                 }
                 else if (node.getText().startsWith("@@")) {
                     source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, MemoryOp.Op.Read, indexNode != null));
-                    source.add(new Bytecode(context, 0x24, "ADD_PBASE"));
+                    source.add(new Bytecode(context, Spin2Bytecode.bc_add_pbase, "ADD_PBASE"));
                 }
                 else if (node.getText().startsWith("@")) {
                     source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, MemoryOp.Op.Address, indexNode != null));
@@ -1255,13 +1253,13 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
 
                 if (postEffectNode == null) {
                     source.add(new Bytecode(context, new byte[] {
-                        (byte) (indexNode == null ? 0x4D : 0x4E),
-                        (byte) (push ? 0x80 : 0x81)
+                        (byte) (indexNode == null ? Spin2Bytecode.bc_setup_field_p : Spin2Bytecode.bc_setup_field_pi),
+                        (byte) (push ? Spin2Bytecode.bc_read : Spin2Bytecode.bc_write)
                     }, "FIELD_" + (push ? "READ" : "WRITE")));
                 }
                 else {
                     source.add(new Bytecode(context, new byte[] {
-                        (byte) (indexNode == null ? 0x4D : 0x4E)
+                        (byte) (indexNode == null ? Spin2Bytecode.bc_setup_field_p : Spin2Bytecode.bc_setup_field_pi)
                     }, "FIELD_SETUP"));
                 }
 
@@ -1368,10 +1366,10 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
 
                         if (postEffectNode != null) {
                             if ("++".equals(postEffectNode.getText())) {
-                                source.add(new Bytecode(context, push ? 0x87 : 0x83, "POST_INC" + (push ? " (push)" : "")));
+                                source.add(new Bytecode(context, push ? Spin2Bytecode.bc_var_postinc_push : Spin2Bytecode.bc_var_inc, "POST_INC" + (push ? " (push)" : "")));
                             }
                             else if ("--".equals(postEffectNode.getText())) {
-                                source.add(new Bytecode(context, push ? 0x88 : 0x84, "POST_DEC" + (push ? " (push)" : "")));
+                                source.add(new Bytecode(context, push ? Spin2Bytecode.bc_var_postdec_push : Spin2Bytecode.bc_var_dec, "POST_DEC" + (push ? " (push)" : "")));
                             }
                             else {
                                 throw new CompilerException("unhandled post effect " + postEffectNode.getText(), postEffectNode.getToken());
@@ -1438,7 +1436,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                             throw new RuntimeException("method doesn't return any value");
                         }
 
-                        source.add(new Bytecode(context, push ? 0x01 : 0x00, "ANCHOR"));
+                        source.add(new Bytecode(context, push ? Spin2Bytecode.bc_drop_push : Spin2Bytecode.bc_drop, "ANCHOR"));
                         for (int i = 0; i < childNode.getChildCount(); i++) {
                             source.addAll(compileConstantExpression(context, method, childNode.getChild(i)));
                         }
@@ -1620,7 +1618,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                         }
                         if (isAbsoluteAddress(node.getText())) {
                             source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Read, popIndex, expression, index));
-                            source.add(new Bytecode(context, 0x24, "ADD_PBASE"));
+                            source.add(new Bytecode(context, Spin2Bytecode.bc_add_pbase, "ADD_PBASE"));
                         }
                         else {
                             source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Address, popIndex, expression, index));
@@ -1875,7 +1873,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
             source.addAll(compilePointerDereference(context, method, node.getChild(0), push ? MemoryOp.Op.Setup : MemoryOp.Op.Write));
         }
         else if ("_".equals(node.getText())) {
-            source.add(new Bytecode(context, 0x17, "POP"));
+            source.add(new Bytecode(context, Spin2Bytecode.bc_pop, "POP"));
         }
         else if (",".equals(node.getText())) {
             for (int i = node.getChildCount() - 1; i >= 0; i--) {
@@ -1946,6 +1944,9 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
 
             if (bitfieldNode != null) {
                 source.add(new BitField(context, push && !write ? BitField.Op.Setup : BitField.Op.Write, push, bitfield));
+            }
+            else if (write) {
+                source.add(new Bytecode(context, Spin2Bytecode.bc_write_push, "WRITE"));
             }
         }
         else if ("REG".equals(node.getText())) {
@@ -2023,6 +2024,9 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
             if (bitfieldNode != null) {
                 source.add(new BitField(context, push && !write ? BitField.Op.Setup : BitField.Op.Write, push, bitfield));
             }
+            else if (write) {
+                source.add(new Bytecode(context, Spin2Bytecode.bc_write_push, "WRITE"));
+            }
         }
         else if ("FIELD".equals(node.getText()) && node.getChildCount() != 0) {
             int n = 1;
@@ -2039,10 +2043,17 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                 source.addAll(compileConstantExpression(context, method, indexNode));
             }
 
-            source.add(new Bytecode(context, new byte[] {
-                (byte) (indexNode == null ? 0x4D : 0x4E),
-                (byte) 0x81
-            }, "FIELD_WRITE"));
+            if (push && !write) {
+                source.add(new Bytecode(context, new byte[] {
+                    (byte) (indexNode == null ? Spin2Bytecode.bc_setup_field_p : Spin2Bytecode.bc_setup_field_pi),
+                }, "FIELD_SETUP"));
+            }
+            else {
+                source.add(new Bytecode(context, new byte[] {
+                    (byte) (indexNode == null ? Spin2Bytecode.bc_setup_field_p : Spin2Bytecode.bc_setup_field_pi),
+                    (byte) (push ? Spin2Bytecode.bc_write_push : Spin2Bytecode.bc_write)
+                }, push ? "FIELD_WRITE (push)" : "FIELD_WRITE"));
+            }
         }
         else {
             Expression expression = null;
@@ -2118,16 +2129,10 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
 
                     if (postEffectNode != null) {
                         if ("++".equals(postEffectNode.getText())) {
-                            source.add(new Bytecode(context, push ? 0x87 : 0x83, "POST_INC" + (push ? " (push)" : "")));
+                            source.add(new Bytecode(context, push ? Spin2Bytecode.bc_var_postinc_push : Spin2Bytecode.bc_var_inc, "POST_INC" + (push ? " (push)" : "")));
                         }
                         else if ("--".equals(postEffectNode.getText())) {
-                            source.add(new Bytecode(context, push ? 0x88 : 0x84, "POST_DEC" + (push ? " (push)" : "")));
-                        }
-                        else if ("!!".equals(postEffectNode.getText())) {
-                            source.add(new Bytecode(context, push ? 0x8A : 0x89, "POST_LOGICAL_NOT" + (push ? " (push)" : "")));
-                        }
-                        else if ("!".equals(postEffectNode.getText())) {
-                            source.add(new Bytecode(context, push ? 0x8C : 0x8B, "POST_NOT" + (push ? " (push)" : "")));
+                            source.add(new Bytecode(context, push ? Spin2Bytecode.bc_var_postdec_push : Spin2Bytecode.bc_var_dec, "POST_DEC" + (push ? " (push)" : "")));
                         }
                         else {
                             throw new CompilerException("unhandled post effect " + postEffectNode.getText(), postEffectNode.getToken());
@@ -2252,16 +2257,10 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
 
                     if (postEffectNode != null) {
                         if ("++".equals(postEffectNode.getText())) {
-                            source.add(new Bytecode(context, push ? 0x87 : 0x83, "POST_INC" + (push ? " (push)" : "")));
+                            source.add(new Bytecode(context, push ? Spin2Bytecode.bc_var_postinc_push : Spin2Bytecode.bc_var_inc, "POST_INC" + (push ? " (push)" : "")));
                         }
                         else if ("--".equals(postEffectNode.getText())) {
-                            source.add(new Bytecode(context, push ? 0x88 : 0x84, "POST_DEC" + (push ? " (push)" : "")));
-                        }
-                        else if ("!!".equals(postEffectNode.getText())) {
-                            source.add(new Bytecode(context, push ? 0x8A : 0x89, "POST_LOGICAL_NOT" + (push ? " (push)" : "")));
-                        }
-                        else if ("!".equals(postEffectNode.getText())) {
-                            source.add(new Bytecode(context, push ? 0x8C : 0x8B, "POST_NOT" + (push ? " (push)" : "")));
+                            source.add(new Bytecode(context, push ? Spin2Bytecode.bc_var_postdec_push : Spin2Bytecode.bc_var_dec, "POST_DEC" + (push ? " (push)" : "")));
                         }
                         else {
                             throw new CompilerException("unhandled post effect " + postEffectNode.getText(), postEffectNode.getToken());
@@ -2350,7 +2349,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                     source.add(new BitField(context, push && !write ? BitField.Op.Setup : BitField.Op.Write, push, bitfield));
                 }
                 else if (write) {
-                    source.add(new Bytecode(context, 0x82, "WRITE"));
+                    source.add(new Bytecode(context, Spin2Bytecode.bc_write_push, "WRITE"));
                 }
             }
         }
@@ -2362,10 +2361,10 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
         List<Spin2Bytecode> source = new ArrayList<Spin2Bytecode>();
 
         if (trap) {
-            source.add(new Bytecode(context, push ? 0x03 : 0x02, "ANCHOR_TRAP"));
+            source.add(new Bytecode(context, push ? Spin2Bytecode.bc_drop_trap_push : Spin2Bytecode.bc_drop_trap, "ANCHOR_TRAP"));
         }
         else {
-            source.add(new Bytecode(context, push ? 0x01 : 0x00, "ANCHOR"));
+            source.add(new Bytecode(context, push ? Spin2Bytecode.bc_drop_push : Spin2Bytecode.bc_drop, "ANCHOR"));
         }
 
         if (symbol instanceof Method) {
@@ -2466,7 +2465,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
             }
 
             source.add(new Bytecode(context, new byte[] {
-                (byte) 0x0B,
+                (byte) Spin2Bytecode.bc_call_ptr,
             }, "CALL_PTR"));
         }
 
@@ -2497,7 +2496,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                 source.addAll(compileBytecodeExpression(context, method, node.getChild(0), true));
                 source.addAll(compileBytecodeExpression(context, method, node.getChild(1), true));
                 source.add(new Bytecode(context, new byte[] {
-                    (byte) 0x9F, (byte) 0x94
+                    (byte) Spin2Bytecode.bc_bitrange, (byte) Spin2Bytecode.bc_addbits
                 }, "ADDBITS"));
             }
         }
@@ -2684,10 +2683,10 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                 if (postEffectNode != null) {
                     source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, MemoryOp.Op.Setup, true));
                     if ("++".equals(postEffectNode.getText())) {
-                        source.add(new Bytecode(context, push ? 0x87 : 0x83, "POST_INC" + (push ? " (push)" : "")));
+                        source.add(new Bytecode(context, push ? Spin2Bytecode.bc_var_postinc_push : Spin2Bytecode.bc_var_inc, "POST_INC" + (push ? " (push)" : "")));
                     }
                     else if ("--".equals(postEffectNode.getText())) {
-                        source.add(new Bytecode(context, push ? 0x88 : 0x84, "POST_DEC" + (push ? " (push)" : "")));
+                        source.add(new Bytecode(context, push ? Spin2Bytecode.bc_var_postdec_push : Spin2Bytecode.bc_var_dec, "POST_DEC" + (push ? " (push)" : "")));
                     }
                     else {
                         throw new CompilerException("unsupported post effect " + postEffectNode.getText(), postEffectNode.getToken());
@@ -2701,10 +2700,10 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                 source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, MemoryOp.Op.Setup, true));
                 if (variable.getPointerSize() == 1) {
                     if ("++".equals(postEffectNode.getText())) {
-                        source.add(new Bytecode(context, push ? 0x87 : 0x83, "POST_INC" + (push ? " (push)" : "")));
+                        source.add(new Bytecode(context, push ? Spin2Bytecode.bc_var_postinc_push : Spin2Bytecode.bc_var_inc, "POST_INC" + (push ? " (push)" : "")));
                     }
                     else if ("--".equals(postEffectNode.getText())) {
-                        source.add(new Bytecode(context, push ? 0x88 : 0x84, "POST_DEC" + (push ? " (push)" : "")));
+                        source.add(new Bytecode(context, push ? Spin2Bytecode.bc_var_postdec_push : Spin2Bytecode.bc_var_dec, "POST_DEC" + (push ? " (push)" : "")));
                     }
                     else {
                         throw new CompilerException("unsupported post effect " + postEffectNode.getText(), postEffectNode.getToken());
@@ -2790,10 +2789,10 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                         variable.setCalledBy(method);
                     }
                     if ("++".equals(postEffectNode.getText())) {
-                        source.add(new Bytecode(context, push ? 0x87 : 0x83, "POST_INC" + (push ? " (push)" : "")));
+                        source.add(new Bytecode(context, push ? Spin2Bytecode.bc_var_postinc_push : Spin2Bytecode.bc_var_inc, "POST_INC" + (push ? " (push)" : "")));
                     }
                     else if ("--".equals(postEffectNode.getText())) {
-                        source.add(new Bytecode(context, push ? 0x88 : 0x84, "POST_DEC" + (push ? " (push)" : "")));
+                        source.add(new Bytecode(context, push ? Spin2Bytecode.bc_var_postdec_push : Spin2Bytecode.bc_var_dec, "POST_DEC" + (push ? " (push)" : "")));
                     }
                     else {
                         throw new CompilerException("unsupported post effect " + postEffectNode.getText(), postEffectNode.getToken());
@@ -2890,10 +2889,10 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
     List<Spin2Bytecode> compilePostEffect(Context context, Spin2StatementNode node, boolean push) {
         List<Spin2Bytecode> source = new ArrayList<Spin2Bytecode>();
         if ("++".equals(node.getText())) {
-            source.add(new Bytecode(context, push ? 0x87 : 0x83, "POST_INC" + (push ? " (push)" : "")));
+            source.add(new Bytecode(context, push ? Spin2Bytecode.bc_var_postinc_push : Spin2Bytecode.bc_var_inc, "POST_INC" + (push ? " (push)" : "")));
         }
         else if ("--".equals(node.getText())) {
-            source.add(new Bytecode(context, push ? 0x88 : 0x84, "POST_DEC" + (push ? " (push)" : "")));
+            source.add(new Bytecode(context, push ? Spin2Bytecode.bc_var_postdec_push : Spin2Bytecode.bc_var_dec, "POST_DEC" + (push ? " (push)" : "")));
         }
         else {
             throw new CompilerException("unhandled post effect " + node.getText(), node.getToken());

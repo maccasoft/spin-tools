@@ -48,6 +48,7 @@ import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenIterator;
 import com.maccasoft.propeller.model.TypeDefinitionNode;
 import com.maccasoft.propeller.model.VariableNode;
+import com.maccasoft.propeller.spin2.Spin2Bytecode;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
 import com.maccasoft.propeller.spin2.Spin2GlobalContext;
 import com.maccasoft.propeller.spin2.Spin2Method;
@@ -254,7 +255,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
             List<Spin2MethodLine> lines = method.getLines();
             if (lines.size() == 0 || !"return".equals(lines.get(lines.size() - 1).getStatement())) {
                 Spin2MethodLine line = new Spin2MethodLine(method.getScope(), "RETURN");
-                line.addSource(new Bytecode(line.getScope(), 0x04, line.getStatement()));
+                line.addSource(new Bytecode(line.getScope(), Spin2Bytecode.bc_return_results, line.getStatement()));
                 method.addSource(line);
             }
         }
@@ -1413,7 +1414,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
             }
 
             if (!hasDefault) {
-                line.addSource(new Bytecode(line.getScope(), 0x1E, "CASE_DONE"));
+                line.addSource(new Bytecode(line.getScope(), Spin2Bytecode.bc_case_done, "CASE_DONE"));
             }
 
             line.addChild(doneLine);
@@ -1422,7 +1423,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
             while (parent != null) {
                 if ("switch".equals(parent.getStatement())) {
                     line = new Spin2MethodLine(context);
-                    line.addSource(new Bytecode(line.getScope(), 0x1E, "CASE_DONE"));
+                    line.addSource(new Bytecode(line.getScope(), Spin2Bytecode.bc_case_done, "CASE_DONE"));
                     break;
                 }
                 Spin2MethodLine targetLine = (Spin2MethodLine) parent.getData(token.getText());
@@ -1521,10 +1522,10 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                     builder.addToken(token);
                 }
                 line.addSource(compileBytecodeExpression(context, method, builder.getRoot(), true));
-                line.addSource(new Bytecode(line.getScope(), 0x05, line.getStatement()));
+                line.addSource(new Bytecode(line.getScope(), Spin2Bytecode.bc_return_args, line.getStatement()));
             }
             else {
-                line.addSource(new Bytecode(line.getScope(), 0x04, line.getStatement()));
+                line.addSource(new Bytecode(line.getScope(), Spin2Bytecode.bc_return_results, line.getStatement()));
             }
         }
         else if ("asm".equalsIgnoreCase(token.getText())) {
@@ -1588,7 +1589,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                 (byte) (count >> 8),
             }, String.format("ORG=$%03x, %d", org, count + 1)));
             line.addSource(0, new Bytecode(context, new byte[] {
-                0x19, 0x5E
+                Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_inline
             }, "INLINE-EXEC"));
         }
         else {
