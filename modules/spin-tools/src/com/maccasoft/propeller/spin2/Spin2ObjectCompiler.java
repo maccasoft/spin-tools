@@ -2554,7 +2554,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
         double clkfreq;
         double xinfreq = 20000000.0; // default crystal frequency
         double errfreq = 1000000.0;
-        int clkmode = 0;
+        int clkmode = isDebugEnabled() ? 0x0000000A : 0x00000000;
         int finalfreq = 20000000;
         int zzzz = 0b10_11;
         int pppp;
