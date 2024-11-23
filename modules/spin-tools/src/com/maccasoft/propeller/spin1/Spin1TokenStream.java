@@ -260,7 +260,7 @@ public class Spin1TokenStream extends TokenStream {
             char ch = Character.toUpperCase(text.charAt(index));
             if ((ch == '.' || ch == '#') && index + 1 < text.length()) {
                 ch = Character.toUpperCase(text.charAt(index + 1));
-                if (!((ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9'))) {
+                if (!((ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || ch == '_')) {
                     break;
                 }
             }

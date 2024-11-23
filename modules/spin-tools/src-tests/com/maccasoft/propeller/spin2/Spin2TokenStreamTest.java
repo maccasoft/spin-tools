@@ -677,13 +677,6 @@ class Spin2TokenStreamTest {
     }
 
     @Test
-    void testObjectConstant() {
-        Spin2TokenStream subject = new Spin2TokenStream("a#b");
-
-        assertEquals("a#b", subject.nextToken().getText());
-    }
-
-    @Test
     void testBit() {
         Spin2TokenStream subject = new Spin2TokenStream("a.");
 

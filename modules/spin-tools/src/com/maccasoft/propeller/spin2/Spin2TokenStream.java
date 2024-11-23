@@ -278,9 +278,9 @@ public class Spin2TokenStream extends TokenStream {
 
         while (index < text.length()) {
             char ch = Character.toUpperCase(text.charAt(index));
-            if ((ch == '.' || ch == '#') && index + 1 < text.length()) {
+            if (ch == '.' && index + 1 < text.length()) {
                 ch = Character.toUpperCase(text.charAt(index + 1));
-                if (!((ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9'))) {
+                if (!((ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || ch == '_')) {
                     break;
                 }
             }

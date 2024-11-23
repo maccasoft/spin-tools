@@ -528,7 +528,7 @@ class Spin2TreeBuilderTest {
 
     @Test
     void test1() {
-        String text = "not cc.IsDigit(look) and look <> term#NL";
+        String text = "not cc.IsDigit(look) and look <> term.NL";
         Assertions.assertEquals(""
             + "[and]\n"
             + " +-- [not]\n"
@@ -536,7 +536,7 @@ class Spin2TreeBuilderTest {
             + "           +-- [look]\n"
             + " +-- [<>]\n"
             + "      +-- [look]\n"
-            + "      +-- [term#NL]\n"
+            + "      +-- [term.NL]\n"
             + "", parse(text));
     }
 
