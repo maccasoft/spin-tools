@@ -47,18 +47,18 @@ class Spin2DebugTest {
             + "'     debug(`index=`udec(long[a++]))\n"
             + "00009 00009       D0             VAR_SETUP LONG DBASE+$00000 (short)\n"
             + "0000A 0000A       87             POST_INC (push)\n"
-            + "0000B 0000B       68 80          MEM_READ LONG\n"
-            + "0000D 0000D       43 04 01       DEBUG #1\n"
+            + "0000B 0000B       63 80          MEM_READ LONG\n"
+            + "0000D 0000D       41 04 01       DEBUG #1\n"
             + "00010 00010       04             RETURN\n"
             + "00011 00011       00 00 00       Padding\n"
             + "' Debug data\n"
-            + "00B28 00000       0F 00         \n"
-            + "00B2A 00002       04 00         \n"
+            + "00B74 00000       0F 00         \n"
+            + "00B76 00002       04 00         \n"
             + "' #1\n"
-            + "00B2C 00004       06 60 69 6E 64 STRING (`index=)\n"
-            + "00B31 00009       65 78 3D 00\n"
-            + "00B35 0000D       43             UDEC\n"
-            + "00B36 0000E       00             DONE\n"
+            + "00B78 00004       06 60 69 6E 64 STRING (`index=)\n"
+            + "00B7D 00009       65 78 3D 00\n"
+            + "00B81 0000D       43             UDEC\n"
+            + "00B82 0000E       00             DONE\n"
             + "", compile(text));
     }
 
@@ -81,7 +81,7 @@ class Spin2DebugTest {
             + "'     repeat\n"
             + "'         debug(udec(a))\n"
             + "00009 00009       E0             VAR_READ LONG DBASE+$00000 (short)\n"
-            + "0000A 0000A       43 04 01       DEBUG #1\n"
+            + "0000A 0000A       41 04 01       DEBUG #1\n"
             + "'         a := 1\n"
             + "0000D 0000D       A2             CONSTANT (1)\n"
             + "0000E 0000E       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
@@ -89,12 +89,12 @@ class Spin2DebugTest {
             + "00011 00011       04             RETURN\n"
             + "00012 00012       00 00          Padding\n"
             + "' Debug data\n"
-            + "00B28 00000       09 00         \n"
-            + "00B2A 00002       04 00         \n"
+            + "00B74 00000       09 00         \n"
+            + "00B76 00002       04 00         \n"
             + "' #1\n"
-            + "00B2C 00004       04             COGN\n"
-            + "00B2D 00005       41 61 00       UDEC(a)\n"
-            + "00B30 00008       00             DONE\n"
+            + "00B78 00004       04             COGN\n"
+            + "00B79 00005       41 61 00       UDEC(a)\n"
+            + "00B7C 00008       00             DONE\n"
             + "", compile(text));
     }
 
@@ -786,14 +786,14 @@ class Spin2DebugTest {
             + "' PUB main()\n"
             + "00008 00008       00             (stack size)\n"
             + "'     debug()\n"
-            + "00009 00009       43 00 01       DEBUG #1\n"
+            + "00009 00009       41 00 01       DEBUG #1\n"
             + "0000C 0000C       04             RETURN\n"
             + "0000D 0000D       00 00 00       Padding\n"
             + "' Debug data\n"
-            + "00B28 00000       05 00         \n"
-            + "00B2A 00002       04 00         \n"
+            + "00B74 00000       05 00         \n"
+            + "00B76 00002       04 00         \n"
             + "' #1\n"
-            + "00B2C 00004       00             DONE\n"
+            + "00B78 00004       00             DONE\n"
             + "", compile(text));
     }
 
@@ -813,11 +813,11 @@ class Spin2DebugTest {
             + "' PUB main()\n"
             + "00008 00008       00             (stack size)\n"
             + "'     debug\n"
-            + "00009 00009       43 00 00       DEBUG #0\n"
+            + "00009 00009       41 00 00       DEBUG #0\n"
             + "0000C 0000C       04             RETURN\n"
             + "0000D 0000D       00 00 00       Padding\n"
             + "' Debug data\n"
-            + "00B28 00000       02 00         \n"
+            + "00B74 00000       02 00         \n"
             + "", compile(text));
     }
 
@@ -842,10 +842,10 @@ class Spin2DebugTest {
             + "0000D 0000D       04             RETURN\n"
             + "0000E 0000E       00 00          Padding\n"
             + "' Debug data\n"
-            + "00B28 00000       05 00         \n"
-            + "00B2A 00002       04 00         \n"
+            + "00B74 00000       05 00         \n"
+            + "00B76 00002       04 00         \n"
             + "' #1\n"
-            + "00B2C 00004       00             DONE\n"
+            + "00B78 00004       00             DONE\n"
             + "", compile(text));
     }
 
@@ -870,7 +870,7 @@ class Spin2DebugTest {
             + "0000D 0000D       04             RETURN\n"
             + "0000E 0000E       00 00          Padding\n"
             + "' Debug data\n"
-            + "00B28 00000       02 00         \n"
+            + "00B74 00000       02 00         \n"
             + "", compile(text));
     }
 

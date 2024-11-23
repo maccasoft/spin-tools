@@ -172,8 +172,8 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
         descriptors.put("pollct", new FunctionDescriptor(Spin2Bytecode.bc_pollct, -1, 1, 1));
         descriptors.put("waitct", new FunctionDescriptor(Spin2Bytecode.bc_waitct, -1, 1, 0));
 
-        descriptors.put("pinw", new FunctionDescriptor(Spin2Bytecode.bc_pinwrite, -1, 2, 0));
-        descriptors.put("pinwrite", new FunctionDescriptor(Spin2Bytecode.bc_pinwrite, -1, 2, 0));
+        descriptors.put("pinw", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_pinwrite, 2, 0));
+        descriptors.put("pinwrite", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_pinwrite, 2, 0));
         descriptors.put("pinl", new FunctionDescriptor(Spin2Bytecode.bc_pinlow, -1, 1, 0));
         descriptors.put("pinlow", new FunctionDescriptor(Spin2Bytecode.bc_pinlow, -1, 1, 0));
         descriptors.put("pinh", new FunctionDescriptor(Spin2Bytecode.bc_pinhigh, -1, 1, 0));
@@ -182,11 +182,11 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
         descriptors.put("pintoggle", new FunctionDescriptor(Spin2Bytecode.bc_pintoggle, -1, 1, 0));
         descriptors.put("pinf", new FunctionDescriptor(Spin2Bytecode.bc_pinfloat, -1, 1, 0));
         descriptors.put("pinfloat", new FunctionDescriptor(Spin2Bytecode.bc_pinfloat, -1, 1, 0));
-        descriptors.put("pinr", new FunctionDescriptor(Spin2Bytecode.bc_pinread, -1, 1, 1));
-        descriptors.put("pinread", new FunctionDescriptor(Spin2Bytecode.bc_pinread, -1, 1, 1));
+        descriptors.put("pinr", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_pinread, 1, 1));
+        descriptors.put("pinread", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_pinread, 1, 1));
 
-        descriptors.put("pinstart", new FunctionDescriptor(Spin2Bytecode.bc_pinstart, -1, 4, 0));
-        descriptors.put("pinclear", new FunctionDescriptor(Spin2Bytecode.bc_pinclear, -1, 1, 0));
+        descriptors.put("pinstart", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_pinstart, 4, 0));
+        descriptors.put("pinclear", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_pinclear, 1, 0));
 
         descriptors.put("wrpin", new FunctionDescriptor(Spin2Bytecode.bc_wrpin, -1, 2, 0));
         descriptors.put("wxpin", new FunctionDescriptor(Spin2Bytecode.bc_wxpin, -1, 2, 0));

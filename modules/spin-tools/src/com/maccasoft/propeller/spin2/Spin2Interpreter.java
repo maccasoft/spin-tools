@@ -14,9 +14,20 @@ import java.io.InputStream;
 
 public class Spin2Interpreter {
 
-    int debugnop0E54; // _debugnop1_     dirh    #63-63                  'write clkfreq to rx pin long repository'
-    int debugnop0E58; // _debugnop2_     wxpin   z,#63-63
-    int debugnop0E5C; // _debugnop3_     dirl    #63-63                  '(these 3 are NOP'd by compiler if not DEBUG, else fixed with debug_pin_rx)
+    static final int _pbase_init = 0x0030;
+    static final int _vbase_init = 0x0034;
+    static final int _dbase_init = 0x0038;
+    static final int _var_longs = 0x003C;
+
+    static final int _clkmode_hub = 0x0040;
+    static final int _clkfreq_hub = 0x0044;
+
+    static final int _debugnop1 = 0x0E54;
+    static final int _debugnop2 = 0x0E58;
+    static final int _debugnop3 = 0x0E5C;
+
+    int[] debugnop = new int[3];
+
     byte[] code = new byte[0];
 
     public Spin2Interpreter() {
@@ -24,10 +35,10 @@ public class Spin2Interpreter {
         try {
             code = new byte[is.available()];
             is.read(code);
-            writeLong(0x003C, 0x00000100);
-            debugnop0E54 = readLong(0x0E54);
-            debugnop0E58 = readLong(0x0E58);
-            debugnop0E5C = readLong(0x0E5C);
+            writeLong(_var_longs, 0x00000100);
+            debugnop[0] = readLong(_debugnop1);
+            debugnop[1] = readLong(_debugnop2);
+            debugnop[2] = readLong(_debugnop3);
             setPBase(code.length);
         } catch (Exception e) {
             e.printStackTrace();
@@ -45,39 +56,39 @@ public class Spin2Interpreter {
     }
 
     public void setPBase(int value) {
-        writeLong(0x30, value);
+        writeLong(_pbase_init, value);
     }
 
     public int getPBase() {
-        return readLong(0x30);
+        return readLong(_pbase_init);
     }
 
     public void setVBase(int value) {
-        writeLong(0x34, value);
+        writeLong(_vbase_init, value);
     }
 
     public int getVBase() {
-        return readLong(0x34);
+        return readLong(_vbase_init);
     }
 
     public void setDBase(int value) {
-        writeLong(0x38, value);
-    }
-
-    public void setClearLongs(int value) {
-        writeLong(0x3C, value);
+        writeLong(_dbase_init, value);
     }
 
     public int getDBase() {
-        return readLong(0x38);
+        return readLong(_dbase_init);
+    }
+
+    public void setClearLongs(int value) {
+        writeLong(_var_longs, value);
     }
 
     public void setClkMode(int mode) {
-        writeLong(0x40, mode);
+        writeLong(_clkmode_hub, mode);
     }
 
     public void setClkFreq(int value) {
-        writeLong(0x44, value);
+        writeLong(_clkfreq_hub, value);
     }
 
     void writeLong(int index, int value) {
@@ -99,22 +110,22 @@ public class Spin2Interpreter {
         int augd = Spin2InstructionObject.e.setValue(0, 0b1111);
         augd = Spin2InstructionObject.o.setValue(augd, 0b1111100);
         augd = Spin2InstructionObject.x.setValue(augd, delay >> 9);
-        writeLong(0x0E54, augd);
+        writeLong(_debugnop1, augd);
 
         int waitx = Spin2InstructionObject.e.setValue(0, 0b1111);
         waitx = Spin2InstructionObject.o.setValue(waitx, 0b1101011);
         waitx = Spin2InstructionObject.i.setBoolean(waitx, true);
         waitx = Spin2InstructionObject.d.setValue(waitx, delay);
         waitx = Spin2InstructionObject.s.setValue(waitx, 0b000011111);
-        writeLong(0x0E58, waitx);
+        writeLong(_debugnop2, waitx);
 
-        writeLong(0x0E5C, 0x00000000);
+        writeLong(_debugnop3, 0x00000000);
     }
 
     public void setDebugPins(int tx, int rx) {
-        writeLong(0x0E54, Spin2InstructionObject.d.setValue(debugnop0E54, rx));
-        writeLong(0x0E58, Spin2InstructionObject.s.setValue(debugnop0E58, rx));
-        writeLong(0x0E5C, Spin2InstructionObject.d.setValue(debugnop0E5C, rx));
+        writeLong(_debugnop1, Spin2InstructionObject.d.setValue(debugnop[0], rx));
+        writeLong(_debugnop2, Spin2InstructionObject.s.setValue(debugnop[1], rx));
+        writeLong(_debugnop3, Spin2InstructionObject.d.setValue(debugnop[2], rx));
     }
 
 }

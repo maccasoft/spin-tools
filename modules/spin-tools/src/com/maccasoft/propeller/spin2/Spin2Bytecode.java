@@ -86,75 +86,72 @@ public class Spin2Bytecode {
     public static final int bc_pollct = 0x33;
     public static final int bc_waitct = 0x34;
 
-    public static final int bc_pinwrite = 0x35;
-    public static final int bc_pinlow = 0x36;
-    public static final int bc_pinhigh = 0x37;
-    public static final int bc_pintoggle = 0x38;
-    public static final int bc_pinfloat = 0x39;
-    public static final int bc_pinread = 0x3A;
+    public static final int bc_pinlow = 0x35;
+    public static final int bc_pinhigh = 0x36;
+    public static final int bc_pintoggle = 0x37;
+    public static final int bc_pinfloat = 0x38;
 
-    public static final int bc_pinstart = 0x3B;
-    public static final int bc_pinclear = 0x3C;
+    public static final int bc_wrpin = 0x39;
+    public static final int bc_wxpin = 0x3A;
+    public static final int bc_wypin = 0x3B;
+    public static final int bc_akpin = 0x3C;
+    public static final int bc_rdpin = 0x3D;
+    public static final int bc_rqpin = 0x3E;
 
-    public static final int bc_wrpin = 0x3D;
-    public static final int bc_wxpin = 0x3E;
-    public static final int bc_wypin = 0x3F;
-    public static final int bc_akpin = 0x40;
-    public static final int bc_rdpin = 0x41;
-    public static final int bc_rqpin = 0x42;
+    public static final int bc_unused_3F = 0x3F;
+    public static final int bc_unused_40 = 0x40;
 
-    public static final int bc_debug = 0x43;
+    public static final int bc_debug = 0x41;
 
-    public static final int bc_con_rfbyte = 0x44;
-    public static final int bc_con_rfbyte_not = 0x45;
-    public static final int bc_con_rfword = 0x46;
-    public static final int bc_con_rfword_not = 0x47;
-    public static final int bc_con_rflong = 0x48;
-    public static final int bc_con_rfbyte_decod = 0x49;
-    public static final int bc_con_rfbyte_decod_not = 0x4A;
-    public static final int bc_con_rfbyte_bmask = 0x4B;
-    public static final int bc_con_rfbyte_bmask_not = 0x4C;
+    public static final int bc_con_rfbyte = 0x42;
+    public static final int bc_con_rfbyte_not = 0x43;
+    public static final int bc_con_rfword = 0x44;
+    public static final int bc_con_rfword_not = 0x45;
+    public static final int bc_con_rflong = 0x46;
+    public static final int bc_con_rfbyte_decod = 0x47;
+    public static final int bc_con_rfbyte_decod_not = 0x48;
+    public static final int bc_con_rfbyte_bmask = 0x49;
+    public static final int bc_con_rfbyte_bmask_not = 0x4A;
 
-    public static final int bc_setup_field_p = 0x4D;
-    public static final int bc_setup_field_pi = 0x4E;
+    public static final int bc_setup_field_p = 0x4B;
+    public static final int bc_setup_field_pi = 0x4C;
 
-    public static final int bc_setup_reg = 0x4F;
-    public static final int bc_setup_reg_pi = 0x50;
+    public static final int bc_setup_reg = 0x4D;
+    public static final int bc_setup_reg_pi = 0x4E;
 
-    public static final int bc_setup_byte_pbase = 0x51;
-    public static final int bc_setup_byte_vbase = 0x52;
-    public static final int bc_setup_byte_dbase = 0x53;
+    public static final int bc_setup_byte_pbase = 0x4F;
+    public static final int bc_setup_byte_vbase = 0x50;
+    public static final int bc_setup_byte_dbase = 0x51;
+    public static final int bc_setup_byte_pbase_pi = 0x52;
+    public static final int bc_setup_byte_vbase_pi = 0x53;
+    public static final int bc_setup_byte_dbase_pi = 0x54;
 
-    public static final int bc_setup_byte_pbase_pi = 0x54;
-    public static final int bc_setup_byte_vbase_pi = 0x55;
-    public static final int bc_setup_byte_dbase_pi = 0x56;
+    public static final int bc_setup_word_pbase = 0x55;
+    public static final int bc_setup_word_vbase = 0x56;
+    public static final int bc_setup_word_dbase = 0x57;
+    public static final int bc_setup_word_pbase_pi = 0x58;
+    public static final int bc_setup_word_vbase_pi = 0x59;
+    public static final int bc_setup_word_dbase_pi = 0x5A;
 
-    public static final int bc_setup_word_pbase = 0x57;
-    public static final int bc_setup_word_vbase = 0x58;
-    public static final int bc_setup_word_dbase = 0x59;
+    public static final int bc_setup_long_pbase = 0x5B;
+    public static final int bc_setup_long_vbase = 0x5C;
+    public static final int bc_setup_long_dbase = 0x5D;
+    public static final int bc_setup_long_pbase_pi = 0x5E;
+    public static final int bc_setup_long_vbase_pi = 0x5F;
+    public static final int bc_setup_long_dbase_pi = 0x60;
 
-    public static final int bc_setup_word_pbase_pi = 0x5A;
-    public static final int bc_setup_word_vbase_pi = 0x5B;
-    public static final int bc_setup_word_dbase_pi = 0x5C;
+    public static final int bc_setup_byte_pa = 0x61;
+    public static final int bc_setup_word_pa = 0x62;
+    public static final int bc_setup_long_pa = 0x63;
 
-    public static final int bc_setup_long_pbase = 0x5D;
-    public static final int bc_setup_long_vbase = 0x5E;
-    public static final int bc_setup_long_dbase = 0x5F;
+    public static final int bc_setup_byte_pb_pi = 0x64;
+    public static final int bc_setup_word_pb_pi = 0x65;
+    public static final int bc_setup_long_pb_pi = 0x66;
 
-    public static final int bc_setup_long_pbase_pi = 0x60;
-    public static final int bc_setup_long_vbase_pi = 0x61;
-    public static final int bc_setup_long_dbase_pi = 0x62;
-
-    public static final int bc_setup_byte_pb_pi = 0x63;
-    public static final int bc_setup_word_pb_pi = 0x64;
-    public static final int bc_setup_long_pb_pi = 0x65;
-
-    public static final int bc_setup_byte_pa = 0x66;
-    public static final int bc_setup_word_pa = 0x67;
-    public static final int bc_setup_long_pa = 0x68;
-
-    public static final int unused1 = 0x69;
-    public static final int unused2 = 0x6A;
+    public static final int bc_setup_struct_pbase = 0x67;
+    public static final int bc_setup_struct_vbase = 0x68;
+    public static final int bc_setup_struct_dbase = 0x69;
+    public static final int bc_setup_struct_pop = 0x6A;
 
     public static final int bc_ternary = 0x6B;
 
@@ -216,14 +213,16 @@ public class Spin2Bytecode {
     public static final int bc_string = 0x9E;
     public static final int bc_bitrange = 0x9F;
 
-    public static final int bc_con_n = 0xA0; //,16
-    public static final int bc_setup_reg_1D8_1F8 = 0xB0; //,16
-    public static final int bc_setup_var_0_15 = 0xC0; //,16
-    public static final int bc_setup_local_0_15 = 0xD0; //,16
-    public static final int bc_read_local_0_15 = 0xE0; //,16
-    public static final int bc_write_local_0_15 = 0xF0; //,16
+    public static final int bc_con_n = 0xA0;
+    public static final int bc_setup_reg_1D8_1F8 = 0xB0;
+    public static final int bc_setup_var_0_15 = 0xC0;
+    public static final int bc_setup_local_0_15 = 0xD0;
+    public static final int bc_read_local_0_15 = 0xE0;
+    public static final int bc_write_local_0_15 = 0xF0;
 
-    public static final int bc_repeat_var_init_n = 0x7A; // variable operator bytecodes
+    public static final int bc_set_incdec = 0x79;
+
+    public static final int bc_repeat_var_init_n = 0x7A;
     public static final int bc_repeat_var_init_1 = 0x7B;
     public static final int bc_repeat_var_init = 0x7C;
     public static final int bc_repeat_var_loop = 0x7D;
@@ -349,44 +348,55 @@ public class Spin2Bytecode {
     public static final int bc_call = 0x64;
     public static final int bc_getregs = 0x66;
     public static final int bc_setregs = 0x68;
-    public static final int bc_bytemove = 0x6A;
-    public static final int bc_bytefill = 0x6C;
-    public static final int bc_wordmove = 0x6E;
-    public static final int bc_wordfill = 0x70;
-    public static final int bc_longmove = 0x72;
-    public static final int bc_longfill = 0x74;
-    public static final int bc_strsize = 0x76;
-    public static final int bc_strcomp = 0x78;
-    public static final int bc_strcopy = 0x7A;
-    public static final int bc_getcrc = 0x7C;
-    public static final int bc_waitus = 0x7E;
-    public static final int bc_waitms = 0x80;
-    public static final int bc_getms = 0x82;
-    public static final int bc_getsec = 0x84;
-    public static final int bc_muldiv64 = 0x86;
-    public static final int bc_qsin = 0x88;
-    public static final int bc_qcos = 0x8A;
-    public static final int bc_rotxy = 0x8C;
-    public static final int bc_polxy = 0x8E;
-    public static final int bc_xypol = 0x90;
+    public static final int bc_bytefill = 0x6A;
+    public static final int bc_bytemove = 0x6C;
+    public static final int bc_byteswap = 0x6E;
+    public static final int bc_bytecomp = 0x70;
+    public static final int bc_wordfill = 0x72;
+    public static final int bc_wordmove = 0x74;
+    public static final int bc_wordswap = 0x76;
+    public static final int bc_wordcomp = 0x78;
+    public static final int bc_longfill = 0x7A;
+    public static final int bc_longmove = 0x7C;
+    public static final int bc_longswap = 0x7E;
+    public static final int bc_longcomp = 0x80;
+    public static final int bc_strsize = 0x82;
+    public static final int bc_strcomp = 0x84;
+    public static final int bc_strcopy = 0x86;
+    public static final int bc_getcrc = 0x88;
+    public static final int bc_waitus = 0x8A;
+    public static final int bc_waitms = 0x8C;
+    public static final int bc_getms = 0x8E;
+    public static final int bc_getsec = 0x90;
+    public static final int bc_muldiv64 = 0x92;
+    public static final int bc_qsin = 0x94;
+    public static final int bc_qcos = 0x96;
+    public static final int bc_rotxy = 0x98;
+    public static final int bc_polxy = 0x9A;
+    public static final int bc_xypol = 0x9C;
 
-    public static final int bc_nan = 0x92; // hub bytecodes, floating point
-    public static final int bc_fneg = 0x94;
-    public static final int bc_fabs = 0x96;
-    public static final int bc_fsqrt = 0x98;
-    public static final int bc_fadd = 0x9A;
-    public static final int bc_fsub = 0x9C;
-    public static final int bc_fmul = 0x9E;
-    public static final int bc_fdiv = 0xA0;
-    public static final int bc_flt = 0xA2;
-    public static final int bc_fgt = 0xA4;
-    public static final int bc_fne = 0xA6;
-    public static final int bc_fe = 0xA8;
-    public static final int bc_flte = 0xAA;
-    public static final int bc_fgte = 0xAC;
-    public static final int bc_round = 0xAE;
-    public static final int bc_trunc = 0xB0;
-    public static final int bc_float = 0xB2;
+    public static final int bc_float = 0x9E; // hub bytecodes, floating point
+    public static final int bc_trunc = 0xA0;
+    public static final int bc_round = 0xA2;
+    public static final int bc_fneg = 0xA4;
+    public static final int bc_fabs = 0xA6;
+    public static final int bc_fsqrt = 0xA8;
+    public static final int bc_fadd = 0xAA;
+    public static final int bc_fsub = 0xAC;
+    public static final int bc_fmul = 0xAE;
+    public static final int bc_fdiv = 0xB0;
+    public static final int bc_flt = 0xB2;
+    public static final int bc_fgt = 0xB4;
+    public static final int bc_fne = 0xB6;
+    public static final int bc_fe = 0xB8;
+    public static final int bc_flte = 0xBA;
+    public static final int bc_fgte = 0xBC;
+    public static final int bc_nan = 0xBE;
+
+    public static final int bc_pinread = 0xC0;
+    public static final int bc_pinwrite = 0xC2;
+    public static final int bc_pinstart = 0xC4;
+    public static final int bc_pinclear = 0xC6;
 
     public static class Descriptor {
         public byte[] code;
@@ -477,8 +487,8 @@ public class Spin2Bytecode {
         descriptors.put("POLLCT", new Descriptor(bc_pollct, -1, 1, 1));
         descriptors.put("WAITCT", new Descriptor(bc_waitct, -1, 1, 0));
 
-        descriptors.put("PINW", new Descriptor(bc_pinwrite, -1, 2, 0));
-        descriptors.put("PINWRITE", new Descriptor(bc_pinwrite, -1, 2, 0));
+        descriptors.put("PINW", new Descriptor(bc_hub_bytecode, bc_pinwrite, 2, 0));
+        descriptors.put("PINWRITE", new Descriptor(bc_hub_bytecode, bc_pinwrite, 2, 0));
         descriptors.put("PINL", new Descriptor(bc_pinlow, -1, 1, 0));
         descriptors.put("PINLOW", new Descriptor(bc_pinlow, -1, 1, 0));
         descriptors.put("PINH", new Descriptor(bc_pinhigh, -1, 1, 0));
@@ -487,11 +497,11 @@ public class Spin2Bytecode {
         descriptors.put("PINTOGGLE", new Descriptor(bc_pintoggle, -1, 1, 0));
         descriptors.put("PINF", new Descriptor(bc_pinfloat, -1, 1, 0));
         descriptors.put("PINFLOAT", new Descriptor(bc_pinfloat, -1, 1, 0));
-        descriptors.put("PINR", new Descriptor(bc_pinread, -1, 1, 1));
-        descriptors.put("PINREAD", new Descriptor(bc_pinread, -1, 1, 1));
+        descriptors.put("PINR", new Descriptor(bc_hub_bytecode, bc_pinread, 1, 1));
+        descriptors.put("PINREAD", new Descriptor(bc_hub_bytecode, bc_pinread, 1, 1));
 
-        descriptors.put("PINSTART", new Descriptor(bc_pinstart, -1, 4, 0));
-        descriptors.put("PINCLEAR", new Descriptor(bc_pinclear, -1, 1, 0));
+        descriptors.put("PINSTART", new Descriptor(bc_hub_bytecode, bc_pinstart, 4, 0));
+        descriptors.put("PINCLEAR", new Descriptor(bc_hub_bytecode, bc_pinclear, 1, 0));
 
         descriptors.put("WRPIN", new Descriptor(bc_wrpin, -1, 2, 0));
         descriptors.put("WXPIN", new Descriptor(bc_wxpin, -1, 2, 0));

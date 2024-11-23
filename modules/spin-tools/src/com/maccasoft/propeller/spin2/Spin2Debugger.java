@@ -16,6 +16,20 @@ import com.maccasoft.propeller.Propeller2Loader;
 
 public class Spin2Debugger {
 
+    static final int _clkfrq = 0x00D4;
+    static final int _clkmode1 = 0x00D8;
+    static final int _clkmode2 = 0x00DC;
+    static final int _delay = 0x00E0;
+    static final int _appsize = 0x00E4;
+    static final int _hubset = 0x00E0;
+
+    static final int _brk_cond = 0x011C;
+
+    static final int _txpin = 0x0140;
+    static final int _rxpin = 0x0144;
+    static final int _baud = 0x0148;
+    static final int _dlyms = 0x014C;
+
     byte[] code = new byte[0];
 
     public Spin2Debugger() {
@@ -23,7 +37,7 @@ public class Spin2Debugger {
         try {
             code = new byte[is.available()];
             is.read(code);
-            writeLong(0x0148, Propeller2Loader.UPLOAD_BAUD_RATE);
+            writeLong(_baud, Propeller2Loader.UPLOAD_BAUD_RATE);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -36,43 +50,43 @@ public class Spin2Debugger {
     }
 
     public void setTxPin(int txPin) {
-        writeLong(0x0140, txPin);
+        writeLong(_txpin, txPin);
     }
 
     public void setRxPin(int rxPin) {
-        writeLong(0x0144, rxPin);
+        writeLong(_rxpin, rxPin);
     }
 
     public void setBaud(int baud) {
-        writeLong(0x0148, baud);
+        writeLong(_baud, baud);
     }
 
     public void setClkFreq(int freq) {
-        writeLong(0xD4, freq);
+        writeLong(_clkfrq, freq);
     }
 
     public void setClkMode1(int mode) {
-        writeLong(0xD8, mode);
+        writeLong(_clkmode1, mode);
     }
 
     public void setClkMode2(int mode) {
-        writeLong(0xDC, mode);
+        writeLong(_clkmode2, mode);
     }
 
     public void setDelay(int delay) {
-        writeLong(0xE0, delay);
+        writeLong(_delay, delay);
     }
 
     public void setAppSize(int size) {
-        writeLong(0xE4, size);
+        writeLong(_appsize, size);
     }
 
     public void setHubset(int set) {
-        writeLong(0xE8, set);
+        writeLong(_hubset, set);
     }
 
     public void setBrkCond(int set) {
-        writeLong(0x11C, set);
+        writeLong(_brk_cond, set);
     }
 
     public void setCogs(int set) {
