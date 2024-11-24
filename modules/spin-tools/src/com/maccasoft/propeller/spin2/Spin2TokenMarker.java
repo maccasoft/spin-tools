@@ -576,9 +576,15 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         debugKeywords.put("SBIN_WORD_ARRAY_", TokenId.FUNCTION);
         debugKeywords.put("SBIN_LONG_ARRAY_", TokenId.FUNCTION);
 
+        debugKeywords.put("BOOL", TokenId.FUNCTION);
+        debugKeywords.put("BOOL_", TokenId.FUNCTION);
+        debugKeywords.put("C_Z", TokenId.FUNCTION);
+
         debugKeywords.put("DLY", TokenId.FUNCTION);
         debugKeywords.put("ZSTR", TokenId.FUNCTION);
+        debugKeywords.put("ZSTR_", TokenId.FUNCTION);
         debugKeywords.put("LSTR", TokenId.FUNCTION);
+        debugKeywords.put("LSTR_", TokenId.FUNCTION);
 
         debugKeywords.put("IF", TokenId.FUNCTION);
         debugKeywords.put("IFNOT", TokenId.FUNCTION);

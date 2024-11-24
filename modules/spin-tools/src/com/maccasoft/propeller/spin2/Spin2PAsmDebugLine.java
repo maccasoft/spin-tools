@@ -139,9 +139,6 @@ public class Spin2PAsmDebugLine {
             token = tokens.get(index++);
             switch (state) {
                 case 0:
-                    if (token.type == Token.OPERATOR) {
-                        throw new CompilerException("unexpected operator '" + token.getText() + "'", token);
-                    }
                     if (token.type == Token.STRING) {
                         root.addStatement(new Spin2DebugCommand(token));
                         if (token.getText().startsWith("`")) {
@@ -152,14 +149,17 @@ public class Spin2PAsmDebugLine {
                         }
                         break;
                     }
-                    if (token.type != 0) {
-                        root.addStatement(new Spin2DebugCommand(token));
-                        break;
+                    if (token.type != 0 && token.type != Token.KEYWORD) {
+                        throw new CompilerException("unexpected operator '" + token.getText() + "'", token);
                     }
                     root.addStatement(child = new Spin2DebugCommand(token));
                     state = 1;
                     break;
                 case 1:
+                    if (",".equals(token.getText())) {
+                        state = 0;
+                        break;
+                    }
                     if (!"(".equals(token.getText())) {
                         throw new CompilerException("expected '(' got '" + token.getText() + "'", token);
                     }

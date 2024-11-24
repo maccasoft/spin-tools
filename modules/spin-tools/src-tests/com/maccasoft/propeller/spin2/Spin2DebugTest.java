@@ -874,6 +874,105 @@ class Spin2DebugTest {
             + "", compile(text));
     }
 
+    @Test
+    void testSpinBool() {
+        Spin2Debug subject = new Spin2Debug();
+        String actual = dumpDebugData(subject.compileDebugStatement(parse("debug(bool(a,b))")));
+        Assertions.assertEquals(""
+            + "00000 00000       04             COGN\n"
+            + "00001 00001       21 61 00       BOOL(a)\n"
+            + "00004 00004       20 62 00       BOOL(b)\n"
+            + "00007 00007       00             DONE\n"
+            + "", actual);
+    }
+
+    @Test
+    void testSpinBoolBacktick() {
+        Spin2Debug subject = new Spin2Debug();
+
+        String actual = dumpDebugData(subject.compileDebugStatement(parse("debug(``?(a,b))")));
+        Assertions.assertEquals(""
+            + "00000 00000       06 60 00       STRING (`)\n"
+            + "00003 00003       23             BOOL\n"
+            + "00004 00004       22             BOOL\n"
+            + "00005 00005       00             DONE\n"
+            + "", actual);
+    }
+
+    @Test
+    void testSpinC_Z() {
+        String text = "debug(c_z, udec(a), c_z)";
+
+        Spin2Debug subject = new Spin2Debug();
+        String actual = dumpDebugData(subject.compileDebugStatement(parse(text)));
+        Assertions.assertEquals(""
+            + "00000 00000       04             COGN\n"
+            + "00001 00001       0B             C_Z\n"
+            + "00002 00002       40 61 00       UDEC(a)\n"
+            + "00005 00005       0A             C_Z\n"
+            + "00006 00006       00             DONE\n"
+            + "", actual);
+    }
+
+    @Test
+    void testPAsmBool() {
+        Context context = new Context();
+        context.addSymbol("a", new NumberLiteral(1));
+        context.addSymbol("b", new NumberLiteral(2));
+
+        Spin2Debug subject = new Spin2Debug();
+
+        Spin2PAsmDebugLine root = Spin2PAsmDebugLine.buildFrom(context, parseTokens("debug(bool(a,b))"));
+        String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
+        Assertions.assertEquals(""
+            + "00000 00000       01             ASMMODE\n"
+            + "00001 00001       04             COGN\n"
+            + "00002 00002       21 61 00 80 01 BOOL(a)\n"
+            + "00007 00007       20 62 00 80 02 BOOL(b)\n"
+            + "0000C 0000C       00             DONE\n"
+            + "", actual);
+    }
+
+    @Test
+    void testPAsmBoolBacktick() {
+        Context context = new Context();
+        context.addSymbol("a", new NumberLiteral(1));
+        context.addSymbol("b", new NumberLiteral(2));
+
+        Spin2Debug subject = new Spin2Debug();
+
+        Spin2PAsmDebugLine root = Spin2PAsmDebugLine.buildFrom(context, parseTokens("debug(``?(a,b))"));
+        String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
+        Assertions.assertEquals(""
+            + "00000 00000       01             ASMMODE\n"
+            + "00001 00001       06 60 00       STRING (`)\n"
+            + "00004 00004       23 80 01       BOOL\n"
+            + "00007 00007       22 80 02       BOOL\n"
+            + "0000A 0000A       00             DONE\n"
+            + "", actual);
+    }
+
+    @Test
+    void testPAsmC_Z() {
+        Context context = new Context();
+        context.addSymbol("a", new NumberLiteral(1));
+
+        String text = "debug(c_z, udec(a), c_z)";
+
+        Spin2PAsmDebugLine root = Spin2PAsmDebugLine.buildFrom(context, parseTokens(text));
+
+        Spin2Debug subject = new Spin2Debug();
+        String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
+        Assertions.assertEquals(""
+            + "00000 00000       01             ASMMODE\n"
+            + "00001 00001       04             COGN\n"
+            + "00002 00002       0B             C_Z\n"
+            + "00003 00003       40 61 00 80 01 UDEC(a)\n"
+            + "00008 00008       0A             C_Z\n"
+            + "00009 00009       00             DONE\n"
+            + "", actual);
+    }
+
     List<Token> parseTokens(String text) {
         List<Token> tokens = new ArrayList<Token>();
 

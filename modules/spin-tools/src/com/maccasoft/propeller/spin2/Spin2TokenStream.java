@@ -611,7 +611,7 @@ public class Spin2TokenStream extends TokenStream {
         if (ch == '`') {
             if (index < text.length()) {
                 ch = text.charAt(index);
-                if (ch == '$' || ch == '%' || ch == '.' || ch == '#') {
+                if (ch == '$' || ch == '%' || ch == '.' || ch == '#' || ch == '?') {
                     index++;
                     column++;
                 }

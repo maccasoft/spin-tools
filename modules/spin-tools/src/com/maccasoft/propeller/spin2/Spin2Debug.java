@@ -25,16 +25,17 @@ import com.maccasoft.propeller.spin2.Spin2PAsmDebugLine.Spin2DebugExpression;
 
 public class Spin2Debug {
 
-    public static final int DBC_DONE = 0;
-    public static final int DBC_ASMMODE = 1; // Switches into PASM mode...
-    public static final int DBC_IF = 2;
-    public static final int DBC_IFNOT = 3;
-    public static final int DBC_COGN = 4;
-    public static final int DBC_CHAR = 5;
-    public static final int DBC_STRING = 6;
-    public static final int DBC_DELAY = 7;
-    public static final int DBC_PC_KEY = 8;
-    public static final int DBC_PC_MOUSE = 9;
+    public static final int DBC_DONE = 0x00;
+    public static final int DBC_ASMMODE = 0x01; // Switches into PASM mode...
+    public static final int DBC_IF = 0x02;
+    public static final int DBC_IFNOT = 0x03;
+    public static final int DBC_COGN = 0x04;
+    public static final int DBC_CHAR = 0x05;
+    public static final int DBC_STRING = 0x06;
+    public static final int DBC_DELAY = 0x07;
+    public static final int DBC_PC_KEY = 0x08;
+    public static final int DBC_PC_MOUSE = 0x09;
+    public static final int DBC_C_Z = 0x0A;
 
     // Flags
     public static final int DBC_FLAG_NOCOMMA = 0x01;
@@ -46,6 +47,7 @@ public class Spin2Debug {
     public static final int DBC_SIZE_WORD = 0x08;
     public static final int DBC_SIZE_LONG = 0x0C;
     // Output type
+    public static final int DBC_TYPE_BOOL = 0x20;
     public static final int DBC_TYPE_STR = 0x20 | DBC_SIZE_BYTE;
     public static final int DBC_TYPE_FLP = 0x20; // Note the overlap with the signed flag and the string type
     public static final int DBC_TYPE_DEC = 0x40;
@@ -271,11 +273,25 @@ public class Spin2Debug {
                                 list.addAll(compileSpinArrayStatement(node, DBC_TYPE_BIN | DBC_SIZE_LONG | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags, cmd));
                                 break;
 
+                            case "?":
+                            case "BOOL":
+                                list.addAll(compileSpinStatement(node, DBC_TYPE_BOOL | flags, "BOOL"));
+                                break;
                             case "ZSTR":
                                 list.addAll(compileSpinStatement(node, DBC_TYPE_STR | flags, cmd));
                                 break;
                             case "LSTR":
                                 list.addAll(compileSpinStatement(node, DBC_TYPE_STR | DBC_FLAG_ARRAY | flags, cmd));
+                                break;
+
+                            case "C_Z":
+                                if (node.getChildCount() != 0) {
+                                    throw new CompilerException("syntax error", node.getTokens());
+                                }
+                                list.add(new DataObject(new byte[] {
+                                    first ? (byte) (DBC_C_Z | DBC_FLAG_NOCOMMA) : (byte) DBC_C_Z
+                                }, cmd.toUpperCase()));
+                                first = false;
                                 break;
 
                             case "DLY":
@@ -664,11 +680,25 @@ public class Spin2Debug {
                                 list.addAll(compileArrayStatement(node, DBC_TYPE_BIN | DBC_SIZE_LONG | DBC_FLAG_SIGNED | DBC_FLAG_ARRAY | flags, cmd));
                                 break;
 
+                            case "?":
+                            case "BOOL":
+                                list.addAll(compileSimpleStatement(node, DBC_TYPE_BOOL | flags, "BOOL"));
+                                break;
                             case "ZSTR":
                                 list.addAll(compileSimpleStatement(node, DBC_TYPE_STR | flags, cmd));
                                 break;
                             case "LSTR":
                                 list.addAll(compileArrayStatement(node, DBC_TYPE_STR | DBC_FLAG_ARRAY | flags, cmd));
+                                break;
+
+                            case "C_Z":
+                                if (node.getArgumentsCount() != 0) {
+                                    throw new CompilerException("syntax error", node.getToken());
+                                }
+                                list.add(new DataObject(new byte[] {
+                                    (byte) (first ? (DBC_C_Z | DBC_FLAG_NOCOMMA) : DBC_C_Z)
+                                }, cmd.toUpperCase()));
+                                first = false;
                                 break;
 
                             case "DLY": {
