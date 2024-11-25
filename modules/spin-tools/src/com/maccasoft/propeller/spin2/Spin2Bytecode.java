@@ -443,10 +443,16 @@ public class Spin2Bytecode {
         descriptors.put("SETREGS", new Descriptor(bc_hub_bytecode, bc_setregs, 3, 0));
         descriptors.put("BYTEMOVE", new Descriptor(bc_hub_bytecode, bc_bytemove, 3, 0));
         descriptors.put("BYTEFILL", new Descriptor(bc_hub_bytecode, bc_bytefill, 3, 0));
+        descriptors.put("BYTECOMP", new Descriptor(bc_hub_bytecode, bc_bytecomp, 3, 1));
+        descriptors.put("BYTESWAP", new Descriptor(bc_hub_bytecode, bc_byteswap, 3, 0));
         descriptors.put("WORDMOVE", new Descriptor(bc_hub_bytecode, bc_wordmove, 3, 0));
         descriptors.put("WORDFILL", new Descriptor(bc_hub_bytecode, bc_wordfill, 3, 0));
+        descriptors.put("WORDCOMP", new Descriptor(bc_hub_bytecode, bc_wordcomp, 3, 1));
+        descriptors.put("WORDSWAP", new Descriptor(bc_hub_bytecode, bc_wordswap, 3, 0));
         descriptors.put("LONGMOVE", new Descriptor(bc_hub_bytecode, bc_longmove, 3, 0));
         descriptors.put("LONGFILL", new Descriptor(bc_hub_bytecode, bc_longfill, 3, 0));
+        descriptors.put("LONGCOMP", new Descriptor(bc_hub_bytecode, bc_longcomp, 3, 1));
+        descriptors.put("LONGSWAP", new Descriptor(bc_hub_bytecode, bc_longswap, 3, 0));
         descriptors.put("STRSIZE", new Descriptor(bc_hub_bytecode, bc_strsize, 1, 1));
         descriptors.put("STRCOMP", new Descriptor(bc_hub_bytecode, bc_strcomp, 2, 1));
         descriptors.put("STRCOPY", new Descriptor(bc_hub_bytecode, bc_strcopy, 3, 0));
