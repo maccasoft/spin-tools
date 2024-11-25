@@ -112,9 +112,6 @@ public class OutlineView {
                 }
                 else if (!(node instanceof DirectiveNode)) {
                     list.add(node);
-                    if (node instanceof VariableNode) {
-                        list.addAll(node.getChilds());
-                    }
                 }
             }
 
@@ -132,7 +129,17 @@ public class OutlineView {
         public Object[] getChildren(Object parentElement) {
             List<Object> list = new ArrayList<Object>();
 
-            if (hasChildren(parentElement)) {
+            if (parentElement instanceof VariablesNode) {
+                for (Node child : ((Node) parentElement).getChilds()) {
+                    if (child instanceof VariablesNode) {
+                        list.addAll(child.getChilds());
+                    }
+                    else {
+                        list.add(child);
+                    }
+                }
+            }
+            else if (hasChildren(parentElement)) {
                 for (Node child : ((Node) parentElement).getChilds()) {
                     if (child instanceof ConstantNode) {
                         if (((ConstantNode) child).identifier != null) {
@@ -221,8 +228,13 @@ public class OutlineView {
                             sb.append(" : ");
                             sb.append(node.type.getText());
                         }
-                        else if (node.getParent() instanceof VariableNode) {
-                            Token type = ((VariableNode) node.getParent()).type;
+                        else if (node.getParent() instanceof VariablesNode) {
+                            VariablesNode parent = (VariablesNode) node.getParent();
+                            int index = 0;
+                            while (!(parent.getChild(index) instanceof VariableNode)) {
+                                index++;
+                            }
+                            Token type = ((VariableNode) parent.getChild(index)).type;
                             if (type != null) {
                                 sb.append(" : ");
                                 sb.append(type.getText());
@@ -242,8 +254,13 @@ public class OutlineView {
                             sb.append(" : ");
                             appendText(node.type.getText(), methodReturnStyle);
                         }
-                        else if (node.getParent() instanceof VariableNode) {
-                            Token type = ((VariableNode) node.getParent()).type;
+                        else if (node.getParent() instanceof VariablesNode) {
+                            VariablesNode parent = (VariablesNode) node.getParent();
+                            int index = 0;
+                            while (!(parent.getChild(index) instanceof VariableNode)) {
+                                index++;
+                            }
+                            Token type = ((VariableNode) parent.getChild(index)).type;
                             if (type != null) {
                                 sb.append(" : ");
                                 appendText(type.getText(), methodReturnStyle);
@@ -635,6 +652,11 @@ public class OutlineView {
             Node node = (Node) element;
             if (node != null) {
                 do {
+                    if (node instanceof VariablesNode) {
+                        if (node.getParent() instanceof VariablesNode) {
+                            node = node.getParent();
+                        }
+                    }
                     sb.insert(0, getPathText(node));
                     sb.insert(0, "/");
                     node = node.getParent();

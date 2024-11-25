@@ -59,6 +59,7 @@ import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenStream;
+import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
 import com.maccasoft.propeller.spin1.Spin1Compiler;
 import com.maccasoft.propeller.spin1.Spin1Formatter;
@@ -251,6 +252,51 @@ public class EditorTab implements FindReplaceTarget {
                                 }
                             }
                         }
+                    }
+                }
+                else if (node instanceof VariablesNode) {
+                    if (offset < start) {
+                        return selection;
+                    }
+                    selection = node;
+
+                    int childLine = -1;
+                    Node childSelection = selection;
+                    for (Node childNode : node.getChilds()) {
+                        if (childNode instanceof VariableNode) {
+                            Token token = childNode.getStartToken();
+                            if (token != null) {
+                                start = token.start;
+                                if (token.line != childLine) {
+                                    start -= token.column;
+                                    childLine = token.line;
+                                }
+                                if (offset < start) {
+                                    return childSelection;
+                                }
+                                childSelection = childNode;
+                            }
+                        }
+                        else {
+                            for (Node child : childNode.getChilds()) {
+                                Token token = child.getStartToken();
+                                if (token != null) {
+                                    start = token.start;
+                                    if (token.line != childLine) {
+                                        start -= token.column;
+                                        childLine = token.line;
+                                    }
+                                    if (offset < start) {
+                                        return childSelection;
+                                    }
+                                    childSelection = child;
+                                }
+                            }
+                        }
+                    }
+
+                    if (line == childSelection.getStartToken().line) {
+                        return childSelection;
                     }
                 }
                 else {

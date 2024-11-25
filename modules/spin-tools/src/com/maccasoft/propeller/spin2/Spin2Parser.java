@@ -365,7 +365,7 @@ public class Spin2Parser extends Parser {
                 parsePreprocessor(node);
             }
             else {
-                parseVariable(node);
+                parseVariable(new VariablesNode(node));
             }
         }
     }
@@ -379,6 +379,7 @@ public class Spin2Parser extends Parser {
             if (token.type == Token.NL) {
                 break;
             }
+            parent.addToken(token);
             switch (state) {
                 case 1:
                     if (Spin2Model.isType(token.getText())) {

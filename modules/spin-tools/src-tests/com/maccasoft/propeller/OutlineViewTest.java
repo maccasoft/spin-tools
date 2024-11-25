@@ -69,15 +69,25 @@ class OutlineViewTest {
     void testVarComparer() {
         String text = ""
             + "VAR\n"
-            + "  long pin\n"
+            + "  long a, b\n"
+            + "  word c\n"
             + "";
 
         Spin2TokenStream stream = new Spin2TokenStream(text);
         Spin2Parser parser = new Spin2Parser(stream);
         Node root = parser.parse();
 
-        Assertions.assertEquals("/VAR0", view.getPath(root.getChild(0)));
-        Assertions.assertEquals("/VAR0/pin", view.getPath(root.getChild(0).getChild(0)));
+        Node varNode = root.getChild(0);
+        Assertions.assertEquals("/VAR0", view.getPath(varNode));
+
+        Node varChildNode = varNode.getChild(0);
+        Assertions.assertEquals("/VAR0", view.getPath(varChildNode));
+        Assertions.assertEquals("/VAR0/a", view.getPath(varChildNode.getChild(0)));
+        Assertions.assertEquals("/VAR0/b", view.getPath(varChildNode.getChild(1)));
+
+        varChildNode = varNode.getChild(1);
+        Assertions.assertEquals("/VAR0", view.getPath(varChildNode));
+        Assertions.assertEquals("/VAR0/c", view.getPath(varChildNode.getChild(0)));
     }
 
     @Test

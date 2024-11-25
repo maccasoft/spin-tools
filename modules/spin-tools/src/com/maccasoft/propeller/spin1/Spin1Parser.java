@@ -315,7 +315,7 @@ public class Spin1Parser extends Parser {
                 parsePreprocessor(node);
             }
             else {
-                parseVariable(node);
+                parseVariable(new VariablesNode(node));
             }
         }
     }
@@ -329,6 +329,7 @@ public class Spin1Parser extends Parser {
             if (token.type == Token.NL) {
                 break;
             }
+            parent.addToken(token);
             switch (state) {
                 case 1:
                     if (Spin1Model.isType(token.getText())) {

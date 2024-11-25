@@ -224,7 +224,9 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
         for (Node node : root.getChilds()) {
             if (node instanceof VariablesNode) {
-                compileVarBlock(node);
+                if (!skipNode(node)) {
+                    compileVarBlock(node);
+                }
             }
         }
 
@@ -773,77 +775,106 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
         }
     }
 
-    void compileVarBlock(Node parent) {
-        String type = "LONG";
+    void compileVarBlock(Node node) {
+        TokenIterator iter = node.tokenIterator();
 
-        for (Node node : parent.getChilds()) {
+        if (iter.hasNext()) {
+            Token section = iter.peekNext();
+            if ("VAR".equalsIgnoreCase(section.getText())) {
+                iter.next();
+            }
+        }
+
+        if (iter.hasNext()) {
             try {
-                if (skipNode(node)) {
-                    continue;
-                }
-                if (node instanceof VariableNode) {
-                    TokenIterator iter = node.tokenIterator();
+                Token type = null;
+                Token identifier = iter.next();
 
-                    Token token = iter.next();
-                    if (Spin1Model.isType(token.getText())) {
-                        type = token.getText().toUpperCase();
-                        if (!iter.hasNext()) {
-                            throw new CompilerException("expecting identifier", token);
-                        }
-                        token = iter.next();
+                if (iter.hasNext()) {
+                    Token next = iter.peekNext();
+                    if (next.type == 0 || next.type == Token.KEYWORD) {
+                        type = identifier;
+                        identifier = iter.next();
                     }
+                }
 
-                    Token identifier = token;
+                if (type != null) {
+                    boolean valid = Spin1Model.isType(type.getText());
+                    if (!valid) {
+                        throw new CompilerException("invalid type '" + type.getText() + "'", type);
+                    }
+                }
+
+                do {
                     int varSize = 1;
+                    Token token = null;
 
                     if (iter.hasNext()) {
                         token = iter.next();
-                        if (!"[".equals(token.getText())) {
-                            throw new CompilerException("unexpected", token);
-                        }
-                        if (!iter.hasNext()) {
-                            throw new CompilerException("expecting expression", token);
-                        }
-                        Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(scope);
-                        while (iter.hasNext()) {
-                            token = iter.next();
-                            if ("]".equals(token.getText())) {
-                                try {
-                                    Expression expression = builder.getExpression();
-                                    if (!expression.isConstant()) {
-                                        throw new Exception("not a constant expression");
-                                    }
-                                    varSize = expression.getNumber().intValue();
-                                } catch (CompilerException e) {
-                                    logMessage(e);
-                                } catch (Exception e) {
-                                    logMessage(new CompilerException(e, builder.getTokens()));
-                                }
-                                break;
+
+                        if ("[".equals(token.getText())) {
+                            if (!iter.hasNext()) {
+                                throw new CompilerException("expecting expression", token);
                             }
-                            builder.addToken(token);
-                        }
-                        if (!"]".equals(token.getText())) {
-                            throw new CompilerException("expecting ']'", token);
-                        }
-                        if (iter.hasNext()) {
-                            throw new CompilerException("unexpected", iter.next());
+                            Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope);
+                            while (iter.hasNext()) {
+                                token = iter.next();
+                                if ("]".equals(token.getText())) {
+                                    try {
+                                        Expression expression = builder.getExpression();
+                                        if (!expression.isConstant()) {
+                                            throw new Exception("not a constant expression");
+                                        }
+                                        varSize = expression.getNumber().intValue();
+                                    } catch (CompilerException e) {
+                                        logMessage(e);
+                                    } catch (Exception e) {
+                                        logMessage(new CompilerException(e, builder.getTokens()));
+                                    }
+                                    break;
+                                }
+                                builder.addToken(token);
+                            }
+                            if (!"]".equals(token.getText())) {
+                                throw new CompilerException("expecting ']'", token);
+                            }
+                            else {
+                                token = iter.hasNext() ? iter.next() : null;
+                            }
                         }
                     }
 
                     try {
-                        Variable var = new Variable(type, identifier.getText(), varSize);
+                        String typeText = type != null ? type.getText().toUpperCase() : "LONG";
+                        Variable var = new Variable(typeText, identifier.getText(), varSize);
+
                         scope.addSymbol(identifier.getText(), var);
                         variables.add(var);
                         var.setData(identifier);
                     } catch (Exception e) {
                         logMessage(new CompilerException(e, identifier));
                     }
-                }
+
+                    if (token != null && !",".equals(token.getText())) {
+                        throw new CompilerException("expecting ','", token);
+                    }
+
+                    identifier = iter.hasNext() ? iter.next() : null;
+
+                } while (identifier != null);
+
             } catch (CompilerException e) {
                 logMessage(e);
             } catch (Exception e) {
                 logMessage(new CompilerException(e, node));
+            }
+        }
+
+        for (Node child : node.getChilds()) {
+            if (child instanceof VariablesNode) {
+                if (!skipNode(child)) {
+                    compileVarBlock(child);
+                }
             }
         }
     }

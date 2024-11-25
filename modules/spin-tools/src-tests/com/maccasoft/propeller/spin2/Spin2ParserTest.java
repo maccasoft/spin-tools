@@ -622,7 +622,7 @@ class Spin2ParserTest {
     }
 
     @Test
-    void testParseVariables() throws Exception {
+    void testVariables() throws Exception {
         Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
             + "VAR a\n"
             + "    b\n"
@@ -631,14 +631,15 @@ class Spin2ParserTest {
         Node root = subject.parse();
         Assertions.assertEquals(""
             + "Node []\n"
-            + "+-- VariablesNode [VAR]\n"
+            + "+-- VariablesNode [VAR a]\n"
             + "    +-- VariableNode identifier=a [a]\n"
-            + "    +-- VariableNode identifier=b [b]\n"
+            + "    +-- VariablesNode [b]\n"
+            + "        +-- VariableNode identifier=b [b]\n"
             + "", tree(root));
     }
 
     @Test
-    void testParseTypedVariables() throws Exception {
+    void testTypedVariables() throws Exception {
         Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
             + "VAR long a\n"
             + "    word b\n"
@@ -647,14 +648,15 @@ class Spin2ParserTest {
         Node root = subject.parse();
         Assertions.assertEquals(""
             + "Node []\n"
-            + "+-- VariablesNode [VAR]\n"
+            + "+-- VariablesNode [VAR long a]\n"
             + "    +-- VariableNode type=long identifier=a [long a]\n"
-            + "    +-- VariableNode type=word identifier=b [word b]\n"
+            + "    +-- VariablesNode [word b]\n"
+            + "        +-- VariableNode type=word identifier=b [word b]\n"
             + "", tree(root));
     }
 
     @Test
-    void testParseVariablesList() throws Exception {
+    void testVariablesList() throws Exception {
         Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
             + "VAR long a, b, c\n"
             + "    word d, e\n"
@@ -663,27 +665,84 @@ class Spin2ParserTest {
         Node root = subject.parse();
         Assertions.assertEquals(""
             + "Node []\n"
-            + "+-- VariablesNode [VAR]\n"
+            + "+-- VariablesNode [VAR long a, b, c]\n"
             + "    +-- VariableNode type=long identifier=a [long a]\n"
             + "    +-- VariableNode identifier=b [b]\n"
             + "    +-- VariableNode identifier=c [c]\n"
-            + "    +-- VariableNode type=word identifier=d [word d]\n"
-            + "    +-- VariableNode identifier=e [e]\n"
+            + "    +-- VariablesNode [word d, e]\n"
+            + "        +-- VariableNode type=word identifier=d [word d]\n"
+            + "        +-- VariableNode identifier=e [e]\n"
             + "", tree(root));
     }
 
     @Test
-    void testParseVariableSize() throws Exception {
+    void testVariableSize() throws Exception {
         Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
             + "VAR a[10]\n"
+            + "    b[20]\n"
             + ""));
 
         Node root = subject.parse();
         Assertions.assertEquals(""
             + "Node []\n"
-            + "+-- VariablesNode [VAR]\n"
+            + "+-- VariablesNode [VAR a[10]]\n"
             + "    +-- VariableNode identifier=a [a[10]]\n"
             + "        +-- size = ExpressionNode [10]\n"
+            + "    +-- VariablesNode [b[20]]\n"
+            + "        +-- VariableNode identifier=b [b[20]]\n"
+            + "            +-- size = ExpressionNode [20]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testVariablesListAndSize() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "VAR a, b[10], c\n"
+            + "    word d[20], e\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- VariablesNode [VAR a, b[10], c]\n"
+            + "    +-- VariableNode identifier=a [a]\n"
+            + "    +-- VariableNode identifier=b [b[10]]\n"
+            + "        +-- size = ExpressionNode [10]\n"
+            + "    +-- VariableNode identifier=c [c]\n"
+            + "    +-- VariablesNode [word d[20], e]\n"
+            + "        +-- VariableNode type=word identifier=d [word d[20]]\n"
+            + "            +-- size = ExpressionNode [20]\n"
+            + "        +-- VariableNode identifier=e [e]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testVariablesPreprocessor() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "VAR a, b[10], c\n"
+            + "#ifdef KEY\n"
+            + "    word d[20], e\n"
+            + "#endif\n"
+            + "    long f, g\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- VariablesNode [VAR a, b[10], c]\n"
+            + "    +-- VariableNode identifier=a [a]\n"
+            + "    +-- VariableNode identifier=b [b[10]]\n"
+            + "        +-- size = ExpressionNode [10]\n"
+            + "    +-- VariableNode identifier=c [c]\n"
+            + "    +-- DirectiveNode [#ifdef KEY]\n"
+            + "    +-- VariablesNode [word d[20], e]\n"
+            + "        +-- VariableNode type=word identifier=d [word d[20]]\n"
+            + "            +-- size = ExpressionNode [20]\n"
+            + "        +-- VariableNode identifier=e [e]\n"
+            + "    +-- DirectiveNode [#endif]\n"
+            + "    +-- VariablesNode [long f, g]\n"
+            + "        +-- VariableNode type=long identifier=f [long f]\n"
+            + "        +-- VariableNode identifier=g [g]\n"
             + "", tree(root));
     }
 

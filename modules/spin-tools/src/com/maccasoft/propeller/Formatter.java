@@ -988,11 +988,13 @@ public abstract class Formatter {
     }
 
     void appendExpressionToken(FormatterStringBuilder sb, Token token) {
+        char lc = sb.lastChar();
+
         if (token.type == Token.OPERATOR) {
             switch (token.getText()) {
                 case "(":
-                case "[":
                 case ")":
+                case "[":
                 case "]":
                 case ",":
                 case ".":
@@ -1008,25 +1010,26 @@ public abstract class Formatter {
                     sb.append(token);
                     break;
                 case "#":
-                    if (sb.lastChar() == ',') {
+                    if (lc == ',') {
                         sb.append(" ");
                     }
                     sb.append(token);
                     break;
                 case "\\":
-                    if (sb.lastChar() != ' ' && sb.lastChar() != '#') {
+                    if (lc != ' ' && lc != '#') {
                         sb.append(" ");
                     }
                     sb.append(token);
                     break;
                 case "+":
                 case "-":
-                    if (sb.lastChar() == ' ' || sb.lastChar() == '(' || sb.lastChar() == '[') {
+                    if (lc == ' ' || lc == '(' || lc == '[') {
                         sb.append(token);
                         break;
                     }
+                    // fall-through
                 default:
-                    if (sb.lastChar() != ' ') {
+                    if (lc != ' ') {
                         sb.append(" ");
                     }
                     sb.append(token);
@@ -1035,7 +1038,6 @@ public abstract class Formatter {
             }
         }
         else {
-            char lc = sb.lastChar();
             if (lc != ' ' && lc != '(' && lc != '[' && lc != ']' && lc != '#' && lc != '.' && lc != '\\' && lc != '+' && lc != '-' && lc != '~' && lc != '!') {
                 sb.append(" ");
             }
@@ -1058,6 +1060,13 @@ public abstract class Formatter {
             Token nextToken = stream.peekNext();
             if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
                 token = token.merge(stream.nextToken());
+            }
+        }
+        else if ("^".equals(token.getText())) {
+            Token nextToken = stream.peekNext();
+            if (token.isAdjacent(nextToken) && nextToken.type == 0) {
+                token = token.merge(stream.nextToken());
+                token.type = 0;
             }
         }
         return token;

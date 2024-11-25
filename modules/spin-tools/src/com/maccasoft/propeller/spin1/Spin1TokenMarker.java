@@ -304,7 +304,9 @@ public class Spin1TokenMarker extends SourceTokenMarker {
 
             @Override
             public boolean visitVariables(VariablesNode node) {
-                tokens.add(new TokenMarker(node.getTokens().get(0), TokenId.SECTION));
+                if (!(node.getParent() instanceof VariablesNode) && node.getTokenCount() != 0) {
+                    tokens.add(new TokenMarker(node.getStartToken(), TokenId.SECTION));
+                }
                 return true;
             }
 
