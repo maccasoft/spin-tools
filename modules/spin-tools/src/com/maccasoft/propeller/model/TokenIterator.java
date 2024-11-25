@@ -25,14 +25,34 @@ public class TokenIterator {
     }
 
     public boolean hasNext() {
+        int index = this.index;
+        while (index < tokens.length) {
+            if (tokens[index].type != Token.COMMENT && tokens[index].type != Token.BLOCK_COMMENT) {
+                break;
+            }
+            index++;
+        }
         return index < tokens.length;
     }
 
     public Token peekNext() {
+        int index = this.index;
+        while (index < tokens.length) {
+            if (tokens[index].type != Token.COMMENT && tokens[index].type != Token.BLOCK_COMMENT) {
+                break;
+            }
+            index++;
+        }
         return tokens[index];
     }
 
     public Token next() {
+        while (index < tokens.length) {
+            if (tokens[index].type != Token.COMMENT && tokens[index].type != Token.BLOCK_COMMENT) {
+                break;
+            }
+            index++;
+        }
         return tokens[index++];
     }
 

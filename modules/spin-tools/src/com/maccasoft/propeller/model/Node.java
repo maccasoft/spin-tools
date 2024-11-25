@@ -154,7 +154,7 @@ public class Node {
         return comments;
     }
 
-    public TokenIterator iterator() {
+    public TokenIterator tokenIterator() {
         return new TokenIterator(tokens);
     }
 

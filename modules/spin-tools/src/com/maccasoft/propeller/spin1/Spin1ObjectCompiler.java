@@ -629,7 +629,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
     void compileConstant(ConstantNode node) {
         try {
-            Iterator<Token> iter = node.getTokens().iterator();
+            TokenIterator iter = node.tokenIterator();
 
             Token token = iter.next();
             do {
@@ -782,7 +782,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                     continue;
                 }
                 if (node instanceof VariableNode) {
-                    Iterator<Token> iter = node.getTokens().iterator();
+                    TokenIterator iter = node.tokenIterator();
 
                     Token token = iter.next();
                     if (Spin1Model.isType(token.getText())) {
@@ -850,7 +850,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
     void compileObject(ObjectNode node) {
         try {
-            TokenIterator iter = node.iterator();
+            TokenIterator iter = node.tokenIterator();
 
             Token token = iter.next();
             String name = token.getText();
@@ -986,7 +986,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
     Spin1Method compileMethod(MethodNode node) {
         Context localScope = new Context(scope);
 
-        TokenIterator iter = node.iterator();
+        TokenIterator iter = node.tokenIterator();
         Token token = iter.next(); // First token is PUB/PRI already checked
 
         if (!iter.hasNext()) {
@@ -1253,7 +1253,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
         Spin1MethodLine line = null;
 
         try {
-            Iterator<Token> iter = node.getTokens().iterator();
+            TokenIterator iter = node.tokenIterator();
             if (!iter.hasNext()) {
                 throw new RuntimeException("syntax error");
             }
@@ -1577,7 +1577,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                         Spin1MethodLine caseLine = new Spin1MethodLine(context);
                         caseLine.addChilds(compileStatement(new Context(context), method, line, child));
 
-                        Iterator<Token> childIter = child.getTokens().iterator();
+                        TokenIterator childIter = child.tokenIterator();
                         token = childIter.next();
 
                         if ("OTHER".equalsIgnoreCase(token.getText())) {
@@ -1687,7 +1687,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
         Token token;
         boolean skip = !conditionStack.isEmpty() && conditionStack.peek().skip;
 
-        Iterator<Token> iter = node.getTokens().iterator();
+        TokenIterator iter = node.tokenIterator();
         token = iter.next();
         if (!iter.hasNext()) {
             throw new CompilerException("expecting directive", new Token(token.getStream(), token.stop));
@@ -1708,11 +1708,9 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                 }
 
                 List<Token> list = new ArrayList<>();
-                if (iter.hasNext()) {
-                    while (iter.hasNext()) {
-                        list.add(iter.next());
-                    }
-                }
+                iter.forEachRemaining(t -> {
+                    list.add(t);
+                });
                 scope.addDefinition(identifier, list);
             }
         }

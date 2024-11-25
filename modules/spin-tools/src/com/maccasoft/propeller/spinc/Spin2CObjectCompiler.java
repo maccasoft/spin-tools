@@ -576,7 +576,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
     }
 
     void compileStructureDefinition(Variable target, Node node) {
-        TokenIterator iter = node.iterator();
+        TokenIterator iter = node.tokenIterator();
 
         Token token = iter.next();
 
@@ -630,7 +630,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
     }
 
     void compileVariable(VariableNode node) {
-        TokenIterator iter = node.iterator();
+        TokenIterator iter = node.tokenIterator();
 
         Token token = iter.next();
 
@@ -1008,7 +1008,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
     Spin2MethodLine compileStatement(Spin2Method method, Context context, Spin2MethodLine parent, Node node, Spin2MethodLine previousLine) {
         Spin2MethodLine line = null;
 
-        TokenIterator iter = node.iterator();
+        TokenIterator iter = node.tokenIterator();
         if (!iter.hasNext()) {
             return null;
         }
