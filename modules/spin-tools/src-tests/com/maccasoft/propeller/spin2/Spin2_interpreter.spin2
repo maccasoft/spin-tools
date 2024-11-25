@@ -1,7 +1,7 @@
 'TESTT add registers stack_start (on launch) and stack_max (on call or return) to track stack size for allocation need
 
 '******************************************
-'*  Spin2 Interpreter - v46 - 2024.11.20  *
+'*  Spin2 Interpreter - v46 - 2024.11.24  *
 '******************************************
 '
 CON     bc_setup_reg_1D8_1F8    = $B0
@@ -527,12 +527,12 @@ callgo          rdfast  #0,x            'a b c d e f g h        return from hub,
         _ret_   wrlong  #0,ptra++       'a b c d e f g h
 '
 '
-' Setup reg variable                    (11 longs)
+' Setup reg variable                    (12 longs)
 '
 reg_im          signx   pa,#3           'a              a: setup reg[$1D8..$1DF]/[$1F8..$1FF]
                 or      pa,#$1D8        'a              b: setup reg[rfvars]
                                         '               c: setup reg[rfvars][index]
-reg_ap          rfvars  pa              '| b c
+reg_ap          rfvars  pa              '| b c          d: modify inc/dec value
                 add     pa,x            '| | c
                 popa    x               '| | c
 
@@ -544,7 +544,9 @@ reg_ap          rfvars  pa              '| b c
 
                 mov     sz,#31          'a b c
 
-        _ret_   setq2   #$0E1           'a b c          (next bytecode is a variable operator)
+set_inc         rfvar   incdec          '| | | d
+
+        _ret_   setq2   #$0E1           'a b c d        (next bytecode is a variable operator)
 '
 '
 ' Setup hub variable                    (22 longs)
@@ -615,12 +617,12 @@ hub_sv          rfvar   y               'a b c d        get starting offset << 4
                 jmp     #structpop                      'pop structure (y=byte count, C=0, Z=0)
 '
 '
-' Setup bitfield                        (14 longs)
+' Setup bitfield                        (13 longs)
 ' Set ++/-- value
 '
 bit_imm         mov     fb,pa           'a              a: setup bitfield [0..31]
                 and     fb,#$1F         'a              b: setup bitfield [rfvar]
-                                        '               c: setup bitfield [pop]
+                                        '               c: setup bitfield [pop] (also used by fieldh, no skips)
 bit_rfvar       rfvar   fb              '| b            d: set ++/-- value
 
 bit_pop         mov     fb,x            '| | c
@@ -636,9 +638,7 @@ bit_pop         mov     fb,x            '| | c
                 mov     rd,rd_field     'a b c
                 mov     wr,wr_field     'a b c
 
-set_inc         rfvar   incdec          '| | | d
-
-        _ret_   setq2   #$0E1           'a b c d        (next bytecode is a variable operator)
+        _ret_   setq2   #$0E1           'a b c          (next bytecode is a variable operator)
 '
 '
 ' Variable read/write                   (10 longs)
@@ -777,13 +777,13 @@ bc_sca_write_push       long  muu_mod   |  %0100111011110011000_ << 10  'DB     
 bc_scas_write_push      long  mul_mod   |  %01000010111100000010 << 10  'DC     var SCAS= exp   (push)
 bc_frac_write_push      long  muu_mod   |  %0100111110011011000_ << 10  'DD     var FRAC= exp   (push)
 
-bc_setup_bfield_pop     long  bit_pop   |           %01000000000 << 10  'DE *   setup bitfield .[pop]
-bc_setup_bfield_rfvar   long  bit_rfvar |          %010000000110 << 10  'DF *   setup bitfield .[rfvar]
+bc_setup_bfield_pop     long  bit_pop   |            %0000000000 << 10  'DE *   setup bitfield .[pop]
+bc_setup_bfield_rfvar   long  bit_rfvar |           %00000000110 << 10  'DF *   setup bitfield .[rfvar]
 
 'bytecodes Ex/Fx are collapsed at runtime to LUT entries E0/E1
 
-bc_setup_bfield_0_31    long  bit_imm   |         %01000000011100 << 10 'Ex *   setup bitfield .[0..15]
-                        long  bit_imm   |         %01000000011100 << 10 'Fx *   setup bitfield .[16..31]
+bc_setup_bfield_0_31    long  bit_imm   |         %0000000011100 << 10  'Ex *   setup bitfield .[0..15]
+                        long  bit_imm   |         %0000000011100 << 10  'Fx *   setup bitfield .[16..31]
 '
 '
 ' Add pbase to x                        (1 long)
@@ -932,8 +932,8 @@ bc_con_rfbyte_bmask_not long  const     |         %0011111101110 << 10  '4A     
 bc_setup_field_p        long  field_    |                     %0 << 10  '4B *   setup field[pop field]
 bc_setup_field_pi       long  fieldi_   |                     %0 << 10  '4C *   setup field[pop field][pop index]
 
-bc_setup_reg            long  reg_ap    |                  %0110 << 10  '4D *   setup reg[rfvars]
-bc_setup_reg_pi         long  reg_ap    |                     %0 << 10  '4E *   setup reg[rfvars][pop index]
+bc_setup_reg            long  reg_ap    |            %0100000110 << 10  '4D *   setup reg[rfvars]
+bc_setup_reg_pi         long  reg_ap    |            %0100000000 << 10  '4E *   setup reg[rfvars][pop index]
 
 bc_setup_byte_pbase     long  hub_ap    | %011011011011110111110 << 10  '4F *   setup byte[pbase + rfvar]
 bc_setup_byte_vbase     long  hub_ap    | %011011011011101111110 << 10  '50 *   setup byte[vbase + rfvar]
@@ -1032,7 +1032,7 @@ bc_bitrange             long  bitrange  |                 %00110 << 10  '9F     
 'bytecodes Ax/Bx/Cx/Dx/Ex/Fx are collapsed at runtime to LUT entries A0/A1/A2/A3/A4/A5
 
 bc_con_n                long  const     |                   %000 << 10  'Ax     constant -1..14
-bc_setup_reg_1D8_1F8_   long  reg_im    |                %011100 << 10  'Bx *   setup reg $1D8..$1DF/$1F8..$1FF
+bc_setup_reg_1D8_1F8_   long  reg_im    |          %010000011100 << 10  'Bx *   setup reg $1D8..$1DF/$1F8..$1FF
 bc_setup_var_0_15_      long  hub_im    |  %11011011111010111110 << 10  'Cx *   setup long[vbase][0..15]
 bc_setup_local_0_15_    long  hub_im    |  %11011011110110111110 << 10  'Dx *   setup long[dbase][0..15]
 bc_read_local_0_15_     long  var_rd    |                %010000 << 10  'Ex     read  long[dbase][0..15]
