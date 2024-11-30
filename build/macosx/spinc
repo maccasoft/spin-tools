@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+APPDIR="$(dirname -- "$(readlink -f -- "${0}")" )"
+
+LIBDIR="$(dirname -- "$APPDIR")/Java"
+for LIB in \
+    "$LIBDIR"/*.jar \
+    ;
+do
+    CLASSPATH="${CLASSPATH}:${LIB}"
+done
+export CLASSPATH
+
+JAVA=java
+if [ -x "$APPDIR/java/bin/java" ]; then
+  JAVA=$APPDIR/java/bin/java
+  export PATH="${APPDIR}/java/bin:${PATH}"
+fi
+
+# Collect options to java in an array, to properly handle whitespace in options
+JAVA_OPTIONS=("-DAPP_DIR=$APPDIR")
+
+"$JAVA" "${JAVA_OPTIONS[@]}" com.maccasoft.propeller.SpinCompiler "$@"

@@ -12,6 +12,11 @@
         </dependencySet>
     </dependencySets>
     <files>
+        <file>
+            <source>build/macosx/spinc</source>
+            <fileMode>755</fileMode>
+            <outputDirectory>Contents/MacOS</outputDirectory>
+        </file>
         <file><source>LICENSE</source></file>
     </files>
     <fileSets>
