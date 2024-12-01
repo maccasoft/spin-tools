@@ -608,6 +608,15 @@ public class Spin2Parser extends Parser {
                     }
                     if (param == null) {
                         param = new MethodNode.ParameterNode(node);
+                        if (token.type == 0 || token.type == Token.KEYWORD) {
+                            Token next = stream.peekNext();
+                            if (next != null && (next.type == 0 || next.type == Token.KEYWORD)) {
+                                param.type = token;
+                                param.addToken(token);
+                                token = stream.nextToken();
+                                node.addToken(token);
+                            }
+                        }
                         param.identifier = token;
                     }
                     param.addToken(token);
@@ -645,6 +654,15 @@ public class Spin2Parser extends Parser {
 
                 case 7:
                     ret = new MethodNode.ReturnNode(node);
+                    if (token.type == 0 || token.type == Token.KEYWORD) {
+                        Token next = stream.peekNext();
+                        if (next != null && (next.type == 0 || next.type == Token.KEYWORD)) {
+                            ret.type = token;
+                            ret.addToken(token);
+                            token = stream.nextToken();
+                            node.addToken(token);
+                        }
+                    }
                     ret.identifier = token;
                     ret.addToken(token);
                     state = 8;

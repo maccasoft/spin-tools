@@ -13,7 +13,7 @@ package com.maccasoft.propeller.spin2;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.maccasoft.propeller.model.ExpressionNode;
+import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.model.Token;
 
 public class Spin2Struct {
@@ -22,11 +22,11 @@ public class Spin2Struct {
 
     public static class Spin2StructMember {
 
-        Token type;
-        Token identifier;
-        ExpressionNode size;
+        private Token type;
+        private Token identifier;
+        private Expression size;
 
-        public Spin2StructMember(Token type, Token identifier, ExpressionNode size) {
+        public Spin2StructMember(Token type, Token identifier, Expression size) {
             this.type = type;
             this.identifier = identifier;
             this.size = size;
@@ -40,7 +40,7 @@ public class Spin2Struct {
             return identifier;
         }
 
-        public ExpressionNode getSize() {
+        public Expression getSize() {
             return size;
         }
     }
@@ -58,7 +58,7 @@ public class Spin2Struct {
         return false;
     }
 
-    public void addMember(Token type, Token identifier, ExpressionNode size) {
+    public void addMember(Token type, Token identifier, Expression size) {
         members.add(new Spin2StructMember(type, identifier, size));
     }
 

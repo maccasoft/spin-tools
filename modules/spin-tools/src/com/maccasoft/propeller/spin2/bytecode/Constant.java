@@ -115,33 +115,7 @@ public class Constant extends Spin2Bytecode {
         return 4;
     }
 
-    public Expression expression;
-
-    public Constant(Context context, Expression expression) {
-        super(context);
-        this.expression = expression;
-    }
-
-    @Override
-    public int getSize() {
-        try {
-            return getBytes().length;
-        } catch (Exception e) {
-            // Do nothing
-        }
-        return 5;
-    }
-
-    @Override
-    public byte[] getBytes() {
-        if (expression.getNumber() instanceof Double) {
-            int value = Float.floatToIntBits(expression.getNumber().floatValue());
-            return new byte[] {
-                Spin2Bytecode.bc_con_rflong, (byte) value, (byte) (value >> 8), (byte) (value >> 16), (byte) (value >> 24)
-            };
-        }
-
-        long value = expression.getNumber().longValue();
+    public static byte[] wrAuto(long value) {
 
         if (value >= -1 && value <= 14) {
             return new byte[] {
@@ -207,7 +181,35 @@ public class Constant extends Spin2Bytecode {
         return new byte[] {
             Spin2Bytecode.bc_con_rflong, (byte) value, (byte) (value >> 8), (byte) (value >> 16), (byte) (value >> 24)
         };
+    }
 
+    public Expression expression;
+
+    public Constant(Context context, Expression expression) {
+        super(context);
+        this.expression = expression;
+    }
+
+    @Override
+    public int getSize() {
+        try {
+            return getBytes().length;
+        } catch (Exception e) {
+            // Do nothing
+        }
+        return 5;
+    }
+
+    @Override
+    public byte[] getBytes() {
+        if (expression.getNumber() instanceof Double) {
+            int value = Float.floatToIntBits(expression.getNumber().floatValue());
+            return new byte[] {
+                Spin2Bytecode.bc_con_rflong, (byte) value, (byte) (value >> 8), (byte) (value >> 16), (byte) (value >> 24)
+            };
+        }
+
+        return wrAuto(expression.getNumber().longValue());
     }
 
     @Override

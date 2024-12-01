@@ -52,6 +52,7 @@ public class MethodNode extends Node {
 
     public static class ReturnNode extends Node {
 
+        public Token type;
         public Token identifier;
 
         public ReturnNode(MethodNode parent) {
@@ -62,6 +63,10 @@ public class MethodNode extends Node {
         @Override
         public void addToken(Token token) {
             tokens.add(token);
+        }
+
+        public Token getType() {
+            return type;
         }
 
         public Token getIdentifier() {

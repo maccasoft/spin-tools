@@ -58,7 +58,6 @@ import com.maccasoft.propeller.model.TypeDefinitionNode;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
 import com.maccasoft.propeller.spin1.Spin1ExpressionBuilder;
-import com.maccasoft.propeller.spin1.Spin1Model;
 import com.maccasoft.propeller.spin2.Spin2Object.Spin2LinkDataObject;
 import com.maccasoft.propeller.spin2.Spin2Struct.Spin2StructMember;
 import com.maccasoft.propeller.spin2.bytecode.Address;
@@ -911,14 +910,14 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
             TokenIterator iter = node.tokenIterator();
 
             Token identifier = iter.next();
-            if ("struct".equalsIgnoreCase(identifier.getText())) {
+            if ("STRUCT".equalsIgnoreCase(identifier.getText())) {
                 if (!iter.hasNext()) {
                     logMessage(new CompilerException("expecting identifier", identifier));
                     return;
                 }
                 identifier = iter.next();
             }
-            if (identifier.type != 0) {
+            if (identifier.type != 0 && identifier.type != Token.KEYWORD) {
                 logMessage(new CompilerException("expecting identifier", identifier));
                 return;
             }
@@ -931,48 +930,78 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
                 Spin2Struct struct = new Spin2Struct();
                 while (iter.hasNext()) {
-                    token = iter.next();
-                    if (")".equals(token.getText())) {
+                    Token member = iter.next();
+                    if (")".equals(member.getText())) {
+                        break;
+                    }
+                    if (member.type != 0 && member.type != Token.KEYWORD) {
+                        logMessage(new CompilerException("expecting identifier", member));
                         break;
                     }
 
                     Token type = null;
-                    if ("struct".equalsIgnoreCase(token.getText())) {
+                    if ("STRUCT".equalsIgnoreCase(member.getText())) {
                         if (!iter.hasNext()) {
-                            logMessage(new CompilerException("expecting type", token));
+                            logMessage(new CompilerException("expecting type", member));
                             break;
                         }
-                        token = iter.next();
+                        type = iter.next();
+                        if (!iter.hasNext()) {
+                            logMessage(new CompilerException("expecting identifier", type));
+                            break;
+                        }
+                        member = iter.next();
+                        if (member.type != 0 && member.type != Token.KEYWORD) {
+                            logMessage(new CompilerException("expecting identifier", member));
+                            break;
+                        }
                     }
-                    if (Spin2Model.isType(token.getText())) {
-                        type = token;
-                        if (!iter.hasNext()) {
-                            logMessage(new CompilerException("expecting identifier", token));
-                            break;
+                    else if (iter.hasNext()) {
+                        token = iter.peekNext();
+                        if (token.type == 0 || token.type == Token.KEYWORD) {
+                            type = member;
+                            member = iter.next();
                         }
-                        token = iter.next();
-                    }
-                    else if (scope.hasStructureDefinition(token.getText())) {
-                        type = token;
-                        if (!iter.hasNext()) {
-                            logMessage(new CompilerException("expecting identifier", token));
-                            break;
-                        }
-                        token = iter.next();
                     }
 
-                    struct.addMember(type, token, null);
-
-                    if (!iter.hasNext()) {
-                        logMessage(new CompilerException("expecting more", token));
-                        break;
+                    Expression memberSize = null;
+                    if (iter.hasNext()) {
+                        token = iter.next();
+                        if ("[".equals(token.getText())) {
+                            if (!iter.hasNext()) {
+                                throw new CompilerException("expecting expression", token);
+                            }
+                            Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope);
+                            while (iter.hasNext()) {
+                                token = iter.next();
+                                if ("]".equals(token.getText())) {
+                                    try {
+                                        memberSize = builder.getExpression();
+                                    } catch (CompilerException e) {
+                                        logMessage(e);
+                                    } catch (Exception e) {
+                                        logMessage(new CompilerException(e, builder.getTokens()));
+                                    }
+                                    break;
+                                }
+                                builder.addToken(token);
+                            }
+                            if (!"]".equals(token.getText())) {
+                                throw new CompilerException("expecting ']'", token);
+                            }
+                            if (iter.hasNext()) {
+                                token = iter.next();
+                            }
+                        }
                     }
-                    token = iter.next();
+
+                    struct.addMember(type, member, memberSize);
+
                     if (")".equals(token.getText())) {
                         break;
                     }
                     if (!",".equals(token.getText())) {
-                        logMessage(new CompilerException("expecting comma", token));
+                        logMessage(new CompilerException("expecting ',' or ')'", token));
                         break;
                     }
                 }
@@ -1107,32 +1136,35 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
     void compileStructureVariable(Variable target, Spin2Struct struct) {
         for (Spin2StructMember member : struct.getMembers()) {
             String memberType = "LONG";
+
             if (member.getType() != null) {
                 memberType = member.getType().getText();
+
+                boolean valid = Spin2Model.isType(memberType);
+                if (!valid) {
+                    valid = scope.hasStructureDefinition(memberType);
+                }
+                if (!valid) {
+                    logMessage(new CompilerException("expecting type", member.getType()));
+                    break;
+                }
             }
 
             int memberSize = 1;
             if (member.getSize() != null) {
-                Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope, member.getSize().getTokens());
                 try {
-                    Expression expression = builder.getExpression();
-                    if (!expression.isConstant()) {
-                        throw new Exception("not a constant expression");
+                    if (!member.getSize().isConstant()) {
+                        throw new RuntimeException("not a constant expression");
                     }
-                    memberSize = expression.getNumber().intValue();
+                    memberSize = member.getSize().getNumber().intValue();
                 } catch (CompilerException e) {
                     logMessage(e);
-                } catch (Exception e) {
-                    logMessage(new CompilerException(e, builder.getTokens()));
                 }
             }
 
             Variable var = target.addMember(memberType, member.getIdentifier().getText(), memberSize);
-            if (!Spin2Model.isType(memberType)) {
-                Spin2Struct memberStruct = scope.getStructureDefinition(memberType);
-                if (memberStruct == null) {
-                    logMessage(new CompilerException("undefined type " + memberType, member.getType()));
-                }
+            Spin2Struct memberStruct = scope.getStructureDefinition(memberType);
+            if (memberStruct != null) {
                 compileStructureVariable(var, memberStruct);
             }
         }
@@ -1366,14 +1398,37 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     logMessage(new CompilerException("expecting parameter(s)", token.substring(token.stop - token.start)));
                 }
                 while (iter.hasNext()) {
+                    Token type = null;
                     Token identifier = iter.next();
                     if (")".equals(identifier.getText())) {
                         break;
                     }
-                    if (Spin1Model.isType(identifier.getText())) {
-                        logMessage(new CompilerException("type not allowed", identifier));
+                    if (iter.hasNext()) {
+                        Token next = iter.peekNext();
+                        if (next.type == 0 || next.type == Token.KEYWORD) {
+                            type = identifier;
+                            identifier = iter.next();
+                        }
                     }
-                    else if (identifier.type == 0) {
+
+                    if (type != null) {
+                        boolean valid = "LONG".equalsIgnoreCase(type.getText());
+                        if (!valid) {
+                            if (scope.hasStructureDefinition(type.getText())) {
+                                valid = true;
+                            }
+                        }
+                        if (!valid) {
+                            if (type.getText().startsWith("^")) {
+                                valid = Spin2Model.isType(type.getText().substring(1));
+                            }
+                        }
+                        if (!valid) {
+                            logMessage(new CompilerException("invalid type", type));
+                        }
+                    }
+
+                    if (identifier.type == 0) {
                         Expression expression = localScope.getLocalSymbol(identifier.getText());
                         if (expression instanceof LocalVariable) {
                             logMessage(new CompilerException("symbol '" + identifier + "' already defined", identifier));
@@ -1408,7 +1463,12 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                                 }
                             }
 
-                            LocalVariable var = method.addParameter("LONG", identifier.getText(), value);
+                            String typeText = type != null ? type.getText().toUpperCase() : "LONG";
+                            LocalVariable var = method.addParameter(typeText, identifier.getText(), value);
+                            Spin2Struct struct = scope.getStructureDefinition(typeText);
+                            if (struct != null) {
+                                compileStructureVariable(var, struct);
+                            }
                             var.setData(identifier);
                         }
                     }
@@ -1439,23 +1499,34 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     logMessage(new CompilerException("expecting local variable(s)", token.substring(token.stop - token.start)));
                 }
                 while (iter.hasNext()) {
+                    Token type = null;
                     Token identifier = iter.next();
 
-                    String type = "LONG";
-                    if (Spin2Model.isType(identifier.getText())) {
-                        type = identifier.getText().toUpperCase();
-                        if (!iter.hasNext()) {
-                            logMessage(new CompilerException("expecting identifier", token.substring(token.stop - token.start)));
+                    if (iter.hasNext()) {
+                        Token next = iter.peekNext();
+                        if (next.type == 0 || next.type == Token.KEYWORD) {
+                            type = identifier;
+                            identifier = iter.next();
                         }
-                        identifier = iter.next();
                     }
-                    else if (scope.hasStructureDefinition(identifier.getText())) {
-                        type = identifier.getText();
-                        if (!iter.hasNext()) {
-                            throw new CompilerException("expecting identifier", token.substring(token.stop - token.start));
+
+                    if (type != null) {
+                        boolean valid = Spin2Model.isType(type.getText());
+                        if (!valid) {
+                            if (scope.hasStructureDefinition(type.getText())) {
+                                valid = true;
+                            }
                         }
-                        identifier = iter.next();
+                        if (!valid) {
+                            if (type.getText().startsWith("^")) {
+                                valid = Spin2Model.isType(type.getText().substring(1));
+                            }
+                        }
+                        if (!valid) {
+                            logMessage(new CompilerException("invalid type", type));
+                        }
                     }
+
                     if (identifier.type == 0) {
                         Expression size = new NumberLiteral(1);
 
@@ -1493,8 +1564,9 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                             if (expression != null) {
                                 logMessage(new CompilerException(CompilerException.WARNING, "local variable '" + identifier + "' hides global variable", identifier));
                             }
-                            LocalVariable var = method.addLocalVariable(type, identifier.getText(), size.getNumber().intValue()); // new LocalVariable(type, identifier.getText(), size, offset);
-                            Spin2Struct struct = scope.getStructureDefinition(type);
+                            String typeText = type != null ? type.getText().toUpperCase() : "LONG";
+                            LocalVariable var = method.addLocalVariable(typeText, identifier.getText(), size.getNumber().intValue()); // new LocalVariable(type, identifier.getText(), size, offset);
+                            Spin2Struct struct = scope.getStructureDefinition(typeText);
                             if (struct != null) {
                                 compileStructureVariable(var, struct);
                             }
@@ -1526,11 +1598,27 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     logMessage(new CompilerException("expecting return variable(s)", token.substring(token.stop - token.start)));
                 }
                 while (iter.hasNext()) {
+                    Token type = null;
                     Token identifier = iter.next();
-                    if (Spin1Model.isType(identifier.getText())) {
-                        logMessage(new CompilerException("type not allowed", identifier));
+                    if (iter.hasNext()) {
+                        Token next = iter.peekNext();
+                        if (next.type == 0 || next.type == Token.KEYWORD) {
+                            type = identifier;
+                            identifier = iter.next();
+                        }
                     }
-                    else if (identifier.type == 0) {
+
+                    if (type != null) {
+                        boolean valid = false;
+                        if (scope.hasStructureDefinition(type.getText())) {
+                            valid = true;
+                        }
+                        if (!valid) {
+                            logMessage(new CompilerException("invalid type", type));
+                        }
+                    }
+
+                    if (identifier.type == 0) {
                         Expression expression = localScope.getLocalSymbol(identifier.getText());
                         if (expression instanceof LocalVariable) {
                             logMessage(new CompilerException("symbol '" + identifier.getText() + "' already defined", identifier));
@@ -1539,7 +1627,12 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                             if (expression != null) {
                                 logMessage(new CompilerException(CompilerException.WARNING, "return variable '" + identifier.getText() + "' hides global variable", identifier));
                             }
-                            LocalVariable var = method.addReturnVariable("LONG", identifier.getText());
+                            String typeText = type != null ? type.getText().toUpperCase() : "LONG";
+                            LocalVariable var = method.addReturnVariable(typeText, identifier.getText());
+                            Spin2Struct struct = scope.getStructureDefinition(typeText);
+                            if (struct != null) {
+                                compileStructureVariable(var, struct);
+                            }
                             var.setData(identifier);
                         }
                     }

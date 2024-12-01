@@ -78,15 +78,7 @@ public class MemoryOp extends Spin2Bytecode {
         this.base = bb;
         this.op = op;
         this.expression = expression;
-        if (this.ss == Size.Long) {
-            this.index = index * 4;
-        }
-        else if (this.ss == Size.Word) {
-            this.index = index * 2;
-        }
-        else {
-            this.index = index;
-        }
+        this.index = index;
     }
 
     public MemoryOp(Context context, Size ss, Base bb, Op op, boolean pop, Expression expression, int index) {

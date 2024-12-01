@@ -1012,15 +1012,31 @@ public class Spin2TokenMarker extends SourceTokenMarker {
             public boolean visitMethod(MethodNode node) {
                 locals.clear();
 
-                for (Node child : node.getParameters()) {
-                    locals.put(child.getText(), TokenId.METHOD_LOCAL);
-                    locals.put("@" + child.getText(), TokenId.METHOD_LOCAL);
-                    locals.put("@@" + child.getText(), TokenId.METHOD_LOCAL);
+                for (MethodNode.ParameterNode child : node.getParameters()) {
+                    if (child.type != null) {
+                        TokenId id = symbols.get(child.type.getText());
+                        if (id != null && id == TokenId.TYPE) {
+                            tokens.add(new TokenMarker(child.type, id));
+                        }
+                    }
+                    if (child.identifier != null) {
+                        locals.put(child.identifier.getText(), TokenId.METHOD_LOCAL);
+                        locals.put("@" + child.identifier.getText(), TokenId.METHOD_LOCAL);
+                        locals.put("@@" + child.identifier.getText(), TokenId.METHOD_LOCAL);
+                    }
                 }
-                for (Node child : node.getReturnVariables()) {
-                    locals.put(child.getText(), TokenId.METHOD_RETURN);
-                    locals.put("@" + child.getText(), TokenId.METHOD_RETURN);
-                    locals.put("@@" + child.getText(), TokenId.METHOD_RETURN);
+                for (MethodNode.ReturnNode child : node.getReturnVariables()) {
+                    if (child.type != null) {
+                        TokenId id = symbols.get(child.type.getText());
+                        if (id != null && id == TokenId.TYPE) {
+                            tokens.add(new TokenMarker(child.type, id));
+                        }
+                    }
+                    if (child.identifier != null) {
+                        locals.put(child.identifier.getText(), TokenId.METHOD_RETURN);
+                        locals.put("@" + child.identifier.getText(), TokenId.METHOD_RETURN);
+                        locals.put("@@" + child.identifier.getText(), TokenId.METHOD_RETURN);
+                    }
                 }
 
                 for (MethodNode.ParameterNode child : node.getParameters()) {
@@ -1031,7 +1047,13 @@ public class Spin2TokenMarker extends SourceTokenMarker {
 
                 for (MethodNode.LocalVariableNode child : node.getLocalVariables()) {
                     if (child.type != null) {
-                        tokens.add(new TokenMarker(child.type, TokenId.TYPE));
+                        TokenId id = symbols.get(child.type.getText());
+                        if (id == null) {
+                            id = keywords.get(child.type.getText());
+                        }
+                        if (id != null && id == TokenId.TYPE) {
+                            tokens.add(new TokenMarker(child.type, id));
+                        }
                     }
                     if (child.identifier != null) {
                         locals.put(child.identifier.getText(), TokenId.METHOD_LOCAL);
@@ -1092,9 +1114,6 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                     else {
                         int dot = token.getText().indexOf('.');
                         TokenId id = locals.get(token.getText());
-                        if (id == null && token.getText().startsWith("@")) {
-                            id = locals.get(token.getText().substring(1));
-                        }
                         if (id == null) {
                             id = symbols.get(token.getText());
                             if (id == null && token.getText().startsWith("@")) {
@@ -1125,9 +1144,6 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                         if (id == null && dot != -1) {
                             String left = token.getText().substring(0, dot);
                             TokenId leftId = locals.get(left);
-                            if (leftId == null && left.startsWith("@")) {
-                                leftId = locals.get(left.substring(1));
-                            }
                             if (leftId == null) {
                                 leftId = symbols.get(left);
                                 if (leftId == null && left.startsWith("@")) {

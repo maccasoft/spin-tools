@@ -67,7 +67,16 @@ public class Spin2Method {
 
             @Override
             public int getOffset() {
-                return parameters.indexOf(this) * 4;
+                int offset = 0;
+
+                for (LocalVariable var : parameters) {
+                    if (var == this) {
+                        break;
+                    }
+                    offset += (var.getTypeSize() * var.getSize() + 3) & ~3;
+                }
+
+                return offset;
             }
 
         };
@@ -81,7 +90,23 @@ public class Spin2Method {
 
             @Override
             public int getOffset() {
-                return (parameters.size() + returns.indexOf(this)) * 4;
+                int offset = 0;
+
+                for (LocalVariable var : parameters) {
+                    if (var == this) {
+                        break;
+                    }
+                    offset += (var.getTypeSize() * var.getSize() + 3) & ~3;
+                }
+
+                for (LocalVariable var : returns) {
+                    if (var == this) {
+                        break;
+                    }
+                    offset += (var.getTypeSize() * var.getSize() + 3) & ~3;
+                }
+
+                return offset;
             }
 
         };
@@ -95,7 +120,21 @@ public class Spin2Method {
 
             @Override
             public int getOffset() {
-                int offset = (parameters.size() + returns.size()) * 4;
+                int offset = 0;
+
+                for (LocalVariable var : parameters) {
+                    if (var == this) {
+                        break;
+                    }
+                    offset += (var.getTypeSize() * var.getSize() + 3) & ~3;
+                }
+
+                for (LocalVariable var : returns) {
+                    if (var == this) {
+                        break;
+                    }
+                    offset += (var.getTypeSize() * var.getSize() + 3) & ~3;
+                }
 
                 for (LocalVariable var : localVariables) {
                     if (var == this) {
@@ -184,34 +223,10 @@ public class Spin2Method {
         int count = 0;
 
         for (LocalVariable var : localVariables) {
-            int typeSize = 4;
-            if ("WORD".equalsIgnoreCase(var.getType())) {
-                typeSize = 2;
-            }
-            else if ("BYTE".equalsIgnoreCase(var.getType())) {
-                typeSize = 1;
-            }
-            count += typeSize * var.getSize();
+            count += var.getTypeSize() * var.getSize();
         }
 
         return (count + 3) >> 2;
-    }
-
-    public int getLocalVarSize() {
-        int count = parameters.size() * 4 + returns.size() * 4;
-
-        for (LocalVariable var : localVariables) {
-            int typeSize = 4;
-            if ("WORD".equalsIgnoreCase(var.getType())) {
-                typeSize = 2;
-            }
-            else if ("BYTE".equalsIgnoreCase(var.getType())) {
-                typeSize = 1;
-            }
-            count += typeSize * var.getSize();
-        }
-
-        return count;
     }
 
     public void addSource(Spin2MethodLine line) {

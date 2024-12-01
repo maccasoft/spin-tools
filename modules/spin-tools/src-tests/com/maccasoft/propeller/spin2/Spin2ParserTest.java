@@ -445,20 +445,6 @@ class Spin2ParserTest {
     }
 
     @Test
-    void testMethodInvalidParameters() throws Exception {
-        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
-            + "PUB StartTx(pin baud)\n"
-            + ""));
-
-        Node root = subject.parse();
-        Assertions.assertEquals(""
-            + "Node []\n"
-            + "+-- MethodNode type=PUB name=StartTx [PUB StartTx(pin baud)]\n"
-            + "    +-- ParameterNode identifier=pin [pin baud]\n"
-            + "", tree(root));
-    }
-
-    @Test
     void testMethodLocalVariables() throws Exception {
         Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
             + "PRI FFT1024() | a, b\n"
@@ -518,36 +504,6 @@ class Spin2ParserTest {
             + "+-- MethodNode type=PRI name=FFT1024 [PRI FFT1024() : a, b]\n"
             + "    +-- ReturnNode identifier=a [a]\n"
             + "    +-- ReturnNode identifier=b [b]\n"
-            + "", tree(root));
-    }
-
-    @Test
-    void testMethodInvalidReturnVariables() throws Exception {
-        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
-            + "PRI FFT1024() : a b\n"
-            + ""));
-
-        Node root = subject.parse();
-        Assertions.assertEquals(""
-            + "Node []\n"
-            + "+-- MethodNode type=PRI name=FFT1024 [PRI FFT1024() : a b]\n"
-            + "    +-- ReturnNode identifier=a [a b]\n"
-            + "", tree(root));
-    }
-
-    @Test
-    void testMethodUnexpectedTokens2() throws Exception {
-        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
-            + "PUB go(a,b) : c to\n"
-            + ""));
-
-        Node root = subject.parse();
-        Assertions.assertEquals(""
-            + "Node []\n"
-            + "+-- MethodNode type=PUB name=go [PUB go(a,b) : c to]\n"
-            + "    +-- ParameterNode identifier=a [a]\n"
-            + "    +-- ParameterNode identifier=b [b]\n"
-            + "    +-- ReturnNode identifier=c [c to]\n"
             + "", tree(root));
     }
 
