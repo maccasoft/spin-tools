@@ -82,6 +82,7 @@ import com.maccasoft.propeller.expressions.Xor;
 import com.maccasoft.propeller.expressions.Zerox;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.spin2.Spin2Bytecode.Descriptor;
+import com.maccasoft.propeller.spin2.Spin2Struct.Spin2StructMember;
 import com.maccasoft.propeller.spin2.bytecode.Address;
 import com.maccasoft.propeller.spin2.bytecode.BitField;
 import com.maccasoft.propeller.spin2.bytecode.Bytecode;
@@ -736,6 +737,19 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     os.writeBytes(code);
                     source.add(new Bytecode(context, os.toByteArray(), node.getText().toUpperCase()));
 
+                    return source;
+                }
+                if ("SIZEOF".equalsIgnoreCase(node.getText())) {
+                    if (node.getChildCount() != 1) {
+                        throw new RuntimeException("expected " + 1 + " argument(s), found " + node.getChildCount());
+                    }
+                    Expression expression = getSizeof(context, node.getChild(0).getText());
+                    if (expression != null) {
+                        source.add(new Constant(context, expression));
+                    }
+                    else {
+                        logMessage(new CompilerException("expected type or variable", node.getChild(0).getTokens()));
+                    }
                     return source;
                 }
                 if ("DEBUG".equalsIgnoreCase(node.getText())) {
@@ -1598,9 +1612,42 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
                 }
                 return new Nan(buildConstantExpression(context, node.getChild(0), registerConstant));
+            case "SIZEOF":
+                if (node.getChildCount() == 1) {
+                    Expression exp = getSizeof(context, node.getChild(0).getText());
+                    if (exp != null) {
+                        return exp;
+                    }
+                }
+                throw new RuntimeException("expected type or variable (" + node.getText() + ")");
         }
 
         throw new RuntimeException("unknown " + node.getText());
+    }
+
+    Expression getSizeof(Context context, String identifier) {
+        Expression expression = context.getLocalSymbol(identifier);
+        if (expression instanceof Variable) {
+            Variable var = (Variable) expression;
+            return new NumberLiteral(var.getTypeSize() * var.getSize());
+        }
+        else if (context.hasStructureDefinition(identifier)) {
+            Spin2Struct struct = context.getStructureDefinition(identifier);
+            return new NumberLiteral(getStructureSize(context, struct));
+        }
+        else if ("BYTE".equalsIgnoreCase(identifier)) {
+            return new NumberLiteral(1);
+        }
+        else if ("WORD".equalsIgnoreCase(identifier)) {
+            return new NumberLiteral(2);
+        }
+        else if ("LONG".equalsIgnoreCase(identifier)) {
+            return new NumberLiteral(4);
+        }
+        else if ("^BYTE".equalsIgnoreCase(identifier) || "^WORD".equalsIgnoreCase(identifier) || "^LONG".equalsIgnoreCase(identifier)) {
+            return new NumberLiteral(4);
+        }
+        return null;
     }
 
     protected List<Spin2Bytecode> leftAssign(Context context, Spin2Method method, Spin2StatementNode node, boolean push, boolean write) {
@@ -3013,6 +3060,34 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
         }
 
         return os.toByteArray();
+    }
+
+    int getStructureSize(Context context, Spin2Struct struct) {
+        int size = 0;
+
+        for (Spin2StructMember member : struct.getMembers()) {
+            String memberType = "LONG";
+            if (member.getType() != null) {
+                memberType = member.getType().getText();
+            }
+            if ("LONG".equalsIgnoreCase(memberType)) {
+                size += 4;
+            }
+            else if ("WORD".equalsIgnoreCase(memberType)) {
+                size += 2;
+            }
+            else if ("BYTE".equalsIgnoreCase(memberType)) {
+                size += 1;
+            }
+            else {
+                Spin2Struct memberStruct = context.getStructureDefinition(memberType);
+                if (memberStruct != null) {
+                    size += getStructureSize(context, memberStruct);
+                }
+            }
+        }
+
+        return size;
     }
 
 }

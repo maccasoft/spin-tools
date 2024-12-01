@@ -327,22 +327,26 @@ public class Spin2TreeBuilder {
         }
 
         if ("(".equals(token.getText())) {
-            next();
+            Token first = next();
             Spin2StatementNode node = parseLevel(parseAtom(), 0, false);
             token = next();
             if (token == null || !")".equals(token.getText())) {
                 throw new CompilerException("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
             }
+            node.firstToken = first;
+            node.lastToken = token;
             return node;
         }
 
         if ("[".equals(token.getText())) {
-            next();
+            Token first = next();
             Spin2StatementNode node = parseLevel(parseAtom(), 0, false);
             token = next();
             if (token == null || !"]".equals(token.getText())) {
                 throw new CompilerException("expecting ]", token == null ? tokens.get(tokens.size() - 1) : token);
             }
+            node.firstToken = first;
+            node.lastToken = token;
             return node;
         }
 
@@ -356,10 +360,10 @@ public class Spin2TreeBuilder {
                     }
                 }
                 if ("[".equals(peek().getText())) {
-                    Token start = next();
+                    Token first = next();
                     Spin2StatementNode childNode = parseLevel(parseAtom(), 0, false);
                     token = next();
-                    node.addChild(new Spin2StatementNode.Index(childNode, start, token));
+                    node.addChild(new Spin2StatementNode.Index(childNode, first, token));
                     if (token == null || !"]".equals(token.getText())) {
                         throw new CompilerException("expecting ]", token == null ? tokens.get(tokens.size() - 1) : token);
                     }
@@ -367,10 +371,10 @@ public class Spin2TreeBuilder {
                         return node;
                     }
                     if ("[".equals(peek().getText())) {
-                        start = next();
+                        first = next();
                         childNode = parseLevel(parseAtom(), 0, false);
                         token = next();
-                        node.addChild(new Spin2StatementNode.Index(childNode, start, token));
+                        node.addChild(new Spin2StatementNode.Index(childNode, first, token));
                         if (token == null || !"]".equals(token.getText())) {
                             throw new CompilerException("expecting ]", token == null ? tokens.get(tokens.size() - 1) : token);
                         }
@@ -391,10 +395,10 @@ public class Spin2TreeBuilder {
                         }
                     }
                     if ("[".equals(peek().getText())) {
-                        start = next();
+                        first = next();
                         childNode = parseLevel(parseAtom(), 0, false);
                         token = next();
-                        node.addChild(new Spin2StatementNode.Index(childNode, start, token));
+                        node.addChild(new Spin2StatementNode.Index(childNode, first, token));
                         if (token == null || !"]".equals(token.getText())) {
                             throw new CompilerException("expecting ]", token == null ? tokens.get(tokens.size() - 1) : token);
                         }
@@ -408,7 +412,7 @@ public class Spin2TreeBuilder {
                     return node;
                 }
                 if ("(".equals(peek().getText())) {
-                    next();
+                    Token first = next();
                     node.method = true;
                     if (peek() != null && ")".equals(peek().getText())) {
                         token = next();
@@ -420,6 +424,8 @@ public class Spin2TreeBuilder {
                                 }
                             }
                         }
+                        node.firstToken = first;
+                        node.lastToken = token;
                         return node;
                     }
                     boolean isBacktickString = false;
@@ -445,6 +451,8 @@ public class Spin2TreeBuilder {
                                     }
                                 }
                             }
+                            node.firstToken = first;
+                            node.lastToken = token;
                             return node;
                         }
                         if (child.getToken().getText().startsWith("`")) {

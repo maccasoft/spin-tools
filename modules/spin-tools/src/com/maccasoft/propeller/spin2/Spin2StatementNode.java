@@ -53,6 +53,8 @@ public class Spin2StatementNode {
 
         public Argument(Spin2StatementNode node) {
             super(node.token);
+            this.firstToken = node.firstToken;
+            this.lastToken = node.lastToken;
             this.properties.putAll(node.properties);
             this.childs.addAll(node.childs);
             this.data = node.data;

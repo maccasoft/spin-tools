@@ -203,6 +203,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         keywords.put("POSX", TokenId.CONSTANT);
         keywords.put("NEGX", TokenId.CONSTANT);
         keywords.put("PI", TokenId.CONSTANT);
+        keywords.put("SIZEOF", TokenId.KEYWORD);
 
         keywords.put("P_TRUE_A", TokenId.CONSTANT);
         keywords.put("P_INVERT_A", TokenId.CONSTANT);
@@ -591,6 +592,8 @@ public class Spin2TokenMarker extends SourceTokenMarker {
 
         debugKeywords.put("PC_KEY", TokenId.FUNCTION);
         debugKeywords.put("PC_MOUSE", TokenId.FUNCTION);
+
+        debugKeywords.put("SIZEOF", TokenId.KEYWORD);
     }
 
     static Map<String, TokenId> spinKeywords = new CaseInsensitiveMap<>();
