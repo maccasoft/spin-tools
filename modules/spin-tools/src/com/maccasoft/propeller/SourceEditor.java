@@ -250,6 +250,7 @@ public class SourceEditor {
     Rectangle popupMouseBounds;
     Point mousePosition;
 
+    boolean hoverButtonDown;
     boolean hoverHighlight;
     NavigationTarget hoverTarget;
 
@@ -591,7 +592,18 @@ public class SourceEditor {
         styledText.addMouseListener(new MouseAdapter() {
 
             @Override
+            public void mouseDown(MouseEvent e) {
+                if (e.button == 1) {
+                    hoverButtonDown = true;
+                }
+            }
+
+            @Override
             public void mouseUp(MouseEvent e) {
+                if (e.button == 1) {
+                    hoverButtonDown = false;
+                }
+
                 if (hoverTarget == null) {
                     return;
                 }
@@ -629,17 +641,19 @@ public class SourceEditor {
                     return;
                 }
 
-                hoverHighlight = (e.stateMask & SWT.CTRL) != 0;
-                hoverTarget = null;
+                if (!hoverButtonDown) {
+                    hoverHighlight = (e.stateMask & SWT.CTRL) != 0;
+                    hoverTarget = null;
 
-                if (hoverHighlight) {
-                    hoverTarget = getNavigationTarget(mousePosition);
+                    if (hoverHighlight) {
+                        hoverTarget = getNavigationTarget(mousePosition);
 
-                    Cursor cursor = hoverTarget != null ? display.getSystemCursor(SWT.CURSOR_HAND) : null;
-                    if (cursor != styledText.getCursor()) {
-                        styledText.setCursor(cursor);
+                        Cursor cursor = hoverTarget != null ? display.getSystemCursor(SWT.CURSOR_HAND) : null;
+                        if (cursor != styledText.getCursor()) {
+                            styledText.setCursor(cursor);
+                        }
+                        styledText.redraw();
                     }
-                    styledText.redraw();
                 }
 
             }
