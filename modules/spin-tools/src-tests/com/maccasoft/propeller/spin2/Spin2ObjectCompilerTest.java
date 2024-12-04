@@ -6921,6 +6921,31 @@ class Spin2ObjectCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testBytecodeInjection() throws Exception {
+        String text = ""
+            + "PUB start() | a\n"
+            + "\n"
+            + "    bytecode($A2, $F0) ' a := 1\n"
+            + "    bytecode($A2, $F0, \"a := 1\")\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method start @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       0E 00 00 00    End\n"
+            + "' PUB start() | a\n"
+            + "00008 00008       01             (stack size)\n"
+            + "'     bytecode($A2, $F0)\n"
+            + "00009 00009       A2 F0          BYTECODE\n"
+            + "'     bytecode($A2, $F0, \"a := 1\")\n"
+            + "0000B 0000B       A2 F0          a := 1\n"
+            + "0000D 0000D       04             RETURN\n"
+            + "0000E 0000E       00 00          Padding\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }

@@ -820,6 +820,28 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     }
                     return new ArrayList<Spin2Bytecode>();
                 }
+                if ("BYTECODE".equalsIgnoreCase(node.getText())) {
+                    String text = node.getText().toUpperCase();
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
+                    for (int i = 0; i < node.getChildCount(); i++) {
+                        if (node.getChild(i).getType() == Token.STRING && i == node.getChildCount() - 1) {
+                            text = node.getChild(i).getText();
+                            text = text.substring(1, text.length() - 1);
+                            break;
+                        }
+                        try {
+                            Expression expression = buildConstantExpression(context, node.getChild(i));
+                            if (!expression.isConstant()) {
+                                throw new CompilerException("expression is not constant", node.getChild(i).getTokens());
+                            }
+                            os.write(expression.getNumber().byteValue());
+                        } catch (Exception e) {
+                            throw new CompilerException("expression is not constant", node.getChild(i).getTokens());
+                        }
+                    }
+                    source.add(new Bytecode(context, os.toByteArray(), text));
+                    return source;
+                }
             }
 
             if ("CLKMODE".equalsIgnoreCase(node.getText())) {

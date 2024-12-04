@@ -134,6 +134,8 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         keywords.put("LOOKDOWN", TokenId.FUNCTION);
         keywords.put("LOOKDOWNZ", TokenId.FUNCTION);
 
+        keywords.put("BYTECODE", TokenId.FUNCTION);
+
         keywords.put("NOT", TokenId.KEYWORD);
         keywords.put("OR", TokenId.KEYWORD);
         keywords.put("AND", TokenId.KEYWORD);

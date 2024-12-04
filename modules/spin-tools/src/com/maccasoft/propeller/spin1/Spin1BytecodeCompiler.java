@@ -127,7 +127,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 for (int i = 0; i < desc.parameters; i++) {
                     source.addAll(compileBytecodeExpression(context, method, node.getChild(i), true));
                 }
-                source.add(new Bytecode(context, push ? desc.code_push : desc.code, node.getText()));
+                source.add(new Bytecode(context, push ? desc.code_push : desc.code, node.getText().toUpperCase()));
             }
             else if ("CONSTANT".equalsIgnoreCase(node.getText())) {
                 if (node.getChildCount() != 1) {
@@ -208,7 +208,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                     source.addAll(compileBytecodeExpression(context, method, node.getChild(1), true));
                 }
                 desc = Spin1Bytecode.getDescriptor("COGINIT");
-                source.add(new Bytecode(context, push ? desc.code_push : desc.code, node.getText()));
+                source.add(new Bytecode(context, push ? desc.code_push : desc.code, node.getText().toUpperCase()));
             }
             else if ("LOOKDOWN".equalsIgnoreCase(node.getText()) || "LOOKDOWNZ".equalsIgnoreCase(node.getText()) || "LOOKUP".equalsIgnoreCase(node.getText())
                 || "LOOKUPZ".equalsIgnoreCase(node.getText())) {
@@ -300,6 +300,27 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 source.add(new Bytecode(context, new byte[] {
                     (byte) 0x20
                 }, "CLKSET"));
+            }
+            else if ("BYTECODE".equalsIgnoreCase(node.getText())) {
+                String text = node.getText().toUpperCase();
+                ByteArrayOutputStream os = new ByteArrayOutputStream();
+                for (int i = 0; i < node.getChildCount(); i++) {
+                    if (node.getChild(i).getType() == Token.STRING && i == node.getChildCount() - 1) {
+                        text = node.getChild(i).getText();
+                        text = text.substring(1, text.length() - 1);
+                        break;
+                    }
+                    try {
+                        Expression expression = buildConstantExpression(context, node.getChild(i));
+                        if (!expression.isConstant()) {
+                            throw new CompilerException("expression is not constant", node.getChild(i).getTokens());
+                        }
+                        os.write(expression.getNumber().byteValue());
+                    } catch (Exception e) {
+                        throw new CompilerException("expression is not constant", node.getChild(i).getTokens());
+                    }
+                }
+                source.add(new Bytecode(context, os.toByteArray(), text));
             }
             else if (node.getType() == Token.NUMBER) {
                 Expression expression = new NumberLiteral(node.getText());

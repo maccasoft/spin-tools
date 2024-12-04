@@ -10,22 +10,22 @@
 
 package com.maccasoft.propeller.spin1.bytecode;
 
-import com.maccasoft.propeller.spin1.Spin1Bytecode;
 import com.maccasoft.propeller.expressions.Context;
+import com.maccasoft.propeller.spin1.Spin1Bytecode;
 
 public class Bytecode extends Spin1Bytecode {
 
     byte[] code;
 
     public Bytecode(Context context, int code, String text) {
-        super(context, text.toUpperCase());
+        super(context, text);
         this.code = new byte[] {
             (byte) code
         };
     }
 
     public Bytecode(Context context, byte[] code, String text) {
-        super(context, text.toUpperCase());
+        super(context, text);
         this.code = code;
         if (code == null) {
             System.out.println("null " + text);
