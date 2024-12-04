@@ -231,7 +231,7 @@ public class VariableOp extends Spin2Bytecode {
             sb.append("VBASE");
         }
 
-        int offset = variable.getOffset();
+        int offset = variable.getOffset() + index;
         if (!indexed && ss == Size.Long && (offset % 4) == 0 && (offset >> 2) <= 15) {
             sb.append(String.format("+$%05X", offset >> 2));
             sb.append(" (short)");
