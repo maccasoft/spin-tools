@@ -1101,6 +1101,13 @@ public class Spin2Parser extends Parser {
                 token.type = Token.STRING;
             }
         }
+        else if ("^".equals(token.getText())) {
+            Token nextToken = stream.peekNext();
+            if (token.isAdjacent(nextToken) && (nextToken.type == 0 || nextToken.type != Token.KEYWORD)) {
+                token = token.merge(stream.nextToken());
+                token.type = 0;
+            }
+        }
         return token;
     }
 

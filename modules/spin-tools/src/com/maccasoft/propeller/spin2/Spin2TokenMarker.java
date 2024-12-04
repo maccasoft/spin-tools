@@ -789,6 +789,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                     tokens.add(new TokenMarker(node.getType(), TokenId.TYPE));
                 }
                 symbols.put(node.getIdentifier().getText(), TokenId.TYPE);
+                symbols.put("^" + node.getIdentifier().getText(), TokenId.TYPE);
                 tokens.add(new TokenMarker(node.getIdentifier(), TokenId.CONSTANT));
             }
 

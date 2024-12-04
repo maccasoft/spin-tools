@@ -764,6 +764,71 @@ class Spin2TreeBuilderTest {
             + "", parse(text));
     }
 
+    @Test
+    void testPointers() {
+        String text = "a := [b]";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + " +-- [b]\n"
+            + "", parse(text));
+    }
+
+    @Test
+    void testPointersPostEffect1() {
+        String text = "a := [b]++";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + " +-- [b]\n"
+            + "      +-- [++]\n"
+            + "", parse(text));
+    }
+
+    @Test
+    void testPointersPostEffect2() {
+        String text = "a := b[++]";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + " +-- [b]\n"
+            + "      +-- [++]\n"
+            + "", parse(text));
+    }
+
+    @Test
+    void testPointersPreEffect1() {
+        String text = "a := ++[b]";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + " +-- [++]\n"
+            + "      +-- [b]\n"
+            + "", parse(text));
+    }
+
+    @Test
+    void testPointersPreEffect2() {
+        String text = "a := [++]b";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + " +-- [++]\n"
+            + "      +-- [b]\n"
+            + "", parse(text));
+    }
+
+    @Test
+    void testPointersPreEffect3() {
+        String text = "[++]a := b";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [++]\n"
+            + "      +-- [a]\n"
+            + " +-- [b]\n"
+            + "", parse(text));
+    }
+
     String parse(String text) {
         Spin2TreeBuilder builder = new Spin2TreeBuilder(new Context());
 

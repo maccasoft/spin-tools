@@ -110,6 +110,9 @@ public class Variable extends Expression {
     }
 
     public int getTypeSize() {
+        if (type.startsWith("^")) {
+            return 4;
+        }
         if (members.size() == 0) {
             if ("SHORT".equals(type) || "WORD".equals(type)) {
                 return 2;
@@ -139,7 +142,7 @@ public class Variable extends Expression {
     }
 
     public boolean isPointer() {
-        return type.endsWith("*");
+        return type.startsWith("^") || type.endsWith("*");
     }
 
     public String getPointerType() {

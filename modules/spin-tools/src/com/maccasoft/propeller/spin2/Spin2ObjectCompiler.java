@@ -91,6 +91,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
     Map<String, Expression> publicSymbols;
     List<LinkDataObject> objectLinks = new ArrayList<>();
+    List<Spin2Struct> objectStructures = new ArrayList<>();
 
     Map<String, Expression> parameters;
 
@@ -243,6 +244,58 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 logMessage(new CompilerException(e, entry.getValue().getData()));
                 iter.remove();
             }
+        }
+
+        for (Spin2Struct struct : objectStructures) {
+            int offset = 0;
+
+            for (Spin2StructMember member : struct.getMembers()) {
+                Token type = member.getType();
+                String typeText = type != null ? type.getText() : "LONG";
+
+                member.setOffset(offset);
+
+                int typeSize = 0;
+                switch (typeText.toUpperCase()) {
+                    case "LONG":
+                        typeSize = 4;
+                        break;
+                    case "WORD":
+                        typeSize = 2;
+                        break;
+                    case "BYTE":
+                        typeSize = 1;
+                        break;
+                    case "^LONG":
+                    case "^WORD":
+                    case "^BYTE":
+                        typeSize = 4;
+                        break;
+                    default: {
+                        Spin2Struct memberStruct = scope.getStructureDefinition(typeText);
+                        if (memberStruct == null) {
+                            logMessage(new CompilerException("undefined type " + typeText, type));
+                            break;
+                        }
+                        typeSize = memberStruct.getTypeSize();
+                        break;
+                    }
+                }
+                try {
+                    Expression expression = member.getSize().resolve();
+                    if (!expression.isConstant()) {
+                        logMessage(new CompilerException("expression is not constant", expression.getData()));
+                    }
+                    offset += typeSize * member.getSize().getNumber().intValue();
+                } catch (CompilerException e) {
+                    logMessage(e);
+                } catch (Exception e) {
+                    logMessage(new CompilerException(e, member.getSize().getData()));
+                    iter.remove();
+                }
+            }
+
+            struct.setTypeSize(offset);
         }
 
         objectVarSize = 4;
@@ -964,7 +1017,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         }
                     }
 
-                    Expression memberSize = null;
+                    Expression memberSize = new NumberLiteral(1);
                     if (iter.hasNext()) {
                         token = iter.next();
                         if ("[".equals(token.getText())) {
@@ -1005,6 +1058,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         break;
                     }
                 }
+                objectStructures.add(struct);
                 scope.addStructureDefinition(identifier.getText(), struct);
             }
             else {
@@ -1414,13 +1468,14 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     if (type != null) {
                         boolean valid = "LONG".equalsIgnoreCase(type.getText());
                         if (!valid) {
-                            if (scope.hasStructureDefinition(type.getText())) {
-                                valid = true;
-                            }
+                            valid = scope.hasStructureDefinition(type.getText());
                         }
                         if (!valid) {
                             if (type.getText().startsWith("^")) {
                                 valid = Spin2Model.isType(type.getText().substring(1));
+                                if (!valid) {
+                                    valid = scope.hasStructureDefinition(type.getText().substring(1));
+                                }
                             }
                         }
                         if (!valid) {
@@ -1513,13 +1568,14 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     if (type != null) {
                         boolean valid = Spin2Model.isType(type.getText());
                         if (!valid) {
-                            if (scope.hasStructureDefinition(type.getText())) {
-                                valid = true;
-                            }
+                            valid = scope.hasStructureDefinition(type.getText());
                         }
                         if (!valid) {
                             if (type.getText().startsWith("^")) {
                                 valid = Spin2Model.isType(type.getText().substring(1));
+                                if (!valid) {
+                                    valid = scope.hasStructureDefinition(type.getText().substring(1));
+                                }
                             }
                         }
                         if (!valid) {
@@ -1609,9 +1665,14 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     }
 
                     if (type != null) {
-                        boolean valid = false;
-                        if (scope.hasStructureDefinition(type.getText())) {
-                            valid = true;
+                        boolean valid = scope.hasStructureDefinition(type.getText());
+                        if (!valid) {
+                            if (type.getText().startsWith("^")) {
+                                valid = Spin2Model.isType(type.getText().substring(1));
+                                if (!valid) {
+                                    valid = scope.hasStructureDefinition(type.getText().substring(1));
+                                }
+                            }
                         }
                         if (!valid) {
                             logMessage(new CompilerException("invalid type", type));

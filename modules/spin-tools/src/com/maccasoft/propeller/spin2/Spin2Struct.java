@@ -18,6 +18,7 @@ import com.maccasoft.propeller.model.Token;
 
 public class Spin2Struct {
 
+    int typeSize;
     List<Spin2StructMember> members;
 
     public static class Spin2StructMember {
@@ -25,6 +26,8 @@ public class Spin2Struct {
         private Token type;
         private Token identifier;
         private Expression size;
+
+        private int offset;
 
         public Spin2StructMember(Token type, Token identifier, Expression size) {
             this.type = type;
@@ -43,6 +46,15 @@ public class Spin2Struct {
         public Expression getSize() {
             return size;
         }
+
+        public int getOffset() {
+            return offset;
+        }
+
+        public void setOffset(int offset) {
+            this.offset = offset;
+        }
+
     }
 
     public Spin2Struct() {
@@ -64,6 +76,23 @@ public class Spin2Struct {
 
     public List<Spin2StructMember> getMembers() {
         return members;
+    }
+
+    public int getTypeSize() {
+        return typeSize;
+    }
+
+    public void setTypeSize(int typeSize) {
+        this.typeSize = typeSize;
+    }
+
+    public Spin2StructMember getMember(String identifier) {
+        for (Spin2StructMember m : members) {
+            if (m.identifier.getText().equalsIgnoreCase(identifier)) {
+                return m;
+            }
+        }
+        return null;
     }
 
 }

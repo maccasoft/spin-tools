@@ -318,7 +318,14 @@ public class Spin2TreeBuilder {
         }
 
         if (unary.contains(token.getText().toUpperCase())) {
-            Spin2StatementNode node = new Spin2StatementNode(next());
+            token = next();
+            Spin2StatementNode node = new Spin2StatementNode(token);
+            if ((token = peek()) == null) {
+                return node;
+            }
+            if ("]".equals(token.getText()) || ")".equals(token.getText())) {
+                return node;
+            }
             node.addChild(parseAtom());
             return node;
         }
@@ -340,13 +347,30 @@ public class Spin2TreeBuilder {
 
         if ("[".equals(token.getText())) {
             Token first = next();
-            Spin2StatementNode node = parseLevel(parseAtom(), 0, false);
+
+            if ((token = next()) == null) {
+                throw new CompilerException("syntax error", tokens.get(tokens.size() - 1));
+            }
+            if (token.type != 0 && !"++".equals(token.getText()) && !"--".equals(token.getText())) {
+                throw new CompilerException("expecting variable", token == null ? tokens.get(tokens.size() - 1) : token);
+            }
+            Spin2StatementNode node = new Spin2StatementNode(token);
             token = next();
             if (token == null || !"]".equals(token.getText())) {
                 throw new CompilerException("expecting ]", token == null ? tokens.get(tokens.size() - 1) : token);
             }
             node.firstToken = first;
             node.lastToken = token;
+
+            if ((token = peek()) != null) {
+                if ("++".equals(token.getText()) || "--".equals(token.getText())) {
+                    node.addChild(new Spin2StatementNode(next()));
+                }
+                else if (token.type == 0 || token.type == Token.KEYWORD) {
+                    node.addChild(parseAtom());
+                }
+            }
+
             return node;
         }
 

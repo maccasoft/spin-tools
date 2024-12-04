@@ -13,10 +13,10 @@ package com.maccasoft.propeller.spin2.bytecode;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
-import com.maccasoft.propeller.expressions.Context;
 
 public class VariableOp extends Spin2Bytecode {
 
@@ -210,7 +210,13 @@ public class VariableOp extends Spin2Bytecode {
 
         if (op != Op.Address && op != Op.PBaseAddress) {
             sb.append(" ");
-            sb.append(variable.getType());
+            if (variable.getType().startsWith("^")) {
+                sb.append("LONG");
+                sb.append(" (" + variable.getType() + ")");
+            }
+            else {
+                sb.append(variable.getType());
+            }
         }
         sb.append(" ");
 

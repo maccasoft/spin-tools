@@ -30,7 +30,7 @@ public class MemoryOp extends Spin2Bytecode {
     }
 
     public static enum Op {
-        Read, Write, Setup, Address, Field
+        Read, Write, Setup, Address, Field, WritePush
     }
 
     public Size ss;
@@ -186,6 +186,9 @@ public class MemoryOp extends Spin2Bytecode {
             else if (op == Op.Write) {
                 os.write(Spin2Bytecode.bc_write);
             }
+            else if (op == Op.WritePush) {
+                os.write(Spin2Bytecode.bc_write_push);
+            }
         } catch (IOException e) {
             // Do nothing
         }
@@ -200,7 +203,7 @@ public class MemoryOp extends Spin2Bytecode {
         if (op == Op.Read) {
             sb.append("READ");
         }
-        else if (op == Op.Write) {
+        else if (op == Op.Write || op == Op.WritePush) {
             sb.append("WRITE");
         }
         else if (op == Op.Setup) {
