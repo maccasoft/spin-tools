@@ -1101,7 +1101,15 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         valid = scope.hasStructureDefinition(type.getText());
                     }
                     if (!valid) {
-                        throw new CompilerException("invalid type '" + type.getText() + "'", type);
+                        if (type.getText().startsWith("^")) {
+                            valid = Spin2Model.isType(type.getText().substring(1));
+                            if (!valid) {
+                                valid = scope.hasStructureDefinition(type.getText().substring(1));
+                            }
+                        }
+                    }
+                    if (!valid) {
+                        logMessage(new CompilerException("invalid type", type));
                     }
                 }
 
@@ -1140,6 +1148,9 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                             }
                             else {
                                 token = iter.hasNext() ? iter.next() : null;
+                            }
+                            if (type != null && type.getText().startsWith("^")) {
+                                logMessage(new CompilerException("syntax error", builder.getTokens()));
                             }
                         }
                     }

@@ -55,6 +55,10 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         keywords.put("WORDFIT", TokenId.TYPE);
         keywords.put("STRUCT", TokenId.TYPE);
 
+        keywords.put("^BYTE", TokenId.TYPE);
+        keywords.put("^WORD", TokenId.TYPE);
+        keywords.put("^LONG", TokenId.TYPE);
+
         keywords.put("HUBSET", TokenId.FUNCTION);
         keywords.put("CLKSET", TokenId.FUNCTION);
         keywords.put("COGSPIN", TokenId.FUNCTION);
@@ -805,10 +809,6 @@ public class Spin2TokenMarker extends SourceTokenMarker {
 
             @Override
             public void visitVariable(VariableNode node) {
-                if (node.getType() != null) {
-                    tokens.add(new TokenMarker(node.getType(), TokenId.TYPE));
-                }
-
                 if (node.getIdentifier() != null) {
                     String identifier = node.getIdentifier().getText();
                     symbols.put(identifier, TokenId.VARIABLE);
@@ -989,6 +989,15 @@ public class Spin2TokenMarker extends SourceTokenMarker {
 
             @Override
             public void visitVariable(VariableNode node) {
+                if (node.type != null) {
+                    TokenId id = symbols.get(node.type.getText());
+                    if (id == null) {
+                        id = keywords.get(node.type.getText());
+                    }
+                    if (id != null && id == TokenId.TYPE) {
+                        tokens.add(new TokenMarker(node.type, id));
+                    }
+                }
                 if (node.getSize() != null) {
                     markTokens(node.getSize(), 0, null);
                 }
@@ -1018,6 +1027,9 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 for (MethodNode.ParameterNode child : node.getParameters()) {
                     if (child.type != null) {
                         TokenId id = symbols.get(child.type.getText());
+                        if (id == null) {
+                            id = keywords.get(child.type.getText());
+                        }
                         if (id != null && id == TokenId.TYPE) {
                             tokens.add(new TokenMarker(child.type, id));
                         }
