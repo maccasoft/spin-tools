@@ -14,6 +14,7 @@ package com.maccasoft.propeller;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.UnaryOperator;
@@ -69,14 +70,18 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.ScrollBar;
 import org.eclipse.swt.widgets.Shell;
 
+import com.maccasoft.propeller.devices.ComPort;
+import com.maccasoft.propeller.devices.ComPortEvent;
+import com.maccasoft.propeller.devices.ComPortEventListener;
+import com.maccasoft.propeller.devices.ComPortException;
+import com.maccasoft.propeller.devices.DeviceDescriptor;
+import com.maccasoft.propeller.devices.NetworkComPort;
+import com.maccasoft.propeller.devices.NetworkUtils;
+import com.maccasoft.propeller.internal.BusyIndicator;
 import com.maccasoft.propeller.internal.ColorRegistry;
 import com.maccasoft.propeller.internal.PngImageTransfer;
 
 import jssc.SerialPort;
-import jssc.SerialPortEvent;
-import jssc.SerialPortEventListener;
-import jssc.SerialPortException;
-import jssc.SerialPortTimeoutException;
 
 public class SerialTerminal {
 
@@ -126,7 +131,8 @@ public class SerialTerminal {
     Color background;
     int cursorState;
 
-    SerialPort serialPort;
+    ComPort comPort;
+
     int serialBaudRate;
     boolean localEcho;
     int historyIndex;
@@ -216,6 +222,9 @@ public class SerialTerminal {
             if (canvas.isDisposed()) {
                 return;
             }
+            if (lineInputGroup.getVisible()) {
+                return;
+            }
             frameCounter++;
             if (frameCounter >= 15) {
                 if ((cursorState & CURSOR_FLASH) != 0) {
@@ -228,74 +237,67 @@ public class SerialTerminal {
         }
     };
 
-    SerialPortEventListener serialEventListener = new SerialPortEventListener() {
+    ComPortEventListener serialEventListener = new ComPortEventListener() {
 
         int index = 0, max = 0;
         byte[] buf = new byte[4];
 
         @Override
-        public void serialEvent(SerialPortEvent serialPortEvent) {
-            switch (serialPortEvent.getEventType()) {
-                case SerialPort.MASK_RXCHAR:
-                    try {
-                        byte[] rx = serialPort.readBytes();
-                        for (int i = 0; i < rx.length; i++) {
-                            byte b = rx[i];
-                            if (index == 0) {
-                                if ((b & 0b111_00000) == 0b110_00000) {
-                                    buf[index++] = b;
-                                    max = 2;
-                                }
-                                else if ((b & 0b1111_0000) == 0b1110_0000) {
-                                    buf[index++] = b;
-                                    max = 3;
-                                }
-                                else if ((b & 0b11111_000) == 0b11110_000) {
-                                    buf[index++] = b;
-                                    max = 4;
-                                }
-                                else {
-                                    write((char) b);
-                                }
+        public void serialEvent(ComPortEvent comPortEvent) {
+            ComPort comPort = comPortEvent.getComPort();
+            if (comPortEvent.isRXCHAR()) {
+                try {
+                    byte[] rx = comPort.readBytes();
+                    for (int i = 0; i < rx.length; i++) {
+                        byte b = rx[i];
+                        if (index == 0) {
+                            if ((b & 0b111_00000) == 0b110_00000) {
+                                buf[index++] = b;
+                                max = 2;
+                            }
+                            else if ((b & 0b1111_0000) == 0b1110_0000) {
+                                buf[index++] = b;
+                                max = 3;
+                            }
+                            else if ((b & 0b11111_000) == 0b11110_000) {
+                                buf[index++] = b;
+                                max = 4;
                             }
                             else {
-                                buf[index++] = b;
-                                if (index >= max) {
-                                    write(new String(buf, 0, max).charAt(0));
-                                    index = 0;
-                                }
+                                write((char) b);
                             }
                         }
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                        else {
+                            buf[index++] = b;
+                            if (index >= max) {
+                                write(new String(buf, 0, max).charAt(0));
+                                index = 0;
+                            }
+                        }
                     }
-                    break;
-                case SerialPort.MASK_DSR:
-                    display.syncExec(new Runnable() {
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            if (comPortEvent.isDSR() || comPortEvent.isCTS()) {
+                display.syncExec(new Runnable() {
 
-                        @Override
-                        public void run() {
-                            if (!canvas.isDisposed()) {
-                                dsr.setSelection(serialPortEvent.getEventValue() != 0);
+                    @Override
+                    public void run() {
+                        if (!canvas.isDisposed()) {
+                            try {
+                                dsr.setSelection(comPort.isDSR());
+                                cts.setSelection(comPort.isCTS());
+                            } catch (ComPortException e) {
+                                // Do nothing
                             }
                         }
+                    }
 
-                    });
-                    break;
-                case SerialPort.MASK_CTS:
-                    display.syncExec(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            if (!canvas.isDisposed()) {
-                                cts.setSelection(serialPortEvent.getEventValue() != 0);
-                            }
-                        }
-
-                    });
-                    break;
+                });
             }
         }
+
     };
 
     abstract class TerminalEmulation {
@@ -637,8 +639,8 @@ public class SerialTerminal {
                         case 'n':
                             if (args[0] == 6) {
                                 try {
-                                    serialPort.writeString(String.format("\033[%d;%dR", cy - screenHeight, cx));
-                                } catch (SerialPortException e) {
+                                    comPort.writeBytes(String.format("\033[%d;%dR", cy - screenHeight, cx).getBytes());
+                                } catch (ComPortException e) {
                                     // Do nothing
                                 }
                                 break;
@@ -813,7 +815,7 @@ public class SerialTerminal {
             try {
                 serialBaudRate = baudRates.get(baudRate.getSelectionIndex());
                 preferences.setTerminalBaudRate(serialBaudRate);
-                serialPort.setParams(serialBaudRate, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
+                comPort.setParams(serialBaudRate, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE, true, true);
             } catch (Exception e1) {
                 e1.printStackTrace();
             }
@@ -960,9 +962,8 @@ public class SerialTerminal {
             public void widgetDisposed(DisposeEvent e) {
                 preferences.removePropertyChangeListener(preferencesChangeListener);
                 try {
-                    serialPort.removeEventListener();
-                    if (serialPort.isOpened()) {
-                        serialPort.closePort();
+                    if (comPort.isOpened()) {
+                        comPort.closePort();
                     }
                 } catch (Exception ex) {
 
@@ -1075,8 +1076,8 @@ public class SerialTerminal {
                 }
                 if (e.character != 0) {
                     try {
-                        if (serialPort != null && serialPort.isOpened()) {
-                            serialPort.writeByte((byte) e.character);
+                        if (comPort != null && comPort.isOpened()) {
+                            comPort.writeByte((byte) e.character);
                             if (localEcho) {
                                 write(e.character);
                             }
@@ -1111,28 +1112,30 @@ public class SerialTerminal {
                     }
                 }
 
-                if ((cursorState & (CURSOR_DISPLAY | CURSOR_ON)) == (CURSOR_DISPLAY | CURSOR_ON)) {
-                    int h = characterHeight;
-                    if ((cursorState & CURSOR_ULINE) != 0) {
-                        h = characterHeight / 4;
+                if (!lineInputGroup.getVisible()) {
+                    if ((cursorState & (CURSOR_DISPLAY | CURSOR_ON)) == (CURSOR_DISPLAY | CURSOR_ON)) {
+                        int h = characterHeight;
+                        if ((cursorState & CURSOR_ULINE) != 0) {
+                            h = characterHeight / 4;
+                        }
+                        int y = ((cy - topRow) * characterHeight) + (characterHeight - h);
+                        int x = cx * characterWidth;
+                        e.gc.setBackground(e.gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
+                        e.gc.fillRectangle(x, y, characterWidth, h);
                     }
-                    int y = ((cy - topRow) * characterHeight) + (characterHeight - h);
-                    int x = cx * characterWidth;
-                    e.gc.setBackground(e.gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
-                    e.gc.fillRectangle(x, y, characterWidth, h);
-                }
 
-                if (selectionRectangle != null && selectionRectangle.width != 0 && selectionRectangle.height != 0) {
-                    int x = selectionRectangle.x * characterWidth;
-                    int y = (selectionRectangle.y - topRow) * characterHeight;
-                    int width = selectionRectangle.width * characterWidth - 1;
-                    int height = selectionRectangle.height * characterHeight - 1;
-                    e.gc.setAlpha(128);
-                    e.gc.setBackground(e.gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
-                    e.gc.fillRectangle(x, y, width, height);
-                    e.gc.setAlpha(255);
-                    e.gc.setForeground(e.gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
-                    e.gc.drawRectangle(x, y, width, height);
+                    if (selectionRectangle != null && selectionRectangle.width != 0 && selectionRectangle.height != 0) {
+                        int x = selectionRectangle.x * characterWidth;
+                        int y = (selectionRectangle.y - topRow) * characterHeight;
+                        int width = selectionRectangle.width * characterWidth - 1;
+                        int height = selectionRectangle.height * characterHeight - 1;
+                        e.gc.setAlpha(128);
+                        e.gc.setBackground(e.gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
+                        e.gc.fillRectangle(x, y, width, height);
+                        e.gc.setAlpha(255);
+                        e.gc.setForeground(e.gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
+                        e.gc.drawRectangle(x, y, width, height);
+                    }
                 }
             }
         });
@@ -1301,9 +1304,9 @@ public class SerialTerminal {
                     case SWT.CR:
                         try {
                             String text = lineInput.getText();
-                            if (serialPort != null && serialPort.isOpened()) {
-                                serialPort.writeBytes(text.getBytes());
-                                serialPort.writeInt(0x0D);
+                            if (comPort != null && comPort.isOpened()) {
+                                comPort.writeBytes(text.getBytes());
+                                comPort.writeInt(0x0D);
                             }
                             if (!text.isEmpty()) {
                                 int index = lineInput.indexOf(text);
@@ -1359,8 +1362,8 @@ public class SerialTerminal {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 try {
-                    serialPort.setDTR(dtr.getSelection());
-                } catch (SerialPortException e1) {
+                    comPort.setDTR(dtr.getSelection());
+                } catch (ComPortException e1) {
                     e1.printStackTrace();
                 }
                 setFocus();
@@ -1373,8 +1376,8 @@ public class SerialTerminal {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 try {
-                    dsr.setSelection(serialPort.isDSR());
-                } catch (SerialPortException e1) {
+                    dsr.setSelection(comPort.isDSR());
+                } catch (ComPortException e1) {
                     // Do nothing
                 }
                 setFocus();
@@ -1387,8 +1390,8 @@ public class SerialTerminal {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 try {
-                    serialPort.setRTS(rts.getSelection());
-                } catch (SerialPortException e1) {
+                    comPort.setRTS(rts.getSelection());
+                } catch (ComPortException e1) {
                     e1.printStackTrace();
                 }
                 setFocus();
@@ -1401,8 +1404,8 @@ public class SerialTerminal {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 try {
-                    cts.setSelection(serialPort.isCTS());
-                } catch (SerialPortException e1) {
+                    cts.setSelection(comPort.isCTS());
+                } catch (ComPortException e1) {
                     // Do nothing
                 }
                 setFocus();
@@ -1574,21 +1577,39 @@ public class SerialTerminal {
         }
     }
 
-    public SerialPort getSerialPort() {
-        return serialPort;
+    public ComPort getSerialPort() {
+        return comPort;
     }
 
-    public void setSerialPort(SerialPort serialPort) {
+    public void setSerialPort(ComPort serialPort) {
         try {
-            if (this.serialPort != null && this.serialPort != serialPort) {
-                if (this.serialPort.isOpened()) {
-                    this.serialPort.removeEventListener();
+            if (this.comPort != null && this.comPort != serialPort) {
+                if (this.comPort.isOpened()) {
+                    this.comPort.removeEventListener();
                 }
             }
 
             if (serialPort != null) {
-                shell.setText(WINDOW_TITLE + " on " + serialPort.getPortName());
+                shell.setText(WINDOW_TITLE + " on " + serialPort.getDescription());
                 if (!serialPort.isOpened()) {
+                    if (serialPort instanceof NetworkComPort) {
+                        NetworkComPort netPort = (NetworkComPort) serialPort;
+                        if (netPort.getInetAddr() == null) {
+                            BusyIndicator.showWhile(display, new Runnable() {
+
+                                @Override
+                                public void run() {
+                                    Collection<DeviceDescriptor> list = NetworkUtils.getAvailableDevices();
+                                    for (DeviceDescriptor descr : list) {
+                                        if (descr.mac_address.equals(netPort.getMacAddress())) {
+                                            netPort.setInetAddr(descr.inetAddr);
+                                            shell.setText(WINDOW_TITLE + " on " + serialPort.getDescription());
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    }
                     serialPort.openPort();
                 }
                 serialPort.setParams(
@@ -1600,30 +1621,31 @@ public class SerialTerminal {
                     dtr.getSelection());
                 dsr.setSelection(serialPort.isDSR());
                 cts.setSelection(serialPort.isCTS());
-                if (this.serialPort != serialPort) {
-                    serialPort.addEventListener(serialEventListener, SerialPort.MASK_RXCHAR | SerialPort.MASK_CTS | SerialPort.MASK_DSR);
+                if (this.comPort != serialPort) {
+                    serialPort.setEventListener(serialEventListener);
                 }
             }
-
-            this.serialPort = serialPort;
         } catch (Exception e) {
             e.printStackTrace();
         }
+        this.comPort = serialPort;
         updateButtonsEnablement();
     }
 
     void updateButtonsEnablement() {
-        terminalType.setEnabled(serialPort != null);
-        baudRate.setEnabled(serialPort != null);
+        lineInputGroup.setEnabled(comPort != null && comPort.isOpened());
 
-        dtr.setEnabled(serialPort != null);
-        dsr.setEnabled(serialPort != null);
-        rts.setEnabled(serialPort != null);
-        cts.setEnabled(serialPort != null);
+        terminalType.setEnabled(comPort != null && comPort.isOpened());
+        baudRate.setEnabled(comPort != null && comPort.isOpened());
 
-        clear.setEnabled(serialPort != null);
-        monitor.setEnabled(serialPort != null);
-        taqoz.setEnabled(serialPort != null);
+        dtr.setEnabled(comPort != null && comPort.isOpened());
+        dsr.setEnabled(comPort != null && comPort.isOpened());
+        rts.setEnabled(comPort != null && comPort.isOpened());
+        cts.setEnabled(comPort != null && comPort.isOpened());
+
+        clear.setEnabled(comPort != null && comPort.isOpened());
+        monitor.setEnabled(comPort != null && comPort.isOpened());
+        taqoz.setEnabled(comPort != null && comPort.isOpened());
     }
 
     public int getBaudRate() {
@@ -1674,8 +1696,8 @@ public class SerialTerminal {
         terminalType.select(1);
 
         try {
-            hwreset();
-            serialPort.writeBytes(new byte[] {
+            comPort.hwreset();
+            comPort.writeBytes(new byte[] {
                 '>', ' ', 0x04
             });
         } catch (Exception e) {
@@ -1688,54 +1710,13 @@ public class SerialTerminal {
         terminalType.select(1);
 
         try {
-            hwreset();
-            serialPort.writeBytes(new byte[] {
+            comPort.hwreset();
+            comPort.writeBytes(new byte[] {
                 '>', ' ', 0x1B
             });
         } catch (Exception e) {
 
         }
-    }
-
-    void hwreset() throws SerialPortException {
-        serialPort.setDTR(true);
-        serialPort.setRTS(true);
-        msleep(25);
-        serialPort.setDTR(false);
-        serialPort.setRTS(false);
-        msleep(25);
-        skipIncomingBytes();
-        serialPort.purgePort(SerialPort.PURGE_TXABORT |
-            SerialPort.PURGE_RXABORT |
-            SerialPort.PURGE_TXCLEAR |
-            SerialPort.PURGE_RXCLEAR);
-    }
-
-    private void msleep(int msec) {
-        try {
-            Thread.sleep(msec);
-        } catch (Exception e) {
-
-        }
-    }
-
-    protected int skipIncomingBytes() throws SerialPortException {
-        int n = 0;
-        while (readByteWithTimeout(50) != -1) {
-            n++;
-        }
-        return n;
-    }
-
-    private int readByteWithTimeout(int timeout) throws SerialPortException {
-        int[] rx;
-        try {
-            rx = serialPort.readIntArray(1, timeout);
-            return rx[0];
-        } catch (SerialPortTimeoutException e) {
-
-        }
-        return -1;
     }
 
     public void pasteFromClipboard() {
@@ -1750,7 +1731,7 @@ public class SerialTerminal {
                     public void run() {
                         try {
                             for (int i = 0; i < b.length; i++) {
-                                serialPort.writeByte(b[i]);
+                                comPort.writeByte(b[i]);
                                 if (localEcho) {
                                     write((char) b[i]);
                                 }

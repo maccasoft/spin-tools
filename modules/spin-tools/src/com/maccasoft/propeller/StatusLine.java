@@ -96,8 +96,12 @@ public class StatusLine implements IProgressMonitor {
         caretPositionLabel.setText(text);
     }
 
-    public void setPort(String text) {
+    public void setPortText(String text) {
         portLabel.setText(text);
+    }
+
+    public void setPortToolTipText(String text) {
+        portLabel.setToolTipText(text);
     }
 
     public IProgressMonitor getProgressMonitor() {

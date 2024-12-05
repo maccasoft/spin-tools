@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Stack;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -96,6 +95,10 @@ import org.eclipse.swt.widgets.ToolItem;
 
 import com.maccasoft.propeller.Preferences.ExternalTool;
 import com.maccasoft.propeller.Preferences.SearchPreferences;
+import com.maccasoft.propeller.devices.ComPort;
+import com.maccasoft.propeller.devices.ComPortException;
+import com.maccasoft.propeller.devices.NetworkComPort;
+import com.maccasoft.propeller.devices.SerialComPort;
 import com.maccasoft.propeller.internal.BusyIndicator;
 import com.maccasoft.propeller.internal.ColorRegistry;
 import com.maccasoft.propeller.internal.FileUtils;
@@ -108,9 +111,6 @@ import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.spin1.Spin1Object;
 import com.maccasoft.propeller.spin2.Spin2Object;
 import com.maccasoft.propeller.spinc.CTokenMarker;
-
-import jssc.SerialPort;
-import jssc.SerialPortException;
 
 public class SpinTools {
 
@@ -532,23 +532,27 @@ public class SpinTools {
 
         sourcePool = new SourcePool();
 
-        serialPortList = new SerialPortList();
+        serialPortList = new SerialPortList(preferences);
 
-        String port = preferences.getPort();
-        if (port != null) {
-            serialPortList.setSelection(port);
-            statusLine.setPort(port);
+        String portName = preferences.getPort();
+        if (portName != null) {
+            serialPortList.setSelection(portName);
+        }
+        ComPort selection = serialPortList.getSelection();
+        if (selection != null) {
+            statusLine.setPortText(selection.getName());
+            statusLine.setPortToolTipText(selection.getDescription());
         }
 
         serialPortList.addPropertyChangeListener(new PropertyChangeListener() {
 
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                String port = (String) evt.getNewValue();
+                ComPort port = (ComPort) evt.getNewValue();
                 SerialTerminal serialTerminal = getSerialTerminal();
                 if (serialTerminal != null) {
-                    if (!port.equals(serialTerminal.getSerialPort().getPortName())) {
-                        SerialPort oldSerialPort = serialTerminal.getSerialPort();
+                    if (!port.equals(serialTerminal.getSerialPort())) {
+                        ComPort oldSerialPort = serialTerminal.getSerialPort();
                         try {
                             if (oldSerialPort.isOpened()) {
                                 oldSerialPort.closePort();
@@ -556,11 +560,12 @@ public class SpinTools {
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
-                        serialTerminal.setSerialPort(new SerialPort(port));
+                        serialTerminal.setSerialPort(port);
                     }
                 }
-                preferences.setPort(port);
-                statusLine.setPort(port);
+                preferences.setPort(port.getPortName());
+                statusLine.setPortText(port.getName());
+                statusLine.setPortToolTipText(port.getDescription());
             }
 
         });
@@ -1724,9 +1729,17 @@ public class SpinTools {
                 try {
                     SerialTerminal serialTerminal = getSerialTerminal();
                     if (serialTerminal == null) {
-                        serialTerminal = new SerialTerminal(display, preferences);
-                        serialTerminal.open();
-                        serialTerminal.setSerialPort(new SerialPort(serialPortList.getSelection()));
+                        SerialTerminal newTerminal = new SerialTerminal(display, preferences);
+                        newTerminal.open();
+                        display.asyncExec(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                newTerminal.setSerialPort(serialPortList.getSelection());
+                            }
+
+                        });
+                        serialTerminal = newTerminal;
                     }
                     serialTerminal.setFocus();
                 } catch (Exception e1) {
@@ -2824,9 +2837,17 @@ public class SpinTools {
             public void handleEvent(Event e) {
                 SerialTerminal serialTerminal = getSerialTerminal();
                 if (serialTerminal == null) {
-                    serialTerminal = new SerialTerminal(display, preferences);
-                    serialTerminal.open();
-                    serialTerminal.setSerialPort(new SerialPort(serialPortList.getSelection()));
+                    SerialTerminal newTerminal = new SerialTerminal(display, preferences);
+                    newTerminal.open();
+                    display.asyncExec(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            newTerminal.setSerialPort(serialPortList.getSelection());
+                        }
+
+                    });
+                    serialTerminal = newTerminal;
                 }
                 serialTerminal.setFocus();
             }
@@ -2943,7 +2964,17 @@ public class SpinTools {
             String fileName = file.lastIndexOf('.') != -1 ? file.substring(0, file.lastIndexOf('.')) : file;
             String fileLoc = editorTab.getFile().getParentFile().getAbsolutePath();
 
-            String cmdline = arguments.replace("${file}", file).replace("${file.name}", fileName).replace("${file.loc}", fileLoc).replace("${serial}", serialPortList.getSelection());
+            String cmdline = arguments.replace("${file}", file) //
+                .replace("${file.name}", fileName) //
+                .replace("${file.loc}", fileLoc);
+
+            ComPort comPort = serialPortList.getSelection();
+            if (comPort instanceof SerialComPort) {
+                cmdline = cmdline.replace("${serial}", comPort.getPortName());
+            }
+            if (comPort instanceof NetworkComPort) {
+                cmdline = cmdline.replace("${ip}", ((NetworkComPort) comPort).getInetAddr().getHostAddress());
+            }
 
             String[] args = Utils.splitArguments(cmdline);
             cmd.addAll(Arrays.asList(args));
@@ -3101,7 +3132,7 @@ public class SpinTools {
     }
 
     private void handleUpload(boolean writeToFlash, boolean openTerminal, boolean forceDebug) {
-        SerialPort serialPort = null;
+        ComPort serialPort = null;
         boolean serialPortShared = false;
 
         EditorTab editorTab = getTargetObjectEditorTab();
@@ -3154,7 +3185,7 @@ public class SpinTools {
             serialPort = serialTerminal.getSerialPort();
         }
         if (serialPort == null) {
-            serialPort = new SerialPort(serialPortList.getSelection());
+            serialPort = serialPortList.getSelection();
         }
 
         if (serialTerminal != null) {
@@ -3179,7 +3210,7 @@ public class SpinTools {
             serialPortShared = true;
         }
 
-        SerialPort uploadPort = doUpload(obj, writeToFlash, serialPort, serialPortShared);
+        ComPort uploadPort = doUpload(obj, writeToFlash, serialPort, serialPortShared);
 
         if (isDebug) {
             File debugFolder = editorTab.getFile() != null ? editorTab.getFile().getParentFile() : new File("").getAbsoluteFile();
@@ -3195,14 +3226,14 @@ public class SpinTools {
         }
 
         if (uploadPort != null) {
-            String port = uploadPort.getPortName();
-            serialPortList.setSelection(port);
-            preferences.setPort(port);
-            statusLine.setPort(port);
-            if (!serialPort.getPortName().equals(port)) {
+            serialPortList.setSelection(uploadPort);
+            preferences.setPort(uploadPort.getPortName());
+            statusLine.setPortText(uploadPort.getName());
+            statusLine.setPortToolTipText(uploadPort.getDescription());
+            if (!serialPort.equals(uploadPort)) {
                 try {
                     serialPort.closePort();
-                } catch (SerialPortException e) {
+                } catch (ComPortException e) {
                     // Do nothing
                 }
             }
@@ -3221,157 +3252,99 @@ public class SpinTools {
         return tabItem != null ? (EditorTab) tabItem.getData() : null;
     }
 
-    private SerialPort doUpload(SpinObject obj, boolean writeToFlash, SerialPort serialPort, boolean serialPortShared) {
-        IRunnableWithProgress thread;
+    private ComPort doUpload(SpinObject obj, boolean writeToFlash, ComPort comPort, boolean serialPortShared) {
         Shell activeShell = Display.getDefault().getActiveShell();
-        AtomicReference<SerialPort> port = new AtomicReference<>(serialPort);
 
         ProgressMonitorDialog dlg = new ProgressMonitorDialog(activeShell);
 
-        if (obj instanceof Spin1Object) {
-            thread = new IRunnableWithProgress() {
+        IRunnableWithProgress thread = new IRunnableWithProgress() {
 
-                @Override
-                public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-                    monitor.beginTask("Upload", IProgressMonitor.UNKNOWN);
+            @Override
+            public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+                try {
+                    PropellerLoaderListener listener = new PropellerLoaderListener() {
 
-                    try {
-                        Propeller1Loader loader = new Propeller1Loader(serialPort, serialPortShared) {
-
-                            @Override
-                            protected void bufferUpload(int type, byte[] binaryImage, String text) throws SerialPortException, IOException {
-                                monitor.setTaskName("Loading " + text + " to RAM");
-                                super.bufferUpload(type, binaryImage, text);
-                            }
-
-                            @Override
-                            protected void verifyRam() throws SerialPortException, IOException {
-                                monitor.setTaskName("Verifying RAM ... ");
-                                super.verifyRam();
-                            }
-
-                            @Override
-                            protected void eepromWrite() throws SerialPortException, IOException {
-                                monitor.setTaskName("Writing EEPROM ... ");
-                                super.eepromWrite();
-                            }
-
-                            @Override
-                            protected void eepromVerify() throws SerialPortException, IOException {
-                                monitor.setTaskName("Verifying EEPROM ... ");
-                                super.eepromVerify();
-                            }
-
-                        };
-
-                        SerialPort detectedPort = loader.detect();
-                        if (detectedPort == null) {
-                            throw new RuntimeException("Propeller 1 not found");
+                        @Override
+                        public void bufferUpload(int type, byte[] binaryImage, String text) {
+                            monitor.subTask("Loading " + text + " to RAM");
                         }
-                        port.set(detectedPort);
 
-                        Display.getDefault().syncExec(new Runnable() {
+                        @Override
+                        public void verifyRam() {
+                            monitor.subTask("Verifying RAM ... ");
+                        }
 
-                            @Override
-                            public void run() {
-                                dlg.open();
-                            }
-                        });
+                        @Override
+                        public void eepromWrite() {
+                            monitor.subTask("Writing EEPROM ... ");
+                        }
 
-                        byte[] image = obj.getBinary();
-                        loader.upload(image, writeToFlash ? Propeller1Loader.DOWNLOAD_RUN_EEPROM : Propeller1Loader.DOWNLOAD_RUN_BINARY);
+                        @Override
+                        public void eepromVerify() {
+                            monitor.subTask("Verifying EEPROM ... ");
+                        }
 
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        Display.getDefault().syncExec(new Runnable() {
+                    };
 
-                            @Override
-                            public void run() {
-                                String msg = e.getMessage();
-                                if (e instanceof SerialPortException) {
-                                    SerialPortException serialException = (SerialPortException) e;
-                                    SerialPort port = serialException.getPort();
-                                    msg = port.getPortName() + " " + serialException.getExceptionType();
-                                }
-                                MessageDialog.openError(activeShell, APP_TITLE, "Error uploading program:\r\n" + msg);
-                            }
-                        });
+                    int flags;
+                    PropellerLoader loader;
+
+                    if (comPort instanceof SerialComPort) {
+                        if (obj instanceof Spin1Object) {
+                            loader = new Propeller1Loader((SerialComPort) comPort, serialPortShared, listener);
+                            flags = writeToFlash ? Propeller1Loader.DOWNLOAD_RUN_EEPROM : Propeller1Loader.DOWNLOAD_RUN_BINARY;
+                        }
+                        else {
+                            loader = new Propeller2Loader((SerialComPort) comPort, serialPortShared, listener);
+                            flags = writeToFlash ? Propeller2Loader.DOWNLOAD_RUN_FLASH : Propeller2Loader.DOWNLOAD_RUN_RAM;
+                        }
                     }
-
-                    monitor.done();
-                }
-
-            };
-        }
-        else {
-            thread = new IRunnableWithProgress() {
-
-                @Override
-                public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-                    monitor.beginTask("Upload", IProgressMonitor.UNKNOWN);
-
-                    try {
-                        Propeller2Loader loader = new Propeller2Loader(serialPort, serialPortShared) {
-
-                            @Override
-                            protected void bufferUpload(int type, byte[] binaryImage, String text) throws SerialPortException, IOException {
-                                monitor.setTaskName("Loading " + text + " to RAM");
-                                super.bufferUpload(type, binaryImage, text);
-                            }
-
-                            @Override
-                            protected void verifyRam() throws SerialPortException, IOException {
-                                monitor.setTaskName("Verifying RAM ... ");
-                                super.verifyRam();
-                            }
-
-                            @Override
-                            protected void flashWrite() throws SerialPortException, IOException {
-                                monitor.setTaskName("Writing to flash ... ");
-                                super.flashWrite();
-                            }
-
-                        };
-
-                        SerialPort detectedPort = loader.detect();
-                        if (detectedPort == null) {
+                    else if (comPort instanceof NetworkComPort) {
+                        if (obj instanceof Spin1Object) {
+                            loader = new Propeller1NetworkLoader((NetworkComPort) comPort, serialPortShared, listener);
+                            flags = writeToFlash ? Propeller1Loader.DOWNLOAD_RUN_EEPROM : Propeller1Loader.DOWNLOAD_RUN_BINARY;
+                        }
+                        else {
                             throw new RuntimeException("Propeller 2 not found");
                         }
-                        port.set(detectedPort);
-
-                        Display.getDefault().syncExec(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                dlg.open();
-                            }
-                        });
-
-                        byte[] image = obj.getBinary();
-                        loader.upload(image, writeToFlash ? Propeller2Loader.DOWNLOAD_RUN_FLASH : Propeller2Loader.DOWNLOAD_RUN_RAM);
-
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        Display.getDefault().syncExec(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                String msg = e.getMessage();
-                                if (e instanceof SerialPortException) {
-                                    SerialPortException serialException = (SerialPortException) e;
-                                    SerialPort port = serialException.getPort();
-                                    msg = port.getPortName() + " " + serialException.getExceptionType();
-                                }
-                                MessageDialog.openError(activeShell, APP_TITLE, "Error uploading program:\r\n" + msg);
-                            }
-                        });
+                    }
+                    else {
+                        throw new RuntimeException("Propeller not found");
                     }
 
-                    monitor.done();
+                    monitor.beginTask("Upload to " + comPort.getDescription(), IProgressMonitor.UNKNOWN);
+
+                    Display.getDefault().syncExec(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            dlg.open();
+                        }
+                    });
+
+                    byte[] image = obj.getBinary();
+                    loader.upload(image, flags);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Display.getDefault().syncExec(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            StringBuilder sb = new StringBuilder();
+                            sb.append(comPort.getDescription());
+                            sb.append(System.lineSeparator());
+                            sb.append(System.lineSeparator());
+                            sb.append(e.getMessage());
+                            MessageDialog.openError(activeShell, APP_TITLE, sb.toString());
+                        }
+                    });
                 }
 
-            };
-        }
+                monitor.done();
+            }
+
+        };
 
         try {
             dlg.setOpenOnRun(false);
@@ -3380,45 +3353,52 @@ public class SpinTools {
             e.printStackTrace();
         }
 
-        return port.get();
+        return comPort;
     }
 
     private void handleListDevices() {
-        SerialPort terminalPort = null;
-        SerialPort devicePort = null;
+        ComPort selectedPort = null;
+        ComPort currentPort = consoleView.getSerialPort();
 
         SerialTerminal serialTerminal = getSerialTerminal();
         if (serialTerminal != null) {
-            terminalPort = serialTerminal.getSerialPort();
+            if (serialTerminal.getSerialPort() != null) {
+                currentPort = serialTerminal.getSerialPort();
+            }
             serialTerminal.setSerialPort(null);
         }
+        consoleView.setSerialPort(null);
 
         DevicesDialog dlg = new DevicesDialog(shell);
-        dlg.setSelection(serialPortList.getSelection());
-        dlg.setTerminalPort(terminalPort);
+        dlg.setSelection(currentPort);
         if (dlg.open() == DevicesDialog.OK) {
-            String port = dlg.getSelection();
-            if (terminalPort != null && terminalPort.getPortName().equals(port)) {
-                devicePort = terminalPort;
-            }
-            else {
-                devicePort = new SerialPort(port);
-            }
-            serialPortList.setSelection(port);
-            preferences.setPort(port);
-            statusLine.setPort(port);
+            selectedPort = dlg.getSelection();
         }
 
-        if (serialTerminal != null) {
-            serialTerminal.setSerialPort(devicePort != null ? devicePort : terminalPort);
+        if (selectedPort == null) {
+            selectedPort = currentPort;
         }
 
-        if (terminalPort != null && devicePort != null && !devicePort.getPortName().equals(terminalPort.getPortName())) {
-            try {
-                terminalPort.closePort();
-            } catch (SerialPortException e) {
-                // Do nothing
+        if (selectedPort != null) {
+            if (currentPort != null && currentPort != selectedPort) {
+                try {
+                    currentPort.closePort();
+                } catch (ComPortException e) {
+                    e.printStackTrace();
+                    // Do nothing
+                }
             }
+            if (consoleView.getVisible()) {
+                consoleView.setSerialPort(selectedPort);
+            }
+            else if (serialTerminal != null) {
+                serialTerminal.setSerialPort(selectedPort);
+            }
+
+            serialPortList.setSelection(selectedPort);
+            preferences.setPort(selectedPort.getPortName());
+            statusLine.setPortText(selectedPort.getName());
+            statusLine.setPortToolTipText(selectedPort.getDescription());
         }
     }
 

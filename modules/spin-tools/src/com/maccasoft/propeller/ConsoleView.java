@@ -44,18 +44,19 @@ import org.eclipse.swt.widgets.Display;
 import com.maccasoft.propeller.debug.DebugPAsmWindow;
 import com.maccasoft.propeller.debug.DebugWindow;
 import com.maccasoft.propeller.debug.KeywordIterator;
+import com.maccasoft.propeller.devices.ComPort;
+import com.maccasoft.propeller.devices.ComPortEvent;
+import com.maccasoft.propeller.devices.ComPortEventListener;
 import com.maccasoft.propeller.internal.CircularBuffer;
 
 import jssc.SerialPort;
-import jssc.SerialPortEvent;
-import jssc.SerialPortEventListener;
 
 public class ConsoleView {
 
     Display display;
     StyledText console;
 
-    SerialPort serialPort;
+    ComPort serialPort;
     int serialBaudRate;
 
     Preferences preferences;
@@ -121,24 +122,22 @@ public class ConsoleView {
         }
     };
 
-    SerialPortEventListener serialEventListener = new SerialPortEventListener() {
+    ComPortEventListener serialEventListener = new ComPortEventListener() {
 
         @Override
-        public void serialEvent(SerialPortEvent event) {
-            switch (event.getEventType()) {
-                case SerialPort.MASK_RXCHAR:
-                    try {
-                        byte[] rx = serialPort.readBytes();
-                        if (rx != null) {
-                            if (os != null) {
-                                os.write(rx, 0, rx.length);
-                            }
-                            receiveBuffer.write(rx);
+        public void serialEvent(ComPortEvent event) {
+            if (event.isRXCHAR()) {
+                try {
+                    byte[] rx = serialPort.readBytes();
+                    if (rx != null) {
+                        if (os != null) {
+                            os.write(rx, 0, rx.length);
                         }
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                        receiveBuffer.write(rx);
                     }
-                    break;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
 
@@ -493,11 +492,11 @@ public class ConsoleView {
         console.setText("");
     }
 
-    public SerialPort getSerialPort() {
+    public ComPort getSerialPort() {
         return serialPort;
     }
 
-    public void setSerialPort(SerialPort serialPort) {
+    public void setSerialPort(ComPort serialPort) {
         try {
             if (this.serialPort != null && this.serialPort != serialPort) {
                 if (this.serialPort.isOpened()) {
@@ -507,7 +506,7 @@ public class ConsoleView {
 
             if (serialPort != null) {
                 if (this.serialPort != serialPort) {
-                    serialPort.addEventListener(serialEventListener);
+                    serialPort.setEventListener(serialEventListener);
                 }
                 serialPort.setParams(
                     serialBaudRate,

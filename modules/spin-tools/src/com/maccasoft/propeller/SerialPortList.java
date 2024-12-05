@@ -14,10 +14,9 @@ package com.maccasoft.propeller;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.List;
+import java.util.Iterator;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
 
@@ -27,12 +26,18 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 
+import com.maccasoft.propeller.Preferences.RemoteDevice;
+import com.maccasoft.propeller.devices.ComPort;
+import com.maccasoft.propeller.devices.NetworkComPort;
+import com.maccasoft.propeller.devices.SerialComPort;
+
 import jssc.SerialNativeInterface;
 
 public class SerialPortList {
 
-    final List<MenuItem> items = new ArrayList<MenuItem>();
-    String selection;
+    Preferences preferences;
+
+    ComPort selection;
 
     PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
 
@@ -160,14 +165,25 @@ public class SerialPortList {
 
         @Override
         public void widgetSelected(SelectionEvent e) {
-            changeSupport.firePropertyChange("selection", selection, selection = ((MenuItem) e.widget).getText());
+            changeSupport.firePropertyChange("selection", selection, selection = (ComPort) e.widget.getData());
         }
     };
 
-    public SerialPortList() {
-        Collection<String> c = getAvailablePorts();
-        if (c.size() != 0) {
-            selection = c.iterator().next();
+    public SerialPortList(Preferences preferences) {
+        this.preferences = preferences;
+
+        if (selection == null) {
+            Iterator<String> iter = getAvailablePorts().iterator();
+            if (iter.hasNext()) {
+                selection = new SerialComPort(iter.next());
+            }
+        }
+
+        if (selection == null) {
+            RemoteDevice[] devices = preferences.getRemoteDevices();
+            if (devices.length != 0) {
+                selection = new NetworkComPort(devices[0].getName(), devices[0].getIp(), devices[0].getMac(), devices[0].getResetPin());
+            }
         }
     }
 
@@ -180,30 +196,56 @@ public class SerialPortList {
     }
 
     public void fillMenu(Menu menu) {
-        int index = -1;
-        if (items.size() != 0) {
-            index = items.get(0).getParent().indexOf(items.get(0));
+        MenuItem[] items = menu.getItems();
+        for (int i = 0; i < items.length; i++) {
+            items[i].dispose();
         }
 
-        for (MenuItem item : items) {
-            item.dispose();
-        }
-        items.clear();
+        fillSerialPorts(menu);
+        fillNetworkPorts(menu);
+    }
 
-        for (String port : getAvailablePorts()) {
-            MenuItem item = index != -1 ? new MenuItem(menu, SWT.CHECK, index++) : new MenuItem(menu, SWT.CHECK);
-            item.setText(port);
-            if (port.equals(selection)) {
-                item.setSelection(true);
+    void fillSerialPorts(Menu menu) {
+        ComPort comPort;
+
+        for (String portName : getAvailablePorts()) {
+            if (selection != null && selection.getPortName().equalsIgnoreCase(portName)) {
+                comPort = selection;
             }
-            item.addSelectionListener(selectionListener);
-            items.add(item);
-        }
+            else {
+                comPort = new SerialComPort(portName);
+            }
 
-        if (selection == null && items.size() != 0) {
-            MenuItem item = items.get(0);
-            item.setSelection(true);
-            selection = item.getText();
+            MenuItem item = new MenuItem(menu, SWT.CHECK);
+            item.setText(comPort.getDescription());
+            item.setSelection(comPort == selection);
+            item.setData(comPort);
+            item.addSelectionListener(selectionListener);
+        }
+    }
+
+    void fillNetworkPorts(Menu menu) {
+        ComPort comPort;
+
+        RemoteDevice[] devices = preferences.getRemoteDevices();
+        if (devices != null && devices.length != 0) {
+            if (menu.getItemCount() != 0) {
+                new MenuItem(menu, SWT.SEPARATOR);
+            }
+            for (RemoteDevice descr : devices) {
+                if (selection != null && selection.getPortName().equalsIgnoreCase(descr.getPortName())) {
+                    comPort = selection;
+                }
+                else {
+                    comPort = new NetworkComPort(descr.getName(), descr.getIp(), descr.getMac(), descr.getResetPin());
+                }
+
+                MenuItem item = new MenuItem(menu, SWT.CHECK);
+                item.setText(comPort.getDescription());
+                item.setSelection(comPort == selection);
+                item.setData(comPort);
+                item.addSelectionListener(selectionListener);
+            }
         }
     }
 
@@ -261,11 +303,38 @@ public class SerialPortList {
         return portsTree;
     }
 
-    public String getSelection() {
-        return selection != null ? selection : "";
+    public void setSelection(String portName) {
+        if (selection != null) {
+            if (selection.getPortName().equalsIgnoreCase(portName)) {
+                return;
+            }
+        }
+
+        for (String availablePortName : getAvailablePorts()) {
+            if (availablePortName.equalsIgnoreCase(portName)) {
+                selection = new SerialComPort(portName);
+                return;
+            }
+        }
+
+        RemoteDevice[] devices = preferences.getRemoteDevices();
+        for (int i = 0; i < devices.length; i++) {
+            if (devices[i].getPortName().equalsIgnoreCase(portName)) {
+                selection = new NetworkComPort(devices[i].getName(), devices[i].getIp(), devices[i].getMac(), devices[i].getResetPin());
+                return;
+            }
+        }
+
+        selection = null;
     }
 
-    public void setSelection(String selection) {
-        this.selection = selection;
+    public ComPort getSelection() {
+        return selection;
     }
+
+    public void setSelection(ComPort selection) {
+        this.selection = selection;
+
+    }
+
 }

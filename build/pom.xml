@@ -22,6 +22,7 @@
                             <addModules>
                                 <addModule>java.base</addModule>
                                 <addModule>java.desktop</addModule>
+                                <addModule>java.net.http</addModule>
                             </addModules>
                             <noHeaderFiles>true</noHeaderFiles>
                             <noManPages>true</noManPages>

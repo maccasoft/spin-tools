@@ -11,41 +11,47 @@
 
 package com.maccasoft.propeller;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Base64;
 import java.util.Base64.Encoder;
 
+import com.maccasoft.propeller.devices.ComPort;
+import com.maccasoft.propeller.devices.ComPortException;
+import com.maccasoft.propeller.devices.SerialComPort;
+
 import jssc.SerialPort;
-import jssc.SerialPortException;
 import jssc.SerialPortList;
 import jssc.SerialPortTimeoutException;
 
-public class Propeller2Loader {
+public class Propeller2Loader extends PropellerLoader {
 
     public static final int UPLOAD_BAUD_RATE = 2000000;
 
     public static final int DOWNLOAD_RUN_RAM = 0;
     public static final int DOWNLOAD_RUN_FLASH = 1;
 
-    SerialPort serialPort;
+    SerialComPort comPort;
     int portBaudRate = UPLOAD_BAUD_RATE;
 
     boolean shared;
 
-    public Propeller2Loader(SerialPort serialPort, boolean shared) {
-        this.serialPort = serialPort;
+    public Propeller2Loader(SerialComPort serialPort, boolean shared) {
+        this.comPort = serialPort;
+        this.shared = shared;
+    }
+
+    public Propeller2Loader(SerialComPort serialPort, boolean shared, PropellerLoaderListener listener) {
+        super(listener);
+        this.comPort = serialPort;
         this.shared = shared;
     }
 
     public String getPortName() {
-        return serialPort.getPortName();
+        return comPort.getPortName();
     }
 
-    public SerialPort getSerialPort() {
-        return serialPort;
+    public SerialComPort getSerialPort() {
+        return comPort;
     }
 
     public int getPortBaudRate() {
@@ -56,11 +62,12 @@ public class Propeller2Loader {
         this.portBaudRate = portBaudRate;
     }
 
-    public SerialPort detect() {
-        if (serialPort != null) {
+    @Override
+    public ComPort detect() {
+        if (comPort != null) {
             try {
                 if (find() != 0) {
-                    return serialPort;
+                    return comPort;
                 }
             } catch (Exception e) {
                 // Do nothing
@@ -69,20 +76,20 @@ public class Propeller2Loader {
 
         String[] portNames = SerialPortList.getPortNames();
         for (int i = 0; i < portNames.length; i++) {
-            if (serialPort != null && portNames[i].equals(serialPort.getPortName())) {
+            if (comPort != null && portNames[i].equals(comPort.getPortName())) {
                 continue;
             }
-            serialPort = new SerialPort(portNames[i]);
+            comPort = new SerialComPort(portNames[i]);
             try {
                 if (find() != 0) {
-                    return serialPort;
+                    return comPort;
                 }
             } catch (Exception e) {
                 // Do nothing
             }
             if (shared) {
                 try {
-                    serialPort.closePort();
+                    comPort.closePort();
                 } catch (Exception e) {
                     // Do nothing
                 }
@@ -92,13 +99,13 @@ public class Propeller2Loader {
         return null;
     }
 
-    public int find() throws Exception {
+    public int find() throws ComPortException {
         int version = 0;
 
-        if (!serialPort.isOpened()) {
-            serialPort.openPort();
+        if (!comPort.isOpened()) {
+            comPort.openPort();
         }
-        serialPort.setParams(
+        comPort.setParams(
             portBaudRate,
             SerialPort.DATABITS_8,
             SerialPort.STOPBITS_1,
@@ -111,25 +118,29 @@ public class Propeller2Loader {
             version = hwfind();
         } finally {
             if (!shared) {
-                serialPort.closePort();
+                comPort.closePort();
             }
         }
 
         return version;
     }
 
-    void hwreset() throws SerialPortException {
-        serialPort.setDTR(true);
-        serialPort.setRTS(true);
-        msleep(25);
-        serialPort.setDTR(false);
-        serialPort.setRTS(false);
-        msleep(25);
-        skipIncomingBytes();
-        serialPort.purgePort(SerialPort.PURGE_TXABORT |
-            SerialPort.PURGE_RXABORT |
-            SerialPort.PURGE_TXCLEAR |
-            SerialPort.PURGE_RXCLEAR);
+    void hwreset() {
+        try {
+            comPort.setDTR(true);
+            comPort.setRTS(true);
+            msleep(25);
+            comPort.setDTR(false);
+            comPort.setRTS(false);
+            msleep(25);
+            skipIncomingBytes();
+            comPort.getSerialPort().purgePort(SerialPort.PURGE_TXABORT |
+                SerialPort.PURGE_RXABORT |
+                SerialPort.PURGE_TXCLEAR |
+                SerialPort.PURGE_RXCLEAR);
+        } catch (Exception e) {
+            // Do nothing
+        }
     }
 
     private void msleep(int msec) {
@@ -140,17 +151,17 @@ public class Propeller2Loader {
         }
     }
 
-    protected int hwfind() throws SerialPortException, IOException {
+    protected int hwfind() throws ComPortException {
         String result = new String();
 
-        serialPort.writeString("> \r");
+        comPort.writeString("> \r");
         msleep(1);
 
-        serialPort.writeString("> Prop_Chk 0 0 0 0\r");
+        comPort.writeString("> Prop_Chk 0 0 0 0\r");
 
         try {
             while (result.length() < 11 || !result.endsWith("\r\n")) {
-                byte[] b = serialPort.readBytes(1, 20);
+                byte[] b = comPort.readBytes(1, 20);
                 if (b != null && b.length == 1) {
                     result += new String(b);
                 }
@@ -165,36 +176,20 @@ public class Propeller2Loader {
         return 0;
     }
 
-    protected int skipIncomingBytes() throws SerialPortException {
+    protected int skipIncomingBytes() throws ComPortException {
         int n = 0;
-        while (readByteWithTimeout(50) != -1) {
+        while (comPort.readByteWithTimeout(50) != -1) {
             n++;
         }
         return n;
     }
 
-    private int readByteWithTimeout(int timeout) throws SerialPortException {
-        int[] rx;
-        try {
-            rx = serialPort.readIntArray(1, timeout);
-            return rx[0];
-        } catch (SerialPortTimeoutException e) {
-
+    @Override
+    public void upload(byte[] binaryImage, int type) throws ComPortException {
+        if (!comPort.isOpened()) {
+            comPort.openPort();
         }
-        return -1;
-    }
-
-    public void upload(File binaryFile, int type) throws SerialPortException, IOException, SerialPortTimeoutException {
-        byte[] imageBuffer = new byte[(int) binaryFile.length()];
-
-        FileInputStream is = new FileInputStream(binaryFile);
-        is.read(imageBuffer);
-        is.close();
-
-        if (!serialPort.isOpened()) {
-            serialPort.openPort();
-        }
-        serialPort.setParams(
+        comPort.setParams(
             portBaudRate,
             SerialPort.DATABITS_8,
             SerialPort.STOPBITS_1,
@@ -204,42 +199,23 @@ public class Propeller2Loader {
 
         try {
             hwreset();
-            if (hwfind() != 0) {
-                bufferUpload(type, imageBuffer, "binary image");
+            if (hwfind() == 0) {
+                throw new ComPortException("Propeller 2 not found");
             }
+            bufferUpload(type, binaryImage, "binary image");
         } finally {
             if (!shared) {
-                serialPort.closePort();
+                comPort.closePort();
             }
         }
     }
 
-    public void upload(byte[] binaryImage, int type) throws SerialPortException, IOException {
-        if (!serialPort.isOpened()) {
-            serialPort.openPort();
-        }
-        serialPort.setParams(
-            portBaudRate,
-            SerialPort.DATABITS_8,
-            SerialPort.STOPBITS_1,
-            SerialPort.PARITY_NONE,
-            false,
-            false);
-
-        try {
-            hwreset();
-            if (hwfind() != 0) {
-                bufferUpload(type, binaryImage, "binary image");
-            }
-        } finally {
-            if (!shared) {
-                serialPort.closePort();
-            }
-        }
-    }
-
-    protected void bufferUpload(int type, byte[] binaryImage, String text) throws SerialPortException, IOException {
+    protected void bufferUpload(int type, byte[] binaryImage, String text) throws ComPortException {
         int n;
+
+        if (listener != null) {
+            listener.bufferUpload(type, binaryImage, text);
+        }
 
         if (type == DOWNLOAD_RUN_FLASH) {
             InputStream is = getClass().getResourceAsStream("flash_loader.binary");
@@ -296,15 +272,15 @@ public class Propeller2Loader {
         }
     }
 
-    void hexUpload(byte[] binaryImage) throws SerialPortException {
+    void hexUpload(byte[] binaryImage) throws ComPortException {
         int n;
 
-        serialPort.writeString("> Prop_Hex 0 0 0 0");
+        comPort.writeString("> Prop_Hex 0 0 0 0");
 
         int sum = 0;
         for (n = 0; n < binaryImage.length; n += 4) {
             if (n > 0 && (n % 64) == 0) {
-                serialPort.writeString("\r>");
+                comPort.writeString("\r>");
                 notifyProgress(n, binaryImage.length);
             }
             int data = binaryImage[n] & 0xFF;
@@ -317,16 +293,16 @@ public class Propeller2Loader {
                     }
                 }
             }
-            serialPort.writeString(String.format(" %x %x %x %x", data & 0xFF, (data >> 8) & 0xFF, (data >> 16) & 0xFF, (data >> 24) & 0xFF));
+            comPort.writeString(String.format(" %x %x %x %x", data & 0xFF, (data >> 8) & 0xFF, (data >> 16) & 0xFF, (data >> 24) & 0xFF));
             sum += data;
         }
         notifyProgress(n, binaryImage.length);
 
         sum = 0x706F7250 - sum;
-        serialPort.writeString(String.format(" %x %x %x %x ?", sum & 0xFF, (sum >> 8) & 0xFF, (sum >> 16) & 0xFF, (sum >> 24) & 0xFF));
+        comPort.writeString(String.format(" %x %x %x %x ?", sum & 0xFF, (sum >> 8) & 0xFF, (sum >> 16) & 0xFF, (sum >> 24) & 0xFF));
     }
 
-    void base64Upload(byte[] binaryImage) throws SerialPortException {
+    void base64Upload(byte[] binaryImage) throws ComPortException {
         int n, sent;
         Encoder encoder = Base64.getEncoder();
 
@@ -354,40 +330,46 @@ public class Propeller2Loader {
         image[image.length - 1] = (byte) (sum >> 24);
         binaryImage = image;
 
-        serialPort.writeString("> Prop_Txt 0 0 0 0");
+        comPort.writeString("> Prop_Txt 0 0 0 0");
 
         String encodedImage = encoder.encodeToString(binaryImage);
         for (n = 0, sent = 0; n < encodedImage.length(); n += 64, sent += 48) {
-            serialPort.writeString("\r> ");
-            serialPort.writeString(encodedImage.substring(n, n + Math.min(64, encodedImage.length() - n)));
+            comPort.writeString("\r> ");
+            comPort.writeString(encodedImage.substring(n, n + Math.min(64, encodedImage.length() - n)));
             notifyProgress(sent, binaryImage.length);
         }
         notifyProgress(sent, binaryImage.length);
 
-        serialPort.writeString(" ?");
+        comPort.writeString(" ?");
     }
 
     protected void notifyProgress(int sent, int total) {
         // Do nothing
     }
 
-    protected void flashWrite() throws SerialPortException, IOException {
+    protected void flashWrite() throws ComPortException {
+
+        if (listener != null) {
+            listener.eepromWrite();
+        }
 
     }
 
-    protected void verifyRam() throws SerialPortException, IOException {
-        int rc = readByteWithTimeout(1000);
+    protected void verifyRam() throws ComPortException {
+
+        if (listener != null) {
+            listener.verifyRam();
+        }
+
+        int rc = comPort.readByteWithTimeout(1000);
 
         if (rc == -1) {
-            throw new IOException("Timeout");
+            throw new ComPortException("Timeout");
         }
 
         if (rc != '.') {
-            throw new IOException("Checksum error");
+            throw new ComPortException("Checksum error");
         }
     }
 
-    protected void writeFile(File file) throws SerialPortException, SerialPortTimeoutException, IOException {
-        // Do nothing
-    }
 }

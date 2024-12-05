@@ -12,8 +12,11 @@ package com.maccasoft.propeller;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import org.eclipse.core.databinding.observable.Realm;
@@ -21,6 +24,7 @@ import org.eclipse.jface.databinding.swt.DisplayRealm;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.resource.StringConverter;
 import org.eclipse.jface.viewers.ArrayContentProvider;
@@ -32,6 +36,7 @@ import org.eclipse.jface.viewers.ListViewer;
 import org.eclipse.jface.viewers.OpenEvent;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
+import org.eclipse.jface.widgets.WidgetFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.events.DisposeEvent;
@@ -43,6 +48,7 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.internal.Platform;
 import org.eclipse.swt.layout.GridData;
@@ -63,6 +69,10 @@ import org.eclipse.swt.widgets.Spinner;
 import org.eclipse.swt.widgets.Text;
 
 import com.maccasoft.propeller.Preferences.ExternalTool;
+import com.maccasoft.propeller.Preferences.RemoteDevice;
+import com.maccasoft.propeller.devices.DeviceDescriptor;
+import com.maccasoft.propeller.devices.NetworkUtils;
+import com.maccasoft.propeller.internal.BusyIndicator;
 import com.maccasoft.propeller.internal.ColorRegistry;
 import com.maccasoft.propeller.internal.ImageRegistry;
 import com.maccasoft.propeller.model.ConstantsNode;
@@ -123,6 +133,8 @@ public class PreferencesDialog extends Dialog {
 
     ToolsList externalTools;
 
+    RemoteList remoteDevices;
+
     Preferences preferences;
     FontData defaultFont;
     Font fontBold;
@@ -174,8 +186,7 @@ public class PreferencesDialog extends Dialog {
             gridData.widthHint = convertWidthInCharsToPixels(50);
             text.setLayoutData(gridData);
 
-            browse = new Button(group, SWT.PUSH);
-            browse.setImage(ImageRegistry.getImageFromResources("folder-horizontal-open.png"));
+            browse = createPageButton(group, ImageRegistry.getImageFromResources("folder-horizontal-open.png"), "Browse files");
             browse.addSelectionListener(new SelectionAdapter() {
 
                 @Override
@@ -255,9 +266,7 @@ public class PreferencesDialog extends Dialog {
             container.setLayout(layout);
             container.setLayoutData(new GridData(SWT.FILL, SWT.TOP, false, false));
 
-            add = new Button(container, SWT.PUSH);
-            add.setImage(ImageRegistry.getImageFromResources("add.png"));
-            add.setToolTipText("Add");
+            add = createPageButton(container, ImageRegistry.getImageFromResources("add.png"), "Add");
             add.addSelectionListener(new SelectionAdapter() {
 
                 @Override
@@ -278,9 +287,7 @@ public class PreferencesDialog extends Dialog {
 
             });
 
-            remove = new Button(container, SWT.PUSH);
-            remove.setImage(ImageRegistry.getImageFromResources("delete.png"));
-            remove.setToolTipText("Remove");
+            remove = createPageButton(container, ImageRegistry.getImageFromResources("delete.png"), "Remove");
             remove.addSelectionListener(new SelectionAdapter() {
 
                 @Override
@@ -293,9 +300,7 @@ public class PreferencesDialog extends Dialog {
             remove.setEnabled(false);
 
             if (allowMove) {
-                moveUp = new Button(container, SWT.PUSH);
-                moveUp.setImage(ImageRegistry.getImageFromResources("arrow_up.png"));
-                moveUp.setToolTipText("Up");
+                moveUp = createPageButton(container, ImageRegistry.getImageFromResources("arrow_up.png"), "Up");
                 moveUp.addSelectionListener(new SelectionAdapter() {
 
                     @Override
@@ -314,9 +319,7 @@ public class PreferencesDialog extends Dialog {
                 });
                 moveUp.setEnabled(false);
 
-                moveDown = new Button(container, SWT.PUSH);
-                moveDown.setImage(ImageRegistry.getImageFromResources("arrow_down.png"));
-                moveDown.setToolTipText("Down");
+                moveDown = createPageButton(container, ImageRegistry.getImageFromResources("arrow_down.png"), "Down");
                 moveDown.addSelectionListener(new SelectionAdapter() {
 
                     @Override
@@ -450,6 +453,7 @@ public class PreferencesDialog extends Dialog {
         createGeneralPage(stack);
         createConsolePage(stack);
         createEditorPage(stack);
+        createRemoteDevicesPage(stack);
         createSpin1CompilerPage(stack);
         createSpin2CompilerPage(stack);
         createTerminalPage(stack);
@@ -754,7 +758,11 @@ public class PreferencesDialog extends Dialog {
         container.setLayout(layout);
         container.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         editorFont = new Text(container, SWT.BORDER);
-        editorFont.setLayoutData(new GridData(convertWidthInCharsToPixels(35), SWT.DEFAULT));
+        editorFont.setLayoutData(GridDataFactory.swtDefaults() //
+            .align(SWT.FILL, SWT.CENTER) //
+            .grab(true, false) //
+            .hint(convertWidthInCharsToPixels(35), SWT.DEFAULT) //
+            .create());
         editorFontSize = new Spinner(container, SWT.NONE);
         editorFontSize.setValues(1, 1, 72, 0, 1, 1);
         editorFontSize.addSelectionListener(new SelectionAdapter() {
@@ -963,7 +971,11 @@ public class PreferencesDialog extends Dialog {
         container.setLayout(layout);
         container.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         terminalFont = new Text(container, SWT.BORDER);
-        terminalFont.setLayoutData(new GridData(convertWidthInCharsToPixels(35), SWT.DEFAULT));
+        terminalFont.setLayoutData(GridDataFactory.swtDefaults() //
+            .align(SWT.FILL, SWT.CENTER) //
+            .grab(true, false) //
+            .hint(convertWidthInCharsToPixels(35), SWT.DEFAULT) //
+            .create());
         terminalFontSize = new Spinner(container, SWT.NONE);
         terminalFontSize.setValues(1, 1, 72, 0, 1, 1);
         terminalFontSize.addSelectionListener(new SelectionAdapter() {
@@ -1057,7 +1069,11 @@ public class PreferencesDialog extends Dialog {
         container.setLayout(layout);
         container.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         consoleFont = new Text(container, SWT.BORDER);
-        consoleFont.setLayoutData(new GridData(convertWidthInCharsToPixels(35), SWT.DEFAULT));
+        consoleFont.setLayoutData(GridDataFactory.swtDefaults() //
+            .align(SWT.FILL, SWT.CENTER) //
+            .grab(true, false) //
+            .hint(convertWidthInCharsToPixels(35), SWT.DEFAULT) //
+            .create());
         consoleFontSize = new Spinner(container, SWT.NONE);
         consoleFontSize.setValues(1, 1, 72, 0, 1, 1);
         consoleFontSize.addSelectionListener(new SelectionAdapter() {
@@ -1182,9 +1198,7 @@ public class PreferencesDialog extends Dialog {
             container.setLayout(layout);
             container.setLayoutData(new GridData(SWT.FILL, SWT.TOP, false, false));
 
-            add = new Button(container, SWT.PUSH);
-            add.setImage(ImageRegistry.getImageFromResources("add.png"));
-            add.setToolTipText("Add");
+            add = createPageButton(container, ImageRegistry.getImageFromResources("add.png"), "Add");
             add.addSelectionListener(new SelectionAdapter() {
 
                 @Override
@@ -1199,9 +1213,7 @@ public class PreferencesDialog extends Dialog {
 
             });
 
-            edit = new Button(container, SWT.PUSH);
-            edit.setImage(ImageRegistry.getImageFromResources("pencil.png"));
-            edit.setToolTipText("Edit");
+            edit = createPageButton(container, ImageRegistry.getImageFromResources("pencil.png"), "Edit");
             edit.addSelectionListener(new SelectionAdapter() {
 
                 @Override
@@ -1216,9 +1228,7 @@ public class PreferencesDialog extends Dialog {
             });
             edit.setEnabled(false);
 
-            remove = new Button(container, SWT.PUSH);
-            remove.setImage(ImageRegistry.getImageFromResources("delete.png"));
-            remove.setToolTipText("Remove");
+            remove = createPageButton(container, ImageRegistry.getImageFromResources("delete.png"), "Remove");
             remove.addSelectionListener(new SelectionAdapter() {
 
                 @Override
@@ -1231,9 +1241,7 @@ public class PreferencesDialog extends Dialog {
             });
             remove.setEnabled(false);
 
-            moveUp = new Button(container, SWT.PUSH);
-            moveUp.setImage(ImageRegistry.getImageFromResources("arrow_up.png"));
-            moveUp.setToolTipText("Up");
+            moveUp = createPageButton(container, ImageRegistry.getImageFromResources("arrow_up.png"), "Up");
             moveUp.addSelectionListener(new SelectionAdapter() {
 
                 @Override
@@ -1250,9 +1258,7 @@ public class PreferencesDialog extends Dialog {
             });
             moveUp.setEnabled(false);
 
-            moveDown = new Button(container, SWT.PUSH);
-            moveDown.setImage(ImageRegistry.getImageFromResources("arrow_down.png"));
-            moveDown.setToolTipText("Down");
+            moveDown = createPageButton(container, ImageRegistry.getImageFromResources("arrow_down.png"), "Down");
             moveDown.addSelectionListener(new SelectionAdapter() {
 
                 @Override
@@ -1312,6 +1318,240 @@ public class PreferencesDialog extends Dialog {
         externalTools.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 2, 1));
     }
 
+    class RemoteList {
+
+        Composite group;
+
+        ListViewer viewer;
+        Button add;
+        Button edit;
+        Button remove;
+        Button moveUp;
+        Button moveDown;
+
+        java.util.List<RemoteDevice> elements = new ArrayList<>();
+
+        public RemoteList(Composite parent) {
+            group = new Composite(parent, SWT.NONE);
+            GridLayout layout = new GridLayout(2, false);
+            layout.marginWidth = layout.marginHeight = 0;
+            group.setLayout(layout);
+
+            viewer = new ListViewer(group, SWT.SINGLE | SWT.BORDER | SWT.V_SCROLL);
+            viewer.setContentProvider(new ArrayContentProvider());
+            viewer.setLabelProvider(new LabelProvider());
+            GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
+            gridData.widthHint = convertWidthInCharsToPixels(50);
+            gridData.heightHint = convertHeightInCharsToPixels(10) + viewer.getList().getBorderWidth() * 2;
+            viewer.getControl().setLayoutData(gridData);
+            viewer.addSelectionChangedListener(new ISelectionChangedListener() {
+
+                @Override
+                public void selectionChanged(SelectionChangedEvent event) {
+                    updateButtons();
+                }
+
+            });
+            viewer.addOpenListener(new IOpenListener() {
+
+                @Override
+                public void open(OpenEvent event) {
+                    RemoteDevice selection = (RemoteDevice) viewer.getStructuredSelection().getFirstElement();
+                    RemoteDeviceDialog dlg = new RemoteDeviceDialog(parent.getShell(), selection);
+                    if (dlg.open() == RemoteDeviceDialog.OK) {
+                        viewer.refresh();
+                    }
+                }
+
+            });
+            viewer.setInput(elements);
+
+            Composite container = new Composite(group, SWT.NONE);
+            layout = new GridLayout(1, true);
+            layout.marginWidth = layout.marginHeight = 0;
+            container.setLayout(layout);
+            container.setLayoutData(new GridData(SWT.FILL, SWT.TOP, false, false));
+
+            add = createPageButton(container, ImageRegistry.getImageFromResources("add.png"), "Add");
+            add.addSelectionListener(new SelectionAdapter() {
+
+                @Override
+                public void widgetSelected(SelectionEvent e) {
+                    RemoteDeviceDialog dlg = new RemoteDeviceDialog(parent.getShell());
+                    if (dlg.open() == RemoteDeviceDialog.OK) {
+                        elements.add(dlg.getRemoteDevice());
+                        viewer.refresh();
+                        updateButtons();
+                    }
+                }
+
+            });
+
+            edit = createPageButton(container, ImageRegistry.getImageFromResources("pencil.png"), "Edit");
+            edit.addSelectionListener(new SelectionAdapter() {
+
+                @Override
+                public void widgetSelected(SelectionEvent e) {
+                    RemoteDevice selection = (RemoteDevice) viewer.getStructuredSelection().getFirstElement();
+                    RemoteDeviceDialog dlg = new RemoteDeviceDialog(parent.getShell(), selection);
+                    if (dlg.open() == RemoteDeviceDialog.OK) {
+                        viewer.refresh();
+                    }
+                }
+
+            });
+            edit.setEnabled(false);
+
+            remove = createPageButton(container, ImageRegistry.getImageFromResources("delete.png"), "Remove");
+            remove.addSelectionListener(new SelectionAdapter() {
+
+                @Override
+                public void widgetSelected(SelectionEvent e) {
+                    elements.remove(viewer.getStructuredSelection().getFirstElement());
+                    viewer.refresh();
+                    updateButtons();
+                }
+
+            });
+            remove.setEnabled(false);
+
+            moveUp = createPageButton(container, ImageRegistry.getImageFromResources("arrow_up.png"), "Up");
+            moveUp.addSelectionListener(new SelectionAdapter() {
+
+                @Override
+                public void widgetSelected(SelectionEvent e) {
+                    RemoteDevice selection = (RemoteDevice) viewer.getStructuredSelection().getFirstElement();
+                    int index = elements.indexOf(selection);
+                    elements.remove(index);
+                    elements.add(index - 1, selection);
+                    viewer.refresh();
+                    viewer.setSelection(new StructuredSelection(selection));
+                    updateButtons();
+                }
+
+            });
+            moveUp.setEnabled(false);
+
+            moveDown = createPageButton(container, ImageRegistry.getImageFromResources("arrow_down.png"), "Down");
+            moveDown.addSelectionListener(new SelectionAdapter() {
+
+                @Override
+                public void widgetSelected(SelectionEvent e) {
+                    RemoteDevice selection = (RemoteDevice) viewer.getStructuredSelection().getFirstElement();
+                    int index = elements.indexOf(selection);
+                    elements.add(index + 2, selection);
+                    elements.remove(index);
+                    viewer.refresh();
+                    viewer.setSelection(new StructuredSelection(selection));
+                    updateButtons();
+                }
+
+            });
+            moveDown.setEnabled(false);
+        }
+
+        void updateButtons() {
+            IStructuredSelection selection = viewer.getStructuredSelection();
+            remove.setEnabled(!selection.isEmpty());
+            edit.setEnabled(!selection.isEmpty());
+            moveUp.setEnabled(!selection.isEmpty() && elements.indexOf(selection.getFirstElement()) > 0);
+            moveDown.setEnabled(!selection.isEmpty() && elements.indexOf(selection.getFirstElement()) < elements.size() - 1);
+        }
+
+        public void setLayoutData(Object layoutData) {
+            group.setLayoutData(layoutData);
+        }
+
+        public Object getLayoutData() {
+            return group.getLayoutData();
+        }
+
+        public void setItems(RemoteDevice[] items) {
+            elements.clear();
+            for (int i = 0; i < items.length; i++) {
+                elements.add(new RemoteDevice(items[i]));
+            }
+            viewer.refresh();
+        }
+
+        public RemoteDevice[] getItems() {
+            return elements.toArray(new RemoteDevice[elements.size()]);
+        }
+
+    }
+
+    void createRemoteDevicesPage(Composite parent) {
+        Composite composite = createPage(parent, "Remotes");
+
+        Label label = new Label(composite, SWT.NONE);
+        label.setText("Remote Devices");
+        label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
+
+        remoteDevices = new RemoteList(composite);
+        remoteDevices.setItems(preferences.getRemoteDevices());
+        remoteDevices.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 2, 1));
+
+        Button button = WidgetFactory.button(SWT.PUSH).text("Discover") //
+            .font(JFaceResources.getDialogFont()) //
+            .create(composite);
+        setButtonLayoutData(button);
+
+        button.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                AtomicReference<RemoteDevice[]> result = new AtomicReference<>();
+                BusyIndicator.showWhile(parent.getDisplay(), new Runnable() {
+
+                    @Override
+                    public void run() {
+                        Collection<DeviceDescriptor> devices = NetworkUtils.getAvailableDevices();
+
+                        int index = 0;
+                        RemoteDevice[] items = new RemoteDevice[devices.size()];
+                        for (DeviceDescriptor descr : devices) {
+                            RemoteDevice dev = new RemoteDevice(descr.name, descr.inetAddr.getHostAddress(), descr.mac_address, String.valueOf(descr.reset_pin));
+                            items[index++] = dev;
+                        }
+
+                        result.set(items);
+                    }
+
+                });
+
+                ArrayList<RemoteDevice> currentItems = new ArrayList<>(Arrays.asList(remoteDevices.getItems()));
+                ArrayList<RemoteDevice> detectedItems = new ArrayList<>(Arrays.asList(result.get()));
+                ArrayList<RemoteDevice> finalItems = new ArrayList<>();
+
+                Iterator<RemoteDevice> currentIter = currentItems.iterator();
+                while (currentIter.hasNext()) {
+                    RemoteDevice current = currentIter.next();
+
+                    Iterator<RemoteDevice> detectedIter = detectedItems.iterator();
+                    while (detectedIter.hasNext()) {
+                        RemoteDevice detected = detectedIter.next();
+                        if (detected.getMac().equalsIgnoreCase(current.getMac())) {
+                            if (!current.getIp().isBlank()) {
+                                current.setIp(detected.getIp());
+                            }
+                            detectedIter.remove();
+                            break;
+                        }
+                        if (current.getMac().isBlank() && detected.getIp().equals(current.getIp())) {
+                            detectedIter.remove();
+                            break;
+                        }
+                    }
+
+                    finalItems.add(current);
+                }
+                finalItems.addAll(detectedItems);
+
+                remoteDevices.setItems(finalItems.toArray(new RemoteDevice[finalItems.size()]));
+            }
+        });
+    }
+
     Composite createPage(Composite parent, String text) {
         Composite composite = new Composite(parent, SWT.NONE);
         GridLayout layout = new GridLayout(2, false);
@@ -1332,6 +1572,14 @@ public class PreferencesDialog extends Dialog {
         pages.add(text);
 
         return composite;
+    }
+
+    Button createPageButton(Composite parent, Image image, String toolTipText) {
+        Button button = new Button(parent, SWT.PUSH);
+        button.setImage(image);
+        button.setToolTipText(toolTipText);
+        button.setLayoutData(new GridData(convertHorizontalDLUsToPixels(16), convertHorizontalDLUsToPixels(16)));
+        return button;
     }
 
     Color buttonBackground;
@@ -1472,6 +1720,7 @@ public class PreferencesDialog extends Dialog {
         preferences.setConsoleResetDeviceOnClose(consoleResetDeviceOnClose.getSelection());
 
         preferences.setExternalTools(externalTools.getItems());
+        preferences.setRemoteDevices(remoteDevices.getItems());
 
         if (!Objects.equals(oldTheme, preferences.getTheme())) {
             MessageDialog.openWarning(getShell(), SpinTools.APP_TITLE, "Close and reopen the application for the theme changes to take full effect.");

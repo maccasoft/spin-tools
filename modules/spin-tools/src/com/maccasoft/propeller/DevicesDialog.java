@@ -11,7 +11,6 @@
 
 package com.maccasoft.propeller;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,14 +33,24 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
+import com.maccasoft.propeller.devices.ComPort;
+import com.maccasoft.propeller.devices.ComPortException;
+import com.maccasoft.propeller.devices.DeviceDescriptor;
+import com.maccasoft.propeller.devices.NetworkComPort;
+import com.maccasoft.propeller.devices.NetworkUtils;
+import com.maccasoft.propeller.devices.SerialComPort;
 import com.maccasoft.propeller.internal.ColorRegistry;
 
 import jssc.SerialPort;
-import jssc.SerialPortException;
 import jssc.SerialPortList;
 import jssc.SerialPortTimeoutException;
 
 public class DevicesDialog extends Dialog {
+
+    public static final int DISCOVER_PORT = 32420;
+
+    public static final int DISCOVER_REPLY_TIMEOUT = 250;
+    public static final int DISCOVER_ATTEMPTS = 3;
 
     static class Device {
 
@@ -68,10 +77,8 @@ public class DevicesDialog extends Dialog {
 
     }
 
-    SerialPort terminalPort;
-
     TableViewer viewer;
-    String selection;
+    ComPort selection;
 
     public DevicesDialog(Shell parentShell) {
         super(parentShell);
@@ -117,12 +124,24 @@ public class DevicesDialog extends Dialog {
                 StringBuilder sb = new StringBuilder();
                 List<StyleRange> styles = new ArrayList<StyleRange>();
 
-                Device element = (Device) cell.getElement();
-                sb.append(element.getName());
-                sb.append(" ");
+                if (cell.getElement() instanceof Device) {
+                    Device element = (Device) cell.getElement();
+                    sb.append(element.getName());
+                    sb.append(" ");
 
-                styles.add(new StyleRange(sb.length(), element.getPort().length(), ColorRegistry.getColor(0x80, 0x80, 0x00), null));
-                sb.append(element.getPort());
+                    styles.add(new StyleRange(sb.length(), element.getPort().length(), ColorRegistry.getColor(0x80, 0x80, 0x00), null));
+                    sb.append(element.getPort());
+                }
+                else if (cell.getElement() instanceof DeviceDescriptor) {
+                    DeviceDescriptor element = (DeviceDescriptor) cell.getElement();
+                    sb.append(element.name);
+                    sb.append(" ");
+
+                    String text = String.format("ip=%s, mac=%s", element.inetAddr.getHostAddress(), element.mac_address);
+
+                    styles.add(new StyleRange(sb.length(), text.length(), ColorRegistry.getColor(0x80, 0x80, 0x00), null));
+                    sb.append(text);
+                }
 
                 cell.setText(sb.toString());
                 cell.setStyleRanges(styles.toArray(new StyleRange[styles.size()]));
@@ -151,15 +170,24 @@ public class DevicesDialog extends Dialog {
     protected void createButtonsForButtonBar(Composite parent) {
         createButton(parent, IDialogConstants.OK_ID, IDialogConstants.OK_LABEL, true);
         createButton(parent, IDialogConstants.CANCEL_ID, IDialogConstants.CANCEL_LABEL, false);
-        createButton(parent, IDialogConstants.CLIENT_ID, "Detect", false);
+        createButton(parent, IDialogConstants.CLIENT_ID, "Discover", false);
     }
 
     @Override
     protected void buttonPressed(int buttonId) {
         switch (buttonId) {
             case IDialogConstants.OK_ID: {
-                IStructuredSelection selection = viewer.getStructuredSelection();
-                DevicesDialog.this.selection = ((Device) selection.getFirstElement()).getPort();
+                Object selectedElement = viewer.getStructuredSelection().getFirstElement();
+                String portName = getPortName(selectedElement);
+
+                if (selection == null || !selection.getPortName().equals(portName)) {
+                    if (selectedElement instanceof Device) {
+                        selection = new SerialComPort(portName);
+                    }
+                    else if (selectedElement instanceof DeviceDescriptor) {
+                        selection = new NetworkComPort((DeviceDescriptor) selectedElement);
+                    }
+                }
                 break;
             }
             case IDialogConstants.CLIENT_ID:
@@ -171,17 +199,27 @@ public class DevicesDialog extends Dialog {
         super.buttonPressed(buttonId);
     }
 
+    String getPortName(Object o) {
+        if (o instanceof Device) {
+            return ((Device) o).getPort();
+        }
+        else if (o instanceof DeviceDescriptor) {
+            return ((DeviceDescriptor) o).getPortName();
+        }
+        return "";
+    }
+
     void scheduleUpdate() {
-        List<Device> list = new ArrayList<>();
+        List<Object> list = new ArrayList<>();
 
         viewer.getControl().setEnabled(false);
 
         String currentSelection;
         if (viewer.getStructuredSelection().isEmpty()) {
-            currentSelection = selection;
+            currentSelection = selection != null ? selection.getPortName() : null;
         }
         else {
-            currentSelection = ((Device) viewer.getStructuredSelection().getFirstElement()).port;
+            currentSelection = getPortName(viewer.getStructuredSelection().getFirstElement());
         }
 
         Thread thread = new Thread(new Runnable() {
@@ -192,29 +230,28 @@ public class DevicesDialog extends Dialog {
             public void run() {
                 String[] portNames = SerialPortList.getPortNames();
                 for (int i = 0; i < portNames.length; i++) {
-                    SerialPort serialPort;
-                    if (terminalPort != null && terminalPort.getPortName().equals(portNames[i])) {
-                        serialPort = terminalPort;
+                    ComPort serialPort = null;
+                    if (selection != null) {
+                        if (selection.getPortName().equals(portNames[i])) {
+                            serialPort = selection;
+                        }
                     }
-                    else {
-                        serialPort = new SerialPort(portNames[i]);
+                    if (serialPort == null) {
+                        serialPort = new SerialComPort(portNames[i]);
                     }
+
                     try {
-                        String version = find(serialPort);
+                        String version = find((SerialComPort) serialPort);
                         if (version != null) {
                             list.add(new Device(version, portNames[i]));
                         }
                     } catch (Exception e) {
                         // Do nothing
                     }
-                    if (serialPort != terminalPort) {
-                        try {
-                            serialPort.closePort();
-                        } catch (Exception e) {
-                            // Do nothing
-                        }
-                    }
                 }
+
+                list.addAll(NetworkUtils.getAvailableDevices());
+
                 Display.getDefault().asyncExec(new Runnable() {
 
                     @Override
@@ -222,11 +259,13 @@ public class DevicesDialog extends Dialog {
                         if (viewer.getControl().isDisposed()) {
                             return;
                         }
-                        viewer.setInput(list.toArray(new Device[list.size()]));
-                        for (Device device : list) {
-                            if (device.port.equals(currentSelection)) {
-                                viewer.setSelection(new StructuredSelection(device));
-                                break;
+                        viewer.setInput(list.toArray());
+                        if (currentSelection != null) {
+                            for (Object device : list) {
+                                if (getPortName(device).equals(currentSelection)) {
+                                    viewer.setSelection(new StructuredSelection(device));
+                                    break;
+                                }
                             }
                         }
                         viewer.getControl().setEnabled(true);
@@ -236,90 +275,79 @@ public class DevicesDialog extends Dialog {
                 });
             }
 
-            public String find(SerialPort serialPort) throws Exception {
-                String version = null;
+            public String find(SerialComPort comPort) throws ComPortException {
+                boolean closePort = comPort != selection;
 
-                if (!serialPort.isOpened()) {
-                    serialPort.openPort();
+                if (!comPort.isOpened()) {
+                    comPort.openPort();
+                    closePort = true;
                 }
 
                 int rc = 0;
                 try {
-                    serialPort.setParams(
+                    comPort.setParams(
                         115200,
                         SerialPort.DATABITS_8,
                         SerialPort.STOPBITS_1,
                         SerialPort.PARITY_NONE,
                         false,
                         false);
-                    hwreset(serialPort);
-                    rc = hwfind1(serialPort);
+                    comPort.hwreset();
+                    rc = hwfind1(comPort);
                 } catch (Exception e) {
                     // Do nothing
                 }
                 if (rc == 0) {
                     try {
-                        serialPort.setParams(
+                        comPort.setParams(
                             2000000,
                             SerialPort.DATABITS_8,
                             SerialPort.STOPBITS_1,
                             SerialPort.PARITY_NONE,
                             false,
                             false);
-                        hwreset(serialPort);
-                        rc = hwfind2(serialPort);
+                        comPort.hwreset();
+                        rc = hwfind2(comPort);
                     } catch (Exception e) {
                         // Do nothing
                     }
                 }
-                switch (rc) {
-                    case 0:
-                        // Not found
-                        break;
-                    case 1:
-                        version = "P8X32A - 8 cogs, 32KB hub, 32 I/O pins";
-                        break;
-                    case 'A':
-                        version = "FPGA - 8 cogs, 512KB hub, 48 smart pins 63..56, 39..0, 80MHz";
-                        break;
-                    case 'B':
-                        version = "FPGA - 4 cogs, 256KB hub, 12 smart pins 63..60/7..0, 80MHz";
-                        break;
-                    case 'C':
-                        version = "1 cog, 32KB hub, 8 smart pins 63..62/5..0, 80MHz, No CORDIC";
-                        break;
-                    case 'D':
-                        version = "1 cog, 128KB hub, 7 smart pins 63..62/4..0, 80MHz, No CORDIC";
-                        break;
-                    case 'E':
-                        version = "FPGA - 4 cogs, 512KB hub, 18 smart pins 63..62/15..0, 80MHz";
-                        break;
-                    case 'F':
-                        version = "16 cogs, 1024KB hub, 7 smart pins 63..62/33..32/2..0, 80MHz";
-                        break;
-                    case 'G':
-                        version = "P2X8C4M64P Rev B/C - 8 cogs, 512KB hub, 64 smart pins";
-                        break;
-                    default:
-                        version = "Unknown version " + (Character.isLetterOrDigit(rc) ? "'" + (char) rc + "'" : rc);
-                        break;
+
+                if (closePort) {
+                    try {
+                        comPort.closePort();
+                    } catch (Exception e) {
+                        // Do nothing
+                    }
                 }
 
-                return version;
+                return getVersionText(rc);
             }
 
-            void hwreset(SerialPort serialPort) throws SerialPortException {
-                serialPort.setDTR(true);
-                serialPort.setRTS(true);
-                msleep(25);
-                serialPort.setDTR(false);
-                serialPort.setRTS(false);
-                msleep(25);
-                skipIncomingBytes(serialPort);
-                serialPort.purgePort(SerialPort.PURGE_TXABORT |
-                    SerialPort.PURGE_RXABORT |
-                    SerialPort.PURGE_TXCLEAR |
-                    SerialPort.PURGE_RXCLEAR);
+            String getVersionText(int version) {
+                switch (version) {
+                    case 0:
+                        // Not found
+                        return null;
+                    case 1:
+                        return "P8X32A - 8 cogs, 32KB hub, 32 I/O pins";
+                    case 'A':
+                        return "FPGA - 8 cogs, 512KB hub, 48 smart pins 63..56, 39..0, 80MHz";
+                    case 'B':
+                        return "FPGA - 4 cogs, 256KB hub, 12 smart pins 63..60/7..0, 80MHz";
+                    case 'C':
+                        return "1 cog, 32KB hub, 8 smart pins 63..62/5..0, 80MHz, No CORDIC";
+                    case 'D':
+                        return "1 cog, 128KB hub, 7 smart pins 63..62/4..0, 80MHz, No CORDIC";
+                    case 'E':
+                        return "FPGA - 4 cogs, 512KB hub, 18 smart pins 63..62/15..0, 80MHz";
+                    case 'F':
+                        return "16 cogs, 1024KB hub, 7 smart pins 63..62/33..32/2..0, 80MHz";
+                    case 'G':
+                        return "P2X8C4M64P Rev B/C - 8 cogs, 512KB hub, 64 smart pins";
+                    default:
+                        return "Unknown version " + (Character.isLetterOrDigit(version) ? "'" + (char) version + "'" : version);
+                }
             }
 
             private void msleep(int msec) {
@@ -330,12 +358,12 @@ public class DevicesDialog extends Dialog {
                 }
             }
 
-            protected int hwfind1(SerialPort serialPort) throws SerialPortException, IOException {
+            protected int hwfind1(SerialComPort comPort) throws ComPortException {
                 int n, ii, jj;
                 byte[] buffer;
 
                 // send the calibration pulse
-                serialPort.writeInt(0xF9);
+                comPort.writeInt(0xF9);
 
                 // send the magic propeller LFSR byte stream.
                 LFSR = 'P';
@@ -344,10 +372,10 @@ public class DevicesDialog extends Dialog {
                     buffer[n] = (byte) (iterate() | 0xFE);
                     //System.out.print(String.format("%02X ", ii));
                 }
-                serialPort.writeBytes(buffer);
+                comPort.writeBytes(buffer);
                 //System.out.println();
 
-                skipIncomingBytes(serialPort);
+                skipIncomingBytes(comPort);
 
                 // Send 258 0xF9 for LFSR and Version ID
                 // These bytes clock the LSFR bits and ID from propeller back to us.
@@ -355,13 +383,13 @@ public class DevicesDialog extends Dialog {
                 for (n = 0; n < 258; n++) {
                     buffer[n] = (byte) (0xF9);
                 }
-                serialPort.writeBytes(buffer);
+                comPort.writeBytes(buffer);
 
                 // Wait at least 100ms for the first response. Allow some margin.
                 // Some chips may respond < 50ms, but there's no guarantee all will.
                 // If we don't get it, we can assume the propeller is not there.
-                if ((ii = getBit(serialPort, 110)) == -1) {
-                    throw new IOException("Timeout waiting for first response bit");
+                if ((ii = getBit(comPort, 110)) == -1) {
+                    throw new ComPortException("Timeout waiting for first response bit");
                 }
                 //System.out.print(String.format("%02X ", ii));
 
@@ -373,7 +401,7 @@ public class DevicesDialog extends Dialog {
                     if (ii != jj) {
                         //System.err.println("Lost HW contact");
                         for (n = 0; n < 300; n++) {
-                            if (readByteWithTimeout(serialPort, 50) == -1) {
+                            if (comPort.readByteWithTimeout(50) == -1) {
                                 break;
                             }
                         }
@@ -382,14 +410,14 @@ public class DevicesDialog extends Dialog {
 
                     int to = 0;
                     do {
-                        if ((ii = getBit(serialPort, 110)) != -1) {
+                        if ((ii = getBit(comPort, 110)) != -1) {
                             //System.out.print(String.format("%02X ", ii));
                             break;
                         }
                     } while (to++ < 100);
 
                     if (to > 100) {
-                        throw new IOException("Timeout waiting for response bit");
+                        throw new ComPortException("Timeout waiting for response bit");
                     }
                 }
                 //System.out.println();
@@ -397,7 +425,7 @@ public class DevicesDialog extends Dialog {
                 int rc = 0;
                 for (n = 0; n < 8; n++) {
                     rc >>= 1;
-                    if ((ii = getBit(serialPort, 110)) != -1) {
+                    if ((ii = getBit(comPort, 110)) != -1) {
                         //System.out.print(String.format("%02X ", ii));
                         rc += (ii != 0) ? 0x80 : 0;
                     }
@@ -407,12 +435,11 @@ public class DevicesDialog extends Dialog {
                 return rc;
             }
 
-            private int getBit(SerialPort serialPort, int timeout) throws SerialPortException {
-                int[] rx;
+            private int getBit(SerialComPort comPort, int timeout) {
                 try {
-                    rx = serialPort.readIntArray(1, timeout);
-                    return rx[0] & 1;
-                } catch (SerialPortTimeoutException e) {
+                    int rx = comPort.readByteWithTimeout(timeout);
+                    return rx & 1;
+                } catch (ComPortException e) {
 
                 }
                 return -1;
@@ -424,17 +451,17 @@ public class DevicesDialog extends Dialog {
                 return bit;
             }
 
-            protected int hwfind2(SerialPort serialPort) throws SerialPortException, IOException {
+            protected int hwfind2(SerialComPort comPort) throws ComPortException {
                 String result = new String();
 
-                serialPort.writeString("> \r");
+                comPort.writeString("> \r");
                 msleep(1);
 
-                serialPort.writeString("> Prop_Chk 0 0 0 0\r");
+                comPort.writeString("> Prop_Chk 0 0 0 0\r");
 
                 try {
                     while (result.length() < 11 || !result.endsWith("\r\n")) {
-                        byte[] b = serialPort.readBytes(1, 20);
+                        byte[] b = comPort.readBytes(1, 20);
                         if (b != null && b.length == 1) {
                             result += new String(b);
                         }
@@ -449,42 +476,23 @@ public class DevicesDialog extends Dialog {
                 return 0;
             }
 
-            protected int skipIncomingBytes(SerialPort serialPort) throws SerialPortException {
+            protected int skipIncomingBytes(SerialComPort comPort) throws ComPortException {
                 int n = 0;
-                while (readByteWithTimeout(serialPort, 50) != -1) {
+                while (comPort.readByteWithTimeout(50) != -1) {
                     n++;
                 }
                 return n;
-            }
-
-            private int readByteWithTimeout(SerialPort serialPort, int timeout) throws SerialPortException {
-                int[] rx;
-                try {
-                    rx = serialPort.readIntArray(1, timeout);
-                    return rx[0];
-                } catch (SerialPortTimeoutException e) {
-
-                }
-                return -1;
             }
 
         });
         thread.start();
     }
 
-    public SerialPort getTerminalPort() {
-        return terminalPort;
-    }
-
-    public void setTerminalPort(SerialPort terminalPort) {
-        this.terminalPort = terminalPort;
-    }
-
-    public String getSelection() {
+    public ComPort getSelection() {
         return selection;
     }
 
-    public void setSelection(String selection) {
+    public void setSelection(ComPort selection) {
         this.selection = selection;
     }
 
