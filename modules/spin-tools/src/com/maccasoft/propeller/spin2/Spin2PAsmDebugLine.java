@@ -152,6 +152,13 @@ public class Spin2PAsmDebugLine {
                     if (token.type != 0 && token.type != Token.KEYWORD) {
                         throw new CompilerException("unexpected operator '" + token.getText() + "'", token);
                     }
+                    if (!isBacktickExpression && !Spin2Model.isDebugKeyword(token.getText())) {
+                        root.addStatement(child = new Spin2DebugCommand(new Token(0, "#")));
+                        list = new ArrayList<Token>();
+                        list.add(token);
+                        state = 4;
+                        break;
+                    }
                     root.addStatement(child = new Spin2DebugCommand(token));
                     state = 1;
                     break;
@@ -195,7 +202,37 @@ public class Spin2PAsmDebugLine {
                         break;
                     }
                     throw new CompilerException("unexpected '" + token.getText() + "'", token);
+                case 4:
+                    if (list.size() == 0 && Spin2Model.isDebugKeyword(token.getText())) {
+                        root.addStatement(child = new Spin2DebugCommand(token));
+                        state = 1;
+                        break;
+                    }
+                    if (",".equals(token.getText())) {
+                        String prefix = null;
+                        if ("#".equals(list.get(0).getText())) {
+                            prefix = list.get(0).getText();
+                            list = list.subList(1, list.size());
+                        }
+                        Spin2ExpressionBuilder expressionBuilder = new Spin2ExpressionBuilder(context, list);
+                        child.addArgument(new Spin2DebugExpression(prefix, expressionBuilder.getExpression()));
+
+                        list = new ArrayList<Token>();
+                        break;
+                    }
+                    list.add(token);
+                    break;
             }
+        }
+
+        if (list != null && list.size() != 0) {
+            String prefix = null;
+            if ("#".equals(list.get(0).getText())) {
+                prefix = list.get(0).getText();
+                list = list.subList(1, list.size());
+            }
+            Spin2ExpressionBuilder expressionBuilder = new Spin2ExpressionBuilder(context, list);
+            child.addArgument(new Spin2DebugExpression(prefix, expressionBuilder.getExpression()));
         }
 
         if (index >= tokens.size()) {

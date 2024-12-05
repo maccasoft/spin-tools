@@ -18,7 +18,6 @@ import java.util.List;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.function.Executable;
 
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.SpinObject.DataObject;
@@ -756,21 +755,6 @@ class Spin2DebugTest {
     }
 
     @Test
-    void testUnknownDebugCommand() {
-        String text = "debug(`MyPlot `unknown_command(a))";
-
-        Spin2Debug subject = new Spin2Debug();
-        Assertions.assertThrows(CompilerException.class, new Executable() {
-
-            @Override
-            public void execute() throws Throwable {
-                subject.compileDebugStatement(parse(text));
-            }
-
-        });
-    }
-
-    @Test
     void testEmptyDebug() throws Exception {
         String text = ""
             + "PUB main()\n"
@@ -970,6 +954,66 @@ class Spin2DebugTest {
             + "00003 00003       40 61 00 80 01 UDEC(a)\n"
             + "00008 00008       0A             C_Z\n"
             + "00009 00009       00             DONE\n"
+            + "", actual);
+    }
+
+    @Test
+    void testVariables() throws Exception {
+        String text = ""
+            + "PUB main() | a, b, c\n"
+            + "\n"
+            + "    debug(a, b, udec(a), c)\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       11 00 00 00    End\n"
+            + "' PUB main() | a, b, c\n"
+            + "00008 00008       03             (stack size)\n"
+            + "'     debug(a, b, udec(a), c)\n"
+            + "00009 00009       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000A 0000A       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "0000B 0000B       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000C 0000C       E2             VAR_READ LONG DBASE+$00002 (short)\n"
+            + "0000D 0000D       41 10 01       DEBUG #1\n"
+            + "00010 00010       04             RETURN\n"
+            + "00011 00011       00 00 00       Padding\n"
+            + "' Debug data\n"
+            + "00B74 00000       0C 00         \n"
+            + "00B76 00002       04 00         \n"
+            + "' #1\n"
+            + "00B78 00004       04             COGN\n"
+            + "00B79 00005       05             CHAR\n"
+            + "00B7A 00006       05             CHAR\n"
+            + "00B7B 00007       41 61 00       UDEC(a)\n"
+            + "00B7E 0000A       05             CHAR\n"
+            + "00B7F 0000B       00             DONE\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testPAsmVariables() {
+        Context context = new Context();
+        context.addSymbol("a", new NumberLiteral(1));
+        context.addSymbol("b", new NumberLiteral(2));
+        context.addSymbol("c", new NumberLiteral(3));
+
+        String text = "debug(a, b, udec(a), c)";
+
+        Spin2PAsmDebugLine root = Spin2PAsmDebugLine.buildFrom(context, parseTokens(text));
+
+        Spin2Debug subject = new Spin2Debug();
+        String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
+        Assertions.assertEquals(""
+            + "00000 00000       01             ASMMODE\n"
+            + "00001 00001       04             COGN\n"
+            + "00002 00002       05 80 01       CHAR\n"
+            + "00005 00005       05 80 02       CHAR\n"
+            + "00008 00008       41 61 00 80 01 UDEC(a)\n"
+            + "0000D 0000D       05 80 03       CHAR\n"
+            + "00010 00010       00             DONE\n"
             + "", actual);
     }
 

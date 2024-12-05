@@ -767,8 +767,26 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 if ("DEBUG".equalsIgnoreCase(node.getText())) {
                     int stack = 0;
                     for (Spin2StatementNode child : node.getChilds()) {
-                        for (Spin2StatementNode param : child.getChilds()) {
-                            source.addAll(compileBytecodeExpression(context, method, param, true));
+                        if (child.getType() == Token.STRING) {
+                            for (Spin2StatementNode param : child.getChilds()) {
+                                source.addAll(compileBytecodeExpression(context, method, param, true));
+                                stack += 4;
+                            }
+                        }
+                        else if (Spin2Model.isDebugKeyword(child.getText())) {
+                            for (Spin2StatementNode param : child.getChilds()) {
+                                source.addAll(compileBytecodeExpression(context, method, param, true));
+                                stack += 4;
+                            }
+                        }
+                        else if (child.getText().startsWith("`")) {
+                            for (Spin2StatementNode param : child.getChilds()) {
+                                source.addAll(compileBytecodeExpression(context, method, param, true));
+                                stack += 4;
+                            }
+                        }
+                        else {
+                            source.addAll(compileBytecodeExpression(context, method, child, true));
                             stack += 4;
                         }
                     }

@@ -74,6 +74,134 @@ public class Spin2Model extends SpinModel {
         "IF", "IFNOT", "ELSEIF", "ELSEIFNOT", "ELSE", "CASE", "CASE_FAST", "OTHER", "REPEAT",
     }));
 
+    public static Set<String> debugKeywords = new HashSet<String>(Arrays.asList(new String[] {
+        "FDEC",
+        "FDEC_REG_ARRAY",
+        "FDEC_ARRAY",
+
+        "FDEC_",
+        "FDEC_REG_ARRAY_",
+        "FDEC_ARRAY_",
+
+        "UDEC",
+        "UDEC_BYTE",
+        "UDEC_WORD",
+        "UDEC_LONG",
+        "SDEC",
+        "SDEC_BYTE",
+        "SDEC_WORD",
+        "SDEC_LONG",
+        "UHEX",
+        "UHEX_BYTE",
+        "UHEX_WORD",
+        "UHEX_LONG",
+        "SHEX",
+        "SHEX_BYTE",
+        "SHEX_WORD",
+        "SHEX_LONG",
+        "UBIN",
+        "UBIN_BYTE",
+        "UBIN_WORD",
+        "UBIN_LONG",
+        "SBIN",
+        "SBIN_BYTE",
+        "SBIN_WORD",
+        "SBIN_LONG",
+
+        "UDEC_",
+        "UDEC_BYTE_",
+        "UDEC_WORD_",
+        "UDEC_LONG_",
+        "SDEC_",
+        "SDEC_BYTE_",
+        "SDEC_WORD_",
+        "SDEC_LONG_",
+        "UHEX_",
+        "UHEX_BYTE_",
+        "UHEX_WORD_",
+        "UHEX_LONG_",
+        "SHEX_",
+        "SHEX_BYTE_",
+        "SHEX_WORD_",
+        "SHEX_LONG_",
+        "UBIN_",
+        "UBIN_BYTE_",
+        "UBIN_WORD_",
+        "UBIN_LONG_",
+        "SBIN_",
+        "SBIN_BYTE_",
+        "SBIN_WORD_",
+        "SBIN_LONG_",
+
+        "UDEC_REG_ARRAY",
+        "UDEC_BYTE_ARRAY",
+        "UDEC_WORD_ARRAY",
+        "UDEC_LONG_ARRAY",
+        "SDEC_REG_ARRAY",
+        "SDEC_BYTE_ARRAY",
+        "SDEC_WORD_ARRAY",
+        "SDEC_LONG_ARRAY",
+        "UHEX_REG_ARRAY",
+        "UHEX_BYTE_ARRAY",
+        "UHEX_WORD_ARRAY",
+        "UHEX_LONG_ARRAY",
+        "SHEX_REG_ARRAY",
+        "SHEX_BYTE_ARRAY",
+        "SHEX_WORD_ARRAY",
+        "SHEX_LONG_ARRAY",
+        "UBIN_REG_ARRAY",
+        "UBIN_BYTE_ARRAY",
+        "UBIN_WORD_ARRAY",
+        "UBIN_LONG_ARRAY",
+        "SBIN_REG_ARRAY",
+        "SBIN_BYTE_ARRAY",
+        "SBIN_WORD_ARRAY",
+        "SBIN_LONG_ARRAY",
+
+        "UDEC_REG_ARRAY_",
+        "UDEC_BYTE_ARRAY_",
+        "UDEC_WORD_ARRAY_",
+        "UDEC_LONG_ARRAY_",
+        "SDEC_REG_ARRAY_",
+        "SDEC_BYTE_ARRAY_",
+        "SDEC_WORD_ARRAY_",
+        "SDEC_LONG_ARRAY_",
+        "UHEX_REG_ARRAY_",
+        "UHEX_BYTE_ARRAY_",
+        "UHEX_WORD_ARRAY_",
+        "UHEX_LONG_ARRAY_",
+        "SHEX_REG_ARRAY_",
+        "SHEX_BYTE_ARRAY_",
+        "SHEX_WORD_ARRAY_",
+        "SHEX_LONG_ARRAY_",
+        "UBIN_REG_ARRAY_",
+        "UBIN_BYTE_ARRAY_",
+        "UBIN_WORD_ARRAY_",
+        "UBIN_LONG_ARRAY_",
+        "SBIN_REG_ARRAY_",
+        "SBIN_BYTE_ARRAY_",
+        "SBIN_WORD_ARRAY_",
+        "SBIN_LONG_ARRAY_",
+
+        "BOOL",
+        "BOOL_",
+        "C_Z",
+
+        "DLY",
+        "ZSTR",
+        "ZSTR_",
+        "LSTR",
+        "LSTR_",
+
+        "IF",
+        "IFNOT",
+
+        "PC_KEY",
+        "PC_MOUSE",
+
+        "SIZEOF"
+    }));
+
     public static boolean isPAsmInstruction(String token) {
         return instructions.contains(token.toUpperCase());
     }
@@ -92,6 +220,10 @@ public class Spin2Model extends SpinModel {
 
     public static boolean isBlockStart(String token) {
         return blockStart.contains(token.toUpperCase());
+    }
+
+    public static boolean isDebugKeyword(String token) {
+        return debugKeywords.contains(token.toUpperCase());
     }
 
     public Spin2Model(Node root) {

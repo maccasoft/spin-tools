@@ -339,7 +339,10 @@ public class Spin2Debug {
                                 break;
 
                             default:
-                                throw new CompilerException("Unknown debug statement '" + cmd + "'", node.getToken());
+                                list.add(new DataObject(new byte[] {
+                                    DBC_CHAR
+                                }, "CHAR"));
+                                break;
                         }
                     }
                 } catch (IOException e) {
@@ -763,7 +766,11 @@ public class Spin2Debug {
                                 break;
 
                             default:
-                                throw new CompilerException("Unknown debug statement '" + cmd + "'", node.getToken());
+                                ByteArrayOutputStream os = new ByteArrayOutputStream();
+                                os.write(DBC_CHAR);
+                                //compileArgument(node, os);
+                                list.add(new DataObject(os.toByteArray(), "CHAR"));
+                                break;
                         }
                     }
                 } catch (IOException e) {
