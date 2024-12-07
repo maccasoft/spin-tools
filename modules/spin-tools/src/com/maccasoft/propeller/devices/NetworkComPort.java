@@ -104,7 +104,6 @@ public class NetworkComPort extends ComPort {
     public NetworkComPort(InetAddress inetAddr) {
         this.name = "";
         this.inetAddr = inetAddr;
-        this.resetPin = "13";
     }
 
     public NetworkComPort(String name, String inetAddr, String mac_address, String resetPin) {
@@ -252,7 +251,14 @@ public class NetworkComPort extends ComPort {
     @Override
     public void hwreset() {
         try {
-            Builder builder = HttpRequest.newBuilder(new URI("http://" + inetAddr.getHostAddress() + "/propeller/reset?reset-pin=" + resetPin));
+            StringBuilder sb = new StringBuilder(128);
+            sb.append("http://");
+            sb.append(inetAddr.getHostAddress());
+            sb.append("/propeller/reset");
+            if (resetPin != null && !resetPin.isBlank()) {
+                sb.append("?reset-pin=" + resetPin);
+            }
+            Builder builder = HttpRequest.newBuilder(new URI(sb.toString()));
             HttpRequest httpRequest = builder.POST(BodyPublishers.noBody()).build();
             client.send(httpRequest, BodyHandlers.ofString());
         } catch (URISyntaxException | IOException | InterruptedException e) {

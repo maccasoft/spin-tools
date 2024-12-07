@@ -173,7 +173,7 @@ public class Propeller1Loader extends PropellerLoader {
         // Some chips may respond < 50ms, but there's no guarantee all will.
         // If we don't get it, we can assume the propeller is not there.
         if ((ii = getBit(110)) == -1) {
-            throw new ComPortException("Timeout waiting for first response bit");
+            return 0;
         }
         //System.out.print(String.format("%02X ", ii));
 
@@ -201,7 +201,7 @@ public class Propeller1Loader extends PropellerLoader {
             } while (to++ < 100);
 
             if (to > 100) {
-                throw new ComPortException("Timeout waiting for response bit");
+                return 0;
             }
         }
         //System.out.println();
@@ -257,7 +257,7 @@ public class Propeller1Loader extends PropellerLoader {
         try {
             hwreset();
             if (hwfind() == 0) {
-                throw new ComPortException("Propeller 1 not found");
+                throw new ComPortException("No propeller chip on port " + comPort.getPortName());
             }
             bufferUpload(type, binaryImage, "binary image");
         } finally {

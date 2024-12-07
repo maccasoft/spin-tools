@@ -200,7 +200,7 @@ public class Propeller2Loader extends PropellerLoader {
         try {
             hwreset();
             if (hwfind() == 0) {
-                throw new ComPortException("Propeller 2 not found");
+                throw new ComPortException("No propeller chip on port " + comPort.getPortName());
             }
             bufferUpload(type, binaryImage, "binary image");
         } finally {

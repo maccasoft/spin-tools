@@ -68,6 +68,10 @@ public class Propeller1NetworkLoader extends PropellerLoader {
         this.shared = shared;
     }
 
+    public NetworkComPort getComPort() {
+        return comPort;
+    }
+
     @Override
     public ComPort detect() {
         if (comPort != null) {
@@ -200,7 +204,9 @@ public class Propeller1NetworkLoader extends PropellerLoader {
             sb.append("http://");
             sb.append(comPort.getInetAddr().getHostAddress());
             sb.append("/propeller/load?baud-rate=115200");
-            sb.append("&reset-pin=" + comPort.getResetPin());
+            if (comPort.getResetPin() != null && !comPort.getResetPin().isBlank()) {
+                sb.append("&reset-pin=" + comPort.getResetPin());
+            }
             HttpRequest httpRequest = HttpRequest.newBuilder(new URI(sb.toString())) //
                 .POST(BodyPublishers.ofByteArray(loaderImage)) //
                 .timeout(Duration.ofMillis(NetworkComPort.RESPONSE_TIMEOUT)) //

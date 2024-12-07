@@ -101,6 +101,7 @@ public class SpinCompiler {
             options.addOptionGroup(terminalOptions);
 
             options.addOption(new Option("W", false, "show all discovered wifi modules"));
+            options.addOption(new Option(null, "reset-pin", true, "set wifi module reset pin number"));
 
             options.addOption("q", false, "quiet mode");
 
@@ -322,6 +323,12 @@ public class SpinCompiler {
                                     }
                                 }
                             }
+                            if (serialPort != null) {
+                                String resetPin = cmd.getOptionValue("reset-pin");
+                                if (resetPin != null) {
+                                    ((NetworkComPort) serialPort).setResetPin(resetPin);
+                                }
+                            }
                         } catch (Exception e) {
                             println(e.getMessage());
                             System.exit(1);
@@ -347,15 +354,9 @@ public class SpinCompiler {
                             @Override
                             protected int hwfind() throws ComPortException {
                                 int version = super.hwfind();
-
                                 if (version != 0) {
                                     println(String.format("Propeller %d on port %s", version, getPortName()));
                                 }
-                                else {
-                                    println(String.format("No propeller chip on port %s", getPortName()));
-                                    error.set(true);
-                                }
-
                                 return version;
                             }
 
@@ -417,22 +418,16 @@ public class SpinCompiler {
 
                         };
                     }
-                    else if (serialPort instanceof NetworkComPort) {
+                    else if (compiler instanceof Spin2Compiler) {
                         flags = cmd.hasOption("f") ? Propeller2Loader.DOWNLOAD_RUN_FLASH : Propeller2Loader.DOWNLOAD_RUN_RAM;
                         loader = new Propeller2Loader((SerialComPort) serialPort, true) {
 
                             @Override
                             protected int hwfind() throws ComPortException {
                                 int version = super.hwfind();
-
                                 if (version != 0) {
                                     println(String.format("Propeller %d on port %s", version, getPortName()));
                                 }
-                                else {
-                                    println(String.format("No propeller chip on port %s", getPortName()));
-                                    error.set(true);
-                                }
-
                                 return version;
                             }
 
@@ -473,6 +468,7 @@ public class SpinCompiler {
 
                             @Override
                             protected void bufferUpload(int type, byte[] binaryImage, String text) throws ComPortException {
+                                println(String.format("Propeller %d on %s", 1, getComPort().getInetAddr().getHostAddress()));
                                 print("Loading " + text + " to ");
                                 switch (type) {
                                     case Propeller1Loader.DOWNLOAD_EEPROM:
@@ -635,7 +631,7 @@ public class SpinCompiler {
                 println("Done.");
             }
 
-        } catch (ParseException e) {
+        } catch (ParseException | ComPortException e) {
             System.out.println(e.getMessage());
         } catch (CompilerException e) {
             println(e);
