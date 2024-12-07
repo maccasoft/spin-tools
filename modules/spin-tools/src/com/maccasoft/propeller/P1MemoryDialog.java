@@ -809,7 +809,7 @@ public class P1MemoryDialog extends Dialog {
             "Binary Files"
         };
         String[] filterExtensions = new String[] {
-            "*.bin;*.binary"
+            "*.binary;*.bin"
         };
         File fileToSave = getFileToWrite("Save Binary File", filterNames, filterExtensions, ".binary");
         try {
@@ -861,6 +861,9 @@ public class P1MemoryDialog extends Dialog {
 
         String fileName = dlg.open();
         if (fileName != null) {
+            if (fileName.indexOf('.') == -1) {
+                fileName += defaultExtension;
+            }
             return new File(fileName);
         }
 
