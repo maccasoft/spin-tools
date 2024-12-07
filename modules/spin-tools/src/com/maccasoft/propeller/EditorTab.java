@@ -1092,11 +1092,26 @@ public class EditorTab implements FindReplaceTarget {
         int topLine = styledText.getLineIndex(0);
         int bottomLine = styledText.getLineIndex(rect.height);
         int pageSize = bottomLine - topLine;
+        int lineCount = styledText.getLineCount();
+
         while (offset < styledText.getOffsetAtLine(topLine)) {
+            if (topLine - pageSize < 0) {
+                topLine = 0;
+                bottomLine = Math.min(pageSize, lineCount - 1);
+                break;
+            }
             topLine -= pageSize;
             bottomLine -= pageSize;
         }
+
         while (offset > styledText.getOffsetAtLine(bottomLine)) {
+            if (bottomLine + pageSize >= lineCount) {
+                topLine = lineCount - pageSize;
+                if (topLine < 0) {
+                    topLine = 0;
+                }
+                break;
+            }
             topLine += pageSize;
             bottomLine += pageSize;
         }
