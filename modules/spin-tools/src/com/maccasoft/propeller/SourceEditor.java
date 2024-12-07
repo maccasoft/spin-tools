@@ -431,7 +431,7 @@ public class SourceEditor {
                         styledText.setFocus();
                     }
 
-                    if (mousePosition != null) {
+                    if (!hoverButtonDown && mousePosition != null) {
                         hoverHighlight = true;
                         hoverTarget = getNavigationTarget(mousePosition);
 
@@ -447,14 +447,16 @@ public class SourceEditor {
             @Override
             public void keyReleased(KeyEvent e) {
                 if (e.keyCode == SWT.CTRL) {
-                    hoverHighlight = false;
-                    styledText.setCursor(null);
-                    styledText.redraw();
-                    if (mousePosition != null) {
-                        Event event = new Event();
-                        event.x = mousePosition.x;
-                        event.y = mousePosition.y;
-                        styledText.notifyListeners(SWT.MouseHover, event);
+                    if (!hoverButtonDown) {
+                        hoverHighlight = false;
+                        styledText.setCursor(null);
+                        styledText.redraw();
+                        if (mousePosition != null) {
+                            Event event = new Event();
+                            event.x = mousePosition.x;
+                            event.y = mousePosition.y;
+                            styledText.notifyListeners(SWT.MouseHover, event);
+                        }
                     }
                 }
             }

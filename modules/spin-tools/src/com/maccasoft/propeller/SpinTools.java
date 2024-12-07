@@ -262,6 +262,8 @@ public class SpinTools {
                 @Override
                 public void run() {
                     editor.goToLineColumn(element.line, element.column);
+                    updateEditorSelection();
+                    updateCaretPosition();
                 }
 
             });
@@ -1599,6 +1601,8 @@ public class SpinTools {
                                 StyledText styledText = editor.getStyledText();
                                 styledText.setCaretOffset(location.offset);
                                 styledText.setTopPixel(location.topPixel);
+                                updateEditorSelection();
+                                updateCaretPosition();
                             }
 
                         });
@@ -1640,6 +1644,8 @@ public class SpinTools {
                                 StyledText styledText = editor.getStyledText();
                                 styledText.setCaretOffset(location.offset);
                                 styledText.setTopPixel(location.topPixel);
+                                updateEditorSelection();
+                                updateCaretPosition();
                             }
 
                         });
