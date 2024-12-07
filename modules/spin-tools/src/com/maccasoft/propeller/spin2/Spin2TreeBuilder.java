@@ -103,6 +103,7 @@ public class Spin2TreeBuilder {
     static Set<String> assignements = new HashSet<>();
     static {
         assignements.add(":=");
+        assignements.add(":=:");
 
         assignements.add(">>=");
         assignements.add("<<=");

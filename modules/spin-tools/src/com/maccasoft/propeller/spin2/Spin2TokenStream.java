@@ -327,6 +327,11 @@ public class Spin2TokenStream extends TokenStream {
             column += 3;
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
+        if (ch0 == ':' && ch1 == '=' && ch2 == ':') {
+            index += 3;
+            column += 3;
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
         if (ch0 == '.' && ch1 == '.' && ch2 == '.') {
             return skipToNextLine();
         }
