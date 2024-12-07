@@ -54,6 +54,7 @@ import com.maccasoft.propeller.expressions.Sar;
 import com.maccasoft.propeller.expressions.Scl;
 import com.maccasoft.propeller.expressions.ShiftLeft;
 import com.maccasoft.propeller.expressions.ShiftRight;
+import com.maccasoft.propeller.expressions.Sqrt;
 import com.maccasoft.propeller.expressions.Subtract;
 import com.maccasoft.propeller.expressions.Trunc;
 import com.maccasoft.propeller.expressions.Type;
@@ -137,6 +138,7 @@ public class Spin1ExpressionBuilder {
         unary.add("||");
         unary.add("~~");
         unary.add("|<");
+        unary.add("^^");
     }
 
     static Set<String> postEffect = new HashSet<String>();
@@ -344,6 +346,8 @@ public class Spin1ExpressionBuilder {
                     return new Decod(parseAtom());
                 case "||":
                     return new Abs(parseAtom());
+                case "^^":
+                    return new Sqrt(parseAtom());
                 default:
                     throw new CompilerException("invalid unary operator " + token.getText(), token);
             }
