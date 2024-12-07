@@ -32,6 +32,7 @@ public class Context {
     Map<String, Spin2Struct> caseInsensitiveStructures = new CaseInsensitiveMap<>();
 
     Map<String, List<Token>> defines = new HashMap<>();
+    Map<String, Expression> parameters;
 
     Integer address;
     Integer objectAddress;
@@ -52,6 +53,9 @@ public class Context {
     Context(Context parent, boolean caseSensitive) {
         this.parent = parent;
         this.caseSensitive = caseSensitive;
+
+        parameters = caseSensitive ? new HashMap<>() : new CaseInsensitiveMap<>();
+
         caseInsensitiveSymbols.put("$", new ContextLiteral(this));
         caseInsensitiveSymbols.put("@$", new ObjectContextLiteral(this));
         caseInsensitiveSymbols.put("@@$", new MemoryContextLiteral(this));
@@ -114,7 +118,10 @@ public class Context {
     }
 
     public Expression getLocalSymbol(String name) {
-        Expression exp = caseInsensitiveSymbols.get(name);
+        Expression exp = parameters.get(name);
+        if (exp == null) {
+            exp = caseInsensitiveSymbols.get(name);
+        }
         if (exp == null && caseSensitive) {
             exp = symbols.get(name);
         }
@@ -141,6 +148,9 @@ public class Context {
 
     public boolean isDefined(String identifier) {
         boolean result = defines.containsKey(identifier);
+        if (result == false) {
+            result = parameters.containsKey(identifier);
+        }
         if (result == false) {
             result = caseSensitive ? symbols.containsKey(identifier) : caseInsensitiveSymbols.containsKey(identifier);
         }
@@ -263,6 +273,10 @@ public class Context {
         else {
             caseInsensitiveStructures.put(name, value);
         }
+    }
+
+    public void addParameters(Map<String, Expression> map) {
+        parameters.putAll(map);
     }
 
 }
