@@ -1087,35 +1087,35 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 Token type = null;
                 Token identifier = iter.next();
 
-                if (iter.hasNext()) {
-                    Token next = iter.peekNext();
-                    if (next.type == 0 || next.type == Token.KEYWORD) {
-                        type = identifier;
-                        identifier = iter.next();
-                    }
-                }
-
-                if (type != null) {
-                    boolean valid = Spin2Model.isType(type.getText());
-                    if (!valid) {
-                        valid = scope.hasStructureDefinition(type.getText());
-                    }
-                    if (!valid) {
-                        if (type.getText().startsWith("^")) {
-                            valid = Spin2Model.isType(type.getText().substring(1));
-                            if (!valid) {
-                                valid = scope.hasStructureDefinition(type.getText().substring(1));
-                            }
-                        }
-                    }
-                    if (!valid) {
-                        logMessage(new CompilerException("invalid type", type));
-                    }
-                }
-
                 do {
                     int varSize = 1;
                     Token token = null;
+
+                    if (iter.hasNext()) {
+                        Token next = iter.peekNext();
+                        if (next.type == 0 || next.type == Token.KEYWORD) {
+                            type = identifier;
+                            identifier = iter.next();
+                        }
+                    }
+
+                    if (type != null) {
+                        boolean valid = Spin2Model.isType(type.getText());
+                        if (!valid) {
+                            valid = scope.hasStructureDefinition(type.getText());
+                        }
+                        if (!valid) {
+                            if (type.getText().startsWith("^")) {
+                                valid = Spin2Model.isType(type.getText().substring(1));
+                                if (!valid) {
+                                    valid = scope.hasStructureDefinition(type.getText().substring(1));
+                                }
+                            }
+                        }
+                        if (!valid) {
+                            logMessage(new CompilerException("invalid type", type));
+                        }
+                    }
 
                     if (iter.hasNext()) {
                         token = iter.next();
