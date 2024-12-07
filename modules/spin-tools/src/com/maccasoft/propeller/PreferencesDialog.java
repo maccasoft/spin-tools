@@ -109,10 +109,12 @@ public class PreferencesDialog extends Dialog {
     Button showSectionsBackground;
 
     PathList spin1Paths;
+    Button spin1RemoveUnusedMethods;
     Button spin1CaseSensitive;
     FileSelector spin1Template;
 
     PathList spin2Paths;
+    Button spin2RemoveUnusedMethods;
     Button spin2CaseSensitive;
     Button spin2ClockSetter;
     Button spin2Compress;
@@ -157,7 +159,9 @@ public class PreferencesDialog extends Dialog {
     boolean oldShowEditorOutline;
     boolean oldHighlightCurrentLine;
     boolean oldSpin1CaseSensitive;
+    boolean oldSpin1RemoveUnusedMethods;
     boolean oldSpin2CaseSensitive;
+    boolean oldSpin2RemoveUnusedMethods;
     boolean oldSpin2ClockSetter;
     boolean oldSpin2Compress;
     String oldTerminalFont;
@@ -483,7 +487,9 @@ public class PreferencesDialog extends Dialog {
         oldShowEditorOutline = preferences.getShowEditorOutline();
         oldHighlightCurrentLine = preferences.getHighlightCurrentLine();
         oldShowSectionsBackground = preferences.getShowSectionsBackground();
+        oldSpin1RemoveUnusedMethods = preferences.getSpin1RemoveUnusedMethods();
         oldSpin1CaseSensitive = preferences.getSpin1CaseSensitiveSymbols();
+        oldSpin2RemoveUnusedMethods = preferences.getSpin2RemoveUnusedMethods();
         oldSpin2CaseSensitive = preferences.getSpin2CaseSensitiveSymbols();
         oldSpin2ClockSetter = preferences.getSpin2ClockSetter();
         oldSpin2Compress = preferences.getSpin2Compress();
@@ -611,6 +617,20 @@ public class PreferencesDialog extends Dialog {
         spin1Template.setSelection(preferences.getSpin1Template());
 
         new Label(composite, SWT.NONE);
+        spin1RemoveUnusedMethods = new Button(composite, SWT.CHECK);
+        spin1RemoveUnusedMethods.setText("Remove unused methods");
+        spin1RemoveUnusedMethods.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+        spin1RemoveUnusedMethods.setSelection(preferences.getSpin1RemoveUnusedMethods());
+        spin1RemoveUnusedMethods.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                preferences.setSpin1RemoveUnusedMethods(((Button) e.widget).getSelection());
+            }
+
+        });
+
+        new Label(composite, SWT.NONE);
         spin1CaseSensitive = new Button(composite, SWT.CHECK);
         spin1CaseSensitive.setText("Case sensitive symbols");
         spin1CaseSensitive.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
@@ -646,6 +666,20 @@ public class PreferencesDialog extends Dialog {
         spin2Template.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         spin2Template.setFilterIndex(3);
         spin2Template.setSelection(preferences.getSpin2Template());
+
+        new Label(composite, SWT.NONE);
+        spin2RemoveUnusedMethods = new Button(composite, SWT.CHECK);
+        spin2RemoveUnusedMethods.setText("Remove unused methods");
+        spin2RemoveUnusedMethods.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+        spin2RemoveUnusedMethods.setSelection(preferences.getSpin2RemoveUnusedMethods());
+        spin2RemoveUnusedMethods.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                preferences.setSpin2RemoveUnusedMethods(((Button) e.widget).getSelection());
+            }
+
+        });
 
         new Label(composite, SWT.NONE);
         spin2CaseSensitive = new Button(composite, SWT.CHECK);
@@ -1679,8 +1713,10 @@ public class PreferencesDialog extends Dialog {
         preferences.setShowSectionsBackground(oldShowSectionsBackground);
         preferences.setHighlightCurrentLine(oldHighlightCurrentLine);
 
+        preferences.setSpin1RemoveUnusedMethods(oldSpin1RemoveUnusedMethods);
         preferences.setSpin1CaseSensitiveSymbols(oldSpin1CaseSensitive);
 
+        preferences.setSpin2RemoveUnusedMethods(oldSpin2RemoveUnusedMethods);
         preferences.setSpin2CaseSensitiveSymbols(oldSpin2CaseSensitive);
         preferences.setSpin2ClockSetter(oldSpin2ClockSetter);
         preferences.setSpin2Compress(oldSpin2Compress);

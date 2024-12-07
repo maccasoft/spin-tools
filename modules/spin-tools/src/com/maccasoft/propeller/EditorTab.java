@@ -113,6 +113,7 @@ public class EditorTab implements FindReplaceTarget {
             switch (evt.getPropertyName()) {
                 case Preferences.PROP_SPIN1_CASE_SENSITIVE_SYMBOLS:
                     tokenMarker.setCaseSensitive((Boolean) evt.getNewValue());
+                case Preferences.PROP_SPIN1_REMOVE_UNUSED_METHODS:
                 case Preferences.PROP_SPIN1_LIBRARY_PATH:
                     if (!tabItemText.toLowerCase().endsWith(".spin2")) {
                         scheduleCompile();
@@ -120,6 +121,7 @@ public class EditorTab implements FindReplaceTarget {
                     break;
                 case Preferences.PROP_SPIN2_CASE_SENSITIVE_SYMBOLS:
                     tokenMarker.setCaseSensitive((Boolean) evt.getNewValue());
+                case Preferences.PROP_SPIN2_REMOVE_UNUSED_METHODS:
                 case Preferences.PROP_SPIN2_LIBRARY_PATH:
                 case Preferences.PROP_SPIN2_COMPRESS:
                     if (tabItemText.toLowerCase().endsWith(".spin2") || tabItemText.toLowerCase().endsWith(".c")) {
@@ -532,6 +534,8 @@ public class EditorTab implements FindReplaceTarget {
 
                     @Override
                     public void run() {
+                        boolean removeUnusedMethods = true;
+
                         dependencies.clear();
 
                         Compiler compiler = null;
@@ -548,6 +552,8 @@ public class EditorTab implements FindReplaceTarget {
                                 }
                                 compiler.addDefine(entry.getKey(), list);
                             }
+
+                            removeUnusedMethods = preferences.getSpin1RemoveUnusedMethods();
                         }
                         else if (tabItemText.toLowerCase().endsWith(".spin2")) {
                             compiler = new Spin2Compiler(preferences.getSpin2CaseSensitiveSymbols());
@@ -562,6 +568,8 @@ public class EditorTab implements FindReplaceTarget {
                                 }
                                 compiler.addDefine(entry.getKey(), list);
                             }
+
+                            removeUnusedMethods = preferences.getSpin2RemoveUnusedMethods();
                         }
                         else if (tabItemText.toLowerCase().endsWith(".c")) {
                             for (Node node : root.getChilds()) {
@@ -596,7 +604,7 @@ public class EditorTab implements FindReplaceTarget {
                             }
                         }
                         if (compiler != null) {
-                            compiler.setRemoveUnusedMethods(true);
+                            compiler.setRemoveUnusedMethods(removeUnusedMethods);
                             compiler.setDebugEnabled(debug);
 
                             if (compiler instanceof Spin2Compiler) {

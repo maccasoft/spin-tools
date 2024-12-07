@@ -53,8 +53,10 @@ public class Preferences {
     public static final String PROP_TOP_OBJECT = "topObject";
     public static final String PROP_PORT = "port";
     public static final String PROP_SPIN1_LIBRARY_PATH = "spin1LibraryPath";
+    public static final String PROP_SPIN1_REMOVE_UNUSED_METHODS = "spin1RemoveUnusedMethods";
     public static final String PROP_SPIN1_CASE_SENSITIVE_SYMBOLS = "spin1CaseSensitiveSymbols";
     public static final String PROP_SPIN2_LIBRARY_PATH = "spin2LibraryPath";
+    public static final String PROP_SPIN2_REMOVE_UNUSED_METHODS = "spin2RemoveUnusedMethods";
     public static final String PROP_SPIN2_CASE_SENSITIVE_SYMBOLS = "spin2CaseSensitiveSymbols";
     public static final String PROP_SPIN2_COMPRESS = "spin2Compress";
     public static final String PROP_TERMINAL_FONT = "terminalFont";
@@ -156,6 +158,9 @@ public class Preferences {
             highlightCurrentLine = true;
             reloadOpenTabs = true;
 
+            spin1RemovedUnusedMethods = true;
+            spin2RemovedUnusedMethods = true;
+
             terminal = new TerminalPreferences();
             console = new ConsolePreferences();
         }
@@ -180,12 +185,14 @@ public class Preferences {
         public String port;
 
         public String[] spin1LibraryPath;
+        public boolean spin1RemovedUnusedMethods;
         public boolean spin1CaseSensitiveSymbols;
         public String spin1Template;
         @JsonInclude(Include.NON_ABSENT)
         public Map<String, String> spin1Defines;
 
         public String[] spin2LibraryPath;
+        public boolean spin2RemovedUnusedMethods;
         public boolean spin2CaseSensitiveSymbols;
         public boolean spin2ClockSetter;
         public String spin2Template;
@@ -777,6 +784,14 @@ public class Preferences {
         preferences.spin1Template = spin1Template != null ? spin1Template.getAbsolutePath() : null;
     }
 
+    public boolean getSpin1RemoveUnusedMethods() {
+        return preferences.spin1RemovedUnusedMethods;
+    }
+
+    public void setSpin1RemoveUnusedMethods(boolean spin1RemovedUnusedMethods) {
+        changeSupport.firePropertyChange(PROP_SPIN1_REMOVE_UNUSED_METHODS, preferences.spin1RemovedUnusedMethods, preferences.spin1RemovedUnusedMethods = spin1RemovedUnusedMethods);
+    }
+
     public boolean getSpin1CaseSensitiveSymbols() {
         return preferences.spin1CaseSensitiveSymbols;
     }
@@ -812,6 +827,14 @@ public class Preferences {
         return new File[] {
             defaultSpin2LibraryPath
         };
+    }
+
+    public boolean getSpin2RemoveUnusedMethods() {
+        return preferences.spin2RemovedUnusedMethods;
+    }
+
+    public void setSpin2RemoveUnusedMethods(boolean spin2RemovedUnusedMethods) {
+        changeSupport.firePropertyChange(PROP_SPIN2_REMOVE_UNUSED_METHODS, preferences.spin2RemovedUnusedMethods, preferences.spin2RemovedUnusedMethods = spin2RemovedUnusedMethods);
     }
 
     public boolean getSpin2CaseSensitiveSymbols() {
