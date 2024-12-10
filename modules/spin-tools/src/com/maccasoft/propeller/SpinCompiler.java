@@ -54,6 +54,8 @@ public class SpinCompiler {
     public static final String APP_TITLE = "Spin Tools Compiler";
     public static final String APP_VERSION = SpinTools.APP_VERSION;
 
+    static String ipAddressPattern = "(?:[0-9]{1,3}\\.){3}[0-9]{1,3}";
+    static String macAddressPattern = "(?:[0-9A-Fa-f]{2}[:-]){5}(?:[0-9A-Fa-f]{2})";
     static Pattern unusedMethodPattern = Pattern.compile("(.*)warning : (method|parameter|variable|local variable) \"(.*)\" is not used");
 
     static boolean quiet;
@@ -311,10 +313,10 @@ public class SpinCompiler {
                     String portName = cmd.getOptionValue("p");
                     if (portName != null) {
                         try {
-                            if (portName.indexOf('.') != -1) {
+                            if (Pattern.matches(ipAddressPattern, portName)) {
                                 serialPort = new NetworkComPort(InetAddress.getByName(portName));
                             }
-                            else if (portName.indexOf(':') != -1) {
+                            else if (Pattern.matches(macAddressPattern, portName)) {
                                 Collection<DeviceDescriptor> list = NetworkUtils.getAvailableDevices();
                                 for (DeviceDescriptor descr : list) {
                                     if (descr.mac_address.equals(portName)) {
