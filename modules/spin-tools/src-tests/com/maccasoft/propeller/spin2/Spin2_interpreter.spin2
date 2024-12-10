@@ -1,7 +1,7 @@
 'TESTT add registers stack_start (on launch) and stack_max (on call or return) to track stack size for allocation need
 
 '******************************************
-'*  Spin2 Interpreter - v46 - 2024.11.24  *
+'*  Spin2 Interpreter - v47 - 2024.12.07  *
 '******************************************
 '
 CON     bc_setup_reg_1D8_1F8    = $B0
@@ -44,8 +44,8 @@ clkfreq_hub     long    320_000_000                             '$44 - compiler 
 '
                 orgh
 
-stopcog         byte    bc_cogid                & $FF   'cogstop(cogid)
-                byte    bc_cogstop              & $FF
+top_return      byte    bc_hub_bytecode         & $FF   'top return, stops task/cog
+                byte    bc_top_return
 
 pri_sendb       byte    0                               'no locals              PRI sendb(count,addr)
                 byte    bc_read_local_0_15+0            'read count               repeat count
@@ -66,7 +66,7 @@ pri_sendb       byte    0                               'no locals              
 bc_hubset       word    @hubset_        'HUBSET(val)                            $54     miscellaneous routines
 bc_clkset       word    @clkset_        'CLKSET(clkmode,clkfreq)                $56     (use ctrl-l to determine address)
 bc_read_clkfreq word    @read_clkfreq   'CLKFREQ                        (push)  $58
-bc_cogspin      word    @cogspin_       'COGSPIN(cog,method(params),stackadr)   $5A
+bc_cogspin      word    @cogspin_       'COGSPIN(cog,method(params),stackaddr)  $5A
 bc_cogchk       word    @cogchk_        'COGCHK(cog)                    (push)  $5C
 bc_inline       word    @inline         'inline pasm code                       $5E
 bc_regexec      word    @regexec_       'REGEXEC(hubadr)                        $60
@@ -123,60 +123,75 @@ bc_pinread      word    @pinread_       'PINREAD(pins)                  (push)  
 bc_pinwrite     word    @pinwrite_      'PINWRITE(pins,val)                     $C2
 bc_pinstart     word    @pinstart_      'PINSTART(pins,mode,xval,yval)          $C4
 bc_pinclear     word    @pinclear_      'PINCLEAR(pins)                         $C6
+bc_taskspin     word    @taskspin_      'TASKSPIN(task,method(pars),stackaddr)  $C8
+bc_taskstop     word    @taskctrl_      'TASKSTOP(task)                         $CA
+bc_taskhalt     word    @taskctrl_      'TASKHALT(task)                         $CC
+bc_taskcont     word    @taskctrl_      'TASKCONT(task)                         $CE
+bc_taskchk      word    @taskctrl_      'TASKCHK(task)                          $D0
+bc_taskid       word    @taskid_        'TASKID()                       (push)  $D2
+bc_top_return   word    @top_return_    'top return, stops task/cog             $D4
 
                 alignl                  'long-align for rest of interpreter
+'
+'
+'*****************************
+'*  Task list and registers  *
+'*****************************
+'
+                org     $100
+
+taskptr         res     32              'task pointer list, builds from top down to maximize free register space
+taskhlt         res     1               'task halt bits
+
+reg_code                                'start of reg code (user area below)
+
+taskena         long    $8000_0000      'initial task enable bits
+tasknum         long    $1F             'initial task number
 '
 '
 '*********************************
 '*  Interpreter - cog registers  *
 '*********************************
 '
-                org     $120            'start of reg code (user area below)
-reg_code
+'
+' TASKNEXT()                            (1 long)
+'
+tasknext_       jmp     #tasknexth      'continue in hub
 '
 '
-' Miscellaneous                         (28 longs)
+' Setup hub structure variable          (24 longs)
 '
-debug_          pusha   x               'a                      a: DEBUG()
-popx            rfvar   x               'a b                    b: pop #rfvar
-                sub     ptra,x          'a b                    c: PINLOW(pins)
-pinl_           drvl    x               '| | c                  d: PINHIGH(pins)
-pinh_           drvh    x               '| | | d                e: PINTOGGLE(pins)
-pint_           drvnot  x               '| | | | e              f: PINFLOAT(pins)
-pinf_           fltl    x               '| | | | | f            g: AKPIN(pins)
-akpin_          akpin   x               '| | | | | | g
-pop1    _ret_   popa    x               '| b c d e f g
-                popa    x               'a                      (continued in string_ + branch + hub_code)
-'
-'
-' STRING()
-'
-string_         rfbyte  w               'a b                    b: STRING() - push string address and jump over string
-        _ret_   brk     w               'a |
-                pusha   x               '  b
-                add     pb,#1           '  b
-                mov     x,pb            '  b                    (continued in branch + hub_code)
-'
-'
-' Branches - jmp, jz, jnz, tjz, djnz
-'
-branch          rfvars  w               '  | c d e f g          c: jmp  - branch
-                test    x       wz      '  | | d e f |          d: jz   - test, pop, branch if z
-                popa    x               '  | | d e | |          e: jnz  - test, pop, branch if nz
-        if_nz   ret                     '  | | d | f |          f: tjz  - test, if z then pop and branch
-                sub     x,#1    wz      '  | | | | | g          g: djnz - dec, if z then pop, else branch
-        if_z    popa    x               '  | | | | f g
-        if_z    ret                     '  | | | e | g
-                add     pb,w            '  b c d e f g          (continued in hub_code)
-'
-'
-' Call hub bytecode routine
-'
-hub_code        rfbyte  pa              '  | | | | | |          get function index byte
-                getptr  pb              '  | | | | | |          get updated bytecode pointer
-                rdword  v,pa    wcz     '  | | | | | |          lookup function address
-                call    v               '  | | | | | |          call function in hub, c/z/v[31]=0
-resume  _ret_   rdfast  #0,pb           '  b c d e f g          resume bytecode stream
+hub_sv          rfvar   y               'a b c d        get starting offset << 4 | %wwii
+                getnib  z,y,#0          'a b c d        isolate %wwii
+                shr     y,#4            'a b c d        isolate starting offset
+                pusha   x               'a b c |        a: setup [pbase + rfvar {+pop*rfvar}]
+                mov     x,pbase         'a | | |        b: setup [vbase + rfvar {+pop*rfvar}]
+                mov     x,vbase         '| b | |        c: setup [dbase + rfvar {+pop*rfvar}]
+                mov     x,dbase         '| | c |        d: setup [pop   + rfvar {+pop*rfvar}]
+                add     x,y             'a b c d        add starting offset before indexes
+
+                mov     y,z                             'get %ii index count
+                and     y,#%11          wz              '0..3 = index count
+
+        if_nz   rep     #4,y                            'handle any indexes
+        if_nz   popa    v                               'pop stack to get index
+        if_nz   rfvar   w                               'get structure size
+        if_nz   mul     v,w                             'multiply index by structure size
+        if_nz   add     x,v                             'add into address
+
+                shr     z,#2            wz              'get %ww word size, 0..3 = other/byte/word/long
+
+        if_nz   add     z,#bc_setup_byte_pa & $1FF - 1  'if byte/word/long, get setup bytecode
+        if_nz   rdlut   z,z                             'look up execf value
+        if_nz   execf   z                               'chain to setup byte/word/long[pop address]
+
+                rfbyte  y               wcz             'not byte/word/long, get address/push/pop command
+
+        if_z    ret                                     'if address (y=0), return structure address on stack
+
+                getptr  pb                              'get updated bytecode pointer
+        if_c    jmp     #structpush                     'push structure (y=$80 | byte count)
+                jmp     #structpop                      'pop structure (y=byte count, C=0, Z=0)
 '
 '
 ' Variable assignments / math operators (21 longs)
@@ -276,7 +291,7 @@ log_mod         mov     w,x     wz      '       x x a b c d e f g h i j         
                 alti    wr              'wr     m n | | | | | | | | | |
                 ret                     'wr,op  m n a b c d e f g h i j         m: var ?= exp   (isolated)
         _ret_   popa    x               'iso    m |                             n: var ?= exp   (push)
-        _ret_   zerox   x,sz            'push     n                             x: use a..h
+        _ret_   zerox   x,sz            'push     n                             x: use a..j
 '
 '
 ' Variable pre/post modifiers           (29 longs, must be in regs)
@@ -338,7 +353,7 @@ repvarl         setq    #3-1            'pop address/terminal/delta into a/b/c
                 add     x,c             'add delta into current
 
                 alti    wr              'write variable
-dcall           long    0               '(pipeline spacer)
+incdec          long    1               '(pipeline spacer, also ++/-- value)
 
                 testb   c,#31   wz      'check for out-of-bounds
         if_nz   cmps    b,x     wc
@@ -389,11 +404,6 @@ wr_long         wrlong  x,ad
 wr_reg          mov     0,x
 '
 '
-' ++/-- value                           (1 long, must be in regs)
-'
-incdec          long    1               'default ++/-- value is 1, gets modified for pointer operations
-'
-'
 ' End of cog register code
 '
 reg_end
@@ -401,15 +411,16 @@ reg_end
 '
 ' Interpreter registers
 '
-v               res     1               'v/pbase/vbase/dbase/mrecv/msend/w/x/y/z must remain in order
+v               res     1               'v/pbase/vbase/dbase/mrecv/msend/w/dcall/x/y/z must remain in order
 pbase           res     1
 vbase           res     1
 dbase           res     1
 mrecv           res     1
 msend           res     1
 w               res     1
-x               res     0
-ma              res     1               '(x alias for float operations)
+dcall           res     1
+ma              res     0               '(x alias for float operations)
+x               res     1
 y               res     1
 z               res     1
 '
@@ -465,11 +476,6 @@ h               res     1
 '
                 org     $210            'leave $20x open for 16 streamer imm->LUT->DAC/pin values
 lut_code
-'
-'
-' Free space                            (2 longs)
-'
-                long    0[2]
 '
 '
 ' Drop anchor                           (8 longs)
@@ -582,48 +588,13 @@ hub_p           mov     ad,x            '| | | | | | | | | | | | | | | | | | | |
         _ret_   setq2   #$0E1           'a b c d e f g h i j k l m n o p q r s t u v w x y z    (next bytecode is a variable operator)
 '
 '
-' Setup hub structure variable          (24 longs)
-'
-hub_sv          rfvar   y               'a b c d        get starting offset << 4 | %wwii
-                getnib  z,y,#0          'a b c d        isolate %wwii
-                shr     y,#4            'a b c d        isolate starting offset
-                pusha   x               'a b c |        a: setup [pbase + rfvar {+pop*rfvar}]
-                mov     x,pbase         'a | | |        b: setup [vbase + rfvar {+pop*rfvar}]
-                mov     x,vbase         '| b | |        c: setup [dbase + rfvar {+pop*rfvar}]
-                mov     x,dbase         '| | c |        d: setup [pop   + rfvar {+pop*rfvar}]
-                add     x,y             'a b c d        add starting offset before indexes
-
-                mov     y,z                             'get %ii index count
-                and     y,#%11          wz              '0..3 = index count
-
-        if_nz   rep     #4,y                            'handle any indexes
-        if_nz   popa    v                               'pop stack to get index
-        if_nz   rfvar   w                               'get structure size
-        if_nz   mul     v,w                             'multiply index by structure size
-        if_nz   add     x,v                             'add into address
-
-                shr     z,#2            wz              'get %ww word size, 0..3 = other/byte/word/long
-
-        if_nz   add     z,#bc_setup_byte_pa & $1FF - 1  'if byte/word/long, get setup bytecode
-        if_nz   rdlut   z,z                             'look up execf value
-        if_nz   execf   z                               'chain to setup byte/word/long[pop address]
-
-                rfbyte  y               wcz             'not byte/word/long, get address/push/pop command
-
-        if_z    ret                                     'if address (y=0), return structure address on stack
-
-                getptr  pb                              'get updated bytecode pointer
-        if_c    jmp     #structpush                     'push structure (y=$80 | byte count)
-                jmp     #structpop                      'pop structure (y=byte count, C=0, Z=0)
-'
-'
 ' Setup bitfield                        (13 longs)
 ' Set ++/-- value
 '
 bit_imm         mov     fb,pa           'a              a: setup bitfield [0..31]
                 and     fb,#$1F         'a              b: setup bitfield [rfvar]
                                         '               c: setup bitfield [pop] (also used by fieldh, no skips)
-bit_rfvar       rfvar   fb              '| b            d: set ++/-- value
+bit_rfvar       rfvar   fb              '| b
 
 bit_pop         mov     fb,x            '| | c
                 popa    x               '| | c
@@ -657,6 +628,36 @@ var_wr          alti    wr              '  | | d e
 
         _ret_   popa    x               '  b | d |
         _ret_   zerox   x,sz            '    c   e      (ret for c, ret+zerox for e)
+'
+'
+' Miscellaneous                         (26 longs)
+'
+debug_          pusha   x               'a                      a: DEBUG()
+popx            rfvar   x               'a b                    b: pop rfvar
+                sub     ptra,x          'a b                    c: PINLOW(pins)
+pinl_           drvl    x               '| | c                  d: PINHIGH(pins)
+pinh_           drvh    x               '| | | d                e: PINTOGGLE(pins)
+pint_           drvnot  x               '| | | | e              f: PINFLOAT(pins)
+pinf_           fltl    x               '| | | | | f            g: AKPIN(pins)
+akpin_          akpin   x               '| | | | | | g          h: STRING() - push string address and jump over string
+pop1    _ret_   popa    x               '| b c d e f g          i: hub bytecode rfbyte - call function in hub with c/z/v[31]=0
+                popa    x               'a                      j: jmp  - branch
+hub_str         rfbyte  pa              'a h i                  k: jz   - test, pop, branch if z
+        _ret_   brk     pa              'a | |                  l: jnz  - test, pop, branch if nz
+                pusha   x               '  h |                  m: tjz  - test, if z then pop and branch
+                getptr  pb              '  h i                  n: djnz - dec, if z then pop, else branch
+                mov     x,pb            '  h |
+branch          rfvars  pa              '  | | j k l m n
+                rdword  v,pa    wcz     '  | i | | | | |
+                test    x       wz      '  | | | k l m |
+                popa    x               '  | | | k l | |
+        if_nz   ret                     '  | | | k | m |
+                sub     x,#1    wz      '  | | | | | | n
+        if_z    popa    x               '  | | | | | m n
+        if_z    ret                     '  | | | | l | n
+                add     pb,pa           '  h | j k l m n
+                call    v               '  | i | | | | |
+resume  _ret_   rdfast  #0,pb           '  h i j k l m n        restart bytecode stream
 '
 '
 ' Variable operator bytecodes at $279 - triggered via '_ret_ setq2 #$0E1'
@@ -856,16 +857,16 @@ bc_mptr_obj_sub         long  callobj   |    %01100_0000010_0000 << 10  '0F     
 bc_mptr_obji_sub        long  callobj   |    %01110_0000000_0000 << 10  '10     @obj[].sub      (push)
 bc_mptr_sub             long  callsub   |          %0111110_000_ << 10  '11     @sub            (push)
 
-bc_jmp                  long  branch    |         %0111101111110 << 10  '12     jmp  rfvars
-bc_jz                   long  branch    |         %0111101110000 << 10  '13     jz   rfvars
-bc_jnz                  long  branch    |         %0111100111000 << 10  '14     jnz  rfvars
-bc_tjz                  long  branch    |         %0111101010100 << 10  '15     tjz  rfvars
-bc_djnz                 long  branch    |         %0111100001110 << 10  '16     djnz rfvars
+bc_jmp                  long  branch    |           %01011111110 << 10  '12     jmp  rfvars
+bc_jz                   long  branch    |           %01011100010 << 10  '13     jz   rfvars
+bc_jnz                  long  branch    |           %01001110010 << 10  '14     jnz  rfvars
+bc_tjz                  long  branch    |           %01010101010 << 10  '15     tjz  rfvars
+bc_djnz                 long  branch    |           %01000011110 << 10  '16     djnz rfvars
 
 bc_pop                  long  pop1      |                     %0 << 10  '17     pop
 bc_pop_rfvar            long  popx      |              %01111100 << 10  '18     pop rfvar
 
-bc_hub_bytecode         long  hub_code  |                     %0 << 10  '19     hub bytecode rfbyte
+bc_hub_bytecode         long  hub_str   |      %0011111110110110 << 10  '19     hub bytecode rfbyte
 
 bc_case_fast_init       long  casefi    |        %01010000000000 << 10  '1A     CASE_FAST init
 bc_case_fast_done       long  casefd    |                     %0 << 10  '1B     CASE_FAST done
@@ -914,8 +915,8 @@ bc_akpin                long  akpin_    |                    %00 << 10  '3C     
 bc_rdpin                long  rdpin_    |                   %010 << 10  '3D     RDPIN(pin)      (push)
 bc_rqpin                long  rqpin_    |                    %00 << 10  '3E     RQPIN(pin)      (push)
 
-bc_unused_3F            long  0         |                     %0 << 10  '3F     <unused>
-bc_unused_40            long  0         |                     %0 << 10  '40     <unused>
+bc_tasknext             long  tasknext_ |                     %0 << 10  '3F     TASKNEXT()
+bc_unused               long  0         |                     %0 << 10  '40     <unused>
 
 bc_debug                long  debug_    |          %000111111000 << 10  '41     DEBUG() rfvar,rfbyte
 
@@ -1026,7 +1027,7 @@ bc_sca                  long  muu_mod   |    %01111011110011010_ << 10  '9B     
 bc_scas                 long  mul_mod   |    %010010111100000110 << 10  '9C     exp SCAS exp
 bc_frac                 long  muu_mod   |    %01111110011011010_ << 10  '9D     exp FRAC exp
 
-bc_string               long  string_   |    %011110111111100010 << 10  '9E     STRING()
+bc_string               long  hub_str   |      %0101111111100010 << 10  '9E     STRING()
 bc_bitrange             long  bitrange  |                 %00110 << 10  '9F     bitrange
 
 'bytecodes Ax/Bx/Cx/Dx/Ex/Fx are collapsed at runtime to LUT entries A0/A1/A2/A3/A4/A5
@@ -1819,6 +1820,188 @@ structpop       rczr    y               wcz     'get long count, trailing byte c
         _ret_   rdfast  #0,pb                   'restart bytecode stream
 '
 '
+' TASKID()
+'
+taskid_         pusha   x
+                not     x,tasknum
+        _ret_   and     x,#$1F
+'
+'
+' TASKSTOP(task)
+' TASKHALT(task)
+' TASKCONT(task)
+' TASKCHK(task)
+'
+taskctrl_       cmp     x,_FFFFFFFF     wz      'get fixed or current task
+                not     x
+                and     x,#$1F
+        if_z    mov     x,tasknum
+
+                cmp     pa,#bc_taskchk  wz      'TASKCHK?
+        if_z    jmp     #taskchk_
+
+                cmp     pa,#bc_taskstop wz      'TASKSTOP or TASKHALT/TASKCONT?
+        if_z    skip    #%11
+                cmp     pa,#bc_taskcont wc      'TASKHALT/TASKCONT
+        _ret_   bitc    taskhlt,x               'set/clear halt bit, done
+
+                cmp     x,tasknum       wz      'TASKSTOP
+
+                bitl    taskena,x               'stop task
+
+                popa    x                       'get top of stack
+
+        if_nz   ret                             'if not current task, done
+
+
+top_return_     bitl    taskena,tasknum         'stop current task, TASKSTOP or top return
+
+                pop     x                       'pop so $1FF (xbyte) pops on next ret
+                tjnz    taskena,#taskstep       'if other task(s), do next task
+
+                cogid   x                       'no tasks left, stop cog
+                cogstop x
+
+
+taskchk_        testb   taskena,x       wz      'TASKCHK, get task enable (C=0 on entry)
+        if_z    testb   taskhlt,x       wc      'if enabled, get halt bit into C
+                wrz     x                       'set result to 0 (off) or 1 (enabled)
+        _ret_   addx    x,#0                    'if enabled and halted, set result to 2 (halted), done
+'
+'
+' TASKNEXT()
+'
+tasknexth       mov     w,pb                    'save current execution address in w
+
+                setq    #8-1                    'push current context (pbase/vbase/dbase/mrecv/msend/w/dcall/x)
+                wrlong  pbase,ptra++
+
+                altd    tasknum,#taskptr        'save current ptra in task pointer list
+                mov     0-0,ptra
+
+taskstep        mov     x,taskena               'step to next unhalted task
+                andn    x,taskhlt
+                ror     x,tasknum
+                encod   x
+                add     tasknum,x
+                and     tasknum,#$1F
+
+                alts    tasknum,#taskptr        'get next ptra from task pointer list
+                mov     ptra,0-0
+
+                setq    #8-1                    'pop next context (pbase/vbase/dbase/mrecv/msend/w/dcall/x)
+                rdlong  pbase,--ptra
+
+        _ret_   rdfast  #0,w                    'restart bytecode execution in next task
+'
+'
+' TASKSPIN(task,method(parameters),stackaddr)
+'
+' compile sequence:
+'
+'       task
+'       0..127 parameters
+'       method pointer
+'       stackaddr
+'
+'       bytecode: bc_hub_bytecode
+'       bytecode: bc_taskspin
+'       bytecode: pushflag<<7 | parameter count
+'
+' on entry:
+'
+'       x        = stackaddr
+'       ptra[-1] = method pointer
+'       ptra[-2] = last parameter
+'       ptra[-?] = first parameter
+'       ptra[--] = task (0..31, -1 for new)
+'       ptra[--] = prior top of stack
+'
+' on exit:
+'
+'       x        = task number or -1 if tasks full      (push)
+'       x        = top of stack                         (no push)
+'
+taskspin_       call    #build_stack            'build remote stack with parameters, after: x=task, ptra=@task, v=stackaddr, C=push
+
+                cmp     x,_FFFFFFFF     wz      'new task?
+
+                not     y,x                     'get task
+                and     y,#$1F
+
+    if_nc       popa    x                       'if no push, get top of stack
+
+    if_nz       skip    #%111                   'if fixed task, skip new task
+
+        _ret_   tjnf    taskena,#.new           'if tasks full, exit with tos=-1 if push
+.new            not     y,taskena               'get new task number
+                encod   y
+
+    if_c        mov     x,y                     'if push, set top of stack to new task number
+
+                mov     w,pb                    'save current execution address in w
+
+                setq    #8-1                    'push current context (pbase/vbase/dbase/mrecv/msend/w/dcall/x)
+                wrlong  pbase,ptra++
+
+                altd    tasknum,#taskptr        'save current ptra in current task pointer
+                mov     0-0,ptra
+
+                mov     tasknum,y               'set tasknum to new task
+                bith    taskena,tasknum         'enable new task
+                bitl    taskhlt,tasknum         'unhalt new task
+
+                mov     ptra,v                  'point to remote stack
+                pop     v                       'pop so $1FF (xbyte) pops on next ret
+                jmp     #launch_method          'launch method
+'
+'
+' Build remote stack with parameters
+'
+' on entry:
+'
+'       x        = stackaddr
+'       ptra[-1] = method pointer
+'       ptra[-2] = last parameter
+'       ptra[-?] = first parameter
+'       ptra[--] = prior top of stack
+'
+'       bytecode: flag<<7 | parameter count
+'
+' on exit:
+'
+'       v        = stackaddr
+'       x        = top of local stack
+'       y        = @top of local stack + 1*4
+'       pb       = next bytecode address
+'       ptra     = @top of local stack
+'       ptrb     = @top of remote stack + 1*4
+'       C        = flag from msb of parameter count
+'       Z        = 0
+'
+build_stack     mov     v,x                     'save stackaddr
+
+                popa    y                       'pop method pointer (method<<20 | vbase) into y
+                rdlong  x,y                     'get pbase into x
+
+                setq    #2-1                    'write pbase and vbase at stackaddr
+                wrlong  x,v
+
+                rdbyte  x,pb            wc      'read flag<<7 | parameter count, C=flag
+                add     pb,#1           wz      'advance pointer, Z=0 for move_fwd_loop
+                bitl    x,#7                    'isolate parameter count
+
+                mov     y,x                     'ptrb points to parameter source
+                shl     y,#2
+                subr    y,ptra                  '(move_fwd_loop sets ptra to y and pops x)
+                mov     ptrb,y
+
+                mov     ptra,v                  'ptra points to parameter destination
+                add     ptra,#6*4
+
+                jmp     #move_fwd_loop          'copy any parameters, x=tos and ptra=@tos after
+'
+'
 '***********************************************
 '*  Interpreter - miscellaneous hub bytecodes  *
 '***********************************************
@@ -1867,23 +2050,24 @@ read_clkfreq    pusha   x
         _ret_   rdlong  x,#@clkfreq_hub
 '
 '
-' COGSPIN(cog,method(parameters),stackadr)
+' COGSPIN(cog,method(parameters),stackaddr)
 '
 ' compile sequence:
 '
 '       cog                                     (COGSPIN)
 '       0..127 parameters
 '       method pointer
-'       stackadr
-'       bc_hub
-'       bc_cogspin
-'       byte: parameter count
+'       stackaddr
 '
-'       bc_coginit/bc_coginit_push              (COGINIT)
+'       bytecode: bc_hub_bytecode
+'       bytecode: bc_cogspin
+'       bytecode: parameter count
+'
+'       bytecode: bc_coginit/bc_coginit_push    (COGINIT)
 '
 ' on entry:
 '
-'       x        = stackadr
+'       x        = stackaddr
 '       ptra[-1] = method pointer
 '       ptra[-2] = last parameter
 '       ptra[-?] = first parameter
@@ -1892,36 +2076,20 @@ read_clkfreq    pusha   x
 '
 ' on exit:
 '
-'       x        = stackadr                     ready for COGINIT(cog,pgm,ptr)
+'       x        = stackaddr                    ready for COGINIT(cog,pgm,ptr)
 '       ptra[-1] = @launch_spin
 '       ptra[-2] = cog | %10_0000
 '       ptra[-3] = prior top of stack
 '
-cogspin_        mov     v,x                     'save stackadr
-
-                popa    y                       'pop method pointer (vbase | method<<20) into y
-                rdlong  x,y                     'get pbase into x
-                setq    #2-1                    'write pbase and vbase at stackadr
-                wrlong  x,v
-
-                rdbyte  x,pb                    'read parameter count
-                add     pb,#1           wz      'advance pointer, Z=0 for move_fwd_loop
-
-                mov     y,x                     'ptrb points to first parameter
-                shl     y,#2
-                subr    y,ptra                  '(move_fwd_loop sets ptra to y and pops x)
-                mov     ptrb,y
-
-                mov     ptra,v                  'ptra points to parameter destination
-                add     ptra,#6*4
-
-                call    #move_fwd_loop          'copy any parameters, x=cog and ptra=@cog after
+cogspin_        call    #build_stack            'build remote stack with parameters, after: x=cog, ptra=@cog, v=stackaddr
 
                 or      x,#%10_0000             'set cog to hub-exec
                 mov     y,##launch_spin         'set pgm to @launch_spin
+
                 setq    #2-1                    'push cog/pgm
                 wrlong  x,ptra++
-        _ret_   mov     x,v                     'get stackadr on top of stack, ready for COGINIT(cog,pgm,ptr)
+
+        _ret_   mov     x,v                     'get stackaddr on top of stack, ready for COGINIT(cog,pgm,ptr)
 '
 '
 ' Launch Spin - invoked by COGINIT
@@ -1939,7 +2107,7 @@ cogspin_        mov     v,x                     'save stackadr
 '       ptra[-4] = dbase        @params...
 '       ptra[-3] = mrecv
 '       ptra[-2] = msend
-'       ptra[-1] = return (w)   @COGSTOP(COGID)
+'       ptra[-1] = return (w)   @TASKSTOP()
 '       ptra[ 0] = params...
 '
 launch_spin     loc     ptrb,#\$80000           'point to zeroes in empty hub space
@@ -1956,7 +2124,9 @@ launch_spin     loc     ptrb,#\$80000           'point to zeroes in empty hub sp
                 setq2   #lut_end-lut_code-1     'load lut_code
                 rdlong  lut_code & $1FF,rdf
 
-                setq    #2-1                    'get pbase/vbase
+                push    #wrf_rd                 'return to wrf_rd to start xbyte after callinit
+
+launch_method   setq    #2-1                    'get pbase/vbase
                 rdlong  pbase,ptra
 
                 or      pbase,#%10              'set pbase 'trap' flag
@@ -1973,9 +2143,7 @@ launch_spin     loc     ptrb,#\$80000           'point to zeroes in empty hub sp
 
                 mov     dcall,dbase             'set dcall
 
-                mov     pb,#@stopcog            'set return to COGSTOP(COGID) bytecodes
-
-                push    #wrf_rd                 'return to wrf_rd to start xbyte after callinit
+                mov     pb,#@top_return         'set return to top_return bytecodes
 
                 jmp     #callinit               'begin bytecode execution of method in vbase[31:20]
 '
@@ -2147,8 +2315,8 @@ move_done       mov     ptra,y                  'restore ptra
 
 fill_buff       not     buff+5,buff+15          'write fill pattern to stack
                 shr     buff+5,#9
-                not     buff+5
-                setd    buff+6,buff+15
+                not     buff+5                  'make AUGD instruction
+                setd    buff+6,buff+15          'set WRLONG D field
                 setq    #16-1
                 augd    #0                      'buff+5
         _ret_   wrlong  #0,y                    'buff+6
