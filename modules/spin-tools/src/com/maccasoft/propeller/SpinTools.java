@@ -2999,10 +2999,9 @@ public class SpinTools {
             consoleView.setEnabled(true);
 
             runCommand(cmd, editorTab.getFile().getParentFile(), consoleView.getOutputStream());
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+            MessageDialog.openError(shell, APP_TITLE, e.getMessage());
         }
     }
 
@@ -3029,7 +3028,7 @@ public class SpinTools {
         return true;
     }
 
-    protected void runCommand(List<String> cmd, File outDir, OutputStream stdout) throws IOException, InterruptedException {
+    protected void runCommand(List<String> cmd, File outDir, OutputStream stdout) throws IOException {
         ProcessBuilder builder = new ProcessBuilder(cmd);
         builder.redirectErrorStream(true);
         builder.directory(outDir);
