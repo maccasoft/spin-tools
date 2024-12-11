@@ -23,7 +23,7 @@ public abstract class ComPort {
 
     public abstract boolean openPort() throws ComPortException;
 
-    public abstract boolean setParams(int baudRate, int dataBits, int stopBits, int parity, boolean setRTS, boolean setDTR) throws ComPortException;
+    public abstract boolean setParams(int baudRate, int dataBits, int stopBits, int parity) throws ComPortException;
 
     public abstract void closePort() throws ComPortException;
 
@@ -36,6 +36,8 @@ public abstract class ComPort {
     public abstract boolean writeByte(byte singleByte) throws ComPortException;
 
     public abstract boolean writeBytes(byte[] buffer) throws ComPortException;
+
+    public abstract boolean writeString(String string) throws ComPortException;
 
     public abstract byte[] readBytes() throws ComPortException;
 

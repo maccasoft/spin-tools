@@ -512,9 +512,7 @@ public class ConsoleView {
                     serialBaudRate,
                     SerialPort.DATABITS_8,
                     SerialPort.STOPBITS_1,
-                    SerialPort.PARITY_NONE,
-                    false,
-                    false);
+                    SerialPort.PARITY_NONE);
             }
 
             this.serialPort = serialPort;

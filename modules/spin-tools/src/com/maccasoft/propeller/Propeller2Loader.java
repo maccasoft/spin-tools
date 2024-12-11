@@ -11,17 +11,24 @@
 
 package com.maccasoft.propeller;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
 import java.util.Base64;
 import java.util.Base64.Encoder;
+import java.util.Collection;
 
 import com.maccasoft.propeller.devices.ComPort;
 import com.maccasoft.propeller.devices.ComPortException;
+import com.maccasoft.propeller.devices.DeviceDescriptor;
+import com.maccasoft.propeller.devices.NetworkComPort;
+import com.maccasoft.propeller.devices.NetworkUtils;
 import com.maccasoft.propeller.devices.SerialComPort;
+import com.maccasoft.propeller.internal.FileUtils;
 
 import jssc.SerialPort;
 import jssc.SerialPortList;
-import jssc.SerialPortTimeoutException;
 
 public class Propeller2Loader extends PropellerLoader {
 
@@ -30,17 +37,17 @@ public class Propeller2Loader extends PropellerLoader {
     public static final int DOWNLOAD_RUN_RAM = 0;
     public static final int DOWNLOAD_RUN_FLASH = 1;
 
-    SerialComPort comPort;
+    ComPort comPort;
     int portBaudRate = UPLOAD_BAUD_RATE;
 
     boolean shared;
 
-    public Propeller2Loader(SerialComPort serialPort, boolean shared) {
+    public Propeller2Loader(ComPort serialPort, boolean shared) {
         this.comPort = serialPort;
         this.shared = shared;
     }
 
-    public Propeller2Loader(SerialComPort serialPort, boolean shared, PropellerLoaderListener listener) {
+    public Propeller2Loader(ComPort serialPort, boolean shared, PropellerLoaderListener listener) {
         super(listener);
         this.comPort = serialPort;
         this.shared = shared;
@@ -50,7 +57,7 @@ public class Propeller2Loader extends PropellerLoader {
         return comPort.getPortName();
     }
 
-    public SerialComPort getSerialPort() {
+    public ComPort getSerialPort() {
         return comPort;
     }
 
@@ -109,12 +116,10 @@ public class Propeller2Loader extends PropellerLoader {
             portBaudRate,
             SerialPort.DATABITS_8,
             SerialPort.STOPBITS_1,
-            SerialPort.PARITY_NONE,
-            false,
-            false);
+            SerialPort.PARITY_NONE);
 
         try {
-            hwreset();
+            comPort.hwreset();
             version = hwfind();
         } finally {
             if (!shared) {
@@ -125,67 +130,42 @@ public class Propeller2Loader extends PropellerLoader {
         return version;
     }
 
-    void hwreset() {
-        try {
-            comPort.setDTR(true);
-            comPort.setRTS(true);
-            msleep(25);
-            comPort.setDTR(false);
-            comPort.setRTS(false);
-            msleep(25);
-            skipIncomingBytes();
-            comPort.getSerialPort().purgePort(SerialPort.PURGE_TXABORT |
-                SerialPort.PURGE_RXABORT |
-                SerialPort.PURGE_TXCLEAR |
-                SerialPort.PURGE_RXCLEAR);
-        } catch (Exception e) {
-            // Do nothing
-        }
-    }
-
-    private void msleep(int msec) {
-        try {
-            Thread.sleep(msec);
-        } catch (Exception e) {
-
-        }
-    }
-
     protected int hwfind() throws ComPortException {
-        String result = new String();
 
-        comPort.writeString("> \r");
-        msleep(1);
+        for (int i = 0; i < 3; i++) {
+            comPort.hwreset();
+            comPort.writeString("> \r");
+            comPort.writeString("> Prop_Chk 0 0 0 0\r");
 
-        comPort.writeString("> Prop_Chk 0 0 0 0\r");
-
-        try {
-            while (result.length() < 11 || !result.endsWith("\r\n")) {
-                byte[] b = comPort.readBytes(1, 20);
-                if (b != null && b.length == 1) {
-                    result += new String(b);
+            try {
+                String result = new String();
+                while (result.length() < 11 || !result.endsWith("\r\n")) {
+                    int b = comPort.readByteWithTimeout(200);
+                    if (b == -1) {
+                        break;
+                    }
+                    result += (char) b;
                 }
+                if (result.startsWith("\r\nProp_Ver ")) {
+                    return 2;
+                }
+            } catch (ComPortException e) {
+                return 0;
             }
-            if (result.startsWith("\r\nProp_Ver ")) {
-                return 2;
-            }
-        } catch (SerialPortTimeoutException e) {
-            return 0;
         }
 
         return 0;
     }
 
-    protected int skipIncomingBytes() throws ComPortException {
-        int n = 0;
-        while (comPort.readByteWithTimeout(50) != -1) {
-            n++;
-        }
-        return n;
-    }
-
     @Override
     public void upload(byte[] binaryImage, int type) throws ComPortException {
+        if (comPort instanceof NetworkComPort) {
+            boolean valid = resolveNetworkPort((NetworkComPort) comPort);
+            if (!valid) {
+                throw new ComPortException("Device " + comPort.getPortName() + " not found");
+            }
+        }
+
         if (!comPort.isOpened()) {
             comPort.openPort();
         }
@@ -193,12 +173,9 @@ public class Propeller2Loader extends PropellerLoader {
             portBaudRate,
             SerialPort.DATABITS_8,
             SerialPort.STOPBITS_1,
-            SerialPort.PARITY_NONE,
-            false,
-            false);
+            SerialPort.PARITY_NONE);
 
         try {
-            hwreset();
             if (hwfind() == 0) {
                 throw new ComPortException("No propeller chip on port " + comPort.getPortName());
             }
@@ -208,6 +185,49 @@ public class Propeller2Loader extends PropellerLoader {
                 comPort.closePort();
             }
         }
+    }
+
+    boolean resolveNetworkPort(NetworkComPort comPort) throws ComPortException {
+        boolean valid = false;
+
+        if (comPort.getInetAddr() != null) {
+            try {
+                DeviceDescriptor descr = NetworkUtils.probe(comPort.getInetAddr());
+                if (descr != null && descr.mac_address.equalsIgnoreCase(comPort.getMacAddress())) {
+                    valid = true;
+                }
+            } catch (IOException e) {
+                throw new ComPortException(e.getMessage(), e);
+            }
+        }
+        if (!valid) {
+            Collection<DeviceDescriptor> list = NetworkUtils.getAvailableDevices();
+            for (DeviceDescriptor descr : list) {
+                if (descr.mac_address.equals(comPort.getMacAddress())) {
+                    comPort.setInetAddr(descr.inetAddr);
+                    try {
+                        if (comPort.isOpened()) {
+                            comPort.closePort();
+                        }
+                    } catch (Exception e) {
+                        // Do nothing
+                    }
+                    valid = true;
+                    break;
+                }
+            }
+            if (!valid) {
+                for (DeviceDescriptor descr : list) {
+                    if (descr.inetAddr.equals(comPort.getInetAddr())) {
+                        comPort.setMacAddress(descr.mac_address);
+                        valid = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return valid;
     }
 
     protected void bufferUpload(int type, byte[] binaryImage, String text) throws ComPortException {
@@ -361,7 +381,7 @@ public class Propeller2Loader extends PropellerLoader {
             listener.verifyRam();
         }
 
-        int rc = comPort.readByteWithTimeout(1000);
+        int rc = comPort.readByteWithTimeout(10_000);
 
         if (rc == -1) {
             throw new ComPortException("Timeout");
@@ -369,6 +389,18 @@ public class Propeller2Loader extends PropellerLoader {
 
         if (rc != '.') {
             throw new ComPortException("Checksum error");
+        }
+    }
+
+    public static void main(String[] args) {
+        try {
+            byte[] binaryImage = FileUtils.loadBinaryFromFile(new File("/home/marco/workspace/spin-tools-ide/examples/P2", "jm_i2c_devices.binary"));
+
+            NetworkComPort comPort = new NetworkComPort(InetAddress.getByName("192.168.1.55"));
+            Propeller2Loader loader = new Propeller2Loader(comPort, false);
+            loader.upload(binaryImage, DOWNLOAD_RUN_RAM);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

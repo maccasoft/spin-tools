@@ -110,6 +110,25 @@ public class Propeller1NetworkLoader extends PropellerLoader {
 
     @Override
     public void upload(byte[] binaryImage, int type) throws ComPortException {
+        boolean valid = resolveNetworkPort(comPort);
+        if (!valid) {
+            throw new ComPortException("Device " + comPort.getPortName() + " not found");
+        }
+
+        if (!comPort.isOpened()) {
+            comPort.openPort();
+        }
+
+        try {
+            bufferUpload(type, binaryImage, "binary image");
+        } finally {
+            if (!shared) {
+                comPort.closePort();
+            }
+        }
+    }
+
+    boolean resolveNetworkPort(NetworkComPort comPort) throws ComPortException {
         boolean valid = false;
 
         if (comPort.getInetAddr() != null) {
@@ -149,17 +168,7 @@ public class Propeller1NetworkLoader extends PropellerLoader {
             }
         }
 
-        if (!comPort.isOpened()) {
-            comPort.openPort();
-        }
-
-        try {
-            bufferUpload(type, binaryImage, "binary image");
-        } finally {
-            if (!shared) {
-                comPort.closePort();
-            }
-        }
+        return valid;
     }
 
     protected void bufferUpload(int type, byte[] binaryImage, String text) throws ComPortException {

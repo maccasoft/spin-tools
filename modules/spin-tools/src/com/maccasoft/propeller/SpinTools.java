@@ -3294,27 +3294,18 @@ public class SpinTools {
                     int flags;
                     PropellerLoader loader;
 
-                    if (comPort instanceof SerialComPort) {
-                        if (obj instanceof Spin1Object) {
-                            loader = new Propeller1Loader((SerialComPort) comPort, serialPortShared, listener);
-                            flags = writeToFlash ? Propeller1Loader.DOWNLOAD_RUN_EEPROM : Propeller1Loader.DOWNLOAD_RUN_BINARY;
-                        }
-                        else {
-                            loader = new Propeller2Loader((SerialComPort) comPort, serialPortShared, listener);
-                            flags = writeToFlash ? Propeller2Loader.DOWNLOAD_RUN_FLASH : Propeller2Loader.DOWNLOAD_RUN_RAM;
-                        }
-                    }
-                    else if (comPort instanceof NetworkComPort) {
-                        if (obj instanceof Spin1Object) {
+                    if (obj instanceof Spin1Object) {
+                        flags = writeToFlash ? Propeller1Loader.DOWNLOAD_RUN_EEPROM : Propeller1Loader.DOWNLOAD_RUN_BINARY;
+                        if (comPort instanceof NetworkComPort) {
                             loader = new Propeller1NetworkLoader((NetworkComPort) comPort, serialPortShared, listener);
-                            flags = writeToFlash ? Propeller1Loader.DOWNLOAD_RUN_EEPROM : Propeller1Loader.DOWNLOAD_RUN_BINARY;
                         }
                         else {
-                            throw new RuntimeException("Propeller 2 not found");
+                            loader = new Propeller1Loader((SerialComPort) comPort, serialPortShared, listener);
                         }
                     }
                     else {
-                        throw new RuntimeException("Propeller not found");
+                        loader = new Propeller2Loader(comPort, serialPortShared, listener);
+                        flags = writeToFlash ? Propeller2Loader.DOWNLOAD_RUN_FLASH : Propeller2Loader.DOWNLOAD_RUN_RAM;
                     }
 
                     monitor.beginTask("Upload to " + comPort.getDescription(), IProgressMonitor.UNKNOWN);

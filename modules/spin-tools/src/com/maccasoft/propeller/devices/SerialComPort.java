@@ -59,9 +59,9 @@ public class SerialComPort extends ComPort {
     }
 
     @Override
-    public boolean setParams(int baudRate, int dataBits, int stopBits, int parity, boolean setRTS, boolean setDTR) throws ComPortException {
+    public boolean setParams(int baudRate, int dataBits, int stopBits, int parity) throws ComPortException {
         try {
-            return serialPort.setParams(baudRate, dataBits, stopBits, parity, setRTS, setDTR);
+            return serialPort.setParams(baudRate, dataBits, stopBits, parity);
         } catch (SerialPortException e) {
             throw new ComPortException(e.getExceptionType(), e);
         }
@@ -236,6 +236,7 @@ public class SerialComPort extends ComPort {
         return serialPort;
     }
 
+    @Override
     public boolean writeString(String string) throws ComPortException {
         return writeBytes(string.getBytes());
     }

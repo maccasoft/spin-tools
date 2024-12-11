@@ -815,7 +815,7 @@ public class SerialTerminal {
             try {
                 serialBaudRate = baudRates.get(baudRate.getSelectionIndex());
                 preferences.setTerminalBaudRate(serialBaudRate);
-                comPort.setParams(serialBaudRate, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE, true, true);
+                comPort.setParams(serialBaudRate, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
             } catch (Exception e1) {
                 e1.printStackTrace();
             }
@@ -1616,9 +1616,7 @@ public class SerialTerminal {
                     serialBaudRate,
                     SerialPort.DATABITS_8,
                     SerialPort.STOPBITS_1,
-                    SerialPort.PARITY_NONE,
-                    rts.getSelection(),
-                    dtr.getSelection());
+                    SerialPort.PARITY_NONE);
                 dsr.setSelection(serialPort.isDSR());
                 cts.setSelection(serialPort.isCTS());
                 if (this.comPort != serialPort) {

@@ -389,9 +389,7 @@ public class DevicesDialog extends Dialog {
                         115200,
                         SerialPort.DATABITS_8,
                         SerialPort.STOPBITS_1,
-                        SerialPort.PARITY_NONE,
-                        false,
-                        false);
+                        SerialPort.PARITY_NONE);
                     comPort.hwreset();
                     rc = hwfind1(comPort);
                 } catch (Exception e) {
@@ -403,9 +401,7 @@ public class DevicesDialog extends Dialog {
                             2000000,
                             SerialPort.DATABITS_8,
                             SerialPort.STOPBITS_1,
-                            SerialPort.PARITY_NONE,
-                            false,
-                            false);
+                            SerialPort.PARITY_NONE);
                         comPort.hwreset();
                         rc = hwfind2(comPort);
                     } catch (Exception e) {

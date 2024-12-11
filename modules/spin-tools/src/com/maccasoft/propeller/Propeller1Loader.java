@@ -100,9 +100,7 @@ public class Propeller1Loader extends PropellerLoader {
             SerialPort.BAUDRATE_115200,
             SerialPort.DATABITS_8,
             SerialPort.STOPBITS_1,
-            SerialPort.PARITY_NONE,
-            false,
-            false);
+            SerialPort.PARITY_NONE);
 
         try {
             hwreset();
@@ -250,9 +248,7 @@ public class Propeller1Loader extends PropellerLoader {
             SerialPort.BAUDRATE_115200,
             SerialPort.DATABITS_8,
             SerialPort.STOPBITS_1,
-            SerialPort.PARITY_NONE,
-            false,
-            false);
+            SerialPort.PARITY_NONE);
 
         try {
             hwreset();

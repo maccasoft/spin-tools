@@ -348,9 +348,42 @@ public class SpinCompiler {
                 int flags = 0;
                 PropellerLoader loader = null;
 
-                if (serialPort instanceof SerialComPort) {
-                    if (compiler instanceof Spin1Compiler) {
-                        flags = cmd.hasOption("f") ? Propeller1Loader.DOWNLOAD_RUN_EEPROM : Propeller1Loader.DOWNLOAD_RUN_BINARY;
+                if (compiler instanceof Spin1Compiler) {
+                    flags = cmd.hasOption("f") ? Propeller1Loader.DOWNLOAD_RUN_EEPROM : Propeller1Loader.DOWNLOAD_RUN_BINARY;
+
+                    if (serialPort instanceof NetworkComPort) {
+                        loader = new Propeller1NetworkLoader((NetworkComPort) serialPort, true) {
+
+                            @Override
+                            protected void bufferUpload(int type, byte[] binaryImage, String text) throws ComPortException {
+                                println(String.format("Propeller %d on %s", 1, getComPort().getInetAddr().getHostAddress()));
+                                print("Loading " + text + " to ");
+                                switch (type) {
+                                    case Propeller1Loader.DOWNLOAD_EEPROM:
+                                    case Propeller1Loader.DOWNLOAD_RUN_EEPROM:
+                                        print("EEPROM via ");
+                                        // fall through
+                                    case Propeller1Loader.DOWNLOAD_RUN_BINARY:
+                                        println("hub memory");
+                                        break;
+                                }
+                                super.bufferUpload(type, binaryImage, text);
+                            }
+
+                            @Override
+                            protected void notifyProgress(int sent, int total) {
+                                if (sent == total) {
+                                    print(String.format("                               \r"));
+                                    println(String.format("%d bytes sent", total));
+                                }
+                                else {
+                                    print(String.format("%d bytes remaining             \r", total - sent));
+                                }
+                            }
+
+                        };
+                    }
+                    else {
                         loader = new Propeller1Loader((SerialComPort) serialPort, true) {
 
                             @Override
@@ -389,15 +422,6 @@ public class SpinCompiler {
                             }
 
                             @Override
-                            protected int skipIncomingBytes() throws ComPortException {
-                                int n = super.skipIncomingBytes();
-                                if (n != 0) {
-                                    println(String.format("Ignoring %d bytes", n));
-                                }
-                                return n;
-                            }
-
-                            @Override
                             protected void verifyRam() throws ComPortException {
                                 print("Verifying RAM ... ");
                                 super.verifyRam();
@@ -420,83 +444,39 @@ public class SpinCompiler {
 
                         };
                     }
-                    else if (compiler instanceof Spin2Compiler) {
-                        flags = cmd.hasOption("f") ? Propeller2Loader.DOWNLOAD_RUN_FLASH : Propeller2Loader.DOWNLOAD_RUN_RAM;
-                        loader = new Propeller2Loader((SerialComPort) serialPort, true) {
-
-                            @Override
-                            protected int hwfind() throws ComPortException {
-                                int version = super.hwfind();
-                                if (version != 0) {
-                                    println(String.format("Propeller %d on port %s", version, getPortName()));
-                                }
-                                return version;
-                            }
-
-                            @Override
-                            protected int skipIncomingBytes() throws ComPortException {
-                                int n = super.skipIncomingBytes();
-                                if (n != 0) {
-                                    println(String.format("Ignoring %d bytes", n));
-                                }
-                                return n;
-                            }
-
-                            @Override
-                            protected void notifyProgress(int sent, int total) {
-                                if (sent >= total) {
-                                    print(String.format("                               \r"));
-                                    println(String.format("%d bytes sent", total));
-                                }
-                                else {
-                                    print(String.format("%d bytes remaining             \r", total - sent));
-                                }
-                            }
-
-                            @Override
-                            protected void verifyRam() throws ComPortException {
-                                print("Verifying checksum ... ");
-                                super.verifyRam();
-                                println("OK");
-                            }
-
-                        };
-                    }
                 }
-                else {
-                    if (compiler instanceof Spin1Compiler) {
-                        flags = cmd.hasOption("f") ? Propeller1Loader.DOWNLOAD_RUN_EEPROM : Propeller1Loader.DOWNLOAD_RUN_BINARY;
-                        loader = new Propeller1NetworkLoader((NetworkComPort) serialPort, true) {
+                else if (compiler instanceof Spin2Compiler) {
+                    flags = cmd.hasOption("f") ? Propeller2Loader.DOWNLOAD_RUN_FLASH : Propeller2Loader.DOWNLOAD_RUN_RAM;
+                    loader = new Propeller2Loader(serialPort, true) {
 
-                            @Override
-                            protected void bufferUpload(int type, byte[] binaryImage, String text) throws ComPortException {
-                                println(String.format("Propeller %d on %s", 1, getComPort().getInetAddr().getHostAddress()));
-                                print("Loading " + text + " to ");
-                                switch (type) {
-                                    case Propeller1Loader.DOWNLOAD_EEPROM:
-                                    case Propeller1Loader.DOWNLOAD_RUN_EEPROM:
-                                        print("EEPROM via ");
-                                        // fall through
-                                    case Propeller1Loader.DOWNLOAD_RUN_BINARY:
-                                        println("hub memory");
-                                        break;
-                                }
-                                super.bufferUpload(type, binaryImage, text);
+                        @Override
+                        protected int hwfind() throws ComPortException {
+                            int version = super.hwfind();
+                            if (version != 0) {
+                                println(String.format("Propeller %d on port %s", version, getPortName()));
                             }
+                            return version;
+                        }
 
-                            @Override
-                            protected void notifyProgress(int sent, int total) {
-                                if (sent == total) {
-                                    print(String.format("                               \r"));
-                                    println(String.format("%d bytes sent", total));
-                                }
-                                else {
-                                    print(String.format("%d bytes remaining             \r", total - sent));
-                                }
+                        @Override
+                        protected void notifyProgress(int sent, int total) {
+                            if (sent >= total) {
+                                print(String.format("                               \r"));
+                                println(String.format("%d bytes sent", total));
                             }
+                            else {
+                                print(String.format("%d bytes remaining             \r", total - sent));
+                            }
+                        }
 
-                        };
-                    }
+                        @Override
+                        protected void verifyRam() throws ComPortException {
+                            print("Verifying checksum ... ");
+                            super.verifyRam();
+                            println("OK");
+                        }
+
+                    };
                 }
 
                 loader.upload(binaryData, flags);
@@ -508,7 +488,7 @@ public class SpinCompiler {
 
                     String baud = pst ? cmd.getOptionValue('T') : cmd.getOptionValue('t');
                     if (baud != null) {
-                        serialPort.setParams(Integer.valueOf(baud), 8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE, true, true);
+                        serialPort.setParams(Integer.valueOf(baud), 8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
                     }
 
                     println(String.format("Entering%s terminal mode. CTRL-C to exit.", pst ? " PST" : ""));

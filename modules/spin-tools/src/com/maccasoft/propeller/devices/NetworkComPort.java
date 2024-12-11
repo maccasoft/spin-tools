@@ -206,18 +206,10 @@ public class NetworkComPort extends ComPort {
     }
 
     @Override
-    public boolean setParams(int baudRate, int dataBits, int stopBits, int parity, boolean setRTS, boolean setDTR) throws ComPortException {
+    public boolean setParams(int baudRate, int dataBits, int stopBits, int parity) throws ComPortException {
         try {
             Builder builder = HttpRequest.newBuilder(new URI("http://" + inetAddr.getHostAddress() + "/wx/setting?name=baud-rate&value=" + baudRate));
             HttpRequest httpRequest = builder.POST(BodyPublishers.noBody()).build();
-            client.send(httpRequest, BodyHandlers.ofString());
-
-            builder = HttpRequest.newBuilder(new URI("http://" + inetAddr.getHostAddress() + "/wx/setting?name=pin-gpio13&value=" + (!setRTS ? 1 : 0)));
-            httpRequest = builder.POST(BodyPublishers.noBody()).build();
-            client.send(httpRequest, BodyHandlers.ofString());
-
-            builder = HttpRequest.newBuilder(new URI("http://" + inetAddr.getHostAddress() + "/wx/setting?name=pin-gpio12&value=" + (!setDTR ? 1 : 0)));
-            httpRequest = builder.POST(BodyPublishers.noBody()).build();
             client.send(httpRequest, BodyHandlers.ofString());
 
         } catch (URISyntaxException | IOException | InterruptedException e) {
@@ -231,17 +223,8 @@ public class NetworkComPort extends ComPort {
     public void closePort() throws ComPortException {
         try {
             removeEventListener();
-
-            Builder builder = HttpRequest.newBuilder(new URI("http://" + inetAddr.getHostAddress() + "/wx/setting?name=pin-gpio13&value=" + 1));
-            HttpRequest httpRequest = builder.POST(BodyPublishers.noBody()).build();
-            client.send(httpRequest, BodyHandlers.ofString());
-
-            builder = HttpRequest.newBuilder(new URI("http://" + inetAddr.getHostAddress() + "/wx/setting?name=pin-gpio12&value=" + 1));
-            httpRequest = builder.POST(BodyPublishers.noBody()).build();
-            client.send(httpRequest, BodyHandlers.ofString());
-
             socket.close();
-        } catch (URISyntaxException | IOException | InterruptedException e) {
+        } catch (IOException e) {
             e.printStackTrace();
             throw new ComPortException(e.getMessage(), e);
         }
@@ -269,7 +252,19 @@ public class NetworkComPort extends ComPort {
 
     @Override
     public int readByteWithTimeout(int timeout) throws ComPortException {
-
+        while (timeout > 0) {
+            try {
+                int len = is.available();
+                if (len > 0) {
+                    return is.read();
+                }
+                Thread.sleep(1);
+            } catch (Exception e) {
+                e.printStackTrace();
+                // Do nothing
+            }
+            timeout--;
+        }
         return -1;
     }
 
@@ -299,6 +294,7 @@ public class NetworkComPort extends ComPort {
     public boolean writeBytes(byte[] buffer) throws ComPortException {
         try {
             os.write(buffer);
+            os.flush();
         } catch (IOException e) {
             e.printStackTrace();
             throw new ComPortException(e.getMessage(), e);
@@ -419,6 +415,7 @@ public class NetworkComPort extends ComPort {
     public boolean writeBytes(byte[] buffer, int ofs, int len) throws ComPortException {
         try {
             os.write(buffer, ofs, len);
+            os.flush();
         } catch (IOException e) {
             e.printStackTrace();
             throw new ComPortException(e.getMessage(), e);
@@ -428,6 +425,11 @@ public class NetworkComPort extends ComPort {
 
     public HttpClient getHttpClient() {
         return client;
+    }
+
+    @Override
+    public boolean writeString(String string) throws ComPortException {
+        return writeBytes(string.getBytes());
     }
 
     @Override
