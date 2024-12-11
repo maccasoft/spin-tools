@@ -138,6 +138,14 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         keywords.put("LOOKDOWN", TokenId.FUNCTION);
         keywords.put("LOOKDOWNZ", TokenId.FUNCTION);
 
+        keywords.put("TASKSPIN", TokenId.FUNCTION);
+        keywords.put("TASKNEXT", TokenId.FUNCTION);
+        keywords.put("TASKSTOP", TokenId.FUNCTION);
+        keywords.put("TASKHALT", TokenId.FUNCTION);
+        keywords.put("TASKCONT", TokenId.FUNCTION);
+        keywords.put("TASKCHK", TokenId.FUNCTION);
+        keywords.put("TASKID", TokenId.FUNCTION);
+
         keywords.put("BYTECODE", TokenId.FUNCTION);
 
         keywords.put("NOT", TokenId.KEYWORD);
@@ -431,6 +439,8 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         keywords.put("HUBEXEC_NEW_PAIR", TokenId.CONSTANT);
 
         keywords.put("NEWCOG", TokenId.CONSTANT);
+        keywords.put("NEWTASK", TokenId.CONSTANT);
+        keywords.put("THISTASK", TokenId.CONSTANT);
 
         keywords.put("EVENT_INT", TokenId.CONSTANT);
         keywords.put("INT_OFF", TokenId.CONSTANT);
@@ -1141,19 +1151,17 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                                 id = externals.get(token.getText().substring(1));
                             }
                         }
-                        if (id == null) {
-                            if (debug) {
-                                String s = token.getText().toUpperCase();
-                                id = debugKeywords.get(s);
-                                if (id == null && s.startsWith("`")) {
-                                    id = debugKeywords.get(s.substring(1));
-                                }
+                        if (debug && id == null) {
+                            String s = token.getText().toUpperCase();
+                            id = debugKeywords.get(s);
+                            if (id == null && s.startsWith("`")) {
+                                id = debugKeywords.get(s.substring(1));
                             }
-                            else {
-                                id = keywords.get(token.getText());
-                                if (id == null) {
-                                    id = spinKeywords.get(token.getText());
-                                }
+                        }
+                        if (id == null) {
+                            id = keywords.get(token.getText());
+                            if (id == null) {
+                                id = spinKeywords.get(token.getText());
                             }
                         }
                         if (id == null && dot != -1) {

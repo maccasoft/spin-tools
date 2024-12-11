@@ -222,6 +222,13 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
         descriptors.put("strcpy", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_strcopy, 3, 0));
         descriptors.put("memmov", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_bytemove, 3, 0));
         descriptors.put("memset", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_bytefill, 3, 0));
+
+        descriptors.put("tasknext", new FunctionDescriptor(Spin2Bytecode.bc_tasknext, -1, 0, 0));
+        descriptors.put("taskstop", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_taskstop, 1, 0));
+        descriptors.put("taskhalt", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_taskhalt, 1, 0));
+        descriptors.put("taskcont", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_taskcont, 1, 0));
+        descriptors.put("taskchk", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_taskchk, 1, 1));
+        descriptors.put("taskid", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_taskid, 0, 1));
     }
 
     static class Descriptor {
@@ -575,6 +582,35 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                     source.add(new Bytecode(context, new byte[] {
                         Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_cogspin,
                         (byte) methodNode.getChildCount(), (byte) (push ? Spin2Bytecode.bc_coginit_push : Spin2Bytecode.bc_coginit)
+                    }, node.getText().toUpperCase()));
+                }
+                else if ("taskspin".equals(node.getText())) {
+                    if (node.getChildCount() != 3) {
+                        throw new RuntimeException("expected " + 3 + " argument(s), found " + node.getChildCount());
+                    }
+
+                    source.addAll(compileConstantExpression(context, method, node.getChild(0)));
+
+                    Spin2StatementNode methodNode = node.getChild(1);
+                    Expression expression = context.getLocalSymbol(methodNode.getText());
+                    if (!(expression instanceof Method)) {
+                        throw new CompilerException("invalid method " + methodNode.getText(), methodNode.getToken());
+                    }
+                    int actual = getArgumentsCount(context, methodNode);
+                    if (actual != ((Method) expression).getArgumentsCount()) {
+                        throw new CompilerException("expected " + ((Method) expression).getArgumentsCount() + " argument(s), found " + actual, methodNode.getToken());
+                    }
+                    for (int i = 0; i < methodNode.getChildCount(); i++) {
+                        source.addAll(compileConstantExpression(context, method, methodNode.getChild(i)));
+                    }
+                    source.add(new SubAddress(context, (Method) expression, false));
+                    Spin2Method calledMethod = (Spin2Method) expression.getData(Spin2Method.class.getName());
+                    calledMethod.setCalledBy(method);
+
+                    source.addAll(compileConstantExpression(context, method, node.getChild(2)));
+
+                    source.add(new Bytecode(context, new byte[] {
+                        Spin2Bytecode.bc_hub_bytecode, (byte) Spin2Bytecode.bc_taskspin, (byte) ((push ? 0x80 : 0x00) | actual)
                     }, node.getText().toUpperCase()));
                 }
                 else if ("recv".equals(node.getText())) {

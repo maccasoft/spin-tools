@@ -295,6 +295,9 @@ public class Spin2GlobalContext extends Context {
         addBuiltinSymbol("EVENT_ATN", 14);
         addBuiltinSymbol("EVENT_QMT", 15);
 
+        addBuiltinSymbol("NEWTASK", -1);
+        addBuiltinSymbol("THISTASK", -1);
+
         // Predefined constants
 
         addBuiltinSymbol("FALSE", 0);

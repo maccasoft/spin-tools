@@ -645,6 +645,37 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
 
                     return source;
                 }
+                if ("TASKSPIN".equalsIgnoreCase(node.getText())) {
+                    if (node.getChildCount() != 3) {
+                        throw new RuntimeException("expected " + 3 + " argument(s), found " + node.getChildCount());
+                    }
+
+                    source.addAll(compileConstantExpression(context, method, node.getChild(0)));
+
+                    Spin2StatementNode methodNode = node.getChild(1);
+                    Expression expression = context.getLocalSymbol(methodNode.getText());
+                    if (!(expression instanceof Method)) {
+                        throw new CompilerException("invalid method " + methodNode.getText(), methodNode.getToken());
+                    }
+                    int actual = getArgumentsCount(context, methodNode);
+                    if (actual != ((Method) expression).getArgumentsCount()) {
+                        throw new CompilerException("expected " + ((Method) expression).getArgumentsCount() + " argument(s), found " + actual, methodNode.getToken());
+                    }
+                    for (int i = 0; i < methodNode.getChildCount(); i++) {
+                        source.addAll(compileConstantExpression(context, method, methodNode.getChild(i)));
+                    }
+                    source.add(new SubAddress(context, (Method) expression, false));
+                    Spin2Method calledMethod = (Spin2Method) expression.getData(Spin2Method.class.getName());
+                    calledMethod.setCalledBy(method);
+
+                    source.addAll(compileConstantExpression(context, method, node.getChild(2)));
+
+                    source.add(new Bytecode(context, new byte[] {
+                        Spin2Bytecode.bc_hub_bytecode, (byte) Spin2Bytecode.bc_taskspin, (byte) ((push ? 0x80 : 0x00) | actual)
+                    }, node.getText().toUpperCase()));
+
+                    return source;
+                }
                 if ("LOOKDOWN".equalsIgnoreCase(node.getText()) || "LOOKDOWNZ".equalsIgnoreCase(node.getText()) || "LOOKUP".equalsIgnoreCase(node.getText())
                     || "LOOKUPZ".equalsIgnoreCase(node.getText())) {
                     if (node.getChildCount() == 0) {

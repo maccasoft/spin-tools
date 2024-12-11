@@ -436,6 +436,8 @@ public class CTokenMarker extends SourceTokenMarker {
         spin2Keywords.put("HUBEXEC_NEW_PAIR", TokenId.CONSTANT);
 
         spin2Keywords.put("NEWCOG", TokenId.CONSTANT);
+        spin2Keywords.put("NEWTASK", TokenId.CONSTANT);
+        spin2Keywords.put("THISTASK", TokenId.CONSTANT);
 
         spin2Keywords.put("EVENT_INT", TokenId.CONSTANT);
         spin2Keywords.put("INT_OFF", TokenId.CONSTANT);
@@ -553,6 +555,14 @@ public class CTokenMarker extends SourceTokenMarker {
         spin2Functions.put("lookupz", TokenId.FUNCTION);
         spin2Functions.put("lookdown", TokenId.FUNCTION);
         spin2Functions.put("lookdownz", TokenId.FUNCTION);
+
+        spin2Functions.put("taskspin", TokenId.FUNCTION);
+        spin2Functions.put("tasknext", TokenId.FUNCTION);
+        spin2Functions.put("taskstop", TokenId.FUNCTION);
+        spin2Functions.put("taskhalt", TokenId.FUNCTION);
+        spin2Functions.put("taskcont", TokenId.FUNCTION);
+        spin2Functions.put("taskchk", TokenId.FUNCTION);
+        spin2Functions.put("taskid", TokenId.FUNCTION);
 
         spin2Functions.put("abs", TokenId.FUNCTION);
         spin2Functions.put("sqrt", TokenId.FUNCTION);

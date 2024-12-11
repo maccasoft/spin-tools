@@ -97,8 +97,8 @@ public class Spin2Bytecode {
     public static final int bc_akpin = 0x3C;
     public static final int bc_rdpin = 0x3D;
     public static final int bc_rqpin = 0x3E;
+    public static final int bc_tasknext = 0x3F;
 
-    public static final int bc_unused_3F = 0x3F;
     public static final int bc_unused_40 = 0x40;
 
     public static final int bc_debug = 0x41;
@@ -398,6 +398,14 @@ public class Spin2Bytecode {
     public static final int bc_pinstart = 0xC4;
     public static final int bc_pinclear = 0xC6;
 
+    public static final int bc_taskspin = 0xC8;
+    public static final int bc_taskstop = 0xCA;
+    public static final int bc_taskhalt = 0xCC;
+    public static final int bc_taskcont = 0xCE;
+    public static final int bc_taskchk = 0xD0;
+    public static final int bc_taskid = 0xD2;
+    public static final int bc_top_return = 0xD4;
+
     public static class Descriptor {
         public byte[] code;
         public int parameters;
@@ -515,6 +523,13 @@ public class Spin2Bytecode {
         descriptors.put("AKPIN", new Descriptor(bc_akpin, -1, 1, 0));
         descriptors.put("RDPIN", new Descriptor(bc_rdpin, -1, 1, 1));
         descriptors.put("RQPIN", new Descriptor(bc_rqpin, -1, 1, 1));
+
+        descriptors.put("TASKNEXT", new Descriptor(bc_tasknext, -1, 0, 0));
+        descriptors.put("TASKSTOP", new Descriptor(bc_hub_bytecode, bc_taskstop, 1, 0));
+        descriptors.put("TASKHALT", new Descriptor(bc_hub_bytecode, bc_taskhalt, 1, 0));
+        descriptors.put("TASKCONT", new Descriptor(bc_hub_bytecode, bc_taskcont, 1, 0));
+        descriptors.put("TASKCHK", new Descriptor(bc_hub_bytecode, bc_taskchk, 1, 1));
+        descriptors.put("TASKID", new Descriptor(bc_hub_bytecode, bc_taskid, 0, 1));
     }
 
     public static Descriptor getDescriptor(String s) {
