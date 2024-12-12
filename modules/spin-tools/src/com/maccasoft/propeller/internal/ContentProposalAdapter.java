@@ -429,6 +429,7 @@ public class ContentProposalAdapter {
                 text = new StyledText(parent, SWT.MULTI | SWT.READ_ONLY | SWT.WRAP | SWT.NO_FOCUS | SWT.V_SCROLL);
                 text.setMargins(5, 5, 5, 5);
                 text.setCaret(null);
+                text.setDragDetect(false);
 
                 // Use the compact margins employed by PopupDialog.
                 GridData gd = new GridData(GridData.BEGINNING | GridData.FILL_BOTH);
@@ -441,10 +442,22 @@ public class ContentProposalAdapter {
 
                 // since SWT.NO_FOCUS is only a hint...
                 text.addFocusListener(new FocusAdapter() {
+
                     @Override
                     public void focusGained(FocusEvent event) {
-                        ContentProposalPopup.this.close();
+                        event.display.asyncExec(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                if (ContentProposalPopup.this.getShell().isDisposed()) {
+                                    return;
+                                }
+                                ContentProposalPopup.this.close();
+                            }
+
+                        });
                     }
+
                 });
                 return text;
             }
