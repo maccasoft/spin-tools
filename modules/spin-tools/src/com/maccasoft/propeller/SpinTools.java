@@ -138,8 +138,8 @@ public class SpinTools {
 
     StatusLine statusLine;
 
-    Menu runMenu;
     Process process;
+    MenuItem runMenuItem;
 
     MenuItem topObjectItem;
     MenuItem blockSelectionItem;
@@ -2830,7 +2830,11 @@ public class SpinTools {
 
         new MenuItem(menu, SWT.SEPARATOR);
 
-        createRunMenu(menu);
+        runMenuItem = new MenuItem(menu, SWT.CASCADE);
+        runMenuItem.setText("Run");
+        runMenuItem.setMenu(new Menu(parent.getParent(), SWT.DROP_DOWN));
+
+        populateRunMenu();
 
         new MenuItem(menu, SWT.SEPARATOR);
 
@@ -2875,25 +2879,17 @@ public class SpinTools {
         return menu;
     }
 
-    void createRunMenu(Menu parent) {
-        runMenu = new Menu(parent.getParent(), SWT.DROP_DOWN);
-
-        populateRunMenu();
-
-        MenuItem item = new MenuItem(parent, SWT.CASCADE);
-        item.setText("Run");
-        item.setMenu(runMenu);
-    }
-
     void populateRunMenu() {
-        MenuItem[] items = runMenu.getItems();
+        Menu menu = runMenuItem.getMenu();
+
+        MenuItem[] items = menu.getItems();
         for (int i = 0; i < items.length; i++) {
             items[i].dispose();
         }
 
         int i = 0;
         for (ExternalTool tool : preferences.getExternalTools()) {
-            MenuItem item = new MenuItem(runMenu, SWT.PUSH);
+            MenuItem item = new MenuItem(menu, SWT.PUSH);
             if (i < 9) {
                 item.setText(tool.getName() + "\tAlt+" + (char) ('1' + i));
                 item.setAccelerator(SWT.MOD3 + '1' + i);
@@ -2913,6 +2909,8 @@ public class SpinTools {
             });
             i++;
         }
+
+        runMenuItem.setEnabled(menu.getItemCount() != 0);
     }
 
     private void handleRunExternalTool(ExternalTool tool) {
