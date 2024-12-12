@@ -2959,14 +2959,19 @@ public class SpinTools {
                 break;
         }
 
+        File editorFile = editorTab.getFile();
+        if (editorFile == null) {
+            editorFile = new File(editorTab.getText()).getAbsoluteFile();
+        }
+
         List<String> cmd = new ArrayList<>();
         cmd.add(tool.getProgram());
 
         String arguments = tool.getArguments();
         if (arguments != null) {
-            String file = editorTab.getFile().getName();
+            String file = editorFile.getName();
             String fileName = file.lastIndexOf('.') != -1 ? file.substring(0, file.lastIndexOf('.')) : file;
-            String fileLoc = editorTab.getFile().getParentFile().getAbsolutePath();
+            String fileLoc = editorFile.getParentFile().getAbsolutePath();
 
             String cmdline = arguments.replace("${file}", file) //
                 .replace("${file.name}", fileName) //
@@ -2996,7 +3001,7 @@ public class SpinTools {
             consoleView.closeLogFile();
             consoleView.setEnabled(true);
 
-            runCommand(cmd, editorTab.getFile().getParentFile(), consoleView.getOutputStream());
+            runCommand(cmd, editorFile.getParentFile(), consoleView.getOutputStream());
         } catch (Exception e) {
             e.printStackTrace();
             MessageDialog.openError(shell, APP_TITLE, e.getMessage());
