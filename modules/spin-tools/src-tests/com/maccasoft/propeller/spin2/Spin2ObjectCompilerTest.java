@@ -7058,6 +7058,37 @@ class Spin2ObjectCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testPRxRegisterImmediate() throws Exception {
+        String text = ""
+            + "PUB main(a) | pixout[7]\n"
+            + "\n"
+            + "    setregs(@pixout, pr0, 7)\n"
+            + "    setregs(@pixout, #pr0, 7)\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       08 00 00 81    Method main @ $00008 (1 parameters, 0 returns)\n"
+            + "00004 00004       19 00 00 00    End\n"
+            + "' PUB main(a) | pixout[7]\n"
+            + "00008 00008       07             (stack size)\n"
+            + "'     setregs(@pixout, pr0, 7)\n"
+            + "00009 00009       D1 7F          VAR_ADDRESS DBASE+$00001 (short)\n"
+            + "0000B 0000B       B0 80          REG_READ +$1D8 (short)\n"
+            + "0000D 0000D       A8             CONSTANT (7)\n"
+            + "0000E 0000E       19 68          SETREGS\n"
+            + "'     setregs(@pixout, #pr0, 7)\n"
+            + "00010 00010       D1 7F          VAR_ADDRESS DBASE+$00001 (short)\n"
+            + "00012 00012       44 D8 01       CONSTANT ($1d8)\n"
+            + "00015 00015       A8             CONSTANT (7)\n"
+            + "00016 00016       19 68          SETREGS\n"
+            + "00018 00018       04             RETURN\n"
+            + "00019 00019       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }
