@@ -230,13 +230,14 @@ public class Preferences {
         public boolean lineInput;
         public boolean localEcho;
         public String[] history;
-        public int type;
+        public String type;
         public String font;
         public int baudRate;
 
         public TerminalPreferences() {
             lineInput = true;
             localEcho = false;
+            type = "pst";
             baudRate = 115200;
         }
 
@@ -978,11 +979,11 @@ public class Preferences {
         preferences.terminal.history = terminalHistory;
     }
 
-    public void setTerminalType(int n) {
-        preferences.terminal.type = n;
+    public void setTerminalType(String type) {
+        preferences.terminal.type = type;
     }
 
-    public int getTerminalType() {
+    public String getTerminalType() {
         return preferences.terminal.type;
     }
 

@@ -69,7 +69,7 @@ class SerialTerminalTest {
 
     @Test
     void testTTYWrite() {
-        SerialTerminal.TTY subject = instance.new TTY();
+        SerialTerminal.ANSI subject = instance.new ANSI();
         Assertions.assertEquals(0, instance.cx);
         Assertions.assertEquals(instance.topRow, instance.cy);
 

@@ -289,88 +289,20 @@ public class SerialTerminal {
         abstract void write(char c);
     }
 
-    class TTY extends TerminalEmulation {
+    class ANSI extends TerminalEmulation {
 
-        public TTY() {
-            foreground = colors[7];
-            background = colors[0];
-        }
-
-        @Override
-        public void write(char c) {
-            redraw(cx, cy, 1, 1);
-
-            switch (c) {
-                case 7:
-                    display.asyncExec(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            display.beep();
-                        }
-                    });
-                    break;
-
-                case 0x08:
-                    if (cx > 0) {
-                        cx--;
-                    }
-                    break;
-
-                case 0x09:
-                    cx = ((cx / 8) + 1) * 8;
-                    if (cx > screenWidth) {
-                        cx = 0;
-                    }
-                    break;
-
-                case 0x0A:
-                    cy++;
-                    if (cy >= screen.length) {
-                        scrollUp(1);
-                        cy--;
-                        redraw();
-                    }
-                    break;
-
-                case 0x0C:
-                    scrollUp(screenHeight);
-                    redraw();
-                    cx = 0;
-                    cy = screen.length - screenHeight;
-                    break;
-
-                case 0x0D:
-                    cx = 0;
-                    break;
-
-                default:
-                    if (cx >= screenWidth) {
-                        cx = 0;
-                        cy++;
-                        if (cy >= screen.length) {
-                            scrollUp(1);
-                            cy--;
-                            redraw();
-                        }
-                    }
-                    screen[cy][cx].set(c, foreground, background);
-                    redraw(cx, cy, 1, 1);
-                    cx++;
-                    break;
-            }
-
-            redraw(cx, cy, 1, 1);
-        }
-    }
-
-    class ANSI extends TTY {
+        static final String KEY = "ansi";
 
         int state = 0;
         int idx, argc, fg = 7, bg = 0;
         int[] args = new int[16];
         char prefix;
         int savedCx, savedCy;
+
+        public ANSI() {
+            foreground = colors[7];
+            background = colors[0];
+        }
 
         @Override
         public void write(char c) {
@@ -383,7 +315,7 @@ public class SerialTerminal {
             }
             switch (state) {
                 case 0:
-                    super.write(c);
+                    writeChar(c);
                     break;
 
                 case 1:
@@ -416,7 +348,7 @@ public class SerialTerminal {
                             state = 0;
                             break;
                         default:
-                            super.write(c);
+                            writeChar(c);
                             break;
                     }
                     break;
@@ -633,9 +565,77 @@ public class SerialTerminal {
             }
         }
 
+        void writeChar(char c) {
+            redraw(cx, cy, 1, 1);
+
+            switch (c) {
+                case 7:
+                    display.asyncExec(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            display.beep();
+                        }
+                    });
+                    break;
+
+                case 0x08:
+                    if (cx > 0) {
+                        cx--;
+                    }
+                    break;
+
+                case 0x09:
+                    cx = ((cx / 8) + 1) * 8;
+                    if (cx > screenWidth) {
+                        cx = 0;
+                    }
+                    break;
+
+                case 0x0A:
+                    cy++;
+                    if (cy >= screen.length) {
+                        scrollUp(1);
+                        cy--;
+                        redraw();
+                    }
+                    break;
+
+                case 0x0C:
+                    scrollUp(screenHeight);
+                    redraw();
+                    cx = 0;
+                    cy = screen.length - screenHeight;
+                    break;
+
+                case 0x0D:
+                    cx = 0;
+                    break;
+
+                default:
+                    if (cx >= screenWidth) {
+                        cx = 0;
+                        cy++;
+                        if (cy >= screen.length) {
+                            scrollUp(1);
+                            cy--;
+                            redraw();
+                        }
+                    }
+                    screen[cy][cx].set(c, foreground, background);
+                    redraw(cx, cy, 1, 1);
+                    cx++;
+                    break;
+            }
+
+            redraw(cx, cy, 1, 1);
+        }
+
     }
 
     class ParallaxSerialTerminal extends TerminalEmulation {
+
+        static final String KEY = "pst";
 
         int state = 0;
         int cmd, p0, p1;
@@ -786,6 +786,25 @@ public class SerialTerminal {
         }
     }
 
+    SelectionAdapter terminalTypeSelectionListener = new SelectionAdapter() {
+
+        @Override
+        public void widgetSelected(SelectionEvent e) {
+            String type = "";
+            switch (terminalType.getSelectionIndex()) {
+                case 0:
+                    type = ANSI.KEY;
+                    break;
+                case 1:
+                    type = ParallaxSerialTerminal.KEY;
+                    break;
+            }
+            setTerminalType(type);
+            preferences.setTerminalType(type);
+            setFocus();
+        }
+    };
+
     SelectionAdapter baudRateSelectionListener = new SelectionAdapter() {
 
         @Override
@@ -866,9 +885,20 @@ public class SerialTerminal {
         serialBaudRate = preferences.getTerminalBaudRate();
         localEcho = preferences.getTerminalLocalEcho();
 
-        cursorState = CURSOR_DISPLAY | CURSOR_ON | CURSOR_FLASH | CURSOR_ULINE;
+        switch (preferences.getTerminalType()) {
+            case ParallaxSerialTerminal.KEY:
+                if (!(emulation instanceof ParallaxSerialTerminal)) {
+                    emulation = new ParallaxSerialTerminal();
+                }
+                break;
+            default:
+                if (!(emulation instanceof ANSI)) {
+                    emulation = new ANSI();
+                }
+                break;
+        }
 
-        setTerminalType(preferences.getTerminalType());
+        cursorState = CURSOR_DISPLAY | CURSOR_ON | CURSOR_FLASH | CURSOR_ULINE;
     }
 
     public void open() {
@@ -1320,7 +1350,6 @@ public class SerialTerminal {
         terminalType = new Combo(container, SWT.DROP_DOWN | SWT.READ_ONLY);
         terminalType.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
         terminalType.setItems(new String[] {
-            "TTY",
             "ANSI / VT100",
             "Parallax Serial Terminal"
         });
@@ -1367,6 +1396,7 @@ public class SerialTerminal {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
+                setTerminalType(preferences.getTerminalType());
                 try {
                     if (comPort != null) {
                         comPort.hwreset();
@@ -1429,39 +1459,30 @@ public class SerialTerminal {
             terminalType.select(2);
         }
         else if (emulation instanceof ANSI) {
-            terminalType.select(1);
-        }
-        else {
             terminalType.select(0);
         }
-        terminalType.addSelectionListener(new SelectionAdapter() {
-
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                setTerminalType(terminalType.getSelectionIndex());
-                preferences.setTerminalType(terminalType.getSelectionIndex());
-                setFocus();
-            }
-        });
+        terminalType.addSelectionListener(terminalTypeSelectionListener);
     }
 
-    void setTerminalType(int type) {
-        switch (type) {
-            case 1:
-                if (!(emulation instanceof ANSI)) {
-                    emulation = new ANSI();
-                }
-                break;
-            case 2:
-                if (!(emulation instanceof ParallaxSerialTerminal)) {
-                    emulation = new ParallaxSerialTerminal();
-                }
-                break;
-            default:
-                if (!(emulation instanceof TTY)) {
-                    emulation = new TTY();
-                }
-                break;
+    void setTerminalType(String type) {
+        terminalType.removeSelectionListener(terminalTypeSelectionListener);
+        try {
+            switch (type) {
+                case ParallaxSerialTerminal.KEY:
+                    if (!(emulation instanceof ParallaxSerialTerminal)) {
+                        emulation = new ParallaxSerialTerminal();
+                    }
+                    terminalType.select(1);
+                    break;
+                default:
+                    if (!(emulation instanceof ANSI)) {
+                        emulation = new ANSI();
+                    }
+                    terminalType.select(0);
+                    break;
+            }
+        } finally {
+            terminalType.addSelectionListener(terminalTypeSelectionListener);
         }
     }
 
@@ -1560,6 +1581,7 @@ public class SerialTerminal {
             e.printStackTrace();
         }
         this.comPort = serialPort;
+        setTerminalType(preferences.getTerminalType());
         updateButtonsEnablement();
     }
 
@@ -1619,8 +1641,8 @@ public class SerialTerminal {
     }
 
     public void startMonitor() {
-        setTerminalType(1);
-        terminalType.select(1);
+        setTerminalType(ANSI.KEY);
+        terminalType.select(0);
 
         try {
             comPort.hwreset();
@@ -1633,8 +1655,8 @@ public class SerialTerminal {
     }
 
     public void startTAQOZ() {
-        setTerminalType(1);
-        terminalType.select(1);
+        setTerminalType(ANSI.KEY);
+        terminalType.select(0);
 
         try {
             comPort.hwreset();
