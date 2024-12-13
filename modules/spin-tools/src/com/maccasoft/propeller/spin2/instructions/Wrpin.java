@@ -66,15 +66,18 @@ public class Wrpin extends Spin2PAsmInstructionFactory {
             value = c.setValue(value, 0);
             value = l.setBoolean(value, dst.isLiteral());
             value = i.setBoolean(value, src.isLiteral());
+
             if (!dst.isLongLiteral() && dst.getInteger() > 0x1FF) {
                 throw new CompilerException("Destination register/constant cannot exceed $1FF", dst.getExpression().getData());
             }
             value = d.setValue(value, dst.getInteger());
-            if (src.getInteger() > 0x1FF) {
+
+            if (!src.isLongLiteral() && src.getInteger() > 0x1FF) {
                 throw new CompilerException("Source register/constant cannot exceed $1FF", src.getExpression().getData());
             }
             value = s.setValue(value, src.getInteger());
-            if (dst.isLongLiteral() && src.isLongLiteral()) {
+
+            if (!dst.isLongLiteral() && dst.getInteger() > 0x1FF) {
                 return getBytes(encodeAugd(condition, dst.getInteger()), encodeAugs(condition, src.getInteger()), value);
             }
             if (dst.isLongLiteral()) {
