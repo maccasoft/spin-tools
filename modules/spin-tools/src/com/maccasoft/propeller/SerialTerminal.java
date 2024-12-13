@@ -20,7 +20,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.UnaryOperator;
 
 import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.resource.StringConverter;
 import org.eclipse.swt.SWT;
@@ -109,12 +108,8 @@ public class SerialTerminal {
 
     Combo terminalType;
     Combo baudRate;
-    Button dtr;
-    Button dsr;
-    Button rts;
-    Button cts;
-
     Button clear;
+    Button reset;
     Button monitor;
     Button taqoz;
 
@@ -278,23 +273,6 @@ public class SerialTerminal {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-            }
-            if (comPortEvent.isDSR() || comPortEvent.isCTS()) {
-                display.syncExec(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        if (!canvas.isDisposed()) {
-                            try {
-                                dsr.setSelection(comPort.isDSR());
-                                cts.setSelection(comPort.isCTS());
-                            } catch (ComPortException e) {
-                                // Do nothing
-                            }
-                        }
-                    }
-
-                });
             }
         }
 
@@ -995,7 +973,7 @@ public class SerialTerminal {
             gridData.heightHint = rect.height * characterHeight;
         }
         else {
-            gridData.widthHint = 80 * characterWidth;
+            gridData.widthHint = 100 * characterWidth;
             gridData.heightHint = 30 * characterHeight;
         }
         canvas.setLayoutData(gridData);
@@ -1123,19 +1101,19 @@ public class SerialTerminal {
                         e.gc.setBackground(e.gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
                         e.gc.fillRectangle(x, y, characterWidth, h);
                     }
+                }
 
-                    if (selectionRectangle != null && selectionRectangle.width != 0 && selectionRectangle.height != 0) {
-                        int x = selectionRectangle.x * characterWidth;
-                        int y = (selectionRectangle.y - topRow) * characterHeight;
-                        int width = selectionRectangle.width * characterWidth - 1;
-                        int height = selectionRectangle.height * characterHeight - 1;
-                        e.gc.setAlpha(128);
-                        e.gc.setBackground(e.gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
-                        e.gc.fillRectangle(x, y, width, height);
-                        e.gc.setAlpha(255);
-                        e.gc.setForeground(e.gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
-                        e.gc.drawRectangle(x, y, width, height);
-                    }
+                if (selectionRectangle != null && selectionRectangle.width != 0 && selectionRectangle.height != 0) {
+                    int x = selectionRectangle.x * characterWidth;
+                    int y = (selectionRectangle.y - topRow) * characterHeight;
+                    int width = selectionRectangle.width * characterWidth - 1;
+                    int height = selectionRectangle.height * characterHeight - 1;
+                    e.gc.setAlpha(128);
+                    e.gc.setBackground(e.gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
+                    e.gc.fillRectangle(x, y, width, height);
+                    e.gc.setAlpha(255);
+                    e.gc.setForeground(e.gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
+                    e.gc.drawRectangle(x, y, width, height);
                 }
             }
         });
@@ -1355,63 +1333,6 @@ public class SerialTerminal {
         }
         baudRate.setItems(items);
 
-        dtr = new Button(container, SWT.CHECK);
-        dtr.setText("DTR");
-        dtr.addSelectionListener(new SelectionAdapter() {
-
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                try {
-                    comPort.setDTR(dtr.getSelection());
-                } catch (ComPortException e1) {
-                    e1.printStackTrace();
-                }
-                setFocus();
-            }
-        });
-        dsr = new Button(container, SWT.CHECK);
-        dsr.setText("DSR");
-        dsr.addSelectionListener(new SelectionAdapter() {
-
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                try {
-                    dsr.setSelection(comPort.isDSR());
-                } catch (ComPortException e1) {
-                    // Do nothing
-                }
-                setFocus();
-            }
-        });
-        rts = new Button(container, SWT.CHECK);
-        rts.setText("RTS");
-        rts.addSelectionListener(new SelectionAdapter() {
-
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                try {
-                    comPort.setRTS(rts.getSelection());
-                } catch (ComPortException e1) {
-                    e1.printStackTrace();
-                }
-                setFocus();
-            }
-        });
-        cts = new Button(container, SWT.CHECK);
-        cts.setText("CTS");
-        cts.addSelectionListener(new SelectionAdapter() {
-
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                try {
-                    cts.setSelection(comPort.isCTS());
-                } catch (ComPortException e1) {
-                    // Do nothing
-                }
-                setFocus();
-            }
-        });
-
         Label label = new Label(container, SWT.NONE);
         label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
@@ -1422,9 +1343,7 @@ public class SerialTerminal {
         clear = new Button(container, SWT.PUSH);
         clear.setText("Clear");
         GridData data = new GridData(GridData.HORIZONTAL_ALIGN_FILL);
-        data.widthHint = Math.max(Dialog.convertHorizontalDLUsToPixels(fontMetrics,
-            IDialogConstants.BUTTON_WIDTH),
-            clear.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
+        data.widthHint = Math.max(Dialog.convertHorizontalDLUsToPixels(fontMetrics, 50), clear.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
         clear.setLayoutData(data);
         clear.addSelectionListener(new SelectionAdapter() {
 
@@ -1439,12 +1358,30 @@ public class SerialTerminal {
             }
         });
 
+        reset = new Button(container, SWT.PUSH);
+        reset.setText("Reset");
+        data = new GridData(GridData.HORIZONTAL_ALIGN_FILL);
+        data.widthHint = Math.max(Dialog.convertHorizontalDLUsToPixels(fontMetrics, 50), reset.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
+        reset.setLayoutData(data);
+        reset.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                try {
+                    if (comPort != null) {
+                        comPort.hwreset();
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+                setFocus();
+            }
+        });
+
         monitor = new Button(container, SWT.PUSH);
         monitor.setText("Monitor");
         data = new GridData(GridData.HORIZONTAL_ALIGN_FILL);
-        data.widthHint = Math.max(Dialog.convertHorizontalDLUsToPixels(fontMetrics,
-            IDialogConstants.BUTTON_WIDTH),
-            monitor.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
+        data.widthHint = Math.max(Dialog.convertHorizontalDLUsToPixels(fontMetrics, 50), monitor.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
         monitor.setLayoutData(data);
         monitor.addSelectionListener(new SelectionAdapter() {
 
@@ -1463,9 +1400,7 @@ public class SerialTerminal {
         taqoz = new Button(container, SWT.PUSH);
         taqoz.setText("TAQOZ");
         data = new GridData(GridData.HORIZONTAL_ALIGN_FILL);
-        data.widthHint = Math.max(Dialog.convertHorizontalDLUsToPixels(fontMetrics,
-            IDialogConstants.BUTTON_WIDTH),
-            taqoz.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
+        data.widthHint = Math.max(Dialog.convertHorizontalDLUsToPixels(fontMetrics, 50), taqoz.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
         taqoz.setLayoutData(data);
         taqoz.addSelectionListener(new SelectionAdapter() {
 
@@ -1617,8 +1552,6 @@ public class SerialTerminal {
                     SerialPort.DATABITS_8,
                     SerialPort.STOPBITS_1,
                     SerialPort.PARITY_NONE);
-                dsr.setSelection(serialPort.isDSR());
-                cts.setSelection(serialPort.isCTS());
                 if (this.comPort != serialPort) {
                     serialPort.setEventListener(serialEventListener);
                 }
@@ -1636,12 +1569,8 @@ public class SerialTerminal {
         terminalType.setEnabled(comPort != null && comPort.isOpened());
         baudRate.setEnabled(comPort != null && comPort.isOpened());
 
-        dtr.setEnabled(comPort != null && comPort.isOpened());
-        dsr.setEnabled(comPort != null && comPort.isOpened());
-        rts.setEnabled(comPort != null && comPort.isOpened());
-        cts.setEnabled(comPort != null && comPort.isOpened());
-
         clear.setEnabled(comPort != null && comPort.isOpened());
+        reset.setEnabled(comPort != null && comPort.isOpened());
         monitor.setEnabled(comPort != null && comPort.isOpened());
         taqoz.setEnabled(comPort != null && comPort.isOpened());
     }
@@ -1791,20 +1720,10 @@ public class SerialTerminal {
         terminalType.setBackground(listBackground);
         baudRate.setBackground(listBackground);
         baudRate.setForeground(listForeground);
-        //dtr.setBackground(widgetBackground);
-        dtr.setForeground(widgetForeground);
-        //dsr.setBackground(widgetBackground);
-        dsr.setForeground(widgetForeground);
-        //rts.setBackground(widgetBackground);
-        rts.setForeground(widgetForeground);
-        //cts.setBackground(widgetBackground);
-        cts.setForeground(widgetForeground);
 
-        clear.setBackground(widgetBackground);
         clear.setForeground(widgetForeground);
-        monitor.setBackground(widgetBackground);
+        reset.setForeground(widgetForeground);
         monitor.setForeground(widgetForeground);
-        taqoz.setBackground(widgetBackground);
         taqoz.setForeground(widgetForeground);
     }
 

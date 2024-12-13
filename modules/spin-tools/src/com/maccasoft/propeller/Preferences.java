@@ -226,10 +226,6 @@ public class Preferences {
     @JsonInclude(Include.NON_DEFAULT)
     public static class TerminalPreferences {
 
-        public TerminalPreferences() {
-            baudRate = 115200;
-        }
-
         public Bounds window;
         public boolean lineInput;
         public boolean localEcho;
@@ -237,6 +233,12 @@ public class Preferences {
         public int type;
         public String font;
         public int baudRate;
+
+        public TerminalPreferences() {
+            lineInput = true;
+            localEcho = false;
+            baudRate = 115200;
+        }
 
         @Override
         public int hashCode() {
