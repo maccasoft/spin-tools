@@ -309,6 +309,8 @@ public class SpinCompiler {
             if (binaryData != null && (cmd.hasOption('r') || cmd.hasOption('f'))) {
                 ComPort serialPort = null;
 
+                println("Uploading...");
+
                 if (cmd.hasOption("p")) {
                     String portName = cmd.getOptionValue("p");
                     if (portName != null) {
@@ -341,8 +343,6 @@ public class SpinCompiler {
                     }
                 }
 
-                println("Uploading...");
-
                 AtomicBoolean error = new AtomicBoolean();
 
                 int flags = 0;
@@ -356,7 +356,7 @@ public class SpinCompiler {
 
                             @Override
                             protected void bufferUpload(int type, byte[] binaryImage, String text) throws ComPortException {
-                                println(String.format("Propeller %d on %s", 1, getComPort().getInetAddr().getHostAddress()));
+                                println(String.format("Propeller %d on port %s", 1, comPort.getPortName()));
                                 print("Loading " + text + " to ");
                                 switch (type) {
                                     case Propeller1Loader.DOWNLOAD_EEPROM:
@@ -387,16 +387,8 @@ public class SpinCompiler {
                         loader = new Propeller1Loader((SerialComPort) serialPort, true) {
 
                             @Override
-                            protected int hwfind() throws ComPortException {
-                                int version = super.hwfind();
-                                if (version != 0) {
-                                    println(String.format("Propeller %d on port %s", version, getPortName()));
-                                }
-                                return version;
-                            }
-
-                            @Override
                             protected void bufferUpload(int type, byte[] binaryImage, String text) throws ComPortException {
+                                println(String.format("Propeller %d on port %s", 1, comPort.getPortName()));
                                 print("Loading " + text + " to ");
                                 switch (type) {
                                     case DOWNLOAD_EEPROM:
@@ -450,12 +442,18 @@ public class SpinCompiler {
                     loader = new Propeller2Loader(serialPort, true) {
 
                         @Override
-                        protected int hwfind() throws ComPortException {
-                            int version = super.hwfind();
-                            if (version != 0) {
-                                println(String.format("Propeller %d on port %s", version, getPortName()));
+                        protected void bufferUpload(int type, byte[] binaryImage, String text) throws ComPortException {
+                            println(String.format("Propeller %d on port %s", 2, comPort.getPortName()));
+                            print("Loading " + text + " to ");
+                            switch (type) {
+                                case Propeller2Loader.DOWNLOAD_RUN_FLASH:
+                                    print("Flash via ");
+                                    // fall through
+                                case Propeller2Loader.DOWNLOAD_RUN_RAM:
+                                    println("hub memory");
+                                    break;
                             }
-                            return version;
+                            super.bufferUpload(type, binaryImage, text);
                         }
 
                         @Override
@@ -479,7 +477,7 @@ public class SpinCompiler {
                     };
                 }
 
-                loader.upload(binaryData, flags);
+                serialPort = loader.upload(binaryData, flags);
 
                 println("Done.");
 

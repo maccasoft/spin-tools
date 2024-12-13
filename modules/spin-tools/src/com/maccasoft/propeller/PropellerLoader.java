@@ -26,7 +26,14 @@ public abstract class PropellerLoader {
         this.listener = listener;
     }
 
-    public abstract ComPort detect();
+    public void setListener(PropellerLoaderListener listener) {
+        this.listener = listener;
+    }
 
-    public abstract void upload(byte[] binaryImage, int type) throws ComPortException;
+    public ComPort upload(byte[] binaryImage, int type) throws ComPortException {
+        return upload(binaryImage, type, false);
+    }
+
+    public abstract ComPort upload(byte[] binaryImage, int type, boolean discoverDevice) throws ComPortException;
+
 }

@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Stack;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -3262,6 +3263,7 @@ public class SpinTools {
 
     private ComPort doUpload(SpinObject obj, boolean writeToFlash, ComPort comPort, boolean serialPortShared) {
         Shell activeShell = Display.getDefault().getActiveShell();
+        AtomicReference<ComPort> port = new AtomicReference<>(comPort);
 
         ProgressMonitorDialog dlg = new ProgressMonitorDialog(activeShell);
 
@@ -3269,8 +3271,43 @@ public class SpinTools {
 
             @Override
             public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+                int flags;
+                PropellerLoader loader;
+
                 try {
-                    PropellerLoaderListener listener = new PropellerLoaderListener() {
+                    monitor.beginTask("Upload to " + comPort.getDescription(), IProgressMonitor.UNKNOWN);
+
+                    if (obj instanceof Spin1Object) {
+                        flags = writeToFlash ? Propeller1Loader.DOWNLOAD_RUN_EEPROM : Propeller1Loader.DOWNLOAD_RUN_BINARY;
+                        if (comPort instanceof NetworkComPort) {
+                            loader = new Propeller1NetworkLoader((NetworkComPort) comPort, serialPortShared);
+                        }
+                        else {
+                            loader = new Propeller1Loader((SerialComPort) comPort, serialPortShared) {
+
+                                @Override
+                                protected void bufferUpload(int type, byte[] binaryImage, String text) throws ComPortException {
+                                    monitor.setTaskName("Upload to " + comPort.getDescription());
+                                    super.bufferUpload(type, binaryImage, text);
+                                }
+
+                            };
+                        }
+                    }
+                    else {
+                        loader = new Propeller2Loader(comPort, serialPortShared) {
+
+                            @Override
+                            protected void bufferUpload(int type, byte[] binaryImage, String text) throws ComPortException {
+                                monitor.setTaskName("Upload to " + comPort.getDescription());
+                                super.bufferUpload(type, binaryImage, text);
+                            }
+
+                        };
+                        flags = writeToFlash ? Propeller2Loader.DOWNLOAD_RUN_FLASH : Propeller2Loader.DOWNLOAD_RUN_RAM;
+                    }
+
+                    loader.setListener(new PropellerLoaderListener() {
 
                         @Override
                         public void bufferUpload(int type, byte[] binaryImage, String text) {
@@ -3292,26 +3329,7 @@ public class SpinTools {
                             monitor.subTask("Verifying EEPROM ... ");
                         }
 
-                    };
-
-                    int flags;
-                    PropellerLoader loader;
-
-                    if (obj instanceof Spin1Object) {
-                        flags = writeToFlash ? Propeller1Loader.DOWNLOAD_RUN_EEPROM : Propeller1Loader.DOWNLOAD_RUN_BINARY;
-                        if (comPort instanceof NetworkComPort) {
-                            loader = new Propeller1NetworkLoader((NetworkComPort) comPort, serialPortShared, listener);
-                        }
-                        else {
-                            loader = new Propeller1Loader((SerialComPort) comPort, serialPortShared, listener);
-                        }
-                    }
-                    else {
-                        loader = new Propeller2Loader(comPort, serialPortShared, listener);
-                        flags = writeToFlash ? Propeller2Loader.DOWNLOAD_RUN_FLASH : Propeller2Loader.DOWNLOAD_RUN_RAM;
-                    }
-
-                    monitor.beginTask("Upload to " + comPort.getDescription(), IProgressMonitor.UNKNOWN);
+                    });
 
                     Display.getDefault().syncExec(new Runnable() {
 
@@ -3322,7 +3340,7 @@ public class SpinTools {
                     });
 
                     byte[] image = obj.getBinary();
-                    loader.upload(image, flags);
+                    port.set(loader.upload(image, flags, true));
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -3352,7 +3370,7 @@ public class SpinTools {
             e.printStackTrace();
         }
 
-        return comPort;
+        return port.get();
     }
 
     private void handleListDevices() {

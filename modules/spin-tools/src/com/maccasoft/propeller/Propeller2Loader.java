@@ -57,10 +57,6 @@ public class Propeller2Loader extends PropellerLoader {
         return comPort.getPortName();
     }
 
-    public ComPort getSerialPort() {
-        return comPort;
-    }
-
     public int getPortBaudRate() {
         return portBaudRate;
     }
@@ -70,95 +66,9 @@ public class Propeller2Loader extends PropellerLoader {
     }
 
     @Override
-    public ComPort detect() {
-        if (comPort != null) {
-            try {
-                if (find() != 0) {
-                    return comPort;
-                }
-            } catch (Exception e) {
-                // Do nothing
-            }
-        }
-
-        String[] portNames = SerialPortList.getPortNames();
-        for (int i = 0; i < portNames.length; i++) {
-            if (comPort != null && portNames[i].equals(comPort.getPortName())) {
-                continue;
-            }
-            comPort = new SerialComPort(portNames[i]);
-            try {
-                if (find() != 0) {
-                    return comPort;
-                }
-            } catch (Exception e) {
-                // Do nothing
-            }
-            if (shared) {
-                try {
-                    comPort.closePort();
-                } catch (Exception e) {
-                    // Do nothing
-                }
-            }
-        }
-
-        return null;
-    }
-
-    public int find() throws ComPortException {
+    public ComPort upload(byte[] binaryImage, int type, boolean discoverDevice) throws ComPortException {
         int version = 0;
 
-        if (!comPort.isOpened()) {
-            comPort.openPort();
-        }
-        comPort.setParams(
-            portBaudRate,
-            SerialPort.DATABITS_8,
-            SerialPort.STOPBITS_1,
-            SerialPort.PARITY_NONE);
-
-        try {
-            comPort.hwreset();
-            version = hwfind();
-        } finally {
-            if (!shared) {
-                comPort.closePort();
-            }
-        }
-
-        return version;
-    }
-
-    protected int hwfind() throws ComPortException {
-
-        for (int i = 0; i < 3; i++) {
-            comPort.hwreset();
-            comPort.writeString("> \r");
-            comPort.writeString("> Prop_Chk 0 0 0 0\r");
-
-            try {
-                String result = new String();
-                while (result.length() < 11 || !result.endsWith("\r\n")) {
-                    int b = comPort.readByteWithTimeout(200);
-                    if (b == -1) {
-                        break;
-                    }
-                    result += (char) b;
-                }
-                if (result.startsWith("\r\nProp_Ver ")) {
-                    return 2;
-                }
-            } catch (ComPortException e) {
-                return 0;
-            }
-        }
-
-        return 0;
-    }
-
-    @Override
-    public void upload(byte[] binaryImage, int type) throws ComPortException {
         if (comPort instanceof NetworkComPort) {
             boolean valid = resolveNetworkPort((NetworkComPort) comPort);
             if (!valid) {
@@ -166,25 +76,40 @@ public class Propeller2Loader extends PropellerLoader {
             }
         }
 
-        if (!comPort.isOpened()) {
-            comPort.openPort();
-        }
-        comPort.setParams(
-            portBaudRate,
-            SerialPort.DATABITS_8,
-            SerialPort.STOPBITS_1,
-            SerialPort.PARITY_NONE);
-
         try {
-            if (hwfind() == 0) {
-                throw new ComPortException("No propeller chip on port " + comPort.getPortName());
+            if (comPort != null) {
+                if (!comPort.isOpened()) {
+                    comPort.openPort();
+                }
+                comPort.setParams(
+                    portBaudRate,
+                    SerialPort.DATABITS_8,
+                    SerialPort.STOPBITS_1,
+                    SerialPort.PARITY_NONE);
+
+                version = hwfind(comPort);
+            }
+
+            if (version == 0) {
+                if ((comPort instanceof NetworkComPort) || (comPort != null && !discoverDevice)) {
+                    throw new ComPortException("No propeller chip on port " + comPort.getPortName());
+                }
+                SerialComPort discoveredComPort = discover();
+                if (discoveredComPort == null) {
+                    throw new ComPortException("No propeller chip found");
+                }
+                if (comPort != null) {
+                    comPort.closePort();
+                }
+                comPort = discoveredComPort;
             }
             bufferUpload(type, binaryImage, "binary image");
         } finally {
-            if (!shared) {
+            if (comPort != null && !shared) {
                 comPort.closePort();
             }
         }
+        return comPort;
     }
 
     boolean resolveNetworkPort(NetworkComPort comPort) throws ComPortException {
@@ -228,6 +153,72 @@ public class Propeller2Loader extends PropellerLoader {
         }
 
         return valid;
+    }
+
+    protected SerialComPort discover() {
+        String[] portNames = SerialPortList.getPortNames();
+
+        for (int i = 0; i < portNames.length; i++) {
+            if (comPort != null && portNames[i].equals(comPort.getPortName())) {
+                continue;
+            }
+            SerialComPort serialComPort = new SerialComPort(portNames[i]);
+            try {
+                serialComPort.openPort();
+                try {
+                    serialComPort.setParams(
+                        portBaudRate,
+                        SerialPort.DATABITS_8,
+                        SerialPort.STOPBITS_1,
+                        SerialPort.PARITY_NONE);
+
+                    if (hwfind(serialComPort) != 0) {
+                        return serialComPort;
+                    }
+
+                } catch (Exception e) {
+                    // Do nothing
+                }
+                serialComPort.closePort();
+
+            } catch (Exception e) {
+                // Do nothing
+            }
+        }
+
+        return null;
+    }
+
+    protected int hwfind(ComPort comPort) throws ComPortException {
+        int attempts = (comPort instanceof NetworkComPort) ? 3 : 1;
+
+        do {
+            comPort.hwreset();
+            comPort.writeString("> \r");
+            comPort.writeString("> Prop_Chk 0 0 0 0\r");
+
+            try {
+                String result = new String();
+                while (result.length() < 11 || !result.endsWith("\r\n")) {
+                    int b = comPort.readByteWithTimeout(200);
+                    if (b == -1) {
+                        break;
+                    }
+                    result += (char) b;
+                }
+                if (result.startsWith("\r\nProp_Ver ")) {
+                    return 2;
+                }
+
+                Thread.sleep(100);
+            } catch (ComPortException e) {
+                return 0;
+            } catch (Exception e) {
+                // Do nothing
+            }
+        } while (--attempts > 0);
+
+        return 0;
     }
 
     protected void bufferUpload(int type, byte[] binaryImage, String text) throws ComPortException {

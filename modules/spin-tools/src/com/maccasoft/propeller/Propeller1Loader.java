@@ -49,69 +49,84 @@ public class Propeller1Loader extends PropellerLoader {
         return comPort.getPortName();
     }
 
-    public SerialComPort getSerialPort() {
-        return comPort;
-    }
-
     @Override
-    public ComPort detect() {
-        if (comPort != null) {
-            try {
-                if (find() != 0) {
-                    return comPort;
-                }
-            } catch (Exception e) {
-                // Do nothing
-            }
-        }
-
-        String[] portNames = SerialPortList.getPortNames();
-        for (int i = 0; i < portNames.length; i++) {
-            if (comPort != null && portNames[i].equals(comPort.getPortName())) {
-                continue;
-            }
-            comPort = new SerialComPort(portNames[i]);
-            try {
-                if (find() != 0) {
-                    return comPort;
-                }
-            } catch (Exception e) {
-                // Do nothing
-            }
-            if (shared) {
-                try {
-                    comPort.closePort();
-                } catch (Exception e) {
-                    // Do nothing
-                }
-            }
-        }
-
-        return null;
-    }
-
-    public int find() throws Exception {
+    public ComPort upload(byte[] binaryImage, int type, boolean discoverDevice) throws ComPortException {
         int version = 0;
 
-        if (!comPort.isOpened()) {
-            comPort.openPort();
-        }
-        comPort.setParams(
-            SerialPort.BAUDRATE_115200,
-            SerialPort.DATABITS_8,
-            SerialPort.STOPBITS_1,
-            SerialPort.PARITY_NONE);
-
         try {
-            hwreset();
-            version = hwfind();
+            if (comPort != null) {
+                if (!comPort.isOpened()) {
+                    comPort.openPort();
+                }
+                comPort.setParams(
+                    SerialPort.BAUDRATE_115200,
+                    SerialPort.DATABITS_8,
+                    SerialPort.STOPBITS_1,
+                    SerialPort.PARITY_NONE);
+
+                hwreset();
+                version = hwfind();
+            }
+            if (version == 0) {
+                if (comPort != null && !discoverDevice) {
+                    throw new ComPortException("No propeller chip on port " + comPort.getPortName());
+                }
+                SerialComPort discoveredComPort = discover();
+                if (discoveredComPort == null) {
+                    throw new ComPortException("No propeller chip found");
+                }
+                if (comPort != null) {
+                    comPort.closePort();
+                }
+                comPort = discoveredComPort;
+            }
+            bufferUpload(type, binaryImage, "binary image");
         } finally {
-            if (!shared) {
+            if (comPort != null && !shared) {
                 comPort.closePort();
             }
         }
 
-        return version;
+        return comPort;
+    }
+
+    protected SerialComPort discover() {
+        SerialComPort currentComPort = comPort;
+        String[] portNames = SerialPortList.getPortNames();
+
+        for (int i = 0; i < portNames.length; i++) {
+            if (comPort != null && portNames[i].equals(comPort.getPortName())) {
+                continue;
+            }
+            SerialComPort serialComPort = new SerialComPort(portNames[i]);
+            try {
+                serialComPort.openPort();
+                serialComPort.setParams(
+                    SerialPort.BAUDRATE_115200,
+                    SerialPort.DATABITS_8,
+                    SerialPort.STOPBITS_1,
+                    SerialPort.PARITY_NONE);
+
+                try {
+                    comPort = serialComPort;
+                    hwreset();
+                    if (hwfind() != 0) {
+                        comPort = currentComPort;
+                        return serialComPort;
+                    }
+                } catch (Exception e) {
+                    // Do nothing
+                }
+                serialComPort.closePort();
+
+            } catch (Exception e) {
+                // Do nothing
+            }
+        }
+
+        comPort = currentComPort;
+
+        return null;
     }
 
     void hwreset() {
@@ -237,30 +252,6 @@ public class Propeller1Loader extends PropellerLoader {
             return rx & 1;
         }
         return -1;
-    }
-
-    @Override
-    public void upload(byte[] binaryImage, int type) throws ComPortException {
-        if (!comPort.isOpened()) {
-            comPort.openPort();
-        }
-        comPort.setParams(
-            SerialPort.BAUDRATE_115200,
-            SerialPort.DATABITS_8,
-            SerialPort.STOPBITS_1,
-            SerialPort.PARITY_NONE);
-
-        try {
-            hwreset();
-            if (hwfind() == 0) {
-                throw new ComPortException("No propeller chip on port " + comPort.getPortName());
-            }
-            bufferUpload(type, binaryImage, "binary image");
-        } finally {
-            if (!shared) {
-                comPort.closePort();
-            }
-        }
     }
 
     protected void bufferUpload(int type, byte[] binaryImage, String text) throws ComPortException {

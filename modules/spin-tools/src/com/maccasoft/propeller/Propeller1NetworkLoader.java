@@ -68,11 +68,6 @@ public class Propeller1NetworkLoader extends PropellerLoader {
         this.shared = shared;
     }
 
-    public NetworkComPort getComPort() {
-        return comPort;
-    }
-
-    @Override
     public ComPort detect() {
         if (comPort != null) {
             try {
@@ -109,7 +104,7 @@ public class Propeller1NetworkLoader extends PropellerLoader {
     }
 
     @Override
-    public void upload(byte[] binaryImage, int type) throws ComPortException {
+    public ComPort upload(byte[] binaryImage, int type, boolean discoverDevice) throws ComPortException {
         boolean valid = resolveNetworkPort(comPort);
         if (!valid) {
             throw new ComPortException("Device " + comPort.getPortName() + " not found");
@@ -126,6 +121,8 @@ public class Propeller1NetworkLoader extends PropellerLoader {
                 comPort.closePort();
             }
         }
+
+        return comPort;
     }
 
     boolean resolveNetworkPort(NetworkComPort comPort) throws ComPortException {
