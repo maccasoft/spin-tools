@@ -250,7 +250,7 @@ public class SourceEditor {
     Rectangle popupMouseBounds;
     Point mousePosition;
 
-    boolean hoverButtonDown;
+    boolean mouseButton1;
     boolean hoverHighlight;
     NavigationTarget hoverTarget;
 
@@ -431,10 +431,12 @@ public class SourceEditor {
                         styledText.setFocus();
                     }
 
-                    if (!hoverButtonDown && mousePosition != null) {
+                    if (!mouseButton1 && mousePosition != null) {
                         hoverHighlight = true;
-                        hoverTarget = getNavigationTarget(mousePosition);
-
+                        int offset = styledText.getOffsetAtPoint(mousePosition);
+                        if (offset != -1) {
+                            hoverTarget = getNavigationTarget(offset);
+                        }
                         Cursor cursor = hoverTarget != null ? display.getSystemCursor(SWT.CURSOR_HAND) : null;
                         if (cursor != styledText.getCursor()) {
                             styledText.setCursor(cursor);
@@ -447,7 +449,7 @@ public class SourceEditor {
             @Override
             public void keyReleased(KeyEvent e) {
                 if (e.keyCode == SWT.CTRL) {
-                    if (!hoverButtonDown) {
+                    if (!mouseButton1) {
                         hoverHighlight = false;
                         styledText.setCursor(null);
                         styledText.redraw();
@@ -596,33 +598,31 @@ public class SourceEditor {
             @Override
             public void mouseDown(MouseEvent e) {
                 if (e.button == 1) {
-                    hoverButtonDown = true;
+                    mouseButton1 = true;
                 }
             }
 
             @Override
             public void mouseUp(MouseEvent e) {
                 if (e.button == 1) {
-                    hoverButtonDown = false;
+                    mouseButton1 = false;
                 }
 
-                if (hoverTarget == null) {
-                    return;
+                if (hoverTarget != null) {
+                    final SourceElement element = hoverTarget;
+                    display.asyncExec(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            fireNavigateToEvent(element);
+                        }
+
+                    });
+
+                    hoverTarget = null;
+                    styledText.setCursor(null);
+                    styledText.redraw();
                 }
-
-                final SourceElement element = hoverTarget;
-                display.asyncExec(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        fireNavigateToEvent(element);
-                    }
-
-                });
-
-                hoverTarget = null;
-                styledText.setCursor(null);
-                styledText.redraw();
             }
 
         });
@@ -643,21 +643,31 @@ public class SourceEditor {
                     return;
                 }
 
-                if (!hoverButtonDown) {
-                    hoverHighlight = (e.stateMask & SWT.CTRL) != 0;
-                    hoverTarget = null;
-
-                    if (hoverHighlight) {
-                        hoverTarget = getNavigationTarget(mousePosition);
-
-                        Cursor cursor = hoverTarget != null ? display.getSystemCursor(SWT.CURSOR_HAND) : null;
-                        if (cursor != styledText.getCursor()) {
-                            styledText.setCursor(cursor);
-                        }
+                if (mouseButton1) {
+                    if (hoverTarget != null) {
+                        hoverHighlight = false;
+                        hoverTarget = null;
+                        styledText.setCursor(null);
                         styledText.redraw();
                     }
+                    return;
                 }
 
+                hoverHighlight = (e.stateMask & SWT.CTRL) != 0;
+                hoverTarget = null;
+
+                if (hoverHighlight) {
+                    int offset = styledText.getOffsetAtPoint(mousePosition);
+                    if (offset != -1) {
+                        hoverTarget = getNavigationTarget(offset);
+                    }
+
+                    Cursor cursor = hoverTarget != null ? display.getSystemCursor(SWT.CURSOR_HAND) : null;
+                    if (cursor != styledText.getCursor()) {
+                        styledText.setCursor(cursor);
+                    }
+                    styledText.redraw();
+                }
             }
 
         });
@@ -2307,11 +2317,7 @@ public class SourceEditor {
 
     }
 
-    NavigationTarget getNavigationTarget(Point point) {
-        int offset = styledText.getOffsetAtPoint(point);
-        if (offset == -1) {
-            return null;
-        }
+    NavigationTarget getNavigationTarget(int offset) {
         Token token = tokenMarker.getTokenAt(offset);
         if (token == null || token.type == Token.EOF) {
             return null;
@@ -2433,6 +2439,9 @@ public class SourceEditor {
         String objectName = null;
 
         int dot = itemName.indexOf('.');
+        if (dot == -1) {
+            dot = itemName.indexOf('#');
+        }
         if (dot == 0) {
             int line = styledText.getLineAtOffset(offset);
             int lineOffset = styledText.getOffsetAtLine(line);
@@ -2549,56 +2558,71 @@ public class SourceEditor {
             }
             else {
                 for (Node node : root.getChilds()) {
-                    if (node instanceof ObjectsNode) {
-                        for (Node child : node.getChilds()) {
-                            if (!(child instanceof ObjectNode)) {
-                                continue;
-                            }
-                            ObjectNode obj = (ObjectNode) child;
-                            if (obj.name.equals(itemName, tokenMarker.isCaseSensitive())) {
-                                return new NavigationTarget(token, obj.name);
-                            }
-                        }
+                    NavigationTarget target = getNavigationTarget(node, token, itemName);
+                    if (target != null) {
+                        return target;
                     }
-                    else if (node instanceof ConstantsNode) {
-                        for (Node child : node.getChilds()) {
-                            if (!(child instanceof ConstantNode)) {
-                                continue;
-                            }
-                            ConstantNode obj = (ConstantNode) child;
-                            if (obj.identifier != null && obj.identifier.equals(itemName, tokenMarker.isCaseSensitive())) {
-                                return new NavigationTarget(token, obj.identifier);
-                            }
-                        }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    NavigationTarget getNavigationTarget(Node node, Token token, String itemName) {
+
+        if (node instanceof ObjectsNode) {
+            for (Node child : node.getChilds()) {
+                if (!(child instanceof ObjectNode)) {
+                    continue;
+                }
+                ObjectNode obj = (ObjectNode) child;
+                if (obj.name.equals(itemName, tokenMarker.isCaseSensitive())) {
+                    return new NavigationTarget(token, obj.name);
+                }
+            }
+        }
+        else if (node instanceof ConstantsNode) {
+            for (Node child : node.getChilds()) {
+                if (!(child instanceof ConstantNode)) {
+                    continue;
+                }
+                ConstantNode obj = (ConstantNode) child;
+                if (obj.identifier != null && obj.identifier.equals(itemName, tokenMarker.isCaseSensitive())) {
+                    return new NavigationTarget(token, obj.identifier);
+                }
+            }
+        }
+        else if (node instanceof MethodNode) {
+            MethodNode method = (MethodNode) node;
+            if (method.name.equals(itemName, tokenMarker.isCaseSensitive())) {
+                return new NavigationTarget(token, method.name);
+            }
+        }
+        else if (node instanceof VariablesNode) {
+            for (Node child : node.getChilds()) {
+                if (child instanceof VariableNode) {
+                    VariableNode obj = (VariableNode) child;
+                    if (obj.identifier != null && obj.identifier.equals(itemName, tokenMarker.isCaseSensitive())) {
+                        return new NavigationTarget(token, obj.identifier);
                     }
-                    else if (node instanceof MethodNode) {
-                        MethodNode method = (MethodNode) node;
-                        if (method.name.equals(itemName, tokenMarker.isCaseSensitive())) {
-                            return new NavigationTarget(token, method.name);
-                        }
+                }
+                else {
+                    NavigationTarget target = getNavigationTarget(child, token, itemName);
+                    if (target != null) {
+                        return target;
                     }
-                    else if (node instanceof VariablesNode) {
-                        for (Node child : node.getChilds()) {
-                            if (!(child instanceof VariableNode)) {
-                                continue;
-                            }
-                            VariableNode obj = (VariableNode) child;
-                            if (obj.identifier != null && obj.identifier.equals(itemName, tokenMarker.isCaseSensitive())) {
-                                return new NavigationTarget(token, obj.identifier);
-                            }
-                        }
-                    }
-                    else if (node instanceof DataNode) {
-                        for (Node child : node.getChilds()) {
-                            if (!(child instanceof DataLineNode)) {
-                                continue;
-                            }
-                            DataLineNode obj = (DataLineNode) child;
-                            if (obj.label != null && obj.label.equals(itemName, tokenMarker.isCaseSensitive())) {
-                                return new NavigationTarget(token, obj.label);
-                            }
-                        }
-                    }
+                }
+            }
+        }
+        else if (node instanceof DataNode) {
+            for (Node child : node.getChilds()) {
+                if (!(child instanceof DataLineNode)) {
+                    continue;
+                }
+                DataLineNode obj = (DataLineNode) child;
+                if (obj.label != null && obj.label.equals(itemName, tokenMarker.isCaseSensitive())) {
+                    return new NavigationTarget(token, obj.label);
                 }
             }
         }

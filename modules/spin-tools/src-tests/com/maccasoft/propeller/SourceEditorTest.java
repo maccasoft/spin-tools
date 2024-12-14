@@ -10,6 +10,8 @@
 
 package com.maccasoft.propeller;
 
+import java.io.File;
+
 import org.eclipse.swt.custom.StyledTextContent;
 import org.eclipse.swt.custom.TextChangeListener;
 import org.eclipse.swt.custom.TextChangingEvent;
@@ -24,8 +26,17 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 
+import com.maccasoft.propeller.SourceEditor.NavigationTarget;
 import com.maccasoft.propeller.SourceTokenMarker.TokenId;
 import com.maccasoft.propeller.SourceTokenMarker.TokenMarker;
+import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.SourceProvider;
+import com.maccasoft.propeller.spin1.Spin1Parser;
+import com.maccasoft.propeller.spin1.Spin1TokenMarker;
+import com.maccasoft.propeller.spin1.Spin1TokenStream;
+import com.maccasoft.propeller.spin2.Spin2Parser;
+import com.maccasoft.propeller.spin2.Spin2TokenMarker;
+import com.maccasoft.propeller.spin2.Spin2TokenStream;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class SourceEditorTest {
@@ -527,4 +538,397 @@ public class SourceEditorTest {
             }
         }
     }
+
+    @Test
+    public void testGetGlobalVariableNavigationTarget() throws Exception {
+        String text = ""
+            + "CON  VALUE1 = 1\n"
+            + "     VALUE2 = 2\n"
+            + "\n"
+            + "VAR long a, b, c\n"
+            + "    word d, e\n"
+            + "\n"
+            + "PUB main()\n"
+            + "    a := VALUE1\n"
+            + "    d := VALUE2\n"
+            + "";
+
+        SourceEditor subject = new SourceEditor(shell);
+        subject.setTokenMarker(new Spin2TokenMarker(null));
+
+        subject.styledText.setText(text);
+        subject.tokenMarker.refreshTokens(subject.styledText.getText());
+
+        int offset1 = text.indexOf("a := ");
+        NavigationTarget target1 = subject.getNavigationTarget(offset1);
+        Assertions.assertNotNull(target1);
+        Assertions.assertEquals(3, target1.line);
+        Assertions.assertEquals(9, target1.column);
+        Assertions.assertEquals(offset1, target1.start);
+
+        int offset2 = text.indexOf("d := ");
+        NavigationTarget target2 = subject.getNavigationTarget(offset2);
+        Assertions.assertNotNull(target2);
+        Assertions.assertEquals(4, target2.line);
+        Assertions.assertEquals(9, target2.column);
+        Assertions.assertEquals(offset2, target2.start);
+    }
+
+    @Test
+    public void testGetConstantNavigationTarget() throws Exception {
+        String text = ""
+            + "CON  VALUE1 = 1\n"
+            + "     VALUE2 = 2\n"
+            + "\n"
+            + "VAR long a, b, c\n"
+            + "    word d, e\n"
+            + "\n"
+            + "PUB main()\n"
+            + "    a := VALUE1\n"
+            + "    d := VALUE2\n"
+            + "";
+
+        SourceEditor subject = new SourceEditor(shell);
+        subject.setTokenMarker(new Spin2TokenMarker(null));
+
+        subject.styledText.setText(text);
+        subject.tokenMarker.refreshTokens(subject.styledText.getText());
+
+        int offset1 = text.indexOf(":= VALUE1") + 3;
+        NavigationTarget target1 = subject.getNavigationTarget(offset1);
+        Assertions.assertNotNull(target1);
+        Assertions.assertEquals(0, target1.line);
+        Assertions.assertEquals(5, target1.column);
+        Assertions.assertEquals(offset1, target1.start);
+
+        int offset2 = text.indexOf(":= VALUE2") + 3;
+        NavigationTarget target2 = subject.getNavigationTarget(offset2);
+        Assertions.assertNotNull(target2);
+        Assertions.assertEquals(1, target2.line);
+        Assertions.assertEquals(5, target2.column);
+        Assertions.assertEquals(offset2, target2.start);
+    }
+
+    @Test
+    public void testGetSpin2ChildObjectConstantNavigationTarget() throws Exception {
+        String text = ""
+            + "VAR long a, b, c\n"
+            + "    word d, e\n"
+            + "\n"
+            + "OBJ\n"
+            + "    child : \"child\"\n"
+            + "\n"
+            + "PUB main()\n"
+            + "    a := child.VALUE1\n"
+            + "    d := child.VALUE2\n"
+            + "";
+
+        String text_child = ""
+            + "CON  VALUE1 = 1\n"
+            + "     VALUE2 = 2\n"
+            + "\n"
+            + "";
+
+        SourceEditor subject = new SourceEditor(shell);
+        subject.setTokenMarker(new Spin2TokenMarker(new SourceProvider() {
+
+            @Override
+            public File getFile(String name) {
+                return new File(name);
+            }
+
+            @Override
+            public Node getParsedSource(File file) {
+                Spin2TokenStream stream = new Spin2TokenStream(text_child);
+                Spin2Parser parser = new Spin2Parser(stream);
+                return parser.parse();
+            }
+
+        }));
+
+        subject.styledText.setText(text);
+        subject.tokenMarker.refreshTokens(subject.styledText.getText());
+
+        int offset1 = text.indexOf(".VALUE1") + 1;
+        NavigationTarget target1 = subject.getNavigationTarget(offset1 + 2);
+        Assertions.assertNotNull(target1);
+        Assertions.assertEquals(0, target1.line);
+        Assertions.assertEquals(5, target1.column);
+        Assertions.assertSame(subject.tokenMarker.getRoot().getChild(1).getChild(0), target1.object);
+        Assertions.assertEquals(offset1, target1.start);
+
+        int offset2 = text.indexOf(".VALUE2") + 1;
+        NavigationTarget target2 = subject.getNavigationTarget(offset2 + 2);
+        Assertions.assertNotNull(target1);
+        Assertions.assertEquals(1, target2.line);
+        Assertions.assertEquals(5, target2.column);
+        Assertions.assertSame(subject.tokenMarker.getRoot().getChild(1).getChild(0), target1.object);
+        Assertions.assertEquals(offset2, target2.start);
+    }
+
+    @Test
+    public void testGetSpin1ChildObjectConstantNavigationTarget() throws Exception {
+        String text = ""
+            + "VAR long a, b, c\n"
+            + "    word d, e\n"
+            + "\n"
+            + "OBJ\n"
+            + "    child : \"child\"\n"
+            + "\n"
+            + "PUB main()\n"
+            + "    a := child#VALUE1\n"
+            + "    d := child#VALUE2\n"
+            + "";
+
+        String childText = ""
+            + "CON  VALUE1 = 1\n"
+            + "     VALUE2 = 2\n"
+            + "\n"
+            + "";
+
+        SourceEditor subject = new SourceEditor(shell);
+        subject.setTokenMarker(new Spin1TokenMarker(new SourceProvider() {
+
+            @Override
+            public File getFile(String name) {
+                return new File(name);
+            }
+
+            @Override
+            public Node getParsedSource(File file) {
+                Spin1TokenStream stream = new Spin1TokenStream(childText);
+                Spin1Parser parser = new Spin1Parser(stream);
+                return parser.parse();
+            }
+
+        }));
+
+        subject.styledText.setText(text);
+        subject.tokenMarker.refreshTokens(subject.styledText.getText());
+
+        int offset1 = text.indexOf("#VALUE1") + 1;
+        NavigationTarget target1 = subject.getNavigationTarget(offset1 + 2);
+        Assertions.assertNotNull(target1);
+        Assertions.assertEquals(0, target1.line);
+        Assertions.assertEquals(5, target1.column);
+        Assertions.assertSame(subject.tokenMarker.getRoot().getChild(1).getChild(0), target1.object);
+        Assertions.assertEquals(offset1, target1.start);
+
+        int offset2 = text.indexOf("#VALUE2") + 1;
+        NavigationTarget target2 = subject.getNavigationTarget(offset2 + 2);
+        Assertions.assertNotNull(target1);
+        Assertions.assertEquals(1, target2.line);
+        Assertions.assertEquals(5, target2.column);
+        Assertions.assertSame(subject.tokenMarker.getRoot().getChild(1).getChild(0), target1.object);
+        Assertions.assertEquals(offset2, target2.start);
+    }
+
+    @Test
+    public void testGetDatLabelNavigationTarget() throws Exception {
+        String text = ""
+            + "CON  VALUE1 = 1\n"
+            + "     VALUE2 = 2\n"
+            + "\n"
+            + "DAT     org $000\n"
+            + "\n"
+            + "        mov     a, #VALUE1\n"
+            + "\n"
+            + "a       res     1\n"
+            + "";
+
+        SourceEditor subject = new SourceEditor(shell);
+        subject.setTokenMarker(new Spin2TokenMarker(null));
+
+        subject.styledText.setText(text);
+        subject.tokenMarker.refreshTokens(subject.styledText.getText());
+
+        int offset1 = text.indexOf("a, ");
+        NavigationTarget target1 = subject.getNavigationTarget(offset1);
+        Assertions.assertNotNull(target1);
+        Assertions.assertEquals(7, target1.line);
+        Assertions.assertEquals(0, target1.column);
+        Assertions.assertEquals(offset1, target1.start);
+
+        int offset2 = text.indexOf("#VALUE1") + 1;
+        NavigationTarget target2 = subject.getNavigationTarget(offset2 + 2);
+        Assertions.assertNotNull(target2);
+        Assertions.assertEquals(0, target2.line);
+        Assertions.assertEquals(5, target2.column);
+        Assertions.assertEquals(offset2, target2.start);
+    }
+
+    @Test
+    public void testGetSpin2DatChildObjectConstantNavigationTarget() throws Exception {
+        String text = ""
+            + "OBJ\n"
+            + "    child : \"child\"\n"
+            + "\n"
+            + "DAT     org $000\n"
+            + "\n"
+            + "        mov     a, #child.VALUE1\n"
+            + "\n"
+            + "a       res     1\n"
+            + "";
+
+        String childText = ""
+            + "CON  VALUE1 = 1\n"
+            + "     VALUE2 = 2\n"
+            + "\n"
+            + "";
+
+        SourceEditor subject = new SourceEditor(shell);
+        subject.setTokenMarker(new Spin2TokenMarker(new SourceProvider() {
+
+            @Override
+            public File getFile(String name) {
+                return new File(name);
+            }
+
+            @Override
+            public Node getParsedSource(File file) {
+                Spin2TokenStream stream = new Spin2TokenStream(childText);
+                Spin2Parser parser = new Spin2Parser(stream);
+                return parser.parse();
+            }
+
+        }));
+
+        subject.styledText.setText(text);
+        subject.tokenMarker.refreshTokens(subject.styledText.getText());
+
+        int offset = text.indexOf(".VALUE1") + 1;
+        NavigationTarget target = subject.getNavigationTarget(offset + 2);
+        Assertions.assertNotNull(target);
+        Assertions.assertEquals(0, target.line);
+        Assertions.assertEquals(5, target.column);
+        Assertions.assertEquals(offset, target.start);
+    }
+
+    @Test
+    public void testGetSpin1DatChildObjectConstantNavigationTarget() throws Exception {
+        String text = ""
+            + "OBJ\n"
+            + "    child : \"child\"\n"
+            + "\n"
+            + "DAT     org $000\n"
+            + "\n"
+            + "        mov     a, #child#VALUE1\n"
+            + "\n"
+            + "a       res     1\n"
+            + "";
+
+        String childText = ""
+            + "CON  VALUE1 = 1\n"
+            + "     VALUE2 = 2\n"
+            + "\n"
+            + "";
+
+        SourceEditor subject = new SourceEditor(shell);
+        subject.setTokenMarker(new Spin1TokenMarker(new SourceProvider() {
+
+            @Override
+            public File getFile(String name) {
+                return new File(name);
+            }
+
+            @Override
+            public Node getParsedSource(File file) {
+                Spin1TokenStream stream = new Spin1TokenStream(childText);
+                Spin1Parser parser = new Spin1Parser(stream);
+                return parser.parse();
+            }
+
+        }));
+
+        subject.styledText.setText(text);
+        subject.tokenMarker.refreshTokens(subject.styledText.getText());
+
+        int offset = text.indexOf("#VALUE1") + 1;
+        NavigationTarget target = subject.getNavigationTarget(offset + 2);
+        Assertions.assertNotNull(target);
+        Assertions.assertEquals(0, target.line);
+        Assertions.assertEquals(5, target.column);
+        Assertions.assertEquals(offset, target.start);
+    }
+
+    @Test
+    public void testGetSpin2DatLocalLabelNavigationTarget() throws Exception {
+        String text = ""
+            + "CON  VALUE1 = 1\n"
+            + "     VALUE2 = 2\n"
+            + "\n"
+            + "DAT     org $000\n"
+            + "\n"
+            + "label1\n"
+            + "        mov     .a, #VALUE1\n"
+            + "\n"
+            + ".a      long    0\n"
+            + "\n"
+            + "label2\n"
+            + "        mov     .a, #VALUE2\n"
+            + "\n"
+            + ".a      long    0\n"
+            + "";
+
+        SourceEditor subject = new SourceEditor(shell);
+        subject.setTokenMarker(new Spin2TokenMarker(null));
+
+        subject.styledText.setText(text);
+        subject.tokenMarker.refreshTokens(subject.styledText.getText());
+
+        int offset1 = text.indexOf(".a, #VALUE1");
+        NavigationTarget target1 = subject.getNavigationTarget(offset1 + 1);
+        Assertions.assertNotNull(target1);
+        Assertions.assertEquals(8, target1.line);
+        Assertions.assertEquals(0, target1.column);
+        Assertions.assertEquals(offset1, target1.start);
+
+        int offset2 = text.indexOf(".a, #VALUE2");
+        NavigationTarget target2 = subject.getNavigationTarget(offset2 + 1);
+        Assertions.assertNotNull(target2);
+        Assertions.assertEquals(13, target2.line);
+        Assertions.assertEquals(0, target2.column);
+        Assertions.assertEquals(offset2, target2.start);
+    }
+
+    @Test
+    public void testGetSpin1DatLocalLabelNavigationTarget() throws Exception {
+        String text = ""
+            + "CON  VALUE1 = 1\n"
+            + "     VALUE2 = 2\n"
+            + "\n"
+            + "DAT     org $000\n"
+            + "\n"
+            + "label1\n"
+            + "        mov     :a, #VALUE1\n"
+            + "\n"
+            + ":a      long    0\n"
+            + "\n"
+            + "label2\n"
+            + "        mov     :a, #VALUE2\n"
+            + "\n"
+            + ":a      long    0\n"
+            + "";
+
+        SourceEditor subject = new SourceEditor(shell);
+        subject.setTokenMarker(new Spin1TokenMarker(null));
+
+        subject.styledText.setText(text);
+        subject.tokenMarker.refreshTokens(subject.styledText.getText());
+
+        int offset1 = text.indexOf(":a, #VALUE1");
+        NavigationTarget target1 = subject.getNavigationTarget(offset1 + 1);
+        Assertions.assertNotNull(target1);
+        Assertions.assertEquals(8, target1.line);
+        Assertions.assertEquals(0, target1.column);
+        Assertions.assertEquals(offset1, target1.start);
+
+        int offset2 = text.indexOf(":a, #VALUE2");
+        NavigationTarget target2 = subject.getNavigationTarget(offset2 + 1);
+        Assertions.assertNotNull(target2);
+        Assertions.assertEquals(13, target2.line);
+        Assertions.assertEquals(0, target2.column);
+        Assertions.assertEquals(offset2, target2.start);
+    }
+
 }
