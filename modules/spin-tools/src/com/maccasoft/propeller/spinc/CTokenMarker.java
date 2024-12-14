@@ -171,6 +171,7 @@ public class CTokenMarker extends SourceTokenMarker {
         spin1Functions.put("decod", TokenId.FUNCTION);
         spin1Functions.put("sqrt", TokenId.FUNCTION);
 
+        spin1Functions.put("string", TokenId.FUNCTION);
         spin1Functions.put("strlen", TokenId.FUNCTION);
         spin1Functions.put("strcmp", TokenId.FUNCTION);
         spin1Functions.put("memset", TokenId.FUNCTION);
@@ -587,6 +588,7 @@ public class CTokenMarker extends SourceTokenMarker {
         spin2Functions.put("scas", TokenId.FUNCTION);
         spin2Functions.put("frac", TokenId.FUNCTION);
 
+        spin1Functions.put("string", TokenId.FUNCTION);
         spin2Functions.put("strlen", TokenId.FUNCTION);
         spin2Functions.put("strcmp", TokenId.FUNCTION);
         spin2Functions.put("strcpy", TokenId.FUNCTION);
@@ -918,7 +920,7 @@ public class CTokenMarker extends SourceTokenMarker {
                         tokens.add(new TokenMarker(node.getToken(index++), TokenId.DIRECTIVE));
                         if (index < node.getTokenCount()) {
                             if ("target".equals(node.getToken(index).getText())) {
-                                index++;
+                                tokens.add(new TokenMarker(node.getToken(index++), TokenId.DIRECTIVE));
                                 if (index < node.getTokenCount()) {
                                     if ("P1".equals(node.getToken(index).getText())) {
                                         if (!p1) {
@@ -1462,15 +1464,13 @@ public class CTokenMarker extends SourceTokenMarker {
                         if (id == null) {
                             id = keywords.get(token.getText().toUpperCase());
                         }
+                        if (debug && id == null) {
+                            id = debugKeywords.get(token.getText());
+                        }
                         if (id == null) {
-                            if (debug) {
-                                id = debugKeywords.get(token.getText());
-                            }
-                            else {
-                                id = spin2Keywords.get(token.getText());
-                                if (id == null) {
-                                    id = spin2MethodKeywords.get(token.getText());
-                                }
+                            id = spin2Keywords.get(token.getText());
+                            if (id == null) {
+                                id = spin2MethodKeywords.get(token.getText());
                             }
                         }
                         if (id != null) {

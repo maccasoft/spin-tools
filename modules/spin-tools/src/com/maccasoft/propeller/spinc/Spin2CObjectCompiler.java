@@ -1593,9 +1593,6 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
             }, "INLINE-EXEC"));
         }
         else {
-            if (!isDebugEnabled() && "debug".equals(token.getText())) {
-                return null;
-            }
             Spin2CTreeBuilder builder = new Spin2CTreeBuilder(scope);
             builder.addToken(token);
             while (iter.hasNext()) {
@@ -1605,8 +1602,12 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                 }
                 builder.addToken(token);
             }
+            Spin2StatementNode statementNode = builder.getRoot();
+            if (!";".equals(token.getText())) {
+                logMessage(new CompilerException("expecting ';'", token));
+            }
             line = new Spin2MethodLine(context, parent, null, node);
-            line.addSource(compileBytecodeExpression(context, method, builder.getRoot(), false));
+            line.addSource(compileBytecodeExpression(context, method, statementNode, false));
         }
 
         return line;

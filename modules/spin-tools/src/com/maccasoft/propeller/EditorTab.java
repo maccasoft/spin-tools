@@ -1201,20 +1201,29 @@ public class EditorTab implements FindReplaceTarget {
     }
 
     public void formatSource() {
-        Formatter formatter = tabItemText.toLowerCase().endsWith(".spin2") ? new Spin2Formatter() : new Spin1Formatter();
+        Formatter formatter = null;
 
-        //formatter.setKeepBlankLines(true);
-        formatter.setSectionTabStop("con", preferences.getTabStops(ConstantsNode.class));
-        formatter.setSectionTabStop("var", preferences.getTabStops(VariablesNode.class));
-        formatter.setSectionTabStop("obj", preferences.getTabStops(ObjectsNode.class));
-        formatter.setSectionTabStop("pub", preferences.getTabStops(MethodNode.class));
-        formatter.setSectionTabStop("dat", preferences.getTabStops(DataNode.class));
-        //formatter.setPAsmColumns(4, 16, 24, 44, 52);
-        //formatter.setInlinePAsmColumns(8, 16, 24, 44, 52);
-        //formatter.setAdjustPAsmColumns(true);
-        //formatter.setIsolateLargeLabels(true);
+        if (tabItemText.toLowerCase().endsWith(".spin")) {
+            formatter = new Spin1Formatter();
+        }
+        else if (tabItemText.toLowerCase().endsWith(".spin2")) {
+            formatter = new Spin2Formatter();
+        }
 
-        editor.format(formatter);
+        if (formatter != null) {
+            //formatter.setKeepBlankLines(true);
+            formatter.setSectionTabStop("con", preferences.getTabStops(ConstantsNode.class));
+            formatter.setSectionTabStop("var", preferences.getTabStops(VariablesNode.class));
+            formatter.setSectionTabStop("obj", preferences.getTabStops(ObjectsNode.class));
+            formatter.setSectionTabStop("pub", preferences.getTabStops(MethodNode.class));
+            formatter.setSectionTabStop("dat", preferences.getTabStops(DataNode.class));
+            //formatter.setPAsmColumns(4, 16, 24, 44, 52);
+            //formatter.setInlinePAsmColumns(8, 16, 24, 44, 52);
+            //formatter.setAdjustPAsmColumns(true);
+            //formatter.setIsolateLargeLabels(true);
+
+            editor.format(formatter);
+        }
     }
 
     public Set<File> getDependencies() {

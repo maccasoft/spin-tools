@@ -76,6 +76,7 @@ import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
 import com.maccasoft.propeller.spin2.Spin2Method;
+import com.maccasoft.propeller.spin2.Spin2Model;
 import com.maccasoft.propeller.spin2.Spin2PasmCompiler;
 import com.maccasoft.propeller.spin2.Spin2StatementNode;
 import com.maccasoft.propeller.spin2.bytecode.Address;
@@ -125,7 +126,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
     static {
         descriptors.put("hubset", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_hubset, 1, 0));
         descriptors.put("clkset", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_clkset, 2, 0));
-        descriptors.put("clkfreq", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_read_clkfreq, 0, 1));
+        //descriptors.put("clkfreq", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_read_clkfreq, 0, 1));
         ////descriptors.put("cogspin", new Descriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_cogspin, 3));
         descriptors.put("cogchk", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_cogchk, 1, 1));
         descriptors.put("regexec", new FunctionDescriptor(Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_regexec, 1, 0));
@@ -649,53 +650,77 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                 else if ("debug".equals(node.getText())) {
                     int stack = 0;
                     for (Spin2StatementNode child : node.getChilds()) {
-                        for (Spin2StatementNode param : child.getChilds()) {
-                            source.addAll(compileBytecodeExpression(context, method, param, true));
+                        if (child.getType() == Token.STRING) {
+                            for (Spin2StatementNode param : child.getChilds()) {
+                                source.addAll(compileBytecodeExpression(context, method, param, true));
+                                stack += 4;
+                            }
+                        }
+                        else if (Spin2Model.isDebugKeyword(child.getText())) {
+                            for (Spin2StatementNode param : child.getChilds()) {
+                                source.addAll(compileBytecodeExpression(context, method, param, true));
+                                stack += 4;
+                            }
+                        }
+                        else if (child.getText().startsWith("`")) {
+                            for (Spin2StatementNode param : child.getChilds()) {
+                                source.addAll(compileBytecodeExpression(context, method, param, true));
+                                stack += 4;
+                            }
+                        }
+                        else {
+                            source.addAll(compileBytecodeExpression(context, method, child, true));
                             stack += 4;
                         }
                     }
+                    debug.compileDebugStatement(node);
                     node.setData("context", context);
-                    method.debugNodes.add(node);
-                    compiler.debugStatements.add(node);
 
-                    int pop = stack;
-                    source.add(new Bytecode(context, Spin2Bytecode.bc_debug, "") {
+                    if (isDebugEnabled()) {
+                        method.debugNodes.add(node);
+                        compiler.debugStatements.add(node);
 
-                        int index;
+                        int pop = stack;
+                        source.add(new Bytecode(context, Spin2Bytecode.bc_debug, "") {
 
-                        @Override
-                        public int resolve(int address) {
-                            index = compiler.debugStatements.indexOf(node) + 1;
-                            if (index >= 255) {
-                                throw new CompilerException("too much debug statements", node);
+                            int index;
+
+                            @Override
+                            public int resolve(int address) {
+                                index = compiler.debugStatements.indexOf(node) + 1;
+                                if (index >= 255) {
+                                    throw new CompilerException("too much debug statements", node);
+                                }
+                                return super.resolve(address);
                             }
-                            return super.resolve(address);
-                        }
 
-                        @Override
-                        public int getSize() {
-                            return index == -1 ? 0 : 3;
-                        }
-
-                        @Override
-                        public byte[] getBytes() {
-                            if (index == -1) {
-                                return new byte[0];
+                            @Override
+                            public int getSize() {
+                                return index == -1 ? 0 : 3;
                             }
-                            return new byte[] {
-                                Spin2Bytecode.bc_debug, (byte) pop, (byte) index
-                            };
-                        }
 
-                        @Override
-                        public String toString() {
-                            if (index == -1) {
-                                return "";
+                            @Override
+                            public byte[] getBytes() {
+                                if (index == -1) {
+                                    return new byte[0];
+                                }
+                                return new byte[] {
+                                    Spin2Bytecode.bc_debug, (byte) pop, (byte) index
+                                };
                             }
-                            return node.getText().toUpperCase() + " #" + index;
-                        }
 
-                    });
+                            @Override
+                            public String toString() {
+                                if (index == -1) {
+                                    return "";
+                                }
+                                return node.getText().toUpperCase() + " #" + index;
+                            }
+
+                        });
+                        return source;
+                    }
+                    return new ArrayList<Spin2Bytecode>();
                 }
                 else if ("end".equals(node.getText())) {
                     // Ignored
@@ -833,7 +858,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                 }
                 else {
                     Expression expression = context.getLocalSymbol(node.getText());
-                    if (expression == null && !(expression instanceof Method)) {
+                    if (expression == null || !(expression instanceof Method)) {
                         throw new CompilerException("unknown function " + node.getText(), node.getToken());
                     }
                     source.addAll(compileMethodCall(context, method, expression, node, push, false));
@@ -1302,6 +1327,12 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                 if (postEffectNode != null) {
                     source.addAll(compilePostEffect(context, postEffectNode, push));
                 }
+            }
+            else if ("CLKFREQ".equalsIgnoreCase(node.getText())) {
+                source.add(new Bytecode(context, new byte[] {
+                    Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_read_clkfreq
+                }, node.getText().toUpperCase()));
+                return source;
             }
             else {
                 Expression expression = null;

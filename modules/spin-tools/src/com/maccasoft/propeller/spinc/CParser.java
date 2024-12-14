@@ -22,6 +22,7 @@ import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.Parser;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
+import com.maccasoft.propeller.model.TokenStream.Position;
 import com.maccasoft.propeller.model.TypeDefinitionNode;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.spin2.Spin2Model;
@@ -441,12 +442,12 @@ public class CParser extends Parser {
                         }
                     }
 
-                    if ((token = nextTokenSkipNL()).type != Token.EOF) {
+                    if ((token = peekNextTokenSkipNL()).type != Token.EOF) {
                         if (";".equals(token.getText())) {
-                            node.addToken(token);
+                            node.addToken(nextTokenSkipNL());
                         }
                         else if ("{".equals(token.getText())) {
-                            node.addToken(token);
+                            node.addToken(nextTokenSkipNL());
                             while ((token = peekNextTokenSkipNL()).type != Token.EOF) {
                                 if ("}".equals(token.getText())) {
                                     node = new StatementNode(parent);
@@ -457,14 +458,7 @@ public class CParser extends Parser {
                             }
                         }
                         else {
-                            node = new StatementNode(node);
-                            node.addToken(token);
-                            while ((token = nextTokenSkipNL()).type != Token.EOF) {
-                                node.addToken(token);
-                                if (";".equals(token.getText())) {
-                                    break;
-                                }
-                            }
+                            parseStatement(node);
                         }
                     }
                 }
@@ -856,19 +850,35 @@ public class CParser extends Parser {
     }
 
     Token peekNextTokenSkipNL() {
-        Token token = stream.peekNext();
-        while (true) {
-            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-                root.addComment(stream.nextToken());
-                token = stream.peekNext();
+        Position pos = new Position(stream);
+        try {
+            Token token = stream.nextToken();
+            while (true) {
+                if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+                    ;
+                }
+                else if (token.type != Token.NL) {
+                    break;
+                }
+                token = stream.nextToken();
             }
-            else if (token.type != Token.NL) {
-                break;
+            if ("&".equals(token.getText())) {
+                Token nextToken = stream.peekNext();
+                if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                    token = token.merge(stream.nextToken());
+                }
             }
-            stream.nextToken();
-            token = stream.peekNext();
+            else if (".".equals(token.getText())) {
+                Token nextToken = stream.peekNext();
+                if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                    token = token.merge(stream.nextToken());
+                    token.type = Token.FUNCTION;
+                }
+            }
+            return token;
+        } finally {
+            pos.restore(stream);
         }
-        return token;
     }
 
 }

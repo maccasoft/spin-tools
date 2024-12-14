@@ -444,7 +444,7 @@ public abstract class Spin1CBytecodeCompiler extends Spin1PAsmCompiler {
                 }
                 else {
                     Expression expression = context.getLocalSymbol(node.getText());
-                    if (expression == null && !(expression instanceof Method)) {
+                    if (expression == null || !(expression instanceof Method)) {
                         throw new CompilerException("unknown function " + node.getText(), node.getToken());
                     }
                     Method methodExpression = (Method) expression;

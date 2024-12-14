@@ -28,6 +28,7 @@ import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
+import com.maccasoft.propeller.spin2.Spin2Debugger;
 import com.maccasoft.propeller.spin2.Spin2Interpreter;
 import com.maccasoft.propeller.spin2.Spin2Object;
 import com.maccasoft.propeller.spin2.Spin2ObjectCompiler;
@@ -113,20 +114,29 @@ public class Spin2CCompiler extends Spin2Compiler {
             }
         }
 
+        Spin2Object debugObject = generateDebugData();
+
+        int stackFree = 512 * 1024;
+
         if (interpreter != null) {
             interpreter.setVBase((interpreter.getPBase() + object.getSize()) | (objectCompiler.getObjectLinks().size() << 21));
             interpreter.setDBase(interpreter.getPBase() + object.getSize() + object.getVarSize());
             interpreter.setClearLongs(255 + ((object.getVarSize() + 3) / 4));
+            stackFree -= interpreter.getDBase();
         }
 
         if (debugEnabled) {
-            Spin2Object debugObject = generateDebugData();
+            debugger = new Spin2Debugger();
             object.setDebugData(debugObject);
+            stackFree -= debugger.getSize() + debugObject.getSize();
         }
 
         tree = buildFrom(objectCompiler);
 
         errors = objectCompiler.hasErrors();
+        if (stackFree < 0) {
+            logMessage(new CompilerException(rootFile.getName(), "program exceeds runtime memory limit by " + Math.abs(stackFree) + " longs.", null));
+        }
 
         messages.addAll(objectCompiler.getMessages());
         for (ObjectInfo info : childObjects) {

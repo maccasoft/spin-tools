@@ -88,6 +88,22 @@ public class Spin2StatementNode {
         return token;
     }
 
+    public Token getFirstToken() {
+        return firstToken;
+    }
+
+    public void setFirstToken(Token firstToken) {
+        this.firstToken = firstToken;
+    }
+
+    public Token getLastToken() {
+        return lastToken;
+    }
+
+    public void setLastToken(Token lastToken) {
+        this.lastToken = lastToken;
+    }
+
     public List<Token> getTokens() {
         List<Token> list = new ArrayList<>();
 

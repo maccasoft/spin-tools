@@ -691,6 +691,33 @@ class CParserTest {
             + "", tree(root));
     }
 
+    @Test
+    void testSimpleIfBlock() throws Exception {
+        CParser subject = new CParser(new CTokenStream(""
+            + "void main() {\n"
+            + "    if (a == 1)\n"
+            + "    while (a == 1) {\n"
+            + "        method(1, 2);\n"
+            + "        d++;\n"
+            + "    }\n"
+            + "    a = function(1, 2);\n"
+            + "}\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- FunctionNode type=void identifier=main [void main() {]\n"
+            + "    +-- StatementNode [    if (a == 1)]\n"
+            + "        +-- StatementNode [    while (a == 1) {]\n"
+            + "            +-- StatementNode [        method(1, 2);]\n"
+            + "            +-- StatementNode [        d++;]\n"
+            + "        +-- StatementNode [    }]\n"
+            + "    +-- StatementNode [    a = function(1, 2);]\n"
+            + "    +-- StatementNode [}]\n"
+            + "", tree(root));
+    }
+
     String tree(Node root) throws Exception {
         return tree(root, 0);
     }
