@@ -526,16 +526,16 @@ public class SpinCompiler {
                                     return;
                                 }
                                 System.out.print("\033[");
-                                System.out.print(String.valueOf(c));
+                                System.out.print(String.valueOf(c + 1));
                                 System.out.print(";");
-                                System.out.print(String.valueOf(p0));
+                                System.out.print(String.valueOf(p0 + 1));
                                 System.out.print("H");
                                 cmd = 0;
                                 return;
                             }
                             else if (cmd == 14) { // PX: Position cursor in X
                                 System.out.print("\r\033[");
-                                System.out.print(String.valueOf(c));
+                                System.out.print(String.valueOf(c + 1));
                                 System.out.print("C");
                                 cmd = 0;
                                 return;
@@ -543,7 +543,7 @@ public class SpinCompiler {
                             else if (cmd == 15) { // PY: Position cursor in Y
                                 System.out.print("\033[999A");
                                 System.out.print("\033[");
-                                System.out.print(String.valueOf(c));
+                                System.out.print(String.valueOf(c + 1));
                                 System.out.print("B");
                                 cmd = 0;
                                 return;
@@ -584,7 +584,7 @@ public class SpinCompiler {
                                     break;
 
                                 case 16: // CS: Clear Screen
-                                    System.out.print("\033[J");
+                                    System.out.print("\033[H\033[2J");
                                     break;
 
                                 default:
