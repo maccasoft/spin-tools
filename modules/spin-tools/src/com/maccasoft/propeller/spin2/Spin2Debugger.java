@@ -21,7 +21,7 @@ public class Spin2Debugger {
     static final int _clkmode2 = 0x00DC;
     static final int _delay = 0x00E0;
     static final int _appsize = 0x00E4;
-    static final int _hubset = 0x00E0;
+    static final int _hubset = 0x00E8;
 
     static final int _brk_cond = 0x011C;
 

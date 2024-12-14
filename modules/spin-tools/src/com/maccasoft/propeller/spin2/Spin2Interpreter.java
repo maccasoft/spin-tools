@@ -22,9 +22,9 @@ public class Spin2Interpreter {
     static final int _clkmode_hub = 0x0040;
     static final int _clkfreq_hub = 0x0044;
 
-    static final int _debugnop1 = 0x0101C;
-    static final int _debugnop2 = 0x01020;
-    static final int _debugnop3 = 0x01024;
+    static final int _debugnop1 = 0x00F20;
+    static final int _debugnop2 = 0x00F24;
+    static final int _debugnop3 = 0x00F28;
 
     int[] debugnop = new int[3];
 
