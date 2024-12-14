@@ -3239,9 +3239,11 @@ public class SpinTools {
             preferences.setPort(uploadPort.getPortName());
             statusLine.setPortText(uploadPort.getName());
             statusLine.setPortToolTipText(uploadPort.getDescription());
-            if (!serialPort.equals(uploadPort)) {
+            if (!uploadPort.equals(serialPort)) {
                 try {
-                    serialPort.closePort();
+                    if (serialPort != null) {
+                        serialPort.closePort();
+                    }
                 } catch (ComPortException e) {
                     // Do nothing
                 }
@@ -3275,7 +3277,11 @@ public class SpinTools {
                 PropellerLoader loader;
 
                 try {
-                    monitor.beginTask("Upload to " + comPort.getDescription(), IProgressMonitor.UNKNOWN);
+                    String text = "Upload";
+                    if (comPort != null) {
+                        text += " to " + comPort.getDescription();
+                    }
+                    monitor.beginTask(text, IProgressMonitor.UNKNOWN);
 
                     if (obj instanceof Spin1Object) {
                         flags = writeToFlash ? Propeller1Loader.DOWNLOAD_RUN_EEPROM : Propeller1Loader.DOWNLOAD_RUN_BINARY;
