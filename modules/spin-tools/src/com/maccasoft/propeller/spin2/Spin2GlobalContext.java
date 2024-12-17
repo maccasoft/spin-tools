@@ -121,7 +121,9 @@ public class Spin2GlobalContext extends Context {
         addBuiltinSymbol("P_TRUE_IN", 0x0);
         addBuiltinSymbol("P_INVERT_IN", 0x8000);
         addBuiltinSymbol("P_TRUE_OUTPUT", 0x0);
+        addBuiltinSymbol("P_TRUE_OUT", 0x0);
         addBuiltinSymbol("P_INVERT_OUTPUT", 0x4000);
+        addBuiltinSymbol("P_INVERT_OUT", 0x4000);
         addBuiltinSymbol("P_HIGH_FAST", 0x0);
         addBuiltinSymbol("P_HIGH_1K5", 0x800);
         addBuiltinSymbol("P_HIGH_15K", 0x1000);
