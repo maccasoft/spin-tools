@@ -3232,6 +3232,9 @@ public class SpinTools {
         }
         else if (serialTerminal != null) {
             serialTerminal.setSerialPort(uploadPort != null ? uploadPort : serialPort);
+            if (openTerminal) {
+                serialTerminal.setFocus();
+            }
         }
 
         if (uploadPort != null) {
