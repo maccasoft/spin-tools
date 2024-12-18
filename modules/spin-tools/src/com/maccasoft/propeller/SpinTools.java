@@ -3355,9 +3355,11 @@ public class SpinTools {
                         @Override
                         public void run() {
                             StringBuilder sb = new StringBuilder();
-                            sb.append(comPort.getDescription());
-                            sb.append(System.lineSeparator());
-                            sb.append(System.lineSeparator());
+                            if (comPort != null) {
+                                sb.append(comPort.getDescription());
+                                sb.append(System.lineSeparator());
+                                sb.append(System.lineSeparator());
+                            }
                             sb.append(e.getMessage());
                             MessageDialog.openError(activeShell, APP_TITLE, sb.toString());
                         }
