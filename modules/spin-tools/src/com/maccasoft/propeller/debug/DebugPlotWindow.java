@@ -403,7 +403,7 @@ public class DebugPlotWindow extends DebugWindow {
                 case "CIRCLE":
                     if (iter.hasNextNumber()) {
                         int diameter = iter.nextNumber();
-                        int sizeOverride = iter.hasNextNumber() ? iter.nextNumber() : lineSize;
+                        int sizeOverride = iter.hasNextNumber() ? iter.nextNumber() : 0;
                         int opacityOverride = iter.hasNextNumber() ? iter.nextNumber() : opacity;
                         oval(diameter, diameter, sizeOverride, opacityOverride, color);
                         if (autoUpdate) {
@@ -417,7 +417,7 @@ public class DebugPlotWindow extends DebugWindow {
                         int width = iter.nextNumber();
                         if (iter.hasNext()) {
                             int height = iter.nextNumber();
-                            int sizeOverride = iter.hasNextNumber() ? iter.nextNumber() : lineSize;
+                            int sizeOverride = iter.hasNextNumber() ? iter.nextNumber() : 0;
                             int opacityOverride = iter.hasNextNumber() ? iter.nextNumber() : opacity;
                             oval(width, height, sizeOverride, opacityOverride, color);
                             if (autoUpdate) {
@@ -432,7 +432,7 @@ public class DebugPlotWindow extends DebugWindow {
                         int width = iter.nextNumber();
                         if (iter.hasNext()) {
                             int height = iter.nextNumber();
-                            int sizeOverride = iter.hasNextNumber() ? iter.nextNumber() : lineSize;
+                            int sizeOverride = iter.hasNextNumber() ? iter.nextNumber() : 0;
                             int opacityOverride = iter.hasNextNumber() ? iter.nextNumber() : opacity;
                             box(width, height, sizeOverride, opacityOverride, color);
                             if (autoUpdate) {
@@ -451,7 +451,7 @@ public class DebugPlotWindow extends DebugWindow {
                                 int radiusX = iter.nextNumber();
                                 if (iter.hasNext()) {
                                     int radiusY = iter.nextNumber();
-                                    int sizeOverride = iter.hasNextNumber() ? iter.nextNumber() : lineSize;
+                                    int sizeOverride = iter.hasNextNumber() ? iter.nextNumber() : 0;
                                     int opacityOverride = iter.hasNextNumber() ? iter.nextNumber() : opacity;
                                     obox(width, height, sizeOverride, radiusX, radiusY, opacityOverride, color);
                                     if (autoUpdate) {
