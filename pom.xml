@@ -172,6 +172,7 @@
                                             outputdirectory="target"
                                             name="Spin Tools IDE"
                                             displayname="Spin Tools IDE"
+                                            executableName="spinide"
                                             identifier="com.maccasoft.propeller"
                                             icon="build/macosx/app.icns"
                                             shortversion="${project.version}"
@@ -192,6 +193,7 @@
                                             outputdirectory="target/jre"
                                             name="Spin Tools IDE"
                                             displayname="Spin Tools IDE"
+                                            executableName="spinide"
                                             identifier="com.maccasoft.propeller"
                                             icon="build/macosx/app.icns"
                                             shortversion="${project.version}"
@@ -209,6 +211,7 @@
                                             <jlink runtime="${runtime}">
                                                 <jmod name="java.base"/>
                                                 <jmod name="java.desktop"/>
+                                                <jmod name="java.net.http"/>
                                             </jlink>
                                         </bundleapp>
                                     </target>
@@ -268,6 +271,7 @@
                                             outputdirectory="target"
                                             name="Spin Tools IDE"
                                             displayname="Spin Tools IDE"
+                                            executableName="spinide"
                                             identifier="com.maccasoft.propeller"
                                             icon="build/macosx/app.icns"
                                             shortversion="${project.version}"
@@ -288,6 +292,7 @@
                                             outputdirectory="target/jre"
                                             name="Spin Tools IDE"
                                             displayname="Spin Tools IDE"
+                                            executableName="spinide"
                                             identifier="com.maccasoft.propeller"
                                             icon="build/macosx/app.icns"
                                             shortversion="${project.version}"
@@ -305,6 +310,7 @@
                                             <jlink runtime="${runtime}">
                                                 <jmod name="java.base"/>
                                                 <jmod name="java.desktop"/>
+                                                <jmod name="java.net.http"/>
                                             </jlink>
                                         </bundleapp>
                                     </target>
