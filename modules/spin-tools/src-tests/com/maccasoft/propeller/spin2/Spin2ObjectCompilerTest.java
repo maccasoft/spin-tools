@@ -3478,6 +3478,88 @@ class Spin2ObjectCompilerTest {
     }
 
     @Test
+    void testListSkipReturnCount() throws Exception {
+        String text = ""
+            + "PUB start() : a, b\n"
+            + "\n"
+            + "    a, _(2) := function()\n"
+            + "\n"
+            + "PUB function() : r1, r2, r3\n"
+            + "\n"
+            + "    r1 := 1\n"
+            + "    r2 := 2\n"
+            + "    r3 := 3\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       0C 00 20 80    Method start @ $0000C (0 parameters, 2 returns)\n"
+            + "00004 00004       14 00 30 80    Method function @ $00014 (0 parameters, 3 returns)\n"
+            + "00008 00008       1C 00 00 00    End\n"
+            + "' PUB start() : a, b\n"
+            + "0000C 0000C       00             (stack size)\n"
+            + "'     a, _(2) := function()\n"
+            + "0000D 0000D       01             ANCHOR\n"
+            + "0000E 0000E       0A 01          CALL_SUB (1)\n"
+            + "00010 00010       18 08          POP 8\n"
+            + "00012 00012       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00013 00013       04             RETURN\n"
+            + "' PUB function() : r1, r2, r3\n"
+            + "00014 00014       00             (stack size)\n"
+            + "'     r1 := 1\n"
+            + "00015 00015       A2             CONSTANT (1)\n"
+            + "00016 00016       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     r2 := 2\n"
+            + "00017 00017       A3             CONSTANT (2)\n"
+            + "00018 00018       F1             VAR_WRITE LONG DBASE+$00001 (short)\n"
+            + "'     r3 := 3\n"
+            + "00019 00019       A4             CONSTANT (3)\n"
+            + "0001A 0001A       F2             VAR_WRITE LONG DBASE+$00002 (short)\n"
+            + "0001B 0001B       04             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testListSkipStructureReturnCount() throws Exception {
+        String text = ""
+            + "CON\n"
+            + "    S(byte a, word b, long c)\n"
+            + "\n"
+            + "\n"
+            + "PUB start() | a, b\n"
+            + "\n"
+            + "    a, _(S) := function()\n"
+            + "\n"
+            + "PUB function() : r1, S r2\n"
+            + "\n"
+            + "    r1 := 1\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       0C 00 00 80    Method start @ $0000C (0 parameters, 0 returns)\n"
+            + "00004 00004       14 00 30 80    Method function @ $00014 (0 parameters, 3 returns)\n"
+            + "00008 00008       18 00 00 00    End\n"
+            + "' PUB start() | a, b\n"
+            + "0000C 0000C       02             (stack size)\n"
+            + "'     a, _(S) := function()\n"
+            + "0000D 0000D       01             ANCHOR\n"
+            + "0000E 0000E       0A 01          CALL_SUB (1)\n"
+            + "00010 00010       18 08          POP 8\n"
+            + "00012 00012       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00013 00013       04             RETURN\n"
+            + "' PUB function() : r1, S r2\n"
+            + "00014 00014       00             (stack size)\n"
+            + "'     r1 := 1\n"
+            + "00015 00015       A2             CONSTANT (1)\n"
+            + "00016 00016       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00017 00017       04             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testReturnListAsArguments() throws Exception {
         String text = ""
             + "PUB start() | a\n"
@@ -7039,7 +7121,7 @@ class Spin2ObjectCompilerTest {
         Assertions.assertEquals(""
             + "' Object header (var size 4)\n"
             + "00000 00000       0C 00 00 80    Method start @ $0000C (0 parameters, 0 returns)\n"
-            + "00004 00004       17 00 10 81    Method test @ $00017 (1 parameters, 1 returns)\n"
+            + "00004 00004       17 00 20 81    Method test @ $00017 (1 parameters, 2 returns)\n"
             + "00008 00008       20 00 00 00    End\n"
             + "' PUB start() | sLine line\n"
             + "0000C 0000C       02             (stack size)\n"

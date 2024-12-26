@@ -25,6 +25,7 @@ public class Spin2StatementNode {
     Token lastToken;
 
     boolean method;
+    int returnLongs;
 
     protected Map<String, Spin2StatementNode> properties = new HashMap<String, Spin2StatementNode>();
     protected List<Spin2StatementNode> childs = new ArrayList<Spin2StatementNode>();
@@ -46,6 +47,7 @@ public class Spin2StatementNode {
             this.data = node.data;
             this.keyedData = node.keyedData;
             this.method = node.method;
+            this.returnLongs = node.returnLongs;
         }
     }
 
@@ -60,6 +62,7 @@ public class Spin2StatementNode {
             this.data = node.data;
             this.keyedData = node.keyedData;
             this.method = node.method;
+            this.returnLongs = node.returnLongs;
         }
 
         public Argument(Token token) {
@@ -69,11 +72,13 @@ public class Spin2StatementNode {
 
     public Spin2StatementNode(Token token) {
         this.token = token;
+        this.returnLongs = 1;
     }
 
     public Spin2StatementNode(Token token, boolean method) {
         this.token = token;
         this.method = method;
+        this.returnLongs = 1;
     }
 
     public int getType() {
@@ -206,6 +211,14 @@ public class Spin2StatementNode {
 
     public void setMethod(boolean method) {
         this.method = method;
+    }
+
+    public int getReturnLongs() {
+        return returnLongs;
+    }
+
+    public void setReturnLongs(int returnLongs) {
+        this.returnLongs = returnLongs;
     }
 
     @Override

@@ -829,6 +829,59 @@ class Spin2TreeBuilderTest {
             + "", parse(text));
     }
 
+    void testSkipReturnValue() {
+        String text = "_, a := function()";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [,]\n"
+            + "      +-- [_]\n"
+            + "      +-- [a]\n"
+            + " +-- [function]\n"
+            + "", parse(text));
+    }
+
+    @Test
+    void testSkipMultipleReturnValue() {
+        String text = "_, a, _ := function()";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [,]\n"
+            + "      +-- [,]\n"
+            + "           +-- [_]\n"
+            + "           +-- [a]\n"
+            + "      +-- [_]\n"
+            + " +-- [function]\n"
+            + "", parse(text));
+    }
+
+    @Test
+    void testSkipReturnCount() {
+        String text = "a, _(1), c := function()";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [,]\n"
+            + "      +-- [,]\n"
+            + "           +-- [a]\n"
+            + "           +-- [_]\n"
+            + "                +-- [1]\n"
+            + "      +-- [c]\n"
+            + " +-- [function]\n"
+            + "", parse(text));
+    }
+
+    @Test
+    void testSkipTypeReturnCount() {
+        String text = "a, _(type) := function()";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [,]\n"
+            + "      +-- [a]\n"
+            + "      +-- [_]\n"
+            + "           +-- [type]\n"
+            + " +-- [function]\n"
+            + "", parse(text));
+    }
+
     String parse(String text) {
         Spin2TreeBuilder builder = new Spin2TreeBuilder(new Context());
 

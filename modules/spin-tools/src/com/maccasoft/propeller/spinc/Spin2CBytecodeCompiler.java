@@ -1499,7 +1499,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                         if (expected != actual) {
                             throw new CompilerException("expected " + expected + " argument(s), found " + actual, node.getToken());
                         }
-                        if (push && methodExpression.getReturnsCount() == 0) {
+                        if (push && methodExpression.getReturnLongs() == 0) {
                             throw new RuntimeException("method doesn't return any value");
                         }
 
@@ -1741,7 +1741,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
         for (int i = 0; i < childNode.getChildCount(); i++) {
             Expression child = context.getLocalSymbol(childNode.getChild(i).getText());
             if (child != null && (child instanceof Method) && !childNode.getChild(i).getText().startsWith("@")) {
-                actual += ((Method) child).getReturnsCount();
+                actual += ((Method) child).getReturnLongs();
                 continue;
             }
             Spin2Bytecode.Descriptor descriptor = Spin2Bytecode.getDescriptor(childNode.getChild(i).getText().toUpperCase());
@@ -2441,7 +2441,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
             if (expected != actual) {
                 throw new RuntimeException("expected " + expected + " argument(s), found " + actual);
             }
-            if (push && !trap && methodExpression.getReturnsCount() == 0) {
+            if (push && !trap && methodExpression.getReturnLongs() == 0) {
                 throw new RuntimeException("method doesn't return any value");
             }
 
@@ -3001,7 +3001,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
             }
             if (expression instanceof Method) {
                 Spin2Method method = (Spin2Method) expression.getData(Spin2Method.class.getName());
-                if (method.getReturnsCount() != 0 && "FLOAT".equals(method.getReturns().get(0).getType())) {
+                if (method.getReturnLongs() == 1 && "FLOAT".equals(method.getReturns().get(0).getType())) {
                     return true;
                 }
             }

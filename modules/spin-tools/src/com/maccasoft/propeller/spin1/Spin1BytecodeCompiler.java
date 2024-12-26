@@ -1302,7 +1302,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
             source.add(new CallSub(context, methodExpression, indexNode != null));
             calledMethod.setCalledBy(method);
 
-            if (push && methodExpression.getReturnsCount() == 0) {
+            if (push && methodExpression.getReturnLongs() == 0) {
                 throw new RuntimeException("method doesn't return any value");
             }
         }

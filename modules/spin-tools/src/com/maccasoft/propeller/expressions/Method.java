@@ -15,20 +15,20 @@ public class Method extends Expression {
     String name;
     int minArguments;
     int arguments;
-    int returns;
+    int returnLongs;
 
-    public Method(String name, int arguments, int returns) {
+    public Method(String name, int arguments, int returnLongs) {
         this.name = name;
         this.minArguments = arguments;
         this.arguments = arguments;
-        this.returns = returns;
+        this.returnLongs = returnLongs;
     }
 
-    public Method(String name, int minArguments, int maxArguments, int returns) {
+    public Method(String name, int minArguments, int maxArguments, int returnLongs) {
         this.name = name;
         this.minArguments = minArguments;
         this.arguments = maxArguments;
-        this.returns = returns;
+        this.returnLongs = returnLongs;
     }
 
     public String getName() {
@@ -43,8 +43,8 @@ public class Method extends Expression {
         return arguments;
     }
 
-    public int getReturnsCount() {
-        return returns;
+    public int getReturnLongs() {
+        return returnLongs;
     }
 
     public int getObjectIndex() {

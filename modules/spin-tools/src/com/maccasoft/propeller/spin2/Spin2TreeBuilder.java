@@ -438,7 +438,7 @@ public class Spin2TreeBuilder {
                 }
                 if ("(".equals(peek().getText())) {
                     Token first = next();
-                    node.method = true;
+                    node.setMethod(true);
                     if (peek() != null && ")".equals(peek().getText())) {
                         token = next();
                         if (peek() != null && peek().column == token.column + 1) {
@@ -446,6 +446,11 @@ public class Spin2TreeBuilder {
                                 next();
                                 if ((token = next()) == null) {
                                     throw new CompilerException("expecting return count", token);
+                                }
+                                try {
+                                    node.setReturnLongs(Integer.valueOf(token.getText()).intValue());
+                                } catch (Exception e) {
+                                    throw new CompilerException("expecting constant", token);
                                 }
                             }
                         }
@@ -473,6 +478,11 @@ public class Spin2TreeBuilder {
                                     next();
                                     if ((token = next()) == null) {
                                         throw new CompilerException("expecting return count", token);
+                                    }
+                                    try {
+                                        node.setReturnLongs(Integer.valueOf(token.getText()).intValue());
+                                    } catch (Exception e) {
+                                        throw new CompilerException("expecting constant", token);
                                     }
                                 }
                             }

@@ -731,7 +731,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                         if (objEntry.getValue() instanceof Method) {
                             String qualifiedName = identifier.getText() + "." + objEntry.getKey();
                             Method objectMethod = (Method) objEntry.getValue();
-                            Method method = new Method(objectMethod.getName(), objectMethod.getArgumentsCount(), objectMethod.getReturnsCount()) {
+                            Method method = new Method(objectMethod.getName(), objectMethod.getArgumentsCount(), objectMethod.getReturnLongs()) {
 
                                 @Override
                                 public int getIndex() {
@@ -949,7 +949,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
             }
         }
 
-        Method exp = new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount()) {
+        Method exp = new Method(method.getLabel(), method.getParametersCount(), method.getReturnLongs()) {
 
             @Override
             public int getIndex() {
@@ -1886,12 +1886,12 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                 int value = 0;
 
                 value = Spin2Method.address_bit.setValue(value, object.getSize());
-                value = Spin2Method.returns_bit.setValue(value, method.getReturnsCount());
+                value = Spin2Method.returns_bit.setValue(value, method.getReturnLongs());
                 value = Spin2Method.parameters_bit.setValue(value, method.getParametersCount());
 
                 methodData.get(index).setValue(value | 0x80000000L);
                 methodData.get(index).setText(
-                    String.format("Method %s @ $%05X (%d parameters, %d returns)", method.getLabel(), object.getSize(), method.getParametersCount(), method.getReturnsCount()));
+                    String.format("Method %s @ $%05X (%d parameters, %d returns)", method.getLabel(), object.getSize(), method.getParametersCount(), method.getReturnLongs()));
                 try {
                     method.writeTo(object);
                 } catch (CompilerException e) {

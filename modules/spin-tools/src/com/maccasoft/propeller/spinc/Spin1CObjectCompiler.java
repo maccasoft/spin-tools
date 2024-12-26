@@ -718,7 +718,7 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
                         if (objEntry.getValue() instanceof Method) {
                             String qualifiedName = identifier.getText() + "." + objEntry.getKey();
                             Method objectMethod = (Method) objEntry.getValue();
-                            Method method = new Method(objectMethod.getName(), objectMethod.getArgumentsCount(), objectMethod.getReturnsCount()) {
+                            Method method = new Method(objectMethod.getName(), objectMethod.getArgumentsCount(), objectMethod.getReturnLongs()) {
 
                                 @Override
                                 public int getIndex() {

@@ -333,7 +333,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                     if (objEntry.getValue() instanceof Method) {
                         String qualifiedName = name + "." + objEntry.getKey();
                         Method objectMethod = (Method) objEntry.getValue();
-                        Method method = new Method(objectMethod.getName(), objectMethod.getMinArgumentsCount(), objectMethod.getArgumentsCount(), objectMethod.getReturnsCount()) {
+                        Method method = new Method(objectMethod.getName(), objectMethod.getMinArgumentsCount(), objectMethod.getArgumentsCount(), objectMethod.getReturnLongs()) {
 
                             @Override
                             public int getIndex() {

@@ -183,8 +183,12 @@ public class Spin2Method {
         return returns;
     }
 
-    public int getReturnsCount() {
-        return returns.size();
+    public int getReturnLongs() {
+        int count = 0;
+        for (LocalVariable var : returns) {
+            count += (var.getTypeSize() + 3) & ~3;
+        }
+        return count / 4;
     }
 
     public LocalVariable getParameter(int index) {
