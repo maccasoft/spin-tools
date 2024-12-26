@@ -17,7 +17,10 @@
             <fileMode>755</fileMode>
             <outputDirectory>Contents/MacOS</outputDirectory>
         </file>
-        <file><source>LICENSE</source></file>
+        <file>
+            <source>LICENSE</source>
+            <outputDirectory>Contents/Java</outputDirectory>
+        </file>
     </files>
     <fileSets>
         <fileSet>
