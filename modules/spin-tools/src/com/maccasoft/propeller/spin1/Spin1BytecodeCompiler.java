@@ -121,13 +121,16 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 if (node.getChildCount() != desc.parameters) {
                     throw new RuntimeException("expected " + desc.parameters + " argument(s), found " + node.getChildCount());
                 }
-                if (push && desc.code_push == null) {
-                    throw new RuntimeException("function " + node.getText() + " doesn't return a value");
-                }
                 for (int i = 0; i < desc.parameters; i++) {
                     source.addAll(compileBytecodeExpression(context, method, node.getChild(i), true));
                 }
-                source.add(new Bytecode(context, push ? desc.code_push : desc.code, node.getText().toUpperCase()));
+                if (push && desc.code_push != null) {
+                    source.add(new Bytecode(context, desc.code_push, node.getText().toUpperCase()));
+                }
+                else {
+                    source.add(new Bytecode(context, desc.code, node.getText().toUpperCase()));
+                }
+                node.setReturnLongs(push && desc.code_push != null ? 1 : 0);
             }
             else if ("CONSTANT".equalsIgnoreCase(node.getText())) {
                 if (node.getChildCount() != 1) {
@@ -142,6 +145,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 } catch (Exception e) {
                     throw new CompilerException("expression is not constant", node.getChild(0).getToken());
                 }
+                node.setReturnLongs(1);
             }
             else if ("TRUNC".equalsIgnoreCase(node.getText())) {
                 if (node.getChildCount() != 1) {
@@ -156,11 +160,13 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 } catch (Exception e) {
                     throw new CompilerException("expression is not constant", node.getChild(0).getToken());
                 }
+                node.setReturnLongs(1);
             }
             else if ("CHIPVER".equalsIgnoreCase(node.getText())) {
                 source.add(new Bytecode(context, new byte[] {
                     (byte) 0x34, (byte) 0x80
                 }, "CHIPVER"));
+                node.setReturnLongs(1);
             }
             else if ("CLKFREQ".equalsIgnoreCase(node.getText())) {
                 source.add(new Constant(context, new NumberLiteral(0), compiler.isOpenspinCompatible()));
@@ -175,6 +181,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                     throw new RuntimeException("expected " + 0 + " argument(s), found " + node.getChildCount());
                 }
                 source.add(new RegisterOp(context, RegisterOp.Op.Read, 0x1E9));
+                node.setReturnLongs(1);
             }
             else if ("COGNEW".equalsIgnoreCase(node.getText())) {
                 if (node.getChildCount() != 2) {
@@ -209,6 +216,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 }
                 desc = Spin1Bytecode.getDescriptor("COGINIT");
                 source.add(new Bytecode(context, push ? desc.code_push : desc.code, node.getText().toUpperCase()));
+                node.setReturnLongs(push ? 1 : 0);
             }
             else if ("LOOKDOWN".equalsIgnoreCase(node.getText()) || "LOOKDOWNZ".equalsIgnoreCase(node.getText()) || "LOOKUP".equalsIgnoreCase(node.getText())
                 || "LOOKUPZ".equalsIgnoreCase(node.getText())) {
@@ -255,6 +263,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
 
                 source.add(new Bytecode(context, 0b00001111, "LOOKDONE"));
                 source.add(end);
+                node.setReturnLongs(1);
             }
             else if ("STRING".equalsIgnoreCase(node.getText())) {
                 ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -293,6 +302,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 os.write(0x00);
                 Spin1Bytecode target = addStringData(new Bytecode(context, os.toByteArray(), "STRING".toUpperCase()));
                 source.add(new MemoryRef(context, MemoryRef.Size.Byte, false, MemoryRef.Base.PBase, MemoryRef.Op.Address, new ContextLiteral(target.getContext())));
+                node.setReturnLongs(1);
             }
             else if ("REBOOT".equalsIgnoreCase(node.getText())) {
                 source.add(new Constant(context, new NumberLiteral("%10000000"), compiler.isOpenspinCompatible()));
@@ -349,6 +359,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                         source.add(new MemoryRef(context, MemoryRef.Size.Byte, false, MemoryRef.Base.PBase, MemoryRef.Op.Address, new ContextLiteral(target.getContext())));
                     }
                 }
+                node.setReturnLongs(1);
             }
             else if ("-".equals(node.getText()) && node.getChildCount() == 1) {
                 if (node.getChild(0).getToken().type == Token.NUMBER) {
@@ -367,6 +378,9 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                             source.addAll(compileBytecodeExpression(context, method, node.getChild(0), true));
                         }
                         source.add(new Bytecode(context, push ? 0b111_00110 : 0b010_00110, "NEGATE"));
+                        if (!push) {
+                            node.setReturnLongs(0);
+                        }
                     }
                 }
             }
@@ -376,14 +390,19 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
             else if (":=".equals(node.getText())) {
                 source.addAll(compileBytecodeExpression(context, method, node.getChild(1), true));
                 source.addAll(leftAssign(context, method, node.getChild(0), push));
+                if (node.getChild(1).getReturnLongs() != 1) {
+                    logMessage(new CompilerException("expression doesn't return a value", node.getChild(1).getTokens()));
+                }
                 if (push) {
                     source.add(new Bytecode(context, 0x80, "WRITE"));
                 }
+                node.setReturnLongs(push ? 1 : 0);
             }
             else if (MathOp.isAssignMathOp(node.getText())) {
                 source.addAll(compileBytecodeExpression(context, method, node.getChild(1), true));
                 source.addAll(leftAssign(context, method, node.getChild(0), true));
                 source.add(new MathOp(context, node.getText(), push));
+                node.setReturnLongs(push ? 1 : 0);
             }
             else if ("||".equals(node.getText()) || "|<".equals(node.getText()) || ">|".equals(node.getText()) || "!".equals(node.getText()) || "^^".equals(node.getText())
                 || "NOT".equalsIgnoreCase(node.getText())) {
@@ -393,6 +412,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 if (!push) {
                     source.addAll(leftAssign(context, method, node.getChild(0), true));
                     source.add(new MathOp(context, node.getText() + "=", false));
+                    node.setReturnLongs(0);
                 }
                 else {
                     source.addAll(compileBytecodeExpression(context, method, node.getChild(0), true));
@@ -416,6 +436,9 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                         code |= 0b10000000;
                     }
                     source.add(new Bytecode(context, code, "RANDOM_FORWARD"));
+                    if (!push) {
+                        node.setReturnLongs(0);
+                    }
                 }
                 else {
                     if (node.getChildCount() != 2) {
@@ -461,6 +484,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 else {
                     throw new CompilerException("symbol " + node.getChild(0).getText() + " is not a method", node.getChild(0).getToken());
                 }
+                node.setReturnLongs(node.getChild(0).getReturnLongs());
             }
             else if ("++".equalsIgnoreCase(node.getText()) || "--".equalsIgnoreCase(node.getText())) {
                 if (node.getChildCount() != 1) {
@@ -523,6 +547,9 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                     int code = Spin1Bytecode.op_ss.setValue(0b0_0110_000, type.ordinal() + 1);
                     source.add(new Bytecode(context, Spin1Bytecode.op_p.setBoolean(code, push), "PRE_DEC"));
                 }
+                if (!push) {
+                    node.setReturnLongs(0);
+                }
             }
             else if ("~".equalsIgnoreCase(node.getText())) {
                 if (node.getChildCount() != 1) {
@@ -534,6 +561,9 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                     code |= 0b10000000;
                 }
                 source.add(new Bytecode(context, code, "SIGN_EXTEND_BYTE"));
+                if (!push) {
+                    node.setReturnLongs(0);
+                }
             }
             else if ("~~".equalsIgnoreCase(node.getText())) {
                 if (node.getChildCount() != 1) {
@@ -545,6 +575,9 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                     code |= 0b10000000;
                 }
                 source.add(new Bytecode(context, code, "SIGN_EXTEND_WORD"));
+                if (!push) {
+                    node.setReturnLongs(0);
+                }
             }
             else if ("..".equalsIgnoreCase(node.getText())) {
                 if (node.getChildCount() != 2) {
@@ -594,6 +627,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
 
                 if (postEffectNode != null) {
                     source.add(compilePostEffect(context, postEffectNode, node.getText(), push));
+                    node.setReturnLongs(push ? 1 : 0);
                 }
             }
             else if ("@BYTE".equalsIgnoreCase(node.getText()) || "@WORD".equalsIgnoreCase(node.getText()) || "@LONG".equalsIgnoreCase(node.getText())) {
@@ -703,6 +737,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
 
                     if (postEffectNode != null) {
                         source.add(compilePostEffect(context, postEffectNode, s[1], push));
+                        node.setReturnLongs(push ? 1 : 0);
                     }
                 }
                 else {
@@ -746,6 +781,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                             if (postEffectNode != null) {
                                 source.add(new VariableOp(context, VariableOp.Op.Assign, popIndex, (Variable) expression));
                                 source.add(compilePostEffect(context, postEffectNode, ((Variable) expression).getType(), push));
+                                node.setReturnLongs(push ? 1 : 0);
                             }
                             else {
                                 if (isAbsoluteAddress(node.getText())) {
@@ -788,6 +824,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                             if (postEffectNode != null) {
                                 source.add(new MemoryOp(context, ss, popIndex, MemoryOp.Base.PBase, MemoryOp.Op.Assign, expression));
                                 source.add(compilePostEffect(context, postEffectNode, type, push));
+                                node.setReturnLongs(push ? 1 : 0);
                             }
                             else {
                                 source.add(new MemoryOp(context, ss, popIndex, MemoryOp.Base.PBase, MemoryOp.Op.Address, expression));
@@ -832,6 +869,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
 
                         if (postEffectNode != null) {
                             source.add(compilePostEffect(context, postEffectNode, "LONG", push));
+                            node.setReturnLongs(push ? 1 : 0);
                         }
                     }
                     else if (expression instanceof Variable) {
@@ -853,6 +891,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                         if (postEffectNode != null) {
                             source.add(new VariableOp(context, VariableOp.Op.Assign, popIndex, (Variable) expression));
                             source.add(compilePostEffect(context, postEffectNode, ((Variable) expression).getType(), push));
+                            node.setReturnLongs(push ? 1 : 0);
                         }
                         else {
                             source.add(new VariableOp(context, VariableOp.Op.Read, popIndex, (Variable) expression));
@@ -892,6 +931,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                         if (postEffectNode != null) {
                             source.add(new MemoryOp(context, ss, popIndex, MemoryOp.Base.PBase, MemoryOp.Op.Assign, expression));
                             source.add(compilePostEffect(context, postEffectNode, type, push));
+                            node.setReturnLongs(push ? 1 : 0);
                         }
                         else {
                             source.add(new MemoryOp(context, ss, popIndex, MemoryOp.Base.PBase, MemoryOp.Op.Read, expression));
@@ -1146,6 +1186,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
 
             if (postEffectNode != null) {
                 source.add(compilePostEffect(context, postEffectNode, s[1], push));
+                node.setReturnLongs(push ? 1 : 0);
             }
         }
         else if (node.getType() != 0 && node.getType() != Token.KEYWORD) {
@@ -1208,6 +1249,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
 
                 if (postEffectNode != null) {
                     source.add(compilePostEffect(context, postEffectNode, "LONG", push));
+                    node.setReturnLongs(push ? 1 : 0);
                 }
             }
             else if (expression instanceof Variable) {
@@ -1263,8 +1305,9 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
             calledMethod.setCalledBy(method);
 
             if (push && !trap && calledMethod.getReturnsCount() == 0) {
-                throw new RuntimeException("method doesn't return any value");
+                logMessage(new CompilerException("method doesn't return a value", node.getToken()));
             }
+            node.setReturnLongs(push ? calledMethod.getReturnsCount() : 0);
         }
         else if (expression instanceof SpinObject) {
             Spin1StatementNode indexNode = null;
@@ -1302,12 +1345,13 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
             source.add(new CallSub(context, methodExpression, indexNode != null));
             calledMethod.setCalledBy(method);
 
-            if (push && methodExpression.getReturnLongs() == 0) {
-                throw new RuntimeException("method doesn't return any value");
+            if (push && !trap && methodExpression.getReturnLongs() == 0) {
+                logMessage(new CompilerException("method doesn't return a value", node.getToken()));
             }
+            node.setReturnLongs(push ? calledMethod.getReturnsCount() : 0);
         }
         else {
-            throw new CompilerException(node.getText() + " is not a method", node.getToken());
+            logMessage(new CompilerException(node.getText() + " is not a method", node.getToken()));
         }
 
         return source;

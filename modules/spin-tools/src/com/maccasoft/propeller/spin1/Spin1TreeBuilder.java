@@ -316,6 +316,7 @@ public class Spin1TreeBuilder {
                 else if ("(".equals(peek().getText())) {
                     next();
                     node = new Spin1StatementNode.Method(node);
+                    node.setReturnLongs(0);
                     if (peek() != null && ")".equals(peek().getText())) {
                         next();
                         return node;
@@ -336,7 +337,7 @@ public class Spin1TreeBuilder {
                             return node;
                         }
                         if (!",".equals(token.getText()) && !":".equals(token.getText())) {
-                            throw new CompilerException("expecting )", token);
+                            throw new CompilerException("expecting ',' or ')'", token);
                         }
                     }
                 }

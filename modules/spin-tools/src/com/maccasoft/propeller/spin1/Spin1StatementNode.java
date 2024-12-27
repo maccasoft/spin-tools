@@ -22,6 +22,8 @@ public class Spin1StatementNode {
 
     Token token;
 
+    int returnLongs;
+
     Map<String, Spin1StatementNode> properties = new HashMap<String, Spin1StatementNode>();
     List<Spin1StatementNode> childs = new ArrayList<Spin1StatementNode>();
 
@@ -39,6 +41,7 @@ public class Spin1StatementNode {
             this.childs.addAll(node.childs);
             this.data = node.data;
             this.keyedData = node.keyedData;
+            this.returnLongs = node.returnLongs;
         }
     }
 
@@ -54,6 +57,7 @@ public class Spin1StatementNode {
             this.childs.addAll(node.childs);
             this.data = node.data;
             this.keyedData = node.keyedData;
+            this.returnLongs = node.returnLongs;
         }
     }
 
@@ -65,11 +69,13 @@ public class Spin1StatementNode {
             this.childs.addAll(node.childs);
             this.data = node.data;
             this.keyedData = node.keyedData;
+            this.returnLongs = node.returnLongs;
         }
     }
 
     public Spin1StatementNode(Token token) {
         this.token = token;
+        this.returnLongs = 1;
     }
 
     public int getType() {
@@ -87,20 +93,18 @@ public class Spin1StatementNode {
     public List<Token> getTokens() {
         List<Token> list = new ArrayList<>();
 
-        if (childs.size() == 0) {
-            list.add(token);
-        }
-        else if (childs.size() == 1) {
-            list.add(token);
-            list.addAll(childs.get(0).getTokens());
-        }
-        else {
-            int i = 0;
-            while (i < childs.size()) {
-                if (i != 0) {
-                    list.add(token);
+        list.add(token);
+
+        int i = 0;
+        while (i < childs.size()) {
+            List<Token> childTokens = childs.get(i++).getTokens();
+            if (childTokens.size() != 0) {
+                if (childTokens.get(0).start > list.get(list.size() - 1).start) {
+                    list.addAll(childTokens);
                 }
-                list.addAll(childs.get(i++).getTokens());
+                else if (childTokens.get(childTokens.size() - 1).start < list.get(0).start) {
+                    list.addAll(0, childTokens);
+                }
             }
         }
 
@@ -178,6 +182,14 @@ public class Spin1StatementNode {
 
     public void setData(String key, Object data) {
         this.keyedData.put(key, data);
+    }
+
+    public int getReturnLongs() {
+        return returnLongs;
+    }
+
+    public void setReturnLongs(int returnLongs) {
+        this.returnLongs = returnLongs;
     }
 
     @Override
