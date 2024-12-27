@@ -15,323 +15,76 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import com.maccasoft.propeller.Compiler.FileSourceProvider;
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.model.Node;
 
+@TestInstance(Lifecycle.PER_CLASS)
 class Spin1ExamplesTest {
 
     static final String path = "examples/P1";
     static final String libraryPath = "library/spin1";
 
-    @Test
-    void test_char_Types() throws Exception {
-        compileAndCompare(new File(path + "/char", "Types.spin"), new File(path + "/char", "Types.binary"));
+    @ParameterizedTest(name = "{0}.spin")
+    @MethodSource("librarySourceFiles")
+    void test_library(File sourceFile) throws Exception {
+        File sourcePath = sourceFile.getParentFile();
+        File binaryFile = new File(sourcePath, sourceFile.getName() + ".binary");
+        compileAndCompare(new File(sourcePath, sourceFile.getName() + ".spin"), binaryFile);
     }
 
-    @Test
-    void test_com_serial_DataBlast() throws Exception {
-        compileAndCompare(new File(path + "/com/serial", "DataBlast.spin"), new File(path, "com/serial/DataBlast.binary"));
+    private List<File> librarySourceFiles() {
+        List<File> result = sourceFiles(new File(libraryPath));
+        Collections.sort(result);
+        return result;
     }
 
-    @Test
-    void test_com_serial_HelloWorld() throws Exception {
-        compileAndCompare(new File(path + "/com/serial", "HelloWorld.spin"), new File(path, "com/serial/HelloWorld.binary"));
+    @ParameterizedTest(name = "{0}.spin")
+    @MethodSource("exampleSourceFiles")
+    void test_examples(File sourceFile) throws Exception {
+        File sourcePath = sourceFile.getParentFile();
+        File binaryFile = new File(sourcePath, sourceFile.getName() + ".binary");
+        compileAndCompare(new File(sourcePath, sourceFile.getName() + ".spin"), binaryFile);
     }
 
-    @Test
-    void test_com_serial_LoopBack() throws Exception {
-        compileAndCompare(new File(path + "/com/serial", "LoopBack.spin"), new File(path, "com/serial/LoopBack.binary"));
+    private List<File> exampleSourceFiles() {
+        List<File> result = sourceFiles(new File(path));
+        Collections.sort(result);
+        return result;
     }
 
-    @Test
-    void test_com_serial_terminal_Demo() throws Exception {
-        compileAndCompare(new File(path + "/com/serial/terminal", "Demo.spin"), new File(path, "com/serial/terminal/Demo.binary"));
-    }
+    private static List<File> sourceFiles(File dir) {
+        List<File> result = new ArrayList<>();
 
-    @Test
-    void test_com_serial_terminal_HelloWorld() throws Exception {
-        compileAndCompare(new File(path + "/com/serial/terminal", "HelloWorld.spin"), new File(path, "com/serial/terminal/HelloWorld.binary"));
-    }
+        File[] files = dir.listFiles();
+        for (int i = 0; i < files.length; i++) {
+            String name = files[i].getName();
+            if (name.endsWith(".spin")) {
+                name = name.substring(0, name.length() - 5);
+                File binaryFile = new File(dir, name + ".binary");
+                if (binaryFile.exists()) {
+                    result.add(new File(dir, name));
+                }
+            }
+            else if (!".".equals(name) && !"..".equals(name)) {
+                if (files[i].isDirectory()) {
+                    result.addAll(sourceFiles(files[i]));
+                }
+            }
+        }
 
-    @Test
-    void test_com_serial_terminal_InputNumbers() throws Exception {
-        compileAndCompare(new File(path + "/com/serial/terminal", "InputNumbers.spin"), new File(path, "com/serial/terminal/InputNumbers.binary"));
-    }
-
-    @Test
-    void test_com_serial_terminal_ReadLine() throws Exception {
-        compileAndCompare(new File(path + "/com/serial/terminal", "ReadLine.spin"), new File(path, "com/serial/terminal/ReadLine.binary"));
-    }
-
-    @Test
-    void test_com_spi_DS1620TemperatureSensing() throws Exception {
-        compileAndCompare(new File(path + "/com/spi", "DS1620TemperatureSensing"));
-    }
-
-    @Test
-    void test_debug_DebugShell() throws Exception {
-        compileAndCompare(new File(path + "/debug", "DebugShell"));
-    }
-
-    @Test
-    void test_debug_RealTimeClockEmulator() throws Exception {
-        compileAndCompare(new File(path + "/debug", "RealTimeClockEmulator"));
-    }
-
-    @Test
-    void test_debug_StackLength() throws Exception {
-        compileAndCompare(new File(path + "/debug", "StackLength"));
-    }
-
-    @Test
-    void test_display_Graphics_Demo() throws Exception {
-        compileAndCompare(new File(path + "/display", "Graphics_Demo"));
-    }
-
-    @Test
-    void test_display_Graphics_Palette() throws Exception {
-        compileAndCompare(new File(path + "/display", "Graphics_Palette"));
-    }
-
-    @Test
-    void test_display_TV_Terminal_Demo() throws Exception {
-        compileAndCompare(new File(path + "/display", "TV_Terminal_Demo"));
-    }
-
-    @Test
-    void test_display_TV_Text_Demo() throws Exception {
-        compileAndCompare(new File(path + "/display", "TV_Text_Demo"));
-    }
-
-    @Test
-    void test_display_lcd_serial_Demo() throws Exception {
-        compileAndCompare(new File(path + "/display/lcd/serial", "Demo"));
-    }
-
-    @Test
-    void test_display_vga_VGA_512x384_Bitmap_Demo() throws Exception {
-        compileAndCompare(new File(path + "/display/vga", "VGA_512x384_Bitmap_Demo"));
-    }
-
-    @Test
-    void test_display_vga_VGA_Demo() throws Exception {
-        compileAndCompare(new File(path + "/display/vga", "VGA_Demo"));
-    }
-
-    @Test
-    void test_display_vga_VGA_HiRes_Text_Demo() throws Exception {
-        compileAndCompare(new File(path + "/display/vga", "VGA_HiRes_Text_Demo"));
-    }
-
-    @Test
-    void test_display_vga_VGA_Text_Demo() throws Exception {
-        compileAndCompare(new File(path + "/display/vga", "VGA_Text_Demo"));
-    }
-
-    @Test
-    void test_display_vga_VGA_Tile_Driver_Demo2() throws Exception {
-        compileAndCompare(new File(path + "/display/vga", "VGA_Tile_Driver_Demo2"));
-    }
-
-    @Test
-    void test_display_vga_VGA_Tile_Driver_Demo3() throws Exception {
-        compileAndCompare(new File(path + "/display/vga", "VGA_Tile_Driver_Demo3"));
-    }
-
-    @Test
-    void test_input_Keyboard() throws Exception {
-        compileAndCompare(new File(path + "/input", "Keyboard.spin"), new File(path + "/input", "Keyboard.binary"));
-    }
-
-    @Test
-    void test_input_Keypad4x4() throws Exception {
-        compileAndCompare(new File(path + "/input", "Keypad4x4.spin"), new File(path + "/input", "Keypad4x4.binary"));
-    }
-
-    @Test
-    void test_input_TrimAD8803() throws Exception {
-        compileAndCompare(new File(path + "/input", "TrimAD8803.spin"), new File(path + "/input", "TrimAD8803.binary"));
-    }
-
-    @Test
-    void test_math_float_FrequencyTable() throws Exception {
-        compileAndCompare(new File(path + "/math/float", "FrequencyTable"));
-    }
-
-    @Test
-    void test_math_float_LogTable() throws Exception {
-        compileAndCompare(new File(path + "/math/float", "LogTable"));
-    }
-
-    @Test
-    void test_math_random_RandomNumbers() throws Exception {
-        compileAndCompare(new File(path + "/math/random", "RandomNumbers"));
-    }
-
-    @Test
-    void test_math_random_WhiteNoise() throws Exception {
-        compileAndCompare(new File(path + "/math/random", "WhiteNoise"));
-    }
-
-    @Test
-    void test_motor_Servo() throws Exception {
-        compileAndCompare(new File(path + "/motor", "Servo"));
-    }
-
-    @Test
-    void test_sensor_H48C_TriAxis_Accelerometer_Demo() throws Exception {
-        compileAndCompare(new File(path + "/sensor", "H48C_Tri-Axis_Accelerometer_Demo"));
-    }
-
-    @Test
-    void test_sensor_Inductive_Proximity_Sensor_Part1() throws Exception {
-        compileAndCompare(new File(path + "/sensor", "Inductive_Proximity_Sensor_Part1"));
-    }
-
-    @Test
-    void test_sensor_Inductive_Proximity_Sensor_Part2() throws Exception {
-        compileAndCompare(new File(path + "/sensor", "Inductive_Proximity_Sensor_Part2"));
-    }
-
-    @Test
-    void test_sensor_MEMSIC2125v2_Graphics_Demo() throws Exception {
-        compileAndCompare(new File(path + "/sensor", "MEMSIC2125v2_Graphics_Demo"));
-    }
-
-    @Test
-    void test_sensor_MEMSIC2125v2_Serial_Demo() throws Exception {
-        compileAndCompare(new File(path + "/sensor", "MEMSIC2125v2_Serial_Demo"));
-    }
-
-    @Test
-    void test_sensor_MXD2125_Demo() throws Exception {
-        compileAndCompare(new File(path + "/sensor", "MXD2125_Demo"));
-    }
-
-    @Test
-    void test_sensor_MXD2125_Simple_Demo() throws Exception {
-        compileAndCompare(new File(path + "/sensor", "MXD2125_Simple_Demo"));
-    }
-
-    @Test
-    void test_sensor_Ping_Demo() throws Exception {
-        compileAndCompare(new File(path + "/sensor", "Ping_Demo"));
-    }
-
-    @Test
-    void test_sensor_TSL230_Demo() throws Exception {
-        compileAndCompare(new File(path + "/sensor", "TSL230_Demo"));
-    }
-
-    @Test
-    void test_sensor_TSL230_Simple_Demo() throws Exception {
-        compileAndCompare(new File(path + "/sensor", "TSL230_Simple_Demo"));
-    }
-
-    @Test
-    void test_sensor_compass_hm55b_Calibration() throws Exception {
-        compileAndCompare(new File(path + "/sensor/compass/hm55b", "Calibration"));
-    }
-
-    @Test
-    void test_sensor_compass_hm55b_SerialDemo() throws Exception {
-        compileAndCompare(new File(path + "/sensor/compass/hm55b", "SerialDemo"));
-    }
-
-    @Test
-    void test_sensor_compass_hm55b_TVDemo() throws Exception {
-        compileAndCompare(new File(path + "/sensor/compass/hm55b", "TVDemo"));
-    }
-
-    @Test
-    void test_signal_Microphone_to_Headphones() throws Exception {
-        compileAndCompare(new File(path + "/signal", "Microphone_to_Headphones"));
-    }
-
-    @Test
-    void test_signal_Microphone_to_VGA() throws Exception {
-        compileAndCompare(new File(path + "/signal", "Microphone_to_VGA"));
-    }
-
-    @Test
-    void test_signal_SpatialSoundDemo() throws Exception {
-        compileAndCompare(new File(path + "/signal", "SpatialSoundDemo"));
-    }
-
-    @Test
-    void test_signal_VocalTractDemo_mixer() throws Exception {
-        compileAndCompare(new File(path + "/signal", "VocalTractDemo_mixer"));
-    }
-
-    @Test
-    void test_signal_synth_VocalTractDemo_mixer() throws Exception {
-        compileAndCompare(new File(path + "/signal/synth", "FrequencySynth"));
-    }
-
-    @Test
-    void test_string_Basics() throws Exception {
-        compileAndCompare(new File(path + "/string", "Basics.spin"), new File(path + "/string", "Basics.binary"));
-    }
-
-    @Test
-    void test_string_Calculator() throws Exception {
-        compileAndCompare(new File(path + "/string", "Calculator.spin"), new File(path + "/string", "Calculator.binary"));
-    }
-
-    @Test
-    void test_string_CommandLine() throws Exception {
-        compileAndCompare(new File(path + "/string", "CommandLine.spin"), new File(path + "/string", "CommandLine.binary"));
-    }
-
-    @Test
-    void test_string_CopyAppend() throws Exception {
-        compileAndCompare(new File(path + "/string", "CopyAppend.spin"), new File(path + "/string", "CopyAppend.binary"));
-    }
-
-    @Test
-    void test_string_LeftMidRight() throws Exception {
-        compileAndCompare(new File(path + "/string", "LeftMidRight.spin"), new File(path + "/string", "LeftMidRight.binary"));
-    }
-
-    @Test
-    void test_string_Replace() throws Exception {
-        compileAndCompare(new File(path + "/string", "Replace.spin"), new File(path + "/string", "Replace.binary"));
-    }
-
-    @Test
-    void test_string_Tokenize() throws Exception {
-        compileAndCompare(new File(path + "/string", "Tokenize.spin"), new File(path + "/string", "Tokenize.binary"));
-    }
-
-    @Test
-    void test_string_UpperLower() throws Exception {
-        compileAndCompare(new File(path + "/string", "UpperLower.spin"), new File(path + "/string", "UpperLower.binary"));
-    }
-
-    @Test
-    void test_string_integer_PrintNumbers() throws Exception {
-        compileAndCompare(new File(path + "/string/integer", "PrintNumbers.spin"), new File(path + "/string/integer", "PrintNumbers.binary"));
-    }
-
-    @Test
-    void test_system_Counters() throws Exception {
-        compileAndCompare(new File(path + "/system", "Counters.spin"), new File(path + "/system", "Counters.binary"));
-    }
-
-    @Test
-    void test_jm_165_ez_demo() throws Exception {
-        compileAndCompare(new File(path, "jm_165_ez_demo.spin"), new File(path, "jm_165_ez_demo.binary"));
-    }
-
-    @Test
-    void test_jm_i2c_devices() throws Exception {
-        compileAndCompare(new File(path, "jm_i2c_devices.spin"), new File(path, "jm_i2c_devices.binary"));
+        return result;
     }
 
     void compileAndCompare(File source) throws Exception {

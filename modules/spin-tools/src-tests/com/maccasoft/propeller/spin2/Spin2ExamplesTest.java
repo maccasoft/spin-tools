@@ -17,159 +17,27 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import com.maccasoft.propeller.Compiler.FileSourceProvider;
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.model.Node;
 
+@TestInstance(Lifecycle.PER_CLASS)
 class Spin2ExamplesTest {
 
     static final String path = "examples/P2";
     static final String libraryPath = "library/spin2";
-
-    @Test
-    void test_ansi_vgatext_demo() throws Exception {
-        compileAndCompare(new File(path, "ansi_vgatext_demo.spin2"), new File(path, "ansi_vgatext_demo.binary"));
-    }
-
-    @Test
-    void test_cgsm_flash_file_demo() throws Exception {
-        compileAndCompare(new File(path, "cgsm_flash_file_demo.spin2"), new File(path, "cgsm_flash_file_demo.binary"));
-    }
-
-    @Test
-    void test_flash_fs_demo() throws Exception {
-        compileAndCompare(new File(path, "flash_fs_demo.spin2"), new File(path, "flash_fs_demo.binary"));
-    }
-
-    @Test
-    void test_jm_1_wire_demo() throws Exception {
-        compileAndCompare(new File(path, "jm_1-wire_demo.spin2"), new File(path, "jm_1-wire_demo.binary"));
-    }
-
-    @Test
-    void test_jm_apa102c_demo() throws Exception {
-        compileAndCompare(new File(path, "jm_apa102c_demo.spin2"), new File(path, "jm_apa102c_demo.binary"));
-    }
-
-    @Test
-    void test_jm_at24c32_demo() throws Exception {
-        compileAndCompare(new File(path, "jm_at24c32_demo.spin2"), new File(path, "jm_at24c32_demo.binary"));
-    }
-
-    @Test
-    void test_jm_chauvet_led_splash() throws Exception {
-        compileAndCompare(new File(path, "jm_chauvet_led-splash.spin2"), new File(path, "jm_chauvet_led-splash.binary"));
-    }
-
-    @Test
-    void test_jm_click_4_20ma_demo() throws Exception {
-        compileAndCompare(new File(path, "jm_click_4-20ma_demo.spin2"), new File(path, "jm_click_4-20ma_demo.binary"));
-    }
-
-    @Test
-    void test_jm_click_dmx_tx_demo() throws Exception {
-        compileAndCompare(new File(path, "jm_click_dmx-tx_demo.spin2"), new File(path, "jm_click_dmx-tx_demo.binary"));
-    }
-
-    @Test
-    void test_jm_click_rs485_demo() throws Exception {
-        compileAndCompare(new File(path, "jm_click_rs485_demo.spin2"), new File(path, "jm_click_rs485_demo.binary"));
-    }
-
-    @Test
-    void test_jm_click_rs485_test() throws Exception {
-        compileAndCompare(new File(path, "jm_click_rs485_test.spin2"), new File(path, "jm_click_rs485_test.binary"));
-    }
-
-    @Test
-    void test_jm_click_rtc_10_demo() throws Exception {
-        compileAndCompare(new File(path, "jm_click_rtc-10_demo.spin2"), new File(path, "jm_click_rtc-10_demo.binary"));
-    }
-
-    @Test
-    void test_jm_dc_motor_demo() throws Exception {
-        compileAndCompare(new File(path, "jm_dc_motor_demo.spin2"), new File(path, "jm_dc_motor_demo.binary"));
-    }
-
-    @Test
-    void test_jm_ds3231_demo() throws Exception {
-        compileAndCompare(new File(path, "jm_ds3231_demo.spin2"), new File(path, "jm_ds3231_demo.binary"));
-    }
-
-    @Test
-    void test_jm_ez_analog_demo() throws Exception {
-        compileAndCompare(new File(path, "jm_ez_analog_demo.spin2"), new File(path, "jm_ez_analog_demo.binary"));
-    }
-
-    @Test
-    void test_jm_ez_button_demo() throws Exception {
-        compileAndCompare(new File(path, "jm_ez_button_demo.spin2"), new File(path, "jm_ez_button_demo.binary"));
-    }
-
-    @Test
-    void test_jm_ez_sound_demo() throws Exception {
-        compileAndCompare(new File(path, "jm_ez_sound_demo.spin2"), new File(path, "jm_ez_sound_demo.binary"));
-    }
-
-    @Test
-    void test_jm_ez_spi_demo() throws Exception {
-        compileAndCompare(new File(path, "jm_ez_spi_demo.spin2"), new File(path, "jm_ez_spi_demo.binary"));
-    }
-
-    @Test
-    void test_jm_flash_explorer() throws Exception {
-        compileAndCompare(new File(path, "jm_flash_explorer.spin2"), new File(path, "jm_flash_explorer.binary"));
-    }
-
-    @Test
-    void test_jm_format_strings_demo() throws Exception {
-        compileAndCompare(new File(path, "jm_format_strings_demo.spin2"), new File(path, "jm_format_strings_demo.binary"));
-    }
-
-    @Test
-    void test_jm_i2c_devices() throws Exception {
-        compileAndCompare(new File(path, "jm_i2c_devices.spin2"), new File(path, "jm_i2c_devices.binary"));
-    }
-
-    @Test
-    void test_jm_i2c_scanner() throws Exception {
-        compileAndCompare(new File(path, "jm_i2c_scanner.spin2"), new File(path, "jm_i2c_scanner.binary"));
-    }
-
-    @Test
-    void test_jm_lcd_pcf8574_demo() throws Exception {
-        compileAndCompare(new File(path, "jm_lcd_pcf8574_demo.spin2"), new File(path, "jm_lcd_pcf8574_demo.binary"));
-    }
-
-    @Test
-    void test_jm_max31855_k_demo() throws Exception {
-        compileAndCompare(new File(path, "jm_max31855-k_demo.spin2"), new File(path, "jm_max31855-k_demo.binary"));
-    }
-
-    @Test
-    void test_jm_max7219_ez_demo() throws Exception {
-        compileAndCompare(new File(path, "jm_max7219_ez_demo.spin2"), new File(path, "jm_max7219_ez_demo.binary"));
-    }
-
-    @Test
-    void test_jm_p2_es_matrix_control_demo() throws Exception {
-        compileAndCompare(new File(path, "jm_p2-es_matrix_control_demo.spin2"), new File(path, "jm_p2-es_matrix_control_demo.binary"));
-    }
-
-    @Test
-    void test_jm_pwm_demo() throws Exception {
-        compileAndCompare(new File(path, "jm_pwm_demo.spin2"), new File(path, "jm_pwm_demo.binary"));
-    }
-
-    @Test
-    void test_m6502_apple1() throws Exception {
-        compileAndCompare(new File(path, "m6502_apple1.spin2"), new File(path, "m6502_apple1.binary"));
-    }
 
     @Test
     void test_Spin2_interpreter() throws Exception {
@@ -194,6 +62,57 @@ class Spin2ExamplesTest {
     @Test
     void test_lz4stub() throws Exception {
         compileAndCompare(new File("lz4stub.spin2"), new File("lz4stub.binary"));
+    }
+
+    @ParameterizedTest(name = "{0}.spin2")
+    @MethodSource("exampleSourceFiles")
+    void test_examples(File sourceFile) throws Exception {
+        File sourcePath = sourceFile.getParentFile();
+        File binaryFile = new File(sourcePath, sourceFile.getName() + ".binary");
+        compileAndCompare(new File(sourcePath, sourceFile.getName() + ".spin2"), binaryFile);
+    }
+
+    private List<File> exampleSourceFiles() {
+        List<File> result = sourceFiles(new File(path));
+        Collections.sort(result);
+        return result;
+    }
+
+    @ParameterizedTest(name = "{0}.spin2")
+    @MethodSource("librarySourceFiles")
+    void test_library(File sourceFile) throws Exception {
+        File sourcePath = sourceFile.getParentFile();
+        File binaryFile = new File(sourcePath, sourceFile.getName() + ".binary");
+        compileAndCompare(new File(sourcePath, sourceFile.getName() + ".spin2"), binaryFile);
+    }
+
+    private List<File> librarySourceFiles() {
+        List<File> result = sourceFiles(new File(libraryPath));
+        Collections.sort(result);
+        return result;
+    }
+
+    private static List<File> sourceFiles(File dir) {
+        List<File> result = new ArrayList<>();
+
+        File[] files = dir.listFiles();
+        for (int i = 0; i < files.length; i++) {
+            String name = files[i].getName();
+            if (name.endsWith(".spin2")) {
+                name = name.substring(0, name.length() - 6);
+                File binaryFile = new File(dir, name + ".binary");
+                if (binaryFile.exists()) {
+                    result.add(new File(dir, name));
+                }
+            }
+            else if (!".".equals(name) && !"..".equals(name)) {
+                if (files[i].isDirectory()) {
+                    result.addAll(sourceFiles(files[i]));
+                }
+            }
+        }
+
+        return result;
     }
 
     void compileAndCompare(File source, File binary) throws Exception {
