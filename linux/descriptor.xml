@@ -12,16 +12,16 @@
         </dependencySet>
     </dependencySets>
     <files>
-        <file><source>build/linux/app16.png</source><outputDirectory>lib</outputDirectory></file>
-        <file><source>build/linux/app32.png</source><outputDirectory>lib</outputDirectory></file>
-        <file><source>build/linux/app48.png</source><outputDirectory>lib</outputDirectory></file>
-        <file><source>build/linux/app64.png</source><outputDirectory>lib</outputDirectory></file>
-        <file><source>build/linux/desktop.template</source><outputDirectory>lib</outputDirectory></file>
-        <file><source>build/linux/spinc</source><fileMode>755</fileMode></file>
-        <file><source>build/linux/spinide</source><fileMode>755</fileMode></file>
-        <file><source>build/linux/spinide.png</source></file>
-        <file><source>build/linux/install.sh</source><fileMode>755</fileMode></file>
-        <file><source>build/linux/uninstall.sh</source><fileMode>755</fileMode></file>
+        <file><source>linux/app16.png</source><outputDirectory>lib</outputDirectory></file>
+        <file><source>linux/app32.png</source><outputDirectory>lib</outputDirectory></file>
+        <file><source>linux/app48.png</source><outputDirectory>lib</outputDirectory></file>
+        <file><source>linux/app64.png</source><outputDirectory>lib</outputDirectory></file>
+        <file><source>linux/desktop.template</source><outputDirectory>lib</outputDirectory></file>
+        <file><source>linux/spinc</source><fileMode>755</fileMode></file>
+        <file><source>linux/spinide</source><fileMode>755</fileMode></file>
+        <file><source>linux/spinide.png</source></file>
+        <file><source>linux/install.sh</source><fileMode>755</fileMode></file>
+        <file><source>linux/uninstall.sh</source><fileMode>755</fileMode></file>
         <file><source>LICENSE</source></file>
     </files>
     <fileSets>

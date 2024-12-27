@@ -1,9 +1,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.maccasoft</groupId>
-    <artifactId>spin-tools-runtime</artifactId>
-    <version>0.43.0</version>
+    <groupId>com.parallax</groupId>
+    <artifactId>runtime</artifactId>
+    <version>1.17.0</version>
     <packaging>pom</packaging>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
     <build>
         <plugins>
             <plugin>
@@ -17,7 +20,7 @@
                         </goals>
                         <configuration>
                             <modulePaths>
-                                <modulePath>../target</modulePath>
+                                <modulePath>target</modulePath>
                             </modulePaths>
                             <addModules>
                                 <addModule>java.base</addModule>
@@ -26,10 +29,29 @@
                             </addModules>
                             <noHeaderFiles>true</noHeaderFiles>
                             <noManPages>true</noManPages>
+                            <stripDebug>true</stripDebug>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>            
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.3.0</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <descriptors>
+                        <descriptor>descriptor.xml</descriptor>
+                    </descriptors>
+                    <appendAssemblyId>false</appendAssemblyId>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>

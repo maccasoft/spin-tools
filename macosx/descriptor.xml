@@ -1,7 +1,7 @@
 <assembly xmlns="http://maven.apache.org/ASSEMBLY/2.1.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.1.0 http://maven.apache.org/xsd/assembly-2.1.0.xsd">
-    <id>macosx-${project.arch}-jre</id>
+    <id>macosx-${project.arch}</id>
     <formats>
         <format>tar.gz</format>
     </formats>
@@ -13,7 +13,7 @@
     </dependencySets>
     <files>
         <file>
-            <source>build/macosx/spinc</source>
+            <source>macosx/spinc</source>
             <fileMode>755</fileMode>
             <outputDirectory>Contents/MacOS</outputDirectory>
         </file>
@@ -24,7 +24,7 @@
     </files>
     <fileSets>
         <fileSet>
-            <directory>target/jre/Spin Tools IDE.app</directory>
+            <directory>target/Spin Tools IDE.app</directory>
             <outputDirectory></outputDirectory>
         </fileSet>
         <fileSet>

@@ -12,9 +12,12 @@
             <url>https://www.maccasoft.com</url>
         </developer>
     </developers>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
     <modules>
+        <module>modules/runtime</module>
         <module>modules/spin-tools</module>
-        <module>build</module>
     </modules>
     <dependencies>
         <dependency>
@@ -39,8 +42,8 @@
                         <artifactId>maven-assembly-plugin</artifactId>
                         <configuration>
                             <descriptors>
-                                <descriptor>build/linux/descriptor.xml</descriptor>
-                                <descriptor>build/linux/descriptor_jre.xml</descriptor>
+                                <descriptor>linux/descriptor.xml</descriptor>
+                                <descriptor>linux/descriptor_jre.xml</descriptor>
                             </descriptors>
                         </configuration>
                     </plugin>
@@ -61,8 +64,8 @@
                         <artifactId>maven-assembly-plugin</artifactId>
                         <configuration>
                             <descriptors>
-                                <descriptor>build/linux/descriptor.xml</descriptor>
-                                <descriptor>build/linux/descriptor_jre.xml</descriptor>
+                                <descriptor>linux/descriptor.xml</descriptor>
+                                <descriptor>linux/descriptor_jre.xml</descriptor>
                             </descriptors>
                         </configuration>
                     </plugin>
@@ -91,7 +94,7 @@
                                     <goal>launch4j</goal>
                                 </goals>
                                 <configuration>
-                                    <infile>build/windows/config.xml</infile>
+                                    <infile>windows/config.xml</infile>
                                     <outfile>target/spinide.exe</outfile>
                                     <versionInfo>
                                         <fileVersion>${project.version}.0</fileVersion>
@@ -108,7 +111,7 @@
                                     <goal>launch4j</goal>
                                 </goals>
                                 <configuration>
-                                    <infile>build/windows/config-cli.xml</infile>
+                                    <infile>windows/config-cli.xml</infile>
                                     <outfile>target/spinc.exe</outfile>
                                     <versionInfo>
                                         <fileVersion>${project.version}.0</fileVersion>
@@ -124,8 +127,8 @@
                         <artifactId>maven-assembly-plugin</artifactId>
                         <configuration>
                             <descriptors>
-                                <descriptor>build/windows/descriptor.xml</descriptor>
-                                <descriptor>build/windows/descriptor_jre.xml</descriptor>
+                                <descriptor>windows/descriptor.xml</descriptor>
+                                <descriptor>windows/descriptor_jre.xml</descriptor>
                             </descriptors>
                         </configuration>
                     </plugin>
@@ -140,6 +143,9 @@
             <properties>
                 <project.arch>x86_64</project.arch>
             </properties>
+            <modules>
+                <module>modules/spin-tools</module>
+            </modules>
             <build>
                 <plugins>
                     <plugin>
@@ -174,7 +180,7 @@
                                             displayname="Spin Tools IDE"
                                             executableName="spinide"
                                             identifier="com.maccasoft.propeller"
-                                            icon="build/macosx/app.icns"
+                                            icon="macosx/app.icns"
                                             shortversion="${project.version}"
                                             signature="????"
                                             copyright="Marco Maccaferri"
@@ -195,7 +201,7 @@
                                             displayname="Spin Tools IDE"
                                             executableName="spinide"
                                             identifier="com.maccasoft.propeller"
-                                            icon="build/macosx/app.icns"
+                                            icon="macosx/app.icns"
                                             shortversion="${project.version}"
                                             signature="????"
                                             copyright="Marco Maccaferri"
@@ -223,8 +229,8 @@
                         <artifactId>maven-assembly-plugin</artifactId>
                         <configuration>
                             <descriptors>
-                                <descriptor>build/macosx/descriptor.xml</descriptor>
-                                <descriptor>build/macosx/descriptor_jre.xml</descriptor>
+                                <descriptor>macosx/descriptor.xml</descriptor>
+                                <descriptor>macosx/descriptor_jre.xml</descriptor>
                             </descriptors>
                         </configuration>
                     </plugin>
@@ -239,6 +245,9 @@
             <properties>
                 <project.arch>aarch64</project.arch>
             </properties>
+            <modules>
+                <module>modules/spin-tools</module>
+            </modules>
             <build>
                 <plugins>
                     <plugin>
@@ -273,7 +282,7 @@
                                             displayname="Spin Tools IDE"
                                             executableName="spinide"
                                             identifier="com.maccasoft.propeller"
-                                            icon="build/macosx/app.icns"
+                                            icon="macosx/app.icns"
                                             shortversion="${project.version}"
                                             signature="????"
                                             copyright="Marco Maccaferri"
@@ -294,7 +303,7 @@
                                             displayname="Spin Tools IDE"
                                             executableName="spinide"
                                             identifier="com.maccasoft.propeller"
-                                            icon="build/macosx/app.icns"
+                                            icon="macosx/app.icns"
                                             shortversion="${project.version}"
                                             signature="????"
                                             copyright="Marco Maccaferri"
@@ -322,8 +331,8 @@
                         <artifactId>maven-assembly-plugin</artifactId>
                         <configuration>
                             <descriptors>
-                                <descriptor>build/macosx/descriptor.xml</descriptor>
-                                <descriptor>build/macosx/descriptor_jre.xml</descriptor>
+                                <descriptor>macosx/descriptor.xml</descriptor>
+                                <descriptor>macosx/descriptor_jre.xml</descriptor>
                             </descriptors>
                         </configuration>
                     </plugin>
