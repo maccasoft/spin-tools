@@ -439,6 +439,7 @@ public class Spin2TreeBuilder {
                 if ("(".equals(peek().getText())) {
                     Token first = next();
                     node.setMethod(true);
+                    node.setReturnLongs(0);
                     if (peek() != null && ")".equals(peek().getText())) {
                         token = next();
                         if (peek() != null && peek().column == token.column + 1) {

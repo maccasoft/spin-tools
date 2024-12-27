@@ -173,6 +173,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         throw new RuntimeException("expected " + 0 + " argument(s), found " + node.getChildCount());
                     }
                     source.add(new Bytecode(context, Spin2Bytecode.bc_call_recv, node.getText().toUpperCase()));
+                    node.setReturnLongs(1);
                     return source;
                 }
 
@@ -732,6 +733,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
 
                     source.add(new Bytecode(context, Spin2Bytecode.bc_look_done, "LOOKDONE"));
                     source.add(end);
+                    node.setReturnLongs(1);
 
                     return source;
                 }
@@ -789,6 +791,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     os.write(code.length);
                     os.writeBytes(code);
                     source.add(new Bytecode(context, os.toByteArray(), node.getText().toUpperCase()));
+                    node.setReturnLongs(1);
 
                     return source;
                 }
@@ -803,6 +806,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     else {
                         logMessage(new CompilerException("expected type or variable", node.getChild(0).getTokens()));
                     }
+                    node.setReturnLongs(1);
                     return source;
                 }
                 if ("DEBUG".equalsIgnoreCase(node.getText())) {
@@ -963,6 +967,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 }
                 else {
                     source.add(new Bytecode(context, Spin2Bytecode.bc_neg_write, "NEGATE_ASSIGN"));
+                    node.setReturnLongs(0);
                 }
                 return source;
             }
@@ -1003,7 +1008,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 int expected = node.getChild(0).getReturnLongs();
                 int actual = node.getChild(1).getReturnLongs();
                 if (expected != actual) {
-                    logMessage(new CompilerException("expected " + expected + " return value(s), found " + actual, node.getTokens()));
+                    logMessage(new CompilerException("expression returns " + actual + " value(s), expecting " + expected, node.getChild(1).getTokens()));
                 }
                 if (!push) {
                     node.setReturnLongs(0);
@@ -1183,6 +1188,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     else {
                         throw new CompilerException("symbol " + node.getChild(0).getText() + " is not a method", node.getChild(0).getToken());
                     }
+                    node.setReturnLongs(node.getChild(0).getReturnLongs());
                 }
                 return source;
             }
@@ -1201,9 +1207,11 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     else if ("--".equalsIgnoreCase(node.getText())) {
                         source.add(new Bytecode(context, push ? Spin2Bytecode.bc_var_predec_push : Spin2Bytecode.bc_var_dec, "PRE_DEC" + (push ? " (push)" : "")));
                     }
+                    if (!push) {
+                        node.setReturnLongs(0);
+                    }
                     return source;
                 }
-
             }
             if ("++".equalsIgnoreCase(node.getText()) || "--".equalsIgnoreCase(node.getText()) || "??".equalsIgnoreCase(node.getText())) {
                 if (node.getChildCount() != 1) {
@@ -1344,6 +1352,9 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 else if (!push) {
                     source.add(new Bytecode(context, Spin2Bytecode.bc_write_push, "WRITE"));
                 }
+                if (!push) {
+                    node.setReturnLongs(0);
+                }
                 return source;
             }
             if ("BYTE".equalsIgnoreCase(node.getText()) || "WORD".equalsIgnoreCase(node.getText()) || "LONG".equalsIgnoreCase(node.getText())) {
@@ -1358,6 +1369,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     os.write(code.length);
                     os.writeBytes(code);
                     source.add(new Bytecode(context, os.toByteArray(), node.getText().toUpperCase() + "S"));
+                    node.setReturnLongs(1);
 
                     return source;
                 }
@@ -1461,6 +1473,9 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
 
                 if (postEffectNode != null) {
                     compilePostEffect(context, postEffectNode, source, push);
+                    if (!push) {
+                        node.setReturnLongs(0);
+                    }
                 }
                 return source;
             }
@@ -1532,6 +1547,9 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
 
                 if (postEffectNode != null) {
                     compilePostEffect(context, postEffectNode, source, push);
+                    if (!push) {
+                        node.setReturnLongs(0);
+                    }
                 }
                 return source;
             }
@@ -1570,11 +1588,15 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
 
                 if (postEffectNode != null) {
                     compilePostEffect(context, postEffectNode, source, push);
+                    if (!push) {
+                        node.setReturnLongs(0);
+                    }
                 }
 
                 return source;
             }
             if ("DEBUG".equalsIgnoreCase(node.getText())) {
+                node.setReturnLongs(0);
                 if (isDebugEnabled()) {
                     source.add(new Bytecode(context, Spin2Bytecode.bc_debug, "") {
 
@@ -2323,6 +2345,9 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     if (postEffectNode != null) {
                         source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, var, hasIndex, index));
                         compilePostEffect(context, postEffectNode, source, push);
+                        if (!push) {
+                            node.setReturnLongs(0);
+                        }
                     }
                     else {
                         source.add(new VariableOp(context, VariableOp.Op.Write, popIndex, var, hasIndex, index));
@@ -2379,6 +2404,9 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         if (postEffectNode != null) {
                             source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, MemoryOp.Op.Setup, indexNode != null));
                             compilePostEffect(context, postEffectNode, source, push);
+                            if (!push) {
+                                node.setReturnLongs(0);
+                            }
                         }
                         else {
                             source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, push ? MemoryOp.Op.WritePush : MemoryOp.Op.Write, indexNode != null));
@@ -2594,10 +2622,10 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 source.add(new CallSub(context, methodExpression, indexNode != null));
                 calledMethod.setCalledBy(method);
 
-                if (push && methodExpression.getReturnLongs() == 0) {
+                if (push && !trap && methodExpression.getReturnLongs() == 0) {
                     logMessage(new CompilerException("method doesn't return any value", node.getToken()));
                 }
-                node.setReturnLongs(methodExpression.getReturnLongs());
+                node.setReturnLongs(push ? methodExpression.getReturnLongs() : 0);
             }
         }
         else {
@@ -2619,7 +2647,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 if (push && !trap && methodExpression.getReturnLongs() == 0) {
                     logMessage(new CompilerException("method doesn't return any value", node.getToken()));
                 }
-                node.setReturnLongs(methodExpression.getReturnLongs());
+                node.setReturnLongs(push ? methodExpression.getReturnLongs() : 0);
             }
             else {
                 int i = 0;
@@ -2680,6 +2708,8 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 source.add(new Bytecode(context, new byte[] {
                     (byte) Spin2Bytecode.bc_call_ptr,
                 }, "CALL_PTR"));
+
+                node.setReturnLongs(push ? node.getReturnLongs() : 0);
             }
         }
 
@@ -2978,6 +3008,9 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 if (postEffectNode != null) {
                     source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, var, hasIndex, index));
                     compilePostEffect(context, postEffectNode, source, push);
+                    if (!push) {
+                        node.setReturnLongs(0);
+                    }
                 }
                 else {
                     source.add(new VariableOp(context, VariableOp.Op.Read, popIndex, var, hasIndex, index));
@@ -3036,6 +3069,9 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     if (postEffectNode != null) {
                         source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, MemoryOp.Op.Setup, indexNode != null));
                         compilePostEffect(context, postEffectNode, source, push);
+                        if (!push) {
+                            node.setReturnLongs(0);
+                        }
                     }
                     else {
                         source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, MemoryOp.Op.Read, indexNode != null));
@@ -3117,6 +3153,9 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
 
                 if (postEffectNode != null) {
                     compilePostEffect(context, postEffectNode, source, push);
+                    if (!push) {
+                        node.setReturnLongs(0);
+                    }
                 }
             }
             else {
@@ -3132,6 +3171,9 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     source.addAll(compileBytecodeExpression(context, method, indexNode, true));
                 }
                 if (postEffectNode != null) {
+                    if (!push) {
+                        node.setReturnLongs(0);
+                    }
                     if ("~".equalsIgnoreCase(postEffectNode.getText()) || "~~".equalsIgnoreCase(postEffectNode.getText())) {
                         if (expression instanceof Register) {
                             source.add(new RegisterOp(context, push ? RegisterOp.Op.Setup : RegisterOp.Op.Write, popIndex, expression, index));
@@ -3495,6 +3537,8 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 } catch (Exception e) {
                     // Do nothing
                 }
+
+                node.setReturnLongs(0);
             }
             return source;
         }

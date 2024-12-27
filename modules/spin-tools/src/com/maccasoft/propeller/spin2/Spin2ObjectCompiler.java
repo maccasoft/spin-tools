@@ -1805,7 +1805,11 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 while (iter.hasNext()) {
                     builder.addToken(iter.next());
                 }
-                line.addSource(compileConstantExpression(context, method, builder.getRoot()));
+                Spin2StatementNode statementNode = builder.getRoot();
+                line.addSource(compileConstantExpression(context, method, statementNode));
+                if (statementNode.getReturnLongs() != 1) {
+                    logMessage(new CompilerException("invalid conditional expression", statementNode.getTokens()));
+                }
 
                 Spin2MethodLine falseLine = new Spin2MethodLine(context);
                 if ("IF".equals(text)) {
@@ -1834,7 +1838,11 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     while (iter.hasNext()) {
                         builder.addToken(iter.next());
                     }
-                    line.addSource(compileConstantExpression(context, method, builder.getRoot()));
+                    Spin2StatementNode statementNode = builder.getRoot();
+                    line.addSource(compileConstantExpression(context, method, statementNode));
+                    if (statementNode.getReturnLongs() != 1) {
+                        logMessage(new CompilerException("invalid conditional expression", statementNode.getTokens()));
+                    }
                     if ("ELSEIF".equals(text)) {
                         line.addSource(new Jz(line.getScope(), new ContextLiteral(falseLine.getScope())));
                     }
@@ -1859,8 +1867,12 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     while (iter.hasNext()) {
                         builder.addToken(iter.next());
                     }
-                    line.addSource(compileConstantExpression(line.getScope(), method, builder.getRoot()));
+                    Spin2StatementNode statementNode = builder.getRoot();
+                    line.addSource(compileConstantExpression(line.getScope(), method, statementNode));
                     line.addSource(new Bytecode(line.getScope(), Spin2Bytecode.bc_return_args, text));
+                    if (statementNode.getReturnLongs() == 0) {
+                        logMessage(new CompilerException("invalid expression", statementNode.getTokens()));
+                    }
                 }
                 else {
                     line.addSource(new Bytecode(line.getScope(), Spin2Bytecode.bc_return_results, text));
@@ -1882,7 +1894,11 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         while (iter.hasNext()) {
                             builder.addToken(iter.next());
                         }
-                        line.addSource(compileConstantExpression(line.getScope(), method, builder.getRoot()));
+                        Spin2StatementNode statementNode = builder.getRoot();
+                        line.addSource(compileConstantExpression(line.getScope(), method, statementNode));
+                        if (statementNode.getReturnLongs() != 1) {
+                            logMessage(new CompilerException("invalid conditional expression", statementNode.getTokens()));
+                        }
 
                         if ("WHILE".equalsIgnoreCase(token.getText())) {
                             line.addSource(new Jz(line.getScope(), new ContextLiteral(quitLine.getScope())));
@@ -1965,10 +1981,19 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                             line.addSource(new Address(line.getScope(), new ContextLiteral(loopLine.getScope())));
 
                             line.addSource(compileConstantExpression(line.getScope(), method, to));
+                            if (to.getReturnLongs() != 1) {
+                                logMessage(new CompilerException("expression doesn't return a value", to.getTokens()));
+                            }
                             if (step != null) {
                                 line.addSource(compileConstantExpression(line.getScope(), method, step));
+                                if (step.getReturnLongs() != 1) {
+                                    logMessage(new CompilerException("expression doesn't return a value", step.getTokens()));
+                                }
                             }
                             line.addSource(compileConstantExpression(line.getScope(), method, from));
+                            if (from.getReturnLongs() != 1) {
+                                logMessage(new CompilerException("expression doesn't return a value", from.getTokens()));
+                            }
 
                             line.addSource(leftAssign(context, method, counter, true, false));
                             line.addSource(new Bytecode(line.getScope(), step != null ? Spin2Bytecode.bc_repeat_var_init : Spin2Bytecode.bc_repeat_var_init_1, "REPEAT"));
@@ -2067,7 +2092,11 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 while (iter.hasNext()) {
                     builder.addToken(iter.next());
                 }
-                conditionLine.addSource(compileConstantExpression(line.getScope(), method, builder.getRoot()));
+                Spin2StatementNode statementNode = builder.getRoot();
+                conditionLine.addSource(compileConstantExpression(line.getScope(), method, statementNode));
+                if (statementNode.getReturnLongs() != 1) {
+                    logMessage(new CompilerException("invalid conditional expression", statementNode.getTokens()));
+                }
 
                 if ("WHILE".equals(text)) {
                     conditionLine.addSource(new Jnz(previousLine.getScope(), new ContextLiteral(previousLine.getScope())));
@@ -2142,7 +2171,11 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 while (iter.hasNext()) {
                     builder.addToken(iter.next());
                 }
-                line.addSource(compileBytecodeExpression(context, method, builder.getRoot(), true));
+                Spin2StatementNode statementNode = builder.getRoot();
+                line.addSource(compileBytecodeExpression(context, method, statementNode, true));
+                if (statementNode.getReturnLongs() != 1) {
+                    logMessage(new CompilerException("invalid expression", statementNode.getTokens()));
+                }
 
                 boolean hasOther = false;
                 for (Node child : node.getChilds()) {
@@ -2182,7 +2215,11 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                             if (!":".equals(token.getText())) {
                                 logMessage(new CompilerException("expecting ':'", token));
                             }
-                            compileCase(method, line, builder.getRoot(), caseLine);
+                            statementNode = builder.getRoot();
+                            compileCase(method, line, statementNode, caseLine);
+                            if (statementNode.getReturnLongs() != 1) {
+                                logMessage(new CompilerException("invalid expression", statementNode.getTokens()));
+                            }
 
                             line.addChild(caseLine);
                         }
@@ -2213,8 +2250,12 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 while (iter.hasNext()) {
                     builder.addToken(iter.next());
                 }
-                line.addSource(compileBytecodeExpression(context, method, builder.getRoot(), true));
+                Spin2StatementNode statementNode = builder.getRoot();
+                line.addSource(compileBytecodeExpression(context, method, statementNode, true));
                 line.addSource(new Bytecode(line.getScope(), Spin2Bytecode.bc_case_fast_init, "CASE_FAST"));
+                if (statementNode.getReturnLongs() != 1) {
+                    logMessage(new CompilerException("invalid expression", statementNode.getTokens()));
+                }
 
                 int min = Integer.MAX_VALUE;
                 int max = Integer.MIN_VALUE;
@@ -2259,7 +2300,8 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                             if (!":".equals(token.getText())) {
                                 logMessage(new CompilerException("expecting ':'", token));
                             }
-                            for (Entry<Integer, Spin2MethodLine> entry : compileCaseFast(line, builder.getRoot(), caseLine).entrySet()) {
+                            statementNode = builder.getRoot();
+                            for (Entry<Integer, Spin2MethodLine> entry : compileCaseFast(line, statementNode, caseLine).entrySet()) {
                                 if (map.containsKey(entry.getKey())) {
                                     throw new CompilerException("index is not unique", builder.getTokens());
                                 }
@@ -2270,7 +2312,9 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                                     throw new CompilerException("values must be within 255 of each other", builder.getTokens());
                                 }
                             }
-
+                            if (statementNode.getReturnLongs() != 1) {
+                                logMessage(new CompilerException("invalid expression", statementNode.getTokens()));
+                            }
                         }
                         if (childIter.hasNext()) {
                             logMessage(new CompilerException("unexpected", childIter.next()));
@@ -2316,6 +2360,9 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 Spin2StatementNode statementNode = builder.getRoot();
                 line = new Spin2MethodLine(context, parent, null, node);
                 line.addSource(compileBytecodeExpression(context, method, statementNode, false));
+                if (statementNode.getReturnLongs() != 0) {
+                    logMessage(new CompilerException("expected assignment or method call", statementNode.getTokens()));
+                }
             }
 
         } catch (CompilerException e) {

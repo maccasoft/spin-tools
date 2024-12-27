@@ -112,21 +112,23 @@ public class Spin2StatementNode {
     public List<Token> getTokens() {
         List<Token> list = new ArrayList<>();
 
-        if (childs.size() == 0) {
-            list.add(token);
-        }
-        else if (childs.size() == 1) {
-            list.add(token);
-            list.addAll(childs.get(0).getTokens());
-        }
-        else {
-            int i = 0;
-            while (i < childs.size()) {
-                if (i != 0) {
-                    list.add(token);
+        list.add(token);
+
+        int i = 0;
+        while (i < childs.size()) {
+            List<Token> childTokens = childs.get(i++).getTokens();
+            if (childTokens.size() != 0) {
+                if (childTokens.get(0).start > list.get(list.size() - 1).start) {
+                    list.addAll(childTokens);
                 }
-                list.addAll(childs.get(i++).getTokens());
+                else if (childTokens.get(childTokens.size() - 1).start < list.get(0).start) {
+                    list.addAll(0, childTokens);
+                }
             }
+        }
+
+        if (lastToken != null) {
+            list.add(lastToken);
         }
 
         return list;
