@@ -43,7 +43,6 @@
                         <configuration>
                             <descriptors>
                                 <descriptor>linux/descriptor.xml</descriptor>
-                                <descriptor>linux/descriptor_jre.xml</descriptor>
                             </descriptors>
                         </configuration>
                     </plugin>
@@ -65,7 +64,6 @@
                         <configuration>
                             <descriptors>
                                 <descriptor>linux/descriptor.xml</descriptor>
-                                <descriptor>linux/descriptor_jre.xml</descriptor>
                             </descriptors>
                         </configuration>
                     </plugin>
@@ -128,7 +126,6 @@
                         <configuration>
                             <descriptors>
                                 <descriptor>windows/descriptor.xml</descriptor>
-                                <descriptor>windows/descriptor_jre.xml</descriptor>
                             </descriptors>
                         </configuration>
                     </plugin>
@@ -193,27 +190,6 @@
                                             <option value="-Xms128M" />
                                             <option value="-Xmx512M" />
                                             <option value="-XstartOnFirstThread" />
-                                        </bundleapp>
-                                        <mkdir dir="target/jre" />
-                                        <bundleapp
-                                            outputdirectory="target/jre"
-                                            name="Spin Tools IDE"
-                                            displayname="Spin Tools IDE"
-                                            executableName="spinide"
-                                            identifier="com.maccasoft.propeller"
-                                            icon="macosx/app.icns"
-                                            shortversion="${project.version}"
-                                            signature="????"
-                                            copyright="Marco Maccaferri"
-                                            applicationCategory="public.app-category.developer-tools"
-                                            mainclassname="com.maccasoft.propeller.SpinTools"
-                                            jvmrequired="17">
-                                            <arch name="x86_64"/>
-                                            <option value="-DAPP_DIR=$APP_ROOT/Contents/Java" />
-                                            <option value="-Dcom.apple.macos.useScreenMenuBar=true" />
-                                            <option value="-Xms128M" />
-                                            <option value="-Xmx512M" />
-                                            <option value="-XstartOnFirstThread" />
                                             <jlink runtime="${runtime}">
                                                 <jmod name="java.base"/>
                                                 <jmod name="java.desktop"/>
@@ -230,7 +206,6 @@
                         <configuration>
                             <descriptors>
                                 <descriptor>macosx/descriptor.xml</descriptor>
-                                <descriptor>macosx/descriptor_jre.xml</descriptor>
                             </descriptors>
                         </configuration>
                     </plugin>
@@ -295,27 +270,6 @@
                                             <option value="-Xms128M" />
                                             <option value="-Xmx512M" />
                                             <option value="-XstartOnFirstThread" />
-                                        </bundleapp>
-                                        <mkdir dir="target/jre" />
-                                        <bundleapp
-                                            outputdirectory="target/jre"
-                                            name="Spin Tools IDE"
-                                            displayname="Spin Tools IDE"
-                                            executableName="spinide"
-                                            identifier="com.maccasoft.propeller"
-                                            icon="macosx/app.icns"
-                                            shortversion="${project.version}"
-                                            signature="????"
-                                            copyright="Marco Maccaferri"
-                                            applicationCategory="public.app-category.developer-tools"
-                                            mainclassname="com.maccasoft.propeller.SpinTools"
-                                            jvmrequired="17">
-                                            <arch name="arm64"/>
-                                            <option value="-DAPP_DIR=$APP_ROOT/Contents/Java" />
-                                            <option value="-Dcom.apple.macos.useScreenMenuBar=true" />
-                                            <option value="-Xms128M" />
-                                            <option value="-Xmx512M" />
-                                            <option value="-XstartOnFirstThread" />
                                             <jlink runtime="${runtime}">
                                                 <jmod name="java.base"/>
                                                 <jmod name="java.desktop"/>
@@ -332,7 +286,6 @@
                         <configuration>
                             <descriptors>
                                 <descriptor>macosx/descriptor.xml</descriptor>
-                                <descriptor>macosx/descriptor_jre.xml</descriptor>
                             </descriptors>
                         </configuration>
                     </plugin>
