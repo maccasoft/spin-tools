@@ -518,10 +518,17 @@ public class CParser extends Parser {
                     }
                 }
                 else if (!";".equals(token.getText())) {
-                    while ((token = nextTokenSkipNL()).type != Token.EOF) {
+                    while ((token = nextToken()).type != Token.EOF && token.type != Token.NL) {
                         node.addToken(token);
                         if (";".equals(token.getText())) {
                             break;
+                        }
+                        if (",".equals(token.getText())) {
+                            token = nextTokenSkipNL();
+                            if (token.type == Token.EOF) {
+                                break;
+                            }
+                            node.addToken(token);
                         }
                         if ("{".equals(token.getText())) {
                             while ((token = peekNextTokenSkipNL()).type != Token.EOF) {
@@ -808,6 +815,7 @@ public class CParser extends Parser {
             Token nextToken = stream.peekNext();
             if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
                 token = token.merge(stream.nextToken());
+                token.type = 0;
             }
         }
         return token;
@@ -843,7 +851,7 @@ public class CParser extends Parser {
             Token nextToken = stream.peekNext();
             if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
                 token = token.merge(stream.nextToken());
-                token.type = Token.FUNCTION;
+                token.type = 0;
             }
         }
         return token;
@@ -872,7 +880,7 @@ public class CParser extends Parser {
                 Token nextToken = stream.peekNext();
                 if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
                     token = token.merge(stream.nextToken());
-                    token.type = Token.FUNCTION;
+                    token.type = 0;
                 }
             }
             return token;

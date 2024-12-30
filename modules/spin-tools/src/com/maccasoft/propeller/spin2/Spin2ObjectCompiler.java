@@ -277,7 +277,6 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     logMessage(e);
                 } catch (Exception e) {
                     logMessage(new CompilerException(e, member.getSize().getData()));
-                    iter.remove();
                 }
             }
 

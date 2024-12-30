@@ -143,29 +143,6 @@ class CParserTest {
     }
 
     @Test
-    void testIfElseSimpleBlock() throws Exception {
-        CParser subject = new CParser(new CTokenStream(""
-            + "void main() {\n"
-            + "    if (a == 1)\n"
-            + "        method(1, 2);\n"
-            + "    else\n"
-            + "        a = function(1, 2);\n"
-            + "}\n"
-            + ""));
-
-        Node root = subject.parse();
-        Assertions.assertEquals(""
-            + "Node []\n"
-            + "+-- FunctionNode type=void identifier=main [void main() {]\n"
-            + "    +-- StatementNode [    if (a == 1)]\n"
-            + "        +-- StatementNode [        method(1, 2);]\n"
-            + "    +-- StatementNode [    else]\n"
-            + "        +-- StatementNode [        a = function(1, 2);]\n"
-            + "    +-- StatementNode [}]\n"
-            + "", tree(root));
-    }
-
-    @Test
     void testIfElseIfElseBlock() throws Exception {
         CParser subject = new CParser(new CTokenStream(""
             + "void main()\n"
@@ -204,6 +181,85 @@ class CParserTest {
             + "    +-- StatementNode [    else {]\n"
             + "        +-- StatementNode [        a = 4;]\n"
             + "    +-- StatementNode [    }]\n"
+            + "    +-- StatementNode [}]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testSimpleIfBlock() throws Exception {
+        CParser subject = new CParser(new CTokenStream(""
+            + "void main() {\n"
+            + "    if (a == 1)\n"
+            + "        method(1, 2);\n"
+            + "    a = function(1, 2);\n"
+            + "}\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- FunctionNode type=void identifier=main [void main() {]\n"
+            + "    +-- StatementNode [    if (a == 1)]\n"
+            + "        +-- StatementNode [        method(1, 2);]\n"
+            + "    +-- StatementNode [    a = function(1, 2);]\n"
+            + "    +-- StatementNode [}]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testSimpleIfElseBlock() throws Exception {
+        CParser subject = new CParser(new CTokenStream(""
+            + "void main() {\n"
+            + "    if (a == 1)\n"
+            + "        method(1, 2);\n"
+            + "    else\n"
+            + "        a = function(1, 2);\n"
+            + "}\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- FunctionNode type=void identifier=main [void main() {]\n"
+            + "    +-- StatementNode [    if (a == 1)]\n"
+            + "        +-- StatementNode [        method(1, 2);]\n"
+            + "    +-- StatementNode [    else]\n"
+            + "        +-- StatementNode [        a = function(1, 2);]\n"
+            + "    +-- StatementNode [}]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testSimpleIfElseIfElseBlock() throws Exception {
+        CParser subject = new CParser(new CTokenStream(""
+            + "void main()\n"
+            + "{\n"
+            + "    int a;\n"
+            + "\n"
+            + "    if (a == 0)\n"
+            + "        a = 1;\n"
+            + "    else if (a == 1)\n"
+            + "        a = 2;\n"
+            + "    else if (a == 2)\n"
+            + "        a = 3;\n"
+            + "    else\n"
+            + "        a = 4;\n"
+            + "}\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- FunctionNode type=void identifier=main [void main() {]\n"
+            + "    +-- StatementNode [    int a;]\n"
+            + "    +-- StatementNode [    if (a == 0)]\n"
+            + "        +-- StatementNode [        a = 1;]\n"
+            + "    +-- StatementNode [    else if (a == 1)]\n"
+            + "        +-- StatementNode [        a = 2;]\n"
+            + "    +-- StatementNode [    else if (a == 2)]\n"
+            + "        +-- StatementNode [        a = 3;]\n"
+            + "    +-- StatementNode [    else]\n"
+            + "        +-- StatementNode [        a = 4;]\n"
             + "    +-- StatementNode [}]\n"
             + "", tree(root));
     }
@@ -318,31 +374,11 @@ class CParserTest {
     }
 
     @Test
-    void testSimpleBlock() throws Exception {
-        CParser subject = new CParser(new CTokenStream(""
-            + "void main() {\n"
-            + "    if (a == 1)\n"
-            + "        method(1, 2);\n"
-            + "    a = function(1, 2);\n"
-            + "}\n"
-            + ""));
-
-        Node root = subject.parse();
-        Assertions.assertEquals(""
-            + "Node []\n"
-            + "+-- FunctionNode type=void identifier=main [void main() {]\n"
-            + "    +-- StatementNode [    if (a == 1)]\n"
-            + "        +-- StatementNode [        method(1, 2);]\n"
-            + "    +-- StatementNode [    a = function(1, 2);]\n"
-            + "    +-- StatementNode [}]\n"
-            + "", tree(root));
-    }
-
-    @Test
-    void testSameLineBlock() throws Exception {
+    void testSameLineBlocks() throws Exception {
         CParser subject = new CParser(new CTokenStream(""
             + "void main() {\n"
             + "    if (a == 1) method(1, 2);\n"
+            + "    while (a < 10) { a++; }\n"
             + "    a = function(1, 2);\n"
             + "}\n"
             + ""));
@@ -353,6 +389,9 @@ class CParserTest {
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
             + "    +-- StatementNode [    if (a == 1)]\n"
             + "        +-- StatementNode [    if (a == 1) method(1, 2);]\n"
+            + "    +-- StatementNode [    while (a < 10) {]\n"
+            + "        +-- StatementNode [    while (a < 10) { a++;]\n"
+            + "    +-- StatementNode [    while (a < 10) { a++; }]\n"
             + "    +-- StatementNode [    a = function(1, 2);]\n"
             + "    +-- StatementNode [}]\n"
             + "", tree(root));
@@ -692,7 +731,7 @@ class CParserTest {
     }
 
     @Test
-    void testSimpleIfBlock() throws Exception {
+    void testSimpleIfBlock2() throws Exception {
         CParser subject = new CParser(new CTokenStream(""
             + "void main() {\n"
             + "    if (a == 1)\n"
