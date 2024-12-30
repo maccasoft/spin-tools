@@ -1128,7 +1128,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
                     try {
                         String typeText = type != null ? type.getText().toUpperCase() : "LONG";
-                        Variable var = new Variable(typeText, identifier.getText(), varSize, objectVarSize);
+                        Variable var = new Variable(typeText.toUpperCase(), identifier.getText(), varSize, objectVarSize);
                         if (type != null) {
                             Spin2Struct memberStruct = scope.getStructureDefinition(type.getText());
                             if (memberStruct != null) {
@@ -1198,7 +1198,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 }
             }
 
-            Variable var = target.addMember(memberType, member.getIdentifier().getText(), memberSize);
+            Variable var = target.addMember(memberType.toUpperCase(), member.getIdentifier().getText(), memberSize);
             Spin2Struct memberStruct = scope.getStructureDefinition(memberType);
             if (memberStruct != null) {
                 compileStructureVariable(var, memberStruct);

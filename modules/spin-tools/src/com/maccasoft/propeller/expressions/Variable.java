@@ -28,20 +28,20 @@ public class Variable extends Expression {
     private Set<Object> calledBy = new HashSet<>();
 
     public Variable(String type, String name, int size) {
-        this.type = type.toUpperCase();
+        this.type = type;
         this.name = name;
         this.size = size;
     }
 
     public Variable(String type, String name, int size, int offset) {
-        this.type = type.toUpperCase();
+        this.type = type;
         this.name = name;
         this.size = size;
         this.offset = offset;
     }
 
     public Variable(String type, String name, int size, int offset, boolean align) {
-        this.type = type.toUpperCase();
+        this.type = type;
         this.name = name;
         this.size = size;
         this.offset = offset;
@@ -100,10 +100,10 @@ public class Variable extends Expression {
         if (type.endsWith("*")) {
             return "LONG";
         }
-        if ("SHORT".equals(type)) {
+        if ("SHORT".equalsIgnoreCase(type)) {
             return "WORD";
         }
-        if ("INT".equals(type)) {
+        if ("INT".equalsIgnoreCase(type)) {
             return "LONG";
         }
         return type;
@@ -114,10 +114,10 @@ public class Variable extends Expression {
             return 4;
         }
         if (members.size() == 0) {
-            if ("SHORT".equals(type) || "WORD".equals(type)) {
+            if ("SHORT".equalsIgnoreCase(type) || "WORD".equalsIgnoreCase(type)) {
                 return 2;
             }
-            else if ("BYTE".equals(type)) {
+            else if ("BYTE".equalsIgnoreCase(type)) {
                 return 1;
             }
             return 4;
@@ -149,14 +149,14 @@ public class Variable extends Expression {
         if (!type.endsWith("*")) {
             return null;
         }
-        return type.substring(0, type.indexOf(' ')).toUpperCase();
+        return type.substring(0, type.indexOf(' '));
     }
 
     public int getPointerSize() {
-        if (type.startsWith("BYTE")) {
+        if (type.toUpperCase().startsWith("BYTE")) {
             return 1;
         }
-        if (type.startsWith("WORD") || type.startsWith("SHORT")) {
+        if (type.toUpperCase().startsWith("WORD") || type.toUpperCase().startsWith("SHORT")) {
             return 2;
         }
         return 4;

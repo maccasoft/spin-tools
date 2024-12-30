@@ -135,7 +135,7 @@ public class VariableOp extends Spin1Bytecode {
         }
         if (oo != Op.Address) {
             sb.append(" ");
-            sb.append(value.getType());
+            sb.append(value.getType().toUpperCase());
         }
         sb.append(" ");
         switch (b) {

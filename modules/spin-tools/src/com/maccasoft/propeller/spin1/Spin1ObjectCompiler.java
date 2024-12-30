@@ -846,7 +846,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
                     try {
                         String typeText = type != null ? type.getText().toUpperCase() : "LONG";
-                        Variable var = new Variable(typeText, identifier.getText(), varSize);
+                        Variable var = new Variable(typeText.toUpperCase(), identifier.getText(), varSize);
 
                         scope.addSymbol(identifier.getText(), var);
                         variables.add(var);

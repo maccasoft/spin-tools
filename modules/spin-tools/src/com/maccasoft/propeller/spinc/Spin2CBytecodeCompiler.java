@@ -1665,20 +1665,20 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                         }
                         if (expression instanceof DataVariable) {
                             switch (((DataVariable) expression).getType()) {
-                                case "BYTE":
+                                case "byte":
                                     ss = MemoryOp.Size.Byte;
                                     break;
-                                case "WORD":
+                                case "word":
                                     ss = MemoryOp.Size.Word;
                                     break;
                             }
                         }
                         else if (expression instanceof ObjectContextLiteral) {
                             switch (((ObjectContextLiteral) expression).getType()) {
-                                case "BYTE":
+                                case "byte":
                                     ss = MemoryOp.Size.Byte;
                                     break;
-                                case "WORD":
+                                case "word":
                                     ss = MemoryOp.Size.Word;
                                     break;
                             }
@@ -2264,10 +2264,10 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                 }
 
                 MemoryOp.Size ss = MemoryOp.Size.Long;
-                if ("BYTE".equals(((Variable) expression).getPointerType())) {
+                if ("byte".equals(((Variable) expression).getPointerType())) {
                     ss = MemoryOp.Size.Byte;
                 }
-                else if ("WORD".equals(((Variable) expression).getPointerType())) {
+                else if ("word".equals(((Variable) expression).getPointerType())) {
                     ss = MemoryOp.Size.Word;
                 }
                 MemoryOp.Op op = push || bitfieldNode != null ? MemoryOp.Op.Setup : MemoryOp.Op.Write;
@@ -2396,10 +2396,10 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                     }
                     if (expression instanceof DataVariable) {
                         switch (((DataVariable) expression).getType()) {
-                            case "BYTE":
+                            case "byte":
                                 ss = MemoryOp.Size.Byte;
                                 break;
-                            case "WORD":
+                            case "word":
                                 ss = MemoryOp.Size.Word;
                                 break;
                         }
@@ -2451,7 +2451,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                 int p = 0;
                 for (int i = 0; i < node.getChildCount(); i++) {
                     LocalVariable parameter = targetMethod.getParameters().get(p++);
-                    boolean leftIsFloat = "FLOAT".equals(parameter.getType());
+                    boolean leftIsFloat = "float".equals(parameter.getType());
                     boolean rightIsFloat = isFloat(context, node.getChild(i));
 
                     if (leftIsFloat && !rightIsFloat) {
@@ -2696,19 +2696,19 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
         MemoryOp.Base bb = MemoryOp.Base.PBase;
         if (expression instanceof DataVariable) {
             switch (((DataVariable) expression).getType()) {
-                case "BYTE":
+                case "byte":
                     ss = MemoryOp.Size.Byte;
                     break;
-                case "WORD":
+                case "word":
                     ss = MemoryOp.Size.Word;
                     break;
             }
         }
         else if (expression instanceof Variable) {
-            if ("BYTE".equals(((Variable) expression).getPointerType())) {
+            if ("byte".equals(((Variable) expression).getPointerType())) {
                 ss = MemoryOp.Size.Byte;
             }
-            else if ("WORD".equals(((Variable) expression).getPointerType())) {
+            else if ("word".equals(((Variable) expression).getPointerType())) {
                 ss = MemoryOp.Size.Word;
             }
         }
@@ -2934,10 +2934,10 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
         }
 
         MemoryOp.Size ss = MemoryOp.Size.Long;
-        if ("BYTE".equals(variable.getPointerType())) {
+        if ("byte".equals(variable.getPointerType())) {
             ss = MemoryOp.Size.Byte;
         }
-        else if ("WORD".equals(variable.getPointerType())) {
+        else if ("word".equals(variable.getPointerType())) {
             ss = MemoryOp.Size.Word;
         }
         source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, op, false));
@@ -2995,13 +2995,13 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                 return true;
             }
             if (expression instanceof Variable) {
-                if ("FLOAT".equals(((Variable) expression).getType())) {
+                if ("float".equals(((Variable) expression).getType())) {
                     return true;
                 }
             }
             if (expression instanceof Method) {
                 Spin2Method method = (Spin2Method) expression.getData(Spin2Method.class.getName());
-                if (method.getReturnLongs() == 1 && "FLOAT".equals(method.getReturns().get(0).getType())) {
+                if (method.getReturnLongs() == 1 && "float".equals(method.getReturns().get(0).getType())) {
                     return true;
                 }
             }

@@ -64,7 +64,7 @@ public class Spin1Method {
     }
 
     public LocalVariable addParameter(String type, String name, Expression value) {
-        LocalVariable var = new LocalVariable(type, name, value, 1, 0) {
+        LocalVariable var = new LocalVariable(type.toUpperCase(), name, value, 1, 0) {
 
             @Override
             public int getOffset() {
@@ -84,7 +84,7 @@ public class Spin1Method {
     }
 
     public LocalVariable addLocalVariable(String type, String name, int size) {
-        LocalVariable var = new LocalVariable(type, name, size, 0) {
+        LocalVariable var = new LocalVariable(type.toUpperCase(), name, size, 0) {
 
             @Override
             public int getOffset() {

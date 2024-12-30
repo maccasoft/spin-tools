@@ -212,10 +212,10 @@ public class VariableOp extends Spin2Bytecode {
             sb.append(" ");
             if (variable.getType().startsWith("^")) {
                 sb.append("LONG");
-                sb.append(" (" + variable.getType() + ")");
+                sb.append(" (" + variable.getType().toUpperCase() + ")");
             }
             else {
-                sb.append(variable.getType());
+                sb.append(variable.getType().toUpperCase());
             }
         }
         sb.append(" ");
