@@ -2722,19 +2722,9 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
         int actual = 0;
         for (int i = 0; i < argsNode.getChildCount(); i++) {
             source.addAll(compileConstantExpression(context, method, argsNode.getChild(i)));
-            Expression child = context.getLocalSymbol(argsNode.getChild(i).getText());
-            if (child != null && (child instanceof Method) && !argsNode.getChild(i).getText().startsWith("@")) {
-                actual += ((Method) child).getReturnLongs();
-                continue;
-            }
-            Spin2Bytecode.Descriptor descriptor = Spin2Bytecode.getDescriptor(argsNode.getChild(i).getText().toUpperCase());
-            if (descriptor != null) {
-                actual += descriptor.getReturns();
-                continue;
-            }
-            actual++;
+            actual += argsNode.getChild(i).getReturnLongs();
         }
-        while (actual < calledMethod.getParametersCount()) {
+        while (actual < calledMethod.getParameterLongs()) {
             Expression value = calledMethod.getParameters().get(actual).getValue();
             if (value == null) {
                 break;
@@ -2743,8 +2733,8 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             actual++;
         }
 
-        if (actual != calledMethod.getParametersCount()) {
-            logMessage(new CompilerException("expected " + calledMethod.getParametersCount() + " argument(s), found " + actual, argsNode.getTokens()));
+        if (actual != calledMethod.getParameterLongs()) {
+            logMessage(new CompilerException("expected " + calledMethod.getParameterLongs() + " argument(s), found " + actual, argsNode.getTokens()));
         }
 
         return source;
@@ -3484,7 +3474,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 } catch (Exception e) {
                     // Do nothing
                 }
-
+        
                 source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, var, hasIndex, index));
                 if ("++".equalsIgnoreCase(node.getText())) {
                     os.write(Spin2Bytecode.bc_var_preinc_push);
@@ -3497,7 +3487,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 else {
                     throw new CompilerException("invalid post effect " + node.getText(), node.getTokens());
                 }
-
+        
          */
         if (node.toString().startsWith("[")) {
             source.add(new VariableOp(context, postEffectNode != null ? VariableOp.Op.Setup : VariableOp.Op.Write, false, (Variable) expression, false, 0));

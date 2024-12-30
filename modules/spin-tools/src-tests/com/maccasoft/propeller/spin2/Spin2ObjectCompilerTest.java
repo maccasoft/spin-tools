@@ -7121,7 +7121,7 @@ class Spin2ObjectCompilerTest {
         Assertions.assertEquals(""
             + "' Object header (var size 4)\n"
             + "00000 00000       0C 00 00 80    Method start @ $0000C (0 parameters, 0 returns)\n"
-            + "00004 00004       17 00 20 81    Method test @ $00017 (1 parameters, 2 returns)\n"
+            + "00004 00004       17 00 20 82    Method test @ $00017 (2 parameters, 2 returns)\n"
             + "00008 00008       20 00 00 00    End\n"
             + "' PUB start() | sLine line\n"
             + "0000C 0000C       02             (stack size)\n"

@@ -13,6 +13,7 @@ package com.maccasoft.propeller.spin2;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.collections4.iterators.ReverseListIterator;
 import org.apache.commons.lang3.BitField;
 
 import com.maccasoft.propeller.expressions.Context;
@@ -199,15 +200,26 @@ public class Spin2Method {
         return parameters;
     }
 
-    public int getParametersCount() {
-        return parameters.size();
+    public int getParameterLongs() {
+        int count = 0;
+        for (LocalVariable var : parameters) {
+            count += (var.getTypeSize() + 3) & ~3;
+        }
+        return count / 4;
     }
 
-    public int getMinParameters() {
-        int count = parameters.size();
-        while (count > 0 && parameters.get(count - 1).getValue() != null) {
-            count--;
+    public int getMinParameterLongs() {
+        int count = getParameterLongs();
+
+        ReverseListIterator<LocalVariable> iter = new ReverseListIterator<>(parameters);
+        while (iter.hasPrevious()) {
+            LocalVariable var = iter.previous();
+            if (var.getValue() == null) {
+                break;
+            }
+            count -= (var.getTypeSize() + 3) / 4;
         }
+
         return count;
     }
 

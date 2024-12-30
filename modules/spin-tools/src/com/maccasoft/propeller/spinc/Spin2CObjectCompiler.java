@@ -949,7 +949,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
             }
         }
 
-        Method exp = new Method(method.getLabel(), method.getParametersCount(), method.getReturnLongs()) {
+        Method exp = new Method(method.getLabel(), method.getParameterLongs(), method.getReturnLongs()) {
 
             @Override
             public int getIndex() {
@@ -1887,11 +1887,11 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
 
                 value = Spin2Method.address_bit.setValue(value, object.getSize());
                 value = Spin2Method.returns_bit.setValue(value, method.getReturnLongs());
-                value = Spin2Method.parameters_bit.setValue(value, method.getParametersCount());
+                value = Spin2Method.parameters_bit.setValue(value, method.getParameterLongs());
 
                 methodData.get(index).setValue(value | 0x80000000L);
                 methodData.get(index).setText(
-                    String.format("Method %s @ $%05X (%d parameters, %d returns)", method.getLabel(), object.getSize(), method.getParametersCount(), method.getReturnLongs()));
+                    String.format("Method %s @ $%05X (%d parameters, %d returns)", method.getLabel(), object.getSize(), method.getParameterLongs(), method.getReturnLongs()));
                 try {
                     method.writeTo(object);
                 } catch (CompilerException e) {

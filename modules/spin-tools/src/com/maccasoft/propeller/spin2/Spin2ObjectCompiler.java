@@ -358,7 +358,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 try {
                     Spin2Method method = compileMethod((MethodNode) node);
                     if (method != null) {
-                        Method exp = new Method(method.getLabel(), method.getMinParameters(), method.getParametersCount(), method.getReturnLongs()) {
+                        Method exp = new Method(method.getLabel(), method.getMinParameterLongs(), method.getParameterLongs(), method.getReturnLongs()) {
 
                             @Override
                             public int getIndex() {
@@ -392,7 +392,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 try {
                     Spin2Method method = compileMethod((MethodNode) node);
                     if (method != null) {
-                        Method exp = new Method(method.getLabel(), method.getMinParameters(), method.getParametersCount(), method.getReturnLongs()) {
+                        Method exp = new Method(method.getLabel(), method.getMinParameterLongs(), method.getParameterLongs(), method.getReturnLongs()) {
 
                             @Override
                             public int getIndex() {
@@ -743,11 +743,11 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
                 value = Spin2Method.address_bit.setValue(value, object.getSize());
                 value = Spin2Method.returns_bit.setValue(value, method.getReturnLongs());
-                value = Spin2Method.parameters_bit.setValue(value, method.getParametersCount());
+                value = Spin2Method.parameters_bit.setValue(value, method.getParameterLongs());
 
                 methodData.get(index).setValue(value | 0x80000000L);
                 methodData.get(index).setText(
-                    String.format("Method %s @ $%05X (%d parameters, %d returns)", method.getLabel(), object.getSize(), method.getParametersCount(), method.getReturnLongs()));
+                    String.format("Method %s @ $%05X (%d parameters, %d returns)", method.getLabel(), object.getSize(), method.getParameterLongs(), method.getReturnLongs()));
                 try {
                     method.writeTo(object);
                 } catch (CompilerException e) {
@@ -1494,8 +1494,8 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                                     logMessage(new CompilerException(e, node));
                                 }
                             }
-                            if (value == null && method.getParametersCount() != 0) {
-                                if (method.getParameter(method.getParametersCount() - 1).getValue() != null) {
+                            if (value == null && method.getParameterLongs() != 0) {
+                                if (method.getParameter(method.getParameterLongs() - 1).getValue() != null) {
                                     logMessage(new CompilerException("expecting default value", identifier));
                                 }
                             }
