@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -104,6 +104,7 @@ public class Spin1TokenMarker extends SourceTokenMarker {
         keywords.put("RESULT", TokenId.METHOD_RETURN);
         keywords.put("@RESULT", TokenId.METHOD_RETURN);
         keywords.put("RETURN", TokenId.KEYWORD);
+        keywords.put("ROUND", TokenId.FUNCTION);
         keywords.put("STRCOMP", TokenId.FUNCTION);
         keywords.put("STRING", TokenId.FUNCTION);
         keywords.put("STRSIZE", TokenId.FUNCTION);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -22,8 +22,6 @@ public class Spin1StatementNode {
 
     Token token;
 
-    int returnLongs;
-
     Map<String, Spin1StatementNode> properties = new HashMap<String, Spin1StatementNode>();
     List<Spin1StatementNode> childs = new ArrayList<Spin1StatementNode>();
 
@@ -41,7 +39,6 @@ public class Spin1StatementNode {
             this.childs.addAll(node.childs);
             this.data = node.data;
             this.keyedData = node.keyedData;
-            this.returnLongs = node.returnLongs;
         }
     }
 
@@ -57,7 +54,6 @@ public class Spin1StatementNode {
             this.childs.addAll(node.childs);
             this.data = node.data;
             this.keyedData = node.keyedData;
-            this.returnLongs = node.returnLongs;
         }
     }
 
@@ -69,13 +65,11 @@ public class Spin1StatementNode {
             this.childs.addAll(node.childs);
             this.data = node.data;
             this.keyedData = node.keyedData;
-            this.returnLongs = node.returnLongs;
         }
     }
 
     public Spin1StatementNode(Token token) {
         this.token = token;
-        this.returnLongs = 1;
     }
 
     public int getType() {
@@ -182,14 +176,6 @@ public class Spin1StatementNode {
 
     public void setData(String key, Object data) {
         this.keyedData.put(key, data);
-    }
-
-    public int getReturnLongs() {
-        return returnLongs;
-    }
-
-    public void setReturnLongs(int returnLongs) {
-        this.returnLongs = returnLongs;
     }
 
     @Override

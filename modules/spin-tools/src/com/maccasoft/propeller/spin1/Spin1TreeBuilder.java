@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -316,7 +316,6 @@ public class Spin1TreeBuilder {
                 else if ("(".equals(peek().getText())) {
                     next();
                     node = new Spin1StatementNode.Method(node);
-                    node.setReturnLongs(0);
                     if (peek() != null && ")".equals(peek().getText())) {
                         next();
                         return node;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -1315,9 +1315,6 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                 }
                 Spin1StatementNode statementNode = builder.getRoot();
                 line.addSource(compileBytecodeExpression(context, method, statementNode, true));
-                if (statementNode.getReturnLongs() != 1) {
-                    logMessage(new CompilerException("invalid conditional expression", statementNode.getTokens()));
-                }
 
                 Spin1MethodLine falseLine = new Spin1MethodLine(context);
                 if ("IF".equals(text)) {
@@ -1348,9 +1345,6 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                     }
                     Spin1StatementNode statementNode = builder.getRoot();
                     line.addSource(compileBytecodeExpression(context, method, statementNode, true));
-                    if (statementNode.getReturnLongs() != 1) {
-                        logMessage(new CompilerException("invalid conditional expression", statementNode.getTokens()));
-                    }
                     if ("ELSEIF".equals(text)) {
                         line.addSource(new Jz(line.getScope(), new ContextLiteral(falseLine.getScope())));
                     }
@@ -1400,9 +1394,6 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                         }
                         Spin1StatementNode statementNode = builder.getRoot();
                         line.addSource(compileBytecodeExpression(line.getScope(), method, statementNode, true));
-                        if (statementNode.getReturnLongs() != 1) {
-                            logMessage(new CompilerException("invalid conditional expression", statementNode.getTokens()));
-                        }
 
                         if ("WHILE".equalsIgnoreCase(token.getText())) {
                             line.addSource(new Jz(line.getScope(), new ContextLiteral(quitLine.getScope())));
@@ -1480,18 +1471,9 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
                             if (step != null) {
                                 nextLine.addSource(compileBytecodeExpression(line.getScope(), method, step, true));
-                                if (step.getReturnLongs() != 1) {
-                                    logMessage(new CompilerException("expression doesn't return a value", step.getTokens()));
-                                }
                             }
                             nextLine.addSource(compileBytecodeExpression(line.getScope(), method, from, true));
-                            if (from.getReturnLongs() != 1) {
-                                logMessage(new CompilerException("expression doesn't return a value", from.getTokens()));
-                            }
                             nextLine.addSource(compileBytecodeExpression(line.getScope(), method, to, true));
-                            if (to.getReturnLongs() != 1) {
-                                logMessage(new CompilerException("expression doesn't return a value", to.getTokens()));
-                            }
 
                             nextLine.addSource(leftAssign(context, method, counter, true));
                             nextLine.addSource(new RepeatLoop(line.getScope(), step != null, new ContextLiteral(loopLine.getScope())));
@@ -1620,9 +1602,6 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                 }
                 Spin1StatementNode statementNode = builder.getRoot();
                 line.addSource(compileBytecodeExpression(context, method, statementNode, true));
-                if (statementNode.getReturnLongs() != 1) {
-                    logMessage(new CompilerException("invalid expression", statementNode.getTokens()));
-                }
 
                 boolean hasOther = false;
                 for (Node child : node.getChilds()) {
@@ -1664,9 +1643,6 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                             }
                             statementNode = builder.getRoot();
                             compileCase(method, line, statementNode, caseLine);
-                            if (statementNode.getReturnLongs() != 1) {
-                                logMessage(new CompilerException("invalid expression", statementNode.getTokens()));
-                            }
 
                             line.addChild(caseLine);
                         }
@@ -1695,9 +1671,6 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                 Spin1StatementNode statementNode = builder.getRoot();
                 line = new Spin1MethodLine(context, parent, null, node);
                 line.addSource(compileBytecodeExpression(context, method, statementNode, false));
-                if (statementNode.getReturnLongs() != 0) {
-                    logMessage(new CompilerException("expected assignment or method call", statementNode.getTokens()));
-                }
             }
 
         } catch (CompilerException e) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -439,7 +439,6 @@ public class Spin2TreeBuilder {
                 if ("(".equals(peek().getText())) {
                     Token first = next();
                     node.setMethod(true);
-                    node.setReturnLongs(0);
                     if (peek() != null && ")".equals(peek().getText())) {
                         token = next();
                         if (peek() != null && peek().column == token.column + 1) {
