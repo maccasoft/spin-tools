@@ -302,6 +302,9 @@ public class Spin2TreeBuilder {
                 }
                 right = parseLevel(right, p.intValue() + 1, comma);
             }
+            if (right == null) {
+                throw new CompilerException("expecting expression", tokens.get(index < tokens.size() ? index : index - 1));
+            }
 
             Spin2StatementNode node = new Spin2StatementNode(token);
             if (left != null) {

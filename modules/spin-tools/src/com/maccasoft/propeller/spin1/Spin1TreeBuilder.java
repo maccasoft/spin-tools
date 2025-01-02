@@ -219,6 +219,9 @@ public class Spin1TreeBuilder {
                 }
                 right = parseLevel(right, p.intValue() + 1);
             }
+            if (right == null) {
+                throw new CompilerException("expecting expression", tokens.get(index < tokens.size() ? index : index - 1));
+            }
 
             Spin1StatementNode node = new Spin1StatementNode(token);
             if (left != null) {
