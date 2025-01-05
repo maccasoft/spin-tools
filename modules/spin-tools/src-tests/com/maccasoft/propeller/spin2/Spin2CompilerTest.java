@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -2088,7 +2088,7 @@ class Spin2CompilerTest {
             + "00004 00004       1A 00 00 00    End\n"
             + "00008 00008   000                                    org     $000\n"
             + "00008 00008   000 0B 00 00 FF                        mov     a, ##@@a\n"
-            + "0000C 0000C   001 30 07 04 F6\n"
+            + "0000C 0000C   001 38 07 04 F6\n"
             + "00010 00010   002 2D 00 64 FD                        ret\n"
             + "00014 00014   003 00 00 00 00    a                   long    0\n"
             + "' PUB main()\n"
@@ -2120,7 +2120,7 @@ class Spin2CompilerTest {
             + "' PUB main() | a\n"
             + "0000C 0000C       01             (stack size)\n"
             + "'     a := @@driver\n"
-            + "0000D 0000D       44 24 17       CONSTANT (5924)\n"
+            + "0000D 0000D       44 2C 17       CONSTANT (5932)\n"
             + "00010 00010       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
             + "00011 00011       04             RETURN\n"
             + "00012 00012       00 00          Padding\n"

@@ -1,7 +1,7 @@
 'TESTT add registers stack_start (on launch) and stack_max (on call or return) to track stack size for allocation need
 
 '******************************************
-'*  Spin2 Interpreter - v47 - 2024.12.08  *
+'*  Spin2 Interpreter - v47 - 2025.01.03  *
 '******************************************
 '
 CON     bc_setup_reg_1D8_1F8    = $B0
@@ -130,7 +130,7 @@ bc_taskhalt     word    @taskctrl_      'TASKHALT(task)                         
 bc_taskcont     word    @taskctrl_      'TASKCONT(task)                         $CE
 bc_taskchk      word    @taskctrl_      'TASKCHK(task)                          $D0
 bc_taskid       word    @taskid_        'TASKID()                       (push)  $D2
-bc_top_return   word    @top_return_    'top return, stops task/cog             $D4
+bc_top_return   word    @top_return_    'top-level return, stops task or cog    $D4
 
                 alignl                  'long-align for rest of interpreter
 '
@@ -469,7 +469,7 @@ g               res     0
 xb              res     1               '(g alias for float operations)
 h               res     1
 
-                fit     $1F0            'buff occupies $1E0..$1EF, adjust user area size to fit
+                fit     $1F0            'buff must end at $1EF
 '
 '
 '***************************
@@ -2730,6 +2730,20 @@ packf           testbn  na,#0           wc      'if NaN, result $FFFFFFFF (c=0 i
 '       x        = task number or -1 if tasks full      (push)
 '       x        = top of stack                         (no push)
 '
+' logic:
+'
+'       push    new     full            start   push
+'       --------------------------------------------
+'       0       0       0               task    <no>
+'       0       0       1               task    <no>
+'       0       1       0               new     <no>
+'       0       1       1               <no>    <no>
+'       1       0       0               task    task
+'       1       0       1               task    task
+'       1       1       0               new     new
+'       1       1       1               <no>    -1
+'
+'
 taskspin_       call    #build_stack            'build remote stack with parameters, after: x=task, ptra=@task, v=stackaddr, C=push
 
                 not     y,x             wz      'get task, Z=1 if new task
@@ -2743,7 +2757,8 @@ taskspin_       call    #build_stack            'build remote stack with paramet
 .new            not     y,taskena               'get new task number
                 encod   y
 
-    if_c        mov     x,y                     'if push, set top of stack to new task number
+    if_c        not     x,y                     'if push, set top of stack to new task number
+    if_c        and     x,#$1F
 
                 mov     w,pb                    'save current execution address in w
 
@@ -2782,7 +2797,7 @@ taskctrl_       not     y,x             wz      'get fixed or current task into 
                 cmp     pa,#bc_taskcont wc      'TASKHALT/TASKCONT
                 bitc    taskhlt,y               'set/clear task halt bit
                 xor     y,tasknum               'current task?
-        _ret_   tjz     y,#tasknext_pop         'if current task then do next task, else done
+        _ret_   tjz     y,#tasknexth_pop        'if current task then do next task, else done
 
 taskchk_        testb   taskena,y       wz      'TASKCHK, get task enable (C=0 on entry)
         if_z    testb   taskhlt,y       wc      'if enabled, get halt bit into C
@@ -2793,8 +2808,10 @@ taskstop_       bitl    taskena,y               'TASKSTOP, clear task enable bit
                 cmp     y,tasknum       wz      'current task?
         if_nz   ret                             'if not current task then done
 
-top_return_     bitl    taskena,tasknum         'TASKSTOP on current task or top return, stop current task
-                tjnz    taskena,#tasknext_pop   'if other task(s) remaining, do next task
+top_return_     bitl    taskena,tasknum         'TASKSTOP on current task or top-level return, stop current task
+                pop     v                       'pop return from bc_hub_bytecode so $1FF (xbyte) pops on next ret
+                tjnz    taskena,#tasknextw      'if other task(s) remaining, do next task
+
                 cogid   v                       'no tasks remaining, stop cog
                 cogstop v
 '
@@ -2808,7 +2825,7 @@ taskid_         pusha   x
 '
 ' TASKNEXT()
 '
-tasknext_pop    pop     v                       'pop return from bc_hub_bytecode so $1FF (xbyte) pops on next ret
+tasknexth_pop   pop     v                       'pop return from bc_hub_bytecode so $1FF (xbyte) pops on next ret
 
 tasknexth       mov     w,pb                    'save current execution address in w
 
@@ -2818,10 +2835,11 @@ tasknexth       mov     w,pb                    'save current execution address 
                 altd    tasknum,#taskptr        'save current ptra in task pointer list
                 mov     0-0,ptra
 
-.wait           mov     x,taskena               'step to next unhalted task
+tasknextw       mov     x,taskena               'get unhalted tasks
                 andn    x,taskhlt
-                tjz     x,#.wait                'if no unhalted task, wait for possible interrupt to unhalt
-                ror     x,tasknum
+                tjz     x,#tasknextw            'if no unhalted task, wait for possible interrupt to unhalt
+
+                ror     x,tasknum               'get next task number
                 encod   x
                 add     tasknum,x
                 and     tasknum,#$1F
