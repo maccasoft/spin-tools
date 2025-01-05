@@ -46,8 +46,8 @@ void i2c_list()
     term.str(string(" #  7-bit  8-bit  DDDD AAA X", CR,
                     "--  -----  -----  ---- --- -", CR));
 
-    for (int type = %0001; type <= %1110; type++) {
-        for (int addr = %000; addr <= %111; addr++) {
+    for (int type = 0b0001; type <= 0b1110; type++) {
+        for (int addr = 0b000; addr <= 0b111; addr++) {
             int devid = (type << 4) | (addr << 1);
             for (int i = 0; i < 10; i++) {
                 if (ok = i2c.present(devid)) {
@@ -75,10 +75,10 @@ void i2c_matrix()
     term.str(string(CLS, "P2 I2C Devices", CR));
     term.str(string("-- dddd_aaa_0 (8-bit) format", CR, CR));
 
-    for (int type = %0001; type <= %1110; type++) {
+    for (int type = 0b0001; type <= 0b1110; type++) {
         term.fxhex(type << 4, 2);
         term.tx(' ');
-        for (int addr = %000; addr <= %111; addr++) {
+        for (int addr = 0b000; addr <= 0b111; addr++) {
             int devid = (type << 4) | (addr << 1);
             if (i2c.present(devid)) {
                 term.fxhex(devid, 2);

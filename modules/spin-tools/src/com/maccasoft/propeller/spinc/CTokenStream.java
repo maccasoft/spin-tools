@@ -135,14 +135,14 @@ public class CTokenStream extends TokenStream {
             index++;
             column++;
             if (ch == '/') {
-                if ((index + 1) < text.length() && text.charAt(index + 1) == '*') {
+                if (index < text.length() && text.charAt(index) == '*') {
                     index++;
                     column++;
                     nested++;
                 }
             }
             else if (ch == '*') {
-                if ((index + 1) < text.length() && text.charAt(index + 1) == '/') {
+                if (index < text.length() && text.charAt(index) == '/') {
                     index++;
                     column++;
                     if (nested == 0) {
