@@ -2322,9 +2322,8 @@ public class SpinTools {
     }
 
     private void handleArchiveProject() {
-        CTabItem tabItem = tabFolder.getSelection();
-        if (tabItem != null) {
-            EditorTab editorTab = (EditorTab) tabItem.getData();
+        EditorTab editorTab = getTargetObjectEditorTab();
+        if (editorTab != null) {
             doArchiveProject(editorTab);
         }
     }
@@ -2371,13 +2370,13 @@ public class SpinTools {
                 archiveStream.putNextEntry(new ZipEntry(editorTab.getText()));
                 archiveStream.write(editorTab.getEditorText().getBytes());
 
-                File topFile = editorTab.getFile() != null ? new File(editorTab.getFile().getParentFile(), editorTab.getText()) : new File(editorTab.getText());
-                Path topFileParent = topFile.getParentFile().toPath();
+                File topFile = editorTab.getFile() != null ? editorTab.getFile() : new File(editorTab.getText());
+                Path topFilePath = topFile.getAbsoluteFile().getParentFile().toPath();
 
                 for (File file : editorTab.getDependencies()) {
-                    Path filePath = file.toPath();
-                    if (filePath.startsWith(topFileParent)) {
-                        archiveStream.putNextEntry(new ZipEntry(topFileParent.relativize(filePath).toString()));
+                    Path filePath = file.getAbsoluteFile().toPath();
+                    if (filePath.startsWith(topFilePath)) {
+                        archiveStream.putNextEntry(new ZipEntry(topFilePath.relativize(filePath).toString()));
                     }
                     else {
                         archiveStream.putNextEntry(new ZipEntry(file.getName()));
@@ -2386,7 +2385,7 @@ public class SpinTools {
                     boolean found = false;
                     for (int i = 0; i < tabFolder.getItemCount(); i++) {
                         EditorTab tab = (EditorTab) tabFolder.getItem(i).getData();
-                        File localFile = editorTab.getFile() != null ? editorTab.getFile() : new File(editorTab.getText());
+                        File localFile = tab.getFile() != null ? tab.getFile() : new File(tab.getText());
                         if (localFile.equals(file)) {
                             archiveStream.write(tab.getEditorText().getBytes());
                             found = true;
