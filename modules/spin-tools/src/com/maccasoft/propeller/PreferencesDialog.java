@@ -556,7 +556,14 @@ public class PreferencesDialog extends Dialog {
         });
 
         label = new Label(composite, SWT.NONE);
-        showToolbar = new Button(composite, SWT.CHECK);
+
+        Composite group = new Composite(composite, SWT.NONE);
+        GridLayout layout = new GridLayout(1, false);
+        layout.marginHeight = layout.marginWidth = 0;
+        group.setLayout(layout);
+        group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+
+        showToolbar = new Button(group, SWT.CHECK);
         showToolbar.setText("Show toolbar");
         showToolbar.setSelection(preferences.getShowToolbar());
         showToolbar.addSelectionListener(new SelectionAdapter() {
@@ -568,8 +575,7 @@ public class PreferencesDialog extends Dialog {
 
         });
 
-        label = new Label(composite, SWT.NONE);
-        showObjectBrowser = new Button(composite, SWT.CHECK);
+        showObjectBrowser = new Button(group, SWT.CHECK);
         showObjectBrowser.setText("Show object browser");
         showObjectBrowser.setSelection(preferences.getShowObjectBrowser());
         showObjectBrowser.addSelectionListener(new SelectionAdapter() {
@@ -581,8 +587,7 @@ public class PreferencesDialog extends Dialog {
 
         });
 
-        label = new Label(composite, SWT.NONE);
-        showBrowser = new Button(composite, SWT.CHECK);
+        showBrowser = new Button(group, SWT.CHECK);
         showBrowser.setText("Show file browser");
         showBrowser.setSelection(preferences.getShowBrowser());
         showBrowser.addSelectionListener(new SelectionAdapter() {
@@ -635,7 +640,14 @@ public class PreferencesDialog extends Dialog {
         spin1Template.setSelection(preferences.getSpin1Template());
 
         new Label(composite, SWT.NONE);
-        spin1RemoveUnusedMethods = new Button(composite, SWT.CHECK);
+
+        Composite group = new Composite(composite, SWT.NONE);
+        GridLayout layout = new GridLayout(1, false);
+        layout.marginHeight = layout.marginWidth = 0;
+        group.setLayout(layout);
+        group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+
+        spin1RemoveUnusedMethods = new Button(group, SWT.CHECK);
         spin1RemoveUnusedMethods.setText("Remove unused methods");
         spin1RemoveUnusedMethods.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin1RemoveUnusedMethods.setSelection(preferences.getSpin1RemoveUnusedMethods());
@@ -648,8 +660,7 @@ public class PreferencesDialog extends Dialog {
 
         });
 
-        new Label(composite, SWT.NONE);
-        spin1CaseSensitive = new Button(composite, SWT.CHECK);
+        spin1CaseSensitive = new Button(group, SWT.CHECK);
         spin1CaseSensitive.setText("Case sensitive symbols");
         spin1CaseSensitive.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin1CaseSensitive.setSelection(preferences.getSpin1CaseSensitiveSymbols());
@@ -662,8 +673,7 @@ public class PreferencesDialog extends Dialog {
 
         });
 
-        new Label(composite, SWT.NONE);
-        spin1WarnUnusedMethods = new Button(composite, SWT.CHECK);
+        spin1WarnUnusedMethods = new Button(group, SWT.CHECK);
         spin1WarnUnusedMethods.setText("Warn unused methods");
         spin1WarnUnusedMethods.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin1WarnUnusedMethods.setSelection(preferences.getSpin1WarnUnusedMethods());
@@ -676,8 +686,7 @@ public class PreferencesDialog extends Dialog {
 
         });
 
-        new Label(composite, SWT.NONE);
-        spin1WarnUnusedMethodVariables = new Button(composite, SWT.CHECK);
+        spin1WarnUnusedMethodVariables = new Button(group, SWT.CHECK);
         spin1WarnUnusedMethodVariables.setText("Warn unused method variables");
         spin1WarnUnusedMethodVariables.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin1WarnUnusedMethodVariables.setSelection(preferences.getSpin1WarnUnusedMethodVariables());
@@ -690,8 +699,7 @@ public class PreferencesDialog extends Dialog {
 
         });
 
-        new Label(composite, SWT.NONE);
-        spin1WarnUnusedVariables = new Button(composite, SWT.CHECK);
+        spin1WarnUnusedVariables = new Button(group, SWT.CHECK);
         spin1WarnUnusedVariables.setText("Warn unused variables");
         spin1WarnUnusedVariables.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin1WarnUnusedVariables.setSelection(preferences.getSpin1WarnUnusedVariables());
@@ -728,7 +736,14 @@ public class PreferencesDialog extends Dialog {
         spin2Template.setSelection(preferences.getSpin2Template());
 
         new Label(composite, SWT.NONE);
-        spin2RemoveUnusedMethods = new Button(composite, SWT.CHECK);
+
+        Composite group = new Composite(composite, SWT.NONE);
+        GridLayout layout = new GridLayout(1, false);
+        layout.marginHeight = layout.marginWidth = 0;
+        group.setLayout(layout);
+        group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+
+        spin2RemoveUnusedMethods = new Button(group, SWT.CHECK);
         spin2RemoveUnusedMethods.setText("Remove unused methods");
         spin2RemoveUnusedMethods.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin2RemoveUnusedMethods.setSelection(preferences.getSpin2RemoveUnusedMethods());
@@ -741,8 +756,7 @@ public class PreferencesDialog extends Dialog {
 
         });
 
-        new Label(composite, SWT.NONE);
-        spin2CaseSensitive = new Button(composite, SWT.CHECK);
+        spin2CaseSensitive = new Button(group, SWT.CHECK);
         spin2CaseSensitive.setText("Case sensitive symbols");
         spin2CaseSensitive.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin2CaseSensitive.setSelection(preferences.getSpin2CaseSensitiveSymbols());
@@ -755,8 +769,7 @@ public class PreferencesDialog extends Dialog {
 
         });
 
-        new Label(composite, SWT.NONE);
-        spin2ClockSetter = new Button(composite, SWT.CHECK);
+        spin2ClockSetter = new Button(group, SWT.CHECK);
         spin2ClockSetter.setText("Use clock setter for PASM-only code");
         spin2ClockSetter.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin2ClockSetter.setSelection(preferences.getSpin2ClockSetter());
@@ -769,8 +782,7 @@ public class PreferencesDialog extends Dialog {
 
         });
 
-        new Label(composite, SWT.NONE);
-        spin2Compress = new Button(composite, SWT.CHECK);
+        spin2Compress = new Button(group, SWT.CHECK);
         spin2Compress.setText("Compress binary");
         spin2Compress.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin2Compress.setSelection(preferences.getSpin2Compress());
@@ -783,8 +795,7 @@ public class PreferencesDialog extends Dialog {
 
         });
 
-        new Label(composite, SWT.NONE);
-        spin2WarnUnusedMethods = new Button(composite, SWT.CHECK);
+        spin2WarnUnusedMethods = new Button(group, SWT.CHECK);
         spin2WarnUnusedMethods.setText("Warn unused methods");
         spin2WarnUnusedMethods.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin2WarnUnusedMethods.setSelection(preferences.getSpin2WarnUnusedMethods());
@@ -797,8 +808,7 @@ public class PreferencesDialog extends Dialog {
 
         });
 
-        new Label(composite, SWT.NONE);
-        spin2WarnUnusedMethodVariables = new Button(composite, SWT.CHECK);
+        spin2WarnUnusedMethodVariables = new Button(group, SWT.CHECK);
         spin2WarnUnusedMethodVariables.setText("Warn unused method variables");
         spin2WarnUnusedMethodVariables.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin2WarnUnusedMethodVariables.setSelection(preferences.getSpin2WarnUnusedMethodVariables());
@@ -811,8 +821,7 @@ public class PreferencesDialog extends Dialog {
 
         });
 
-        new Label(composite, SWT.NONE);
-        spin2WarnUnusedVariables = new Button(composite, SWT.CHECK);
+        spin2WarnUnusedVariables = new Button(group, SWT.CHECK);
         spin2WarnUnusedVariables.setText("Warn unused variables");
         spin2WarnUnusedVariables.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin2WarnUnusedVariables.setSelection(preferences.getSpin2WarnUnusedVariables());
@@ -955,7 +964,13 @@ public class PreferencesDialog extends Dialog {
 
         new Label(composite, SWT.NONE);
 
-        showLineNumbers = new Button(composite, SWT.CHECK);
+        Composite group = new Composite(composite, SWT.NONE);
+        layout = new GridLayout(1, false);
+        layout.marginHeight = layout.marginWidth = 0;
+        group.setLayout(layout);
+        group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+
+        showLineNumbers = new Button(group, SWT.CHECK);
         showLineNumbers.setText("Show line numbers");
         showLineNumbers.setSelection(preferences.getShowLineNumbers());
         showLineNumbers.addSelectionListener(new SelectionAdapter() {
@@ -966,11 +981,9 @@ public class PreferencesDialog extends Dialog {
             }
         });
 
-        createIndentLinesGroup(composite);
+        createIndentLinesGroup(group);
 
-        new Label(composite, SWT.NONE);
-
-        showEditorOutline = new Button(composite, SWT.CHECK);
+        showEditorOutline = new Button(group, SWT.CHECK);
         showEditorOutline.setText("Show outline");
         showEditorOutline.setSelection(preferences.getShowEditorOutline());
         showEditorOutline.addSelectionListener(new SelectionAdapter() {
@@ -981,9 +994,7 @@ public class PreferencesDialog extends Dialog {
             }
         });
 
-        new Label(composite, SWT.NONE);
-
-        showSectionsBackground = new Button(composite, SWT.CHECK);
+        showSectionsBackground = new Button(group, SWT.CHECK);
         showSectionsBackground.setText("Show sections background");
         showSectionsBackground.setSelection(preferences.getShowSectionsBackground());
         showSectionsBackground.addSelectionListener(new SelectionAdapter() {
@@ -994,9 +1005,7 @@ public class PreferencesDialog extends Dialog {
             }
         });
 
-        new Label(composite, SWT.NONE);
-
-        highlightCurrentLine = new Button(composite, SWT.CHECK);
+        highlightCurrentLine = new Button(group, SWT.CHECK);
         highlightCurrentLine.setText("Highlight current line");
         highlightCurrentLine.setSelection(preferences.getHighlightCurrentLine());
         highlightCurrentLine.addSelectionListener(new SelectionAdapter() {
@@ -1007,55 +1016,52 @@ public class PreferencesDialog extends Dialog {
             }
         });
 
-        Group group = new Group(composite, SWT.NONE);
-        group.setText("Tab stops");
-        group.setLayout(new GridLayout(2, false));
-        group.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
+        Group tabStopGroup = new Group(composite, SWT.NONE);
+        tabStopGroup.setText("Tab stops");
+        tabStopGroup.setLayout(new GridLayout(2, false));
+        tabStopGroup.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
 
-        label = new Label(group, SWT.NONE);
+        label = new Label(tabStopGroup, SWT.NONE);
         label.setText("CON Block");
-        conTabStops = new TabStops(group);
+        conTabStops = new TabStops(tabStopGroup);
         conTabStops.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         ((GridData) conTabStops.getLayoutData()).widthHint = convertWidthInCharsToPixels(35);
         conTabStops.setSelection(preferences.getTabStops(ConstantsNode.class));
 
-        label = new Label(group, SWT.NONE);
+        label = new Label(tabStopGroup, SWT.NONE);
         label.setText("VAR Block");
-        varTabStops = new TabStops(group);
+        varTabStops = new TabStops(tabStopGroup);
         varTabStops.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         ((GridData) varTabStops.getLayoutData()).widthHint = convertWidthInCharsToPixels(35);
         varTabStops.setSelection(preferences.getTabStops(VariablesNode.class));
 
-        label = new Label(group, SWT.NONE);
+        label = new Label(tabStopGroup, SWT.NONE);
         label.setText("OBJ Block");
-        objTabStops = new TabStops(group);
+        objTabStops = new TabStops(tabStopGroup);
         objTabStops.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         ((GridData) objTabStops.getLayoutData()).widthHint = convertWidthInCharsToPixels(35);
         objTabStops.setSelection(preferences.getTabStops(ObjectsNode.class));
 
-        label = new Label(group, SWT.NONE);
+        label = new Label(tabStopGroup, SWT.NONE);
         label.setText("PUB / PRI Block");
-        pubTabStops = new TabStops(group);
+        pubTabStops = new TabStops(tabStopGroup);
         pubTabStops.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         ((GridData) pubTabStops.getLayoutData()).widthHint = convertWidthInCharsToPixels(35);
         pubTabStops.setSelection(preferences.getTabStops(MethodNode.class));
 
-        label = new Label(group, SWT.NONE);
+        label = new Label(tabStopGroup, SWT.NONE);
         label.setText("DAT Block");
-        datTabStops = new TabStops(group);
+        datTabStops = new TabStops(tabStopGroup);
         datTabStops.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         ((GridData) datTabStops.getLayoutData()).widthHint = convertWidthInCharsToPixels(35);
         datTabStops.setSelection(preferences.getTabStops(DataNode.class));
     }
 
     private void createIndentLinesGroup(Composite parent) {
-        new Label(parent, SWT.NONE);
 
         showIndentLines = new Button(parent, SWT.CHECK);
         showIndentLines.setText("Show indentation lines");
         showIndentLines.setSelection(preferences.getShowIndentLines());
-
-        new Label(parent, SWT.NONE);
 
         Composite container = new Composite(parent, SWT.NONE);
         GridLayout layout = new GridLayout(2, false);
@@ -1168,7 +1174,13 @@ public class PreferencesDialog extends Dialog {
 
         new Label(composite, SWT.NONE);
 
-        terminalLineInput = new Button(composite, SWT.CHECK);
+        Composite group = new Composite(composite, SWT.NONE);
+        layout = new GridLayout(1, false);
+        layout.marginHeight = layout.marginWidth = 0;
+        group.setLayout(layout);
+        group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+
+        terminalLineInput = new Button(group, SWT.CHECK);
         terminalLineInput.setText("Line input");
         terminalLineInput.setSelection(preferences.getTerminalLineInput());
         terminalLineInput.addSelectionListener(new SelectionAdapter() {
@@ -1179,9 +1191,7 @@ public class PreferencesDialog extends Dialog {
             }
         });
 
-        new Label(composite, SWT.NONE);
-
-        terminalLocalEcho = new Button(composite, SWT.CHECK);
+        terminalLocalEcho = new Button(group, SWT.CHECK);
         terminalLocalEcho.setText("Local echo");
         terminalLocalEcho.setSelection(preferences.getTerminalLocalEcho());
         terminalLocalEcho.addSelectionListener(new SelectionAdapter() {
@@ -1270,12 +1280,18 @@ public class PreferencesDialog extends Dialog {
         consoleMaxLines.setValues(preferences.getConsoleMaxLines(), 1, 999999, 0, 1, 10);
 
         new Label(composite, SWT.NONE);
-        consoleWriteLogFile = new Button(composite, SWT.CHECK);
+
+        Composite group = new Composite(composite, SWT.NONE);
+        layout = new GridLayout(1, false);
+        layout.marginHeight = layout.marginWidth = 0;
+        group.setLayout(layout);
+        group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+
+        consoleWriteLogFile = new Button(group, SWT.CHECK);
         consoleWriteLogFile.setText("Write to Log File");
         consoleWriteLogFile.setSelection(preferences.getConsoleWriteLogFile());
 
-        new Label(composite, SWT.NONE);
-        consoleResetDeviceOnClose = new Button(composite, SWT.CHECK);
+        consoleResetDeviceOnClose = new Button(group, SWT.CHECK);
         consoleResetDeviceOnClose.setText("Reset Device on Close");
         consoleResetDeviceOnClose.setSelection(preferences.getConsoleResetDeviceOnClose());
     }
