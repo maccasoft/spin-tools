@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -56,7 +56,6 @@ public class SpinCompiler {
 
     static String ipAddressPattern = "(?:[0-9]{1,3}\\.){3}[0-9]{1,3}";
     static String macAddressPattern = "(?:[0-9A-Fa-f]{2}[:-]){5}(?:[0-9A-Fa-f]{2})";
-    static Pattern unusedMethodPattern = Pattern.compile("(.*)warning : (method|parameter|variable|local variable) \"(.*)\" is not used");
 
     static boolean quiet;
     static boolean filterUnusedMethodWarning = false;
@@ -92,6 +91,10 @@ public class SpinCompiler {
             options.addOptionGroup(uploadOptions);
 
             options.addOption(new Option("u", false, "enable unused methods removal"));
+
+            options.addOption(new Option(null, "no-warn-unused-methods", false, "disable unused methods warning"));
+            options.addOption(new Option(null, "no-warn-unused-method-variables", false, "disable unused method variabless warning"));
+            options.addOption(new Option(null, "no-warn-unused-variables", false, "disable unused variabless warning"));
 
             options.addOption(new Option("C", "x-case", false, "case-sensitive spin symbols"));
             options.addOption(new Option(null, "x-openspin", false, "enable OpenSpin compatibility (P1)"));
@@ -225,6 +228,10 @@ public class SpinCompiler {
             compiler.setSourceProvider(new Compiler.FileSourceProvider(libraryPaths.toArray(new File[libraryPaths.size()])));
             compiler.setDebugEnabled(cmd.hasOption('d'));
             compiler.setRemoveUnusedMethods(cmd.hasOption('u'));
+
+            compiler.setWarnUnusedMethods(!cmd.hasOption("no-warn-unused-methods"));
+            compiler.setWarnUnusedMethodVariables(!cmd.hasOption("no-warn-unused-method-variables"));
+            compiler.setWarnUnusedVariables(!cmd.hasOption("no-warn-unused-variables"));
 
             if (compiler instanceof Spin1Compiler) {
                 ((Spin1Compiler) compiler).setOpenspinCompatible(cmd.hasOption("x-openspin"));
@@ -638,9 +645,7 @@ public class SpinCompiler {
         if (!quiet) {
             String msg = obj.getText();
             if (!msg.isEmpty()) {
-                if (!filterUnusedMethodWarning || !unusedMethodPattern.matcher(msg).matches()) {
-                    System.out.println(msg);
-                }
+                System.out.println(msg);
             }
             for (CompilerException e : obj.getChilds()) {
                 println(e);

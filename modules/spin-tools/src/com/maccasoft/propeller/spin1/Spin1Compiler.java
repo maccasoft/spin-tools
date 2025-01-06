@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -32,7 +32,6 @@ import com.maccasoft.propeller.model.TokenStream;
 
 public class Spin1Compiler extends Compiler {
 
-    boolean removeUnusedMethods;
     boolean openspinCompatible;
     boolean foldConstants;
 
@@ -52,16 +51,6 @@ public class Spin1Compiler extends Compiler {
     public Spin1Compiler(boolean caseSensitive, boolean foldConstants) {
         super(caseSensitive);
         this.foldConstants = foldConstants;
-    }
-
-    @Override
-    public boolean isRemoveUnusedMethods() {
-        return removeUnusedMethods;
-    }
-
-    @Override
-    public void setRemoveUnusedMethods(boolean removeUnusedMethods) {
-        this.removeUnusedMethods = removeUnusedMethods;
     }
 
     public boolean isOpenspinCompatible() {

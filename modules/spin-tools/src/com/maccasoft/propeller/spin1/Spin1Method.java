@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -80,6 +80,7 @@ public class Spin1Method {
     public LocalVariable addReturnVariable(String name) {
         LocalVariable var = new LocalVariable("LONG", name, 1, 0);
         scope.addSymbol(name, var);
+        returns.add(var);
         return var;
     }
 
@@ -146,7 +147,7 @@ public class Spin1Method {
     }
 
     public int getReturnsCount() {
-        return returns.size();
+        return 1;
     }
 
     public LocalVariable getParameter(int index) {

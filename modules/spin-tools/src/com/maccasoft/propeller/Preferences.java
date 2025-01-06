@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -55,10 +55,16 @@ public class Preferences {
     public static final String PROP_SPIN1_LIBRARY_PATH = "spin1LibraryPath";
     public static final String PROP_SPIN1_REMOVE_UNUSED_METHODS = "spin1RemoveUnusedMethods";
     public static final String PROP_SPIN1_CASE_SENSITIVE_SYMBOLS = "spin1CaseSensitiveSymbols";
+    public static final String PROP_SPIN1_WARN_UNUSED_METHODS = "spin1WarnUnusedMethods";
+    public static final String PROP_SPIN1_WARN_UNUSED_METHOD_VARIABLES = "spin1WarnUnusedMethodVariabless";
+    public static final String PROP_SPIN1_WARN_UNUSED_VARIABLES = "spin1WarnUnusedVariabless";
     public static final String PROP_SPIN2_LIBRARY_PATH = "spin2LibraryPath";
     public static final String PROP_SPIN2_REMOVE_UNUSED_METHODS = "spin2RemoveUnusedMethods";
     public static final String PROP_SPIN2_CASE_SENSITIVE_SYMBOLS = "spin2CaseSensitiveSymbols";
     public static final String PROP_SPIN2_COMPRESS = "spin2Compress";
+    public static final String PROP_SPIN2_WARN_UNUSED_METHODS = "spin2WarnUnusedMethods";
+    public static final String PROP_SPIN2_WARN_UNUSED_METHOD_VARIABLES = "spin2WarnUnusedMethodVariabless";
+    public static final String PROP_SPIN2_WARN_UNUSED_VARIABLES = "spin2WarnUnusedVariabless";
     public static final String PROP_TERMINAL_FONT = "terminalFont";
     public static final String PROP_TERMINAL_LINE_INPUT = "terminalLineInput";
     public static final String PROP_TERMINAL_LOCAL_ECHO = "terminalLocalEcho";
@@ -159,7 +165,14 @@ public class Preferences {
             reloadOpenTabs = true;
 
             spin1RemovedUnusedMethods = true;
+            spin1WarnUnusedMethods = true;
+            spin1WarnUnusedMethodVariables = true;
+            spin1WarnUnusedVariables = true;
+
             spin2RemovedUnusedMethods = true;
+            spin2WarnUnusedMethods = true;
+            spin2WarnUnusedMethodVariables = true;
+            spin2WarnUnusedVariables = true;
 
             terminal = new TerminalPreferences();
             console = new ConsolePreferences();
@@ -187,6 +200,9 @@ public class Preferences {
         public String[] spin1LibraryPath;
         public boolean spin1RemovedUnusedMethods;
         public boolean spin1CaseSensitiveSymbols;
+        public boolean spin1WarnUnusedMethods;
+        public boolean spin1WarnUnusedMethodVariables;
+        public boolean spin1WarnUnusedVariables;
         public String spin1Template;
         @JsonInclude(Include.NON_ABSENT)
         public Map<String, String> spin1Defines;
@@ -195,6 +211,9 @@ public class Preferences {
         public boolean spin2RemovedUnusedMethods;
         public boolean spin2CaseSensitiveSymbols;
         public boolean spin2ClockSetter;
+        public boolean spin2WarnUnusedMethods;
+        public boolean spin2WarnUnusedMethodVariables;
+        public boolean spin2WarnUnusedVariables;
         public String spin2Template;
         @JsonInclude(Include.NON_ABSENT)
         public Map<String, String> spin2Defines;
@@ -803,6 +822,31 @@ public class Preferences {
         changeSupport.firePropertyChange(PROP_SPIN1_CASE_SENSITIVE_SYMBOLS, preferences.spin1CaseSensitiveSymbols, preferences.spin1CaseSensitiveSymbols = spin1CaseSensitiveSymbols);
     }
 
+    public boolean getSpin1WarnUnusedMethods() {
+        return preferences.spin1WarnUnusedMethods;
+    }
+
+    public void setSpin1WarnUnusedMethods(boolean spin1WarnUnusedMethods) {
+        changeSupport.firePropertyChange(PROP_SPIN1_WARN_UNUSED_METHODS, preferences.spin1WarnUnusedMethods, this.preferences.spin1WarnUnusedMethods = spin1WarnUnusedMethods);
+    }
+
+    public boolean getSpin1WarnUnusedMethodVariables() {
+        return preferences.spin1WarnUnusedMethodVariables;
+    }
+
+    public void setSpin1WarnUnusedMethodVariables(boolean spin1WarnUnusedMethodVariables) {
+        changeSupport.firePropertyChange(PROP_SPIN1_WARN_UNUSED_METHOD_VARIABLES, preferences.spin1WarnUnusedMethodVariables,
+            this.preferences.spin1WarnUnusedMethodVariables = spin1WarnUnusedMethodVariables);
+    }
+
+    public boolean getSpin1WarnUnusedVariables() {
+        return preferences.spin1WarnUnusedVariables;
+    }
+
+    public void setSpin1WarnUnusedVariables(boolean spin1WarnUnusedVariables) {
+        changeSupport.firePropertyChange(PROP_SPIN1_WARN_UNUSED_VARIABLES, preferences.spin1WarnUnusedVariables, this.preferences.spin1WarnUnusedVariables = spin1WarnUnusedVariables);
+    }
+
     public Map<String, String> getSpin1Defines() {
         return preferences.spin1Defines != null ? preferences.spin1Defines : new HashMap<>();
     }
@@ -902,6 +946,31 @@ public class Preferences {
 
     public void setSpin2Compress(boolean spin2Compress) {
         changeSupport.firePropertyChange(PROP_SPIN2_COMPRESS, preferences.spin2Compress, preferences.spin2Compress = spin2Compress);
+    }
+
+    public boolean getSpin2WarnUnusedMethods() {
+        return preferences.spin2WarnUnusedMethods;
+    }
+
+    public void setSpin2WarnUnusedMethods(boolean spin2WarnUnusedMethods) {
+        changeSupport.firePropertyChange(PROP_SPIN2_WARN_UNUSED_METHODS, preferences.spin2WarnUnusedMethods, this.preferences.spin2WarnUnusedMethods = spin2WarnUnusedMethods);
+    }
+
+    public boolean getSpin2WarnUnusedMethodVariables() {
+        return preferences.spin2WarnUnusedMethodVariables;
+    }
+
+    public void setSpin2WarnUnusedMethodVariables(boolean spin2WarnUnusedMethodVariables) {
+        changeSupport.firePropertyChange(PROP_SPIN2_WARN_UNUSED_METHOD_VARIABLES, preferences.spin2WarnUnusedMethodVariables,
+            this.preferences.spin2WarnUnusedMethodVariables = spin2WarnUnusedMethodVariables);
+    }
+
+    public boolean getSpin2WarnUnusedVariables() {
+        return preferences.spin2WarnUnusedVariables;
+    }
+
+    public void setSpin2WarnUnusedVariables(boolean spin2WarnUnusedVariables) {
+        changeSupport.firePropertyChange(PROP_SPIN2_WARN_UNUSED_VARIABLES, preferences.spin2WarnUnusedVariables, this.preferences.spin2WarnUnusedVariables = spin2WarnUnusedVariables);
     }
 
     public int[] getTabStops(Class<?> clazz) {

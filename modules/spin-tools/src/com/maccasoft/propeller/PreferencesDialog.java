@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -111,6 +111,9 @@ public class PreferencesDialog extends Dialog {
     PathList spin1Paths;
     Button spin1RemoveUnusedMethods;
     Button spin1CaseSensitive;
+    Button spin1WarnUnusedMethods;
+    Button spin1WarnUnusedMethodVariables;
+    Button spin1WarnUnusedVariables;
     FileSelector spin1Template;
 
     PathList spin2Paths;
@@ -118,6 +121,9 @@ public class PreferencesDialog extends Dialog {
     Button spin2CaseSensitive;
     Button spin2ClockSetter;
     Button spin2Compress;
+    Button spin2WarnUnusedMethods;
+    Button spin2WarnUnusedMethodVariables;
+    Button spin2WarnUnusedVariables;
     FileSelector spin2Template;
 
     Text terminalFont;
@@ -160,10 +166,16 @@ public class PreferencesDialog extends Dialog {
     boolean oldHighlightCurrentLine;
     boolean oldSpin1CaseSensitive;
     boolean oldSpin1RemoveUnusedMethods;
+    boolean oldSpin1WarnUnusedMethods;
+    boolean oldSpin1WarnUnusedMethodVariables;
+    boolean oldSpin1WarnUnusedVariables;
     boolean oldSpin2CaseSensitive;
     boolean oldSpin2RemoveUnusedMethods;
     boolean oldSpin2ClockSetter;
     boolean oldSpin2Compress;
+    boolean oldSpin2WarnUnusedMethods;
+    boolean oldSpin2WarnUnusedMethodVariables;
+    boolean oldSpin2WarnUnusedVariables;
     String oldTerminalFont;
     boolean oldTerminalLineInput;
     boolean oldTerminalLocalEcho;
@@ -489,10 +501,16 @@ public class PreferencesDialog extends Dialog {
         oldShowSectionsBackground = preferences.getShowSectionsBackground();
         oldSpin1RemoveUnusedMethods = preferences.getSpin1RemoveUnusedMethods();
         oldSpin1CaseSensitive = preferences.getSpin1CaseSensitiveSymbols();
+        oldSpin1WarnUnusedMethods = preferences.getSpin1WarnUnusedMethods();
+        oldSpin1WarnUnusedMethodVariables = preferences.getSpin1WarnUnusedMethodVariables();
+        oldSpin1WarnUnusedVariables = preferences.getSpin1WarnUnusedVariables();
         oldSpin2RemoveUnusedMethods = preferences.getSpin2RemoveUnusedMethods();
         oldSpin2CaseSensitive = preferences.getSpin2CaseSensitiveSymbols();
         oldSpin2ClockSetter = preferences.getSpin2ClockSetter();
         oldSpin2Compress = preferences.getSpin2Compress();
+        oldSpin2WarnUnusedMethods = preferences.getSpin2WarnUnusedMethods();
+        oldSpin2WarnUnusedMethodVariables = preferences.getSpin2WarnUnusedMethodVariables();
+        oldSpin2WarnUnusedVariables = preferences.getSpin2WarnUnusedVariables();
         oldTerminalFont = preferences.getTerminalFont();
         oldTerminalLineInput = preferences.getTerminalLineInput();
         oldTerminalLocalEcho = preferences.getTerminalLocalEcho();
@@ -643,6 +661,48 @@ public class PreferencesDialog extends Dialog {
             }
 
         });
+
+        new Label(composite, SWT.NONE);
+        spin1WarnUnusedMethods = new Button(composite, SWT.CHECK);
+        spin1WarnUnusedMethods.setText("Warn unused methods");
+        spin1WarnUnusedMethods.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+        spin1WarnUnusedMethods.setSelection(preferences.getSpin1WarnUnusedMethods());
+        spin1WarnUnusedMethods.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                preferences.setSpin1WarnUnusedMethods(((Button) e.widget).getSelection());
+            }
+
+        });
+
+        new Label(composite, SWT.NONE);
+        spin1WarnUnusedMethodVariables = new Button(composite, SWT.CHECK);
+        spin1WarnUnusedMethodVariables.setText("Warn unused method variables");
+        spin1WarnUnusedMethodVariables.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+        spin1WarnUnusedMethodVariables.setSelection(preferences.getSpin1WarnUnusedMethodVariables());
+        spin1WarnUnusedMethodVariables.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                preferences.setSpin1WarnUnusedMethodVariables(((Button) e.widget).getSelection());
+            }
+
+        });
+
+        new Label(composite, SWT.NONE);
+        spin1WarnUnusedVariables = new Button(composite, SWT.CHECK);
+        spin1WarnUnusedVariables.setText("Warn unused variables");
+        spin1WarnUnusedVariables.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+        spin1WarnUnusedVariables.setSelection(preferences.getSpin1WarnUnusedVariables());
+        spin1WarnUnusedVariables.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                preferences.setSpin1WarnUnusedVariables(((Button) e.widget).getSelection());
+            }
+
+        });
     }
 
     void createSpin2CompilerPage(Composite parent) {
@@ -719,6 +779,48 @@ public class PreferencesDialog extends Dialog {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 preferences.setSpin2Compress(((Button) e.widget).getSelection());
+            }
+
+        });
+
+        new Label(composite, SWT.NONE);
+        spin2WarnUnusedMethods = new Button(composite, SWT.CHECK);
+        spin2WarnUnusedMethods.setText("Warn unused methods");
+        spin2WarnUnusedMethods.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+        spin2WarnUnusedMethods.setSelection(preferences.getSpin2WarnUnusedMethods());
+        spin2WarnUnusedMethods.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                preferences.setSpin2WarnUnusedMethods(((Button) e.widget).getSelection());
+            }
+
+        });
+
+        new Label(composite, SWT.NONE);
+        spin2WarnUnusedMethodVariables = new Button(composite, SWT.CHECK);
+        spin2WarnUnusedMethodVariables.setText("Warn unused method variables");
+        spin2WarnUnusedMethodVariables.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+        spin2WarnUnusedMethodVariables.setSelection(preferences.getSpin2WarnUnusedMethodVariables());
+        spin2WarnUnusedMethodVariables.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                preferences.setSpin2WarnUnusedMethodVariables(((Button) e.widget).getSelection());
+            }
+
+        });
+
+        new Label(composite, SWT.NONE);
+        spin2WarnUnusedVariables = new Button(composite, SWT.CHECK);
+        spin2WarnUnusedVariables.setText("Warn unused variables");
+        spin2WarnUnusedVariables.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+        spin2WarnUnusedVariables.setSelection(preferences.getSpin2WarnUnusedVariables());
+        spin2WarnUnusedVariables.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                preferences.setSpin2WarnUnusedVariables(((Button) e.widget).getSelection());
             }
 
         });
@@ -1715,11 +1817,17 @@ public class PreferencesDialog extends Dialog {
 
         preferences.setSpin1RemoveUnusedMethods(oldSpin1RemoveUnusedMethods);
         preferences.setSpin1CaseSensitiveSymbols(oldSpin1CaseSensitive);
+        preferences.setSpin1WarnUnusedMethods(oldSpin1WarnUnusedMethods);
+        preferences.setSpin1WarnUnusedMethodVariables(oldSpin1WarnUnusedMethodVariables);
+        preferences.setSpin1WarnUnusedVariables(oldSpin1WarnUnusedVariables);
 
         preferences.setSpin2RemoveUnusedMethods(oldSpin2RemoveUnusedMethods);
         preferences.setSpin2CaseSensitiveSymbols(oldSpin2CaseSensitive);
         preferences.setSpin2ClockSetter(oldSpin2ClockSetter);
         preferences.setSpin2Compress(oldSpin2Compress);
+        preferences.setSpin2WarnUnusedMethods(oldSpin2WarnUnusedMethods);
+        preferences.setSpin2WarnUnusedMethodVariables(oldSpin2WarnUnusedMethodVariables);
+        preferences.setSpin2WarnUnusedVariables(oldSpin2WarnUnusedVariables);
 
         preferences.setTerminalFont(oldTerminalFont);
         preferences.setTerminalLineInput(oldTerminalLineInput);

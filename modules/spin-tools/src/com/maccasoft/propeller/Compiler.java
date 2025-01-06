@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -132,6 +132,13 @@ public abstract class Compiler {
     boolean caseSensitive;
     Map<String, List<Token>> defines = new HashMap<>();
 
+    boolean removeUnusedMethods;
+
+    boolean warnUnusedMethods;
+    boolean warnUnusedMethodVariables;
+    boolean warnUnusedVariables;
+    boolean warnRemovedUnusedMethods;
+
     public Compiler() {
 
     }
@@ -144,12 +151,44 @@ public abstract class Compiler {
         this.sourceProvider = sourceProvider;
     }
 
-    public boolean isRemoveUnusedMethods() {
-        return false;
+    public boolean removeUnusedMethods() {
+        return removeUnusedMethods;
     }
 
     public void setRemoveUnusedMethods(boolean removeUnusedMethods) {
+        this.removeUnusedMethods = removeUnusedMethods;
+    }
 
+    public boolean warnUnusedMethods() {
+        return warnUnusedMethods;
+    }
+
+    public void setWarnUnusedMethods(boolean warnUnusedMethods) {
+        this.warnUnusedMethods = warnUnusedMethods;
+    }
+
+    public boolean warnUnusedMethodVariables() {
+        return warnUnusedMethodVariables;
+    }
+
+    public void setWarnUnusedMethodVariables(boolean warnUnusedMethodVariables) {
+        this.warnUnusedMethodVariables = warnUnusedMethodVariables;
+    }
+
+    public boolean warnUnusedVariables() {
+        return warnUnusedVariables;
+    }
+
+    public void setWarnUnusedVariables(boolean warnUnusedVariables) {
+        this.warnUnusedVariables = warnUnusedVariables;
+    }
+
+    public boolean warnRemovedUnusedMethods() {
+        return warnRemovedUnusedMethods;
+    }
+
+    public void setWarnRemovedUnusedMethods(boolean warnRemovedUnusedMethods) {
+        this.warnRemovedUnusedMethods = warnRemovedUnusedMethods;
     }
 
     public boolean isDebugEnabled() {

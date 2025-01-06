@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -34,8 +34,6 @@ import com.maccasoft.propeller.spinc.Spin2CObjectCompiler;
 
 public class Spin2Compiler extends Compiler {
 
-    protected boolean removeUnusedMethods;
-
     protected boolean debugEnabled;
     public List<Object> debugStatements = new ArrayList<Object>();
     protected Spin2Debug debug = new Spin2Debug();
@@ -56,16 +54,6 @@ public class Spin2Compiler extends Compiler {
 
     public Spin2Compiler(boolean caseSensitive) {
         super(caseSensitive);
-    }
-
-    @Override
-    public void setRemoveUnusedMethods(boolean removeUnusedMethods) {
-        this.removeUnusedMethods = removeUnusedMethods;
-    }
-
-    @Override
-    public boolean isRemoveUnusedMethods() {
-        return removeUnusedMethods;
     }
 
     @Override

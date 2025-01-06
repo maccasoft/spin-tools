@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -115,6 +115,9 @@ public class EditorTab implements FindReplaceTarget {
                     tokenMarker.setCaseSensitive((Boolean) evt.getNewValue());
                 case Preferences.PROP_SPIN1_REMOVE_UNUSED_METHODS:
                 case Preferences.PROP_SPIN1_LIBRARY_PATH:
+                case Preferences.PROP_SPIN1_WARN_UNUSED_METHODS:
+                case Preferences.PROP_SPIN1_WARN_UNUSED_METHOD_VARIABLES:
+                case Preferences.PROP_SPIN1_WARN_UNUSED_VARIABLES:
                     if (!tabItemText.toLowerCase().endsWith(".spin2")) {
                         scheduleCompile();
                     }
@@ -124,6 +127,9 @@ public class EditorTab implements FindReplaceTarget {
                 case Preferences.PROP_SPIN2_REMOVE_UNUSED_METHODS:
                 case Preferences.PROP_SPIN2_LIBRARY_PATH:
                 case Preferences.PROP_SPIN2_COMPRESS:
+                case Preferences.PROP_SPIN2_WARN_UNUSED_METHODS:
+                case Preferences.PROP_SPIN2_WARN_UNUSED_METHOD_VARIABLES:
+                case Preferences.PROP_SPIN2_WARN_UNUSED_VARIABLES:
                     if (tabItemText.toLowerCase().endsWith(".spin2") || tabItemText.toLowerCase().endsWith(".c")) {
                         scheduleCompile();
                     }
@@ -535,6 +541,9 @@ public class EditorTab implements FindReplaceTarget {
                     @Override
                     public void run() {
                         boolean removeUnusedMethods = true;
+                        boolean warnUnusedMethods = true;
+                        boolean warnUnusedMethodVariables = true;
+                        boolean warnUnusedVariables = true;
 
                         dependencies.clear();
 
@@ -554,6 +563,9 @@ public class EditorTab implements FindReplaceTarget {
                             }
 
                             removeUnusedMethods = preferences.getSpin1RemoveUnusedMethods();
+                            warnUnusedMethods = preferences.getSpin1WarnUnusedMethods();
+                            warnUnusedMethodVariables = preferences.getSpin1WarnUnusedMethodVariables();
+                            warnUnusedVariables = preferences.getSpin1WarnUnusedVariables();
                         }
                         else if (tabItemText.toLowerCase().endsWith(".spin2")) {
                             compiler = new Spin2Compiler(preferences.getSpin2CaseSensitiveSymbols());
@@ -570,6 +582,9 @@ public class EditorTab implements FindReplaceTarget {
                             }
 
                             removeUnusedMethods = preferences.getSpin2RemoveUnusedMethods();
+                            warnUnusedMethods = preferences.getSpin2WarnUnusedMethods();
+                            warnUnusedMethodVariables = preferences.getSpin2WarnUnusedMethodVariables();
+                            warnUnusedVariables = preferences.getSpin2WarnUnusedVariables();
                         }
                         else if (tabItemText.toLowerCase().endsWith(".c")) {
                             for (Node node : root.getChilds()) {
@@ -605,6 +620,10 @@ public class EditorTab implements FindReplaceTarget {
                         }
                         if (compiler != null) {
                             compiler.setRemoveUnusedMethods(removeUnusedMethods);
+                            compiler.setWarnUnusedMethods(warnUnusedMethods);
+                            compiler.setWarnUnusedMethodVariables(warnUnusedMethodVariables);
+                            compiler.setWarnUnusedVariables(warnUnusedVariables);
+                            compiler.setWarnRemovedUnusedMethods(true);
                             compiler.setDebugEnabled(debug);
 
                             if (compiler instanceof Spin2Compiler) {

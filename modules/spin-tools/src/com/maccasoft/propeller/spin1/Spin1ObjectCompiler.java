@@ -397,79 +397,100 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
     @Override
     public void compileStep2(boolean keepFirst) {
+        String unusedVariable = "variable \"%s\" is not used";
 
-        for (Variable var : variables) {
-            if (!var.isReferenced() && var.getData() != null) {
-                logMessage(new CompilerException(CompilerException.WARNING, "variable \"" + var.getName() + "\" is not used", var.getData()));
+        if (compiler.warnRemovedUnusedMethods()) {
+            warnUnusedMethods(keepFirst);
+            if (compiler.removeUnusedMethods()) {
+                removeUnusedMethods(keepFirst);
             }
         }
-
-        if (methods.size() != 0) {
-            if (compiler.isRemoveUnusedMethods()) {
-                boolean loop;
-                do {
-                    loop = false;
-                    Iterator<Spin1Method> methodsIterator = methods.iterator();
-                    if (keepFirst) {
-                        methodsIterator.next();
-                    }
-                    while (methodsIterator.hasNext()) {
-                        Spin1Method method = methodsIterator.next();
-                        if (!method.isReferenced()) {
-                            MethodNode node = (MethodNode) method.getData();
-                            logMessage(new CompilerException(CompilerException.WARNING, "method \"" + method.getLabel() + "\" is not used", node.getName()));
-                            for (Variable var : method.getParameters()) {
-                                if (!var.isReferenced() && var.getData() != null) {
-                                    logMessage(new CompilerException(CompilerException.WARNING, "parameter \"" + var.getName() + "\" is not used", var.getData()));
-                                }
-                            }
-                            for (Variable var : method.getLocalVariables()) {
-                                if (!var.isReferenced() && var.getData() != null) {
-                                    logMessage(new CompilerException(CompilerException.WARNING, "local variable \"" + var.getName() + "\" is not used", var.getData()));
-                                }
-                            }
-                            method.remove();
-                            methodsIterator.remove();
-                            loop = true;
-                        }
-                    }
-                } while (loop);
+        else {
+            if (compiler.removeUnusedMethods()) {
+                removeUnusedMethods(keepFirst);
             }
+            warnUnusedMethods(keepFirst);
+        }
 
-            Iterator<Spin1Method> methodsIterator = methods.iterator();
+        if (compiler.warnUnusedVariables()) {
+            for (Variable var : variables) {
+                if (!var.isReferenced() && var.getData() != null) {
+                    logMessage(new CompilerException(CompilerException.WARNING, String.format(unusedVariable, var.getName()), var.getData()));
+                }
+            }
+        }
+    }
 
-            if (keepFirst) {
-                Spin1Method method = methodsIterator.next();
+    void warnUnusedMethods(boolean keepFirst) {
+        String unusedMethod = "method \"%s\" is not used";
+        String unusedMethodParameter = "method \"%s\" parameter \"%s\" is not used";
+        String unusedMethodVariable = "method \"%s\" local variable \"%s\" is not used";
+        String unusedMethodReturn = "method \"%s\" return variable \"%s\" is not used";
+
+        Iterator<Spin1Method> methodsIterator = methods.iterator();
+        if (methodsIterator.hasNext() && keepFirst) {
+            Spin1Method method = methodsIterator.next();
+            if (compiler.warnUnusedMethodVariables()) {
                 for (Variable var : method.getParameters()) {
                     if (!var.isReferenced() && var.getData() != null) {
-                        logMessage(new CompilerException(CompilerException.WARNING, "parameter \"" + var.getName() + "\" is not used", var.getData()));
+                        logMessage(new CompilerException(CompilerException.WARNING, String.format(unusedMethodParameter, method.getLabel(), var.getName()), var.getData()));
                     }
                 }
                 for (Variable var : method.getLocalVariables()) {
                     if (!var.isReferenced() && var.getData() != null) {
-                        logMessage(new CompilerException(CompilerException.WARNING, "local variable \"" + var.getName() + "\" is not used", var.getData()));
+                        logMessage(new CompilerException(CompilerException.WARNING, String.format(unusedMethodVariable, method.getLabel(), var.getName()), var.getData()));
+                    }
+                }
+                for (Variable var : method.getReturns()) {
+                    if (!var.isReferenced() && var.getData() != null) {
+                        logMessage(new CompilerException(CompilerException.WARNING, String.format(unusedMethodReturn, method.getLabel(), var.getName()), var.getData()));
                     }
                 }
             }
+        }
+        while (methodsIterator.hasNext()) {
+            Spin1Method method = methodsIterator.next();
+            if (!method.isReferenced() && compiler.warnUnusedMethods()) {
+                MethodNode node = (MethodNode) method.getData();
+                logMessage(new CompilerException(CompilerException.WARNING, String.format(unusedMethod, method.getLabel()), node.getName()));
+            }
+            if (compiler.warnUnusedMethodVariables()) {
+                for (Variable var : method.getParameters()) {
+                    if (!var.isReferenced() && var.getData() != null) {
+                        logMessage(new CompilerException(CompilerException.WARNING, String.format(unusedMethodParameter, method.getLabel(), var.getName()), var.getData()));
+                    }
+                }
+                for (Variable var : method.getLocalVariables()) {
+                    if (!var.isReferenced() && var.getData() != null) {
+                        logMessage(new CompilerException(CompilerException.WARNING, String.format(unusedMethodVariable, method.getLabel(), var.getName()), var.getData()));
+                    }
+                }
+                for (Variable var : method.getReturns()) {
+                    if (!var.isReferenced() && var.getData() != null) {
+                        logMessage(new CompilerException(CompilerException.WARNING, String.format(unusedMethodReturn, method.getLabel(), var.getName()), var.getData()));
+                    }
+                }
+            }
+        }
+    }
 
+    void removeUnusedMethods(boolean keepFirst) {
+        boolean loop;
+        do {
+            loop = false;
+            Iterator<Spin1Method> methodsIterator = methods.iterator();
+            if (methodsIterator.hasNext() && keepFirst) {
+                methodsIterator.next();
+            }
             while (methodsIterator.hasNext()) {
                 Spin1Method method = methodsIterator.next();
                 if (!method.isReferenced()) {
-                    MethodNode node = (MethodNode) method.getData();
-                    logMessage(new CompilerException(CompilerException.WARNING, "method \"" + method.getLabel() + "\" is not used", node.getName()));
-                }
-                for (Variable var : method.getParameters()) {
-                    if (!var.isReferenced() && var.getData() != null) {
-                        logMessage(new CompilerException(CompilerException.WARNING, "parameter \"" + var.getName() + "\" is not used", var.getData()));
-                    }
-                }
-                for (Variable var : method.getLocalVariables()) {
-                    if (!var.isReferenced() && var.getData() != null) {
-                        logMessage(new CompilerException(CompilerException.WARNING, "local variable \"" + var.getName() + "\" is not used", var.getData()));
-                    }
+                    method.remove();
+                    methodsIterator.remove();
+                    loop = true;
                 }
             }
-        }
+        } while (loop);
     }
 
     @Override

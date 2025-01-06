@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -1851,7 +1851,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
         }
 
         if (methods.size() != 0) {
-            if (compiler.isRemoveUnusedMethods()) {
+            if (compiler.removeUnusedMethods()) {
                 boolean loop;
                 do {
                     loop = false;
