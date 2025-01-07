@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -12,6 +12,7 @@ package com.maccasoft.propeller.debug;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import org.eclipse.core.databinding.observable.Realm;
@@ -345,6 +346,9 @@ public class DebugPAsmWindow {
     Image baseImage;
     Image regMapImage;
     Image lutMapImage;
+    Image hubMapImage;
+
+    GC imageGc;
 
     int COGN, BRKCZ, BRKC, BRKZ, CTH2, CTL2;
     int IRET, FPTR, PTRA, PTRB, FREQ, COND;
@@ -521,6 +525,8 @@ public class DebugPAsmWindow {
 
     int requestCOGBRK;
 
+    AtomicBoolean pendingPaint;
+
     public DebugPAsmWindow(int cogn) {
         this.COGN = cogn;
 
@@ -531,6 +537,8 @@ public class DebugPAsmWindow {
 
         resetRegWatch();
         resetSmartWatch();
+
+        pendingPaint = new AtomicBoolean(false);
     }
 
     void resetRegWatch() {
@@ -609,13 +617,9 @@ public class DebugPAsmWindow {
             @Override
             public void paintControl(PaintEvent e) {
                 e.gc.setAdvanced(true);
-                e.gc.setAntialias(SWT.ON);
-                e.gc.setInterpolation(SWT.LOW);
+                e.gc.setInterpolation(SWT.NONE);
                 e.gc.drawImage(image, 0, 0);
-                e.gc.drawImage(regMapImage, 0, 0, 32, 512, RegMap.x, RegMap.y, RegMap.width, RegMap.height);
-                e.gc.drawImage(lutMapImage, 0, 0, 32, 512, LutMap.x, LutMap.y, LutMap.width, LutMap.height);
-                e.gc.setBackground(cBlack);
-                e.gc.fillRectangle(HubMap);
+                pendingPaint.set(false);
             }
 
         });
@@ -625,6 +629,7 @@ public class DebugPAsmWindow {
             @Override
             public void widgetDisposed(DisposeEvent e) {
                 image.dispose();
+                imageGc.dispose();
                 baseImage.dispose();
             }
 
@@ -888,9 +893,23 @@ public class DebugPAsmWindow {
 
             @Override
             public void keyPressed(KeyEvent e) {
+
                 switch (Character.toUpperCase(e.character)) {
-                    case ' ':
-                        stallBrk = breakValue;
+                    case SWT.SPACE:
+                    case SWT.CR:
+                        if (repeatMode) {
+                            stallBrk = STALL_CMD;
+                            repeatMode = false;
+                        }
+                        else {
+                            if (e.character == SWT.SPACE) {
+                                stallBrk = breakValue;
+                            }
+                            else if (e.character == SWT.CR) {
+                                oldTickCount = System.currentTimeMillis();
+                                repeatMode = true;
+                            }
+                        }
                         break;
                     case 'B':
                         breakValue = breakValue & 0x00000100;
@@ -904,34 +923,36 @@ public class DebugPAsmWindow {
                     case 'M':
                         breakValue = (breakValue & 0x00000100) | 0x00000001;
                         break;
-                }
-                switch (e.keyCode) {
-                    case SWT.ARROW_UP:
-                        hubAddr = (hubAddr - 0x10) & 0xFFFFF;
-                        break;
-                    case SWT.ARROW_DOWN:
-                        hubAddr = (hubAddr + 0x10) & 0xFFFFF;
-                        break;
-                    case SWT.PAGE_UP:
-                        if ((e.stateMask & SWT.SHIFT) != 0) {
-                            hubAddr = (hubAddr - 0x10000) & 0xFFFFF;
-                        }
-                        else if ((e.stateMask & SWT.CTRL) != 0) {
-                            hubAddr = (hubAddr - 0x1000) & 0xFFFFF;
-                        }
-                        else {
-                            hubAddr = (hubAddr - HUB_SUB_BLOCK_SIZE) & 0xFFFFF;
-                        }
-                        break;
-                    case SWT.PAGE_DOWN:
-                        if ((e.stateMask & SWT.SHIFT) != 0) {
-                            hubAddr = (hubAddr + 0x10000) & 0xFFFFF;
-                        }
-                        else if ((e.stateMask & SWT.CTRL) != 0) {
-                            hubAddr = (hubAddr + 0x1000) & 0xFFFFF;
-                        }
-                        else {
-                            hubAddr = (hubAddr + HUB_SUB_BLOCK_SIZE) & 0xFFFFF;
+                    default:
+                        switch (e.keyCode) {
+                            case SWT.ARROW_UP:
+                                hubAddr = (hubAddr - 0x10) & 0xFFFFF;
+                                break;
+                            case SWT.ARROW_DOWN:
+                                hubAddr = (hubAddr + 0x10) & 0xFFFFF;
+                                break;
+                            case SWT.PAGE_UP:
+                                if ((e.stateMask & SWT.SHIFT) != 0) {
+                                    hubAddr = (hubAddr - 0x10000) & 0xFFFFF;
+                                }
+                                else if ((e.stateMask & SWT.CTRL) != 0) {
+                                    hubAddr = (hubAddr - 0x1000) & 0xFFFFF;
+                                }
+                                else {
+                                    hubAddr = (hubAddr - HUB_SUB_BLOCK_SIZE) & 0xFFFFF;
+                                }
+                                break;
+                            case SWT.PAGE_DOWN:
+                                if ((e.stateMask & SWT.SHIFT) != 0) {
+                                    hubAddr = (hubAddr + 0x10000) & 0xFFFFF;
+                                }
+                                else if ((e.stateMask & SWT.CTRL) != 0) {
+                                    hubAddr = (hubAddr + 0x1000) & 0xFFFFF;
+                                }
+                                else {
+                                    hubAddr = (hubAddr + HUB_SUB_BLOCK_SIZE) & 0xFFFFF;
+                                }
+                                break;
                         }
                         break;
                 }
@@ -1130,9 +1151,11 @@ public class DebugPAsmWindow {
         ButtonGo = boxBoundary(bGOl, bGOt, bGOw, bGOh, 1);
 
         image = new Image(display, new ImageData(imageSize.x, imageSize.y, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF)));
+        imageGc = new GC(image);
 
         regMapImage = new Image(display, new ImageData(32, 512, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF)));
         lutMapImage = new Image(display, new ImageData(32, 512, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF)));
+        hubMapImage = new Image(display, new ImageData(HUB_MAP_WIDTH, HUB_MAP_HEIGHT, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF)));
     }
 
     Rectangle boxBoundary(int l, int t, int w, int h, int b) {
@@ -1173,6 +1196,7 @@ public class DebugPAsmWindow {
 
     boolean regMapUpdate;
     boolean lutMapUpdate;
+    boolean hubMapUpdate;
 
     public void breakPoint(CircularBuffer receiver, CircularBuffer transmitter) {
         int i, n, j;
@@ -1292,6 +1316,7 @@ public class DebugPAsmWindow {
                 j >>= 1;
                 if (i < hubBlock.length && hubBlock[i] != hubBlockOld[i]) {
                     j |= 0x80;
+                    hubMapUpdate = true;
                 }
                 if ((i & 7) == 7) {
                     transmitter.write(j);
@@ -1350,13 +1375,14 @@ public class DebugPAsmWindow {
             }
 
             // Receive detailed hub checksum words
+            j = 0;
             for (i = 0; i < hubBlock.length; i++) {
                 if (hubBlock[i] != hubBlockOld[i]) {
                     for (n = 0; n < HUB_BLOCK_RATIO; n++) {
-                        hubSubBlockOld[i * HUB_BLOCK_RATIO + n] = hubSubBlock[i * HUB_BLOCK_RATIO + n];
-                        hubSubBlock[i * HUB_BLOCK_RATIO + n] = receiver.readWord();
+                        hubSubBlock[j + n] = receiver.readWord();
                     }
                 }
+                j += HUB_BLOCK_RATIO;
             }
 
             // Receive hub reads
@@ -1429,6 +1455,7 @@ public class DebugPAsmWindow {
             else if (((BRKCZ >> 6) & 3) == 3) {
                 execMode = 3;
             }
+
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
@@ -1445,49 +1472,59 @@ public class DebugPAsmWindow {
     }
 
     public void update() {
-        GC gc = new GC(image);
-        try {
-            gc.setAdvanced(true);
-            gc.setAntialias(SWT.ON);
-            gc.setTextAntialias(SWT.ON);
-            gc.setInterpolation(SWT.NONE);
-            gc.setFont(font);
-            updateBitmap(gc);
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.exit(0);
-        } finally {
-            gc.dispose();
+        if (canvas.isDisposed()) {
+            return;
         }
 
-        canvas.redraw();
+        updateBitmap();
+
+        if (!pendingPaint.getAndSet(true)) {
+            display.asyncExec(new Runnable() {
+
+                @Override
+                public void run() {
+                    if (canvas.isDisposed()) {
+                        return;
+                    }
+                    canvas.redraw();
+                }
+
+            });
+        }
     }
 
-    void updateBitmap(GC gc) {
+    void updateBitmap() {
         //Color i;
 
-        gc.drawImage(baseImage, 0, 0);
+        try {
+            imageGc.setAdvanced(true);
+            imageGc.setAntialias(SWT.ON);
+            imageGc.setTextAntialias(SWT.ON);
+            imageGc.setInterpolation(SWT.NONE);
+            imageGc.setFont(font);
 
-        // Draw C flag
-        drawText(gc, CFl + 2, CFt, cData, "" + (char) ((IRET >> 31 & 1) + '0'));
-        // Draw Z flag
-        drawText(gc, ZFl + 2, ZFt, cData, "" + (char) ((IRET >> 30 & 1) + '0'));
-        // Draw PC
-        drawText(gc, PCl + 3, PCt, cData, String.format("%05X", IRET & 0xFFFFF));
-        //// Draw SKIP/SKIPF
-        if (((BRKC >> 27) & 1) == 0) {
-            drawText(gc, SKIPl + 4, SKIPt, cName, "F");
-        }
-        int CallDepth = (BRKC >> 28) & 0xF;
-        boolean SkipOn = (execMode == 0) && (CallDepth == 0);
-        /*if (SkipOn) {
+            imageGc.drawImage(baseImage, 0, 0);
+
+            // Draw C flag
+            drawText(imageGc, CFl + 2, CFt, cData, "" + (char) ((IRET >> 31 & 1) + '0'));
+            // Draw Z flag
+            drawText(imageGc, ZFl + 2, ZFt, cData, "" + (char) ((IRET >> 30 & 1) + '0'));
+            // Draw PC
+            drawText(imageGc, PCl + 3, PCt, cData, String.format("%05X", IRET & 0xFFFFF));
+            //// Draw SKIP/SKIPF
+            if (((BRKC >> 27) & 1) == 0) {
+                drawText(imageGc, SKIPl + 4, SKIPt, cName, "F");
+            }
+            int CallDepth = (BRKC >> 28) & 0xF;
+            boolean SkipOn = (execMode == 0) && (CallDepth == 0);
+            /*if (SkipOn) {
             i = cData;
-        }
-        else {
+            }
+            else {
             i = cDataDim;
-        }*/
-        drawRegBin(gc, SKIPl + 6, SKIPt, BRKZ, SkipOn ? cData : cDataDim);
-        /*if (!SkipOn) {
+            }*/
+            drawRegBin(imageGc, SKIPl + 6, SKIPt, BRKZ, SkipOn ? cData : cDataDim);
+            /*if (!SkipOn) {
             String s;
             if ((ExecMode == 0) && (CallDepth != 0)) {
                 s = "CALL(" + i + ")";
@@ -1496,334 +1533,359 @@ public class DebugPAsmWindow {
                 s = ModeName[ExecMode];
             }
             drawText(gc, SKIPl + 15 - (s.length() + 1) >> 1, SKIPt, cData, "Suspended during " + s);
-        }*/
-        // Draw XBYTE
-        drawText(gc, XBYTEl + 6, XBYTEt, cData, String.format("%03X", (BRKC >> 16) & 0x1FF));
-        if (((BRKC >> 25) & 1) != 0) {
-            drawText(gc, XBYTEl + 10, XBYTEt, cIndicator, "\u2713");
-        }
-        // Draw CT
-        drawText(gc, CTl + 3, CTt, cData, String.format("%08X %08X", CTH2, CTL2));
-        // Draw special function registers
-        for (int i = 0; i < 16; i++) {
-            drawText(gc, SFRl + 10, SFRt + (i << 1), cData, String.format("%08X", cogImage[0x1F0 + i]));
-        }
-        // Draw events
-        for (int i = 0; i < 16; i++) {
-            drawText(gc, EVENTl + 4, EVENTt + (i << 1), cData, "" + (char) ('0' + ((BRKC >> i) & 1)));
-        }
-        // Draw execution mode
-        drawText(gc, EXECl, EXECt + 2, cData2, ModeName[execMode]);
-        // Draw STACK
-        for (int i = 0; i < STK.length; i++) {
-            drawText(gc, STACKl + 6 + i * 9, STACKt, cData, String.format("%08X", STK[i]));
-        }
-        // Draw interrupts
-        drawInt(gc, INTl, INTt + (0 << 1), 1);
-        drawInt(gc, INTl, INTt + (1 << 1), 2);
-        drawInt(gc, INTl, INTt + (2 << 1), 3);
-        // Draw RFxx/WFxx, PTRA, PTRB
-        drawText(gc, PTRl, PTRt, cName, ((BRKCZ >> 20) & 1) != 0 ? "W" : "R");
-        drawPtrBytes(gc, PTRl, PTRt + (0 << 1), FPTR, buffFptr);
-        drawPtrBytes(gc, PTRl, PTRt + (1 << 1), cogImage[0x1F8], buffPtra);
-        drawPtrBytes(gc, PTRl, PTRt + (2 << 1), cogImage[0x1F9], buffPtrb);
-        // Draw INIT, STALLI, STR, MOD, LUTS
-        if (((BRKCZ >> 23) & 1) != 0) {
-            drawText(gc, STATUSl + 1, STATUSt - 1 + q3, cIndicator, "INIT");
-        }
-        if (((BRKCZ >> 1) & 1) != 0) {
-            drawText(gc, STATUSl, STATUSt + 1 + q1, cIndicator, "STALLI");
-        }
-        if (((BRKCZ >> 21) & 1) != 0) {
-            drawText(gc, STATUSl - 1 + q3, STATUSt + 2 + q3, cIndicator, "STR");
-        }
-        if (((BRKCZ >> 22) & 1) != 0) {
-            drawText(gc, STATUSl + 3 + q1, STATUSt + 2 + q3, cIndicator, "MOD");
-        }
-        if (((BRKC >> 26) & 1) != 0) {
-            drawText(gc, STATUSl + 1, STATUSt + 4 + q1, cIndicator, "LUTS");
-        }
-        // Draw pins in binary
-        drawRegBin(gc, PINl + 4, PINt + (0 << 1), cogImage[0x1FB], cData);
-        drawRegBin(gc, PINl + 40, PINt + (0 << 1), cogImage[0x1FA], cData);
-        drawRegBin(gc, PINl + 4, PINt + (1 << 1), cogImage[0x1FD], cData);
-        drawRegBin(gc, PINl + 40, PINt + (1 << 1), cogImage[0x1FC], cData);
-        drawRegBin(gc, PINl + 4, PINt + (2 << 1), cogImage[0x1FF], cData);
-        drawRegBin(gc, PINl + 40, PINt + (2 << 1), cogImage[0x1FE], cData);
-        // Draw hub data
-        for (int j = 0; j < 8; j++) {
-            int i = (curHubAddr + (j << 4)) & 0xFFFFF;
-            drawText(gc, HUBl, HUBt + (j << 1), cData, String.format("%05X", i));
-            for (int k = 0; k < 16; k++) {
-                i = buffHub[(j << 4) + k] & 0xFF;
-                drawText(gc, HUBl + 6 + k * 3, HUBt + (j << 1), cData, String.format("%02X", i));
-                if ((i < 0x20) || (i > 0x7E)) {
-                    i = '.';
-                }
-                drawText(gc, HUBl + 55 + k, HUBt + (j << 1), cData2, "" + (char) i);
+            }*/
+            // Draw XBYTE
+            drawText(imageGc, XBYTEl + 6, XBYTEt, cData, String.format("%03X", (BRKC >> 16) & 0x1FF));
+            if (((BRKC >> 25) & 1) != 0) {
+                drawText(imageGc, XBYTEl + 10, XBYTEt, cIndicator, "\u2713");
             }
-        }
-
-        //  --------------------
-        //   Update disassembly
-        //  --------------------
-
-        boolean disCog = (curDisMode == dmPC) && PCInCog || (curDisMode == dmCOG);
-        int x = (DISl + 15) * charWidth - (charWidth >> 1);
-        int xs = charWidth * 42;
-        int ys = charHeight;
-        int r = charHeight >> 2;
-
-        for (int i = 0; i < DIS_LINES; i++) {
-            String s;
-            int addr;
-
-            // Draw address
-            if (disCog) {
-                addr = curDisAddr + i;
-                s = (addr < 0x200) ? "R" : "L";
-                s += "-" + String.format("%03X", addr);
+            // Draw CT
+            drawText(imageGc, CTl + 3, CTt, cData, String.format("%08X %08X", CTH2, CTL2));
+            // Draw special function registers
+            for (int i = 0; i < 16; i++) {
+                drawText(imageGc, SFRl + 10, SFRt + (i << 1), cData, String.format("%08X", cogImage[0x1F0 + i]));
             }
-            else {
-                addr = (curDisAddr + (i << 2)) & 0xFFFFF;
-                s = String.format("%05X", addr);
+            // Draw events
+            for (int i = 0; i < 16; i++) {
+                drawText(imageGc, EVENTl + 4, EVENTt + (i << 1), cData, "" + (char) ('0' + ((BRKC >> i) & 1)));
             }
-            drawText(gc, DISl, DISt + (i << 1), cData2, s);
-
-            // Draw instruction long
-            int inst = buffDis[i];
-            drawText(gc, DISl + 6, DISt + (i << 1), cData, String.format("%08X", inst));
-
-            // Disassemble instruction long, may be register ROM
-            if (disCog && (addr >= 0x1F8) && (addr <= 0x1FF)) {
-                s = "[ROM]        " + DebugROM[addr & 0x7];
+            // Draw execution mode
+            drawText(imageGc, EXECl, EXECt + 2, cData2, ModeName[execMode]);
+            // Draw STACK
+            for (int i = 0; i < STK.length; i++) {
+                drawText(imageGc, STACKl + 6 + i * 9, STACKt, cData, String.format("%08X", STK[i]));
             }
-            else {
-                s = P2Disassembler.disassemble(addr, inst);
+            // Draw interrupts
+            drawInt(imageGc, INTl, INTt + (0 << 1), 1);
+            drawInt(imageGc, INTl, INTt + (1 << 1), 2);
+            drawInt(imageGc, INTl, INTt + (2 << 1), 3);
+            // Draw RFxx/WFxx, PTRA, PTRB
+            drawText(imageGc, PTRl, PTRt, cName, ((BRKCZ >> 20) & 1) != 0 ? "W" : "R");
+            drawPtrBytes(imageGc, PTRl, PTRt + (0 << 1), FPTR, buffFptr);
+            drawPtrBytes(imageGc, PTRl, PTRt + (1 << 1), cogImage[0x1F8], buffPtra);
+            drawPtrBytes(imageGc, PTRl, PTRt + (2 << 1), cogImage[0x1F9], buffPtrb);
+            // Draw INIT, STALLI, STR, MOD, LUTS
+            if (((BRKCZ >> 23) & 1) != 0) {
+                drawText(imageGc, STATUSl + 1, STATUSt - 1 + q3, cIndicator, "INIT");
             }
-
-            // Prepare to draw instruction
-            boolean HiddenPC = (addr < 0x400) && (curDisMode == dmHUB);
-            int y = ((DISt + 1 + (i << 1)) * charHeight) >> 1;
-
-            // Inverse if instruction at PC
-            if ((addr == curPC) && !HiddenPC) {
-                smoothShape(gc, x, y - (charHeight >> 1), xs, ys, r, r, 0, cData, 255);
-                drawText(gc, DISl + 15, DISt + (i << 1), cBox2, s);
+            if (((BRKCZ >> 1) & 1) != 0) {
+                drawText(imageGc, STATUSl, STATUSt + 1 + q1, cIndicator, "STALLI");
             }
-            else {
-                drawText(gc, DISl + 15, DISt + (i << 1), cData2, s);
-
-                // Strikethrough if instruction is to be skipped
-                int j = (addr < 0x400) ? (addr - curPC) : (addr - curPC) / 4;
-                if (SkipOn && (j >= 0) && (j <= 31) && ((BRKZ >> j) & 1) != 0 && !HiddenPC) {
-                    smoothShape(gc, x, y - 1, xs, ys >> 1, r, r, 0, cData2, 160);
-                }
-
-                // Highlight if breakpoint instruction
-                if ((breakValue & 0x400) != 0 && (breakAddr == addr) && !HiddenPC) {
-                    smoothShape(gc, x, y - (charHeight >> 1), xs, ys, r, r, 0, cName, 64);
+            if (((BRKCZ >> 21) & 1) != 0) {
+                drawText(imageGc, STATUSl - 1 + q3, STATUSt + 2 + q3, cIndicator, "STR");
+            }
+            if (((BRKCZ >> 22) & 1) != 0) {
+                drawText(imageGc, STATUSl + 3 + q1, STATUSt + 2 + q3, cIndicator, "MOD");
+            }
+            if (((BRKC >> 26) & 1) != 0) {
+                drawText(imageGc, STATUSl + 1, STATUSt + 4 + q1, cIndicator, "LUTS");
+            }
+            // Draw pins in binary
+            drawRegBin(imageGc, PINl + 4, PINt + (0 << 1), cogImage[0x1FB], cData);
+            drawRegBin(imageGc, PINl + 40, PINt + (0 << 1), cogImage[0x1FA], cData);
+            drawRegBin(imageGc, PINl + 4, PINt + (1 << 1), cogImage[0x1FD], cData);
+            drawRegBin(imageGc, PINl + 40, PINt + (1 << 1), cogImage[0x1FC], cData);
+            drawRegBin(imageGc, PINl + 4, PINt + (2 << 1), cogImage[0x1FF], cData);
+            drawRegBin(imageGc, PINl + 40, PINt + (2 << 1), cogImage[0x1FE], cData);
+            // Draw hub data
+            for (int j = 0; j < 8; j++) {
+                int i = (curHubAddr + (j << 4)) & 0xFFFFF;
+                drawText(imageGc, HUBl, HUBt + (j << 1), cData, String.format("%05X", i));
+                for (int k = 0; k < 16; k++) {
+                    i = buffHub[(j << 4) + k] & 0xFF;
+                    drawText(imageGc, HUBl + 6 + k * 3, HUBt + (j << 1), cData, String.format("%02X", i));
+                    if ((i < 0x20) || (i > 0x7E)) {
+                        i = '.';
+                    }
+                    drawText(imageGc, HUBl + 55 + k, HUBt + (j << 1), cData2, "" + (char) i);
                 }
             }
-        }
 
-        //  ----------------
-        //   Update watches
-        //  ----------------
+            //  --------------------
+            //   Update disassembly
+            //  --------------------
 
-        for (int i = 0; i < watchReg.length; i++) {
-            if (watchReg[i] == 0xFFFF) {
-                watchReg[i] = 0;
-            }
-            else if (cogImage[i] != cogImageOld[i]) {
-                watchReg[i] = 1000;
-            }
-            else if (watchReg[i] > 0) {
-                watchReg[i]--;
-            }
-        }
-        for (int i = 0; i < watchReg.length; i++) {
-            if (watchReg[i] != 0) {
-                index = -1;
-                for (int j = 0; j < watchRegList.length; j++) {
-                    if ((watchRegList[j] >> 16) == i) {
-                        index = j;
-                        break;
+            boolean disCog = (curDisMode == dmPC) && PCInCog || (curDisMode == dmCOG);
+            int x = (DISl + 15) * charWidth - (charWidth >> 1);
+            int xs = charWidth * 42;
+            int ys = charHeight;
+            int r = charHeight >> 2;
+
+            for (int i = 0; i < DIS_LINES; i++) {
+                String s;
+                int addr;
+
+                // Draw address
+                if (disCog) {
+                    addr = curDisAddr + i;
+                    s = (addr < 0x200) ? "R" : "L";
+                    s += "-" + String.format("%03X", addr);
+                }
+                else {
+                    addr = (curDisAddr + (i << 2)) & 0xFFFFF;
+                    s = String.format("%05X", addr);
+                }
+                drawText(imageGc, DISl, DISt + (i << 1), cData2, s);
+
+                // Draw instruction long
+                int inst = buffDis[i];
+                drawText(imageGc, DISl + 6, DISt + (i << 1), cData, String.format("%08X", inst));
+
+                // Disassemble instruction long, may be register ROM
+                if (disCog && (addr >= 0x1F8) && (addr <= 0x1FF)) {
+                    s = "[ROM]        " + DebugROM[addr & 0x7];
+                }
+                else {
+                    s = P2Disassembler.disassemble(addr, inst);
+                }
+
+                // Prepare to draw instruction
+                boolean HiddenPC = (addr < 0x400) && (curDisMode == dmHUB);
+                int y = ((DISt + 1 + (i << 1)) * charHeight) >> 1;
+
+                // Inverse if instruction at PC
+                if ((addr == curPC) && !HiddenPC) {
+                    smoothShape(imageGc, x, y - (charHeight >> 1), xs, ys, r, r, 0, cData, 255);
+                    drawText(imageGc, DISl + 15, DISt + (i << 1), cBox2, s);
+                }
+                else {
+                    drawText(imageGc, DISl + 15, DISt + (i << 1), cData2, s);
+
+                    // Strikethrough if instruction is to be skipped
+                    int j = (addr < 0x400) ? (addr - curPC) : (addr - curPC) / 4;
+                    if (SkipOn && (j >= 0) && (j <= 31) && ((BRKZ >> j) & 1) != 0 && !HiddenPC) {
+                        smoothShape(imageGc, x, y - 1, xs, ys >> 1, r, r, 0, cData2, 160);
+                    }
+
+                    // Highlight if breakpoint instruction
+                    if ((breakValue & 0x400) != 0 && (breakAddr == addr) && !HiddenPC) {
+                        smoothShape(imageGc, x, y - (charHeight >> 1), xs, ys, r, r, 0, cName, 64);
                     }
                 }
-                if (index < 0) {
-                    int k = 0xFFFF;
-                    for (int j = watchRegList.length - 1; j >= 0; j--) {
-                        if ((watchRegList[j] & 0xFFFF) <= k) {
-                            k = watchRegList[j] & 0xFFFF;
+            }
+
+            //  ----------------
+            //   Update watches
+            //  ----------------
+
+            for (int i = 0; i < watchReg.length; i++) {
+                if (watchReg[i] == 0xFFFF) {
+                    watchReg[i] = 0;
+                }
+                else if (cogImage[i] != cogImageOld[i]) {
+                    watchReg[i] = 1000;
+                }
+                else if (watchReg[i] > 0) {
+                    watchReg[i]--;
+                }
+            }
+            for (int i = 0; i < watchReg.length; i++) {
+                if (watchReg[i] != 0) {
+                    index = -1;
+                    for (int j = 0; j < watchRegList.length; j++) {
+                        if ((watchRegList[j] >> 16) == i) {
                             index = j;
+                            break;
                         }
                     }
-                }
-                watchRegList[index] = (i << 16) + watchReg[i];
-            }
-        }
-        // Draw reg watch
-        if ((watchRegList[0] & 0xFFFF) == 0) {
-            drawText(gc, WATCHl + 3, WATCHt, cName, "REG \u0394");
-        }
-        else {
-            for (int i = 0; i < REG_WATCH_LIST_SIZE; i++) {
-                if ((watchRegList[i] & 0xFFFF) > 0) {
-                    int y = WATCHt + (i << 1);
-                    drawText(gc, WATCHl, y, cData2, String.format("%03X", watchRegList[i] >> 16));
-                    drawText(gc, WATCHl + 4, y, cData, String.format("%08X", cogImage[watchRegList[i] >> 16]));
-                }
-            }
-        }
-
-        // Update smart pin watch
-        for (int i = 0; i < watchSmart.length; i++) {
-            if (watchSmart[i] == 0xFFFF) {
-                watchSmart[i] = 0;
-            }
-            else if (watchSmartAll || ((((cogImage[0x1FA + i >> 5] >> (i & 0x1F)) & 1) != 0) && (i < 62) && (smartBuff[i] != smartBuffOld[i]))) {
-                watchSmart[i] = 1000;
-            }
-            else if (watchSmart[i] > 0) {
-                watchSmart[i]--;
-            }
-        }
-        for (int i = 0; i < watchSmart.length; i++) {
-            if (watchSmart[i] != 0) {
-                index = -1;
-                for (int j = 0; j < watchSmartList.length; j++) {
-                    if ((watchSmartList[j] >> 16) == i) {
-                        index = j;
-                        break;
-                    }
-                }
-                if (index < 0) {
-                    int k = 0xFFFF;
-                    for (int j = watchSmartList.length - 1; j >= 0; j--) {
-                        if ((watchSmartList[j] & 0xFFFF) <= k) {
-                            k = watchSmartList[j] & 0xFFFF;
-                            index = j;
+                    if (index < 0) {
+                        int k = 0xFFFF;
+                        for (int j = watchRegList.length - 1; j >= 0; j--) {
+                            if ((watchRegList[j] & 0xFFFF) <= k) {
+                                k = watchRegList[j] & 0xFFFF;
+                                index = j;
+                            }
                         }
                     }
-                }
-                watchSmartList[index] = i << 16 + watchSmart[i];
-            }
-        }
-        // Draw smart pin watch
-        if ((watchSmartList[0] & 0xFFFF) == 0) {
-            drawText(gc, SMARTl, SMARTt, cName, "RQPIN \u0394");
-        }
-        else {
-            for (int i = 0; i < watchSmartList.length; i++) {
-                if ((watchSmartList[i] & 0xFFFF) > 0) {
-                    x = SMARTl + (i * 14);
-                    int k = watchSmartList[i] >> 16;
-                    drawText(gc, x, SMARTt, cData2, String.format("P%d", k));
-                    drawText(gc, x + 4, SMARTt, cData, String.format("%08X", smartBuff[k] >> 16));
+                    watchRegList[index] = (i << 16) + watchReg[i];
                 }
             }
-        }
-
-        //  ----------------
-        //   Update buttons
-        //  ----------------
-
-        // Highlight MAIN button?
-        if ((breakValue & 0x00000001) != 0) {
-            drawBox(gc, bMAINl, bMAINt, bMAINw, bMAINh, cModeButton);
-            drawText(gc, bMAINl, bMAINt, cModeText, "MAIN");
-        }
-        if ((breakValue & 0x00000002) != 0) {
-            drawBox(gc, bINT1l, bINT1t, bINT1w, bINT1h, cModeButton);
-            drawText(gc, bINT1l, bINT1t, cModeText, "INT1");
-        }
-        if ((breakValue & 0x00000004) != 0) {
-            drawBox(gc, bINT2l, bINT2t, bINT2w, bINT2h, cModeButton);
-            drawText(gc, bINT2l, bINT2t, cModeText, "INT2");
-        }
-        if ((breakValue & 0x00000008) != 0) {
-            drawBox(gc, bINT3l, bINT3t, bINT3w, bINT3h, cModeButton);
-            drawText(gc, bINT3l, bINT3t, cModeText, "INT3");
-        }
-        if ((breakValue & 0x00000010) != 0) {
-            drawBox(gc, bDEBUGl, bDEBUGt, bDEBUGw, bDEBUGh, cModeButton);
-            drawText(gc, bDEBUGl, bDEBUGt, cModeText, "DEBUG");
-        }
-        if ((breakValue & 0x00000020) != 0) {
-            drawBox(gc, bINT1El, bINT1Et, bINT1Ew, bINT1Eh, cModeButton);
-            drawText(gc, bINT1El, bINT1Et, cModeText, "\u2794INT1");
-        }
-        if ((breakValue & 0x00000040) != 0) {
-            drawBox(gc, bINT2El, bINT2Et, bINT2Ew, bINT2Eh, cModeButton);
-            drawText(gc, bINT2El, bINT2Et, cModeText, "\u2794INT2");
-        }
-        if ((breakValue & 0x00000080) != 0) {
-            drawBox(gc, bINT3El, bINT3Et, bINT3Ew, bINT3Eh, cModeButton);
-            drawText(gc, bINT3El, bINT3Et, cModeText, "\u2794INT3");
-        }
-        if ((breakValue & 0x00000100) != 0) {
-            drawBox(gc, bINITl, bINITt, bINITw, bINITh, cModeButton);
-            drawText(gc, bINITl, bINITt, cModeTextDim, "INIT");
-        }
-        if ((breakValue & 0x00000200) != 0) {
-            drawBox(gc, bEVENTl, bEVENTt, bEVENTw, bEVENTh, cModeButton);
-            drawText(gc, bEVENTl, bEVENTt, cModeText, EventName[breakEvent] + "\u2191");
-        }
-        else {
-            drawText(gc, bEVENTl, bEVENTt, cModeTextDim, EventName[breakEvent]);
-        }
-        if ((breakValue & 0x00000400) != 0) {
-            drawBox(gc, bADDRl, bADDRt, bADDRw, bADDRh, cModeButton);
-            drawText(gc, bADDRl, bADDRt, cModeText, String.format("%05X", breakAddr & 0xFFFFF));
-        }
-        else {
-            drawText(gc, bADDRl, bADDRt, cModeTextDim, String.format("%05X", breakAddr & 0xFFFFF));
-        }
-        if ((breakValue & 0x000006FF) == 0) {
-            drawBox(gc, bBREAKl, bBREAKt, bBREAKw, bBREAKh, cModeButtonDim);
-            drawText(gc, bBREAKl, bBREAKt, cModeTextDim, "BREAK");
-        }
-
-        drawBox(gc, bGOl, bGOt, bGOw, bGOh, cCmdButton);
-        drawText(gc, bGOl + 3 + q2, bGOt, cCmdText, repeatMode ? "STOP" : " GO");
-
-        //  ----------------------------
-        //   Update reg/lut/hub bitmaps
-        //  ----------------------------
-
-        if (regMapUpdate) {
-            GC gcMap = new GC(regMapImage);
-            try {
-                int y = 0;
-                for (int h = 0; h < 512; h++, y++) {
-                    int i = cogImageOld[h] = cogImage[h];
-                    for (x = 31, r = 1; x >= 0; x--, r <<= 1) {
-                        gcMap.setForeground((i & r) != 0 ? cHighSame : cBackground);
-                        gcMap.drawPoint(x, y);
+            // Draw reg watch
+            if ((watchRegList[0] & 0xFFFF) == 0) {
+                drawText(imageGc, WATCHl + 3, WATCHt, cName, "REG \u0394");
+            }
+            else {
+                for (int i = 0; i < REG_WATCH_LIST_SIZE; i++) {
+                    if ((watchRegList[i] & 0xFFFF) > 0) {
+                        int y = WATCHt + (i << 1);
+                        drawText(imageGc, WATCHl, y, cData2, String.format("%03X", watchRegList[i] >> 16));
+                        drawText(imageGc, WATCHl + 4, y, cData, String.format("%08X", cogImage[watchRegList[i] >> 16]));
                     }
                 }
-            } finally {
-                gcMap.dispose();
             }
-            regMapUpdate = false;
-        }
 
-        if (lutMapUpdate) {
-            GC gcMap = new GC(lutMapImage);
-            try {
-                int y = 0;
-                for (int h = 512; h < 1024; h++, y++) {
-                    int i = cogImageOld[h] = cogImage[h];
-                    for (x = 31, r = 1; x >= 0; x--, r <<= 1) {
-                        gcMap.setForeground((i & r) != 0 ? cHighSame : cBackground);
-                        gcMap.drawPoint(x, y);
+            // Update smart pin watch
+            for (int i = 0; i < watchSmart.length; i++) {
+                if (watchSmart[i] == 0xFFFF) {
+                    watchSmart[i] = 0;
+                }
+                else if (watchSmartAll || ((((cogImage[0x1FA + i >> 5] >> (i & 0x1F)) & 1) != 0) && (i < 62) && (smartBuff[i] != smartBuffOld[i]))) {
+                    watchSmart[i] = 1000;
+                }
+                else if (watchSmart[i] > 0) {
+                    watchSmart[i]--;
+                }
+            }
+            for (int i = 0; i < watchSmart.length; i++) {
+                if (watchSmart[i] != 0) {
+                    index = -1;
+                    for (int j = 0; j < watchSmartList.length; j++) {
+                        if ((watchSmartList[j] >> 16) == i) {
+                            index = j;
+                            break;
+                        }
+                    }
+                    if (index < 0) {
+                        int k = 0xFFFF;
+                        for (int j = watchSmartList.length - 1; j >= 0; j--) {
+                            if ((watchSmartList[j] & 0xFFFF) <= k) {
+                                k = watchSmartList[j] & 0xFFFF;
+                                index = j;
+                            }
+                        }
+                    }
+                    watchSmartList[index] = i << 16 + watchSmart[i];
+                }
+            }
+            // Draw smart pin watch
+            if ((watchSmartList[0] & 0xFFFF) == 0) {
+                drawText(imageGc, SMARTl, SMARTt, cName, "RQPIN \u0394");
+            }
+            else {
+                for (int i = 0; i < watchSmartList.length; i++) {
+                    if ((watchSmartList[i] & 0xFFFF) > 0) {
+                        x = SMARTl + (i * 14);
+                        int k = watchSmartList[i] >> 16;
+                        drawText(imageGc, x, SMARTt, cData2, String.format("P%d", k));
+                        drawText(imageGc, x + 4, SMARTt, cData, String.format("%08X", smartBuff[k] >> 16));
                     }
                 }
-            } finally {
-                gcMap.dispose();
             }
-            lutMapUpdate = false;
+
+            //  ----------------
+            //   Update buttons
+            //  ----------------
+
+            // Highlight MAIN button?
+            if ((breakValue & 0x00000001) != 0) {
+                drawBox(imageGc, bMAINl, bMAINt, bMAINw, bMAINh, cModeButton);
+                drawText(imageGc, bMAINl, bMAINt, cModeText, "MAIN");
+            }
+            if ((breakValue & 0x00000002) != 0) {
+                drawBox(imageGc, bINT1l, bINT1t, bINT1w, bINT1h, cModeButton);
+                drawText(imageGc, bINT1l, bINT1t, cModeText, "INT1");
+            }
+            if ((breakValue & 0x00000004) != 0) {
+                drawBox(imageGc, bINT2l, bINT2t, bINT2w, bINT2h, cModeButton);
+                drawText(imageGc, bINT2l, bINT2t, cModeText, "INT2");
+            }
+            if ((breakValue & 0x00000008) != 0) {
+                drawBox(imageGc, bINT3l, bINT3t, bINT3w, bINT3h, cModeButton);
+                drawText(imageGc, bINT3l, bINT3t, cModeText, "INT3");
+            }
+            if ((breakValue & 0x00000010) != 0) {
+                drawBox(imageGc, bDEBUGl, bDEBUGt, bDEBUGw, bDEBUGh, cModeButton);
+                drawText(imageGc, bDEBUGl, bDEBUGt, cModeText, "DEBUG");
+            }
+            if ((breakValue & 0x00000020) != 0) {
+                drawBox(imageGc, bINT1El, bINT1Et, bINT1Ew, bINT1Eh, cModeButton);
+                drawText(imageGc, bINT1El, bINT1Et, cModeText, "\u2794INT1");
+            }
+            if ((breakValue & 0x00000040) != 0) {
+                drawBox(imageGc, bINT2El, bINT2Et, bINT2Ew, bINT2Eh, cModeButton);
+                drawText(imageGc, bINT2El, bINT2Et, cModeText, "\u2794INT2");
+            }
+            if ((breakValue & 0x00000080) != 0) {
+                drawBox(imageGc, bINT3El, bINT3Et, bINT3Ew, bINT3Eh, cModeButton);
+                drawText(imageGc, bINT3El, bINT3Et, cModeText, "\u2794INT3");
+            }
+            if ((breakValue & 0x00000100) != 0) {
+                drawBox(imageGc, bINITl, bINITt, bINITw, bINITh, cModeButton);
+                drawText(imageGc, bINITl, bINITt, cModeTextDim, "INIT");
+            }
+            if ((breakValue & 0x00000200) != 0) {
+                drawBox(imageGc, bEVENTl, bEVENTt, bEVENTw, bEVENTh, cModeButton);
+                drawText(imageGc, bEVENTl, bEVENTt, cModeText, EventName[breakEvent] + "\u2191");
+            }
+            else {
+                drawText(imageGc, bEVENTl, bEVENTt, cModeTextDim, EventName[breakEvent]);
+            }
+            if ((breakValue & 0x00000400) != 0) {
+                drawBox(imageGc, bADDRl, bADDRt, bADDRw, bADDRh, cModeButton);
+                drawText(imageGc, bADDRl, bADDRt, cModeText, String.format("%05X", breakAddr & 0xFFFFF));
+            }
+            else {
+                drawText(imageGc, bADDRl, bADDRt, cModeTextDim, String.format("%05X", breakAddr & 0xFFFFF));
+            }
+            if ((breakValue & 0x000006FF) == 0) {
+                drawBox(imageGc, bBREAKl, bBREAKt, bBREAKw, bBREAKh, cModeButtonDim);
+                drawText(imageGc, bBREAKl, bBREAKt, cModeTextDim, "BREAK");
+            }
+
+            drawBox(imageGc, bGOl, bGOt, bGOw, bGOh, cCmdButton);
+            drawText(imageGc, bGOl + 3 + q2, bGOt, cCmdText, repeatMode ? "STOP" : " GO");
+
+            //  ----------------------------
+            //   Update reg/lut/hub bitmaps
+            //  ----------------------------
+
+            if (regMapUpdate) {
+                GC gcMap = new GC(regMapImage);
+                try {
+                    int y = 0;
+                    for (int h = 0; h < 512; h++, y++) {
+                        int i = cogImageOld[h] = cogImage[h];
+                        for (x = 31, r = 1; x >= 0; x--, r <<= 1) {
+                            gcMap.setForeground((i & r) != 0 ? cHighSame : cBackground);
+                            gcMap.drawPoint(x, y);
+                        }
+                    }
+                } finally {
+                    gcMap.dispose();
+                }
+                regMapUpdate = false;
+            }
+            imageGc.drawImage(regMapImage, 0, 0, 32, 512, RegMap.x, RegMap.y, RegMap.width, RegMap.height);
+
+            if (lutMapUpdate) {
+                GC gcMap = new GC(lutMapImage);
+                try {
+                    int y = 0;
+                    for (int h = 512; h < 1024; h++, y++) {
+                        int i = cogImageOld[h] = cogImage[h];
+                        for (x = 31, r = 1; x >= 0; x--, r <<= 1) {
+                            gcMap.setForeground((i & r) != 0 ? cHighSame : cBackground);
+                            gcMap.drawPoint(x, y);
+                        }
+                    }
+                } finally {
+                    gcMap.dispose();
+                }
+                lutMapUpdate = false;
+            }
+            imageGc.drawImage(lutMapImage, 0, 0, 32, 512, LutMap.x, LutMap.y, LutMap.width, LutMap.height);
+
+            if (hubMapUpdate) {
+                GC gcMap = new GC(hubMapImage);
+                try {
+                    int h = 0;
+                    for (int y = 0; y < HUB_MAP_HEIGHT; y++) {
+                        for (x = 0; x < HUB_MAP_WIDTH; x++) {
+                            int i = hubSubBlockOld[h] = hubSubBlock[h];
+                            gcMap.setForeground(i != 0x0142 ? cHighSame : cBackground);
+                            gcMap.drawPoint(x, y);
+                            h++;
+                        }
+                    }
+                } finally {
+                    gcMap.dispose();
+                }
+                hubMapUpdate = false;
+            }
+            imageGc.drawImage(hubMapImage, 0, 0, HUB_MAP_WIDTH, HUB_MAP_HEIGHT, HubMap.x, HubMap.y, HubMap.width, HubMap.height);
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

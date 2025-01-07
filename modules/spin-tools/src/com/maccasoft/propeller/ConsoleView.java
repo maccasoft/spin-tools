@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -193,6 +193,7 @@ public class ConsoleView {
         @Override
         public void run() {
             int count, b = 0;
+            int cogn = -1;
             ByteArrayOutputStream os = new ByteArrayOutputStream();
 
             while (consoleThreadRun) {
@@ -200,11 +201,23 @@ public class ConsoleView {
                     count = receiveBuffer.available();
                     while (count > 0) {
                         b = receiveBuffer.read();
-                        if (b < 8) {
-                            break;
-                        }
-                        os.write(b);
                         count--;
+
+                        if (b < 8) {
+                            cogn = b;
+                            if ((b = receiveBuffer.read()) == 0) {
+                                count--;
+                                if ((b = receiveBuffer.read()) == 0) {
+                                    count--;
+                                    if ((b = receiveBuffer.read()) == 0) {
+                                        count--;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        os.write(b);
                     }
                     if (os.size() > 0) {
                         byte[] rx = os.toByteArray();
@@ -223,16 +236,28 @@ public class ConsoleView {
                         });
                         os.reset();
                     }
-                    if (count > 0) {
-                        int cogn = b | (receiveBuffer.read() << 8) | (receiveBuffer.read() << 16) | (receiveBuffer.read() << 24);
-                        display.syncExec(new Runnable() {
+                    if (cogn != -1) {
+                        DebugPAsmWindow window = debugger[cogn];
+                        if (window != null) {
+                            window.breakPoint(receiveBuffer, transmitBuffer);
+                            window.update();
+                        }
+                        else {
+                            DebugPAsmWindow newWindow = new DebugPAsmWindow(cogn);
+                            display.syncExec(new Runnable() {
 
-                            @Override
-                            public void run() {
-                                handleDebuggerData(cogn);
-                            }
+                                @Override
+                                public void run() {
+                                    newWindow.create();
+                                    newWindow.open();
+                                    newWindow.breakPoint(receiveBuffer, transmitBuffer);
+                                    newWindow.update();
+                                }
 
-                        });
+                            });
+                            debugger[cogn] = newWindow;
+                        }
+                        cogn = -1;
                     }
                     Thread.sleep(1);
                 } catch (InterruptedException e) {
@@ -340,7 +365,7 @@ public class ConsoleView {
         display = parent.getDisplay();
         preferences = Preferences.getInstance();
 
-        receiveBuffer = new CircularBuffer(8192);
+        receiveBuffer = new CircularBuffer(1 * 1024 * 1024);
         transmitBuffer = new CircularBuffer(4096);
         pendingText = new StringBuilder();
 
@@ -431,8 +456,9 @@ public class ConsoleView {
         });
 
         consoleThreadRun = true;
-        new Thread(receiveThread).start();
-        new Thread(transmitThread).start();
+
+        new Thread(receiveThread, "ConsoleView Receiver").start();
+        new Thread(transmitThread, "ConsoleView Transmitter").start();
     }
 
     public void setEnabled(boolean enabled) {
@@ -447,16 +473,7 @@ public class ConsoleView {
     public void setVisible(boolean visible) {
         if (enabled && console.getVisible() && !visible && preferences.getConsoleResetDeviceOnClose()) {
             if (serialPort != null && serialPort.isOpened()) {
-                try {
-                    serialPort.setDTR(true);
-                    serialPort.setRTS(true);
-                    Thread.sleep(25);
-                    serialPort.setDTR(false);
-                    serialPort.setRTS(false);
-                    Thread.sleep(25);
-                } catch (Exception e) {
-                    // Do nothing
-                }
+                serialPort.hwreset();
             }
         }
         console.setVisible(visible);
@@ -621,21 +638,6 @@ public class ConsoleView {
                 }
             }
         }
-    }
-
-    void handleDebuggerData(int cogn) {
-        DebugPAsmWindow window = debugger[cogn];
-        if (window == null) {
-            window = new DebugPAsmWindow(cogn);
-            window.create();
-            window.open();
-            debugger[cogn] = window;
-        }
-        window.breakPoint(receiveBuffer, transmitBuffer);
-        if (window.isDisposed()) {
-            return;
-        }
-        window.update();
     }
 
 }
