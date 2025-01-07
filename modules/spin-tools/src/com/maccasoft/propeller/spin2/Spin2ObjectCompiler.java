@@ -466,46 +466,48 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
         String unusedMethodReturn = "method \"%s\" return variable \"%s\" is not used";
 
         Iterator<Spin2Method> methodsIterator = methods.iterator();
-        if (methodsIterator.hasNext() && keepFirst) {
-            Spin2Method method = methodsIterator.next();
-            if (compiler.warnUnusedMethodVariables()) {
-                for (Variable var : method.getParameters()) {
-                    if (!var.isReferenced() && var.getData() != null) {
-                        logMessage(new CompilerException(CompilerException.WARNING, String.format(unusedMethodParameter, method.getLabel(), var.getName()), var.getData()));
+        if (methodsIterator.hasNext()) {
+            if (keepFirst) {
+                Spin2Method method = methodsIterator.next();
+                if (compiler.warnUnusedMethodVariables()) {
+                    for (Variable var : method.getParameters()) {
+                        if (!var.isReferenced() && var.getData() != null) {
+                            logMessage(new CompilerException(CompilerException.WARNING, String.format(unusedMethodParameter, method.getLabel(), var.getName()), var.getData()));
+                        }
                     }
-                }
-                for (Variable var : method.getLocalVariables()) {
-                    if (!var.isReferenced() && var.getData() != null) {
-                        logMessage(new CompilerException(CompilerException.WARNING, String.format(unusedMethodVariable, method.getLabel(), var.getName()), var.getData()));
+                    for (Variable var : method.getLocalVariables()) {
+                        if (!var.isReferenced() && var.getData() != null) {
+                            logMessage(new CompilerException(CompilerException.WARNING, String.format(unusedMethodVariable, method.getLabel(), var.getName()), var.getData()));
+                        }
                     }
-                }
-                for (Variable var : method.getReturns()) {
-                    if (!var.isReferenced() && var.getData() != null) {
-                        logMessage(new CompilerException(CompilerException.WARNING, String.format(unusedMethodReturn, method.getLabel(), var.getName()), var.getData()));
+                    for (Variable var : method.getReturns()) {
+                        if (!var.isReferenced() && var.getData() != null) {
+                            logMessage(new CompilerException(CompilerException.WARNING, String.format(unusedMethodReturn, method.getLabel(), var.getName()), var.getData()));
+                        }
                     }
                 }
             }
-        }
-        while (methodsIterator.hasNext()) {
-            Spin2Method method = methodsIterator.next();
-            if (!method.isReferenced() && compiler.warnUnusedMethods()) {
-                MethodNode node = (MethodNode) method.getData();
-                logMessage(new CompilerException(CompilerException.WARNING, String.format(unusedMethod, method.getLabel()), node.getName()));
-            }
-            if (compiler.warnUnusedMethodVariables()) {
-                for (Variable var : method.getParameters()) {
-                    if (!var.isReferenced() && var.getData() != null) {
-                        logMessage(new CompilerException(CompilerException.WARNING, String.format(unusedMethodParameter, method.getLabel(), var.getName()), var.getData()));
-                    }
+            while (methodsIterator.hasNext()) {
+                Spin2Method method = methodsIterator.next();
+                if (!method.isReferenced() && compiler.warnUnusedMethods()) {
+                    MethodNode node = (MethodNode) method.getData();
+                    logMessage(new CompilerException(CompilerException.WARNING, String.format(unusedMethod, method.getLabel()), node.getName()));
                 }
-                for (Variable var : method.getLocalVariables()) {
-                    if (!var.isReferenced() && var.getData() != null) {
-                        logMessage(new CompilerException(CompilerException.WARNING, String.format(unusedMethodVariable, method.getLabel(), var.getName()), var.getData()));
+                if (compiler.warnUnusedMethodVariables()) {
+                    for (Variable var : method.getParameters()) {
+                        if (!var.isReferenced() && var.getData() != null) {
+                            logMessage(new CompilerException(CompilerException.WARNING, String.format(unusedMethodParameter, method.getLabel(), var.getName()), var.getData()));
+                        }
                     }
-                }
-                for (Variable var : method.getReturns()) {
-                    if (!var.isReferenced() && var.getData() != null) {
-                        logMessage(new CompilerException(CompilerException.WARNING, String.format(unusedMethodReturn, method.getLabel(), var.getName()), var.getData()));
+                    for (Variable var : method.getLocalVariables()) {
+                        if (!var.isReferenced() && var.getData() != null) {
+                            logMessage(new CompilerException(CompilerException.WARNING, String.format(unusedMethodVariable, method.getLabel(), var.getName()), var.getData()));
+                        }
+                    }
+                    for (Variable var : method.getReturns()) {
+                        if (!var.isReferenced() && var.getData() != null) {
+                            logMessage(new CompilerException(CompilerException.WARNING, String.format(unusedMethodReturn, method.getLabel(), var.getName()), var.getData()));
+                        }
                     }
                 }
             }
@@ -517,16 +519,18 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
         do {
             loop = false;
             Iterator<Spin2Method> methodsIterator = methods.iterator();
-            if (keepFirst) {
-                methodsIterator.next();
-            }
-            while (methodsIterator.hasNext()) {
-                Spin2Method method = methodsIterator.next();
-                if (!method.isReferenced()) {
-                    method.remove();
-                    methodsIterator.remove();
-                    compiler.debugStatements.removeAll(method.debugNodes);
-                    loop = true;
+            if (methodsIterator.hasNext()) {
+                if (keepFirst) {
+                    methodsIterator.next();
+                }
+                while (methodsIterator.hasNext()) {
+                    Spin2Method method = methodsIterator.next();
+                    if (!method.isReferenced()) {
+                        method.remove();
+                        methodsIterator.remove();
+                        compiler.debugStatements.removeAll(method.debugNodes);
+                        loop = true;
+                    }
                 }
             }
         } while (loop);

@@ -1619,6 +1619,29 @@ class Spin2CompilerTest {
     }
 
     @Test
+    void testPAsmOnlyRemoveUnusedMethods() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin2", ""
+            + "DAT             org     $000\n"
+            + "\n"
+            + "start\n"
+            + "                cogid   a\n"
+            + "                cogstop a\n"
+            + "\n"
+            + "a               res     1\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000   000                                    org     $000\n"
+            + "00000 00000   000                start               \n"
+            + "00000 00000   000 01 04 60 FD                        cogid   a\n"
+            + "00004 00004   001 03 04 60 FD                        cogstop a\n"
+            + "00008 00008   002                a                   res     1\n"
+            + "", compile("main.spin2", sources, true, false));
+    }
+
+    @Test
     void testUnusedMethodsCauseErrors() throws Exception {
         Map<String, String> sources = new HashMap<String, String>();
         sources.put("main.spin2", ""
