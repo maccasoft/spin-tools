@@ -492,8 +492,8 @@ public class Spin2ExpressionBuilder {
 
     protected Expression compilePseudoFunction(Token token) {
 
-        switch (token.getText()) {
-            case "defined": {
+        switch (token.getText().toUpperCase()) {
+            case "DEFINED": {
                 token = next();
                 if (token == null || !"(".equals(token.getText())) {
                     throw new CompilerException("expecting (", token == null ? tokens.get(tokens.size() - 1) : token);
@@ -509,9 +509,6 @@ public class Spin2ExpressionBuilder {
                 }
                 return expression;
             }
-        }
-
-        switch (token.getText().toUpperCase()) {
             case "FLOAT": {
                 next();
                 Expression expression = new com.maccasoft.propeller.expressions.Float(parseLevel(parseAtom(), 0));

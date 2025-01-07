@@ -100,7 +100,6 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
         scope.addDefinition("__P1__", new NumberLiteral(1));
         scope.addDefinition("__P2__", new NumberLiteral(0));
         scope.addDefinition("__SPINTOOLS__", new NumberLiteral(1));
-        scope.addDefinition("__debug__", new NumberLiteral(0));
     }
 
     @Override
@@ -1751,7 +1750,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
             throw new CompilerException("expecting directive", new Token(token.getStream(), token.stop));
         }
         token = iter.next();
-        if ("define".equals(token.getText())) {
+        if ("define".equalsIgnoreCase(token.getText())) {
             if (!skip) {
                 if (!iter.hasNext()) {
                     throw new CompilerException("expecting identifier", new Token(token.getStream(), token.stop));
@@ -1772,17 +1771,17 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                 scope.addDefinition(identifier, list);
             }
         }
-        else if ("error".equals(token.getText())) {
+        else if ("error".equalsIgnoreCase(token.getText())) {
             if (!skip) {
                 throw new CompilerException(CompilerException.ERROR, node.getText(), node);
             }
         }
-        else if ("warning".equals(token.getText())) {
+        else if ("warning".equalsIgnoreCase(token.getText())) {
             if (!skip) {
                 throw new CompilerException(CompilerException.WARNING, node.getText(), node);
             }
         }
-        else if ("ifdef".equals(token.getText())) {
+        else if ("ifdef".equalsIgnoreCase(token.getText())) {
             if (!skip) {
                 if (!iter.hasNext()) {
                     throw new CompilerException("expecting identifier", new Token(token.getStream(), token.stop));
@@ -1798,7 +1797,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                 conditionStack.push(new Condition(node, false, skip));
             }
         }
-        else if ("elifdef".equals(token.getText()) || "elseifdef".equals(token.getText())) {
+        else if ("elifdef".equalsIgnoreCase(token.getText()) || "elseifdef".equalsIgnoreCase(token.getText())) {
             if (conditionStack.isEmpty()) {
                 throw new CompilerException("misplaced #" + token.getText(), token);
             }
@@ -1821,7 +1820,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                 }
             }
         }
-        else if ("ifndef".equals(token.getText())) {
+        else if ("ifndef".equalsIgnoreCase(token.getText())) {
             if (!skip) {
                 if (!iter.hasNext()) {
                     throw new CompilerException("expecting identifier", new Token(token.getStream(), token.stop));
@@ -1837,7 +1836,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                 conditionStack.push(new Condition(node, false, skip));
             }
         }
-        else if ("elifndef".equals(token.getText()) || "elseifndef".equals(token.getText())) {
+        else if ("elifndef".equalsIgnoreCase(token.getText()) || "elseifndef".equalsIgnoreCase(token.getText())) {
             if (conditionStack.isEmpty()) {
                 throw new CompilerException("misplaced #" + token.getText(), token);
             }
@@ -1860,7 +1859,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                 }
             }
         }
-        else if ("else".equals(token.getText())) {
+        else if ("else".equalsIgnoreCase(token.getText())) {
             if (conditionStack.isEmpty()) {
                 throw new CompilerException("misplaced #" + token.getText(), token);
             }
@@ -1872,12 +1871,12 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                 }
             }
         }
-        else if ("if".equals(token.getText())) {
+        else if ("if".equalsIgnoreCase(token.getText())) {
             if (!skip) {
                 Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(scope);
                 while (iter.hasNext()) {
                     token = iter.next();
-                    if ("defined".equals(token.getText())) {
+                    if ("defined".equalsIgnoreCase(token.getText())) {
                         builder.addToken(token);
                         if (iter.hasNext()) {
                             builder.addTokenLiteral(iter.next());
@@ -1904,7 +1903,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                 conditionStack.push(new Condition(node, false, skip));
             }
         }
-        else if ("elif".equals(token.getText()) || "elseif".equals(token.getText())) {
+        else if ("elif".equalsIgnoreCase(token.getText()) || "elseif".equalsIgnoreCase(token.getText())) {
             if (conditionStack.isEmpty()) {
                 throw new CompilerException("misplaced #" + token.getText(), token);
             }
@@ -1949,7 +1948,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                 conditionStack.push(new Condition(node, false, skip));
             }
         }
-        else if ("endif".equals(token.getText())) {
+        else if ("endif".equalsIgnoreCase(token.getText())) {
             if (conditionStack.isEmpty()) {
                 throw new CompilerException("misplaced #" + token.getText(), token);
             }

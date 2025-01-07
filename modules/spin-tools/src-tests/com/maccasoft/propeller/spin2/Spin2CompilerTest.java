@@ -2430,7 +2430,7 @@ class Spin2CompilerTest {
     void testPreprocessorDefineInheritance() throws Exception {
         Map<String, String> sources = new HashMap<String, String>();
         sources.put("main.spin2", ""
-            + "#define VALUE 2\n"
+            + "#DEFINE VALUE 2\n"
             + "\n"
             + "OBJ\n"
             + "\n"
