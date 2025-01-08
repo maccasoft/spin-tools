@@ -5,41 +5,38 @@
     <formats>
         <format>tar.gz</format>
     </formats>
-    <baseDirectory>Spin Tools IDE.app</baseDirectory>
+    <baseDirectory>Spin Tools IDE.app/Contents</baseDirectory>
     <dependencySets>
         <dependencySet>
-            <outputDirectory>Contents/Java</outputDirectory>
+            <outputDirectory>MacOS/lib</outputDirectory>
         </dependencySet>
     </dependencySets>
     <files>
-        <file>
-            <source>macosx/spinc</source>
-            <fileMode>755</fileMode>
-            <outputDirectory>Contents/MacOS</outputDirectory>
-        </file>
-        <file>
-            <source>LICENSE</source>
-            <outputDirectory>Contents/Java</outputDirectory>
-        </file>
+        <file><source>macosx/spinide</source><fileMode>755</fileMode><outputDirectory>MacOS</outputDirectory></file>
+        <file><source>macosx/spinc</source><fileMode>755</fileMode><outputDirectory>MacOS</outputDirectory></file>
+        <file><source>macosx/Info.plist</source></file>
+        <file><source>macosx/PkgInfo</source></file>
+        <file><source>macosx/spinide.icns</source><outputDirectory>Resources</outputDirectory></file>
+        <file><source>LICENSE</source><outputDirectory>Resources</outputDirectory></file>
     </files>
     <fileSets>
-        <fileSet>
-            <directory>target/Spin Tools IDE.app</directory>
-            <outputDirectory></outputDirectory>
-        </fileSet>
         <fileSet>
             <directory>examples</directory>
             <excludes>
                 <exclude>**/*.binary</exclude>
             </excludes>
-            <outputDirectory>Contents/Java/examples</outputDirectory>
+            <outputDirectory>MacOS/examples</outputDirectory>
         </fileSet>
         <fileSet>
             <directory>library</directory>
             <excludes>
                 <exclude>**/*.binary</exclude>
             </excludes>
-            <outputDirectory>Contents/Java/library</outputDirectory>
+            <outputDirectory>MacOS/library</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>modules/runtime/target/maven-jlink/default</directory>
+            <outputDirectory>MacOS/java</outputDirectory>
         </fileSet>
     </fileSets>
 </assembly>

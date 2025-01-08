@@ -176,19 +176,17 @@
                                             name="Spin Tools IDE"
                                             displayname="Spin Tools IDE"
                                             executableName="spinide"
-                                            identifier="com.maccasoft.propeller"
-                                            icon="macosx/app.icns"
+                                            identifier="com.maccasoft.propeller.SpinTools"
+                                            icon="macosx/spinide.icns"
                                             shortversion="${project.version}"
                                             signature="????"
-                                            copyright="Marco Maccaferri"
+                                            copyright="2025 Marco Maccaferri"
                                             applicationCategory="public.app-category.developer-tools"
                                             mainclassname="com.maccasoft.propeller.SpinTools"
                                             jvmrequired="17">
                                             <arch name="x86_64"/>
                                             <option value="-DAPP_DIR=$APP_ROOT/Contents/Java" />
                                             <option value="-Dcom.apple.macos.useScreenMenuBar=true" />
-                                            <option value="-Xms128M" />
-                                            <option value="-Xmx512M" />
                                             <option value="-XstartOnFirstThread" />
                                             <jlink runtime="${runtime}">
                                                 <jmod name="java.base"/>
@@ -206,6 +204,7 @@
                         <configuration>
                             <descriptors>
                                 <descriptor>macosx/descriptor.xml</descriptor>
+                                <descriptor>macosx/descriptor_appbundler.xml</descriptor>
                             </descriptors>
                         </configuration>
                     </plugin>
@@ -256,19 +255,17 @@
                                             name="Spin Tools IDE"
                                             displayname="Spin Tools IDE"
                                             executableName="spinide"
-                                            identifier="com.maccasoft.propeller"
-                                            icon="macosx/app.icns"
+                                            identifier="com.maccasoft.propeller.SpinTools"
+                                            icon="macosx/spinide.icns"
                                             shortversion="${project.version}"
                                             signature="????"
-                                            copyright="Marco Maccaferri"
+                                            copyright="2025 Marco Maccaferri"
                                             applicationCategory="public.app-category.developer-tools"
                                             mainclassname="com.maccasoft.propeller.SpinTools"
                                             jvmrequired="17">
                                             <arch name="arm64"/>
                                             <option value="-DAPP_DIR=$APP_ROOT/Contents/Java" />
                                             <option value="-Dcom.apple.macos.useScreenMenuBar=true" />
-                                            <option value="-Xms128M" />
-                                            <option value="-Xmx512M" />
                                             <option value="-XstartOnFirstThread" />
                                             <jlink runtime="${runtime}">
                                                 <jmod name="java.base"/>
@@ -286,6 +283,7 @@
                         <configuration>
                             <descriptors>
                                 <descriptor>macosx/descriptor.xml</descriptor>
+                                <descriptor>macosx/descriptor_appbundler.xml</descriptor>
                             </descriptors>
                         </configuration>
                     </plugin>

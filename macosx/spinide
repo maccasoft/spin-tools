@@ -2,11 +2,7 @@
 
 APPDIR="$(dirname -- "$(readlink -f -- "${0}")" )"
 
-if [ -x "$APPDIR"/lib ]; then
-    LIBDIR="$APPDIR"/lib
-else
-    LIBDIR="$(dirname -- "$APPDIR")/Java"
-fi
+LIBDIR="$APPDIR"/lib
 for LIB in \
     "$LIBDIR"/*.jar \
     ;
@@ -21,6 +17,6 @@ if [ -x "$APPDIR/java/bin/java" ]; then
 fi
 
 # Collect options to java in an array, to properly handle whitespace in options
-JAVA_OPTIONS=("-DAPP_DIR=$APPDIR")
+JAVA_OPTIONS=("-DAPP_DIR=$APPDIR" "-Dcom.apple.macos.useScreenMenuBar=true" "-XstartOnFirstThread")
 
-"$JAVA" "${JAVA_OPTIONS[@]}" com.maccasoft.propeller.SpinCompiler "$@"
+"$JAVA" "${JAVA_OPTIONS[@]}" com.maccasoft.propeller.SpinTools "$@"
