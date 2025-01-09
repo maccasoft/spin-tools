@@ -1433,8 +1433,8 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
     Spin2Method compileMethod(MethodNode node) {
         Context localScope = new Context(scope);
 
-        localScope.addBuiltinSymbol("RECV", new Register(0x1D2));
-        localScope.addBuiltinSymbol("SEND", new Register(0x1D3));
+        localScope.addBuiltinSymbol("RECV", new Register(0x1D1));
+        localScope.addBuiltinSymbol("SEND", new Register(0x1D2));
 
         TokenIterator iter = node.tokenIterator();
         Token token = iter.next(); // First token is PUB/PRI already checked
