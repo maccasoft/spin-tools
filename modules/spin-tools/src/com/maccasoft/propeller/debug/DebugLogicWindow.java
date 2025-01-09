@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -175,8 +175,6 @@ public class DebugLogicWindow extends DebugWindow {
                     case "SAMPLES":
                         if (iter.hasNextNumber()) {
                             sampleData = new int[iter.nextNumber()];
-                            triggerOffset = sampleData.length / 2;
-                            holdOff = sampleData.length;
                         }
                         break;
 
@@ -233,7 +231,7 @@ public class DebugLogicWindow extends DebugWindow {
                         packMode = packedMode(cmd, iter);
                         break;
 
-                    case "HIDEXY":
+                    case "HIDEXY": // TODO
                         break;
                 }
             }
@@ -246,6 +244,13 @@ public class DebugLogicWindow extends DebugWindow {
         }
         fontData.setStyle(SWT.NONE);
         font = new Font(display, fontData.getName(), textSize != 0 ? textSize : fontData.getHeight(), SWT.NONE);
+
+        triggerMask = 0;
+        triggerMatch = 1;
+        triggerOffset = sampleData.length / 2;
+
+        holdOff = sampleData.length;
+        holdOffCount = holdOff;
 
         GC gc = new GC(canvas);
         try {
@@ -461,11 +466,9 @@ public class DebugLogicWindow extends DebugWindow {
 
                     case "CLEAR":
                         triggered = false;
-                        imageGc.setForeground(backColor);
-                        imageGc.setBackground(backColor);
-                        imageGc.fillRectangle(0, 0, imageSize.x, imageSize.y);
-                        imageGc.drawRectangle(0, 0, imageSize.x, imageSize.y);
-                        canvas.redraw();
+                        sampleDataIndex = 0;
+                        sampleCount = 0;
+                        update();
                         break;
 
                     case "SAVE":

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -87,7 +87,7 @@ public class DebugBitmapWindow extends DebugWindow {
                     dotsize(iter);
                     break;
 
-                case "SPARSE":
+                case "SPARSE": // TODO
                     if (iter.hasNext()) {
                         iter.next();
                     }
@@ -146,7 +146,7 @@ public class DebugBitmapWindow extends DebugWindow {
                     autoUpdate = false;
                     break;
 
-                case "HIDEXY":
+                case "HIDEXY": // TODO
                     break;
             }
         }
@@ -289,7 +289,7 @@ public class DebugBitmapWindow extends DebugWindow {
                         traceMode &= 7;
                         break;
 
-                    case "SCROLL":
+                    case "SCROLL": // TODO
                         if (iter.hasNextNumber()) {
                             iter.nextNumber();
                             if (iter.hasNextNumber()) {
@@ -506,6 +506,7 @@ public class DebugBitmapWindow extends DebugWindow {
                         update();
                     }
                 }
+                imageData.setPixel(x, y, color);
                 if (--x < 0) {
                     if (autoUpdate && rate == -1) {
                         update();
