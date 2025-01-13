@@ -358,94 +358,61 @@ public class SpinCompiler {
                 if (compiler instanceof Spin1Compiler) {
                     flags = cmd.hasOption("f") ? Propeller1Loader.DOWNLOAD_RUN_EEPROM : Propeller1Loader.DOWNLOAD_RUN_BINARY;
 
-                    if (serialPort instanceof NetworkComPort) {
-                        loader = new Propeller1NetworkLoader((NetworkComPort) serialPort, true) {
+                    loader = new Propeller1Loader(serialPort, true) {
 
-                            @Override
-                            protected void bufferUpload(int type, byte[] binaryImage, String text) throws ComPortException {
-                                println(String.format("Propeller %d on port %s", 1, comPort.getPortName()));
-                                print("Loading " + text + " to ");
-                                switch (type) {
-                                    case Propeller1Loader.DOWNLOAD_EEPROM:
-                                    case Propeller1Loader.DOWNLOAD_RUN_EEPROM:
-                                        print("EEPROM via ");
-                                        // fall through
-                                    case Propeller1Loader.DOWNLOAD_RUN_BINARY:
-                                        println("hub memory");
-                                        break;
-                                }
-                                super.bufferUpload(type, binaryImage, text);
+                        @Override
+                        protected void bufferUpload(int type, byte[] binaryImage, String text) throws ComPortException {
+                            println(String.format("Propeller %d on port %s", 1, comPort.getPortName()));
+                            print("Loading " + text + " to ");
+                            switch (type) {
+                                case DOWNLOAD_EEPROM:
+                                case DOWNLOAD_RUN_EEPROM:
+                                    print("EEPROM via ");
+                                    // fall through
+                                case DOWNLOAD_RUN_BINARY:
+                                    println("hub memory");
+                                    break;
                             }
+                            super.bufferUpload(type, binaryImage, text);
+                        }
 
-                            @Override
-                            protected void notifyProgress(int sent, int total) {
-                                if (sent == total) {
-                                    print(String.format("                               \r"));
-                                    println(String.format("%d bytes sent", total));
-                                }
-                                else {
-                                    print(String.format("%d bytes remaining             \r", total - sent));
-                                }
+                        @Override
+                        protected void notifyProgress(int sent, int total) {
+                            if (sent == total) {
+                                print(String.format("                               \r"));
+                                println(String.format("%d bytes sent", total));
                             }
-
-                        };
-                    }
-                    else {
-                        loader = new Propeller1Loader((SerialComPort) serialPort, true) {
-
-                            @Override
-                            protected void bufferUpload(int type, byte[] binaryImage, String text) throws ComPortException {
-                                println(String.format("Propeller %d on port %s", 1, comPort.getPortName()));
-                                print("Loading " + text + " to ");
-                                switch (type) {
-                                    case DOWNLOAD_EEPROM:
-                                    case DOWNLOAD_RUN_EEPROM:
-                                        print("EEPROM via ");
-                                        // fall through
-                                    case DOWNLOAD_RUN_BINARY:
-                                        println("hub memory");
-                                        break;
-                                }
-                                super.bufferUpload(type, binaryImage, text);
+                            else {
+                                print(String.format("%d bytes remaining             \r", total - sent));
                             }
+                        }
 
-                            @Override
-                            protected void notifyProgress(int sent, int total) {
-                                if (sent == total) {
-                                    print(String.format("                               \r"));
-                                    println(String.format("%d bytes sent", total));
-                                }
-                                else {
-                                    print(String.format("%d bytes remaining             \r", total - sent));
-                                }
-                            }
+                        @Override
+                        protected void verifyRam() throws ComPortException {
+                            print("Verifying RAM ... ");
+                            super.verifyRam();
+                            println("OK");
+                        }
 
-                            @Override
-                            protected void verifyRam() throws ComPortException {
-                                print("Verifying RAM ... ");
-                                super.verifyRam();
-                                println("OK");
-                            }
+                        @Override
+                        protected void eepromWrite() throws ComPortException {
+                            print("Programming EEPROM ... ");
+                            super.eepromWrite();
+                            println("OK");
+                        }
 
-                            @Override
-                            protected void eepromWrite() throws ComPortException {
-                                print("Programming EEPROM ... ");
-                                super.eepromWrite();
-                                println("OK");
-                            }
+                        @Override
+                        protected void eepromVerify() throws ComPortException {
+                            print("Verifying EEPROM ... ");
+                            super.eepromVerify();
+                            println("OK");
+                        }
 
-                            @Override
-                            protected void eepromVerify() throws ComPortException {
-                                print("Verifying EEPROM ... ");
-                                super.eepromVerify();
-                                println("OK");
-                            }
-
-                        };
-                    }
+                    };
                 }
                 else if (compiler instanceof Spin2Compiler) {
                     flags = cmd.hasOption("f") ? Propeller2Loader.DOWNLOAD_RUN_FLASH : Propeller2Loader.DOWNLOAD_RUN_RAM;
+
                     loader = new Propeller2Loader(serialPort, true) {
 
                         @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -3286,21 +3286,16 @@ public class SpinTools {
                     monitor.beginTask(text, IProgressMonitor.UNKNOWN);
 
                     if (obj instanceof Spin1Object) {
+                        loader = new Propeller1Loader(comPort, serialPortShared) {
+
+                            @Override
+                            protected void bufferUpload(int type, byte[] binaryImage, String text) throws ComPortException {
+                                monitor.setTaskName("Upload to " + comPort.getDescription());
+                                super.bufferUpload(type, binaryImage, text);
+                            }
+
+                        };
                         flags = writeToFlash ? Propeller1Loader.DOWNLOAD_RUN_EEPROM : Propeller1Loader.DOWNLOAD_RUN_BINARY;
-                        if (comPort instanceof NetworkComPort) {
-                            loader = new Propeller1NetworkLoader((NetworkComPort) comPort, serialPortShared);
-                        }
-                        else {
-                            loader = new Propeller1Loader((SerialComPort) comPort, serialPortShared) {
-
-                                @Override
-                                protected void bufferUpload(int type, byte[] binaryImage, String text) throws ComPortException {
-                                    monitor.setTaskName("Upload to " + comPort.getDescription());
-                                    super.bufferUpload(type, binaryImage, text);
-                                }
-
-                            };
-                        }
                     }
                     else {
                         loader = new Propeller2Loader(comPort, serialPortShared) {
