@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -382,6 +382,14 @@ public class Spin2Parser extends Parser {
             parent.addToken(token);
             switch (state) {
                 case 1:
+                    if ("^".equals(token.getText())) {
+                        Token nextToken = stream.peekNext();
+                        if (token.isAdjacent(nextToken) && (nextToken.type == 0 || nextToken.type == Token.KEYWORD)) {
+                            token = token.merge(stream.nextToken());
+                            token.type = 0;
+                            parent.getTokens().set(parent.getTokenCount() - 1, token);
+                        }
+                    }
                     if (Spin2Model.isType(token.getText())) {
                         node = new VariableNode(parent);
                         node.addToken(token);
@@ -608,6 +616,14 @@ public class Spin2Parser extends Parser {
                     }
                     if (param == null) {
                         param = new MethodNode.ParameterNode(node);
+                        if ("^".equals(token.getText())) {
+                            Token nextToken = stream.peekNext();
+                            if (token.isAdjacent(nextToken) && (nextToken.type == 0 || nextToken.type == Token.KEYWORD)) {
+                                token = token.merge(stream.nextToken());
+                                token.type = 0;
+                                node.getTokens().set(node.getTokenCount() - 1, token);
+                            }
+                        }
                         if (token.type == 0 || token.type == Token.KEYWORD) {
                             Token next = stream.peekNext();
                             if (next != null && (next.type == 0 || next.type == Token.KEYWORD)) {
@@ -654,6 +670,14 @@ public class Spin2Parser extends Parser {
 
                 case 7:
                     ret = new MethodNode.ReturnNode(node);
+                    if ("^".equals(token.getText())) {
+                        Token nextToken = stream.peekNext();
+                        if (token.isAdjacent(nextToken) && (nextToken.type == 0 || nextToken.type == Token.KEYWORD)) {
+                            token = token.merge(stream.nextToken());
+                            token.type = 0;
+                            node.getTokens().set(node.getTokenCount() - 1, token);
+                        }
+                    }
                     if (token.type == 0 || token.type == Token.KEYWORD) {
                         Token next = stream.peekNext();
                         if (next != null && (next.type == 0 || next.type == Token.KEYWORD)) {
@@ -681,6 +705,14 @@ public class Spin2Parser extends Parser {
 
                 case 9:
                     local = new MethodNode.LocalVariableNode(node);
+                    if ("^".equals(token.getText())) {
+                        Token nextToken = stream.peekNext();
+                        if (token.isAdjacent(nextToken) && (nextToken.type == 0 || nextToken.type == Token.KEYWORD)) {
+                            token = token.merge(stream.nextToken());
+                            token.type = 0;
+                            node.getTokens().set(node.getTokenCount() - 1, token);
+                        }
+                    }
                     if (Spin2Model.isType(token.getText())) {
                         local.type = token;
                         local.addToken(token);
@@ -1099,13 +1131,6 @@ public class Spin2Parser extends Parser {
             if (token.isAdjacent(nextToken) && nextToken.type == Token.STRING) {
                 token = token.merge(stream.nextToken());
                 token.type = Token.STRING;
-            }
-        }
-        else if ("^".equals(token.getText())) {
-            Token nextToken = stream.peekNext();
-            if (token.isAdjacent(nextToken) && (nextToken.type == 0 || nextToken.type != Token.KEYWORD)) {
-                token = token.merge(stream.nextToken());
-                token.type = 0;
             }
         }
         return token;

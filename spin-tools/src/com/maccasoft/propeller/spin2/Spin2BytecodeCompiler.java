@@ -395,22 +395,8 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     }
 
                     if (postEffectNode != null) {
+                        compilePostEffect(context, postEffectNode, source, push);
                         node.setReturnLongs(push ? 1 : 0);
-                        if ("++".equalsIgnoreCase(postEffectNode.getText())) {
-                            source.add(new Bytecode(context, push ? Spin2Bytecode.bc_var_postinc_push : Spin2Bytecode.bc_var_inc, "POST_INC" + (push ? " (push)" : "")));
-                        }
-                        else if ("--".equalsIgnoreCase(postEffectNode.getText())) {
-                            source.add(new Bytecode(context, push ? Spin2Bytecode.bc_var_postdec_push : Spin2Bytecode.bc_var_dec, "POST_DEC" + (push ? " (push)" : "")));
-                        }
-                        else if ("!!".equalsIgnoreCase(postEffectNode.getText())) {
-                            source.add(new Bytecode(context, push ? Spin2Bytecode.bc_var_lognot_push : Spin2Bytecode.bc_var_lognot, "POST_LOGICAL_NOT" + (push ? " (push)" : "")));
-                        }
-                        else if ("!".equalsIgnoreCase(postEffectNode.getText())) {
-                            source.add(new Bytecode(context, push ? Spin2Bytecode.bc_var_bitnot_push : Spin2Bytecode.bc_var_bitnot, "POST_NOT" + (push ? " (push)" : "")));
-                        }
-                        else {
-                            throw new CompilerException("unhandled post effect " + postEffectNode.getText(), postEffectNode.getToken());
-                        }
                     }
                     else {
                         if (!push) {
