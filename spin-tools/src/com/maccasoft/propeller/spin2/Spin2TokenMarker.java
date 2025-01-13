@@ -1173,6 +1173,12 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                                     leftId = symbols.get(left.substring(1));
                                 }
                             }
+                            if (leftId == null) {
+                                TokenId specialId = keywords.get(left);
+                                if (specialId == TokenId.CONSTANT) {
+                                    leftId = specialId;
+                                }
+                            }
                             if (leftId != null) {
                                 tokens.add(new TokenMarker(token.start, token.start + dot, leftId));
                             }
