@@ -912,6 +912,18 @@ class Spin2TreeBuilderTest {
             + "", parse(text));
     }
 
+    @Test
+    void test() {
+        String text = "a <> b \\a";
+        Assertions.assertEquals(""
+            + "[<>]\n"
+            + " +-- [a]\n"
+            + " +-- [\\]\n"
+            + "      +-- [b]\n"
+            + "      +-- [a]\n"
+            + "", parse(text));
+    }
+
     String parse(String text) {
         Spin2TreeBuilder builder = new Spin2TreeBuilder(new Context());
 

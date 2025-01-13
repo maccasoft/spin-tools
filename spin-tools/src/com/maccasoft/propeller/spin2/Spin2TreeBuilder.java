@@ -97,7 +97,7 @@ public class Spin2TreeBuilder {
 
         precedence.put(",", 2);
 
-        precedence.put("\\", 1);
+        precedence.put("\\", 17);
     }
 
     static Set<String> assignements = new HashSet<>();
