@@ -1353,8 +1353,6 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     if (node.getChildCount() != 1) {
                         throw new RuntimeException("expression syntax error");
                     }
-                    node.setReturnLongs(node.getChild(0).getReturnLongs());
-
                     Expression expression = context.getLocalSymbol(node.getChild(0).getText());
                     if (expression instanceof Method) {
                         source.addAll(compileMethodCall(context, method, expression, node.getChild(0), push, true));
@@ -1372,8 +1370,9 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         source.addAll(compileBytecodeExpression(context, method, node.getChild(0), push));
                     }
                     else {
-                        throw new CompilerException("symbol " + node.getChild(0).getText() + " is not a method", node.getChild(0).getToken());
+                        logMessage(new CompilerException("symbol " + node.getChild(0).getText() + " is not a method", node.getChild(0).getToken()));
                     }
+                    node.setReturnLongs(push ? 1 : 0);
                 }
                 return source;
             }
