@@ -32,7 +32,7 @@
             <outputDirectory>library</outputDirectory>
         </fileSet>
         <fileSet>
-            <directory>modules/runtime/target/maven-jlink/default</directory>
+            <directory>runtime/target/maven-jlink/default</directory>
             <outputDirectory>java</outputDirectory>
         </fileSet>
     </fileSets>

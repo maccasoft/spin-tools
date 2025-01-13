@@ -16,8 +16,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <modules>
-        <module>modules/runtime</module>
-        <module>modules/spin-tools</module>
+        <module>runtime</module>
+        <module>spin-tools</module>
     </modules>
     <dependencies>
         <dependency>
@@ -140,9 +140,6 @@
             <properties>
                 <project.arch>x86_64</project.arch>
             </properties>
-            <modules>
-                <module>modules/spin-tools</module>
-            </modules>
             <build>
                 <plugins>
                     <plugin>
@@ -219,9 +216,6 @@
             <properties>
                 <project.arch>aarch64</project.arch>
             </properties>
-            <modules>
-                <module>modules/spin-tools</module>
-            </modules>
             <build>
                 <plugins>
                     <plugin>
