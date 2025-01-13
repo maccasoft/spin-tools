@@ -288,19 +288,39 @@ public class Spin2TreeBuilder {
             token = next();
 
             Spin2StatementNode right = left == null ? parseLevel(parseAtom(), p.intValue() + 1, comma) : parseAtom();
-            for (;;) {
+
+            if (",".equals(token.getText())) {
                 Token nextToken = peek();
-                if (nextToken == null) {
-                    break;
+                if (nextToken != null) {
+                    Integer nextP = precedence.get(peek().getText().toUpperCase());
+                    if (nextP != null && nextP.intValue() > p.intValue()) {
+                        right = parseLevel(right, p.intValue() + 1, comma);
+                    }
                 }
-                Integer nextP = precedence.get(nextToken.getText().toUpperCase());
-                if (nextP == null || nextP.intValue() <= p.intValue()) {
-                    break;
+            }
+            else {
+                for (;;) {
+                    Token nextToken = peek();
+                    if (nextToken == null) {
+                        break;
+                    }
+                    if (assignements.contains(nextToken.getText().toUpperCase())) {
+                        Spin2StatementNode node = new Spin2StatementNode(next());
+                        node.addChild(right);
+                        node.addChild(parseLevel(parseAtom(), 0, false));
+                        right = node;
+                    }
+                    else {
+                        Integer nextP = precedence.get(nextToken.getText().toUpperCase());
+                        if (nextP == null || nextP.intValue() <= p.intValue()) {
+                            break;
+                        }
+                        if (",".equals(token.getText()) && !comma) {
+                            break;
+                        }
+                        right = parseLevel(right, p.intValue() + 1, comma);
+                    }
                 }
-                if (",".equals(token.getText()) && !comma) {
-                    break;
-                }
-                right = parseLevel(right, p.intValue() + 1, comma);
             }
             if (right == null) {
                 throw new CompilerException("expecting expression", tokens.get(index < tokens.size() ? index : index - 1));

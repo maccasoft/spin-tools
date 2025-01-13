@@ -882,6 +882,36 @@ class Spin2TreeBuilderTest {
             + "", parse(text));
     }
 
+    @Test
+    public void testAssignmentsPriority() throws Exception {
+        String text = "a + b := c * d";
+        Assertions.assertEquals(""
+            + "[+]\n"
+            + " +-- [a]\n"
+            + " +-- [:=]\n"
+            + "      +-- [b]\n"
+            + "      +-- [*]\n"
+            + "           +-- [c]\n"
+            + "           +-- [d]\n"
+            + "", parse(text));
+    }
+
+    @Test
+    void testListRange() {
+        String text = "1, 2, 3..4, 5";
+        Assertions.assertEquals(""
+            + "[,]\n"
+            + " +-- [,]\n"
+            + "      +-- [,]\n"
+            + "           +-- [1]\n"
+            + "           +-- [2]\n"
+            + "      +-- [..]\n"
+            + "           +-- [3]\n"
+            + "           +-- [4]\n"
+            + " +-- [5]\n"
+            + "", parse(text));
+    }
+
     String parse(String text) {
         Spin2TreeBuilder builder = new Spin2TreeBuilder(new Context());
 

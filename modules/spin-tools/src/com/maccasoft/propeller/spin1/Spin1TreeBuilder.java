@@ -213,11 +213,19 @@ public class Spin1TreeBuilder {
                 if (nextToken == null) {
                     break;
                 }
-                Integer nextP = precedence.get(nextToken.getText().toUpperCase());
-                if (nextP == null || nextP.intValue() <= p.intValue()) {
-                    break;
+                if (assignements.contains(nextToken.getText().toUpperCase())) {
+                    Spin1StatementNode node = new Spin1StatementNode(next());
+                    node.addChild(right);
+                    node.addChild(parseLevel(parseAtom(), 0));
+                    right = node;
                 }
-                right = parseLevel(right, p.intValue() + 1);
+                else {
+                    Integer nextP = precedence.get(nextToken.getText().toUpperCase());
+                    if (nextP == null || nextP.intValue() <= p.intValue()) {
+                        break;
+                    }
+                    right = parseLevel(right, p.intValue() + 1);
+                }
             }
             if (right == null) {
                 throw new CompilerException("expecting expression", tokens.get(index < tokens.size() ? index : index - 1));
