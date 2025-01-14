@@ -462,18 +462,25 @@ public class Spin2TreeBuilder {
                 if ("(".equals(peek().getText())) {
                     Token first = next();
                     node.setMethod(true);
-                    if (peek() != null && ")".equals(peek().getText())) {
+                    Token next = peek();
+                    if (next != null && ")".equals(next.getText())) {
                         token = next();
-                        if (peek() != null && peek().column == token.column + 1) {
-                            if (":".equals(peek().getText())) {
-                                next();
-                                if ((token = next()) == null) {
-                                    throw new CompilerException("expecting return count", token);
+                        next = peek();
+                        if (next != null && next.column == token.column + 1) {
+                            if (":".equals(next.getText())) {
+                                int currentIndex = index;
+                                next = next();
+                                Token value = next();
+                                if (value != null && value.column == next.column + 1) {
+                                    try {
+                                        node.setReturnLongs(Integer.valueOf(value.getText()).intValue());
+                                    } catch (Exception e) {
+                                        throw new CompilerException("expected integer constant", token);
+                                    }
+                                    token = value;
                                 }
-                                try {
-                                    node.setReturnLongs(Integer.valueOf(token.getText()).intValue());
-                                } catch (Exception e) {
-                                    throw new CompilerException("expecting constant", token);
+                                else {
+                                    index = currentIndex;
                                 }
                             }
                         }
@@ -496,16 +503,22 @@ public class Spin2TreeBuilder {
                         }
                         if (")".equals(token.getText())) {
                             next();
-                            if (peek() != null && peek().column == token.column + 1) {
-                                if (":".equals(peek().getText())) {
-                                    next();
-                                    if ((token = next()) == null) {
-                                        throw new CompilerException("expecting return count", token);
+                            next = peek();
+                            if (next != null && next.column == token.column + 1) {
+                                if (":".equals(next.getText())) {
+                                    int currentIndex = index;
+                                    next = next();
+                                    Token value = next();
+                                    if (value != null && value.column == next.column + 1) {
+                                        try {
+                                            node.setReturnLongs(Integer.valueOf(value.getText()).intValue());
+                                        } catch (Exception e) {
+                                            throw new CompilerException("expected integer constant", token);
+                                        }
+                                        token = value;
                                     }
-                                    try {
-                                        node.setReturnLongs(Integer.valueOf(token.getText()).intValue());
-                                    } catch (Exception e) {
-                                        throw new CompilerException("expecting constant", token);
+                                    else {
+                                        index = currentIndex;
                                     }
                                 }
                             }

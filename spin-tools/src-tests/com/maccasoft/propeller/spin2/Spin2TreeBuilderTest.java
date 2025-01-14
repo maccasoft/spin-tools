@@ -913,7 +913,7 @@ class Spin2TreeBuilderTest {
     }
 
     @Test
-    void test() {
+    void testSwap() {
         String text = "a <> b \\a";
         Assertions.assertEquals(""
             + "[<>]\n"
@@ -921,6 +921,22 @@ class Spin2TreeBuilderTest {
             + " +-- [\\]\n"
             + "      +-- [b]\n"
             + "      +-- [a]\n"
+            + "", parse(text));
+    }
+
+    @Test
+    void testMethodPointersTernary() {
+        String text = "a := a <> 0 ? ptrb():1 : ptrc():1";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + " +-- [?]\n"
+            + "      +-- [<>]\n"
+            + "           +-- [a]\n"
+            + "           +-- [0]\n"
+            + "      +-- [:]\n"
+            + "           +-- [ptrb]\n"
+            + "           +-- [ptrc]\n"
             + "", parse(text));
     }
 

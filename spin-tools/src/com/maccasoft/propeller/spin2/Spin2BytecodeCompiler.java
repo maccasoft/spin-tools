@@ -761,7 +761,16 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     Spin2Bytecode end = new Spin2Bytecode(context);
                     source.add(new Address(context, new ContextLiteral(end.getContext())));
 
-                    source.addAll(compileBytecodeExpression(context, method, argsNode.getChild(0), true));
+                    Spin2StatementNode valueNode = argsNode.getChild(0);
+                    source.addAll(compileBytecodeExpression(context, method, valueNode, true));
+                    if (valueNode.getReturnLongs() > 1) {
+                        if (valueNode.isMethod()) {
+                            logMessage(new CompilerException("method return multiple values", valueNode.getToken()));
+                        }
+                        else {
+                            logMessage(new CompilerException("expression return multiple values", valueNode.getTokens()));
+                        }
+                    }
 
                     source.add(new Constant(context, new NumberLiteral(node.getText().toUpperCase().endsWith("Z") ? 0 : 1)));
 
@@ -3005,6 +3014,9 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     (byte) Spin2Bytecode.bc_call_ptr,
                 }, "CALL_PTR"));
 
+                if ((push && !trap) && node.getReturnLongs() == 0) {
+                    logMessage(new CompilerException("method doesn't return any value", node.getToken()));
+                }
                 node.setReturnLongs(push ? node.getReturnLongs() : 0);
             }
         }
