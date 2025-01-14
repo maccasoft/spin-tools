@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -232,7 +232,7 @@ public class NetworkComPort extends ComPort {
     }
 
     @Override
-    public void hwreset() {
+    public void hwreset(int delay) { /* delay ignored */
         try {
             StringBuilder sb = new StringBuilder(128);
             sb.append("http://");

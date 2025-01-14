@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -17,8 +17,10 @@ import java.util.List;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.viewers.ArrayContentProvider;
+import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.OpenEvent;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.StyledCellLabelProvider;
@@ -51,7 +53,6 @@ import com.maccasoft.propeller.internal.ColorRegistry;
 
 import jssc.SerialPort;
 import jssc.SerialPortList;
-import jssc.SerialPortTimeoutException;
 
 public class DevicesDialog extends Dialog {
 
@@ -262,6 +263,16 @@ public class DevicesDialog extends Dialog {
             }
 
         });
+        viewer.addOpenListener(new IOpenListener() {
+
+            @Override
+            public void open(OpenEvent event) {
+                if (!viewer.getStructuredSelection().isEmpty()) {
+                    buttonPressed(IDialogConstants.OK_ID);
+                }
+            }
+
+        });
 
         return content;
     }
@@ -385,36 +396,20 @@ public class DevicesDialog extends Dialog {
 
                 int rc = 0;
                 try {
-                    comPort.setParams(
-                        115200,
-                        SerialPort.DATABITS_8,
-                        SerialPort.STOPBITS_1,
-                        SerialPort.PARITY_NONE);
-                    comPort.hwreset();
-                    rc = hwfind1(comPort);
+                    rc = hwfind2(comPort);
                 } catch (Exception e) {
                     // Do nothing
                 }
                 if (rc == 0) {
                     try {
-                        comPort.setParams(
-                            2000000,
-                            SerialPort.DATABITS_8,
-                            SerialPort.STOPBITS_1,
-                            SerialPort.PARITY_NONE);
-                        comPort.hwreset();
-                        rc = hwfind2(comPort);
+                        rc = hwfind1(comPort);
                     } catch (Exception e) {
                         // Do nothing
                     }
                 }
 
                 if (closePort) {
-                    try {
-                        comPort.closePort();
-                    } catch (Exception e) {
-                        // Do nothing
-                    }
+                    comPort.closePort();
                 }
 
                 return getVersionText(rc);
@@ -446,17 +441,12 @@ public class DevicesDialog extends Dialog {
                 }
             }
 
-            private void msleep(int msec) {
-                try {
-                    Thread.sleep(msec);
-                } catch (Exception e) {
-
-                }
-            }
-
             protected int hwfind1(SerialComPort comPort) throws ComPortException {
                 int n, ii, jj;
                 byte[] buffer;
+
+                comPort.setParams(115200, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
+                comPort.hwreset(ComPort.P1_RESET_DELAY);
 
                 // send the calibration pulse
                 comPort.writeInt(0xF9);
@@ -466,12 +456,8 @@ public class DevicesDialog extends Dialog {
                 buffer = new byte[250];
                 for (n = 0; n < 250; n++) {
                     buffer[n] = (byte) (iterate() | 0xFE);
-                    //System.out.print(String.format("%02X ", ii));
                 }
                 comPort.writeBytes(buffer);
-                //System.out.println();
-
-                skipIncomingBytes(comPort);
 
                 // Send 258 0xF9 for LFSR and Version ID
                 // These bytes clock the LSFR bits and ID from propeller back to us.
@@ -487,15 +473,12 @@ public class DevicesDialog extends Dialog {
                 if ((ii = getBit(comPort, 110)) == -1) {
                     throw new ComPortException("Timeout waiting for first response bit");
                 }
-                //System.out.print(String.format("%02X ", ii));
 
                 // wait for response so we know we have a Propeller
                 for (n = 1; n < 250; n++) {
                     jj = iterate();
-                    //System.out.println(String.format("%03d: %d:%d", n, ii, jj));
 
                     if (ii != jj) {
-                        //System.err.println("Lost HW contact");
                         for (n = 0; n < 300; n++) {
                             if (comPort.readByteWithTimeout(50) == -1) {
                                 break;
@@ -507,7 +490,6 @@ public class DevicesDialog extends Dialog {
                     int to = 0;
                     do {
                         if ((ii = getBit(comPort, 110)) != -1) {
-                            //System.out.print(String.format("%02X ", ii));
                             break;
                         }
                     } while (to++ < 100);
@@ -516,17 +498,14 @@ public class DevicesDialog extends Dialog {
                         throw new ComPortException("Timeout waiting for response bit");
                     }
                 }
-                //System.out.println();
 
                 int rc = 0;
                 for (n = 0; n < 8; n++) {
                     rc >>= 1;
                     if ((ii = getBit(comPort, 110)) != -1) {
-                        //System.out.print(String.format("%02X ", ii));
                         rc += (ii != 0) ? 0x80 : 0;
                     }
                 }
-                //System.out.println();
 
                 return rc;
             }
@@ -550,34 +529,34 @@ public class DevicesDialog extends Dialog {
             protected int hwfind2(SerialComPort comPort) throws ComPortException {
                 String result = new String();
 
-                comPort.writeString("> \r");
-                msleep(1);
+                comPort.setParams(2000000, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
+                comPort.hwreset(ComPort.P2_RESET_DELAY);
 
+                comPort.writeString("> \r");
                 comPort.writeString("> Prop_Chk 0 0 0 0\r");
 
-                try {
-                    while (result.length() < 11 || !result.endsWith("\r\n")) {
-                        byte[] b = comPort.readBytes(1, 20);
-                        if (b != null && b.length == 1) {
-                            result += new String(b);
-                        }
-                    }
-                    if (result.startsWith("\r\nProp_Ver ")) {
-                        return result.charAt(11);
-                    }
-                } catch (SerialPortTimeoutException e) {
-                    return 0;
+                readStringWithTimeout(comPort, 50);
+
+                result = readStringWithTimeout(comPort, 50);
+                if (result.startsWith("Prop_Ver ")) {
+                    return result.charAt(9);
                 }
 
                 return 0;
             }
 
-            protected int skipIncomingBytes(SerialComPort comPort) throws ComPortException {
-                int n = 0;
-                while (comPort.readByteWithTimeout(50) != -1) {
-                    n++;
-                }
-                return n;
+            private String readStringWithTimeout(ComPort comPort, int timeout) throws ComPortException {
+                int b;
+                StringBuilder sb = new StringBuilder();
+
+                do {
+                    b = comPort.readByteWithTimeout(timeout);
+                    if (b > 0) {
+                        sb.append((char) b);
+                    }
+                } while (b > 0 && b != '\n');
+
+                return sb.toString();
             }
 
         });

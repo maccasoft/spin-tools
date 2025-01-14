@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -18,7 +18,6 @@ import java.io.PrintStream;
 
 import org.apache.commons.lang3.BitField;
 
-import com.maccasoft.propeller.Propeller2Loader;
 import com.maccasoft.propeller.SpinObject;
 
 import net.jpountz.lz4.LZ4Compressor;
@@ -62,7 +61,7 @@ public class Spin2Object extends SpinObject {
 
     public int debugTxPin = 62;
     public int debugRxPin = 63;
-    public int debugBaud = Propeller2Loader.UPLOAD_BAUD_RATE;
+    public int debugBaud = 2000000;
     public Integer debugCogs;
     public Integer debugBrkCond;
     public Integer debugDelay;

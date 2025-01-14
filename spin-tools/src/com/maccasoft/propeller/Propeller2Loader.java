@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -32,13 +32,10 @@ import jssc.SerialPortList;
 
 public class Propeller2Loader extends PropellerLoader {
 
-    public static final int UPLOAD_BAUD_RATE = 2000000;
-
     public static final int DOWNLOAD_RUN_RAM = 0;
     public static final int DOWNLOAD_RUN_FLASH = 1;
 
     ComPort comPort;
-    int portBaudRate = UPLOAD_BAUD_RATE;
 
     boolean shared;
 
@@ -55,14 +52,6 @@ public class Propeller2Loader extends PropellerLoader {
 
     public String getPortName() {
         return comPort.getPortName();
-    }
-
-    public int getPortBaudRate() {
-        return portBaudRate;
-    }
-
-    public void setPortBaudRate(int portBaudRate) {
-        this.portBaudRate = portBaudRate;
     }
 
     @Override
@@ -82,12 +71,20 @@ public class Propeller2Loader extends PropellerLoader {
                     comPort.openPort();
                 }
                 comPort.setParams(
-                    portBaudRate,
+                    comPort instanceof NetworkComPort ? 921600 : 2000000,
                     SerialPort.DATABITS_8,
                     SerialPort.STOPBITS_1,
                     SerialPort.PARITY_NONE);
 
                 version = hwfind(comPort);
+                if (comPort instanceof NetworkComPort) {
+                    if (version == 0) {
+                        version = hwfind(comPort);
+                    }
+                    if (version == 0) {
+                        version = hwfind(comPort);
+                    }
+                }
             }
 
             if (version == 0) {
@@ -103,6 +100,7 @@ public class Propeller2Loader extends PropellerLoader {
                 }
                 comPort = discoveredComPort;
             }
+
             bufferUpload(type, binaryImage, "binary image");
         } finally {
             if (comPort != null && !shared) {
@@ -167,7 +165,7 @@ public class Propeller2Loader extends PropellerLoader {
                 serialComPort.openPort();
                 try {
                     serialComPort.setParams(
-                        portBaudRate,
+                        2000000,
                         SerialPort.DATABITS_8,
                         SerialPort.STOPBITS_1,
                         SerialPort.PARITY_NONE);
@@ -190,35 +188,35 @@ public class Propeller2Loader extends PropellerLoader {
     }
 
     protected int hwfind(ComPort comPort) throws ComPortException {
-        int attempts = (comPort instanceof NetworkComPort) ? 3 : 1;
+        int timeout = (comPort instanceof NetworkComPort) ? 200 : 50;
 
-        do {
-            comPort.hwreset();
-            comPort.writeString("> \r");
-            comPort.writeString("> Prop_Chk 0 0 0 0\r");
+        comPort.hwreset(ComPort.P2_RESET_DELAY);
 
-            try {
-                String result = new String();
-                while (result.length() < 11 || !result.endsWith("\r\n")) {
-                    int b = comPort.readByteWithTimeout(200);
-                    if (b == -1) {
-                        break;
-                    }
-                    result += (char) b;
-                }
-                if (result.startsWith("\r\nProp_Ver ")) {
-                    return 2;
-                }
+        comPort.writeString("> \r");
+        comPort.writeString("> Prop_Chk 0 0 0 0\r");
 
-                Thread.sleep(100);
-            } catch (ComPortException e) {
-                return 0;
-            } catch (Exception e) {
-                // Do nothing
-            }
-        } while (--attempts > 0);
+        readStringWithTimeout(comPort, timeout);
+
+        String result = readStringWithTimeout(comPort, timeout);
+        if (result.startsWith("Prop_Ver ")) {
+            return result.charAt(9);
+        }
 
         return 0;
+    }
+
+    private String readStringWithTimeout(ComPort comPort, int timeout) throws ComPortException {
+        int b;
+        StringBuilder sb = new StringBuilder();
+
+        do {
+            b = comPort.readByteWithTimeout(timeout);
+            if (b > 0) {
+                sb.append((char) b);
+            }
+        } while (b > 0 && b != '\n');
+
+        return sb.toString();
     }
 
     protected void bufferUpload(int type, byte[] binaryImage, String text) throws ComPortException {

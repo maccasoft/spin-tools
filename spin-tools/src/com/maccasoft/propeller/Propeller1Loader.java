@@ -120,7 +120,7 @@ public class Propeller1Loader extends PropellerLoader {
                         SerialPort.PARITY_NONE);
                 }
 
-                hwreset();
+                comPort.hwreset(ComPort.P1_RESET_DELAY);
                 version = hwfind();
 
                 if (version == 0) {
@@ -209,7 +209,7 @@ public class Propeller1Loader extends PropellerLoader {
 
                 try {
                     comPort = serialComPort;
-                    hwreset();
+                    comPort.hwreset(ComPort.P1_RESET_DELAY);
                     if (hwfind() != 0) {
                         comPort = currentComPort;
                         return serialComPort;
@@ -227,26 +227,6 @@ public class Propeller1Loader extends PropellerLoader {
         comPort = currentComPort;
 
         return null;
-    }
-
-    void hwreset() {
-        try {
-            comPort.setDTR(true);
-            comPort.setRTS(true);
-            msleep(25);
-            comPort.setDTR(false);
-            comPort.setRTS(false);
-            msleep(25);
-            skipIncomingBytes();
-            if (comPort instanceof SerialComPort) {
-                ((SerialComPort) comPort).getSerialPort().purgePort(SerialPort.PURGE_TXABORT |
-                    SerialPort.PURGE_RXABORT |
-                    SerialPort.PURGE_TXCLEAR |
-                    SerialPort.PURGE_RXCLEAR);
-            }
-        } catch (Exception e) {
-            // Do nothing
-        }
     }
 
     private void msleep(int msec) {
@@ -269,12 +249,8 @@ public class Propeller1Loader extends PropellerLoader {
         buffer = new byte[250];
         for (n = 0; n < 250; n++) {
             buffer[n] = (byte) (iterate() | 0xFE);
-            //System.out.print(String.format("%02X ", ii));
         }
         comPort.writeBytes(buffer);
-        //System.out.println();
-
-        skipIncomingBytes();
 
         // Send 258 0xF9 for LFSR and Version ID
         // These bytes clock the LSFR bits and ID from propeller back to us.
@@ -290,15 +266,12 @@ public class Propeller1Loader extends PropellerLoader {
         if ((ii = getBit(110)) == -1) {
             return 0;
         }
-        //System.out.print(String.format("%02X ", ii));
 
         // wait for response so we know we have a Propeller
         for (n = 1; n < 250; n++) {
             jj = iterate();
-            //System.out.println(String.format("%03d: %d:%d", n, ii, jj));
 
             if (ii != jj) {
-                //System.err.println("Lost HW contact");
                 for (n = 0; n < 300; n++) {
                     if (comPort.readByteWithTimeout(50) == -1) {
                         break;
@@ -310,7 +283,6 @@ public class Propeller1Loader extends PropellerLoader {
             int to = 0;
             do {
                 if ((ii = getBit(110)) != -1) {
-                    //System.out.print(String.format("%02X ", ii));
                     break;
                 }
             } while (to++ < 100);
@@ -319,17 +291,14 @@ public class Propeller1Loader extends PropellerLoader {
                 return 0;
             }
         }
-        //System.out.println();
 
         int rc = 0;
         for (n = 0; n < 8; n++) {
             rc >>= 1;
             if ((ii = getBit(110)) != -1) {
-                //System.out.print(String.format("%02X ", ii));
                 rc += (ii != 0) ? 0x80 : 0;
             }
         }
-        //System.out.println();
 
         return rc;
     }
@@ -338,14 +307,6 @@ public class Propeller1Loader extends PropellerLoader {
         int bit = LFSR & 1;
         LFSR = (byte) ((LFSR << 1) | (((LFSR >> 7) ^ (LFSR >> 5) ^ (LFSR >> 4) ^ (LFSR >> 1)) & 1));
         return bit;
-    }
-
-    protected int skipIncomingBytes() throws ComPortException {
-        int n = 0;
-        while (comPort.readByteWithTimeout(50) != -1) {
-            n++;
-        }
-        return n;
     }
 
     private int getBit(int timeout) throws ComPortException {

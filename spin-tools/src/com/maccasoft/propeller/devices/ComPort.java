@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,6 +12,11 @@
 package com.maccasoft.propeller.devices;
 
 public abstract class ComPort {
+
+    public static final int DEFAULT_RESET_DELAY = 100;
+
+    public static final int P1_RESET_DELAY = 90;
+    public static final int P2_RESET_DELAY = 15;
 
     public abstract String getName();
 
@@ -27,7 +32,11 @@ public abstract class ComPort {
 
     public abstract void closePort() throws ComPortException;
 
-    public abstract void hwreset();
+    public void hwreset() {
+        hwreset(DEFAULT_RESET_DELAY);
+    }
+
+    public abstract void hwreset(int delay);
 
     public abstract int readByteWithTimeout(int timeout) throws ComPortException;
 

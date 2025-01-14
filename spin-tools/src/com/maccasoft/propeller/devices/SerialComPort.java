@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -80,38 +80,18 @@ public class SerialComPort extends ComPort {
     }
 
     @Override
-    public void hwreset() {
+    public void hwreset(int delay) {
         try {
             serialPort.setDTR(true);
             serialPort.setRTS(true);
-            msleep(25);
+            Thread.sleep(5);
             serialPort.setDTR(false);
             serialPort.setRTS(false);
-            msleep(25);
-            skipIncomingBytes();
-            serialPort.purgePort(SerialPort.PURGE_TXABORT |
-                SerialPort.PURGE_RXABORT |
-                SerialPort.PURGE_TXCLEAR |
-                SerialPort.PURGE_RXCLEAR);
+            Thread.sleep(delay);
+            serialPort.purgePort(SerialPort.PURGE_TXCLEAR | SerialPort.PURGE_RXCLEAR);
         } catch (Exception e) {
             // Do nothing
         }
-    }
-
-    private void msleep(int msec) {
-        try {
-            Thread.sleep(msec);
-        } catch (Exception e) {
-            // Do nothing
-        }
-    }
-
-    protected int skipIncomingBytes() throws ComPortException {
-        int n = 0;
-        while (readByteWithTimeout(50) != -1) {
-            n++;
-        }
-        return n;
     }
 
     @Override

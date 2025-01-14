@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -1645,7 +1645,7 @@ public class SerialTerminal {
         terminalType.select(0);
 
         try {
-            comPort.hwreset();
+            comPort.hwreset(ComPort.P2_RESET_DELAY);
             comPort.writeBytes(new byte[] {
                 '>', ' ', 0x04
             });
@@ -1659,7 +1659,7 @@ public class SerialTerminal {
         terminalType.select(0);
 
         try {
-            comPort.hwreset();
+            comPort.hwreset(ComPort.P2_RESET_DELAY);
             comPort.writeBytes(new byte[] {
                 '>', ' ', 0x1B
             });

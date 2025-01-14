@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -11,8 +11,6 @@
 package com.maccasoft.propeller.spin2;
 
 import java.io.InputStream;
-
-import com.maccasoft.propeller.Propeller2Loader;
 
 public class Spin2Debugger {
 
@@ -37,7 +35,7 @@ public class Spin2Debugger {
         try {
             code = new byte[is.available()];
             is.read(code);
-            writeLong(_baud, Propeller2Loader.UPLOAD_BAUD_RATE);
+            writeLong(_baud, 2000000);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
