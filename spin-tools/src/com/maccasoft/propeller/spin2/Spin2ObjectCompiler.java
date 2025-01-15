@@ -1890,6 +1890,15 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     Spin2StatementNode statementNode = builder.getRoot();
                     line.addSource(compileConstantExpression(line.getScope(), method, statementNode));
                     line.addSource(new Bytecode(line.getScope(), Spin2Bytecode.bc_return_args, text));
+                    if (statementNode.getReturnLongs() < method.getReturnLongs()) {
+                        logMessage(new CompilerException("not enough return values", statementNode.getTokens()));
+                    }
+                    else if (statementNode.getReturnLongs() > method.getReturnLongs()) {
+                        logMessage(new CompilerException("too many return values", statementNode.getTokens()));
+                    }
+                    for (LocalVariable var : method.getReturns()) {
+                        var.setCalledBy(method);
+                    }
                 }
                 else {
                     line.addSource(new Bytecode(line.getScope(), Spin2Bytecode.bc_return_results, text));
