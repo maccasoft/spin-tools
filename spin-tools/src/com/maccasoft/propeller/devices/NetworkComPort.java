@@ -244,6 +244,12 @@ public class NetworkComPort extends ComPort {
             Builder builder = HttpRequest.newBuilder(new URI(sb.toString()));
             HttpRequest httpRequest = builder.POST(BodyPublishers.noBody()).build();
             client.send(httpRequest, BodyHandlers.ofString());
+
+            Thread.sleep(delay);
+
+            if (is.available() > 0) {
+                is.readAllBytes();
+            }
         } catch (URISyntaxException | IOException | InterruptedException e) {
             // Do nothing
             e.printStackTrace();

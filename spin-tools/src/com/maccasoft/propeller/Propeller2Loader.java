@@ -71,20 +71,12 @@ public class Propeller2Loader extends PropellerLoader {
                     comPort.openPort();
                 }
                 comPort.setParams(
-                    comPort instanceof NetworkComPort ? 921600 : 2000000,
+                    2000000,
                     SerialPort.DATABITS_8,
                     SerialPort.STOPBITS_1,
                     SerialPort.PARITY_NONE);
 
                 version = hwfind(comPort);
-                if (comPort instanceof NetworkComPort) {
-                    if (version == 0) {
-                        version = hwfind(comPort);
-                    }
-                    if (version == 0) {
-                        version = hwfind(comPort);
-                    }
-                }
             }
 
             if (version == 0) {
@@ -188,16 +180,13 @@ public class Propeller2Loader extends PropellerLoader {
     }
 
     protected int hwfind(ComPort comPort) throws ComPortException {
-        int timeout = (comPort instanceof NetworkComPort) ? 200 : 50;
 
         comPort.hwreset(ComPort.P2_RESET_DELAY);
+        comPort.writeString("> \r> Prop_Chk 0 0 0 0\r");
 
-        comPort.writeString("> \r");
-        comPort.writeString("> Prop_Chk 0 0 0 0\r");
+        readStringWithTimeout(comPort, 50);
 
-        readStringWithTimeout(comPort, timeout);
-
-        String result = readStringWithTimeout(comPort, timeout);
+        String result = readStringWithTimeout(comPort, 50);
         if (result.startsWith("Prop_Ver ")) {
             return result.charAt(9);
         }

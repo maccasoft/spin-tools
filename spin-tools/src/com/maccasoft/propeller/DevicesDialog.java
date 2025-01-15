@@ -532,8 +532,7 @@ public class DevicesDialog extends Dialog {
                 comPort.setParams(2000000, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
                 comPort.hwreset(ComPort.P2_RESET_DELAY);
 
-                comPort.writeString("> \r");
-                comPort.writeString("> Prop_Chk 0 0 0 0\r");
+                comPort.writeString("> \r> Prop_Chk 0 0 0 0\r");
 
                 readStringWithTimeout(comPort, 50);
 
