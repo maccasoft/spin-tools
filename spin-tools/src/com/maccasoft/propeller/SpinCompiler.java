@@ -120,7 +120,7 @@ public class SpinCompiler {
             filterUnusedMethodWarning = cmd.hasOption('u');
 
             println(APP_TITLE + " - Version " + APP_VERSION);
-            println("Copyright (c) 2021-24 Marco Maccaferri and others. All rights reserved.");
+            println("Copyright (c) 2021-25 Marco Maccaferri and others. All rights reserved.");
 
             if (cmd.hasOption("W")) {
                 println("");

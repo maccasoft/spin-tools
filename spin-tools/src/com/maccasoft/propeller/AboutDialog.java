@@ -109,7 +109,7 @@ public class AboutDialog extends Dialog {
         final String fugueLink = "https://p.yusukekamiyamane.com/";
         final String cc = "Creative Commons\r\nAttribution 3.0";
         final String ccLink = "https://creativecommons.org/licenses/by/3.0/";
-        final String message = title + "\r\n" + "Copyright (c) 2021-24 Marco Maccaferri and others. All rights reserved.\r\n"
+        final String message = title + "\r\n" + "Copyright (c) 2021-25 Marco Maccaferri and others. All rights reserved.\r\n"
             + "\r\n"
             + "Spin2 Interpreter: v47 - 2025.01.03\r\n"
             + "\r\n"
