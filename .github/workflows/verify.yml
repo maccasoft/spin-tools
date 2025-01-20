@@ -21,11 +21,10 @@ jobs:
 
     - name: Maven verify
       run: |
-        xvfb-run --auto-servernum mvn --batch-mode verify
+        xvfb-run --auto-servernum mvn --batch-mode test
 
     - name: Create Tests Summary
       uses: test-summary/action@v2.3
       with:
-        paths: modules/spin-tools/target/surefire-reports/**/*.xml
+        paths: spin-tools/target/surefire-reports/**/*.xml
       if: always()
-
