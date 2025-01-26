@@ -34,10 +34,10 @@ xdg_install_f() {
       -e "s,<ICON_NAME>,${RESOURCE_NAME},g" "${SCRIPT_PATH}/lib/desktop.template" > "${TMP_DIR}/${RESOURCE_NAME}.desktop"
 
   # Install the icon files using name and resolutions
-  xdg-icon-resource install --context apps --size 16 "${SCRIPT_PATH}/lib/app16.png" $RESOURCE_NAME
-  xdg-icon-resource install --context apps --size 32 "${SCRIPT_PATH}/lib/app32.png" $RESOURCE_NAME
-  xdg-icon-resource install --context apps --size 48 "${SCRIPT_PATH}/lib/app48.png" $RESOURCE_NAME
-  xdg-icon-resource install --context apps --size 64 "${SCRIPT_PATH}/lib/app64.png" $RESOURCE_NAME
+  xdg-icon-resource install --context apps --size 16 "${SCRIPT_PATH}/lib/spinide16.png" $RESOURCE_NAME
+  xdg-icon-resource install --context apps --size 32 "${SCRIPT_PATH}/lib/spinide32.png" $RESOURCE_NAME
+  xdg-icon-resource install --context apps --size 48 "${SCRIPT_PATH}/lib/spinide48.png" $RESOURCE_NAME
+  xdg-icon-resource install --context apps --size 64 "${SCRIPT_PATH}/lib/spinide64.png" $RESOURCE_NAME
 
   # Install the created *.desktop file
   xdg-desktop-menu install "${TMP_DIR}/${RESOURCE_NAME}.desktop"

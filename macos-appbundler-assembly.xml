@@ -13,7 +13,8 @@
     </dependencySets>
     <files>
         <file>
-            <source>macosx/spinc</source>
+            <source>launcher/spinc.macos</source>
+            <destName>spinc</destName>
             <fileMode>755</fileMode>
             <outputDirectory>Contents/MacOS</outputDirectory>
         </file>

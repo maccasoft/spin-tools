@@ -12,11 +12,10 @@
         </dependencySet>
     </dependencySets>
     <files>
-        <file><source>macosx/spinide</source><fileMode>755</fileMode><outputDirectory>MacOS</outputDirectory></file>
-        <file><source>macosx/spinc</source><fileMode>755</fileMode><outputDirectory>MacOS</outputDirectory></file>
-        <file><source>macosx/Info.plist</source></file>
-        <file><source>macosx/PkgInfo</source></file>
-        <file><source>macosx/spinide.icns</source><outputDirectory>Resources</outputDirectory></file>
+        <file><source>launcher/spinc.macos</source><destName>spinc</destName><fileMode>755</fileMode><outputDirectory>MacOS</outputDirectory></file>
+        <file><source>launcher/spinide.macos</source><destName>spinide</destName><fileMode>755</fileMode><outputDirectory>MacOS</outputDirectory></file>
+        <file><source>launcher/spinide.icns</source><outputDirectory>Resources</outputDirectory></file>
+        <file><source>launcher/Info.plist</source></file>
         <file><source>LICENSE</source><outputDirectory>Resources</outputDirectory></file>
     </files>
     <fileSets>
