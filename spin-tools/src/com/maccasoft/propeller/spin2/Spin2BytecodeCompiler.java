@@ -1844,7 +1844,12 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 }
                 return new ArrayList<Spin2Bytecode>();
             }
-            throw new CompilerException("undefined symbol " + node.getText(), node.getToken());
+            if (node.getType() != 0 && node.getType() != Token.KEYWORD) {
+                throw new CompilerException("unexpected operator '" + node.getText() + "'", node.getToken());
+            }
+            else {
+                throw new CompilerException("undefined symbol " + node.getText(), node.getToken());
+            }
         } catch (CompilerException e) {
             logMessage(e);
         } catch (Exception e) {

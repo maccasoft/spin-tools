@@ -19,6 +19,9 @@ import java.util.Set;
 
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.Context;
+import com.maccasoft.propeller.expressions.DataVariable;
+import com.maccasoft.propeller.expressions.Expression;
+import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.model.Token;
 
 public class Spin2TreeBuilder {
@@ -465,17 +468,18 @@ public class Spin2TreeBuilder {
                     Token next = peek();
                     if (next != null && ")".equals(next.getText())) {
                         token = next();
-                        next = peek();
-                        if (next != null && next.column == token.column + 1) {
-                            if (":".equals(next.getText())) {
+                        Expression expression = scope.getLocalSymbol(node.getText());
+                        if ((expression instanceof Variable) || (expression instanceof DataVariable)) {
+                            next = peek();
+                            if (next != null && ":".equals(next.getText())) {
                                 int currentIndex = index;
                                 next = next();
                                 Token value = next();
-                                if (value != null && value.column == next.column + 1) {
+                                if (value != null) {
                                     try {
                                         node.setReturnLongs(Integer.valueOf(value.getText()).intValue());
                                     } catch (Exception e) {
-                                        throw new CompilerException("expected integer constant", token);
+                                        throw new CompilerException("expected integer constant", value);
                                     }
                                     token = value;
                                 }
@@ -502,18 +506,19 @@ public class Spin2TreeBuilder {
                             throw new CompilerException("expecting )", tokens.get(tokens.size() - 1));
                         }
                         if (")".equals(token.getText())) {
-                            next();
-                            next = peek();
-                            if (next != null && next.column == token.column + 1) {
-                                if (":".equals(next.getText())) {
+                            token = next();
+                            Expression expression = scope.getLocalSymbol(node.getText());
+                            if ((expression instanceof Variable) || (expression instanceof DataVariable)) {
+                                next = peek();
+                                if (next != null && ":".equals(next.getText())) {
                                     int currentIndex = index;
                                     next = next();
                                     Token value = next();
-                                    if (value != null && value.column == next.column + 1) {
+                                    if (value != null) {
                                         try {
                                             node.setReturnLongs(Integer.valueOf(value.getText()).intValue());
                                         } catch (Exception e) {
-                                            throw new CompilerException("expected integer constant", token);
+                                            throw new CompilerException("expected integer constant", value);
                                         }
                                         token = value;
                                     }

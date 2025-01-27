@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.expressions.Context;
+import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.model.Token;
 
 class Spin2TreeBuilderTest {
@@ -623,23 +624,29 @@ class Spin2TreeBuilderTest {
 
     @Test
     void testMethodReturn() {
+        Context context = new Context();
+        context.addSymbol("ptr", new Variable("LONG", "ptr", 1));
+
         String text = "a := ptr():1";
         Assertions.assertEquals(""
             + "[:=]\n"
             + " +-- [a]\n"
             + " +-- [ptr]\n"
-            + "", parse(text));
+            + "", parse(context, text));
     }
 
     @Test
     void testMethodArgumentAndReturn() {
+        Context context = new Context();
+        context.addSymbol("ptr", new Variable("LONG", "ptr", 1));
+
         String text = "a := ptr(b):1";
         Assertions.assertEquals(""
             + "[:=]\n"
             + " +-- [a]\n"
             + " +-- [ptr]\n"
             + "      +-- [b]\n"
-            + "", parse(text));
+            + "", parse(context, text));
     }
 
     @Test
@@ -926,6 +933,10 @@ class Spin2TreeBuilderTest {
 
     @Test
     void testMethodPointersTernary() {
+        Context context = new Context();
+        context.addSymbol("ptrb", new Variable("LONG", "ptrb", 1));
+        context.addSymbol("ptrc", new Variable("LONG", "ptrc", 1));
+
         String text = "a := a <> 0 ? ptrb():1 : ptrc():1";
         Assertions.assertEquals(""
             + "[:=]\n"
@@ -937,11 +948,15 @@ class Spin2TreeBuilderTest {
             + "      +-- [:]\n"
             + "           +-- [ptrb]\n"
             + "           +-- [ptrc]\n"
-            + "", parse(text));
+            + "", parse(context, text));
     }
 
     String parse(String text) {
-        Spin2TreeBuilder builder = new Spin2TreeBuilder(new Context());
+        return parse(new Context(), text);
+    }
+
+    String parse(Context context, String text) {
+        Spin2TreeBuilder builder = new Spin2TreeBuilder(context);
 
         Spin2TokenStream stream = new Spin2TokenStream(text);
         while (true) {
