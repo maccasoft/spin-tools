@@ -1,26 +1,17 @@
 #!/usr/bin/env bash
 
-APPDIR="$(dirname -- "$(readlink -f -- "${0}")" )"
+EXEDIR="$(dirname -- "$(readlink -f -- "${0}")" )"
 
-if [ -x "$APPDIR"/lib ]; then
-    LIBDIR="$APPDIR"/lib
-else
-    LIBDIR="$(dirname -- "$APPDIR")/Java"
-fi
 for LIB in \
-    "$LIBDIR"/*.jar \
+    "$EXEDIR/Spin Tools IDE.app"/Contents/MacOS/lib/*.jar \
     ;
 do
     CLASSPATH="${CLASSPATH}:${LIB}"
 done
 export CLASSPATH
 
-JAVA=java
-if [ -x "$APPDIR/java/bin/java" ]; then
-  JAVA=$APPDIR/java/bin/java
-fi
+JAVA="$EXEDIR/Spin Tools IDE.app"/Contents/Java/bin/java
 
-# Collect options to java in an array, to properly handle whitespace in options
-JAVA_OPTIONS=("-DAPP_DIR=$APPDIR")
+JAVA_OPTIONS=("-DAPP_DIR=$EXEDIR")
 
 "$JAVA" "${JAVA_OPTIONS[@]}" com.maccasoft.propeller.SpinCompiler "$@"

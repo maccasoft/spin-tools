@@ -1,22 +1,28 @@
 #!/usr/bin/env bash
 
-APPDIR="$(dirname -- "$(readlink -f -- "${0}")" )"
+EXEDIR="$(dirname -- "$(readlink -f -- "${0}")" )"
 
-LIBDIR="$APPDIR"/lib
-for LIB in \
-    "$LIBDIR"/*.jar \
-    ;
-do
-    CLASSPATH="${CLASSPATH}:${LIB}"
-done
+if [ -x "$EXEDIR/Spin Tools IDE.app" ]; then
+    for LIB in \
+        "$EXEDIR/Spin Tools IDE.app"/Contents/MacOS/lib/*.jar \
+        ;
+    do
+        CLASSPATH="${CLASSPATH}:${LIB}"
+    done
+    JAVA="$EXEDIR/Spin Tools IDE.app"/Contents/Java/bin/java
+    APPDIR=EXEDIR
+else
+    for LIB in \
+        "$EXEDIR"/lib/*.jar \
+        ;
+    do
+        CLASSPATH="${CLASSPATH}:${LIB}"
+    done
+    JAVA="$(dirname -- "$EXEDIR")/Java/bin/java"
+    APPDIR="$(dirname -- "$(dirname -- "$(dirname -- "$EXEDIR")")")"
+fi
 export CLASSPATH
 
-JAVA=java
-if [ -x "$APPDIR/java/bin/java" ]; then
-  JAVA=$APPDIR/java/bin/java
-fi
-
-# Collect options to java in an array, to properly handle whitespace in options
-JAVA_OPTIONS=("-DAPP_DIR=$APPDIR" "-Dcom.apple.macos.useScreenMenuBar=true" "-XstartOnFirstThread")
+JAVA_OPTIONS=("-DAPP_DIR=$APPDIR" "-XstartOnFirstThread")
 
 "$JAVA" "${JAVA_OPTIONS[@]}" com.maccasoft.propeller.SpinTools "$@"

@@ -2,51 +2,33 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
     <dict>
-        <key>CFBundleDevelopmentRegion</key>
-        <string>English</string>
+        <key>NSRequiresAquaSystemAppearance</key>
+        <true/>
         <key>CFBundleExecutable</key>
         <string>spinide</string>
+        <key>CFBundleGetInfoString</key>
+        <string>Spin Tools IDE 0.44.0 for Mac OS X, Copyright 2021-25 Marco Maccaferri and Others. All rights reserved.</string>
         <key>CFBundleIconFile</key>
         <string>spinide.icns</string>
         <key>CFBundleIdentifier</key>
-        <string>com.maccasoft.propeller.SpinTools</string>
-        <key>CFBundleDisplayName</key>
-        <string>Spin Tools IDE</string>
+        <string>com.maccasoft.propeller.spinide</string>
         <key>CFBundleInfoDictionaryVersion</key>
         <string>6.0</string>
         <key>CFBundleName</key>
-        <string>Spin Tools IDE</string>
+        <string>SpinIDE</string>
         <key>CFBundlePackageType</key>
         <string>APPL</string>
         <key>CFBundleShortVersionString</key>
-        <string>0.43.0</string>
-        <key>CFBundleVersion</key>
-        <string>1.0</string>
+        <string>0.44.0</string>
         <key>CFBundleSignature</key>
         <string>????</string>
-        <key>NSHumanReadableCopyright</key>
-        <string>2025 Marco Maccaferri</string>
-        <key>LSMinimumSystemVersion</key>
-        <string>10.7</string>
-        <key>LSApplicationCategoryType</key>
-        <string>public.app-category.developer-tools</string>
-        <key>LSUIElement</key>
-        <false/>
+        <key>CFBundleVersion</key>
+        <string>0.44.0</string>
         <key>NSHighResolutionCapable</key>
         <true/>
-        <key>NSSupportsAutomaticGraphicsSwitching</key>
-        <true/>
-        <key>IgnorePSN</key>
-        <false/>
-        <key>NSRequiresAquaSystemAppearance</key>
-        <false/>
-        <key>CFBundleDocumentTypes</key>
-        <array>
-        </array>
-        <key>LSEnvironment</key>
-        <dict>
-            <key>LC_CTYPE</key>
-            <string>UTF-8</string>
-        </dict>
+        <key>CFBundleDevelopmentRegion</key>
+        <string>English</string>
+        <key>CFBundleDisplayName</key>
+        <string>Spin Tools IDE</string>
     </dict>
 </plist>
