@@ -235,13 +235,13 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
 
                             boolean popValue = false;
 
-                            Method methodExpression = getMethodExpression(context, child);
+                            Expression methodExpression = getMethodExpression(context, child);
                             if (methodExpression != null) {
-                                if (methodExpression.getReturnLongs() > 1) {
+                                source.addAll(compileMethodCall(context, method, methodExpression, child, null, false));
+                                if (child.getReturnLongs() > 1) {
                                     logMessage(new CompilerException("send parameter cannot return multiple values", child.getTokens()));
                                 }
-                                popValue = methodExpression.getReturnLongs() != 0;
-                                source.addAll(compileMethodCall(context, method, methodExpression, child, popValue, false));
+                                popValue = child.getReturnLongs() != 0;
                             }
                             else {
                                 source.addAll(compileConstantExpression(context, method, child));
@@ -2830,7 +2830,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
         return false;
     }
 
-    Method getMethodExpression(Context context, Spin2StatementNode node) {
+    Expression getMethodExpression(Context context, Spin2StatementNode node) {
         Expression symbol = context.getLocalSymbol(node.getText());
 
         if (symbol instanceof SpinObject) {
@@ -2861,16 +2861,21 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             if (!(symbol instanceof Method)) {
                 throw new CompilerException(methodNode.getText() + " is not a method", methodNode.getToken());
             }
-            return (Method) symbol;
+            return symbol;
         }
         if (symbol instanceof Method) {
-            return (Method) symbol;
+            return symbol;
+        }
+        if (symbol instanceof Variable) {
+            if (node.isMethod()) {
+                return symbol;
+            }
         }
 
         return null;
     }
 
-    List<Spin2Bytecode> compileMethodCall(Context context, Spin2Method method, Expression symbol, Spin2StatementNode node, boolean push, boolean trap) {
+    List<Spin2Bytecode> compileMethodCall(Context context, Spin2Method method, Expression symbol, Spin2StatementNode node, Boolean push, boolean trap) {
         List<Spin2Bytecode> source = new ArrayList<Spin2Bytecode>();
 
         if (symbol instanceof SpinObject) {
@@ -2913,11 +2918,24 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 node.setReturnLongs(1);
             }
             else {
-                if (trap) {
-                    source.add(new Bytecode(context, push ? Spin2Bytecode.bc_drop_trap_push : Spin2Bytecode.bc_drop_trap, "ANCHOR_TRAP"));
+                if (push == null) {
+                    push = methodExpression.getReturnLongs() != 0;
+                }
+                if (push) {
+                    if (trap) {
+                        source.add(new Bytecode(context, Spin2Bytecode.bc_drop_trap_push, "ANCHOR_TRAP (push)"));
+                    }
+                    else {
+                        source.add(new Bytecode(context, Spin2Bytecode.bc_drop_push, "ANCHOR (push)"));
+                    }
                 }
                 else {
-                    source.add(new Bytecode(context, push ? Spin2Bytecode.bc_drop_push : Spin2Bytecode.bc_drop, "ANCHOR"));
+                    if (trap) {
+                        source.add(new Bytecode(context, Spin2Bytecode.bc_drop_trap, "ANCHOR_TRAP"));
+                    }
+                    else {
+                        source.add(new Bytecode(context, Spin2Bytecode.bc_drop, "ANCHOR"));
+                    }
                 }
 
                 source.addAll(compileMethodArguments(context, method, calledMethod, methodNode));
@@ -2934,16 +2952,29 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             }
         }
         else {
-            if (trap) {
-                source.add(new Bytecode(context, push ? Spin2Bytecode.bc_drop_trap_push : Spin2Bytecode.bc_drop_trap, "ANCHOR_TRAP"));
-            }
-            else {
-                source.add(new Bytecode(context, push ? Spin2Bytecode.bc_drop_push : Spin2Bytecode.bc_drop, "ANCHOR"));
-            }
-
             if (symbol instanceof Method) {
                 Method methodExpression = (Method) symbol;
                 Spin2Method calledMethod = (Spin2Method) methodExpression.getData(Spin2Method.class.getName());
+
+                if (push == null) {
+                    push = methodExpression.getReturnLongs() != 0;
+                }
+                if (push) {
+                    if (trap) {
+                        source.add(new Bytecode(context, Spin2Bytecode.bc_drop_trap_push, "ANCHOR_TRAP (push)"));
+                    }
+                    else {
+                        source.add(new Bytecode(context, Spin2Bytecode.bc_drop_push, "ANCHOR (push)"));
+                    }
+                }
+                else {
+                    if (trap) {
+                        source.add(new Bytecode(context, Spin2Bytecode.bc_drop_trap, "ANCHOR_TRAP"));
+                    }
+                    else {
+                        source.add(new Bytecode(context, Spin2Bytecode.bc_drop, "ANCHOR"));
+                    }
+                }
 
                 source.addAll(compileMethodArguments(context, method, calledMethod, node));
                 source.add(new CallSub(context, methodExpression));
@@ -2955,6 +2986,26 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 node.setReturnLongs(push ? methodExpression.getReturnLongs() : 0);
             }
             else {
+                if (push == null) {
+                    push = node.getReturnLongs() != 0;
+                }
+                if (push) {
+                    if (trap) {
+                        source.add(new Bytecode(context, Spin2Bytecode.bc_drop_trap_push, "ANCHOR_TRAP (push)"));
+                    }
+                    else {
+                        source.add(new Bytecode(context, Spin2Bytecode.bc_drop_push, "ANCHOR (push)"));
+                    }
+                }
+                else {
+                    if (trap) {
+                        source.add(new Bytecode(context, Spin2Bytecode.bc_drop_trap, "ANCHOR_TRAP"));
+                    }
+                    else {
+                        source.add(new Bytecode(context, Spin2Bytecode.bc_drop, "ANCHOR"));
+                    }
+                }
+
                 int i = 0;
                 Spin2StatementNode indexNode = null;
                 if (i < node.getChildCount()) {
