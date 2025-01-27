@@ -17,8 +17,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
+import org.eclipse.core.databinding.observable.Realm;
+import org.eclipse.jface.databinding.swt.DisplayRealm;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.resource.StringConverter;
@@ -1747,6 +1750,50 @@ public class SerialTerminal {
         reset.setForeground(widgetForeground);
         monitor.setForeground(widgetForeground);
         taqoz.setForeground(widgetForeground);
+    }
+
+    public static void main(String[] args) {
+        final Display display = new Display();
+
+        display.setErrorHandler(new Consumer<Error>() {
+
+            @Override
+            public void accept(Error t) {
+                t.printStackTrace();
+            }
+
+        });
+        display.setRuntimeExceptionHandler(new Consumer<RuntimeException>() {
+
+            @Override
+            public void accept(RuntimeException t) {
+                t.printStackTrace();
+            }
+
+        });
+
+        Realm.runWithDefault(DisplayRealm.getRealm(display), new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+                    SerialTerminal serialTerminal = new SerialTerminal(display, new Preferences());
+                    serialTerminal.open();
+
+                    while (display.getShells().length != 0) {
+                        if (!display.readAndDispatch()) {
+                            display.sleep();
+                        }
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return;
+                }
+            }
+        });
+
+        display.dispose();
     }
 
 }

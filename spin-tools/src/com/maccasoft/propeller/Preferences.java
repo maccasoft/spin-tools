@@ -176,6 +176,8 @@ public class Preferences {
 
             terminal = new TerminalPreferences();
             console = new ConsolePreferences();
+
+            packageLru = new ArrayList<>();
         }
 
         public Bounds window;
@@ -239,6 +241,8 @@ public class Preferences {
         public ExternalTool[] externalTools;
 
         public RemoteDevice[] remoteDevices;
+
+        public List<String> packageLru;
 
     }
 
@@ -1159,6 +1163,18 @@ public class Preferences {
 
     public void setRemoteDevices(RemoteDevice[] remoteDevices) {
         changeSupport.firePropertyChange(PROP_EXTERNAL_TOOLS, preferences.remoteDevices, preferences.remoteDevices = remoteDevices.length != 0 ? remoteDevices : null);
+    }
+
+    public List<String> getPackageLru() {
+        return preferences.packageLru;
+    }
+
+    public void addToPackageLru(File file) {
+        preferences.packageLru.remove(file.getAbsolutePath());
+        preferences.packageLru.add(0, file.getAbsolutePath());
+        while (preferences.packageLru.size() > 10) {
+            preferences.packageLru.remove(preferences.packageLru.size() - 1);
+        }
     }
 
     public void save() throws IOException {
