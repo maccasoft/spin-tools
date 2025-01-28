@@ -16,6 +16,4 @@ Integrated Development Environment for the Parallax Propeller 1 and 2 multicore 
  * P2 debug support (partial)
  * Includes a set of libraries and examples ready to use
  * Multiplatform, available for Linux, Windows and MacOS
-
- **Note:** requires Java SE 17 or later runtime already installed.
  
