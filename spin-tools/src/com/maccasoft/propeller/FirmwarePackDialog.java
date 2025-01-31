@@ -10,11 +10,29 @@
 
 package com.maccasoft.propeller;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
+import java.nio.file.attribute.FileTime;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.function.Consumer;
 
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
+import org.apache.commons.io.IOUtils;
 import org.eclipse.core.databinding.observable.Realm;
 import org.eclipse.jface.databinding.swt.DisplayRealm;
 import org.eclipse.jface.dialogs.Dialog;
@@ -22,9 +40,12 @@ import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.CellEditor;
+import org.eclipse.jface.viewers.ComboViewer;
 import org.eclipse.jface.viewers.EditingSupport;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.StyledCellLabelProvider;
@@ -60,15 +81,19 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.Text;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.core.exc.StreamWriteException;
+import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.maccasoft.propeller.Preferences.PackageFile;
+import com.maccasoft.propeller.internal.BusyIndicator;
 import com.maccasoft.propeller.internal.ColorRegistry;
 import com.maccasoft.propeller.internal.ImageRegistry;
 
-public class FirmwarePackEditor {
+public class FirmwarePackDialog {
 
-    public static final String WINDOW_TITLE = "Firmware Pack Editor";
+    public static final String WINDOW_TITLE = "Firmware Package";
 
     private static final int HORIZONTAL_DIALOG_UNIT_PER_CHAR = 4;
     private static final int VERTICAL_DIALOG_UNITS_PER_CHAR = 8;
@@ -80,12 +105,15 @@ public class FirmwarePackEditor {
         "*.json",
     };
 
+    static final String BUNDLE_PREFIX_NAME = "propeller-firmware-loader";
+    static final String FIRMWARE_ENTRY_NAME = "propeller-firmware-loader/firmware.json";
+
     Shell parentShell;
     Display display;
     Shell shell;
     FontMetrics fontMetrics;
 
-    Combo packFile;
+    ComboViewer packFile;
     Button browseFile;
 
     TableViewer viewer;
@@ -97,6 +125,8 @@ public class FirmwarePackEditor {
 
     Button enableLocal;
     Button enableNetwork;
+    Button[] enableBundle;
+    Button exportBundleButton;
 
     Button saveButton;
     Button saveAsButton;
@@ -104,13 +134,47 @@ public class FirmwarePackEditor {
     Preferences preferences;
 
     String appDir;
-    String packFileName;
     FirmwarePack pack;
 
+    PackageFile lruFile;
     Object selection;
     boolean dirty;
 
-    public FirmwarePackEditor(Shell parentShell, Preferences preferences) {
+    final ISelectionChangedListener packFileSelectionListener = new ISelectionChangedListener() {
+
+        @Override
+        public void selectionChanged(SelectionChangedEvent event) {
+            if (!handleUnsavedContent()) {
+                try {
+                    packFile.removeSelectionChangedListener(packFileSelectionListener);
+                    if (lruFile != null) {
+                        packFile.setSelection(new StructuredSelection(lruFile), true);
+                    }
+                } finally {
+                    packFile.addSelectionChangedListener(packFileSelectionListener);
+                }
+                return;
+            }
+            lruFile = (PackageFile) event.getStructuredSelection().getFirstElement();
+            if (lruFile != null) {
+                File fileToLoad = lruFile.getFile();
+                if (!fileToLoad.exists()) {
+                    MessageDialog.openError(shell, shell.getText(), "File " + fileToLoad + " not found");
+                    preferences.getPackageLru().remove(lruFile);
+                    packFile.refresh();
+
+                    fileToLoad = handleBrowseFirmwarePack(fileToLoad.getAbsoluteFile().getParent());
+                    if (fileToLoad == null) {
+                        return;
+                    }
+                }
+                loadFromFile(fileToLoad);
+            }
+        }
+
+    };
+
+    public FirmwarePackDialog(Shell parentShell, Preferences preferences) {
         if (parentShell == null) {
             parentShell = new Shell(Display.getDefault());
 
@@ -154,7 +218,7 @@ public class FirmwarePackEditor {
 
             @Override
             public void handleEvent(Event event) {
-                event.doit = handleShellCloseEvent();
+                event.doit = handleUnsavedContent();
             }
         });
 
@@ -228,32 +292,33 @@ public class FirmwarePackEditor {
         GridData groupLayoutData = new GridData(SWT.FILL, SWT.FILL, true, false);
         group.setLayoutData(groupLayoutData);
 
-        packFile = new Combo(group, SWT.DROP_DOWN | SWT.READ_ONLY);
-        packFile.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-        packFile.setItems(preferences.getPackageLru().toArray(new String[0]));
-        packFile.addSelectionListener(new SelectionAdapter() {
+        packFile = new ComboViewer(group, SWT.DROP_DOWN | SWT.READ_ONLY);
+        packFile.getControl().setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        packFile.setContentProvider(new IStructuredContentProvider() {
 
             @Override
-            public void widgetSelected(SelectionEvent event) {
-                if (packFile.getSelectionIndex() == -1) {
-                    return;
+            @SuppressWarnings({
+                "rawtypes", "unchecked"
+            })
+            public Object[] getElements(Object inputElement) {
+                List l = new ArrayList((Collection) inputElement);
+                if (lruFile != null && !l.contains(lruFile)) {
+                    l.add(0, lruFile);
                 }
-                File file = new File(packFile.getItem(packFile.getSelectionIndex()));
-                if (!file.exists()) {
-                    MessageDialog.openError(shell, shell.getText(), "File " + file + " not found");
-                    preferences.getPackageLru().remove(file.getAbsolutePath());
-
-                    file = handleBrowseFirmwarePack(file.getAbsoluteFile().getParent());
-                    if (file == null) {
-                        return;
-                    }
-                }
-                loadFromFile(file);
-                dirty = false;
-                updateControls();
+                return l.toArray();
             }
 
         });
+        packFile.setLabelProvider(new LabelProvider() {
+
+            @Override
+            public String getText(Object element) {
+                return ((PackageFile) element).getFile().toString();
+            }
+
+        });
+        packFile.setInput(preferences.getPackageLru());
+        packFile.addSelectionChangedListener(packFileSelectionListener);
 
         browseFile = new Button(group, SWT.PUSH | SWT.FLAT);
         browseFile.setImage(ImageRegistry.getImageFromResources("folder-horizontal-open.png"));
@@ -263,10 +328,10 @@ public class FirmwarePackEditor {
 
             @Override
             public void widgetSelected(SelectionEvent event) {
-                File file = handleBrowseFirmwarePack(packFile.getText());
-                if (file != null) {
-                    packFile.setText(file.getAbsolutePath());
-                    loadFromFile(file);
+                PackageFile lruFile = (PackageFile) packFile.getStructuredSelection().getFirstElement();
+                File fileToLoad = handleBrowseFirmwarePack(lruFile != null ? lruFile.getFile().getAbsolutePath() : "");
+                if (fileToLoad != null) {
+                    loadFromFile(fileToLoad);
                     dirty = false;
                     updateControls();
                 }
@@ -276,6 +341,8 @@ public class FirmwarePackEditor {
     }
 
     public void loadFromFile(File file) {
+        lruFile = new PackageFile(file);
+
         if (file.exists()) {
             try {
                 ObjectMapper mapper = new ObjectMapper();
@@ -290,13 +357,30 @@ public class FirmwarePackEditor {
                 // Do nothing
                 e.printStackTrace();
             }
+
+            for (PackageFile pf : preferences.getPackageLru()) {
+                if (pf.getFile().equals(file)) {
+                    for (int i = 0; i < enableBundle.length; i++) {
+                        String id = (String) enableBundle[i].getData("id");
+                        enableBundle[i].setSelection(pf.getBundleEnabled(id));
+                    }
+                    lruFile = pf;
+                    break;
+                }
+            }
+
+            preferences.addToPackageLru(lruFile);
         }
 
-        preferences.addToPackageLru(file);
-        packFileName = file.getAbsolutePath();
-
-        packFile.setItems(preferences.getPackageLru().toArray(new String[0]));
-        packFile.select(0);
+        try {
+            packFile.removeSelectionChangedListener(packFileSelectionListener);
+            packFile.refresh();
+            if (lruFile != null) {
+                packFile.setSelection(new StructuredSelection(lruFile), true);
+            }
+        } finally {
+            packFile.addSelectionChangedListener(packFileSelectionListener);
+        }
 
         dirty = false;
         updateControls();
@@ -304,8 +388,10 @@ public class FirmwarePackEditor {
 
     public void addFirmare(Firmware firmware) {
         pack.getFirmwareList().add(0, firmware);
+
         viewer.refresh();
         viewer.setSelection(new StructuredSelection(firmware));
+
         dirty = true;
         updateControls();
     }
@@ -346,7 +432,7 @@ public class FirmwarePackEditor {
         label.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, true, false, 2, 1));
         label.setText("Firmware List");
 
-        viewer = new TableViewer(container, SWT.FULL_SELECTION);
+        viewer = new TableViewer(container, SWT.FULL_SELECTION | SWT.BORDER);
         viewer.getTable().setHeaderVisible(true);
 
         TableViewerColumn viewerColumn = new TableViewerColumn(viewer, SWT.NONE);
@@ -535,14 +621,23 @@ public class FirmwarePackEditor {
     }
 
     void createSettingsGroup(Composite parent) {
-        Composite group = new Composite(parent, SWT.NONE);
+        Composite container = new Composite(parent, SWT.NONE);
         GridLayout layout = new GridLayout(3, false);
         layout.marginWidth = layout.marginHeight = 0;
-        group.setLayout(layout);
-        group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+        layout.verticalSpacing = convertVerticalDLUsToPixels(IDialogConstants.VERTICAL_SPACING);
+        container.setLayout(layout);
+        GridData containerGridData = new GridData(SWT.FILL, SWT.FILL, true, false);
+        container.setLayoutData(containerGridData);
 
-        Label label = new Label(group, SWT.NONE);
+        Label label = new Label(container, SWT.NONE);
         label.setText("Discover settings");
+        label.setLayoutData(new GridData(SWT.FILL, SWT.TOP, false, false));
+
+        Composite group = new Composite(container, SWT.NONE);
+        layout = new GridLayout(2, false);
+        layout.marginWidth = layout.marginHeight = 0;
+        group.setLayout(layout);
+        group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false, 2, 1));
 
         enableLocal = new Button(group, SWT.CHECK);
         enableLocal.setText("Local");
@@ -570,6 +665,101 @@ public class FirmwarePackEditor {
             }
 
         });
+
+        label = new Label(container, SWT.NONE);
+        label.setText("Loader bundles");
+        label.setLayoutData(new GridData(SWT.FILL, SWT.TOP, false, false));
+
+        group = new Composite(container, SWT.NONE);
+        layout = new GridLayout(3, false);
+        layout.marginWidth = layout.marginHeight = 0;
+        group.setLayout(layout);
+        group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+
+        int i = 0;
+        enableBundle = new Button[5];
+
+        SelectionAdapter listener = new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                if (lruFile != null) {
+                    String id = (String) e.widget.getData("id");
+                    lruFile.setBundleEnabled(id, ((Button) e.widget).getSelection());
+                    updateControls();
+                }
+            }
+
+        };
+
+        enableBundle[i] = new Button(group, SWT.CHECK);
+        enableBundle[i].setText("Linux (x86_64)");
+        enableBundle[i].setData("id", "linux-x86_64");
+        enableBundle[i].setData("suffix", "-linux-x86_64.tar.gz");
+        enableBundle[i].setEnabled(bundleExists((String) enableBundle[i].getData("suffix")));
+        enableBundle[i].addSelectionListener(listener);
+        i++;
+
+        enableBundle[i] = new Button(group, SWT.CHECK);
+        enableBundle[i].setText("Linux (aarch64)");
+        enableBundle[i].setData("id", "linux-aarch64");
+        enableBundle[i].setData("suffix", "-linux-aarch64.tar.gz");
+        enableBundle[i].setEnabled(bundleExists((String) enableBundle[i].getData("suffix")));
+        enableBundle[i].addSelectionListener(listener);
+        i++;
+
+        enableBundle[i] = new Button(group, SWT.CHECK);
+        enableBundle[i].setText("Windows (x86_64)");
+        enableBundle[i].setData("id", "windows-x86_64");
+        enableBundle[i].setData("suffix", "-windows-x86_64.zip");
+        enableBundle[i].setEnabled(bundleExists((String) enableBundle[i].getData("suffix")));
+        enableBundle[i].addSelectionListener(listener);
+        i++;
+
+        enableBundle[i] = new Button(group, SWT.CHECK);
+        enableBundle[i].setText("MacOS (x86_64)");
+        enableBundle[i].setData("id", "macos-x86_64");
+        enableBundle[i].setData("suffix", "-macos-x86_64.tar.gz");
+        enableBundle[i].setEnabled(bundleExists((String) enableBundle[i].getData("suffix")));
+        enableBundle[i].addSelectionListener(listener);
+        i++;
+
+        enableBundle[i] = new Button(group, SWT.CHECK);
+        enableBundle[i].setText("MacOS (aarch64)");
+        enableBundle[i].setData("id", "macos-aarch64");
+        enableBundle[i].setData("suffix", "-macos-aarch64.tar.gz");
+        enableBundle[i].setEnabled(bundleExists((String) enableBundle[i].getData("suffix")));
+        enableBundle[i].addSelectionListener(listener);
+        i++;
+
+        exportBundleButton = createButton(container, "Export");
+        exportBundleButton.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                BusyIndicator.showWhile(display, new Runnable() {
+
+                    @Override
+                    public void run() {
+                        doSaveBundle();
+                    }
+
+                });
+            }
+        });
+    }
+
+    boolean bundleExists(String suffix) {
+        File bundlesPath = new File(appDir, "loaders");
+        File[] files = bundlesPath.listFiles(new FilenameFilter() {
+
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.startsWith(BUNDLE_PREFIX_NAME) && name.endsWith(suffix);
+            }
+
+        });
+        return files != null && files.length != 0;
     }
 
     Button createPageButton(Composite parent, Image image, String toolTipText) {
@@ -581,22 +771,20 @@ public class FirmwarePackEditor {
     }
 
     void createBottomControls(Composite parent) {
-        GridData data;
-
         Composite container = new Composite(parent, SWT.NONE);
         container.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
-        Button button = new Button(container, SWT.PUSH);
-        button.setText("New");
-        data = new GridData(GridData.HORIZONTAL_ALIGN_FILL);
-        data.widthHint = Math.max(Dialog.convertHorizontalDLUsToPixels(fontMetrics, IDialogConstants.BUTTON_WIDTH), button.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
-        button.setLayoutData(data);
+        Button button = createButton(container, "New");
         button.addSelectionListener(new SelectionAdapter() {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
-                packFile.deselectAll();
-                packFileName = null;
+                if (!handleUnsavedContent()) {
+                    return;
+                }
+
+                packFile.setSelection(StructuredSelection.EMPTY);
+                lruFile = null;
 
                 pack = new FirmwarePack();
                 viewer.setInput(pack.getFirmwareList());
@@ -611,15 +799,7 @@ public class FirmwarePackEditor {
         Label label = new Label(container, SWT.NONE);
         label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
-        GC gc = new GC(container);
-        FontMetrics fontMetrics = gc.getFontMetrics();
-        gc.dispose();
-
-        saveAsButton = new Button(container, SWT.PUSH);
-        saveAsButton.setText("Save As...");
-        data = new GridData(GridData.HORIZONTAL_ALIGN_FILL);
-        data.widthHint = Math.max(Dialog.convertHorizontalDLUsToPixels(fontMetrics, IDialogConstants.BUTTON_WIDTH), saveAsButton.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
-        saveAsButton.setLayoutData(data);
+        saveAsButton = createButton(container, "Save As...");
         saveAsButton.addSelectionListener(new SelectionAdapter() {
 
             @Override
@@ -628,11 +808,7 @@ public class FirmwarePackEditor {
             }
         });
 
-        saveButton = new Button(container, SWT.PUSH);
-        saveButton.setText("Save");
-        data = new GridData(GridData.HORIZONTAL_ALIGN_FILL);
-        data.widthHint = Math.max(Dialog.convertHorizontalDLUsToPixels(fontMetrics, IDialogConstants.BUTTON_WIDTH), saveButton.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
-        saveButton.setLayoutData(data);
+        saveButton = createButton(container, "Save");
         saveButton.addSelectionListener(new SelectionAdapter() {
 
             @Override
@@ -646,7 +822,16 @@ public class FirmwarePackEditor {
         container.setLayout(layout);
     }
 
-    protected boolean handleShellCloseEvent() {
+    Button createButton(Composite parent, String text) {
+        Button button = new Button(parent, SWT.PUSH);
+        button.setText(text);
+        GridData data = new GridData(GridData.HORIZONTAL_ALIGN_FILL);
+        data.widthHint = Math.max(Dialog.convertHorizontalDLUsToPixels(fontMetrics, IDialogConstants.BUTTON_WIDTH), button.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
+        button.setLayoutData(data);
+        return button;
+    }
+
+    protected boolean handleUnsavedContent() {
         if (dirty) {
             int style = SWT.APPLICATION_MODAL | SWT.ICON_QUESTION | SWT.YES | SWT.NO | SWT.CANCEL;
             MessageBox messageBox = new MessageBox(shell, style);
@@ -673,18 +858,18 @@ public class FirmwarePackEditor {
     }
 
     protected void doSave() {
-        File fileToSave;
+        File fileToSave = null;
 
-        String fileName = packFile.getText();
-        if (fileName.isBlank()) {
+        if (lruFile != null) {
+            fileToSave = lruFile.getFile();
+        }
+        if (fileToSave == null) {
             fileToSave = getFileToWrite(true);
         }
-        else {
-            fileToSave = new File(fileName);
-            if (fileToSave.exists() && !fileToSave.getAbsolutePath().equals(packFileName)) {
-
-            }
+        if (fileToSave == null) {
+            return;
         }
+
         try {
             ObjectMapper mapper = new ObjectMapper();
             mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
@@ -692,10 +877,13 @@ public class FirmwarePackEditor {
             mapper.setSerializationInclusion(Include.NON_DEFAULT);
             mapper.writeValue(fileToSave, pack);
 
-            preferences.addToPackageLru(fileToSave);
+            if (lruFile == null || !fileToSave.equals(lruFile.getFile())) {
+                lruFile = new PackageFile(fileToSave);
+            }
+            preferences.addToPackageLru(lruFile);
 
-            packFile.setItems(preferences.getPackageLru().toArray(new String[0]));
-            packFile.select(0);
+            packFile.refresh();
+            packFile.setSelection(new StructuredSelection(lruFile), true);
 
             dirty = false;
             updateControls();
@@ -705,7 +893,25 @@ public class FirmwarePackEditor {
         }
     }
 
+    protected void doSaveBundle() {
+        File packageFile = lruFile.getFile();
+        File outDir = packageFile.getParentFile().getAbsoluteFile();
+
+        for (int i = 0; i < enableBundle.length; i++) {
+            if (enableBundle[i].getSelection()) {
+                try {
+                    exportBundle((String) enableBundle[i].getData("suffix"), outDir, pack);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        }
+    }
+
     File getFileToWrite(boolean overwrite) {
+        String filterPath = null;
+
         FileDialog dlg = new FileDialog(shell, SWT.OPEN | SWT.SAVE);
         dlg.setText("Open Firmware File");
         dlg.setFilterNames(filterNames);
@@ -713,12 +919,8 @@ public class FirmwarePackEditor {
         dlg.setFilterIndex(0);
         dlg.setOverwrite(overwrite);
 
-        String filterPath = packFile.getText();
-        if (!filterPath.isBlank()) {
-            File file = new File(filterPath).getAbsoluteFile().getParentFile();
-            if (file != null) {
-                filterPath = file.getAbsolutePath();
-            }
+        if (lruFile != null) {
+            filterPath = lruFile.getFile().getParentFile().getAbsolutePath();
         }
         if (filterPath == null) {
             filterPath = appDir;
@@ -751,8 +953,10 @@ public class FirmwarePackEditor {
             moveDown.setEnabled(index != -1 && index < (pack.getFirmwareList().size() - 1));
         }
 
-        saveButton.setEnabled(pack.getFirmwareList().size() != 0 && dirty);
-        saveAsButton.setEnabled(pack.getFirmwareList().size() != 0 && (dirty || packFile.getSelectionIndex() != -1));
+        exportBundleButton.setEnabled(pack.getFirmwareList().size() != 0 && lruFile != null);
+
+        saveButton.setEnabled(pack.getFirmwareList().size() != 0 && lruFile != null);
+        saveAsButton.setEnabled(pack.getFirmwareList().size() != 0 && lruFile != null);
     }
 
     protected int convertHorizontalDLUsToPixels(int dlus) {
@@ -871,6 +1075,102 @@ public class FirmwarePackEditor {
         }
     }
 
+    void exportBundle(String suffix, File outDir, FirmwarePack pack) throws StreamWriteException, DatabindException, IOException {
+        byte[] data = getBinary(pack);
+
+        File bundlesPath = new File(appDir, "loaders");
+        File[] files = bundlesPath.listFiles(new FilenameFilter() {
+
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.startsWith(BUNDLE_PREFIX_NAME) && name.endsWith(suffix);
+            }
+
+        });
+        if (files.length == 0) {
+            return;
+        }
+        File inFile = files[0];
+
+        File outFile = new File(outDir, inFile.getName());
+        if (outFile.exists()) {
+            outFile.delete();
+        }
+
+        if (inFile.getName().endsWith(".zip")) {
+            exportZipBundle(inFile, outFile, data);
+        }
+        else {
+            exportTarBundle(inFile, outFile, data);
+        }
+    }
+
+    void exportTarBundle(File inFile, File outFile, byte[] data) throws StreamWriteException, DatabindException, IOException {
+        if (outFile.exists()) {
+            outFile.delete();
+        }
+
+        TarArchiveInputStream is = new TarArchiveInputStream(new GzipCompressorInputStream(new FileInputStream(inFile)));
+        TarArchiveOutputStream os = new TarArchiveOutputStream(new GzipCompressorOutputStream(new FileOutputStream(outFile)));
+        os.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
+
+        is.forEach((action) -> {
+            os.putArchiveEntry(action);
+            IOUtils.copy(is, os);
+            os.closeArchiveEntry();
+        });
+
+        TarArchiveEntry entry = new TarArchiveEntry(FIRMWARE_ENTRY_NAME);
+        entry.setModTime(new Date());
+        entry.setSize(data.length);
+
+        os.putArchiveEntry(entry);
+        os.write(data);
+        os.closeArchiveEntry();
+
+        os.close();
+        is.close();
+    }
+
+    void exportZipBundle(File inFile, File outFile, byte[] data) throws StreamWriteException, DatabindException, IOException {
+        if (outFile.exists()) {
+            outFile.delete();
+        }
+
+        ZipArchiveInputStream is = new ZipArchiveInputStream(new FileInputStream(inFile));
+        ZipArchiveOutputStream os = new ZipArchiveOutputStream(new FileOutputStream(outFile));
+
+        is.forEach((action) -> {
+            os.putArchiveEntry(action);
+            IOUtils.copy(is, os);
+            os.closeArchiveEntry();
+        });
+
+        ZipArchiveEntry entry = new ZipArchiveEntry(FIRMWARE_ENTRY_NAME);
+        entry.setLastModifiedTime(FileTime.from(Instant.now()));
+        entry.setSize(data.length);
+
+        os.putArchiveEntry(entry);
+        os.write(data);
+        os.closeArchiveEntry();
+
+        os.close();
+        is.close();
+    }
+
+    byte[] getBinary(FirmwarePack pack) throws StreamWriteException, DatabindException, IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+        mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
+        mapper.setSerializationInclusion(Include.NON_DEFAULT);
+
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        mapper.writeValue(os, pack);
+        os.close();
+
+        return os.toByteArray();
+    }
+
     public static void main(String[] args) {
         final Display display = new Display();
 
@@ -897,11 +1197,11 @@ public class FirmwarePackEditor {
             public void run() {
                 try {
                     Preferences preferences = new Preferences();
-                    preferences.addToPackageLru(new File("/home/marco/workspace/spin-tools-ide/spin-tools", "firmware.json"));
-                    preferences.addToPackageLru(new File("/home/marco/workspace/spin-tools-ide/spin-tools", "firmware-2025.01.25.json"));
-                    preferences.addToPackageLru(new File("/home/marco/workspace/propeller-firmware-loader", "firmware-pack.json"));
+                    //preferences.addToPackageLru(new File("/home/marco/workspace/spin-tools-ide/spin-tools", "firmware.json"));
+                    //preferences.addToPackageLru(new File("/home/marco/workspace/spin-tools-ide/spin-tools", "firmware-2025.01.25.json"));
+                    //preferences.addToPackageLru(new File("/home/marco/workspace/propeller-firmware-loader", "firmware-pack.json"));
 
-                    FirmwarePackEditor serialTerminal = new FirmwarePackEditor(null, preferences);
+                    FirmwarePackDialog serialTerminal = new FirmwarePackDialog(null, preferences);
                     serialTerminal.open();
 
                 } catch (Exception e) {

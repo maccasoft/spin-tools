@@ -18,9 +18,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import org.eclipse.swt.graphics.Rectangle;
 
@@ -242,7 +245,7 @@ public class Preferences {
 
         public RemoteDevice[] remoteDevices;
 
-        public List<String> packageLru;
+        public List<PackageFile> packageLru;
 
     }
 
@@ -524,6 +527,47 @@ public class Preferences {
             }
             sb.append(")");
             return sb.toString();
+        }
+
+    }
+
+    @JsonInclude(Include.NON_DEFAULT)
+    public static class PackageFile {
+
+        public String file;
+        public Set<String> bundles = new HashSet<>();
+
+        public PackageFile() {
+
+        }
+
+        public PackageFile(File file) {
+            this.file = file.getAbsolutePath();
+        }
+
+        public File getFile() {
+            return file != null ? new File(file) : null;
+        }
+
+        public void setFile(File file) {
+            this.file = file.getAbsolutePath();
+        }
+
+        public void setBundleEnabled(String id, boolean enabled) {
+            if (enabled) {
+                bundles.add(id);
+            }
+            else {
+                bundles.remove(id);
+            }
+        }
+
+        public boolean getBundleEnabled(String id) {
+            return bundles.contains(id);
+        }
+
+        public boolean hasBundlesEnabled() {
+            return bundles.size() != 0;
         }
 
     }
@@ -1165,13 +1209,20 @@ public class Preferences {
         changeSupport.firePropertyChange(PROP_EXTERNAL_TOOLS, preferences.remoteDevices, preferences.remoteDevices = remoteDevices.length != 0 ? remoteDevices : null);
     }
 
-    public List<String> getPackageLru() {
+    public List<PackageFile> getPackageLru() {
         return preferences.packageLru;
     }
 
-    public void addToPackageLru(File file) {
-        preferences.packageLru.remove(file.getAbsolutePath());
-        preferences.packageLru.add(0, file.getAbsolutePath());
+    public void addToPackageLru(PackageFile file) {
+        Iterator<PackageFile> iter = preferences.packageLru.iterator();
+        while (iter.hasNext()) {
+            PackageFile lru = iter.next();
+            if (lru.getFile().equals(file.getFile())) {
+                iter.remove();
+                break;
+            }
+        }
+        preferences.packageLru.add(0, file);
         while (preferences.packageLru.size() > 10) {
             preferences.packageLru.remove(preferences.packageLru.size() - 1);
         }

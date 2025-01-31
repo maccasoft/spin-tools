@@ -95,6 +95,7 @@ import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 
 import com.maccasoft.propeller.Preferences.ExternalTool;
+import com.maccasoft.propeller.Preferences.PackageFile;
 import com.maccasoft.propeller.Preferences.SearchPreferences;
 import com.maccasoft.propeller.devices.ComPort;
 import com.maccasoft.propeller.devices.ComPortException;
@@ -201,7 +202,7 @@ public class SpinTools {
                     }
                 }
                 else if (name.endsWith(".json")) {
-                    FirmwarePackEditor dlg = new FirmwarePackEditor(shell, preferences);
+                    FirmwarePackDialog dlg = new FirmwarePackDialog(shell, preferences);
                     dlg.open(fileToOpen);
                 }
                 else {
@@ -1099,8 +1100,8 @@ public class SpinTools {
     void populateOpenFromMenu(Menu menu) {
         List<String> list = new ArrayList<String>();
         List<String> defaultList = Arrays.asList(new String[] {
-            new File(System.getProperty("APP_DIR"), "examples/P1").getAbsolutePath(),
-            new File(System.getProperty("APP_DIR"), "examples/P2").getAbsolutePath(),
+            defaultSpin1Examples.getAbsolutePath(),
+            defaultSpin2Examples.getAbsolutePath(),
             Preferences.defaultSpin1LibraryPath.getAbsolutePath(),
             Preferences.defaultSpin2LibraryPath.getAbsolutePath()
         });
@@ -1198,8 +1199,8 @@ public class SpinTools {
     void populateSaveToMenu(Menu menu) {
         List<String> list = new ArrayList<String>();
         List<String> defaultList = Arrays.asList(new String[] {
-            new File(System.getProperty("APP_DIR"), "examples/P1").getAbsolutePath(),
-            new File(System.getProperty("APP_DIR"), "examples/P2").getAbsolutePath(),
+            defaultSpin1Examples.getAbsolutePath(),
+            defaultSpin1Examples.getAbsolutePath(),
             Preferences.defaultSpin1LibraryPath.getAbsolutePath(),
             Preferences.defaultSpin2LibraryPath.getAbsolutePath()
         });
@@ -2821,17 +2822,7 @@ public class SpinTools {
         new MenuItem(menu, SWT.SEPARATOR);
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Export to Firmware Pack...");
-        item.addListener(SWT.Selection, new Listener() {
-
-            @Override
-            public void handleEvent(Event e) {
-                handleExportToFirmwarePack();
-            }
-        });
-
-        item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Firmware Pack Editor...");
+        item.setText("Show Firmware Packages...");
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -3165,71 +3156,16 @@ public class SpinTools {
         }
     }
 
-    private void handleExportToFirmwarePack() {
-        EditorTab editorTab = getTargetObjectEditorTab();
-        if (editorTab == null) {
-            return;
-        }
-        editorTab.waitCompile();
-        if (editorTab.hasErrors()) {
-            MessageDialog.openError(shell, APP_TITLE, "Program has errors.");
-            editorTab.goToFirstError();
-            return;
-        }
-
-        SpinObject obj = editorTab.getObject();
-        if (obj == null) {
-            return;
-        }
-
-        boolean isDebug = (obj instanceof Spin2Object) && ((Spin2Object) obj).getDebugger() != null;
-        if (isDebug) {
-            editorTab.runCompile(false);
-            if (editorTab.hasErrors()) {
-                MessageDialog.openError(shell, APP_TITLE, "Program has errors.");
-                editorTab.goToFirstError();
-                return;
-            }
-            obj = editorTab.getObject();
-        }
-
-        if (obj instanceof Spin2Object) {
-            ((Spin2Object) obj).setClockSetter(preferences.getSpin2ClockSetter());
-            ((Spin2Object) obj).setCompress(preferences.getSpin2Compress());
-        }
-
-        try {
-            File localFile = editorTab.getFile() != null ? editorTab.getFile().getAbsoluteFile() : new File(editorTab.getText()).getAbsoluteFile();
-            String fileName = handleBrowseFirmwarePack(localFile.getParentFile().getAbsolutePath());
-            if (fileName != null) {
-                String name = editorTab.getText();
-                if (name.indexOf('.') != -1) {
-                    name = name.substring(0, name.lastIndexOf('.'));
-                }
-                Firmware firmware = new Firmware((obj instanceof Spin2Object) ? 2 : 1, obj.getBinary(), name);
-
-                FirmwarePackEditor editor = new FirmwarePackEditor(shell, preferences);
-                editor.create();
-                editor.loadFromFile(new File(fileName).getAbsoluteFile());
-                editor.addFirmare(firmware);
-                editor.open();
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-    }
-
     String handleBrowseFirmwarePack(String filterPath) {
         FileDialog dlg = new FileDialog(shell, SWT.SAVE);
         dlg.setText("Open Firmware Pack");
-        dlg.setFilterNames(FirmwarePackEditor.filterNames);
-        dlg.setFilterExtensions(FirmwarePackEditor.filterExtensions);
+        dlg.setFilterNames(FirmwarePackDialog.filterNames);
+        dlg.setFilterExtensions(FirmwarePackDialog.filterExtensions);
         dlg.setFilterIndex(0);
 
         if (preferences.getPackageLru().size() != 0) {
-            filterPath = preferences.getPackageLru().get(0);
+            PackageFile lruFile = preferences.getPackageLru().get(0);
+            filterPath = lruFile.getFile().getAbsolutePath();
         }
 
         if (filterPath != null && !filterPath.isBlank()) {
@@ -3531,7 +3467,7 @@ public class SpinTools {
     }
 
     private void handleFirmwarePack() {
-        FirmwarePackEditor dlg = new FirmwarePackEditor(shell, preferences);
+        FirmwarePackDialog dlg = new FirmwarePackDialog(shell, preferences);
         dlg.open();
     }
 

@@ -54,6 +54,7 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.ScrollBar;
 import org.eclipse.swt.widgets.Shell;
 
+import com.maccasoft.propeller.Preferences.PackageFile;
 import com.maccasoft.propeller.internal.ColorRegistry;
 import com.maccasoft.propeller.spin2.Spin2Object;
 
@@ -256,6 +257,7 @@ public class P2MemoryDialog extends Dialog {
         createButton(parent, IDialogConstants.CLIENT_ID + 1, "Save Binary", false);
         createButton(parent, IDialogConstants.CLIENT_ID + 2, "Save Flash Binary", false);
         createButton(parent, IDialogConstants.CLIENT_ID + 3, "Save Listing", false);
+        createButton(parent, IDialogConstants.CLIENT_ID + 4, "Save Package", false);
         super.createButtonsForButtonBar(parent);
     }
 
@@ -811,17 +813,19 @@ public class P2MemoryDialog extends Dialog {
 
     @Override
     protected void buttonPressed(int buttonId) {
-        if (buttonId == IDialogConstants.CLIENT_ID + 1) {
-            doSaveBinary();
-            return;
-        }
-        if (buttonId == IDialogConstants.CLIENT_ID + 2) {
-            doSaveFlashBinary();
-            return;
-        }
-        if (buttonId == IDialogConstants.CLIENT_ID + 3) {
-            doSaveListing();
-            return;
+        switch (buttonId) {
+            case IDialogConstants.CLIENT_ID + 1:
+                doSaveBinary();
+                return;
+            case IDialogConstants.CLIENT_ID + 2:
+                doSaveFlashBinary();
+                return;
+            case IDialogConstants.CLIENT_ID + 3:
+                doSaveListing();
+                return;
+            case IDialogConstants.CLIENT_ID + 4:
+                doSaveFirmwarePackage();
+                return;
         }
         super.buttonPressed(buttonId);
     }
@@ -911,6 +915,60 @@ public class P2MemoryDialog extends Dialog {
         }
 
         return null;
+    }
+
+    private void doSaveFirmwarePackage() {
+        String[] filterNames = new String[] {
+            "Firmware Packs",
+        };
+        String[] filterExtensions = new String[] {
+            "*.json",
+        };
+        Preferences preferences = Preferences.getInstance();
+
+        String baseName = tree.getName();
+        baseName = baseName.substring(0, baseName.lastIndexOf('.'));
+
+        FileDialog dlg = new FileDialog(getShell(), SWT.SAVE);
+        dlg.setOverwrite(false);
+        dlg.setText("Save Firmware Package");
+        dlg.setFilterNames(filterNames);
+        dlg.setFilterExtensions(filterExtensions);
+
+        dlg.setFileName(baseName + ".json");
+
+        List<PackageFile> lru = preferences.getPackageLru();
+
+        File filterPath = null;
+        if (lru.size() != 0) {
+            filterPath = lru.get(0).getFile();
+        }
+        if (filterPath == null) {
+            filterPath = tree.getFile();
+        }
+        if (filterPath != null) {
+            dlg.setFilterPath(filterPath.getParent());
+        }
+
+        String fileName = dlg.open();
+        if (fileName != null) {
+            if (fileName.indexOf('.') == -1) {
+                fileName += ".json";
+            }
+            File fileToSave = new File(fileName);
+            try {
+                Firmware firmware = new Firmware(2, object.getBinary(), baseName);
+
+                FirmwarePackDialog editor = new FirmwarePackDialog(getShell(), preferences);
+                editor.create();
+                editor.loadFromFile(fileToSave.getAbsoluteFile());
+                editor.addFirmare(firmware);
+                editor.open();
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -19,6 +19,14 @@ import java.io.InputStream;
 public class FileUtils {
 
     static final String EOL_PATTERN = "\\r\\n|\\r|\\n";
+
+    public static File getAppDir() {
+        String appDir = System.getenv("APP_DIR");
+        if (appDir == null) {
+            return new File("").getAbsoluteFile();
+        }
+        return new File(appDir).getAbsoluteFile();
+    }
 
     public static String loadFromFile(File file) throws IOException {
         FileInputStream is = new FileInputStream(file);
