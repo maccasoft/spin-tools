@@ -25,18 +25,18 @@
             <excludes>
                 <exclude>**/*.binary</exclude>
             </excludes>
-            <outputDirectory>MacOS/examples</outputDirectory>
+            <outputDirectory>examples</outputDirectory>
         </fileSet>
         <fileSet>
             <directory>library</directory>
             <excludes>
                 <exclude>**/*.binary</exclude>
             </excludes>
-            <outputDirectory>MacOS/library</outputDirectory>
+            <outputDirectory>library</outputDirectory>
         </fileSet>
         <fileSet>
             <directory>runtime/target/maven-jlink/default</directory>
-            <outputDirectory>MacOS/java</outputDirectory>
+            <outputDirectory>Spin Tools IDE.app/Contents/Java</outputDirectory>
         </fileSet>
     </fileSets>
 </assembly>
