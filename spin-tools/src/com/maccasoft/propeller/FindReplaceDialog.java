@@ -495,6 +495,13 @@ public class FindReplaceDialog extends Dialog {
         }
         gd.verticalAlignment = verticalAlignment;
         gd.grabExcessVerticalSpace = grabExcessVerticalSpace;
+        if (component instanceof Button && (((Button) component).getStyle() & (SWT.RADIO | SWT.CHECK)) != 0) {
+            String theme = System.getProperty("org.eclipse.swt.internal.gtk.theme");
+            if (theme != null && theme.startsWith("Breeze")) {
+                //gd.horizontalIndent = -4;
+                gd.widthHint = component.computeSize(SWT.DEFAULT, SWT.DEFAULT).x + 8;
+            }
+        }
     }
 
     private void setButtonDimensionHint(Button button) {

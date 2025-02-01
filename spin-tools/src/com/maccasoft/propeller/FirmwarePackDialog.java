@@ -639,8 +639,7 @@ public class FirmwarePackDialog {
         group.setLayout(layout);
         group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false, 2, 1));
 
-        enableLocal = new Button(group, SWT.CHECK);
-        enableLocal.setText("Local");
+        enableLocal = createRadioOrCheckButton(group, "Local", SWT.CHECK);
         enableLocal.setSelection(pack.isEnableLocal());
         enableLocal.addSelectionListener(new SelectionAdapter() {
 
@@ -652,8 +651,7 @@ public class FirmwarePackDialog {
             }
 
         });
-        enableNetwork = new Button(group, SWT.CHECK);
-        enableNetwork.setText("Network");
+        enableNetwork = createRadioOrCheckButton(group, "Network", SWT.CHECK);
         enableNetwork.setSelection(pack.isEnableNetwork());
         enableNetwork.addSelectionListener(new SelectionAdapter() {
 
@@ -692,40 +690,35 @@ public class FirmwarePackDialog {
 
         };
 
-        enableBundle[i] = new Button(group, SWT.CHECK);
-        enableBundle[i].setText("Linux (x86_64)");
+        enableBundle[i] = createRadioOrCheckButton(group, "Linux (x86_64)", SWT.CHECK);
         enableBundle[i].setData("id", "linux-x86_64");
         enableBundle[i].setData("suffix", "-linux-x86_64.tar.gz");
         enableBundle[i].setEnabled(bundleExists((String) enableBundle[i].getData("suffix")));
         enableBundle[i].addSelectionListener(listener);
         i++;
 
-        enableBundle[i] = new Button(group, SWT.CHECK);
-        enableBundle[i].setText("Linux (aarch64)");
+        enableBundle[i] = createRadioOrCheckButton(group, "Linux (aarch64)", SWT.CHECK);
         enableBundle[i].setData("id", "linux-aarch64");
         enableBundle[i].setData("suffix", "-linux-aarch64.tar.gz");
         enableBundle[i].setEnabled(bundleExists((String) enableBundle[i].getData("suffix")));
         enableBundle[i].addSelectionListener(listener);
         i++;
 
-        enableBundle[i] = new Button(group, SWT.CHECK);
-        enableBundle[i].setText("Windows (x86_64)");
+        enableBundle[i] = createRadioOrCheckButton(group, "Windows (x86_64)", SWT.CHECK);
         enableBundle[i].setData("id", "windows-x86_64");
         enableBundle[i].setData("suffix", "-windows-x86_64.zip");
         enableBundle[i].setEnabled(bundleExists((String) enableBundle[i].getData("suffix")));
         enableBundle[i].addSelectionListener(listener);
         i++;
 
-        enableBundle[i] = new Button(group, SWT.CHECK);
-        enableBundle[i].setText("MacOS (x86_64)");
+        enableBundle[i] = createRadioOrCheckButton(group, "MacOS (x86_64)", SWT.CHECK);
         enableBundle[i].setData("id", "macos-x86_64");
         enableBundle[i].setData("suffix", "-macos-x86_64.tar.gz");
         enableBundle[i].setEnabled(bundleExists((String) enableBundle[i].getData("suffix")));
         enableBundle[i].addSelectionListener(listener);
         i++;
 
-        enableBundle[i] = new Button(group, SWT.CHECK);
-        enableBundle[i].setText("MacOS (aarch64)");
+        enableBundle[i] = createRadioOrCheckButton(group, "MacOS (aarch64)", SWT.CHECK);
         enableBundle[i].setData("id", "macos-aarch64");
         enableBundle[i].setData("suffix", "-macos-aarch64.tar.gz");
         enableBundle[i].setEnabled(bundleExists((String) enableBundle[i].getData("suffix")));
@@ -1169,6 +1162,21 @@ public class FirmwarePackDialog {
         os.close();
 
         return os.toByteArray();
+    }
+
+    Button createRadioOrCheckButton(Composite parent, String text, int style) {
+        Button button = new Button(parent, style);
+        button.setText(text);
+
+        GridData gridData = new GridData(SWT.FILL, SWT.CENTER, false, false);
+        String theme = System.getProperty("org.eclipse.swt.internal.gtk.theme");
+        if (theme != null && theme.startsWith("Breeze")) {
+            //gridData.horizontalIndent = -4;
+            gridData.widthHint = button.computeSize(SWT.DEFAULT, SWT.DEFAULT).x + 8;
+        }
+        button.setLayoutData(gridData);
+
+        return button;
     }
 
     public static void main(String[] args) {
