@@ -21,7 +21,7 @@ else
 	UNAME_P := $(shell uname -p)
 	ifeq ($(UNAME_S),Linux)
 		CXXFLAGS += -I "$(JAVA_HOME)/include/linux"
-		SPINIDE_OBJS += spinide32.o spinide48.o spinide64.o
+		SPINIDE_OBJS += spinide16.o spinide32.o spinide48.o spinide64.o
 	endif
 	ifeq ($(UNAME_S),Darwin)
 		ifeq ($(UNAME_P),x86_64)
