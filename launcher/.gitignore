@@ -1,0 +1,10 @@
+/.settings/
+/*.o
+/*.res
+/spinide
+/spinide.exe
+/spinc
+/spinc.exe
+/target/
+/java/
+/lib/

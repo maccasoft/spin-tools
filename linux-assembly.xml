@@ -12,16 +12,9 @@
         </dependencySet>
     </dependencySets>
     <files>
-        <file><source>launcher/spinide16.png</source><outputDirectory>lib</outputDirectory></file>
-        <file><source>launcher/spinide32.png</source><outputDirectory>lib</outputDirectory></file>
-        <file><source>launcher/spinide48.png</source><outputDirectory>lib</outputDirectory></file>
-        <file><source>launcher/spinide64.png</source><outputDirectory>lib</outputDirectory></file>
-        <file><source>launcher/desktop.template</source><outputDirectory>lib</outputDirectory></file>
-        <file><source>launcher/spinc.linux</source><destName>spinc</destName><fileMode>755</fileMode></file>
-        <file><source>launcher/spinide.linux</source><destName>spinide</destName><fileMode>755</fileMode></file>
-        <file><source>launcher/spinide.png</source></file>
-        <file><source>launcher/install.sh</source><fileMode>755</fileMode></file>
-        <file><source>launcher/uninstall.sh</source><fileMode>755</fileMode></file>
+        <file><source>launcher/spinc</source><fileMode>755</fileMode></file>
+        <file><source>launcher/spinide</source><fileMode>755</fileMode></file>
+        <file><source>launcher/spinide48.png</source><destName>spinide.png</destName></file>
         <file><source>LICENSE</source></file>
     </files>
     <fileSets>

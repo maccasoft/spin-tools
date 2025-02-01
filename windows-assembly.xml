@@ -12,8 +12,8 @@
         </dependencySet>
     </dependencySets>
     <files>
-        <file><source>target/spinc.exe</source></file>
-        <file><source>target/spinide.exe</source></file>
+        <file><source>launcher/spinc.exe</source></file>
+        <file><source>launcher/spinide.exe</source></file>
         <file><source>LICENSE</source></file>
     </files>
     <fileSets>
