@@ -2822,7 +2822,7 @@ public class SpinTools {
         new MenuItem(menu, SWT.SEPARATOR);
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Show Firmware Packages...");
+        item.setText("Firmware Packages...");
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
