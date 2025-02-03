@@ -541,6 +541,11 @@ public class Preferences {
 
         }
 
+        public PackageFile(File file, Set<String> bundles) {
+            this.file = file.getAbsolutePath();
+            this.bundles.addAll(bundles);
+        }
+
         public PackageFile(File file) {
             this.file = file.getAbsolutePath();
         }
@@ -551,6 +556,10 @@ public class Preferences {
 
         public void setFile(File file) {
             this.file = file.getAbsolutePath();
+        }
+
+        public Set<String> getBundles() {
+            return bundles;
         }
 
         public void setBundleEnabled(String id, boolean enabled) {

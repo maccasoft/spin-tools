@@ -797,7 +797,7 @@ public class FirmwarePackDialog {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
-                doSave();
+                doSaveAs();
             }
         });
 
@@ -870,13 +870,58 @@ public class FirmwarePackDialog {
             mapper.setSerializationInclusion(Include.NON_DEFAULT);
             mapper.writeValue(fileToSave, pack);
 
-            if (lruFile == null || !fileToSave.equals(lruFile.getFile())) {
+            if (lruFile == null) {
                 lruFile = new PackageFile(fileToSave);
+            }
+            else if (!fileToSave.equals(lruFile.getFile())) {
+                lruFile = new PackageFile(fileToSave, lruFile.getBundles());
             }
             preferences.addToPackageLru(lruFile);
 
-            packFile.refresh();
-            packFile.setSelection(new StructuredSelection(lruFile), true);
+            try {
+                packFile.removeSelectionChangedListener(packFileSelectionListener);
+                packFile.refresh();
+                packFile.setSelection(new StructuredSelection(lruFile), true);
+            } finally {
+                packFile.addSelectionChangedListener(packFileSelectionListener);
+            }
+
+            dirty = false;
+            updateControls();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    protected void doSaveAs() {
+        File fileToSave = getFileToWrite(true);
+        if (fileToSave == null) {
+            return;
+        }
+
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+            mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
+            mapper.setSerializationInclusion(Include.NON_DEFAULT);
+            mapper.writeValue(fileToSave, pack);
+
+            if (lruFile == null) {
+                lruFile = new PackageFile(fileToSave);
+            }
+            else if (!fileToSave.equals(lruFile.getFile())) {
+                lruFile = new PackageFile(fileToSave, lruFile.getBundles());
+            }
+            preferences.addToPackageLru(lruFile);
+
+            try {
+                packFile.removeSelectionChangedListener(packFileSelectionListener);
+                packFile.refresh();
+                packFile.setSelection(new StructuredSelection(lruFile), true);
+            } finally {
+                packFile.addSelectionChangedListener(packFileSelectionListener);
+            }
 
             dirty = false;
             updateControls();
@@ -914,6 +959,7 @@ public class FirmwarePackDialog {
 
         if (lruFile != null) {
             filterPath = lruFile.getFile().getParentFile().getAbsolutePath();
+            dlg.setFileName(lruFile.getFile().getName());
         }
         if (filterPath == null) {
             filterPath = appDir;
