@@ -79,6 +79,10 @@ public abstract class DebugWindow {
 
     protected CircularBuffer transmitBuffer;
 
+    Point origin;
+    int xDirection;
+    int yDirection;
+
     int keyPress;
     int mousePack;
     int mousePixel;
@@ -116,8 +120,12 @@ public abstract class DebugWindow {
 
     public DebugWindow(CircularBuffer transmitBuffer) {
         this.transmitBuffer = transmitBuffer;
+
         imageSize = new Point(256, 256);
         dotSize = new Point(1, 1);
+
+        xDirection = 0;
+        yDirection = 0;
     }
 
     public void open() {
@@ -207,8 +215,8 @@ public abstract class DebugWindow {
 
             @Override
             public void mouseMove(MouseEvent e) {
-                mousePack = mouseX.setValue(mousePack, e.x);
-                mousePack = mouseY.setValue(mousePack, imageSize.y - e.y);
+                mousePack = mouseX.setValue(mousePack, xDirection == 0 ? origin.x + e.x : imageSize.x - (origin.x + e.x));
+                mousePack = mouseY.setValue(mousePack, yDirection == 0 ? imageSize.y - (origin.y + e.y) : origin.y + e.y);
             }
 
         });

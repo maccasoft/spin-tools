@@ -39,7 +39,6 @@ public class DebugPlotWindow extends DebugWindow {
 
     int x;
     int y;
-    Point origin;
 
     Color color;
     Color textColor;
@@ -59,8 +58,6 @@ public class DebugPlotWindow extends DebugWindow {
     boolean polar;
     long twoPi;
     int theta;
-    int cartesianX;
-    int cartesianY;
 
     Sprite[] sprites;
 
@@ -112,8 +109,6 @@ public class DebugPlotWindow extends DebugWindow {
         polar = false;
         twoPi = 0x100000000L;
         theta = 0;
-        cartesianX = 0;
-        cartesianY = 0;
 
         sprites = new Sprite[256];
 
@@ -393,8 +388,8 @@ public class DebugPlotWindow extends DebugWindow {
                                 newX = pt.x;
                                 newY = pt.y;
                             }
-                            x = cartesianX == 0 ? origin.x + newX : imageSize.x - (origin.x + newX);
-                            y = cartesianY == 0 ? imageSize.y - (origin.y + newY) : origin.y + newY;
+                            x = xDirection == 0 ? origin.x + newX : imageSize.x - (origin.x + newX);
+                            y = yDirection == 0 ? imageSize.y - (origin.y + newY) : origin.y + newY;
                         }
                     }
                     break;
@@ -427,8 +422,8 @@ public class DebugPlotWindow extends DebugWindow {
                                 newX = pt.x;
                                 newY = pt.y;
                             }
-                            int dx = origin.x + newX;
-                            int dy = imageSize.y - (origin.y + newY);
+                            int dx = xDirection == 0 ? origin.x + newX : imageSize.x - (origin.x + newX);
+                            int dy = yDirection == 0 ? imageSize.y - (origin.y + newY) : origin.y + newY;
                             int size = iter.hasNextNumber() ? iter.nextNumber() : lineSize;
                             line(dx, dy, size, color);
                             if (autoUpdate) {
@@ -617,11 +612,11 @@ public class DebugPlotWindow extends DebugWindow {
 
                 case "CARTESIAN":
                     polar = false;
-                    cartesianY = cartesianX = 0;
+                    yDirection = xDirection = 0;
                     if (iter.hasNextNumber()) {
-                        cartesianY = iter.nextNumber() == 0 ? 0 : 1;
+                        yDirection = iter.nextNumber() == 0 ? 0 : 1;
                         if (iter.hasNextNumber()) {
-                            cartesianX = iter.nextNumber() == 0 ? 0 : 1;
+                            xDirection = iter.nextNumber() == 0 ? 0 : 1;
                         }
                     }
                     break;
