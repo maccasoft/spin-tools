@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -991,6 +991,89 @@ class Spin2DebugTest {
             + "00B7E 0000A       05             CHAR\n"
             + "00B7F 0000B       00             DONE\n"
             + "", compile(text));
+    }
+
+    @Test
+    void testBacktickStringConcatenation() throws Exception {
+        String text = ""
+            + "PUB main() | a, b, c\n"
+            + "\n"
+            + "    debug(`test a=`(a), b=`(b), c=`(c))\n"
+            + "    debug(`test `(a)+`(b)*`(c))\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       16 00 00 00    End\n"
+            + "' PUB main() | a, b, c\n"
+            + "00008 00008       03             (stack size)\n"
+            + "'     debug(`test a=`(a), b=`(b), c=`(c))\n"
+            + "00009 00009       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000A 0000A       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "0000B 0000B       E2             VAR_READ LONG DBASE+$00002 (short)\n"
+            + "0000C 0000C       41 0C 01       DEBUG #1\n"
+            + "'     debug(`test `(a)+`(b)*`(c))\n"
+            + "0000F 0000F       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00010 00010       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "00011 00011       E2             VAR_READ LONG DBASE+$00002 (short)\n"
+            + "00012 00012       41 0C 02       DEBUG #2\n"
+            + "00015 00015       04             RETURN\n"
+            + "00016 00016       00 00          Padding\n"
+            + "' Debug data\n"
+            + "00B74 00000       32 00         \n"
+            + "00B76 00002       06 00         \n"
+            + "00B78 00004       20 00         \n"
+            + "' #1\n"
+            + "00B7A 00006       06 60 74 65 73 STRING (`test a=)\n"
+            + "00B7F 0000B       74 20 61 3D 00\n"
+            + "00B84 00010       63             SDEC\n"
+            + "00B85 00011       06 2C 20 62 3D STRING (, b=)\n"
+            + "00B8A 00016       00\n"
+            + "00B8B 00017       63             SDEC\n"
+            + "00B8C 00018       06 2C 20 63 3D STRING (, c=)\n"
+            + "00B91 0001D       00\n"
+            + "00B92 0001E       63             SDEC\n"
+            + "00B93 0001F       00             DONE\n"
+            + "' #2\n"
+            + "00B94 00020       06 60 74 65 73 STRING (`test )\n"
+            + "00B99 00025       74 20 00\n"
+            + "00B9C 00028       63             SDEC\n"
+            + "00B9D 00029       06 2B 00       STRING (+)\n"
+            + "00BA0 0002C       63             SDEC\n"
+            + "00BA1 0002D       06 2A 00       STRING (*)\n"
+            + "00BA4 00030       63             SDEC\n"
+            + "00BA5 00031       00             DONE\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testPAsmBacktickStringConcatenation() throws Exception {
+        Context context = new Context();
+        context.addSymbol("a", new NumberLiteral(1));
+        context.addSymbol("b", new NumberLiteral(2));
+        context.addSymbol("c", new NumberLiteral(3));
+
+        String text = "debug(`test a=`(a), b=`(b), c=`(c))";
+
+        Spin2PAsmDebugLine root = Spin2PAsmDebugLine.buildFrom(context, parseTokens(text));
+
+        Spin2Debug subject = new Spin2Debug();
+        String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
+        Assertions.assertEquals(""
+            + "00000 00000       01             ASMMODE\n"
+            + "00001 00001       06 60 74 65 73 STRING (`test a=)\n"
+            + "00006 00006       74 20 61 3D 00\n"
+            + "0000B 0000B       63 80 01       SDEC\n"
+            + "0000E 0000E       06 2C 20 62 3D STRING (, b=)\n"
+            + "00013 00013       00\n"
+            + "00014 00014       63 80 02       SDEC\n"
+            + "00017 00017       06 2C 20 63 3D STRING (, c=)\n"
+            + "0001C 0001C       00\n"
+            + "0001D 0001D       63 80 03       SDEC\n"
+            + "00020 00020       00             DONE\n"
+            + "", actual);
     }
 
     @Test

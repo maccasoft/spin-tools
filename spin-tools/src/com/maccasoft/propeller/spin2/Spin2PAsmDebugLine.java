@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -115,6 +115,7 @@ public class Spin2PAsmDebugLine {
     public static Spin2PAsmDebugLine buildFrom(Context context, List<Token> tokens) {
         int index = 0;
         int state = 0;
+        boolean isBacktickExpression = false;
         Spin2DebugCommand child = null;
         List<Token> list = null;
 
@@ -134,7 +135,6 @@ public class Spin2PAsmDebugLine {
             throw new CompilerException("expected '(' got '" + token.getText() + "'", token);
         }
 
-        boolean isBacktickExpression = false;
         while (index < tokens.size() - 1) {
             token = tokens.get(index++);
             switch (state) {
@@ -144,7 +144,7 @@ public class Spin2PAsmDebugLine {
                         if (token.getText().startsWith("`")) {
                             isBacktickExpression = true;
                         }
-                        else {
+                        if (!isBacktickExpression) {
                             state = 3;
                         }
                         break;

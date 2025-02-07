@@ -268,7 +268,7 @@ public class Spin2TreeBuilder {
     Spin2StatementNode parseLevel(Spin2StatementNode left, int level, boolean comma) {
         for (;;) {
             Token token = peek();
-            if (token == null) {
+            if (token == null || token.type == Token.STRING) {
                 return left;
             }
             if (",".equals(token.getText()) && !comma) {
@@ -342,6 +342,10 @@ public class Spin2TreeBuilder {
         Token token = peek();
         if (token == null) {
             throw new CompilerException("expecting operand", tokens.get(tokens.size() - 1));
+        }
+
+        if (token.type == Token.STRING) {
+            return new Spin2StatementNode(next());
         }
 
         if (unary.contains(token.getText().toUpperCase())) {
