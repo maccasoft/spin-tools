@@ -601,6 +601,7 @@ public class ConsoleView {
                 if (iter.hasNext()) {
                     String id = iter.next();
 
+                    window.setBaseDirectory(logFile.getParentFile());
                     window.create();
                     window.setText(id);
                     window.addDisposeListener(new DisposeListener() {

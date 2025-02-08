@@ -83,6 +83,8 @@ public abstract class DebugWindow {
     int xDirection;
     int yDirection;
 
+    File baseDirectory;
+
     int keyPress;
     int mousePack;
     int mousePixel;
@@ -126,6 +128,14 @@ public abstract class DebugWindow {
 
         xDirection = 0;
         yDirection = 0;
+    }
+
+    public File getBaseDirectory() {
+        return baseDirectory != null ? baseDirectory : new File("/home/marco/workspace/spin-tools-ide");
+    }
+
+    public void setBaseDirectory(File baseDirectory) {
+        this.baseDirectory = baseDirectory;
     }
 
     public void open() {

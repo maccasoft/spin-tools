@@ -10,6 +10,7 @@
 
 package com.maccasoft.propeller.debug;
 
+import java.io.File;
 import java.util.function.Consumer;
 
 import org.eclipse.core.databinding.observable.Realm;
@@ -26,6 +27,7 @@ import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
+import org.eclipse.swt.graphics.ImageLoader;
 import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.RGB;
@@ -60,6 +62,7 @@ public class DebugPlotWindow extends DebugWindow {
     int theta;
 
     Sprite[] sprites;
+    Image[] layer;
 
     boolean autoUpdate;
 
@@ -111,6 +114,7 @@ public class DebugPlotWindow extends DebugWindow {
         theta = 0;
 
         sprites = new Sprite[256];
+        layer = new Image[8];
 
         autoUpdate = true;
     }
@@ -212,6 +216,11 @@ public class DebugPlotWindow extends DebugWindow {
 
             @Override
             public void widgetDisposed(DisposeEvent e) {
+                for (int i = 0; i < layer.length; i++) {
+                    if (layer[i] != null) {
+                        layer[i].dispose();
+                    }
+                }
                 canvasImage.dispose();
                 imageGc.dispose();
                 image.dispose();
@@ -661,6 +670,80 @@ public class DebugPlotWindow extends DebugWindow {
 
                 case "PC_MOUSE":
                     sendMouse();
+                    break;
+
+                case "LAYER":
+                    if (iter.hasNextNumber()) {
+                        int id = iter.nextNumber();
+                        if (iter.hasNextString()) {
+                            String fileName = iter.nextString();
+                            File file = new File(getBaseDirectory(), fileName);
+                            if (file.exists() && id >= 0 && id < layer.length) {
+                                try {
+                                    ImageData[] imageData = new ImageLoader().load(file.getAbsolutePath());
+                                    if (imageData != null && imageData.length != 0) {
+                                        if (layer[id] != null) {
+                                            layer[id].dispose();
+                                            layer[id] = null;
+                                        }
+                                        layer[id] = new Image(display, imageData[0]);
+                                    }
+                                } catch (Exception e) {
+                                    // Do nothing
+                                }
+                            }
+                        }
+                    }
+                    break;
+
+                case "CROP":
+                    if (iter.hasNextNumber()) {
+                        int id = iter.nextNumber();
+                        if (iter.hasNext() && "AUTO".equalsIgnoreCase(iter.peekNext())) {
+                            iter.next();
+                            if (iter.hasNextNumber()) {
+                                int x = iter.nextNumber();
+                                if (iter.hasNextNumber()) {
+                                    int y = iter.nextNumber();
+                                    if (id >= 0 && id < layer.length && layer[id] != null) {
+                                        Rectangle rect = layer[id].getBounds();
+                                        while (y < imageSize.y) {
+                                            int x1 = x;
+                                            while (x1 < imageSize.x) {
+                                                imageGc.drawImage(layer[id], x1, y);
+                                                x1 += rect.width;
+                                            }
+                                            y += rect.height;
+                                        }
+                                    }
+                                }
+                            }
+                            break;
+                        }
+                        if (iter.hasNextNumber()) {
+                            int x0 = iter.nextNumber();
+                            if (iter.hasNextNumber()) {
+                                int y0 = iter.nextNumber();
+                                if (iter.hasNextNumber()) {
+                                    int width = iter.nextNumber() - x0;
+                                    if (iter.hasNextNumber()) {
+                                        int height = iter.nextNumber() - y0;
+
+                                        int x1 = iter.hasNextNumber() ? iter.nextNumber() : x0;
+                                        int y1 = iter.hasNextNumber() ? iter.nextNumber() : y0;
+
+                                        if (id >= 0 && id < layer.length && layer[id] != null) {
+                                            imageGc.drawImage(layer[id], x0, y0, width, height, x1, y1, width, height);
+                                        }
+                                    }
+                                }
+                            }
+                            break;
+                        }
+                        if (layer[id] != null) {
+                            imageGc.drawImage(layer[id], 0, 0);
+                        }
+                    }
                     break;
             }
         }
