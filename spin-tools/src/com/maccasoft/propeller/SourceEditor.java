@@ -1988,13 +1988,14 @@ public class SourceEditor {
         else if (node instanceof ObjectNode) {
             proposals.addAll(helpProvider.fillSourceProposals(filterText));
         }
+        else if (node instanceof VariablesNode) {
+            proposals.addAll(tokenMarker.getTypeProposals(node, filterText));
+        }
         else if (node instanceof VariableNode) {
-            if (tokenMarker instanceof CTokenMarker) {
-                VariableNode line = (VariableNode) node;
-                position = styledText.getCaretOffset();
-                if (line.type != null && position >= line.type.start && position <= line.type.stop + 1) {
-                    proposals.addAll(helpProvider.fillSourceProposals(filterText));
-                }
+            VariableNode line = (VariableNode) node;
+            position = styledText.getCaretOffset();
+            if (line.type != null && position >= line.type.start && position <= line.type.stop + 1) {
+                proposals.addAll(helpProvider.fillSourceProposals(filterText));
             }
         }
         else if (node instanceof DataLineNode) {
@@ -2026,6 +2027,40 @@ public class SourceEditor {
                     proposals.addAll(tokenMarker.getPAsmProposals(node, filterText));
                 }
                 proposals.addAll(helpProvider.fillProposals(node.getClass().getSimpleName(), filterText));
+            }
+        }
+        else if (node instanceof MethodNode) {
+            boolean found = false;
+            MethodNode methodNode = (MethodNode) node;
+            for (MethodNode.ParameterNode child : methodNode.getParameters()) {
+                if (child.type != null && position >= child.type.start && position <= child.type.stop + 1) {
+                    proposals.addAll(tokenMarker.getTypeProposals(node, filterText));
+                    found = true;
+                }
+                if (child.identifier != null && position >= child.identifier.start && position <= child.identifier.stop + 1) {
+                    found = true;
+                }
+            }
+            for (MethodNode.LocalVariableNode child : methodNode.getLocalVariables()) {
+                if (child.type != null && position >= child.type.start && position <= child.type.stop + 1) {
+                    proposals.addAll(tokenMarker.getTypeProposals(node, filterText));
+                    found = true;
+                }
+                if (child.identifier != null && position >= child.identifier.start && position <= child.identifier.stop + 1) {
+                    found = true;
+                }
+            }
+            for (MethodNode.ReturnNode child : methodNode.getReturnVariables()) {
+                if (child.type != null && position >= child.type.start && position <= child.type.stop + 1) {
+                    proposals.addAll(tokenMarker.getTypeProposals(node, filterText));
+                    found = true;
+                }
+                if (child.identifier != null && position >= child.identifier.start && position <= child.identifier.stop + 1) {
+                    found = true;
+                }
+            }
+            if (!found) {
+                proposals.addAll(tokenMarker.getTypeProposals(node, filterText));
             }
         }
         else if (node != null) {

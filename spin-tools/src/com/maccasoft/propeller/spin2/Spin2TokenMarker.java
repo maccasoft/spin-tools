@@ -740,6 +740,13 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                         }
 
                         @Override
+                        public void visitTypeDefinition(TypeDefinitionNode node) {
+                            if (node.getIdentifier() != null) {
+                                externals.put(objectNode.name.getText() + "." + node.getIdentifier().getText(), TokenId.TYPE);
+                            }
+                        }
+
+                        @Override
                         public boolean visitMethod(MethodNode node) {
                             if ("PUB".equalsIgnoreCase(node.type.getText())) {
                                 if (node.name != null) {
@@ -1007,6 +1014,14 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                     if (id != null && id == TokenId.TYPE) {
                         tokens.add(new TokenMarker(node.type, id));
                     }
+                    else if (id == null) {
+                        id = externals.get(node.type.getText());
+                        if (id != null) {
+                            int dot = node.type.getText().indexOf('.');
+                            tokens.add(new TokenMarker(node.type.start, node.type.start + dot - 1, TokenId.OBJECT));
+                            tokens.add(new TokenMarker(node.type.start + dot + 1, node.type.stop, id));
+                        }
+                    }
                 }
                 if (node.getSize() != null) {
                     markTokens(node.getSize(), 0, null);
@@ -1043,6 +1058,14 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                         if (id != null && id == TokenId.TYPE) {
                             tokens.add(new TokenMarker(child.type, id));
                         }
+                        else if (id == null) {
+                            id = externals.get(child.type.getText());
+                            if (id != null) {
+                                int dot = child.type.getText().indexOf('.');
+                                tokens.add(new TokenMarker(child.type.start, child.type.start + dot - 1, TokenId.OBJECT));
+                                tokens.add(new TokenMarker(child.type.start + dot + 1, child.type.stop, id));
+                            }
+                        }
                     }
                     if (child.identifier != null) {
                         locals.put(child.identifier.getText(), TokenId.METHOD_LOCAL);
@@ -1055,6 +1078,14 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                         TokenId id = symbols.get(child.type.getText());
                         if (id != null && id == TokenId.TYPE) {
                             tokens.add(new TokenMarker(child.type, id));
+                        }
+                        else if (id == null) {
+                            id = externals.get(child.type.getText());
+                            if (id != null) {
+                                int dot = child.type.getText().indexOf('.');
+                                tokens.add(new TokenMarker(child.type.start, child.type.start + dot - 1, TokenId.OBJECT));
+                                tokens.add(new TokenMarker(child.type.start + dot + 1, child.type.stop, id));
+                            }
                         }
                     }
                     if (child.identifier != null) {
@@ -1078,6 +1109,14 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                         }
                         if (id != null && id == TokenId.TYPE) {
                             tokens.add(new TokenMarker(child.type, id));
+                        }
+                        else if (id == null) {
+                            id = externals.get(child.type.getText());
+                            if (id != null) {
+                                int dot = child.type.getText().indexOf('.');
+                                tokens.add(new TokenMarker(child.type.start, child.type.start + dot - 1, TokenId.OBJECT));
+                                tokens.add(new TokenMarker(child.type.start + dot + 1, child.type.stop, id));
+                            }
                         }
                     }
                     if (child.identifier != null) {

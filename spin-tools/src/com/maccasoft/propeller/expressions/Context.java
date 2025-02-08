@@ -28,8 +28,7 @@ public class Context {
     Map<String, Expression> symbols = new HashMap<>();
     Map<String, Expression> caseInsensitiveSymbols = new CaseInsensitiveMap<>();
 
-    Map<String, Spin2Struct> structures = new HashMap<>();
-    Map<String, Spin2Struct> caseInsensitiveStructures = new CaseInsensitiveMap<>();
+    Map<String, Spin2Struct> structures;
 
     Map<String, List<Token>> defines = new HashMap<>();
     Map<String, Expression> parameters;
@@ -55,6 +54,7 @@ public class Context {
         this.caseSensitive = caseSensitive;
 
         parameters = caseSensitive ? new HashMap<>() : new CaseInsensitiveMap<>();
+        structures = caseSensitive ? new HashMap<>() : new CaseInsensitiveMap<>();
 
         caseInsensitiveSymbols.put("$", new ContextLiteral(this));
         caseInsensitiveSymbols.put("@$", new ObjectContextLiteral(this));
@@ -239,10 +239,7 @@ public class Context {
     }
 
     public boolean hasStructureDefinition(String name) {
-        boolean result = caseInsensitiveStructures.containsKey(name);
-        if (result == false && caseSensitive) {
-            result = structures.containsKey(name);
-        }
+        boolean result = structures.containsKey(name);
         if (result == false && parent != null) {
             result = parent.hasStructureDefinition(name);
         }
@@ -250,10 +247,7 @@ public class Context {
     }
 
     public Spin2Struct getStructureDefinition(String name) {
-        Spin2Struct exp = caseInsensitiveStructures.get(name);
-        if (exp == null && caseSensitive) {
-            exp = structures.get(name);
-        }
+        Spin2Struct exp = structures.get(name);
         if (exp == null && parent != null) {
             exp = parent.getStructureDefinition(name);
         }
@@ -261,18 +255,14 @@ public class Context {
     }
 
     public void addStructureDefinition(String name, Spin2Struct value) {
-        if (caseInsensitiveStructures.containsKey(name)) {
+        if (structures.containsKey(name)) {
             throw new RuntimeException("structure " + name + " already defined");
         }
-        if (caseSensitive) {
-            if (structures.containsKey(name)) {
-                throw new RuntimeException("structure " + name + " already defined");
-            }
-            structures.put(name, value);
-        }
-        else {
-            caseInsensitiveStructures.put(name, value);
-        }
+        structures.put(name, value);
+    }
+
+    public Map<String, Spin2Struct> getStructures() {
+        return structures;
     }
 
     public void addParameters(Map<String, Expression> map) {

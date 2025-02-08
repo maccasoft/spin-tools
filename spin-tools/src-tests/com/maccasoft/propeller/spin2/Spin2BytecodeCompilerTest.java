@@ -43,13 +43,13 @@ class Spin2BytecodeCompilerTest {
         context.addSymbol("a", new Variable("LONG", "a", 1));
         context.addSymbol("b", new Variable("LONG", "b", 1));
 
-        Spin2Struct point = new Spin2Struct();
+        Spin2Struct point = new Spin2Struct(context);
         point.addMember(new Token(0, "WORD"), new Token(0, "x"), new NumberLiteral(1));
         point.addMember(new Token(0, "WORD"), new Token(0, "y"), new NumberLiteral(1));
         point.setTypeSize(4);
         context.addStructureDefinition("sPoint", point);
 
-        Spin2Struct line = new Spin2Struct();
+        Spin2Struct line = new Spin2Struct(context);
         line.addMember(new Token(0, "SPOINT"), new Token(0, "a"), new NumberLiteral(1));
         line.addMember(new Token(0, "SPOINT"), new Token(0, "b"), new NumberLiteral(1));
         line.addMember(new Token(0, "BYTE"), new Token(0, "color"), new NumberLiteral(1));

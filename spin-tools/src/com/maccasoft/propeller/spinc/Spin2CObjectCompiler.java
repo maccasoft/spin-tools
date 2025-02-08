@@ -632,7 +632,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                     logMessage(new CompilerException("structure " + identifier.getText() + " already defined", identifier));
                 }
 
-                Spin2Struct struct = new Spin2Struct();
+                Spin2Struct struct = new Spin2Struct(scope);
                 while (iter.hasNext()) {
                     Token type = iter.next();
                     if ("}".equals(type.getText())) {

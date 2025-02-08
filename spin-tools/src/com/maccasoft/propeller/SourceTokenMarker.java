@@ -12,6 +12,8 @@ package com.maccasoft.propeller;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -40,6 +42,7 @@ import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenStream;
+import com.maccasoft.propeller.model.TypeDefinitionNode;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
 
@@ -561,22 +564,22 @@ public abstract class SourceTokenMarker {
 
             @Override
             public boolean visitMethod(MethodNode node) {
-                for (Node child : node.getParameters()) {
-                    String text = child.getText();
+                for (MethodNode.ParameterNode child : node.getParameters()) {
+                    String text = child.getIdentifier().getText();
                     if (StringUtils.containsIgnoreCase(text, filterText)) {
                         proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                     }
                 }
 
-                for (Node child : node.getLocalVariables()) {
-                    String text = child.getText();
+                for (MethodNode.LocalVariableNode child : node.getLocalVariables()) {
+                    String text = child.getIdentifier().getText();
                     if (StringUtils.containsIgnoreCase(text, filterText)) {
                         proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                     }
                 }
 
-                for (Node child : node.getReturnVariables()) {
-                    String text = child.getText();
+                for (MethodNode.ReturnNode child : node.getReturnVariables()) {
+                    String text = child.getIdentifier().getText();
                     if (StringUtils.containsIgnoreCase(text, filterText)) {
                         proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                     }
@@ -594,7 +597,7 @@ public abstract class SourceTokenMarker {
                 if (node.getIdentifier() != null && !contextMethodName.equals(node.getIdentifier().getText())) {
                     String text = node.getIdentifier().getText();
                     if (StringUtils.containsIgnoreCase(text, filterText)) {
-                        proposals.add(new ContentProposal(text, node.getIdentifier().getText(), null));
+                        proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                     }
                 }
             }
@@ -660,7 +663,7 @@ public abstract class SourceTokenMarker {
                 }
                 String text = node.name.getText();
                 if (StringUtils.containsIgnoreCase(text, filterText)) {
-                    proposals.add(new ContentProposal(text, text, ""));
+                    proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                 }
             }
 
@@ -1025,6 +1028,78 @@ public abstract class SourceTokenMarker {
         sb.append(")");
 
         return sb.toString();
+    }
+
+    public List<IContentProposal> getTypeProposals(Node context, String filterText) {
+        List<IContentProposal> proposals = new ArrayList<IContentProposal>();
+        if (root == null) {
+            return proposals;
+        }
+
+        List<IContentProposal> localProposals = new ArrayList<IContentProposal>();
+        root.accept(new NodeVisitor() {
+
+            @Override
+            public void visitTypeDefinition(TypeDefinitionNode node) {
+                if (node.getIdentifier() != null) {
+                    String text = node.getIdentifier().getText();
+                    if (StringUtils.containsIgnoreCase(text, filterText)) {
+                        localProposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                    }
+                }
+            }
+
+        });
+        Collections.sort(localProposals, new Comparator<IContentProposal>() {
+
+            @Override
+            public int compare(IContentProposal o1, IContentProposal o2) {
+                return o1.getLabel().compareToIgnoreCase(o2.getLabel());
+            }
+
+        });
+        proposals.addAll(localProposals);
+
+        List<IContentProposal> objectProposals = new ArrayList<IContentProposal>();
+        root.accept(new NodeVisitor() {
+
+            @Override
+            public void visitObject(ObjectNode objectNode) {
+                if (objectNode.name == null || objectNode.file == null) {
+                    return;
+                }
+                String fileName = objectNode.getFileName();
+                Node objectRoot = getObjectTree(fileName);
+                if (objectRoot == null) {
+                    return;
+                }
+                objectRoot.accept(new NodeVisitor() {
+
+                    @Override
+                    public void visitTypeDefinition(TypeDefinitionNode node) {
+                        if (node.getIdentifier() != null) {
+                            String text = objectNode.name.getText() + "." + node.getIdentifier().getText();
+                            if (StringUtils.containsIgnoreCase(text, filterText)) {
+                                objectProposals.add(new ContentProposal(node.getIdentifier().getText(), text, "<b>" + node.getText() + "</b>"));
+                            }
+                        }
+                    }
+
+                });
+            }
+
+        });
+        Collections.sort(objectProposals, new Comparator<IContentProposal>() {
+
+            @Override
+            public int compare(IContentProposal o1, IContentProposal o2) {
+                return o1.getLabel().compareToIgnoreCase(o2.getLabel());
+            }
+
+        });
+        proposals.addAll(objectProposals);
+
+        return proposals;
     }
 
     public List<IContentProposal> getConstantsProposals(Node context, String filterText) {

@@ -3781,10 +3781,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 offset += member.getOffset();
 
                 varType = member.getType() != null ? member.getType().getText() : "LONG";
-                struct = context.getStructureDefinition(varType);
-                if (struct == null && varType.startsWith("^")) {
-                    struct = context.getStructureDefinition(varType.substring(1));
-                }
+                struct = member.getStructureDefinition();
             }
 
             if (n < varNode.getChildCount() && (varNode.getChild(n) instanceof Spin2StatementNode.Index)) {

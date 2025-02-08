@@ -13,6 +13,7 @@ package com.maccasoft.propeller.spin2;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.model.Token;
 
@@ -21,7 +22,9 @@ public class Spin2Struct {
     int typeSize;
     List<Spin2StructMember> members;
 
-    public static class Spin2StructMember {
+    Context scope;
+
+    public class Spin2StructMember {
 
         private Token type;
         private Token identifier;
@@ -55,10 +58,27 @@ public class Spin2Struct {
             this.offset = offset;
         }
 
+        public Spin2Struct getStructureDefinition() {
+            Spin2Struct struct = null;
+            if (type != null) {
+                struct = scope.getStructureDefinition(type.getText());
+                if (type.getText().startsWith("^")) {
+                    struct = scope.getStructureDefinition(type.getText().substring(1));
+                }
+            }
+            return struct;
+        }
+
     }
 
-    public Spin2Struct() {
-        members = new ArrayList<>();
+    public Spin2Struct(Context context) {
+        this.scope = context;
+        this.members = new ArrayList<>();
+    }
+
+    public Spin2Struct(Context context, Spin2Struct orig) {
+        this.scope = context;
+        this.members = new ArrayList<>(orig.getMembers());
     }
 
     public boolean containsMember(Token identifier) {
