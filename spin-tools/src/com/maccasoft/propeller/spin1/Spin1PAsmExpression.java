@@ -52,20 +52,8 @@ public class Spin1PAsmExpression {
     }
 
     public byte[] getByte() {
-        int[] value;
-        if (expression.isString()) {
-            value = expression.getStringValues();
-        }
-        else if (expression.getNumber() instanceof Double) {
-            value = new int[] {
-                Float.floatToIntBits(expression.getNumber().floatValue())
-            };
-        }
-        else {
-            value = new int[] {
-                expression.getNumber().intValue()
-            };
-        }
+        int[] value = getValue();
+
         if (expression instanceof Type) {
             switch (((Type) expression).getType().toUpperCase()) {
                 case "WORD": {
@@ -88,6 +76,7 @@ public class Spin1PAsmExpression {
                 }
             }
         }
+
         byte[] r = new byte[value.length];
         for (int s = 0, d = 0; s < value.length; s++) {
             r[d++] = (byte) value[s];
@@ -95,21 +84,41 @@ public class Spin1PAsmExpression {
         return r;
     }
 
-    public byte[] getWord() {
+    public int getByteSize() {
         int[] value;
-        if (expression.isString()) {
-            value = expression.getStringValues();
+        try {
+            value = getValue();
+        } catch (Exception e) {
+            value = new int[1];
         }
-        else if (expression.getNumber() instanceof Double) {
-            value = new int[] {
-                Float.floatToIntBits(expression.getNumber().floatValue())
-            };
+
+        int size = value.length;
+
+        if (expression instanceof Type) {
+            switch (((Type) expression).getType().toUpperCase()) {
+                case "WORD":
+                    size = value.length * 2;
+                    break;
+
+                case "LONG":
+                    size = value.length * 4;
+                    break;
+            }
         }
-        else {
-            value = new int[] {
-                expression.getNumber().intValue()
-            };
+
+        int count;
+        try {
+            count = getCount();
+        } catch (Exception e) {
+            count = 1;
         }
+
+        return size * count;
+    }
+
+    public byte[] getWord() {
+        int[] value = getValue();
+
         if (expression instanceof Type) {
             switch (((Type) expression).getType().toUpperCase()) {
                 case "LONG": {
@@ -133,21 +142,37 @@ public class Spin1PAsmExpression {
         return r;
     }
 
-    public byte[] getLong() {
+    public int getWordSize() {
         int[] value;
-        if (expression.isString()) {
-            value = expression.getStringValues();
+        try {
+            value = getValue();
+        } catch (Exception e) {
+            value = new int[1];
         }
-        else if (expression.getNumber() instanceof Double) {
-            value = new int[] {
-                Float.floatToIntBits(expression.getNumber().floatValue())
-            };
+
+        int size = value.length * 2;
+
+        if (expression instanceof Type) {
+            switch (((Type) expression).getType().toUpperCase()) {
+                case "LONG":
+                    size = value.length * 4;
+                    break;
+            }
         }
-        else {
-            value = new int[] {
-                expression.getNumber().intValue()
-            };
+
+        int count;
+        try {
+            count = getCount();
+        } catch (Exception e) {
+            count = 1;
         }
+
+        return size * count;
+    }
+
+    public byte[] getLong() {
+        int[] value = getValue();
+
         byte[] r = new byte[value.length * 4];
         for (int s = 0, d = 0; s < value.length; s++) {
             r[d++] = (byte) value[s];
@@ -156,6 +181,40 @@ public class Spin1PAsmExpression {
             r[d++] = (byte) (value[s] >> 24);
         }
         return r;
+    }
+
+    public int getLongSize() {
+        int[] value;
+        try {
+            value = getValue();
+        } catch (Exception e) {
+            value = new int[1];
+        }
+
+        int size = value.length * 4;
+
+        int count;
+        try {
+            count = getCount();
+        } catch (Exception e) {
+            count = 1;
+        }
+
+        return size * count;
+    }
+
+    int[] getValue() {
+        if (expression.isString()) {
+            return expression.getStringValues();
+        }
+        if (expression.getNumber() instanceof Double) {
+            return new int[] {
+                Float.floatToIntBits(expression.getNumber().floatValue())
+            };
+        }
+        return new int[] {
+            expression.getNumber().intValue()
+        };
     }
 
     public String getString() {

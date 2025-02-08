@@ -47,12 +47,13 @@ public class Word extends Spin1PAsmInstructionFactory {
 
         @Override
         public int getSize() {
-            try {
-                return getBytes().length;
-            } catch (Exception e) {
-                // Do nothing
+            int size = 0;
+
+            for (Spin1PAsmExpression exp : arguments) {
+                size += exp.getWordSize();
             }
-            return 0;
+
+            return size;
         }
 
         @Override

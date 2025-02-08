@@ -37,12 +37,13 @@ public class Bytefit extends Byte {
 
         @Override
         public int getSize() {
-            try {
-                return getBytes().length;
-            } catch (Exception e) {
-                // Do nothing
+            int size = 0;
+
+            for (Spin2PAsmExpression exp : arguments) {
+                size += exp.getByteSize();
             }
-            return 0;
+
+            return size;
         }
 
         @Override

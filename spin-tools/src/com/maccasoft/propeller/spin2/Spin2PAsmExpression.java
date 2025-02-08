@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -11,6 +11,7 @@
 package com.maccasoft.propeller.spin2;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.Expression;
@@ -194,20 +195,8 @@ public class Spin2PAsmExpression {
     }
 
     public byte[] getByte() {
-        int[] value;
-        if (expression.isString()) {
-            value = expression.getStringValues();
-        }
-        else if (expression.getNumber() instanceof Double) {
-            value = new int[] {
-                Float.floatToIntBits(expression.getNumber().floatValue())
-            };
-        }
-        else {
-            value = new int[] {
-                expression.getNumber().intValue()
-            };
-        }
+        int[] value = getValue();
+
         if (expression instanceof Type) {
             switch (((Type) expression).getType().toUpperCase()) {
                 case "WORD": {
@@ -229,28 +218,29 @@ public class Spin2PAsmExpression {
                     return r;
                 }
                 case "FVAR": {
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
                     try {
-                        ByteArrayOutputStream os = new ByteArrayOutputStream();
                         for (int i = 0; i < value.length; i++) {
                             os.write(Constant.wrVar(value[i]));
                         }
-                        return os.toByteArray();
-                    } catch (Exception e) {
-
+                    } catch (IOException e) {
+                        // Do nothing
                     }
+                    return os.toByteArray();
                 }
                 case "FVARS":
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
                     try {
-                        ByteArrayOutputStream os = new ByteArrayOutputStream();
                         for (int i = 0; i < value.length; i++) {
                             os.write(Constant.wrVars(value[i]));
                         }
-                        return os.toByteArray();
-                    } catch (Exception e) {
-
+                    } catch (IOException e) {
+                        // Do nothing
                     }
+                    return os.toByteArray();
             }
         }
+
         byte[] r = new byte[value.length];
         for (int s = 0, d = 0; s < value.length; s++) {
             r[d++] = (byte) value[s];
@@ -258,21 +248,65 @@ public class Spin2PAsmExpression {
         return r;
     }
 
-    public byte[] getWord() {
+    public int getByteSize() {
         int[] value;
-        if (expression.isString()) {
-            value = expression.getStringValues();
+        try {
+            value = getValue();
+        } catch (Exception e) {
+            value = new int[1];
         }
-        else if (expression.getNumber() instanceof Double) {
-            value = new int[] {
-                Float.floatToIntBits(expression.getNumber().floatValue())
-            };
+
+        int size = value.length;
+
+        if (expression instanceof Type) {
+            switch (((Type) expression).getType().toUpperCase()) {
+                case "WORD":
+                    size = value.length * 2;
+                    break;
+
+                case "LONG":
+                    size = value.length * 4;
+                    break;
+
+                case "FVAR": {
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
+                    try {
+                        for (int i = 0; i < value.length; i++) {
+                            os.write(Constant.wrVar(value[i]));
+                        }
+                        size = os.size();
+                    } catch (IOException e) {
+                        // Do nothing
+                    }
+                    break;
+                }
+                case "FVARS":
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
+                    try {
+                        for (int i = 0; i < value.length; i++) {
+                            os.write(Constant.wrVars(value[i]));
+                        }
+                        size = os.size();
+                    } catch (IOException e) {
+                        // Do nothing
+                    }
+                    break;
+            }
         }
-        else {
-            value = new int[] {
-                expression.getNumber().intValue()
-            };
+
+        int count;
+        try {
+            count = getCount();
+        } catch (Exception e) {
+            count = 1;
         }
+
+        return size * count;
+    }
+
+    public byte[] getWord() {
+        int[] value = getValue();
+
         if (expression instanceof Type) {
             switch (((Type) expression).getType().toUpperCase()) {
                 case "LONG": {
@@ -286,26 +320,26 @@ public class Spin2PAsmExpression {
                     return r;
                 }
                 case "FVAR": {
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
                     try {
-                        ByteArrayOutputStream os = new ByteArrayOutputStream();
                         for (int i = 0; i < value.length; i++) {
                             os.write(Constant.wrVar(value[i]));
                         }
-                        return os.toByteArray();
-                    } catch (Exception e) {
-
+                    } catch (IOException e) {
+                        // Do nothing
                     }
+                    return os.toByteArray();
                 }
                 case "FVARS":
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
                     try {
-                        ByteArrayOutputStream os = new ByteArrayOutputStream();
                         for (int i = 0; i < value.length; i++) {
                             os.write(Constant.wrVars(value[i]));
                         }
-                        return os.toByteArray();
-                    } catch (Exception e) {
-
+                    } catch (IOException e) {
+                        // Do nothing
                     }
+                    return os.toByteArray();
             }
         }
 
@@ -317,46 +351,87 @@ public class Spin2PAsmExpression {
         return r;
     }
 
-    public byte[] getLong() {
+    public int getWordSize() {
         int[] value;
-        if (expression.isString()) {
-            value = expression.getStringValues();
+        try {
+            value = getValue();
+        } catch (Exception e) {
+            value = new int[1];
         }
-        else if (expression.getNumber() instanceof Double) {
-            value = new int[] {
-                Float.floatToIntBits(expression.getNumber().floatValue())
-            };
-        }
-        else {
-            value = new int[] {
-                expression.getNumber().intValue()
-            };
-        }
+
+        int size = value.length * 2;
+
         if (expression instanceof Type) {
             switch (((Type) expression).getType().toUpperCase()) {
+                case "LONG":
+                    size = value.length * 4;
+                    break;
+
                 case "FVAR": {
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
                     try {
-                        ByteArrayOutputStream os = new ByteArrayOutputStream();
                         for (int i = 0; i < value.length; i++) {
                             os.write(Constant.wrVar(value[i]));
                         }
-                        return os.toByteArray();
-                    } catch (Exception e) {
-
+                        size = os.size();
+                    } catch (IOException e) {
+                        // Do nothing
                     }
+                    break;
                 }
                 case "FVARS":
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
                     try {
-                        ByteArrayOutputStream os = new ByteArrayOutputStream();
                         for (int i = 0; i < value.length; i++) {
                             os.write(Constant.wrVars(value[i]));
                         }
-                        return os.toByteArray();
-                    } catch (Exception e) {
-
+                        size = os.size();
+                    } catch (IOException e) {
+                        // Do nothing
                     }
+                    break;
             }
         }
+
+        int count;
+        try {
+            count = getCount();
+        } catch (Exception e) {
+            count = 1;
+        }
+
+        return size * count;
+    }
+
+    public byte[] getLong() {
+        int[] value = getValue();
+
+        if (expression instanceof Type) {
+            switch (((Type) expression).getType().toUpperCase()) {
+                case "FVAR": {
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
+                    try {
+                        for (int i = 0; i < value.length; i++) {
+                            os.write(Constant.wrVar(value[i]));
+                        }
+                    } catch (IOException e) {
+                        // Do nothing
+                    }
+                    return os.toByteArray();
+                }
+                case "FVARS":
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
+                    try {
+                        for (int i = 0; i < value.length; i++) {
+                            os.write(Constant.wrVars(value[i]));
+                        }
+                    } catch (IOException e) {
+                        // Do nothing
+                    }
+                    return os.toByteArray();
+            }
+        }
+
         byte[] r = new byte[value.length * 4];
         for (int s = 0, d = 0; s < value.length; s++) {
             r[d++] = (byte) value[s];
@@ -365,6 +440,68 @@ public class Spin2PAsmExpression {
             r[d++] = (byte) (value[s] >> 24);
         }
         return r;
+    }
+
+    public int getLongSize() {
+        int[] value;
+        try {
+            value = getValue();
+        } catch (Exception e) {
+            value = new int[1];
+        }
+
+        int size = value.length * 4;
+
+        if (expression instanceof Type) {
+            switch (((Type) expression).getType().toUpperCase()) {
+                case "FVAR": {
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
+                    try {
+                        for (int i = 0; i < value.length; i++) {
+                            os.write(Constant.wrVar(value[i]));
+                        }
+                        size = os.size();
+                    } catch (IOException e) {
+                        // Do nothing
+                    }
+                    break;
+                }
+                case "FVARS":
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
+                    try {
+                        for (int i = 0; i < value.length; i++) {
+                            os.write(Constant.wrVars(value[i]));
+                        }
+                        size = os.size();
+                    } catch (IOException e) {
+                        // Do nothing
+                    }
+                    break;
+            }
+        }
+
+        int count;
+        try {
+            count = getCount();
+        } catch (Exception e) {
+            count = 1;
+        }
+
+        return size * count;
+    }
+
+    int[] getValue() {
+        if (expression.isString()) {
+            return expression.getStringValues();
+        }
+        if (expression.getNumber() instanceof Double) {
+            return new int[] {
+                Float.floatToIntBits(expression.getNumber().floatValue())
+            };
+        }
+        return new int[] {
+            expression.getNumber().intValue()
+        };
     }
 
     public String getString() {
