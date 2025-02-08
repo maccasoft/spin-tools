@@ -353,7 +353,7 @@ void install_desktop_launcher()
     fprintf(fp, "Type=Application\n");
     fprintf(fp, "Name=Spin Tools IDE\n");
     fprintf(fp, "GenericName=Spin Tools IDE\n");
-    fprintf(fp, "Comment=Spin Tools IDE 0.44.0 for Linux, Copyright 2025 Marco Maccaferri and Others. All rights reserved.\n");
+    fprintf(fp, "Comment=Integrated development environment for Parallax Propeller microcontrollers.\n");
     fprintf(fp, "Path=%s\n", app_root);
     fprintf(fp, "Exec=%s %%f\n", exe_path);
     fprintf(fp, "Icon=%s\n", base_name);
