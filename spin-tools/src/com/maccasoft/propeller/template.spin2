@@ -1,15 +1,18 @@
 {Spin2_v47}
-CON
+CON ' Constants
 
     _CLKFREQ = 160_000_000
 
-VAR
+VAR ' Variables
 
-OBJ
+OBJ ' Objects
 
 PUB start()
 
-    ' initialization
+    ' Initialization
 
     repeat
-        ' loop
+        ' Loop
+
+DAT ' Data
+        

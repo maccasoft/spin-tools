@@ -160,6 +160,9 @@ public class Spin2Parser extends Parser {
             if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT) {
                 break;
             }
+            if (node.getDescription() == null) {
+                node.setDescription(token);
+            }
             node.addToken(token);
             root.addComment(stream.nextToken());
         }
@@ -346,6 +349,9 @@ public class Spin2Parser extends Parser {
             if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT) {
                 break;
             }
+            if (node.getDescription() == null) {
+                node.setDescription(token);
+            }
             node.addToken(token);
             root.addComment(stream.nextToken());
         }
@@ -449,6 +455,9 @@ public class Spin2Parser extends Parser {
         while ((token = stream.peekNext()).type != Token.EOF) {
             if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT) {
                 break;
+            }
+            if (node.getDescription() == null) {
+                node.setDescription(token);
             }
             node.addToken(token);
             root.addComment(stream.nextToken());
@@ -958,6 +967,9 @@ public class Spin2Parser extends Parser {
         while ((token = stream.peekNext()).type != Token.EOF) {
             if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT) {
                 break;
+            }
+            if (node.getDescription() == null) {
+                node.setDescription(token);
             }
             node.addToken(token);
             root.addComment(stream.nextToken());

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -414,15 +414,15 @@ public class OutlineView {
             }
             appendText(text, sectionStyle);
 
-            if (node.getTokenCount() > 1) {
-                text = node.getToken(1).getText();
-                while (text.startsWith("'")) {
-                    text = text.substring(1);
+            String comment = node.getDescription();
+            if (comment != null) {
+                while (comment.startsWith("'")) {
+                    comment = comment.substring(1);
                 }
-                text = text.trim();
-                if (!text.isEmpty()) {
+                comment = comment.trim();
+                if (!comment.isEmpty()) {
                     sb.append(" ");
-                    appendText(text, commentStyle);
+                    appendText(comment, commentStyle);
                 }
             }
         }

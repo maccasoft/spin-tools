@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -159,6 +159,9 @@ public class Spin1Parser extends Parser {
             if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT) {
                 break;
             }
+            if (node.getDescription() == null) {
+                node.setDescription(token);
+            }
             node.addToken(token);
             root.addComment(stream.nextToken());
         }
@@ -296,6 +299,9 @@ public class Spin1Parser extends Parser {
             if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT) {
                 break;
             }
+            if (node.getDescription() == null) {
+                node.setDescription(token);
+            }
             node.addToken(token);
             root.addComment(stream.nextToken());
         }
@@ -381,6 +387,9 @@ public class Spin1Parser extends Parser {
         while ((token = stream.peekNext()).type != Token.EOF) {
             if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT) {
                 break;
+            }
+            if (node.getDescription() == null) {
+                node.setDescription(token);
             }
             node.addToken(token);
             root.addComment(stream.nextToken());
@@ -763,6 +772,9 @@ public class Spin1Parser extends Parser {
         while ((token = stream.peekNext()).type != Token.EOF) {
             if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT) {
                 break;
+            }
+            if (node.getDescription() == null) {
+                node.setDescription(token);
             }
             node.addToken(token);
             root.addComment(stream.nextToken());

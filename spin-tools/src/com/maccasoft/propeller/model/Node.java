@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -27,6 +27,8 @@ public class Node {
 
     public List<Token> document = new ArrayList<Token>();
     public List<Token> comments = new ArrayList<Token>();
+
+    public String description;
 
     public Node() {
         this.parent = null;
@@ -156,6 +158,35 @@ public class Node {
 
     public TokenIterator tokenIterator() {
         return new TokenIterator(tokens);
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(Token comment) {
+        int eol;
+
+        this.description = comment.getText();
+
+        while ((eol = this.description.indexOf("\r")) != -1) {
+            this.description = this.description.substring(0, eol);
+        }
+        while ((eol = this.description.indexOf("\n")) != -1) {
+            this.description = this.description.substring(0, eol);
+        }
+
+        while (this.description.startsWith("'")) {
+            this.description = this.description.substring(1);
+        }
+        while (this.description.startsWith("{")) {
+            this.description = this.description.substring(1);
+        }
+        while (this.description.endsWith("}")) {
+            this.description = this.description.substring(0, this.description.length() - 1);
+        }
+
+        this.description = this.description.trim();
     }
 
     @Override
