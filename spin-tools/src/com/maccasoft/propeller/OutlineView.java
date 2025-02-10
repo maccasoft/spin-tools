@@ -190,7 +190,7 @@ public class OutlineView {
             try {
                 Object element = cell.getElement();
                 if (element instanceof ConstantsNode || element instanceof VariablesNode || element instanceof ObjectsNode || element instanceof DataNode) {
-                    decorateSectionStart((Node) element, cell);
+                    decorateBlockStart((Node) element, cell);
                 }
                 else if (element instanceof DefinesNode) {
                     String text = ((Node) element).getStartToken().getText();
@@ -198,7 +198,7 @@ public class OutlineView {
                         appendText(text, commentStyle);
                     }
                     else {
-                        appendText(text, sectionStyle);
+                        appendText(text, blockStyle);
                     }
                 }
                 else if (element instanceof DefinitionNode) {
@@ -373,7 +373,7 @@ public class OutlineView {
             }
             else {
                 if (node.getType() != null) {
-                    appendText(node.getType().getText().toUpperCase(), sectionStyle);
+                    appendText(node.getType().getText().toUpperCase(), blockStyle);
                 }
                 if (node.getName() != null) {
                     if (sb.length() != 0) {
@@ -407,12 +407,20 @@ public class OutlineView {
             }
         }
 
-        void decorateSectionStart(Node node, ViewerCell cell) {
+        void decorateBlockStart(Node node, ViewerCell cell) {
             String text = "";
             if (node.getStartToken() != null) {
                 text = node.getStartToken().getText().toUpperCase();
             }
-            appendText(text, sectionStyle);
+            appendText(text, blockStyle);
+
+            if (node instanceof DataNode) {
+                String name = ((DataNode) node).getName();
+                if (name != null) {
+                    sb.append(" ");
+                    sb.append(name);
+                }
+            }
 
             String comment = node.getDescription();
             if (comment != null) {
@@ -466,7 +474,7 @@ public class OutlineView {
                     if (sb.length() != 0) {
                         sb.append(" ");
                     }
-                    appendText(node.getIdentifier().getText(), sectionStyle);
+                    appendText(node.getIdentifier().getText(), blockStyle);
 
                     sb.append("(");
                     boolean first = true;
@@ -523,7 +531,7 @@ public class OutlineView {
     };
 
     TextStyle commentStyle;
-    TextStyle sectionStyle;
+    TextStyle blockStyle;
     TextStyle methodLocalStyle;
     TextStyle methodReturnStyle;
     TextStyle typeStyle;
@@ -558,7 +566,7 @@ public class OutlineView {
         fontBold = new Font(viewer.getControl().getDisplay(), fd[0]);
 
         commentStyle = new TextStyle(null, new Color(0x7E, 0x7E, 0x7E), null);
-        sectionStyle = new TextStyle(fontBold, null, null);
+        blockStyle = new TextStyle(fontBold, null, null);
         methodLocalStyle = new TextStyle(null, new Color(0x80, 0x80, 0x00), null);
         methodReturnStyle = new TextStyle(null, new Color(0x90, 0x00, 0x00), null);
         typeStyle = new TextStyle(fontBold, null, null);

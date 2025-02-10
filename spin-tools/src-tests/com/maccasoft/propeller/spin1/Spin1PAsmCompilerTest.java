@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -639,6 +639,151 @@ class Spin1PAsmCompilerTest {
             + "00004 00004   000 00 00 7C 5C                        ret\n"
             + "00008 00008   001                a                   res     1\n"
             + "", compile(text, false));
+    }
+
+    @Test
+    void testDatName() throws Exception {
+        String text = ""
+            + "PUB main | v\n"
+            + "    v := @proga.entry\n"
+            + "    v := @progb.entry\n"
+            + "\n"
+            + "    v := @proga.a\n"
+            + "    v := @proga.a_alias\n"
+            + "    v := @proga.b\n"
+            + "    v := @proga.c\n"
+            + "\n"
+            + "    v := @progb.a\n"
+            + "    v := @progb.a_alias\n"
+            + "    v := @progb.b\n"
+            + "    v := @progb.c\n"
+            + "\n"
+            + "DAT proga\n"
+            + "                org $000\n"
+            + "entry\n"
+            + "                mov     a, #a\n"
+            + "                mov     a, #a_alias\n"
+            + "                mov     b, #b\n"
+            + "                mov     c, #c\n"
+            + "                ret\n"
+            + "\n"
+            + "a_alias\n"
+            + "a               long    0\n"
+            + "b               res     1\n"
+            + "c\n"
+            + "\n"
+            + "DAT progb\n"
+            + "                org $010\n"
+            + "entry\n"
+            + "                mov     a, #a\n"
+            + "                mov     a, #a_alias\n"
+            + "                mov     b, #b\n"
+            + "                mov     c, #c\n"
+            + "                ret\n"
+            + "\n"
+            + "a_alias\n"
+            + "a               long    0\n"
+            + "b               res     1\n"
+            + "c\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 0)\n"
+            + "00000 00000       58 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       38 00 04 00    Function main @ $0038 (local size 4)\n"
+            + "00008 00008   000                                    org     $000\n"
+            + "00008 00008   000                entry               \n"
+            + "00008 00008   000 05 0A FC A0                        mov     a, #a\n"
+            + "0000C 0000C   001 05 0A FC A0                        mov     a, #a_alias\n"
+            + "00010 00010   002 06 0C FC A0                        mov     b, #b\n"
+            + "00014 00014   003 07 0E FC A0                        mov     c, #c\n"
+            + "00018 00018   004 00 00 7C 5C                        ret\n"
+            + "0001C 0001C   005                a_alias             \n"
+            + "0001C 0001C   005 00 00 00 00    a                   long    0\n"
+            + "00020 00020   006                b                   res     1\n"
+            + "00020 00020   007                c                   \n"
+            + "00020 00020   007                                    org     $010\n"
+            + "00020 00020   010                entry               \n"
+            + "00020 00020   010 15 2A FC A0                        mov     a, #a\n"
+            + "00024 00024   011 15 2A FC A0                        mov     a, #a_alias\n"
+            + "00028 00028   012 16 2C FC A0                        mov     b, #b\n"
+            + "0002C 0002C   013 17 2E FC A0                        mov     c, #c\n"
+            + "00030 00030   014 00 00 7C 5C                        ret\n"
+            + "00034 00034   015                a_alias             \n"
+            + "00034 00034   015 00 00 00 00    a                   long    0\n"
+            + "00038 00038   016                b                   res     1\n"
+            + "00038 00038   017                c                   \n"
+            + "' PUB main | v\n"
+            + "'     v := @proga.entry\n"
+            + "00038 00038       C7 08          MEM_ADDRESS LONG PBASE+$0008\n"
+            + "0003A 0003A       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     v := @progb.entry\n"
+            + "0003B 0003B       C7 20          MEM_ADDRESS LONG PBASE+$0020\n"
+            + "0003D 0003D       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     v := @proga.a\n"
+            + "0003E 0003E       C7 1C          MEM_ADDRESS LONG PBASE+$001C\n"
+            + "00040 00040       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     v := @proga.a_alias\n"
+            + "00041 00041       C7 1C          MEM_ADDRESS LONG PBASE+$001C\n"
+            + "00043 00043       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     v := @proga.b\n"
+            + "00044 00044       C7 20          MEM_ADDRESS LONG PBASE+$0020\n"
+            + "00046 00046       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     v := @proga.c\n"
+            + "00047 00047       C7 20          MEM_ADDRESS LONG PBASE+$0020\n"
+            + "00049 00049       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     v := @progb.a\n"
+            + "0004A 0004A       C7 34          MEM_ADDRESS LONG PBASE+$0034\n"
+            + "0004C 0004C       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     v := @progb.a_alias\n"
+            + "0004D 0004D       C7 34          MEM_ADDRESS LONG PBASE+$0034\n"
+            + "0004F 0004F       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     v := @progb.b\n"
+            + "00050 00050       C7 38          MEM_ADDRESS LONG PBASE+$0038\n"
+            + "00052 00052       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     v := @progb.c\n"
+            + "00053 00053       C7 38          MEM_ADDRESS LONG PBASE+$0038\n"
+            + "00055 00055       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "00056 00056       32             RETURN\n"
+            + "00057 00057       00             Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testDatInstruction() throws Exception {
+        String text = ""
+            + "DAT entry       org $000\n"
+            + "DAT label       mov a, #1\n"
+            + "a               res 1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 0)\n"
+            + "00000 00000       08 00          Object size\n"
+            + "00002 00002       01             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004   000                entry               org     $000\n"
+            + "00004 00004   000 01 02 FC A0    label               mov     a, #1\n"
+            + "00008 00008   001                a                   res     1\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testDatNameError() throws Exception {
+        String text = ""
+            + "DAT entry label org $000\n"
+            + "";
+
+        Assertions.assertThrows(CompilerException.class, new Executable() {
+
+            @Override
+            public void execute() throws Throwable {
+                compile(text);
+            }
+
+        });
     }
 
     String compile(String text) throws Exception {

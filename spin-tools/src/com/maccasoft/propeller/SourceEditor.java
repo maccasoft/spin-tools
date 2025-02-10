@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -2403,7 +2403,41 @@ public class SourceEditor {
         else if (context instanceof DataLineNode.ParameterNode) {
             Node lineNode = context.getParent();
             Node parent = lineNode.getParent();
-            if (itemName.startsWith(".") || itemName.startsWith(":")) {
+
+            if (itemName.startsWith(tokenMarker.localLabelPrefix)) {
+                int index = parent.getChilds().indexOf(lineNode);
+                while (index > 0) {
+                    if (parent.getChild(index) instanceof DataLineNode) {
+                        DataLineNode obj = (DataLineNode) parent.getChild(index);
+                        if (obj.label != null) {
+                            if (!obj.label.getText().startsWith(tokenMarker.localLabelPrefix)) {
+                                break;
+                            }
+                            if (obj.label.equals(itemName, tokenMarker.isCaseSensitive())) {
+                                return new NavigationTarget(token, obj.label);
+                            }
+                        }
+                    }
+                    index--;
+                }
+                index = parent.getChilds().indexOf(lineNode) + 1;
+                while (index < parent.getChildCount()) {
+                    if (parent.getChild(index) instanceof DataLineNode) {
+                        DataLineNode obj = (DataLineNode) parent.getChild(index);
+                        if (obj.label != null) {
+                            if (!obj.label.getText().startsWith(tokenMarker.localLabelPrefix)) {
+                                break;
+                            }
+                            if (obj.label.equals(itemName, tokenMarker.isCaseSensitive())) {
+                                return new NavigationTarget(token, obj.label);
+                            }
+                        }
+                    }
+                    index++;
+                }
+            }
+
+            if (((DataNode) parent).getName() != null) {
                 int index = parent.getChilds().indexOf(lineNode);
                 while (index > 0) {
                     if (parent.getChild(index) instanceof DataLineNode) {
@@ -2411,9 +2445,6 @@ public class SourceEditor {
                         if (obj.label != null) {
                             if (obj.label.equals(itemName, tokenMarker.isCaseSensitive())) {
                                 return new NavigationTarget(token, obj.label);
-                            }
-                            if (!obj.label.getText().startsWith(".") && !obj.label.getText().startsWith(":")) {
-                                break;
                             }
                         }
                     }
@@ -2427,14 +2458,27 @@ public class SourceEditor {
                             if (obj.label.equals(itemName, tokenMarker.isCaseSensitive())) {
                                 return new NavigationTarget(token, obj.label);
                             }
-                            if (!obj.label.getText().startsWith(".") && !obj.label.getText().startsWith(":")) {
-                                break;
-                            }
                         }
                     }
                     index++;
                 }
             }
+
+            for (Node node : tokenMarker.getRoot().getChilds()) {
+                if (node instanceof DataNode) {
+                    String namespace = ((DataNode) node).getName() != null ? ((DataNode) node).getName() + "." : "";
+                    for (Node child : node.getChilds()) {
+                        DataLineNode obj = (DataLineNode) child;
+                        if (obj.label != null) {
+                            String qualifiedName = namespace + obj.label.getText();
+                            if (tokenMarker.isCaseSensitive() ? qualifiedName.equals(itemName) : qualifiedName.equalsIgnoreCase(itemName)) {
+                                return new NavigationTarget(token, obj.label);
+                            }
+                        }
+                    }
+                }
+            }
+
             if ((parent instanceof StatementNode) || (parent instanceof MethodNode)) {
                 for (int index = 0; index < parent.getChildCount(); index++) {
                     if (parent.getChild(index) instanceof DataLineNode) {
@@ -2651,13 +2695,17 @@ public class SourceEditor {
             }
         }
         else if (node instanceof DataNode) {
+            String namespace = ((DataNode) node).getName() != null ? ((DataNode) node).getName() + "." : "";
             for (Node child : node.getChilds()) {
                 if (!(child instanceof DataLineNode)) {
                     continue;
                 }
                 DataLineNode obj = (DataLineNode) child;
-                if (obj.label != null && obj.label.equals(itemName, tokenMarker.isCaseSensitive())) {
-                    return new NavigationTarget(token, obj.label);
+                if (obj.label != null) {
+                    String qualifiedName = namespace + obj.label.getText();
+                    if (tokenMarker.isCaseSensitive() ? qualifiedName.equals(itemName) : qualifiedName.equalsIgnoreCase(itemName)) {
+                        return new NavigationTarget(token, obj.label);
+                    }
                 }
             }
         }

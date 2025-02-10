@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -1339,80 +1339,80 @@ public abstract class SourceTokenMarker {
             return proposals;
         }
 
-        List<String> pasmLabels = new ArrayList<String>();
-        int dot = filterText.indexOf(constantSeparator);
+        Node parent = ref;
+        if (parent instanceof DataLineNode) {
+            parent = ref.getParent();
+        }
 
-        root.accept(new NodeVisitor() {
+        int dot = filterText.indexOf('.');
 
-            @Override
-            public boolean visitData(DataNode node) {
-                String lastLabel = "";
-
-                for (Node child : node.getChilds()) {
-                    if (!(child instanceof DataLineNode)) {
-                        continue;
-                    }
-                    DataLineNode lineNode = (DataLineNode) child;
-                    if (lineNode.label != null) {
-                        String text = lineNode.label.getText();
-                        if (text.startsWith(localLabelPrefix)) {
-                            pasmLabels.add(lastLabel + text);
-                        }
-                        else {
-                            lastLabel = text;
-                        }
-                    }
-                }
-
-                return true;
-            }
-
-        });
-
-        for (Node node : root.getChilds()) {
-            if (node instanceof DataNode) {
-                String lastLabel = "";
-
-                for (Node child : node.getChilds()) {
-                    if (!(child instanceof DataLineNode)) {
-                        continue;
-                    }
-                    DataLineNode lineNode = (DataLineNode) child;
-                    if (lineNode.label != null) {
-                        String text = lineNode.label.getText();
-                        if (!text.startsWith(localLabelPrefix)) {
-                            lastLabel = text;
-                        }
-                    }
-                    if (lineNode == ref) {
-                        String s1 = lastLabel + localLabelPrefix;
-                        for (String s : pasmLabels) {
-                            if (StringUtils.startsWithIgnoreCase(s, s1)) {
-                                if (StringUtils.containsIgnoreCase(s.substring(s1.length() - 1), filterText)) {
-                                    String text = s.substring(s1.length() - 1);
-                                    if (StringUtils.containsIgnoreCase(text, filterText)) {
-                                        proposals.add(new ContentProposal(text, text, null));
-                                    }
-                                }
-                            }
-                        }
+        int index = parent.getChilds().indexOf(ref);
+        while (index > 0) {
+            if (parent.getChild(index) instanceof DataLineNode) {
+                DataLineNode obj = (DataLineNode) parent.getChild(index);
+                if (obj.label != null) {
+                    if (!obj.label.getText().startsWith(localLabelPrefix)) {
                         break;
                     }
+                    if (StringUtils.containsIgnoreCase(obj.label.getText(), filterText)) {
+                        proposals.add(0, new ContentProposal(obj.label.getText(), obj.label.getText(), null));
+                    }
+                }
+            }
+            index--;
+        }
+        index = parent.getChilds().indexOf(ref) + 1;
+        while (index < parent.getChildCount()) {
+            if (parent.getChild(index) instanceof DataLineNode) {
+                DataLineNode obj = (DataLineNode) parent.getChild(index);
+                if (obj.label != null) {
+                    if (!obj.label.getText().startsWith(localLabelPrefix)) {
+                        break;
+                    }
+                    if (StringUtils.containsIgnoreCase(obj.label.getText(), filterText)) {
+                        proposals.add(new ContentProposal(obj.label.getText(), obj.label.getText(), null));
+                    }
+                }
+            }
+            index++;
+        }
+
+        for (Node child : parent.getChilds()) {
+            if (!(child instanceof DataLineNode)) {
+                continue;
+            }
+            DataLineNode lineNode = (DataLineNode) child;
+            if (lineNode.label != null && !lineNode.label.getText().startsWith(localLabelPrefix)) {
+                String text = lineNode.label.getText();
+                if (StringUtils.containsIgnoreCase(text, filterText)) {
+                    proposals.add(new ContentProposal(lineNode.label.getText(), text, null));
                 }
             }
         }
 
         for (Node node : root.getChilds()) {
-            if (node instanceof DataNode) {
-                for (Node child : node.getChilds()) {
-                    if (!(child instanceof DataLineNode)) {
-                        continue;
+            if (node instanceof DataNode && parent != node) {
+                DataNode dataNode = (DataNode) node;
+                if (dataNode.getName() != null) {
+                    if (StringUtils.containsIgnoreCase(dataNode.getName(), filterText)) {
+                        proposals.add(new ContentProposal(dataNode.getName(), dataNode.getName(), ""));
                     }
-                    DataLineNode lineNode = (DataLineNode) child;
-                    if (lineNode.label != null) {
-                        String text = lineNode.label.getText();
-                        if (!text.startsWith(localLabelPrefix) && StringUtils.containsIgnoreCase(text, filterText)) {
-                            proposals.add(new ContentProposal(text, text, null));
+
+                }
+                if (dot != -1) {
+                    String namespace = dataNode.getName() != null ? dataNode.getName() + "." : "";
+
+                    for (Node child : node.getChilds()) {
+                        if (!(child instanceof DataLineNode)) {
+                            continue;
+                        }
+                        DataLineNode lineNode = (DataLineNode) child;
+                        if (lineNode.label != null && !lineNode.label.getText().startsWith(localLabelPrefix)) {
+                            String text = namespace + lineNode.label.getText();
+                            if (StringUtils.containsIgnoreCase(text, filterText)) {
+                                String content = dot == -1 ? text : lineNode.label.getText();
+                                proposals.add(new ContentProposal(content, text, null));
+                            }
                         }
                     }
                 }

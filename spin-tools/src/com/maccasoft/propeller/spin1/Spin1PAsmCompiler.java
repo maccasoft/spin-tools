@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -24,8 +24,10 @@ import com.maccasoft.propeller.expressions.DataVariable;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.ObjectContextLiteral;
 import com.maccasoft.propeller.model.DataLineNode;
+import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.Token;
+import com.maccasoft.propeller.model.TokenIterator;
 import com.maccasoft.propeller.spin1.instructions.FileInc;
 
 public abstract class Spin1PAsmCompiler extends ObjectCompiler {
@@ -47,8 +49,24 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
         this.compiler = compiler;
     }
 
-    protected void compileDatBlock(Node parent) {
-        Context lineScope = scope;
+    protected void compileDatBlock(DataNode parent) {
+        Context datScope = new Context(scope);
+        Context lineScope = datScope;
+        String namespace = "";
+
+        TokenIterator iter = parent.tokenIterator();
+        if (iter.hasNext()) {
+            Token section = iter.peekNext();
+            if ("DAT".equalsIgnoreCase(section.getText())) {
+                iter.next();
+            }
+        }
+        if (iter.hasNext()) {
+            namespace = iter.next().getText() + ".";
+            if (iter.hasNext()) {
+                logMessage(new CompilerException("syntax error", iter.next()));
+            }
+        }
 
         for (Node child : parent.getChilds()) {
             try {
@@ -59,10 +77,10 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
                     DataLineNode node = (DataLineNode) child;
 
                     if (node.label != null && !node.label.getText().startsWith(":")) {
-                        lineScope = scope;
+                        lineScope = datScope;
                     }
 
-                    Spin1PAsmLine pasmLine = compileDataLine(scope, lineScope, node);
+                    Spin1PAsmLine pasmLine = compileDataLine(datScope, lineScope, node, namespace);
                     pasmLine.setData(node);
                     source.addAll(pasmLine.expand());
 
@@ -104,14 +122,14 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
             }
         }
 
-        pendingAlias.clear();
+        processAliases("LONG", namespace);
     }
 
     protected boolean skipNode(Node node) {
         return excludedNodes.contains(node);
     }
 
-    protected Spin1PAsmLine compileDataLine(Context globalScope, Context lineScope, DataLineNode node) {
+    protected Spin1PAsmLine compileDataLine(Context globalScope, Context lineScope, DataLineNode node, String namespace) {
         String label = node.label != null ? node.label.getText() : null;
         String condition = node.condition != null ? node.condition.getText() : null;
         String mnemonic = node.instruction != null ? node.instruction.getText() : null;
@@ -189,37 +207,37 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
 
         if (pasmLine.getLabel() != null) {
             try {
-                String type = "LONG";
-                if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Word) {
-                    type = "WORD";
-                }
-                else if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Byte) {
-                    type = "BYTE";
-                }
-                else if ("FILE".equalsIgnoreCase(pasmLine.getMnemonic())) {
-                    type = "BYTE";
-                }
-
                 Context labelScope = pasmLine.isLocalLabel() ? lineScope : globalScope;
-                labelScope.addSymbol(pasmLine.getLabel(), new DataVariable(pasmLine.getScope(), type));
-                labelScope.addSymbol("@" + pasmLine.getLabel(), new ObjectContextLiteral(pasmLine.getScope(), type));
-                labelScope.addSymbol("@@" + pasmLine.getLabel(), new ObjectContextLiteral(pasmLine.getScope(), type));
-
                 if (pasmLine.getMnemonic() == null) {
                     pendingAlias.put(pasmLine, labelScope);
                 }
-                else if (pendingAlias.size() != 0) {
-                    for (Entry<Spin1PAsmLine, Context> entry : pendingAlias.entrySet()) {
-                        Spin1PAsmLine line = entry.getKey();
-                        Context aliasScope = entry.getValue();
-                        aliasScope.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
-                        aliasScope.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
-                        aliasScope.addOrUpdateSymbol("@@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
+                else {
+                    String type = "LONG";
+                    if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Word) {
+                        type = "WORD";
                     }
-                    pendingAlias.clear();
+                    else if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Byte) {
+                        type = "BYTE";
+                    }
+                    else if ("FILE".equalsIgnoreCase(pasmLine.getMnemonic())) {
+                        type = "BYTE";
+                    }
+
+                    labelScope.addSymbol(pasmLine.getLabel(), new DataVariable(pasmLine.getScope(), type));
+                    labelScope.addSymbol("@" + pasmLine.getLabel(), new ObjectContextLiteral(pasmLine.getScope(), type));
+                    labelScope.addSymbol("@@" + pasmLine.getLabel(), new ObjectContextLiteral(pasmLine.getScope(), type));
+
+                    if (!pasmLine.isLocalLabel()) {
+                        String qualifiedName = namespace + pasmLine.getLabel();
+                        scope.addSymbol(qualifiedName, new DataVariable(pasmLine.getScope(), type));
+                        scope.addSymbol("@" + qualifiedName, new ObjectContextLiteral(pasmLine.getScope(), type));
+                        scope.addSymbol("@@" + qualifiedName, new ObjectContextLiteral(pasmLine.getScope(), type));
+                    }
+
+                    processAliases(type, namespace);
                 }
-            } catch (RuntimeException e) {
-                throw new CompilerException(e, node.label);
+            } catch (Exception e) {
+                logMessage(new CompilerException(e.getMessage(), node.label));
             }
         }
         else if (pasmLine.getMnemonic() != null && pendingAlias.size() != 0) {
@@ -233,18 +251,29 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
             else if ("FILE".equalsIgnoreCase(pasmLine.getMnemonic())) {
                 type = "BYTE";
             }
-
-            for (Entry<Spin1PAsmLine, Context> entry : pendingAlias.entrySet()) {
-                Spin1PAsmLine line = entry.getKey();
-                Context aliasScope = entry.getValue();
-                aliasScope.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
-                aliasScope.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
-                aliasScope.addOrUpdateSymbol("@@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
-            }
-            pendingAlias.clear();
+            processAliases(type, namespace);
         }
 
         return pasmLine;
+    }
+
+    protected void processAliases(String type, String namespace) {
+        for (Entry<Spin1PAsmLine, Context> entry : pendingAlias.entrySet()) {
+            Spin1PAsmLine line = entry.getKey();
+
+            Context aliasScope = entry.getValue();
+            aliasScope.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
+            aliasScope.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
+            aliasScope.addOrUpdateSymbol("@@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
+
+            if (!line.isLocalLabel()) {
+                String qualifiedName = namespace + line.getLabel();
+                scope.addSymbol(qualifiedName, new DataVariable(line.getScope(), type));
+                scope.addSymbol("@" + qualifiedName, new ObjectContextLiteral(line.getScope(), type));
+                scope.addSymbol("@@" + qualifiedName, new ObjectContextLiteral(line.getScope(), type));
+            }
+        }
+        pendingAlias.clear();
     }
 
     protected abstract void compileDatInclude(Node root);

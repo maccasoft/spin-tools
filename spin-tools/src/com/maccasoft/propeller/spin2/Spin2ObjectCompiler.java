@@ -314,7 +314,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
         for (Node node : root.getChilds()) {
             if (node instanceof DataNode) {
-                compileDatBlock(node);
+                compileDatBlock((DataNode) node);
             }
         }
 
@@ -1484,7 +1484,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
         }
         for (Node node : root.getChilds()) {
             if (node instanceof DataNode) {
-                compileDatBlock(node);
+                compileDatBlock((DataNode) node);
             }
         }
     }
@@ -2453,6 +2453,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
             }
             else if (node instanceof StatementNode) {
                 if ("END".equalsIgnoreCase(node.getStartToken().getText())) {
+                    processAliases();
                     Spin2PAsmLine pasmLine = new Spin2PAsmLine(line.getScope(), null, null, "ret", Collections.emptyList(), null);
                     line.addSource(new InlinePAsm(rootScope, pasmLine));
                     break;

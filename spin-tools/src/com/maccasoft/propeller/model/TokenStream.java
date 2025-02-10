@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -14,17 +14,19 @@ public abstract class TokenStream {
 
     public static class Position {
 
+        final TokenStream stream;
         final int index;
         final int line;
         final int column;
 
         public Position(TokenStream stream) {
+            this.stream = stream;
             this.index = stream.index;
             this.line = stream.line;
             this.column = stream.column;
         }
 
-        public void restore(TokenStream stream) {
+        public void restore() {
             stream.index = this.index;
             stream.line = this.line;
             stream.column = this.column;
@@ -50,7 +52,7 @@ public abstract class TokenStream {
         try {
             return nextToken();
         } finally {
-            pos.restore(this);
+            pos.restore();
         }
     }
 

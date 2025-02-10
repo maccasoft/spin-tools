@@ -246,7 +246,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
         for (Node node : root.getChilds()) {
             if (node instanceof DataNode) {
-                compileDatBlock(node);
+                compileDatBlock((DataNode) node);
             }
         }
 
@@ -1033,7 +1033,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
         }
         for (Node node : root.getChilds()) {
             if (node instanceof DataNode) {
-                compileDatBlock(node);
+                compileDatBlock((DataNode) node);
             }
         }
     }

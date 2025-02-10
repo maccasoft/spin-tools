@@ -10,8 +10,10 @@
 
 package com.maccasoft.propeller.spin2;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import com.maccasoft.propeller.model.ConstantNode;
@@ -27,6 +29,7 @@ import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.Parser;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
+import com.maccasoft.propeller.model.TokenStream;
 import com.maccasoft.propeller.model.TypeDefinitionNode;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
@@ -961,25 +964,108 @@ public class Spin2Parser extends Parser {
     void parseDat() {
         Token token;
 
-        Node node = new DataNode(root);
+        DataNode node = new DataNode(root);
         node.addToken(stream.nextToken());
 
-        while ((token = stream.peekNext()).type != Token.EOF) {
+        boolean hasName = false;
+        TokenStream.Position pos = new TokenStream.Position(stream);
+
+        List<Token> comments = new ArrayList<>();
+        while ((token = stream.nextToken()).type != Token.EOF) {
             if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT) {
                 break;
             }
-            if (node.getDescription() == null) {
-                node.setDescription(token);
+            comments.add(token);
+        }
+        if (token.type == 0 || token.type == Token.KEYWORD) {
+            if (!"debug".equalsIgnoreCase(token.getText()) && !Spin2Model.isPAsmCondition(token.getText()) && !Spin2Model.isPAsmInstruction(token.getText())) {
+                Token name = token;
+                Token description = null;
+
+                List<Token> tokens = new ArrayList<>();
+                tokens.add(name);
+
+                while ((token = stream.nextToken()).type != Token.EOF && token.type != Token.NL) {
+                    if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT && token.type != Token.NEXT_LINE) {
+                        break;
+                    }
+                    tokens.add(token);
+                    if (token.type == Token.COMMENT) {
+                        if (description == null) {
+                            description = token;
+                        }
+                        comments.add(token);
+                        break;
+                    }
+                    if (token.type == Token.BLOCK_COMMENT) {
+                        if (description == null) {
+                            description = token;
+                        }
+                        comments.add(token);
+                    }
+                    if (token.type == Token.NEXT_LINE) {
+                        comments.add(token);
+                    }
+                }
+
+                if (!"debug".equalsIgnoreCase(token.getText()) && !Spin2Model.isPAsmCondition(token.getText()) && !Spin2Model.isPAsmInstruction(token.getText())) {
+                    if (token.type != Token.EOF && token.type != Token.NL) {
+                        tokens.add(token);
+
+                        while ((token = stream.nextToken()).type != Token.EOF && token.type != Token.NL) {
+                            tokens.add(token);
+                            if (token.type == Token.COMMENT) {
+                                if (description == null) {
+                                    description = token;
+                                }
+                                comments.add(token);
+                                break;
+                            }
+                            if (token.type == Token.BLOCK_COMMENT) {
+                                if (description == null) {
+                                    description = token;
+                                }
+                                comments.add(token);
+                            }
+                            if (token.type == Token.NEXT_LINE) {
+                                comments.add(token);
+                            }
+                        }
+                    }
+
+                    node.setName(name);
+                    if (description != null) {
+                        node.setDescription(description);
+                    }
+                    node.getTokens().addAll(tokens);
+
+                    root.comments.addAll(comments);
+
+                    hasName = true;
+                }
             }
-            node.addToken(token);
-            root.addComment(stream.nextToken());
         }
 
-        if ((token = stream.peekNext()).type == Token.NL) {
-            stream.nextToken();
-        }
-        else {
-            parseDatLine(node);
+        if (!hasName) {
+            pos.restore();
+
+            while ((token = stream.peekNext()).type != Token.EOF) {
+                if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT) {
+                    break;
+                }
+                if (node.getDescription() == null) {
+                    node.setDescription(token);
+                }
+                node.addToken(token);
+                root.addComment(stream.nextToken());
+            }
+
+            if ((token = stream.peekNext()).type == Token.NL) {
+                stream.nextToken();
+            }
+            else {
+                parseDatLine(node);
+            }
         }
 
         while ((token = stream.peekNext()).type != Token.EOF) {

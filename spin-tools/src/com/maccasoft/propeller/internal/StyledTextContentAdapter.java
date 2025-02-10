@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -38,20 +38,31 @@ public class StyledTextContentAdapter implements IControlContentAdapter, IContro
 
         String contents = styledText.getLine(line);
         char prefix = (text.startsWith(".") || text.startsWith(":")) ? text.charAt(0) : '\0';
+        boolean replaceDot = text.indexOf('.') > 0 && contents.indexOf('.') > 0;
 
         int position = caretOffset - lineOffset;
         int start = position;
         while (start > 0) {
-            if (!isIdentifierPart(contents.charAt(start - 1)) && contents.charAt(start - 1) != prefix) {
-                break;
+            if (replaceDot && contents.charAt(start - 1) == '.') {
+                start--;
             }
-            start--;
+            else {
+                if (!isIdentifierPart(contents.charAt(start - 1)) && contents.charAt(start - 1) != prefix) {
+                    break;
+                }
+                start--;
+            }
         }
         while (position < contents.length()) {
-            if (!isIdentifierPart(contents.charAt(position))) {
-                break;
+            if (replaceDot && contents.charAt(position) == '.') {
+                position++;
             }
-            position++;
+            else {
+                if (!isIdentifierPart(contents.charAt(position))) {
+                    break;
+                }
+                position++;
+            }
         }
 
         char args = '\0';

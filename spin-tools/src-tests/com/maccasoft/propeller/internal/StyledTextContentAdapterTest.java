@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -562,6 +562,93 @@ class StyledTextContentAdapterTest {
             + "    ret\n"
             + ":local\n"
             + "    ret\n"
+            + "\n";
+        int expectedCaretOffset = expectedText.indexOf("|");
+
+        Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
+        Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
+    }
+
+    @Test
+    void testSetPAsmLabelWithName() {
+        String text = ""
+            + "PUB start\n"
+            + "\n"
+            + "    a := @|\n"
+            + "    repeat\n"
+            + "\n";
+        int caretOffset = text.indexOf("|");
+
+        control = new StyledText(shell, SWT.NONE);
+        control.setText(text.replace("|", ""));
+        control.setCaretOffset(caretOffset);
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
+        subject.setControlContents(control, "proga.start", subject.getCursorPosition(control));
+
+        String expectedText = ""
+            + "PUB start\n"
+            + "\n"
+            + "    a := @proga.start|\n"
+            + "    repeat\n"
+            + "\n";
+        int expectedCaretOffset = expectedText.indexOf("|");
+
+        Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
+        Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
+    }
+
+    @Test
+    void testAppendPAsmLabelWithName() {
+        String text = ""
+            + "PUB start\n"
+            + "\n"
+            + "    a := @prog|\n"
+            + "    repeat\n"
+            + "\n";
+        int caretOffset = text.indexOf("|");
+
+        control = new StyledText(shell, SWT.NONE);
+        control.setText(text.replace("|", ""));
+        control.setCaretOffset(caretOffset);
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
+        subject.setControlContents(control, "proga.start", subject.getCursorPosition(control));
+
+        String expectedText = ""
+            + "PUB start\n"
+            + "\n"
+            + "    a := @proga.start|\n"
+            + "    repeat\n"
+            + "\n";
+        int expectedCaretOffset = expectedText.indexOf("|");
+
+        Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
+        Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
+    }
+
+    @Test
+    void testReplacePAsmLabelWithName() {
+        String text = ""
+            + "PUB start\n"
+            + "\n"
+            + "    a := @pro|g.start\n"
+            + "    repeat\n"
+            + "\n";
+        int caretOffset = text.indexOf("|");
+
+        control = new StyledText(shell, SWT.NONE);
+        control.setText(text.replace("|", ""));
+        control.setCaretOffset(caretOffset);
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
+        subject.setControlContents(control, "proga.start", subject.getCursorPosition(control));
+
+        String expectedText = ""
+            + "PUB start\n"
+            + "\n"
+            + "    a := @proga.start|\n"
+            + "    repeat\n"
             + "\n";
         int expectedCaretOffset = expectedText.indexOf("|");
 
