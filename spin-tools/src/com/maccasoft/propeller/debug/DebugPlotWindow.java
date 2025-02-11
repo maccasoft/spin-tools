@@ -725,9 +725,9 @@ public class DebugPlotWindow extends DebugWindow {
                             if (iter.hasNextNumber()) {
                                 int y0 = iter.nextNumber();
                                 if (iter.hasNextNumber()) {
-                                    int width = iter.nextNumber() - x0;
+                                    int width = iter.nextNumber();
                                     if (iter.hasNextNumber()) {
-                                        int height = iter.nextNumber() - y0;
+                                        int height = iter.nextNumber();
 
                                         int x1 = iter.hasNextNumber() ? iter.nextNumber() : x0;
                                         int y1 = iter.hasNextNumber() ? iter.nextNumber() : y0;
