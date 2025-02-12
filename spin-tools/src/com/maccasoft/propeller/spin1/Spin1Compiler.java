@@ -155,7 +155,7 @@ public class Spin1Compiler extends Compiler {
         int memoryOffset = 16;
 
         Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompiler(this, rootFile);
-        objectCompiler.compileObject(root);
+        objectCompiler.compileStep1(root);
 
         objectCompiler.compileStep2(true);
         for (ObjectInfo info : childObjects) {
@@ -245,7 +245,7 @@ public class Spin1Compiler extends Compiler {
             info = childObjects.remove(index);
         }
         childObjects.add(info);
-        objectCompiler.compileObject(objectRoot);
+        objectCompiler.compileStep1(objectRoot);
 
         return info;
     }
@@ -261,7 +261,7 @@ public class Spin1Compiler extends Compiler {
                 if (index != -1) {
                     return childObjects.get(index);
                 }
-                objectCompiler.compileObject(objectRoot);
+                objectCompiler.compileStep1(objectRoot);
                 return info;
             }
         }

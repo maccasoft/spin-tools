@@ -65,7 +65,7 @@ public class Spin2CCompiler extends Spin2Compiler {
     @Override
     protected Spin2Object compileObject(File rootFile, Node root) {
         Spin2CObjectCompiler objectCompiler = new Spin2CObjectCompiler(this, rootFile);
-        objectCompiler.compileObject(root);
+        objectCompiler.compileStep1(root);
 
         objectCompiler.compileStep2(true);
         for (ObjectInfo info : childObjects) {
@@ -217,7 +217,7 @@ public class Spin2CCompiler extends Spin2Compiler {
             info = childObjects.remove(index);
         }
         childObjects.add(info);
-        objectCompiler.compileObject(objectRoot);
+        objectCompiler.compileStep1(objectRoot);
 
         return info;
     }

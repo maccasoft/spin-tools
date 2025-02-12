@@ -115,7 +115,7 @@ public class Spin2Compiler extends Compiler {
 
     protected Spin2Object compileObject(File rootFile, Node root) {
         Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompiler(this, rootFile);
-        objectCompiler.compileObject(root);
+        objectCompiler.compileStep1(root);
 
         objectCompiler.compileStep2(true);
         for (ObjectInfo info : childObjects) {
@@ -269,7 +269,7 @@ public class Spin2Compiler extends Compiler {
             info = childObjects.remove(index);
         }
         childObjects.add(info);
-        objectCompiler.compileObject(objectRoot);
+        objectCompiler.compileStep1(objectRoot);
 
         if (index != -1) {
             debugStatements.removeAll(((Spin2ObjectCompiler) objectCompiler).debugSource);
@@ -298,7 +298,7 @@ public class Spin2Compiler extends Compiler {
                 if (index != -1) {
                     return childObjects.get(index);
                 }
-                objectCompiler.compileObject(objectRoot);
+                objectCompiler.compileStep1(objectRoot);
                 debugStatements.removeAll(((Spin2ObjectCompiler) objectCompiler).debugSource);
                 for (Spin2Method method : ((Spin2ObjectCompiler) objectCompiler).methods) {
                     debugStatements.removeAll(method.debugNodes);
