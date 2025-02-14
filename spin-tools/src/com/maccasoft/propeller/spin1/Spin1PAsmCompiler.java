@@ -38,8 +38,6 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
 
     protected List<Spin1PAsmLine> source = new ArrayList<>();
 
-    protected List<Node> excludedNodes = new ArrayList<>();
-
     public Spin1PAsmCompiler(Context scope, Spin1Compiler compiler, File file) {
         this(scope, compiler, null, file);
     }
@@ -70,7 +68,7 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
 
         for (Node child : parent.getChilds()) {
             try {
-                if (skipNode(child)) {
+                if (child.isExclude()) {
                     continue;
                 }
                 if (child instanceof DataLineNode) {
@@ -123,10 +121,6 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
         }
 
         processAliases("LONG", namespace);
-    }
-
-    protected boolean skipNode(Node node) {
-        return excludedNodes.contains(node);
     }
 
     protected Spin1PAsmLine compileDataLine(Context globalScope, Context lineScope, DataLineNode node, String namespace) {

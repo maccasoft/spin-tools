@@ -631,7 +631,7 @@ public class Spin1Parser extends Parser {
                 }
                 token = stream.nextToken();
                 if (token.getText().startsWith("''") || token.getText().startsWith("{{")) {
-                    node.document.add(token);
+                    node.addDocument(token);
                 }
                 root.addComment(token);
             }
@@ -838,7 +838,7 @@ public class Spin1Parser extends Parser {
                     }
                     node.getTokens().addAll(tokens);
 
-                    root.comments.addAll(comments);
+                    root.addAllComments(comments);
 
                     hasName = true;
                 }

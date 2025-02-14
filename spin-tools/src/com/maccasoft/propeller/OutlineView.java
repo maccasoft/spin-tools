@@ -19,11 +19,9 @@ import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITreeContentProvider;
-import org.eclipse.jface.viewers.ITreeViewerListener;
 import org.eclipse.jface.viewers.OwnerDrawLabelProvider;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.StyledCellLabelProvider;
-import org.eclipse.jface.viewers.TreeExpansionEvent;
 import org.eclipse.jface.viewers.TreePath;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.ViewerCell;
@@ -57,7 +55,7 @@ public class OutlineView {
     static class DefinesNode extends Node {
 
         public DefinesNode(Token token) {
-            tokens.add(new Token(0, "#" + token.getText()));
+            addToken(new Token(0, "#" + token.getText()));
         }
 
     }
@@ -68,7 +66,7 @@ public class OutlineView {
 
         public DefinitionNode(Node parent, Token identifier, String text) {
             super(parent);
-            tokens.add(identifier);
+            addToken(identifier);
             this.text = text;
         }
 
@@ -97,7 +95,7 @@ public class OutlineView {
                         }
                         String text = directive.getFile().getText().substring(1, directive.getFile().getText().length() - 1);
                         DefinitionNode definition = new DefinitionNode(includes, directive.getFile(), text);
-                        definition.setData("__skip__", node.getData("__skip__"));
+                        definition.setExclude(node.isExclude());
                     }
                 }
                 else if (node instanceof DirectiveNode.DefineNode) {
@@ -107,7 +105,7 @@ public class OutlineView {
                             defines = new DefinesNode(directive.getDirective());
                         }
                         DefinitionNode definition = new DefinitionNode(defines, directive.getIdentifier(), directive.getIdentifier().getText());
-                        definition.setData("__skip__", node.getData("__skip__"));
+                        definition.setExclude(node.isExclude());
                     }
                 }
                 else if (!(node instanceof DirectiveNode)) {
@@ -510,8 +508,7 @@ public class OutlineView {
         }
 
         boolean skipNode(Node node) {
-            Boolean skip = (Boolean) node.getData("__skip__");
-            return skip != null && skip.booleanValue();
+            return node.isExclude();
         }
 
     };
@@ -543,23 +540,6 @@ public class OutlineView {
         viewer.setContentProvider(contentProvider);
         viewer.setLabelProvider(labelProvider);
         viewer.setComparer(elementComparer);
-        viewer.addTreeListener(new ITreeViewerListener() {
-
-            @Override
-            public void treeExpanded(TreeExpansionEvent event) {
-                if (event.getElement() instanceof Node) {
-                    ((Node) event.getElement()).setData("__treeExpanded__", true);
-                }
-            }
-
-            @Override
-            public void treeCollapsed(TreeExpansionEvent event) {
-                if (event.getElement() instanceof Node) {
-                    ((Node) event.getElement()).setData("__treeExpanded__", false);
-                }
-            }
-
-        });
 
         FontData[] fd = viewer.getControl().getFont().getFontData();
         fd[0].setStyle(SWT.BOLD);
@@ -607,12 +587,6 @@ public class OutlineView {
             Object[] expandedElements = viewer.getExpandedElements();
             viewer.setInput(node);
             viewer.setExpandedElements(expandedElements);
-            for (Node child : node.getChilds()) {
-                Boolean expanded = (Boolean) child.getData("__treeExpanded__");
-                if (expanded != null) {
-                    viewer.setExpandedState(child, expanded.booleanValue());
-                }
-            }
         } finally {
             viewer.getTree().setRedraw(true);
         }

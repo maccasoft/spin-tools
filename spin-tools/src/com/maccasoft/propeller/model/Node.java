@@ -12,23 +12,19 @@ package com.maccasoft.propeller.model;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class Node {
 
-    protected final Node parent;
-    protected final List<Token> tokens = new ArrayList<Token>();
-    protected final List<Node> childs = new ArrayList<Node>();
+    final Node parent;
+    final List<Token> tokens = new ArrayList<Token>();
+    final List<Node> childs = new ArrayList<Node>();
 
-    protected Object data;
-    protected Map<String, Object> keyedData = new HashMap<String, Object>();
+    List<Token> document = new ArrayList<Token>();
+    List<Token> comments = new ArrayList<Token>();
 
-    public List<Token> document = new ArrayList<Token>();
-    public List<Token> comments = new ArrayList<Token>();
-
-    public String description;
+    String description;
+    boolean exclude;
 
     public Node() {
         this.parent = null;
@@ -36,12 +32,12 @@ public class Node {
 
     public Node(Node parent) {
         this.parent = parent;
-        this.parent.childs.add(this);
+        this.parent.addChild(this);
     }
 
     public Node(Collection<Token> list) {
         this.parent = null;
-        tokens.addAll(list);
+        this.tokens.addAll(list);
     }
 
     public void accept(NodeVisitor visitor) {
@@ -124,22 +120,6 @@ public class Node {
         return stream.getSource(getStartIndex(), getStopIndex());
     }
 
-    public Object getData() {
-        return data;
-    }
-
-    public void setData(Object data) {
-        this.data = data;
-    }
-
-    public Object getData(String key) {
-        return keyedData.get(key);
-    }
-
-    public void setData(String key, Object data) {
-        this.keyedData.put(key, data);
-    }
-
     public void addDocument(Token token) {
         document.add(token);
     }
@@ -150,6 +130,10 @@ public class Node {
 
     public void addComment(Token token) {
         comments.add(token);
+    }
+
+    public void addAllComments(Collection<Token> c) {
+        comments.addAll(c);
     }
 
     public List<Token> getComments() {
@@ -187,6 +171,14 @@ public class Node {
         }
 
         this.description = this.description.trim();
+    }
+
+    public boolean isExclude() {
+        return exclude;
+    }
+
+    public void setExclude(boolean exclude) {
+        this.exclude = exclude;
     }
 
     @Override

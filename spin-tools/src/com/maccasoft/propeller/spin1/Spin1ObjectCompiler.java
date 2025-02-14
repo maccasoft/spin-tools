@@ -134,52 +134,40 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
             @Override
             public void visitConstant(ConstantNode node) {
-                if (!conditionStack.isEmpty() && conditionStack.peek().skip) {
-                    excludedNodes.add(node);
-                }
-                if (!skipNode(node)) {
+                node.setExclude(!conditionStack.isEmpty() && conditionStack.peek().skip);
+                if (!node.isExclude()) {
                     compileConstant(node);
                 }
             }
 
             @Override
             public void visitVariable(VariableNode node) {
-                if (!conditionStack.isEmpty() && conditionStack.peek().skip) {
-                    excludedNodes.add(node);
-                }
+                node.setExclude(!conditionStack.isEmpty() && conditionStack.peek().skip);
             }
 
             @Override
             public void visitObject(ObjectNode node) {
-                if (!conditionStack.isEmpty() && conditionStack.peek().skip) {
-                    excludedNodes.add(node);
-                }
-                if (!skipNode(node)) {
+                node.setExclude(!conditionStack.isEmpty() && conditionStack.peek().skip);
+                if (!node.isExclude()) {
                     compileObject(node);
                 }
             }
 
             @Override
             public boolean visitMethod(MethodNode node) {
-                if (!conditionStack.isEmpty() && conditionStack.peek().skip) {
-                    excludedNodes.add(node);
-                }
+                node.setExclude(!conditionStack.isEmpty() && conditionStack.peek().skip);
                 return true;
             }
 
             @Override
             public boolean visitStatement(StatementNode node) {
-                if (!conditionStack.isEmpty() && conditionStack.peek().skip) {
-                    excludedNodes.add(node);
-                }
+                node.setExclude(!conditionStack.isEmpty() && conditionStack.peek().skip);
                 return true;
             }
 
             @Override
             public void visitDataLine(DataLineNode node) {
-                if (!conditionStack.isEmpty() && conditionStack.peek().skip) {
-                    excludedNodes.add(node);
-                }
+                node.setExclude(!conditionStack.isEmpty() && conditionStack.peek().skip);
             }
 
         });
@@ -223,7 +211,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
         for (Node node : root.getChilds()) {
             if (node instanceof VariablesNode) {
-                if (!skipNode(node)) {
+                if (!node.isExclude()) {
                     compileVarBlock(node);
                 }
             }
@@ -251,7 +239,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
         }
 
         for (Node node : root.getChilds()) {
-            if (skipNode(node)) {
+            if (node.isExclude()) {
                 continue;
             }
             if ((node instanceof MethodNode) && "PUB".equalsIgnoreCase(((MethodNode) node).getType().getText())) {
@@ -286,7 +274,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
             }
         }
         for (Node node : root.getChilds()) {
-            if (skipNode(node)) {
+            if (node.isExclude()) {
                 continue;
             }
             if ((node instanceof MethodNode) && "PRI".equalsIgnoreCase(((MethodNode) node).getType().getText())) {
@@ -896,7 +884,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
         for (Node child : node.getChilds()) {
             if (child instanceof VariablesNode) {
-                if (!skipNode(child)) {
+                if (!child.isExclude()) {
                     compileVarBlock(child);
                 }
             }
@@ -1292,7 +1280,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
     List<Node> buildFilteredStatements(Node statementNode) {
         List<Node> list = new ArrayList<>();
         for (Node node : statementNode.getChilds()) {
-            if (skipNode(node)) {
+            if (node.isExclude()) {
                 if (node instanceof StatementNode) {
                     list.addAll(buildFilteredStatements(node));
                 }
@@ -1629,7 +1617,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
                 boolean hasOther = false;
                 for (Node child : node.getChilds()) {
-                    if (skipNode(node)) {
+                    if (child.isExclude()) {
                         continue;
                     }
                     if (child instanceof StatementNode) {
@@ -1747,6 +1735,8 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
     void compileDirective(Node node) {
         Token token;
         boolean skip = !conditionStack.isEmpty() && conditionStack.peek().skip;
+
+        node.setExclude(skip);
 
         TokenIterator iter = node.tokenIterator();
         token = iter.next();
@@ -1957,6 +1947,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                 throw new CompilerException("misplaced #" + token.getText(), token);
             }
             conditionStack.pop();
+            node.setExclude(!conditionStack.isEmpty() && conditionStack.peek().skip);
         }
         else {
             logMessage(new CompilerException("unsupported directive", token));

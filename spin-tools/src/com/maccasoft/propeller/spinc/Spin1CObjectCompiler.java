@@ -122,24 +122,18 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
 
             @Override
             public void visitVariable(VariableNode node) {
-                if (!conditionStack.isEmpty() && conditionStack.peek().skip) {
-                    excludedNodes.add(node);
-                }
+                node.setExclude(!conditionStack.isEmpty() && conditionStack.peek().skip);
             }
 
             @Override
             public boolean visitFunction(FunctionNode node) {
-                if (!conditionStack.isEmpty() && conditionStack.peek().skip) {
-                    excludedNodes.add(node);
-                }
+                node.setExclude(!conditionStack.isEmpty() && conditionStack.peek().skip);
                 return true;
             }
 
             @Override
             public boolean visitStatement(StatementNode node) {
-                if (!conditionStack.isEmpty() && conditionStack.peek().skip) {
-                    excludedNodes.add(node);
-                }
+                node.setExclude(!conditionStack.isEmpty() && conditionStack.peek().skip);
                 return true;
             }
 
@@ -152,7 +146,7 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
 
         for (Node node : new ArrayList<>(root.getChilds())) {
             try {
-                if (skipNode(node)) {
+                if (node.isExclude()) {
                     continue;
                 }
                 if (node instanceof TypeDefinitionNode) {
@@ -978,7 +972,7 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
         while (nodeIterator.hasNext()) {
             Node node = nodeIterator.next();
             try {
-                if (skipNode(node)) {
+                if (node.isExclude()) {
                     continue;
                 }
                 if (node instanceof StatementNode) {
@@ -1368,7 +1362,7 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
 
             boolean hasDefault = false;
             for (Node child : node.getChilds()) {
-                if (skipNode(child)) {
+                if (child.isExclude()) {
                     continue;
                 }
                 if (child instanceof StatementNode) {

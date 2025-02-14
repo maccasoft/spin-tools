@@ -44,8 +44,6 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
     protected List<Spin2PAsmLine> source = new ArrayList<>();
     protected List<Spin2PAsmDebugLine> debugSource = new ArrayList<>();
 
-    protected List<Node> excludedNodes = new ArrayList<>();
-
     public Spin2PasmCompiler(Context scope, Spin2Compiler compiler, File file) {
         this(scope, compiler, null, file);
     }
@@ -76,7 +74,7 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
 
         for (Node child : parent.getChilds()) {
             try {
-                if (skipNode(child)) {
+                if (child.isExclude()) {
                     continue;
                 }
                 if (child instanceof DataLineNode) {
@@ -129,10 +127,6 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
         }
 
         processAliases(scope, "LONG", namespace);
-    }
-
-    protected boolean skipNode(Node node) {
-        return excludedNodes.contains(node);
     }
 
     protected Spin2PAsmLine compileDataLine(Context datScope, Context lineScope, DataLineNode node) {
