@@ -13,6 +13,7 @@ package com.maccasoft.propeller;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -491,7 +492,22 @@ public class SourceEditor {
 
             @Override
             public void textChanging(TextChangingEvent event) {
-                for (TokenMarker entry : tokenMarker.getCompilerTokens()) {
+                fixupTokens(event, tokenMarker.getCompilerTokens());
+                fixupTokens(event, tokenMarker.getExcludedNodes());
+                modified = true;
+            }
+
+            void fixupTokens(TextChangingEvent event, Collection<TokenMarker> c) {
+                for (TokenMarker entry : c) {
+                    if (event.newCharCount != 0) {
+                        if (event.start < entry.start) {
+                            entry.start += event.newCharCount;
+                            entry.stop += event.newCharCount;
+                        }
+                        else if (event.start >= entry.start && event.start <= entry.stop + 1) {
+                            entry.stop += event.newCharCount;
+                        }
+                    }
                     if (event.replaceCharCount != 0) {
                         if (event.start + event.replaceCharCount <= entry.start) {
                             entry.start -= event.replaceCharCount;
@@ -516,17 +532,7 @@ public class SourceEditor {
                             }
                         }
                     }
-                    if (event.newCharCount != 0) {
-                        if (event.start < entry.start) {
-                            entry.start += event.newCharCount;
-                            entry.stop += event.newCharCount;
-                        }
-                        else if (event.start >= entry.start && event.start <= entry.stop) {
-                            entry.stop += event.newCharCount;
-                        }
-                    }
                 }
-                modified = true;
             }
 
             @Override

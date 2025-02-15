@@ -12,6 +12,7 @@ package com.maccasoft.propeller;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -133,7 +134,10 @@ public abstract class SourceTokenMarker {
 
         @Override
         public int compareTo(TokenMarker o) {
-            return start - o.start;
+            if (start != o.start) {
+                return start - o.start;
+            }
+            return stop - o.stop;
         }
 
         public String getError() {
@@ -144,6 +148,11 @@ public abstract class SourceTokenMarker {
             this.error = error;
         }
 
+        @Override
+        public String toString() {
+            return "TokenMarker [start=" + start + ", stop=" + stop + ", id=" + id;
+        }
+
     }
 
     protected SourceProvider sourceProvider;
@@ -151,6 +160,7 @@ public abstract class SourceTokenMarker {
     protected Node root;
     protected TreeSet<TokenMarker> tokens = new TreeSet<>();
     protected TreeSet<TokenMarker> compilerTokens = new TreeSet<>();
+    protected TreeSet<TokenMarker> excludedNodes = new TreeSet<>();
 
     protected boolean caseSensitive;
     protected String constantSeparator;
@@ -189,24 +199,26 @@ public abstract class SourceTokenMarker {
     }
 
     public void refreshCompilerTokens(List<CompilerException> messages) {
-        TreeSet<TokenMarker> tokens = new TreeSet<TokenMarker>();
+        compilerTokens.clear();
+
         for (CompilerException message : messages) {
             if (message.hasChilds()) {
                 for (CompilerException childMessage : message.getChilds()) {
                     TokenId id = childMessage.type == CompilerException.ERROR ? TokenId.ERROR : TokenId.WARNING;
                     TokenMarker marker = childMessage.getStartToken() != null ? new TokenMarker(childMessage.getStartToken(), childMessage.getStopToken(), id) : new TokenMarker(0, 0, id);
                     marker.setError(childMessage.getMessage());
-                    tokens.add(marker);
+                    compilerTokens.add(marker);
                 }
             }
             else {
                 TokenId id = message.type == CompilerException.ERROR ? TokenId.ERROR : TokenId.WARNING;
                 TokenMarker marker = message.getStartToken() != null ? new TokenMarker(message.getStartToken(), message.getStopToken(), id) : new TokenMarker(0, 0, id);
                 marker.setError(message.getMessage());
-                tokens.add(marker);
+                compilerTokens.add(marker);
             }
         }
-        compilerTokens = tokens;
+
+        tokens.addAll(compilerTokens);
     }
 
     public TreeSet<TokenMarker> getCompilerTokens() {
@@ -232,13 +244,18 @@ public abstract class SourceTokenMarker {
     }
 
     public Set<TokenMarker> getLineTokens(int lineStart, int lineStop) {
-        Set<TokenMarker> result = new TreeSet<TokenMarker>();
+        Set<TokenMarker> result = new TreeSet<>();
 
         if (tokens.size() != 0) {
             TokenMarker firstMarker = tokens.floor(new TokenMarker(lineStart, lineStart, null));
             if (firstMarker == null) {
                 firstMarker = tokens.first();
             }
+            if (firstMarker.start <= lineStart && firstMarker.stop >= lineStop) {
+                result.add(new TokenMarker(lineStart, lineStop, firstMarker.getId()));
+                return result;
+            }
+
             TokenMarker lastMarker = tokens.ceiling(new TokenMarker(lineStop, lineStop, null));
             if (lastMarker == null) {
                 lastMarker = tokens.last();
@@ -254,6 +271,7 @@ public abstract class SourceTokenMarker {
                         stop = lineStop;
                     }
                     result.add(new TokenMarker(start, stop, entry.getId()));
+                    lineStart = stop + 1;
                 }
             }
             int start = lastMarker.getStart();
@@ -1516,6 +1534,19 @@ public abstract class SourceTokenMarker {
 
     public Map<String, TokenId> getSymbols() {
         return symbols;
+    }
+
+    public Collection<TokenMarker> getExcludedNodes() {
+        return excludedNodes;
+    }
+
+    protected void addToExcluded(Node node) {
+        Token startToken = node.getStartToken();
+        if (startToken != null) {
+            TokenMarker marker = new TokenMarker(startToken.start - startToken.column, node.getStopIndex(), TokenId.COMMENT);
+            tokens.add(marker);
+            excludedNodes.add(marker);
+        }
     }
 
 }

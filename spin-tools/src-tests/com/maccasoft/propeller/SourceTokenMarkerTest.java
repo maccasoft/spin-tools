@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -10,12 +10,17 @@
 
 package com.maccasoft.propeller;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.eclipse.jface.fieldassist.IContentProposal;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import com.maccasoft.propeller.SourceTokenMarker.TokenId;
+import com.maccasoft.propeller.SourceTokenMarker.TokenMarker;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.spin1.Spin1Parser;
@@ -546,6 +551,90 @@ public class SourceTokenMarkerTest {
         Assertions.assertEquals("object.PIN_TX", result.get(1).getLabel());
         Assertions.assertEquals("PIN_TX", result.get(1).getContent());
         Assertions.assertEquals(6, result.get(1).getCursorPosition());
+    }
+
+    @Test
+    public void testMarkerOrdering() throws Exception {
+        TreeSet<TokenMarker> set = new TreeSet<>();
+
+        TokenMarker marker1 = new TokenMarker(11, 19, TokenId.KEYWORD);
+        TokenMarker marker2 = new TokenMarker(0, 30, TokenId.COMMENT);
+        set.add(marker1);
+        set.add(marker2);
+
+        Iterator<TokenMarker> iter = set.iterator();
+        Assertions.assertSame(marker2, iter.next());
+        Assertions.assertSame(marker1, iter.next());
+    }
+
+    @Test
+    public void testOverlappedMarkersOrdering() throws Exception {
+        TreeSet<TokenMarker> set = new TreeSet<>();
+
+        TokenMarker marker1 = new TokenMarker(0, 15, TokenId.KEYWORD);
+        TokenMarker marker2 = new TokenMarker(16, 30, TokenId.KEYWORD);
+        TokenMarker marker3 = new TokenMarker(0, 30, TokenId.COMMENT);
+        set.add(marker1);
+        set.add(marker2);
+        set.add(marker3);
+        Assertions.assertEquals(3, set.size());
+
+        Iterator<TokenMarker> iter = set.iterator();
+        Assertions.assertSame(marker1, iter.next());
+        Assertions.assertSame(marker3, iter.next());
+        Assertions.assertSame(marker2, iter.next());
+    }
+
+    @Test
+    public void testReplacedMarkersOrdering() throws Exception {
+        TreeSet<TokenMarker> set = new TreeSet<>();
+
+        TokenMarker marker1 = new TokenMarker(16, 30, TokenId.KEYWORD);
+        TokenMarker marker2 = new TokenMarker(16, 31, TokenId.COMMENT);
+        set.add(marker1);
+        set.add(marker2);
+        Assertions.assertEquals(2, set.size());
+
+        Iterator<TokenMarker> iter = set.iterator();
+        Assertions.assertSame(marker1, iter.next());
+        Assertions.assertSame(marker2, iter.next());
+    }
+
+    @Test
+    public void testSkipOverriddenMarkers() throws Exception {
+        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
+
+        TokenMarker marker1 = new TokenMarker(11, 19, TokenId.KEYWORD);
+        TokenMarker marker2 = new TokenMarker(0, 30, TokenId.COMMENT);
+        subject.tokens.add(marker1);
+        subject.tokens.add(marker2);
+        Assertions.assertEquals(2, subject.tokens.size());
+
+        Set<TokenMarker> result = subject.getLineTokens(0, 30);
+        Assertions.assertEquals(1, result.size());
+        Iterator<TokenMarker> iter = result.iterator();
+        Assertions.assertEquals(TokenId.COMMENT, iter.next().id);
+    }
+
+    @Test
+    public void test() throws Exception {
+        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
+
+        TokenMarker marker1 = new TokenMarker(0, 30, TokenId.COMMENT);
+        TokenMarker marker2 = new TokenMarker(0, 0, TokenId.ERROR);
+        subject.tokens.add(marker1);
+        subject.tokens.add(marker2);
+        Assertions.assertEquals(2, subject.tokens.size());
+
+        Iterator<TokenMarker> iter = subject.tokens.iterator();
+        Assertions.assertSame(marker2, iter.next());
+        Assertions.assertSame(marker1, iter.next());
+
+        Set<TokenMarker> result = subject.getLineTokens(0, 30);
+        Assertions.assertEquals(2, result.size());
+        iter = result.iterator();
+        Assertions.assertEquals(TokenId.ERROR, iter.next().id);
+        Assertions.assertEquals(TokenId.COMMENT, iter.next().id);
     }
 
 }

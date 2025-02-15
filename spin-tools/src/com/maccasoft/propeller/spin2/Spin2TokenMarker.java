@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -14,7 +14,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
 
@@ -675,6 +674,9 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         modczOperands.put("_SET", TokenId.PASM_INSTRUCTION);
     }
 
+    String lastLabel;
+    boolean collectLinkedObjects;
+
     public Spin2TokenMarker(SourceProvider sourceProvider) {
         super(sourceProvider);
         this.constantSeparator = ".";
@@ -683,13 +685,11 @@ public class Spin2TokenMarker extends SourceTokenMarker {
 
     @Override
     public void refreshTokens(String text) {
-        tokens.clear();
-        symbols.clear();
-
         Spin2TokenStream stream = new Spin2TokenStream(text);
         Spin2Parser subject = new Spin2Parser(stream);
         root = subject.parse();
 
+        tokens.clear();
         for (Token token : root.getComments()) {
             if (token.type == Token.NEXT_LINE) {
                 tokens.add(new TokenMarker(token.substring(0, 2), TokenId.OPERATOR));
@@ -699,15 +699,22 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 tokens.add(new TokenMarker(token, TokenId.COMMENT));
             }
         }
-        collectKeywords(root, tokens);
-        updateReferences(root, tokens);
+        tokens.addAll(excludedNodes);
+
+        collectLinkedObjects = false;
+
+        collectKeywords(root);
+        updateReferences(root);
     }
 
     @Override
     public void refreshCompilerTokens(List<CompilerException> messages) {
         tokens.clear();
+        symbols.clear();
         externals.clear();
         cache.clear();
+
+        excludedNodes.clear();
 
         for (Token token : root.getComments()) {
             if (token.type == Token.NEXT_LINE) {
@@ -718,96 +725,68 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 tokens.add(new TokenMarker(token, TokenId.COMMENT));
             }
         }
-        collectKeywords(root, tokens);
-        root.accept(new NodeVisitor() {
 
-            @Override
-            public void visitObject(ObjectNode objectNode) {
-                if (objectNode.name == null || objectNode.file == null) {
-                    return;
-                }
+        collectLinkedObjects = true;
 
-                String fileName = objectNode.getFileName();
-                Node objectRoot = getObjectTree(fileName);
-                if (objectRoot != null) {
-                    objectRoot.accept(new NodeVisitor() {
-
-                        @Override
-                        public void visitConstant(ConstantNode node) {
-                            if (node.getIdentifier() != null) {
-                                externals.put(objectNode.name.getText() + constantSeparator + node.getIdentifier().getText(), TokenId.CONSTANT);
-                            }
-                        }
-
-                        @Override
-                        public void visitTypeDefinition(TypeDefinitionNode node) {
-                            if (node.getIdentifier() != null) {
-                                externals.put(objectNode.name.getText() + "." + node.getIdentifier().getText(), TokenId.TYPE);
-                            }
-                        }
-
-                        @Override
-                        public boolean visitMethod(MethodNode node) {
-                            if ("PUB".equalsIgnoreCase(node.type.getText())) {
-                                if (node.name != null) {
-                                    externals.put(objectNode.name.getText() + "." + node.name.getText(), TokenId.METHOD_PUB);
-                                }
-                            }
-                            return false;
-                        }
-
-                    });
-                }
-            }
-
-        });
-        updateReferences(root, tokens);
+        collectKeywords(root);
+        updateReferences(root);
 
         super.refreshCompilerTokens(messages);
     }
 
-    void collectKeywords(Node root, TreeSet<TokenMarker> tokens) {
-        root.accept(new NodeVisitor() {
+    NodeVisitor collectKeywordsVisitor = new NodeVisitor() {
 
-            String lastLabel = "";
+        @Override
+        public void visitDirective(DirectiveNode node) {
+            if (!node.isExclude()) {
+                collectTokens(node);
+            }
+            else {
+                addToExcluded(node);
+            }
+        }
 
-            @Override
-            public void visitDirective(DirectiveNode node) {
-                int index = 0;
-                if (index < node.getTokenCount()) {
-                    tokens.add(new TokenMarker(node.getToken(index++), TokenId.DIRECTIVE));
-                }
-                if (index < node.getTokenCount()) {
-                    tokens.add(new TokenMarker(node.getToken(index++), TokenId.DIRECTIVE));
-                }
-
-                if (node instanceof DirectiveNode.DefineNode) {
-                    Token identifier = ((DirectiveNode.DefineNode) node).getIdentifier();
-                    if (identifier != null) {
-                        symbols.put(identifier.getText(), TokenId.CONSTANT);
-                        tokens.add(new TokenMarker(identifier, TokenId.CONSTANT));
-                    }
+        void collectTokens(DirectiveNode node) {
+            if (node instanceof DirectiveNode.DefineNode) {
+                Token identifier = ((DirectiveNode.DefineNode) node).getIdentifier();
+                if (identifier != null) {
+                    symbols.put(identifier.getText(), TokenId.CONSTANT);
                 }
             }
+            if (node.getTokenCount() != 0) {
+                tokens.add(new TokenMarker(node.getStartIndex(), node.getStopIndex(), TokenId.DIRECTIVE));
+            }
+        }
 
-            @Override
-            public boolean visitConstants(ConstantsNode node) {
+        @Override
+        public boolean visitConstants(ConstantsNode node) {
+            if (!node.isExclude()) {
                 if (node.getTextToken() != null) {
                     tokens.add(new TokenMarker(node.getTextToken(), TokenId.SECTION));
                 }
-                return true;
             }
+            else {
+                addToExcluded(node);
+            }
+            return true;
+        }
 
-            @Override
-            public void visitConstant(ConstantNode node) {
+        @Override
+        public void visitConstant(ConstantNode node) {
+            if (!node.isExclude()) {
                 if (node.getIdentifier() != null) {
                     symbols.put(node.getIdentifier().getText(), TokenId.CONSTANT);
                     tokens.add(new TokenMarker(node.getIdentifier(), TokenId.CONSTANT));
                 }
             }
+            else {
+                addToExcluded(node);
+            }
+        }
 
-            @Override
-            public void visitTypeDefinition(TypeDefinitionNode node) {
+        @Override
+        public void visitTypeDefinition(TypeDefinitionNode node) {
+            if (!node.isExclude()) {
                 if (node.getType() != null) {
                     tokens.add(new TokenMarker(node.getType(), TokenId.TYPE));
                 }
@@ -815,17 +794,27 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 symbols.put("^" + node.getIdentifier().getText(), TokenId.TYPE);
                 tokens.add(new TokenMarker(node.getIdentifier(), TokenId.CONSTANT));
             }
+            else {
+                addToExcluded(node);
+            }
+        }
 
-            @Override
-            public boolean visitVariables(VariablesNode node) {
+        @Override
+        public boolean visitVariables(VariablesNode node) {
+            if (!node.isExclude()) {
                 if (!(node.getParent() instanceof VariablesNode) && node.getTokenCount() != 0) {
                     tokens.add(new TokenMarker(node.getStartToken(), TokenId.SECTION));
                 }
-                return true;
             }
+            else {
+                addToExcluded(node);
+            }
+            return true;
+        }
 
-            @Override
-            public void visitVariable(VariableNode node) {
+        @Override
+        public void visitVariable(VariableNode node) {
+            if (!node.isExclude()) {
                 if (node.getIdentifier() != null) {
                     String identifier = node.getIdentifier().getText();
                     symbols.put(identifier, TokenId.VARIABLE);
@@ -834,130 +823,233 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                     tokens.add(new TokenMarker(node.getIdentifier(), TokenId.VARIABLE));
                 }
             }
+            else {
+                addToExcluded(node);
+            }
+        }
 
-            @Override
-            public boolean visitObjects(ObjectsNode node) {
+        @Override
+        public boolean visitObjects(ObjectsNode node) {
+            if (!node.isExclude()) {
                 tokens.add(new TokenMarker(node.getTokens().get(0), TokenId.SECTION));
-                return true;
+            }
+            else {
+                addToExcluded(node);
+            }
+            return true;
+        }
+
+        @Override
+        public void visitObject(ObjectNode node) {
+            if (!node.isExclude()) {
+                collectTokens(node);
+            }
+            else {
+                addToExcluded(node);
+            }
+        }
+
+        void collectTokens(ObjectNode node) {
+            if (node.name == null || node.file == null) {
+                return;
             }
 
-            @Override
-            public void visitObject(ObjectNode node) {
-                if (node.name == null || node.file == null) {
-                    return;
-                }
+            symbols.put(node.name.getText(), TokenId.OBJECT);
+            tokens.add(new TokenMarker(node.name, TokenId.OBJECT));
+            if (node.file != null) {
+                tokens.add(new TokenMarker(node.file, TokenId.STRING));
+            }
 
-                symbols.put(node.name.getText(), TokenId.OBJECT);
-                tokens.add(new TokenMarker(node.name, TokenId.OBJECT));
-                if (node.file != null) {
-                    tokens.add(new TokenMarker(node.file, TokenId.STRING));
+            for (ObjectNode.ParameterNode param : node.parameters) {
+                if (param.identifier != null) {
+                    tokens.add(new TokenMarker(param.identifier, TokenId.CONSTANT));
                 }
+            }
 
-                for (ObjectNode.ParameterNode param : node.parameters) {
-                    if (param.identifier != null) {
-                        tokens.add(new TokenMarker(param.identifier, TokenId.CONSTANT));
+            if (!collectLinkedObjects) {
+                return;
+            }
+
+            Node root = getObjectTree(node.getFileName());
+            if (root != null) {
+                String qualifier = node.name.getText();
+                root.accept(new NodeVisitor() {
+
+                    @Override
+                    public void visitConstant(ConstantNode node) {
+                        if (node.getIdentifier() != null) {
+                            externals.put(qualifier + constantSeparator + node.getIdentifier().getText(), TokenId.CONSTANT);
+                        }
                     }
-                }
+
+                    @Override
+                    public void visitTypeDefinition(TypeDefinitionNode node) {
+                        if (!node.isExclude()) {
+                            if (node.getIdentifier() != null) {
+                                externals.put(qualifier + "." + node.getIdentifier().getText(), TokenId.TYPE);
+                            }
+                        }
+                    }
+
+                    @Override
+                    public boolean visitVariables(VariablesNode node) {
+                        return false;
+                    }
+
+                    @Override
+                    public boolean visitObjects(ObjectsNode node) {
+                        return false;
+                    }
+
+                    @Override
+                    public boolean visitMethod(MethodNode node) {
+                        if (!node.isExclude()) {
+                            if ("PUB".equalsIgnoreCase(node.type.getText())) {
+                                externals.put(qualifier + "." + node.name.getText(), TokenId.METHOD_PUB);
+                            }
+                        }
+                        return false;
+                    }
+
+                    @Override
+                    public boolean visitData(DataNode node) {
+                        return false;
+                    }
+
+                });
+            }
+        }
+
+        @Override
+        public boolean visitMethod(MethodNode node) {
+            if (!node.isExclude()) {
+                collectTokens(node);
+            }
+            else {
+                addToExcluded(node);
+            }
+            return true;
+        }
+
+        void collectTokens(MethodNode node) {
+            TokenId id = TokenId.METHOD_PUB;
+            if ("PRI".equalsIgnoreCase(node.getType().getText())) {
+                id = TokenId.METHOD_PRI;
+            }
+            tokens.add(new TokenMarker(node.getType(), id));
+
+            if (node.getName() != null) {
+                symbols.put(node.getName().getText(), id);
+                tokens.add(new TokenMarker(node.getName(), id));
             }
 
-            @Override
-            public boolean visitMethod(MethodNode node) {
-                TokenId id = TokenId.METHOD_PUB;
-                if ("PRI".equalsIgnoreCase(node.getType().getText())) {
-                    id = TokenId.METHOD_PRI;
-                }
-                tokens.add(new TokenMarker(node.getType(), id));
-
-                if (node.getName() != null) {
-                    symbols.put(node.getName().getText(), id);
-                    tokens.add(new TokenMarker(node.getName(), id));
-                }
-
-                for (MethodNode.ParameterNode child : node.getParameters()) {
-                    tokens.add(new TokenMarker(child.getIdentifier(), TokenId.METHOD_LOCAL));
-                }
-
-                for (MethodNode.ReturnNode child : node.getReturnVariables()) {
-                    tokens.add(new TokenMarker(child.getIdentifier(), TokenId.METHOD_RETURN));
-                }
-
-                return true;
+            for (MethodNode.ParameterNode child : node.getParameters()) {
+                tokens.add(new TokenMarker(child.getIdentifier(), TokenId.METHOD_LOCAL));
             }
 
-            @Override
-            public boolean visitData(DataNode node) {
+            for (MethodNode.ReturnNode child : node.getReturnVariables()) {
+                tokens.add(new TokenMarker(child.getIdentifier(), TokenId.METHOD_RETURN));
+            }
+        }
+
+        @Override
+        public boolean visitStatement(StatementNode node) {
+            if (node.isExclude()) {
+                addToExcluded(node);
+            }
+            return true;
+        }
+
+        @Override
+        public boolean visitData(DataNode node) {
+            if (!node.isExclude()) {
                 lastLabel = "";
                 tokens.add(new TokenMarker(node.getTokens().get(0), TokenId.SECTION));
-                return true;
             }
+            else {
+                addToExcluded(node);
+            }
+            return true;
+        }
 
-            @Override
-            public void visitDataLine(DataLineNode node) {
-                if (node.label != null) {
-                    String s = node.label.getText();
-                    if (s.startsWith(".")) {
-                        symbols.put(lastLabel + s, TokenId.PASM_LOCAL_LABEL);
-                        symbols.put(lastLabel + "@" + s, TokenId.PASM_LOCAL_LABEL);
-                        symbols.put(lastLabel + "@@" + s, TokenId.PASM_LOCAL_LABEL);
-                        tokens.add(new TokenMarker(node.label, TokenId.PASM_LOCAL_LABEL));
-                    }
-                    else {
-                        symbols.put(s, TokenId.PASM_LABEL);
-                        symbols.put("@" + s, TokenId.PASM_LABEL);
-                        symbols.put("@@" + s, TokenId.PASM_LABEL);
-                        tokens.add(new TokenMarker(node.label, TokenId.PASM_LABEL));
-                        lastLabel = s;
-                    }
+        @Override
+        public void visitDataLine(DataLineNode node) {
+            if (!node.isExclude()) {
+                collectTokens(node);
+            }
+            else {
+                addToExcluded(node);
+            }
+        }
+
+        void collectTokens(DataLineNode node) {
+            if (node.label != null) {
+                String s = node.label.getText();
+                if (s.startsWith(".")) {
+                    symbols.put(lastLabel + s, TokenId.PASM_LOCAL_LABEL);
+                    symbols.put(lastLabel + "@" + s, TokenId.PASM_LOCAL_LABEL);
+                    symbols.put(lastLabel + "@@" + s, TokenId.PASM_LOCAL_LABEL);
+                    tokens.add(new TokenMarker(node.label, TokenId.PASM_LOCAL_LABEL));
                 }
-                if (node.condition != null) {
-                    tokens.add(new TokenMarker(node.condition, TokenId.PASM_CONDITION));
+                else {
+                    symbols.put(s, TokenId.PASM_LABEL);
+                    symbols.put("@" + s, TokenId.PASM_LABEL);
+                    symbols.put("@@" + s, TokenId.PASM_LABEL);
+                    tokens.add(new TokenMarker(node.label, TokenId.PASM_LABEL));
+                    lastLabel = s;
                 }
-                if (node.instruction != null) {
-                    if (Spin2Model.isPAsmInstruction(node.instruction.getText())) {
-                        tokens.add(new TokenMarker(node.instruction, TokenId.PASM_INSTRUCTION));
-                    }
-                    else if ("debug".equalsIgnoreCase(node.instruction.getText())) {
-                        tokens.add(new TokenMarker(node.instruction, TokenId.KEYWORD));
-                        for (int i = 1; i < node.getTokens().size(); i++) {
-                            Token token = node.getToken(i);
-                            if (token.type == Token.NUMBER) {
-                                tokens.add(new TokenMarker(token, TokenId.NUMBER));
+            }
+            if (node.condition != null) {
+                tokens.add(new TokenMarker(node.condition, TokenId.PASM_CONDITION));
+            }
+            if (node.instruction != null) {
+                if (Spin2Model.isPAsmInstruction(node.instruction.getText())) {
+                    tokens.add(new TokenMarker(node.instruction, TokenId.PASM_INSTRUCTION));
+                }
+                else if ("debug".equalsIgnoreCase(node.instruction.getText())) {
+                    tokens.add(new TokenMarker(node.instruction, TokenId.KEYWORD));
+                    for (int i = 1; i < node.getTokens().size(); i++) {
+                        Token token = node.getToken(i);
+                        if (token.type == Token.NUMBER) {
+                            tokens.add(new TokenMarker(token, TokenId.NUMBER));
+                        }
+                        else if (token.type == Token.OPERATOR) {
+                            tokens.add(new TokenMarker(token, TokenId.OPERATOR));
+                        }
+                        else if (token.type == Token.STRING) {
+                            tokens.add(new TokenMarker(token, TokenId.STRING));
+                        }
+                        else {
+                            TokenId id;
+                            String s = token.getText().toUpperCase();
+                            id = debugKeywords.get(s);
+                            if (id == null && s.startsWith("`")) {
+                                id = debugKeywords.get(s.substring(1));
                             }
-                            else if (token.type == Token.OPERATOR) {
-                                tokens.add(new TokenMarker(token, TokenId.OPERATOR));
-                            }
-                            else if (token.type == Token.STRING) {
-                                tokens.add(new TokenMarker(token, TokenId.STRING));
-                            }
-                            else {
-                                TokenId id;
-                                String s = token.getText().toUpperCase();
-                                id = debugKeywords.get(s);
-                                if (id == null && s.startsWith("`")) {
-                                    id = debugKeywords.get(s.substring(1));
-                                }
-                                if (id != null) {
-                                    tokens.add(new TokenMarker(token, id));
-                                }
+                            if (id != null) {
+                                tokens.add(new TokenMarker(token, id));
                             }
                         }
                     }
                 }
-                if (node.modifier != null) {
-                    tokens.add(new TokenMarker(node.modifier, TokenId.PASM_MODIFIER));
-                }
             }
+            if (node.modifier != null) {
+                tokens.add(new TokenMarker(node.modifier, TokenId.PASM_MODIFIER));
+            }
+        }
 
-        });
+    };
+
+    void collectKeywords(Node root) {
+        lastLabel = "";
+        root.accept(collectKeywordsVisitor);
     }
 
-    void updateReferences(Node root, TreeSet<TokenMarker> tokens) {
-        root.accept(new NodeVisitor() {
+    NodeVisitor updateReferencesVisitor = new NodeVisitor() {
 
-            String lastLabel = "";
-
-            @Override
-            public void visitConstant(ConstantNode node) {
+        @Override
+        public void visitConstant(ConstantNode node) {
+            if (!node.isExclude()) {
                 if (node.getStart() != null) {
                     markTokens(node.getStart(), 0, null);
                 }
@@ -971,41 +1063,49 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                     markTokens(node.getMultiplier(), 0, null);
                 }
             }
+        }
 
-            @Override
-            public void visitTypeDefinition(TypeDefinitionNode node) {
-                List<Token> list = node.getTokens();
+        @Override
+        public void visitTypeDefinition(TypeDefinitionNode node) {
+            if (!node.isExclude()) {
+                updateTokens(node);
+            }
+        }
 
-                int i = 1;
-                if (node.getType() != null) {
-                    i++;
+        void updateTokens(TypeDefinitionNode node) {
+            List<Token> list = node.getTokens();
+
+            int i = 1;
+            if (node.getType() != null) {
+                i++;
+            }
+            while (i < list.size()) {
+                Token token = list.get(i++);
+                if (token.type == Token.NUMBER) {
+                    tokens.add(new TokenMarker(token, TokenId.NUMBER));
                 }
-                while (i < list.size()) {
-                    Token token = list.get(i++);
-                    if (token.type == Token.NUMBER) {
-                        tokens.add(new TokenMarker(token, TokenId.NUMBER));
-                    }
-                    else if (token.type == Token.OPERATOR) {
-                        tokens.add(new TokenMarker(token, TokenId.OPERATOR));
-                    }
-                    else {
-                        TokenId id = keywords.get(token.getText());
-                        if (id == null || id != TokenId.TYPE) {
-                            id = symbols.get(token.getText());
-                            if (id != null && id == TokenId.TYPE) {
-                                id = TokenId.CONSTANT;
-                            }
-                            else if (id == null || id != TokenId.TYPE) {
-                                id = TokenId.VARIABLE;
-                            }
+                else if (token.type == Token.OPERATOR) {
+                    tokens.add(new TokenMarker(token, TokenId.OPERATOR));
+                }
+                else {
+                    TokenId id = keywords.get(token.getText());
+                    if (id == null || id != TokenId.TYPE) {
+                        id = symbols.get(token.getText());
+                        if (id != null && id == TokenId.TYPE) {
+                            id = TokenId.CONSTANT;
                         }
-                        tokens.add(new TokenMarker(token, id));
+                        else if (id == null || id != TokenId.TYPE) {
+                            id = TokenId.VARIABLE;
+                        }
                     }
+                    tokens.add(new TokenMarker(token, id));
                 }
             }
+        }
 
-            @Override
-            public void visitVariable(VariableNode node) {
+        @Override
+        public void visitVariable(VariableNode node) {
+            if (!node.isExclude()) {
                 if (node.type != null) {
                     TokenId id = symbols.get(node.type.getText());
                     if (id == null) {
@@ -1027,14 +1127,18 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                     markTokens(node.getSize(), 0, null);
                 }
             }
+        }
 
-            @Override
-            public void visitDirective(DirectiveNode node) {
+        @Override
+        public void visitDirective(DirectiveNode node) {
+            if (!node.isExclude()) {
                 markTokens(node, 2, null);
             }
+        }
 
-            @Override
-            public void visitObject(ObjectNode node) {
+        @Override
+        public void visitObject(ObjectNode node) {
+            if (!node.isExclude()) {
                 if (node.count != null) {
                     markTokens(node.count, 0, null);
                 }
@@ -1044,327 +1148,358 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                     }
                 }
             }
+        }
 
-            @Override
-            public boolean visitMethod(MethodNode node) {
-                locals.clear();
-
-                for (MethodNode.ParameterNode child : node.getParameters()) {
-                    if (child.type != null) {
-                        TokenId id = symbols.get(child.type.getText());
-                        if (id == null) {
-                            id = keywords.get(child.type.getText());
-                        }
-                        if (id != null && id == TokenId.TYPE) {
-                            tokens.add(new TokenMarker(child.type, id));
-                        }
-                        else if (id == null) {
-                            id = externals.get(child.type.getText());
-                            if (id != null) {
-                                int dot = child.type.getText().indexOf('.');
-                                tokens.add(new TokenMarker(child.type.start, child.type.start + dot - 1, TokenId.OBJECT));
-                                tokens.add(new TokenMarker(child.type.start + dot + 1, child.type.stop, id));
-                            }
-                        }
-                    }
-                    if (child.identifier != null) {
-                        locals.put(child.identifier.getText(), TokenId.METHOD_LOCAL);
-                        locals.put("@" + child.identifier.getText(), TokenId.METHOD_LOCAL);
-                        locals.put("@@" + child.identifier.getText(), TokenId.METHOD_LOCAL);
-                    }
-                }
-                for (MethodNode.ReturnNode child : node.getReturnVariables()) {
-                    if (child.type != null) {
-                        TokenId id = symbols.get(child.type.getText());
-                        if (id != null && id == TokenId.TYPE) {
-                            tokens.add(new TokenMarker(child.type, id));
-                        }
-                        else if (id == null) {
-                            id = externals.get(child.type.getText());
-                            if (id != null) {
-                                int dot = child.type.getText().indexOf('.');
-                                tokens.add(new TokenMarker(child.type.start, child.type.start + dot - 1, TokenId.OBJECT));
-                                tokens.add(new TokenMarker(child.type.start + dot + 1, child.type.stop, id));
-                            }
-                        }
-                    }
-                    if (child.identifier != null) {
-                        locals.put(child.identifier.getText(), TokenId.METHOD_RETURN);
-                        locals.put("@" + child.identifier.getText(), TokenId.METHOD_RETURN);
-                        locals.put("@@" + child.identifier.getText(), TokenId.METHOD_RETURN);
-                    }
-                }
-
-                for (MethodNode.ParameterNode child : node.getParameters()) {
-                    if (child.defaultValue != null) {
-                        markTokens(child, 1, null);
-                    }
-                }
-
-                for (MethodNode.LocalVariableNode child : node.getLocalVariables()) {
-                    if (child.type != null) {
-                        TokenId id = symbols.get(child.type.getText());
-                        if (id == null) {
-                            id = keywords.get(child.type.getText());
-                        }
-                        if (id != null && id == TokenId.TYPE) {
-                            tokens.add(new TokenMarker(child.type, id));
-                        }
-                        else if (id == null) {
-                            id = externals.get(child.type.getText());
-                            if (id != null) {
-                                int dot = child.type.getText().indexOf('.');
-                                tokens.add(new TokenMarker(child.type.start, child.type.start + dot - 1, TokenId.OBJECT));
-                                tokens.add(new TokenMarker(child.type.start + dot + 1, child.type.stop, id));
-                            }
-                        }
-                    }
-                    if (child.identifier != null) {
-                        locals.put(child.identifier.getText(), TokenId.METHOD_LOCAL);
-                        locals.put("@" + child.identifier.getText(), TokenId.METHOD_LOCAL);
-                        locals.put("@@" + child.identifier.getText(), TokenId.METHOD_LOCAL);
-                        tokens.add(new TokenMarker(child.identifier, TokenId.METHOD_LOCAL));
-                    }
-                    if (child.size != null) {
-                        markTokens(child.size, 0, null);
-                    }
-                }
-
-                for (Node child : node.getChilds()) {
-                    if (child instanceof DirectiveNode) {
-                        visitDirective((DirectiveNode) child);
-                    }
-                    else if (child instanceof StatementNode) {
-                        markTokens(child, 0, null);
-                    }
-                    else if (child instanceof DataLineNode) {
-                        markDataTokens((DataLineNode) child, true);
-                    }
-                }
-
-                return false;
+        @Override
+        public boolean visitMethod(MethodNode node) {
+            if (!node.isExclude()) {
+                updateTokens(node);
             }
 
-            int markTokens(Node node, int i, String endMarker) {
-                List<Token> list = node.getTokens();
-                boolean debug = list.size() != 0 && "debug".equalsIgnoreCase(list.get(0).getText());
+            node.accept(new NodeVisitor() {
 
-                while (i < list.size()) {
-                    Token token = list.get(i++);
-                    if (token.type == Token.NUMBER) {
-                        tokens.add(new TokenMarker(token, TokenId.NUMBER));
-                    }
-                    else if (token.type == Token.OPERATOR) {
-                        tokens.add(new TokenMarker(token, TokenId.OPERATOR));
-                        if (token.getText().equals(endMarker)) {
-                            return i;
-                        }
-                        if (token.getText().equals("[")) {
-                            i = markTokens(node, i, "]");
-                            if (i < list.size()) {
-                                token = list.get(i);
-                            }
-                        }
-                        if (token.getText().equals("(")) {
-                            i = markTokens(node, i, ")");
-                            if (i < list.size()) {
-                                token = list.get(i);
-                            }
-                        }
-                    }
-                    else if (token.type == Token.STRING) {
-                        tokens.add(new TokenMarker(token, TokenId.STRING));
+                @Override
+                public void visitDirective(DirectiveNode node) {
+                    updateReferencesVisitor.visitDirective(node);
+                }
+
+                @Override
+                public boolean visitStatement(StatementNode node) {
+                    if (!node.isExclude()) {
+                        markTokens(node, 0, null);
                     }
                     else {
-                        int dot = token.getText().indexOf('.');
-                        TokenId id = locals.get(token.getText());
-                        if (id == null) {
-                            id = symbols.get(token.getText());
-                            if (id == null && token.getText().startsWith("@")) {
-                                id = symbols.get(token.getText().substring(1));
-                            }
-                        }
-                        if (id == null) {
-                            id = externals.get(token.getText());
-                            if (id == null && token.getText().startsWith("@")) {
-                                id = externals.get(token.getText().substring(1));
-                            }
-                        }
-                        if (debug && id == null) {
-                            String s = token.getText().toUpperCase();
-                            id = debugKeywords.get(s);
-                            if (id == null && s.startsWith("`")) {
-                                id = debugKeywords.get(s.substring(1));
-                            }
-                        }
-                        if (id == null) {
-                            id = keywords.get(token.getText());
-                            if (id == null) {
-                                id = spinKeywords.get(token.getText());
-                            }
-                        }
-                        if (id == null && dot != -1) {
-                            String left = token.getText().substring(0, dot);
-                            TokenId leftId = locals.get(left);
-                            if (leftId == null) {
-                                leftId = symbols.get(left);
-                                if (leftId == null && left.startsWith("@")) {
-                                    leftId = symbols.get(left.substring(1));
-                                }
-                            }
-                            if (leftId == null) {
-                                TokenId specialId = keywords.get(left);
-                                if (specialId == TokenId.CONSTANT) {
-                                    leftId = specialId;
-                                }
-                            }
-                            if (leftId != null) {
-                                tokens.add(new TokenMarker(token.start, token.start + dot, leftId));
-                            }
+                        tokens.add(new TokenMarker(node.getStartIndex(), node.getStopIndex(), TokenId.COMMENT));
+                    }
+                    return true;
+                }
 
-                            dot = token.getText().lastIndexOf('.');
-                            switch (token.getText().substring(dot + 1).toUpperCase()) {
-                                case "LONG":
-                                case "WORD":
-                                case "BYTE":
-                                    tokens.add(new TokenMarker(token.start + dot + 1, token.stop, TokenId.TYPE));
-                                    break;
-                            }
-                        }
+                @Override
+                public void visitDataLine(DataLineNode node) {
+                    if (!node.isExclude()) {
+                        markDataTokens(node, true);
+                    }
+                    else {
+                        tokens.add(new TokenMarker(node.getStartIndex(), node.getStopIndex(), TokenId.COMMENT));
+                    }
+                }
+
+            });
+
+            return false;
+        }
+
+        void updateTokens(MethodNode node) {
+            locals.clear();
+
+            for (MethodNode.ParameterNode child : node.getParameters()) {
+                if (child.type != null) {
+                    TokenId id = symbols.get(child.type.getText());
+                    if (id == null) {
+                        id = keywords.get(child.type.getText());
+                    }
+                    if (id != null && id == TokenId.TYPE) {
+                        tokens.add(new TokenMarker(child.type, id));
+                    }
+                    else if (id == null) {
+                        id = externals.get(child.type.getText());
                         if (id != null) {
-                            if ((id == TokenId.METHOD_PUB || id == TokenId.CONSTANT) && dot != -1) {
-                                tokens.add(new TokenMarker(token.start, token.start + dot - 1, TokenId.OBJECT));
-                                tokens.add(new TokenMarker(token.start + dot + 1, token.stop, id));
-                            }
-                            else {
-                                tokens.add(new TokenMarker(token, id));
-                                if (id == TokenId.OBJECT && i < list.size()) {
-                                    Token objToken = token;
-                                    token = list.get(i);
-                                    if (token.getText().equals("[")) {
-                                        tokens.add(new TokenMarker(token, TokenId.OPERATOR));
-                                        i = markTokens(node, i + 1, "]");
-                                        if (i < list.size()) {
-                                            token = list.get(i);
-                                        }
-                                    }
-                                    if (token.getText().startsWith(".")) {
-                                        String qualifiedName = objToken.getText() + token.getText();
-                                        id = symbols.get(qualifiedName);
-                                        if (id == null && qualifiedName.startsWith("@")) {
-                                            id = symbols.get(qualifiedName.substring(1));
-                                        }
-                                        if (id == null) {
-                                            id = externals.get(qualifiedName);
-                                            if (id == null && qualifiedName.startsWith("@")) {
-                                                id = externals.get(qualifiedName.substring(1));
-                                            }
-                                        }
-                                        if (id != null) {
-                                            tokens.add(new TokenMarker(token, id));
-                                        }
-                                        i++;
-                                    }
-                                }
-                            }
+                            int dot = child.type.getText().indexOf('.');
+                            tokens.add(new TokenMarker(child.type.start, child.type.start + dot - 1, TokenId.OBJECT));
+                            tokens.add(new TokenMarker(child.type.start + dot + 1, child.type.stop, id));
                         }
                     }
                 }
-                for (Node child : node.getChilds()) {
-                    if (child instanceof DirectiveNode) {
-                        visitDirective((DirectiveNode) child);
+                if (child.identifier != null) {
+                    locals.put(child.identifier.getText(), TokenId.METHOD_LOCAL);
+                    locals.put("@" + child.identifier.getText(), TokenId.METHOD_LOCAL);
+                    locals.put("@@" + child.identifier.getText(), TokenId.METHOD_LOCAL);
+                }
+            }
+            for (MethodNode.ReturnNode child : node.getReturnVariables()) {
+                if (child.type != null) {
+                    TokenId id = symbols.get(child.type.getText());
+                    if (id != null && id == TokenId.TYPE) {
+                        tokens.add(new TokenMarker(child.type, id));
                     }
-                    else if (child instanceof StatementNode) {
-                        markTokens(child, 0, null);
-                    }
-                    else if (child instanceof DataLineNode) {
-                        markDataTokens((DataLineNode) child, true);
+                    else if (id == null) {
+                        id = externals.get(child.type.getText());
+                        if (id != null) {
+                            int dot = child.type.getText().indexOf('.');
+                            tokens.add(new TokenMarker(child.type.start, child.type.start + dot - 1, TokenId.OBJECT));
+                            tokens.add(new TokenMarker(child.type.start + dot + 1, child.type.stop, id));
+                        }
                     }
                 }
-                return i;
+                if (child.identifier != null) {
+                    locals.put(child.identifier.getText(), TokenId.METHOD_RETURN);
+                    locals.put("@" + child.identifier.getText(), TokenId.METHOD_RETURN);
+                    locals.put("@@" + child.identifier.getText(), TokenId.METHOD_RETURN);
+                }
             }
 
-            @Override
-            public boolean visitData(DataNode node) {
-                lastLabel = "";
-                for (Node child : node.getChilds()) {
-                    if (child instanceof DataLineNode) {
-                        markDataTokens((DataLineNode) child, false);
+            for (MethodNode.ParameterNode child : node.getParameters()) {
+                if (child.defaultValue != null) {
+                    markTokens(child, 1, null);
+                }
+            }
+
+            for (MethodNode.LocalVariableNode child : node.getLocalVariables()) {
+                if (child.type != null) {
+                    TokenId id = symbols.get(child.type.getText());
+                    if (id == null) {
+                        id = keywords.get(child.type.getText());
+                    }
+                    if (id != null && id == TokenId.TYPE) {
+                        tokens.add(new TokenMarker(child.type, id));
+                    }
+                    else if (id == null) {
+                        id = externals.get(child.type.getText());
+                        if (id != null) {
+                            int dot = child.type.getText().indexOf('.');
+                            tokens.add(new TokenMarker(child.type.start, child.type.start + dot - 1, TokenId.OBJECT));
+                            tokens.add(new TokenMarker(child.type.start + dot + 1, child.type.stop, id));
+                        }
+                    }
+                }
+                if (child.identifier != null) {
+                    locals.put(child.identifier.getText(), TokenId.METHOD_LOCAL);
+                    locals.put("@" + child.identifier.getText(), TokenId.METHOD_LOCAL);
+                    locals.put("@@" + child.identifier.getText(), TokenId.METHOD_LOCAL);
+                    tokens.add(new TokenMarker(child.identifier, TokenId.METHOD_LOCAL));
+                }
+                if (child.size != null) {
+                    markTokens(child.size, 0, null);
+                }
+            }
+        }
+
+        @Override
+        public boolean visitData(DataNode node) {
+            lastLabel = "";
+            return true;
+        }
+
+        @Override
+        public void visitDataLine(DataLineNode node) {
+            if (!node.isExclude()) {
+                markDataTokens(node, false);
+            }
+            else {
+                tokens.add(new TokenMarker(node.getStartIndex(), node.getStopIndex(), TokenId.COMMENT));
+            }
+        }
+
+    };
+
+    void updateReferences(Node root) {
+        lastLabel = "";
+        root.accept(updateReferencesVisitor);
+    }
+
+    void markTokens(Node node, int i, String endMarker) {
+        List<Token> list = node.getTokens();
+        boolean debug = list.size() != 0 && "debug".equalsIgnoreCase(list.get(0).getText());
+
+        if (!node.isExclude()) {
+            markTokens(list, i, endMarker, debug);
+        }
+        else {
+            tokens.add(new TokenMarker(node.getStartIndex(), node.getStopIndex(), TokenId.COMMENT));
+        }
+    }
+
+    int markTokens(List<Token> list, int i, String endMarker, boolean debug) {
+
+        while (i < list.size()) {
+            Token token = list.get(i++);
+            if (token.type == Token.NUMBER) {
+                tokens.add(new TokenMarker(token, TokenId.NUMBER));
+            }
+            else if (token.type == Token.OPERATOR) {
+                tokens.add(new TokenMarker(token, TokenId.OPERATOR));
+                if (token.getText().equals(endMarker)) {
+                    return i;
+                }
+                if (token.getText().equals("[")) {
+                    i = markTokens(list, i, "]", debug);
+                    if (i < list.size()) {
+                        token = list.get(i);
+                    }
+                }
+                if (token.getText().equals("(")) {
+                    i = markTokens(list, i, ")", debug);
+                    if (i < list.size()) {
+                        token = list.get(i);
+                    }
+                }
+            }
+            else if (token.type == Token.STRING) {
+                tokens.add(new TokenMarker(token, TokenId.STRING));
+            }
+            else {
+                int dot = token.getText().indexOf('.');
+                TokenId id = locals.get(token.getText());
+                if (id == null) {
+                    id = symbols.get(token.getText());
+                    if (id == null && token.getText().startsWith("@")) {
+                        id = symbols.get(token.getText().substring(1));
+                    }
+                }
+                if (id == null) {
+                    id = externals.get(token.getText());
+                    if (id == null && token.getText().startsWith("@")) {
+                        id = externals.get(token.getText().substring(1));
+                    }
+                }
+                if (debug && id == null) {
+                    String s = token.getText().toUpperCase();
+                    id = debugKeywords.get(s);
+                    if (id == null && s.startsWith("`")) {
+                        id = debugKeywords.get(s.substring(1));
+                    }
+                }
+                if (id == null) {
+                    id = keywords.get(token.getText());
+                    if (id == null) {
+                        id = spinKeywords.get(token.getText());
+                    }
+                }
+                if (id == null && dot != -1) {
+                    String left = token.getText().substring(0, dot);
+                    TokenId leftId = locals.get(left);
+                    if (leftId == null) {
+                        leftId = symbols.get(left);
+                        if (leftId == null && left.startsWith("@")) {
+                            leftId = symbols.get(left.substring(1));
+                        }
+                    }
+                    if (leftId == null) {
+                        TokenId specialId = keywords.get(left);
+                        if (specialId == TokenId.CONSTANT) {
+                            leftId = specialId;
+                        }
+                    }
+                    if (leftId != null) {
+                        tokens.add(new TokenMarker(token.start, token.start + dot, leftId));
+                    }
+
+                    dot = token.getText().lastIndexOf('.');
+                    switch (token.getText().substring(dot + 1).toUpperCase()) {
+                        case "LONG":
+                        case "WORD":
+                        case "BYTE":
+                            tokens.add(new TokenMarker(token.start + dot + 1, token.stop, TokenId.TYPE));
+                            break;
+                    }
+                }
+                if (id != null) {
+                    if ((id == TokenId.METHOD_PUB || id == TokenId.CONSTANT) && dot != -1) {
+                        tokens.add(new TokenMarker(token.start, token.start + dot - 1, TokenId.OBJECT));
+                        tokens.add(new TokenMarker(token.start + dot + 1, token.stop, id));
                     }
                     else {
-                        markTokens(child, 0, null);
-                    }
-                }
-                return true;
-            }
-
-            public void markDataTokens(DataLineNode node, boolean inline) {
-                if (node.label != null) {
-                    String s = node.label.getText();
-                    if (!s.startsWith(".")) {
-                        lastLabel = s;
-                    }
-                }
-
-                boolean isModcz = node.instruction != null && modcz.contains(node.instruction.getText().toUpperCase());
-
-                for (DataLineNode.ParameterNode parameter : node.parameters) {
-                    for (Token token : parameter.getTokens()) {
-                        TokenId id = null;
-                        if (token.type == Token.NUMBER) {
-                            tokens.add(new TokenMarker(token, TokenId.NUMBER));
-                        }
-                        else if (token.type == Token.OPERATOR) {
-                            tokens.add(new TokenMarker(token, TokenId.OPERATOR));
-                        }
-                        else if (token.type == Token.STRING) {
-                            tokens.add(new TokenMarker(token, TokenId.STRING));
-                        }
-                        else {
-                            String s = token.getText();
-                            if (s.startsWith(".") || s.startsWith("@.") || s.startsWith("@@.")) {
-                                s = lastLabel + s;
+                        tokens.add(new TokenMarker(token, id));
+                        if (id == TokenId.OBJECT && i < list.size()) {
+                            Token objToken = token;
+                            token = list.get(i);
+                            if (token.getText().equals("[")) {
+                                tokens.add(new TokenMarker(token, TokenId.OPERATOR));
+                                i = markTokens(list, i + 1, "]", debug);
+                                if (i < list.size()) {
+                                    token = list.get(i);
+                                }
                             }
-                            id = symbols.get(s);
-                            if (id == null) {
-                                id = externals.get(s);
-                            }
-                            if (id == null && isModcz) {
-                                id = modczOperands.get(token.getText());
-                            }
-                            if (id == null) {
-                                id = keywords.get(token.getText());
-                            }
-                            if (id == null && ("fvar".equalsIgnoreCase(token.getText()) || "fvars".equalsIgnoreCase(token.getText()))) {
-                                id = TokenId.TYPE;
-                            }
-                            if (id == null && inline) {
-                                if (isModcz) {
-                                    id = modczOperands.get(token.getText().toUpperCase());
+                            if (token.getText().startsWith(".")) {
+                                String qualifiedName = objToken.getText() + token.getText();
+                                id = symbols.get(qualifiedName);
+                                if (id == null && qualifiedName.startsWith("@")) {
+                                    id = symbols.get(qualifiedName.substring(1));
                                 }
                                 if (id == null) {
-                                    id = spinKeywords.get(token.getText().toUpperCase());
+                                    id = externals.get(qualifiedName);
+                                    if (id == null && qualifiedName.startsWith("@")) {
+                                        id = externals.get(qualifiedName.substring(1));
+                                    }
                                 }
-                                if (id == null) {
-                                    id = locals.get(token.getText());
-                                }
-                            }
-                            if (id != null) {
-                                if (id == TokenId.CONSTANT && token.getText().contains(".")) {
-                                    int dot = token.getText().indexOf('.');
-                                    tokens.add(new TokenMarker(token.start, token.start + dot - 1, TokenId.OBJECT));
-                                    tokens.add(new TokenMarker(token.start + dot + 1, token.stop, id));
-                                }
-                                else {
+                                if (id != null) {
                                     tokens.add(new TokenMarker(token, id));
                                 }
+                                i++;
                             }
                         }
                     }
                 }
             }
+        }
 
-        });
+        return i;
+    }
+
+    public void markDataTokens(DataLineNode node, boolean inline) {
+        if (node.label != null) {
+            String s = node.label.getText();
+            if (!s.startsWith(".")) {
+                lastLabel = s;
+            }
+        }
+
+        boolean isModcz = node.instruction != null && modcz.contains(node.instruction.getText().toUpperCase());
+
+        for (DataLineNode.ParameterNode parameter : node.parameters) {
+            for (Token token : parameter.getTokens()) {
+                TokenId id = null;
+                if (token.type == Token.NUMBER) {
+                    tokens.add(new TokenMarker(token, TokenId.NUMBER));
+                }
+                else if (token.type == Token.OPERATOR) {
+                    tokens.add(new TokenMarker(token, TokenId.OPERATOR));
+                }
+                else if (token.type == Token.STRING) {
+                    tokens.add(new TokenMarker(token, TokenId.STRING));
+                }
+                else {
+                    String s = token.getText();
+                    if (s.startsWith(".") || s.startsWith("@.") || s.startsWith("@@.")) {
+                        s = lastLabel + s;
+                    }
+                    id = symbols.get(s);
+                    if (id == null) {
+                        id = externals.get(s);
+                    }
+                    if (id == null && isModcz) {
+                        id = modczOperands.get(token.getText());
+                    }
+                    if (id == null) {
+                        id = keywords.get(token.getText());
+                    }
+                    if (id == null && ("fvar".equalsIgnoreCase(token.getText()) || "fvars".equalsIgnoreCase(token.getText()))) {
+                        id = TokenId.TYPE;
+                    }
+                    if (id == null && inline) {
+                        if (isModcz) {
+                            id = modczOperands.get(token.getText().toUpperCase());
+                        }
+                        if (id == null) {
+                            id = spinKeywords.get(token.getText().toUpperCase());
+                        }
+                        if (id == null) {
+                            id = locals.get(token.getText());
+                        }
+                    }
+                    if (id != null) {
+                        if (id == TokenId.CONSTANT && token.getText().contains(".")) {
+                            int dot = token.getText().indexOf('.');
+                            tokens.add(new TokenMarker(token.start, token.start + dot - 1, TokenId.OBJECT));
+                            tokens.add(new TokenMarker(token.start + dot + 1, token.stop, id));
+                        }
+                        else {
+                            tokens.add(new TokenMarker(token, id));
+                        }
+                    }
+                }
+            }
+        }
     }
 
 }
