@@ -141,13 +141,13 @@ public class SourceEditor {
     Caret insertCaret;
     Caret overwriteCaret;
     Caret alignCaret;
-    boolean modified;
 
     Color[][] sectionColor = new Color[6][2];
     int[] sectionCount = new int[6];
 
     SourceTokenMarker tokenMarker;
     Map<TokenId, TextStyle> styleMap = new HashMap<TokenId, TextStyle>();
+    Map<Integer, StyleRange[]> lineStylesCache = new HashMap<>();
 
     EditorHelp helpProvider;
     ContentProposalAdapter proposalAdapter;
@@ -487,6 +487,14 @@ public class SourceEditor {
 
             @Override
             public void textSet(TextChangedEvent event) {
+                try {
+                    if (tokenMarker != null) {
+                        tokenMarker.refreshTokens(styledText.getText());
+                        lineStylesCache.clear();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 styledText.redraw();
             }
 
@@ -494,7 +502,6 @@ public class SourceEditor {
             public void textChanging(TextChangingEvent event) {
                 fixupTokens(event, tokenMarker.getCompilerTokens());
                 fixupTokens(event, tokenMarker.getExcludedNodes());
-                modified = true;
             }
 
             void fixupTokens(TextChangingEvent event, Collection<TokenMarker> c) {
@@ -537,28 +544,28 @@ public class SourceEditor {
 
             @Override
             public void textChanged(TextChangedEvent event) {
+                try {
+                    if (tokenMarker != null) {
+                        tokenMarker.refreshTokens(styledText.getText());
+                        lineStylesCache.clear();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 styledText.redraw();
             }
+
         });
 
         styledText.addLineStyleListener(new LineStyleListener() {
 
             @Override
             public void lineGetStyle(LineStyleEvent event) {
+                event.styles = lineStylesCache.get(event.lineOffset);
 
-                if (tokenMarker != null) {
-                    if (modified) {
-                        try {
-                            tokenMarker.refreshTokens(styledText.getText());
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                        modified = false;
-                    }
-
-                    List<StyleRange> ranges = new ArrayList<StyleRange>();
-
+                if (event.styles == null && tokenMarker != null) {
                     try {
+                        List<StyleRange> ranges = new ArrayList<StyleRange>();
                         for (TokenMarker entry : tokenMarker.getLineTokens(event.lineOffset, event.lineText)) {
                             TextStyle style = styleMap.get(entry.getId());
                             if (style != null) {
@@ -568,13 +575,14 @@ public class SourceEditor {
                                 ranges.add(range);
                             }
                         }
+                        event.styles = ranges.toArray(new StyleRange[ranges.size()]);
+                        lineStylesCache.put(event.lineOffset, event.styles);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-
-                    event.styles = ranges.toArray(new StyleRange[ranges.size()]);
                 }
             }
+
         });
 
         styledText.addLineBackgroundListener(new LineBackgroundListener() {
@@ -1316,7 +1324,7 @@ public class SourceEditor {
 
     public void setTokenMarker(SourceTokenMarker tokenMarker) {
         this.tokenMarker = tokenMarker;
-        modified = true;
+        this.tokenMarker.refreshTokens(styledText.getText());
         styledText.redraw();
     }
 
@@ -1358,7 +1366,6 @@ public class SourceEditor {
             undoStack.clear();
             redoStack.clear();
 
-            modified = true;
             ignoreModify = false;
             styledText.redraw();
 
@@ -2162,6 +2169,7 @@ public class SourceEditor {
 
     public void setCompilerMessages(List<CompilerException> messages) {
         tokenMarker.refreshCompilerTokens(messages);
+        lineStylesCache.clear();
 
         ruler.clearHighlights();
         overview.clearHighlights();
@@ -2291,7 +2299,6 @@ public class SourceEditor {
             styledText.setTopPixel(topPixel);
             styledText.setCaretOffset(styledText.getOffsetAtLine(caretLine) + caretColumn);
 
-            modified = true;
             ignoreModify = false;
             styledText.redraw();
 
