@@ -352,12 +352,12 @@ public class EditorTab implements FindReplaceTarget {
         }
 
         @Override
-        public Node getParsedSource(File file) {
-            Node root = sourcePool.getParsedSource(file);
-            if (root != null) {
-                return root;
+        protected String getSource(File file) {
+            String source = sourcePool.getSource(file);
+            if (source != null) {
+                return source;
             }
-            return super.getParsedSource(file);
+            return super.getSource(file);
         }
 
         @Override
@@ -423,7 +423,7 @@ public class EditorTab implements FindReplaceTarget {
             super.refreshTokens(text);
 
             File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
-            sourcePool.setParsedSource(localFile, getRoot());
+            sourcePool.setSource(localFile, text);
         }
 
         @Override
@@ -451,7 +451,7 @@ public class EditorTab implements FindReplaceTarget {
             super.refreshTokens(text);
 
             File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
-            sourcePool.setParsedSource(localFile, getRoot());
+            sourcePool.setSource(localFile, text);
         }
 
         @Override
@@ -479,7 +479,7 @@ public class EditorTab implements FindReplaceTarget {
             super.refreshTokens(text);
 
             File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
-            sourcePool.setParsedSource(localFile, getRoot());
+            sourcePool.setSource(localFile, text);
         }
 
         @Override
@@ -524,18 +524,6 @@ public class EditorTab implements FindReplaceTarget {
             if (!threadRunning.getAndSet(true)) {
                 pendingCompile.set(false);
 
-                File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
-                Node root = sourcePool.getParsedSource(localFile);
-                Display.getDefault().asyncExec(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        if (outlineView != null && !outlineView.getControl().isDisposed() && outlineView.getInput() == null) {
-                            outlineView.setInput(root);
-                        }
-                    }
-                });
-
                 Thread thread = new Thread(new Runnable() {
 
                     @Override
@@ -544,6 +532,9 @@ public class EditorTab implements FindReplaceTarget {
                         boolean warnUnusedMethods = true;
                         boolean warnUnusedMethodVariables = true;
                         boolean warnUnusedVariables = true;
+
+                        File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
+                        Node root = tokenMarker.getRoot();
 
                         dependencies.clear();
 
@@ -772,7 +763,7 @@ public class EditorTab implements FindReplaceTarget {
                 sourcePool.removePropertyChangeListener(sourcePoolChangeListener);
 
                 File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
-                sourcePool.removeParsedSource(localFile);
+                sourcePool.removeSource(localFile);
 
                 editor.dispose();
 
@@ -851,7 +842,7 @@ public class EditorTab implements FindReplaceTarget {
 
     public void setFile(File file) {
         File localFile = this.file != null ? this.file : new File(tabItemText).getAbsoluteFile();
-        sourcePool.removeParsedSource(localFile);
+        sourcePool.removeSource(localFile);
 
         if (file != null) {
             tabItem.setToolTipText(file.getAbsolutePath());

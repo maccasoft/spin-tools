@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -35,8 +35,20 @@ public abstract class SourceProvider {
             String fileName = file.getName();
             if (fileName.indexOf('.') != -1) {
                 String suffix = fileName.substring(fileName.lastIndexOf('.')).toLowerCase();
-                return Parser.parse(suffix, FileUtils.loadFromFile(file));
+                String source = getSource(file);
+                if (source != null) {
+                    return Parser.parse(suffix, source);
+                }
             }
+        } catch (Exception e) {
+            // Do nothing
+        }
+        return null;
+    }
+
+    protected String getSource(File file) {
+        try {
+            return FileUtils.loadFromFile(file);
         } catch (Exception e) {
             // Do nothing
         }

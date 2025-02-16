@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -16,11 +16,9 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.maccasoft.propeller.model.Node;
-
 public class SourcePool {
 
-    Map<File, Node> sources = new HashMap<>();
+    Map<File, String> sources = new HashMap<>();
 
     final PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
 
@@ -36,18 +34,18 @@ public class SourcePool {
         changeSupport.removePropertyChangeListener(listener);
     }
 
-    public Node getParsedSource(File key) {
+    public String getSource(File key) {
         return sources.get(key);
     }
 
-    public void setParsedSource(File key, Node node) {
-        Node oldNode = sources.put(key, node);
-        changeSupport.firePropertyChange(key.getAbsolutePath(), oldNode, node);
+    public void setSource(File key, String text) {
+        String oldText = sources.put(key, text);
+        changeSupport.firePropertyChange(key.getAbsolutePath(), oldText, text);
     }
 
-    public void removeParsedSource(File key) {
-        Node oldNode = sources.remove(key);
-        changeSupport.firePropertyChange(key.getAbsolutePath(), oldNode, null);
+    public void removeSource(File key) {
+        String oldText = sources.remove(key);
+        changeSupport.firePropertyChange(key.getAbsolutePath(), oldText, null);
     }
 
 }
