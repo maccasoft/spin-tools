@@ -54,9 +54,15 @@ public class Word extends Spin2PAsmInstructionFactory {
             for (Spin2PAsmExpression exp : arguments) {
                 try {
                     byte[] value = exp.getWord();
-                    for (int i = 0; i < exp.getCount(); i++) {
-                        os.write(value);
+
+                    int v = 0, d = 0;
+                    byte[] data = new byte[value.length * exp.getCount()];
+                    while (d < data.length) {
+                        data[d++] = value[v];
+                        v = (v + 1) % value.length;
                     }
+                    os.write(data);
+
                 } catch (CompilerException e) {
                     msgs.addMessage(e);
                 } catch (Exception e) {

@@ -72,10 +72,17 @@ public class Bytefit extends Byte {
                     else if (exp.getInteger() < -0x80 || exp.getInteger() > 0xFF) {
                         throw new CompilerException("Byte value must range from -$80 to $FF", exp.getExpression().getData());
                     }
+
                     byte[] value = exp.getByte();
-                    for (int i = 0; i < exp.getCount(); i++) {
-                        os.write(value);
+
+                    int v = 0, d = 0;
+                    byte[] data = new byte[value.length * exp.getCount()];
+                    while (d < data.length) {
+                        data[d++] = value[v];
+                        v = (v + 1) % value.length;
                     }
+                    os.write(data);
+
                 } catch (CompilerException e) {
                     msgs.addMessage(e);
                 } catch (Exception e) {
