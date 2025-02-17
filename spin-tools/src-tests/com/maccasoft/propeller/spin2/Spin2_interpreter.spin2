@@ -1,7 +1,7 @@
 'TESTT add registers stack_start (on launch) and stack_max (on call or return) to track stack size for allocation need
 
 '******************************************
-'*  Spin2 Interpreter - v47 - 2025.01.03  *
+'*  Spin2 Interpreter - v49 - 2025.02.16  *
 '******************************************
 '
 CON     bc_setup_reg_1D8_1F8    = $B0
@@ -44,8 +44,8 @@ clkfreq_hub     long    320_000_000                             '$44 - compiler 
 '
                 orgh
 
-top_return      byte    bc_hub_bytecode         & $FF   'top return, stops task/cog
-                byte    bc_top_return
+task_return     byte    bc_hub_bytecode         & $FF   'task return, stops task or cog
+                byte    bc_task_return
 
 pri_sendb       byte    0                               'no locals              PRI sendb(count,addr)
                 byte    bc_read_local_0_15+0            'read count               repeat count
@@ -68,7 +68,7 @@ bc_clkset       word    @clkset_        'CLKSET(clkmode,clkfreq)                
 bc_read_clkfreq word    @read_clkfreq   'CLKFREQ                        (push)  $58
 bc_cogspin      word    @cogspin_       'COGSPIN(cog,method(params),stackaddr)  $5A
 bc_cogchk       word    @cogchk_        'COGCHK(cog)                    (push)  $5C
-bc_inline       word    @inline         'inline pasm code                       $5E
+bc_org          word    @inline         'ORG inline pasm code                   $5E
 bc_regexec      word    @regexec_       'REGEXEC(hubadr)                        $60
 bc_regload      word    @regload_       'REGLOAD(hubadr)                        $62
 bc_call         word    @call_          'CALL(anyadr)                           $64
@@ -130,7 +130,9 @@ bc_taskhalt     word    @taskctrl_      'TASKHALT(task)                         
 bc_taskcont     word    @taskctrl_      'TASKCONT(task)                         $CE
 bc_taskchk      word    @taskctrl_      'TASKCHK(task)                          $D0
 bc_taskid       word    @taskid_        'TASKID()                       (push)  $D2
-bc_top_return   word    @top_return_    'top-level return, stops task or cog    $D4
+bc_task_return  word    @task_return_   'task return, stops task or cog         $D4
+
+bc_orgh         word    @inline         'ORGH inline pasm code                  $D6
 
                 alignl                  'long-align for rest of interpreter
 '
@@ -2009,7 +2011,7 @@ launch_method   setq    #2-1                    'get pbase/vbase
 
                 mov     dcall,dbase             'set dcall
 
-                mov     pb,#@top_return         'set return to top_return bytecodes
+                mov     pb,#@task_return        'set return to task_return bytecodes
 
                 jmp     #callinit               'begin bytecode execution of method in vbase[31:20]
 '
@@ -2021,47 +2023,55 @@ cogchk_         cogid   x               wc
 
 '
 '
-' a: In-line PASM
-' b: REGEXEC(hubadr)
-' c: REGLOAD(hubadr)
-' d: CALL(anyadr)
+' a: ORG inline PASM
+' b: ORGH inline PASM
+' c: REGEXEC(hubadr)
+' d: REGLOAD(hubadr)
+' e: CALL(anyadr)
 '
-inline          setq    #16-1                   'a              load local variables from hub into buff
-                rdlong  buff,dbase              'a
-                bith    pb,#31                  'a              set flag to restore local variable to hub
+inline          setq    #16-1                   'a b            load first 16 local variables from hub into buff
+                rdlong  buff,dbase              'a b
+                bith    pb,#31                  'a b            set flag to restore local variable to hub
 
-                mov     ptrb,pb                 'a              get bytecode ptr into ptrb
-                skip    ##%11100100000111       'a      x2      begin inline_pasm skip pattern
+                mov     ptrb,pb         wc      'a b            get bytecode ptr into ptrb, C=1
 
-regexec_        skip    ##%1111000000           '| b    x2      begin REGEXEC skip pattern
-regload_        mov     ptrb,x                  '| b c          get hubadr into ptrb
+                cmp     pa,#bc_org      wz      'a b            get ORG/ORGH skip pattern
+        if_z    loc     pa,#\%1110011000001     'a b            ORG skip pattern
+        if_nz   loc     pa,#\%1110001111011     'a b            ORGH skip pattern
 
-                rdword  w,ptrb++                'a b c          read start register
-                rdword  y,ptrb++                'a b c          read length of pasm code, minus 1
+regexec_ if_nc  loc     pa,#\%11111000000       'a b c          REGEXEC skip pattern (C=0)
+                skip    pa                      'a b c          begin ORG/ORGH/REGEXEC skip pattern
 
-                setq    y                       'a b c          read in code
-                altd    w                       'a b c
-                rdlong  0-0,ptrb++              'a b c          altd causes ptrb++ to inc by 4, not by (y+1)*4
+regload_        mov     ptrb,x                  '| | c d        get hubadr into ptrb
 
-        _ret_   popa    x                       '| | c          REGLOAD done, pop stack
+                rdword  w,ptrb++                'a | c d        read start register
+                rdword  y,ptrb++                'a b c d        read register count, minus 1 if ORG/REGEXEC/REGLOAD
 
-                shl     y,#2                    'a |            update bytecode ptr for inline_pasm
-                add     y,ptrb                  'a |
+                setq    y                       'a | c d        read in registers for ORG/REGEXEC/REGLOAD
+                altd    w                       'a | c d
+                rdlong  0-0,ptrb++              'a | c d        altd causes ptrb++ to inc by 4, not by (y+1)*4
 
-call_           mov     w,x                     '| |   d        get CALL address
-                popa    x                       '| b   d        pop stack
+        _ret_   popa    x                       '| | | d        REGLOAD done, pop stack
 
-                mov     y,pb                    '| b   d        save bytecode ptr
-                mov     z,ptra                  'a b   d        save ptra
+                mov     w,ptrb                  '| b |          get ORGH call address
 
-                call    w                       'a b   d        call pasm code (can use pa/pb/ptra/ptrb/stack, C/Z=0)
+                shl     y,#2                    'a b |          update bytecode ptr for ORG/ORGH
+                add     y,ptrb                  'a b |
 
-                mov     pb,y            wc      'a b   d        restore bytecode ptr
+call_           mov     w,x                     '| | |   e      get CALL address
+                popa    x                       '| | c   e      pop stack
 
-        if_c    setq    #16-1                   'a b   d        if inline_pasm, restore local variables to hub
-        if_c    wrlong  buff,dbase              'a b   d
+                mov     y,pb                    '| | c   e      save bytecode ptr
+                mov     z,ptra                  'a b c   e      save ptra
 
-        _ret_   mov     ptra,z                  'a b   d        restore ptra
+                call    w                       'a b c   e      call pasm code (can use pa/pb/ptra/ptrb/stack, C/Z=0)
+
+                mov     pb,y            wc      'a b c   e      restore bytecode ptr
+
+        if_c    setq    #16-1                   'a b c   e      if ORG/ORGH, restore first 16 local variables to hub
+        if_c    wrlong  buff,dbase              'a b c   e
+
+        _ret_   mov     ptra,z                  'a b c   e      restore ptra
 '
 '
 ' GETREGS(hubadr,cogadr,longs)
@@ -2097,7 +2107,6 @@ getregs_        setq    #3-1                    'x = longs
 ' LONGMOVE(dst,src,cnt)         $7C     %100    C=1, Z=0
 ' LONGSWAP(adra,adrb,cnt)       $7E     %110    C=0, Z=0
 ' LONGCOMP(adra,adrb,cnt)       $80     %000    C=0, Z=1
-'
 '
 longfill_       shl     x,#1                    'cnt<<2 for long
 wordfill_       shl     x,#1                    'cnt<<1 for word
@@ -2808,7 +2817,7 @@ taskstop_       bitl    taskena,y               'TASKSTOP, clear task enable bit
                 cmp     y,tasknum       wz      'current task?
         if_nz   ret                             'if not current task then done
 
-top_return_     bitl    taskena,tasknum         'TASKSTOP on current task or top-level return, stop current task
+task_return_    bitl    taskena,tasknum         'TASKSTOP on current task or task return, stop current task
                 pop     v                       'pop return from bc_hub_bytecode so $1FF (xbyte) pops on next ret
                 tjnz    taskena,#tasknextw      'if other task(s) remaining, do next task
 
@@ -2837,7 +2846,7 @@ tasknexth       mov     w,pb                    'save current execution address 
 
 tasknextw       mov     x,taskena               'get unhalted tasks
                 andn    x,taskhlt
-                tjz     x,#tasknextw            'if no unhalted task, wait for possible interrupt to unhalt
+                tjz     x,#tasknextw            'if no unhalted task, wait for possible interrupt to unhalt some task
 
                 ror     x,tasknum               'get next task number
                 encod   x

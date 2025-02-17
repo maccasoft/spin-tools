@@ -2482,7 +2482,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
             (byte) (count >> 8),
         }, String.format("ORG=$%03x, %d", org, count + 1)));
         line.source.add(0, new Bytecode(line.getScope(), new byte[] {
-            Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_inline
+            Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_org
         }, "INLINE-EXEC"));
     }
 

@@ -342,7 +342,7 @@ public class Spin2Bytecode {
     public static final int bc_read_clkfreq = 0x58;
     public static final int bc_cogspin = 0x5A;
     public static final int bc_cogchk = 0x5C;
-    public static final int bc_inline = 0x5E;
+    public static final int bc_org = 0x5E;
     public static final int bc_regexec = 0x60;
     public static final int bc_regload = 0x62;
     public static final int bc_call = 0x64;
@@ -404,7 +404,9 @@ public class Spin2Bytecode {
     public static final int bc_taskcont = 0xCE;
     public static final int bc_taskchk = 0xD0;
     public static final int bc_taskid = 0xD2;
-    public static final int bc_top_return = 0xD4;
+    public static final int bc_task_return = 0xD4;
+
+    public static final int bc_orgh = 0xD6;
 
     public static class Descriptor {
         public byte[] code;

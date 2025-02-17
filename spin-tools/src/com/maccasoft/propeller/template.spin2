@@ -1,4 +1,4 @@
-{Spin2_v47}
+{Spin2_v50}
 CON ' Constants
 
     _CLKFREQ = 160_000_000
