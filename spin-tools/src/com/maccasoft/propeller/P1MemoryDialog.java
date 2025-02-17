@@ -274,7 +274,9 @@ public class P1MemoryDialog extends Dialog {
         container.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
         objectTree = new ObjectBrowser(container);
-        objectTree.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
+        gridData.heightHint = convertVerticalDLUsToPixels(10);
+        objectTree.setLayoutData(gridData);
         objectTree.setBackground(listBackground);
         objectTree.setForeground(listForeground);
         objectTree.setInput(tree, topObject);
@@ -294,7 +296,7 @@ public class P1MemoryDialog extends Dialog {
         label.setForeground(labelForeground);
 
         label = new Label(group, SWT.BORDER);
-        GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, false);
+        gridData = new GridData(SWT.FILL, SWT.FILL, true, false);
         gridData.horizontalSpan = 3;
         gridData.heightHint = convertVerticalDLUsToPixels(16);
         gridData.widthHint = convertHorizontalDLUsToPixels(100);
