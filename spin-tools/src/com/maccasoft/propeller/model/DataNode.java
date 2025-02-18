@@ -34,4 +34,20 @@ public class DataNode extends Node {
         }
     }
 
+    @Override
+    public String getPath() {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("/DAT");
+        if (name != null) {
+            sb.append(" ");
+            sb.append(name.getText().toUpperCase());
+        }
+        else {
+            sb.append(parent.indexOf(this));
+        }
+
+        return sb.toString();
+    }
+
 }

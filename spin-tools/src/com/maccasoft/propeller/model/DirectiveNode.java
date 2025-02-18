@@ -39,6 +39,18 @@ public class DirectiveNode extends Node {
             return file.getText().substring(1, file.getText().length() - 1);
         }
 
+        @Override
+        public String getPath() {
+            StringBuilder sb = new StringBuilder();
+
+            sb.append("/");
+            if (file != null) {
+                sb.append(file.getText().toUpperCase());
+            }
+
+            return sb.toString();
+        }
+
     }
 
     public static class DefineNode extends DirectiveNode {

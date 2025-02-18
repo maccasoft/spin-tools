@@ -23,4 +23,16 @@ public class ObjectsNode extends Node {
         }
     }
 
+    @Override
+    public String getPath() {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("/OBJ");
+        if (parent != null) {
+            sb.append(parent.indexOf(this));
+        }
+
+        return sb.toString();
+    }
+
 }

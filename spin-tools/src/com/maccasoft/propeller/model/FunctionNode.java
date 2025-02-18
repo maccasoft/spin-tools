@@ -188,4 +188,21 @@ public class FunctionNode extends Node {
         return localVariables.get(index);
     }
 
+    @Override
+    public String getPath() {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("/");
+        sb.append(type.getText().toUpperCase());
+        if (identifier != null) {
+            sb.append(" ");
+            sb.append(identifier.getText().toUpperCase());
+        }
+        else {
+            sb.append(parent.indexOf(this));
+        }
+
+        return sb.toString();
+    }
+
 }

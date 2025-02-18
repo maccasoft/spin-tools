@@ -181,6 +181,34 @@ public class Node {
         this.exclude = exclude;
     }
 
+    public String getPath() {
+        StringBuilder sb = new StringBuilder();
+
+        if (parent != null) {
+            sb.append(parent.getPath());
+        }
+        sb.append("/");
+        sb.append(getClass().getSimpleName());
+        if (parent != null) {
+            sb.append(parent.indexOf(this));
+        }
+
+        return sb.toString();
+    }
+
+    public int indexOf(Node node) {
+        int i = 0;
+        for (Node child : getChilds()) {
+            if (child == node) {
+                return i;
+            }
+            if (child.getClass().isInstance(node)) {
+                i++;
+            }
+        }
+        return -1;
+    }
+
     @Override
     public String toString() {
         if (tokens.size() == 0) {

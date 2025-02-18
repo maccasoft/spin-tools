@@ -176,4 +176,21 @@ public class MethodNode extends Node {
         return localVariables.get(index);
     }
 
+    @Override
+    public String getPath() {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("/");
+        sb.append(type.getText().toUpperCase());
+        if (name != null) {
+            sb.append(" ");
+            sb.append(name.getText().toUpperCase());
+        }
+        else {
+            sb.append(parent.indexOf(this));
+        }
+
+        return sb.toString();
+    }
+
 }

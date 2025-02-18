@@ -54,4 +54,22 @@ public class ConstantNode extends Node {
         return multiplier;
     }
 
+    @Override
+    public String getPath() {
+        StringBuilder sb = new StringBuilder();
+
+        if (parent != null) {
+            sb.append(parent.getPath());
+        }
+        sb.append("/");
+        if (identifier != null) {
+            sb.append(identifier.getText().toUpperCase());
+        }
+        else {
+            sb.append(parent.indexOf(this));
+        }
+
+        return sb.toString();
+    }
+
 }

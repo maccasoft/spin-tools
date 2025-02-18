@@ -71,4 +71,22 @@ public class ObjectNode extends Node {
         return text;
     }
 
+    @Override
+    public String getPath() {
+        StringBuilder sb = new StringBuilder();
+
+        if (parent != null) {
+            sb.append(parent.getPath());
+        }
+        sb.append("/");
+        if (name != null) {
+            sb.append(name.getText().toUpperCase());
+        }
+        else {
+            sb.append(parent.indexOf(this));
+        }
+
+        return sb.toString();
+    }
+
 }

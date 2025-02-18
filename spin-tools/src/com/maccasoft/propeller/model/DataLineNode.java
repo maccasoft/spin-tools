@@ -55,4 +55,22 @@ public class DataLineNode extends Node {
         return tokens.size() != 0 ? tokens.get(0).start - tokens.get(0).column : -1;
     }
 
+    @Override
+    public String getPath() {
+        StringBuilder sb = new StringBuilder();
+
+        if (parent != null) {
+            sb.append(parent.getPath());
+        }
+        sb.append("/");
+        if (label != null) {
+            sb.append(label.getText().toUpperCase());
+        }
+        else {
+            sb.append(parent.indexOf(this));
+        }
+
+        return sb.toString();
+    }
+
 }

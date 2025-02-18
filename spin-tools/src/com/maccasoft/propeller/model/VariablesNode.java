@@ -23,4 +23,20 @@ public class VariablesNode extends Node {
         }
     }
 
+    @Override
+    public String getPath() {
+        StringBuilder sb = new StringBuilder();
+
+        if (parent instanceof VariablesNode) {
+            sb.append(parent.getPath());
+            sb.append("/");
+        }
+        else {
+            sb.append("/VAR");
+        }
+        sb.append(parent.indexOf(this));
+
+        return sb.toString();
+    }
+
 }

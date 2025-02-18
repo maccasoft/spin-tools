@@ -36,4 +36,16 @@ public class ConstantsNode extends Node {
         return text;
     }
 
+    @Override
+    public String getPath() {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("/CON");
+        if (parent != null) {
+            sb.append(parent.indexOf(this));
+        }
+
+        return sb.toString();
+    }
+
 }

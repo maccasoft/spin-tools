@@ -22,10 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 
-import com.maccasoft.propeller.OutlineView.DefinesNode;
-import com.maccasoft.propeller.OutlineView.DefinitionNode;
 import com.maccasoft.propeller.model.Node;
-import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.spin2.Spin2Parser;
 import com.maccasoft.propeller.spin2.Spin2TokenStream;
 import com.maccasoft.propeller.spinc.CParser;
@@ -81,13 +78,13 @@ class OutlineViewTest {
         Assertions.assertEquals("/VAR0", view.getPath(varNode));
 
         Node varChildNode = varNode.getChild(0);
-        Assertions.assertEquals("/VAR0", view.getPath(varChildNode));
-        Assertions.assertEquals("/VAR0/a", view.getPath(varChildNode.getChild(0)));
-        Assertions.assertEquals("/VAR0/b", view.getPath(varChildNode.getChild(1)));
+        Assertions.assertEquals("/VAR0/0", view.getPath(varChildNode));
+        Assertions.assertEquals("/VAR0/0/A", view.getPath(varChildNode.getChild(0)));
+        Assertions.assertEquals("/VAR0/0/B", view.getPath(varChildNode.getChild(1)));
 
         varChildNode = varNode.getChild(1);
-        Assertions.assertEquals("/VAR0", view.getPath(varChildNode));
-        Assertions.assertEquals("/VAR0/c", view.getPath(varChildNode.getChild(0)));
+        Assertions.assertEquals("/VAR0/1", view.getPath(varChildNode));
+        Assertions.assertEquals("/VAR0/1/C", view.getPath(varChildNode.getChild(0)));
     }
 
     @Test
@@ -101,7 +98,7 @@ class OutlineViewTest {
         Spin2Parser parser = new Spin2Parser(stream);
         Node root = parser.parse();
 
-        Assertions.assertEquals("/PUB main", view.getPath(root.getChild(0)));
+        Assertions.assertEquals("/PUB MAIN", view.getPath(root.getChild(0)));
     }
 
     @Test
@@ -119,7 +116,7 @@ class OutlineViewTest {
             root.getChild(0)
         });
 
-        Assertions.assertEquals("/PUB main", view.getPath(path0));
+        Assertions.assertEquals("/PUB MAIN", view.getPath(path0));
     }
 
     @Test
@@ -135,7 +132,7 @@ class OutlineViewTest {
         Node root = parser.parse();
 
         Assertions.assertEquals("/DAT0", view.getPath(root.getChild(0)));
-        Assertions.assertEquals("/DAT0/driver", view.getPath(root.getChild(0).getChild(1)));
+        Assertions.assertEquals("/DAT0/DRIVER", view.getPath(root.getChild(0).getChild(1)));
     }
 
     @Test
@@ -155,9 +152,9 @@ class OutlineViewTest {
         Node root = parser.parse();
 
         Assertions.assertEquals("/DAT0", view.getPath(root.getChild(0)));
-        Assertions.assertEquals("/DAT0/driver1", view.getPath(root.getChild(0).getChild(1)));
+        Assertions.assertEquals("/DAT0/DRIVER1", view.getPath(root.getChild(0).getChild(1)));
         Assertions.assertEquals("/DAT1", view.getPath(root.getChild(1)));
-        Assertions.assertEquals("/DAT1/driver2", view.getPath(root.getChild(1).getChild(1)));
+        Assertions.assertEquals("/DAT1/DRIVER2", view.getPath(root.getChild(1).getChild(1)));
     }
 
     @Test
@@ -180,7 +177,7 @@ class OutlineViewTest {
         });
 
         Assertions.assertEquals("/DAT0", view.getPath(path0));
-        Assertions.assertEquals("/DAT0/driver", view.getPath(path1));
+        Assertions.assertEquals("/DAT0/DRIVER", view.getPath(path1));
     }
 
     @Test
@@ -193,15 +190,7 @@ class OutlineViewTest {
         CParser parser = new CParser(stream);
         Node root = parser.parse();
 
-        Assertions.assertEquals("/<object>", view.getPath(root.getChild(0)));
-    }
-
-    @Test
-    void testhelperNodesComparer() {
-        DefinesNode defines = new DefinesNode(new Token(Token.KEYWORD, "include"));
-        new DefinitionNode(defines, new Token(Token.KEYWORD, "<object>"), "object");
-
-        Assertions.assertEquals("/<object>", view.getPath(defines.getChild(0)));
+        Assertions.assertEquals("/<OBJECT>", view.getPath(root.getChild(0)));
     }
 
     @Test
@@ -216,7 +205,7 @@ class OutlineViewTest {
         CParser parser = new CParser(stream);
         Node root = parser.parse();
 
-        Assertions.assertEquals("/void main", view.getPath(root.getChild(0)));
+        Assertions.assertEquals("/VOID MAIN", view.getPath(root.getChild(0)));
     }
 
     @Test
@@ -235,7 +224,7 @@ class OutlineViewTest {
             root.getChild(0)
         });
 
-        Assertions.assertEquals("/void main", view.getPath(path0));
+        Assertions.assertEquals("/VOID MAIN", view.getPath(path0));
     }
 
 }
