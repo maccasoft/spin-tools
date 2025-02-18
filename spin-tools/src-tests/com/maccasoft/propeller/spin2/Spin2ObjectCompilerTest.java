@@ -5210,13 +5210,14 @@ class Spin2ObjectCompilerTest {
             + "    a := string(\"1234\", 13, 10)\n"
             + "    b := \"1234\"\n"
             + "    c := @\"1234\"\n"
+            + "    c := @\\\"1234\\a\\b\\t\\n\\f\\r\\\\\\x01\\x02\\x03\\x04\\xA\\xFF\"\n"
             + "\n"
             + "";
 
         Assertions.assertEquals(""
             + "' Object header (var size 4)\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
-            + "00004 00004       24 00 00 00    End\n"
+            + "00004 00004       39 00 00 00    End\n"
             + "' PUB main() | a, b, c\n"
             + "00008 00008       03             (stack size)\n"
             + "'     a := string(\"1234\", 13, 10)\n"
@@ -5231,7 +5232,14 @@ class Spin2ObjectCompilerTest {
             + "0001B 0001B       9E 05 31 32 33 STRING\n"
             + "00020 00020       34 00\n"
             + "00022 00022       F2             VAR_WRITE LONG DBASE+$00002 (short)\n"
-            + "00023 00023       04             RETURN\n"
+            + "'     c := @\\\"1234\\a\\b\\t\\n\\f\\r\\\\\\x01\\x02\\x03\\x04\\xA\\xFF\"\n"
+            + "00023 00023       9E 12 31 32 33 STRING\n"
+            + "00028 00028       34 07 08 09 0A\n"
+            + "0002D 0002D       0C 0D 5C 01 02\n"
+            + "00032 00032       03 04 0A FF 00\n"
+            + "00037 00037       F2             VAR_WRITE LONG DBASE+$00002 (short)\n"
+            + "00038 00038       04             RETURN\n"
+            + "00039 00039       00 00 00       Padding\n"
             + "", compile(text));
     }
 

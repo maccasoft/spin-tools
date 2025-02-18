@@ -368,7 +368,7 @@ public class Spin2TokenStream extends TokenStream {
             column += 2;
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
-        if (ch0 == '@' && ch1 == '@') {
+        if (ch0 == '@' && (ch1 == '@' || ch1 == '\\')) {
             index += 2;
             column += 2;
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));

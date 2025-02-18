@@ -119,55 +119,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 return source;
             }
             if (node.getType() == Token.STRING) {
-                String s = node.getText();
-                if (s.startsWith("@")) {
-                    StringBuilder sb = new StringBuilder(s.substring(2, s.length() - 1));
-                    sb.append((char) 0x00);
-
-                    byte[] code = sb.toString().getBytes();
-                    ByteArrayOutputStream os = new ByteArrayOutputStream();
-                    os.write(Spin2Bytecode.bc_string);
-                    os.write(code.length);
-                    os.writeBytes(code);
-                    source.add(new Bytecode(context, os.toByteArray(), "STRING"));
-                }
-                else if (s.startsWith("%")) {
-                    s = s.substring(2, s.length() - 1);
-                    if (s.length() > 4) {
-                        logMessage(new CompilerException("no more than 4 characters can be packed into a long", node.getTokens()));
-                    }
-
-                    ByteArrayOutputStream os = new ByteArrayOutputStream();
-                    os.write(Spin2Bytecode.bc_con_rflong);
-
-                    int i = 0;
-                    while (i < s.length() && i < 4) {
-                        os.write(s.charAt(i++));
-                    }
-                    while (i < 4) {
-                        os.write(0x00);
-                        i++;
-                    }
-                    source.add(new Bytecode(context, os.toByteArray(), "CONSTANT (" + node.getText() + ")"));
-                }
-                else {
-                    s = s.substring(1, s.length() - 1);
-                    if (s.length() == 1) {
-                        Expression expression = new CharacterLiteral(s);
-                        source.add(new Constant(context, expression));
-                    }
-                    else {
-                        StringBuilder sb = new StringBuilder(s);
-                        sb.append((char) 0x00);
-
-                        byte[] code = sb.toString().getBytes();
-                        ByteArrayOutputStream os = new ByteArrayOutputStream();
-                        os.write(Spin2Bytecode.bc_string);
-                        os.write(code.length);
-                        os.writeBytes(code);
-                        source.add(new Bytecode(context, os.toByteArray(), "STRING"));
-                    }
-                }
+                source.addAll(compileString(context, node));
                 if (!push) {
                     logMessage(new CompilerException("expected assignment", node.getTokens()));
                 }
@@ -4036,6 +3988,163 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
         baseVariable.setCalledBy(method);
 
         return source;
+    }
+
+    public List<Spin2Bytecode> compileString(Context context, Spin2StatementNode node) {
+        List<Spin2Bytecode> source = new ArrayList<Spin2Bytecode>();
+
+        Token token = node.getToken();
+        String s = getString(token);
+        byte[] data = s.getBytes();
+
+        if (token.getText().startsWith("@\\")) {
+            int i = 0, ch;
+
+            ByteArrayOutputStream ar = new ByteArrayOutputStream();
+            while (i < data.length) {
+                int c = data[i++] & 0xFF;
+                if (c == '\\' && i < data.length) {
+                    switch (data[i]) {
+                        case 'a':
+                        case 'A':
+                            ar.write(7);
+                            break;
+                        case 'b':
+                        case 'B':
+                            ar.write(8);
+                            break;
+                        case 't':
+                        case 'T':
+                            ar.write(9);
+                            break;
+                        case 'n':
+                        case 'N':
+                            ar.write(10);
+                            break;
+                        case 'f':
+                        case 'F':
+                            ar.write(12);
+                            break;
+                        case 'r':
+                        case 'R':
+                            ar.write(13);
+                            break;
+                        case '\\':
+                            ar.write('\\');
+                            break;
+                        case 'x':
+                        case 'X':
+                            ch = 0;
+                            if (i + 1 < data.length) {
+                                ch = hexVal(data[i + 1] & 0xFF);
+                                if (ch != -1) {
+                                    i++;
+                                    if (i + 1 < data.length) {
+                                        c = hexVal(data[i + 1] & 0xFF);
+                                        if (c != -1) {
+                                            i++;
+                                            ch = (ch << 4) | c;
+                                        }
+                                    }
+                                    ar.write(ch);
+                                    break;
+                                }
+                                else if (data[i + 1] != '\\') {
+                                    logMessage(new CompilerException(CompilerException.WARNING, "string contains an invalid hex number", node.getToken()));
+                                }
+                            }
+                            // Fall-through
+                        default:
+                            ar.write('\\');
+                            ar.write(data[i]);
+                            break;
+                    }
+                    i++;
+                }
+                else {
+                    ar.write(c);
+                }
+            }
+            data = ar.toByteArray();
+
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            os.write(Spin2Bytecode.bc_string);
+            os.write(data.length + 1);
+            os.writeBytes(data);
+            os.write(0x00);
+            source.add(new Bytecode(context, os.toByteArray(), "STRING"));
+        }
+        else if (token.getText().startsWith("@")) {
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            os.write(Spin2Bytecode.bc_string);
+            os.write(data.length + 1);
+            os.writeBytes(data);
+            os.write(0);
+            source.add(new Bytecode(context, os.toByteArray(), "STRING"));
+        }
+        else if (token.getText().startsWith("%")) {
+            if (data.length > 4) {
+                logMessage(new CompilerException("no more than 4 characters can be packed into a long", node.getToken()));
+            }
+
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            os.write(Spin2Bytecode.bc_con_rflong);
+            os.writeBytes(data);
+
+            int i = data.length;
+            while (i < 4) {
+                os.write(0x00);
+                i++;
+            }
+
+            source.add(new Bytecode(context, os.toByteArray(), "CONSTANT (" + node.getText() + ")"));
+        }
+        else {
+            if (s.length() == 1) {
+                Expression expression = new CharacterLiteral(s);
+                source.add(new Constant(context, expression));
+            }
+            else {
+                ByteArrayOutputStream os = new ByteArrayOutputStream();
+                os.write(Spin2Bytecode.bc_string);
+                os.write(data.length + 1);
+                os.writeBytes(data);
+                os.write(0);
+                source.add(new Bytecode(context, os.toByteArray(), "STRING"));
+            }
+        }
+
+        return source;
+    }
+
+    String getString(Token token) {
+        int i;
+        String s = token.getText();
+
+        if ((i = s.indexOf('"')) != -1) {
+            s = s.substring(i + 1);
+            if ((i = s.lastIndexOf('"')) != -1) {
+                s = s.substring(0, i);
+            }
+            else {
+                logMessage(new CompilerException("unterminated string", token));
+            }
+        }
+
+        return s;
+    }
+
+    int hexVal(int c) {
+        if (c >= '0' && c <= '9') {
+            return c - '0';
+        }
+        else if (c >= 'A' && c <= 'F') {
+            return (c - 'A') + 10;
+        }
+        else if (c >= 'a' && c <= 'f') {
+            return (c - 'a') + 10;
+        }
+        return -1;
     }
 
 }
