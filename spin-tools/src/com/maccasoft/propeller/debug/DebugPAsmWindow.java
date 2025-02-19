@@ -541,6 +541,10 @@ public class DebugPAsmWindow {
         pendingPaint = new AtomicBoolean(false);
     }
 
+    public int getCOGN() {
+        return COGN;
+    }
+
     void resetRegWatch() {
         for (int i = 0; i < watchReg.length; i++) {
             watchReg[i] = 0xFFFF;
@@ -1198,266 +1202,261 @@ public class DebugPAsmWindow {
     boolean lutMapUpdate;
     boolean hubMapUpdate;
 
-    public void breakPoint(CircularBuffer receiver, CircularBuffer transmitter) {
+    public void breakPoint(CircularBuffer receiver, CircularBuffer transmitter) throws IOException, InterruptedException {
         int i, n, j;
 
-        try {
-            //  ------------------------------
-            //   Receive initial data from P2
-            //  ------------------------------
+        //  ------------------------------
+        //   Receive initial data from P2
+        //  ------------------------------
 
-            BRKCZ = receiver.readLong();
-            BRKC = receiver.readLong();
-            BRKZ = receiver.readLong();
-            CTH2 = receiver.readLong();
-            CTL2 = receiver.readLong();
-            for (i = 0; i < STK.length; i++) {
-                STK[i] = receiver.readLong();
-            }
-            IRET = receiver.readLong();
-            FPTR = receiver.readLong();
-            PTRA = receiver.readLong();
-            PTRB = receiver.readLong();
-            FREQ = receiver.readLong();
-            COND = receiver.readLong();
+        BRKCZ = receiver.readLong();
+        BRKC = receiver.readLong();
+        BRKZ = receiver.readLong();
+        CTH2 = receiver.readLong();
+        CTL2 = receiver.readLong();
+        for (i = 0; i < STK.length; i++) {
+            STK[i] = receiver.readLong();
+        }
+        IRET = receiver.readLong();
+        FPTR = receiver.readLong();
+        PTRA = receiver.readLong();
+        PTRB = receiver.readLong();
+        FREQ = receiver.readLong();
+        COND = receiver.readLong();
 
-            for (i = 0; i < cogBlock.length; i++) {
-                cogBlockOld[i] = cogBlock[i];
-                cogBlock[i] = receiver.readWord();
-            }
+        for (i = 0; i < cogBlock.length; i++) {
+            cogBlockOld[i] = cogBlock[i];
+            cogBlock[i] = receiver.readWord();
+        }
 
-            for (i = 0; i < hubBlock.length; i++) {
-                hubBlockOld[i] = hubBlock[i];
-                hubBlock[i] = receiver.readWord();
-            }
+        for (i = 0; i < hubBlock.length; i++) {
+            hubBlockOld[i] = hubBlock[i];
+            hubBlock[i] = receiver.readWord();
+        }
 
-            //  ----------------------
-            //   Process initial data
-            //  ----------------------
+        //  ----------------------
+        //   Process initial data
+        //  ----------------------
 
-            if (firstBreak) {
-                breakValue = COND;
-                firstBreak = false;
-            }
+        if (firstBreak) {
+            breakValue = COND;
+            firstBreak = false;
+        }
 
-            // Set defaults
-            curDisMode = disMode;
-            curCogAddr = cogAddr;
-            curHubAddr = hubAddr;
+        // Set defaults
+        curDisMode = disMode;
+        curCogAddr = cogAddr;
+        curHubAddr = hubAddr;
 
-            curPC = IRET & 0xFFFFF;
-            difPC = Math.abs(((curPC - oldPC) << 12) / 4096); // get absolute value of 20-bit difference
-            oldPC = curPC;
-            PCInCog = curPC < 0x400;
+        curPC = IRET & 0xFFFFF;
+        difPC = Math.abs(((curPC - oldPC) << 12) / 4096); // get absolute value of 20-bit difference
+        oldPC = curPC;
+        PCInCog = curPC < 0x400;
 
-            i = PCInCog ? 0 : 2;
-            switch (curDisMode) {
-                case dmPC:
-                    if (difPC > (8 << i)) {
-                        disAddr = curPC - (DIS_LINE_IDEAL << i);
-                    }
-                    else if (curPC < disAddr) {
-                        disAddr = curPC;
-                    }
-                    else if (curPC > disAddr + ((DIS_LINES - 1) << i)) {
-                        disAddr = curPC - ((DIS_LINES - 1) << i);
-                    }
-                    else if (curPC != disAddr + (DIS_LINE_IDEAL << i)) {
-                        if (disScrollTimer < DIS_SCROLL_THRESHOLD) {
-                            disScrollTimer++;
-                        }
-                        else {
-                            disAddr += within(curPC - (disAddr + (DIS_LINE_IDEAL << i)), -1, 1) << i;
-                        }
-                    }
-                    if (PCInCog) {
-                        disAddr = within(disAddr, 0x000, 0x400 - DIS_LINES);
+        i = PCInCog ? 0 : 2;
+        switch (curDisMode) {
+            case dmPC:
+                if (difPC > (8 << i)) {
+                    disAddr = curPC - (DIS_LINE_IDEAL << i);
+                }
+                else if (curPC < disAddr) {
+                    disAddr = curPC;
+                }
+                else if (curPC > disAddr + ((DIS_LINES - 1) << i)) {
+                    disAddr = curPC - ((DIS_LINES - 1) << i);
+                }
+                else if (curPC != disAddr + (DIS_LINE_IDEAL << i)) {
+                    if (disScrollTimer < DIS_SCROLL_THRESHOLD) {
+                        disScrollTimer++;
                     }
                     else {
-                        disAddr = within(disAddr, 0x00000, 0x100000 - (DIS_LINES << 2));
-                    }
-                    curDisAddr = disAddr;
-                    break;
-                case dmCOG:
-                    curDisAddr = curCogAddr;
-                    break;
-                case dmHUB:
-                    curDisAddr = curHubAddr;
-                    break;
-            }
-
-            // Is hub read needed for instructions?
-            getHubCode = (curDisMode == dmPC) && !PCInCog;
-
-            //  -----------------------------
-            //   Send requests/command to P2
-            //  -----------------------------
-
-            // Send reg/lut block requests
-            j = 0;
-            for (i = 0; i < cogBlock.length; i++) {
-                j >>= 1;
-                if (cogBlock[i] != cogBlockOld[i]) {
-                    j |= 0x80;
-                    if (i < cogBlock.length / 2) {
-                        regMapUpdate = true;
-                    }
-                    else {
-                        lutMapUpdate = true;
+                        disAddr += within(curPC - (disAddr + (DIS_LINE_IDEAL << i)), -1, 1) << i;
                     }
                 }
-                if ((i & 7) == 7) {
-                    transmitter.write(j);
-                }
-            }
-
-            j = 0;
-            for (i = 0; i < ((hubBlock.length + 31) & ~31); i++) {
-                j >>= 1;
-                if (i < hubBlock.length && hubBlock[i] != hubBlockOld[i]) {
-                    j |= 0x80;
-                    hubMapUpdate = true;
-                }
-                if ((i & 7) == 7) {
-                    transmitter.write(j);
-                }
-            }
-
-            // Send hub read requests
-            if (getHubCode) {
-                transmitter.writeLong(((DIS_LINES << 2) << 20) | curDisAddr); // DisLines
-            }
-            else {
-                transmitter.writeLong(0x00000000);
-            }
-            transmitter.writeLong((buffFptr.length << 20) | ((FPTR - PTR_CENTER) & 0xFFFFF)); // FPTR
-            transmitter.writeLong((buffPtra.length << 20) | ((PTRA - PTR_CENTER) & 0xFFFFF)); // PTRA
-            transmitter.writeLong((buffPtrb.length << 20) | ((PTRB - PTR_CENTER) & 0xFFFFF)); // PTRB
-            transmitter.writeLong((buffHub.length << 20) | curHubAddr); // CurHubAddr
-
-            // Send COGBRK requests
-            transmitter.writeLong(requestCOGBRK);
-            requestCOGBRK = 0;
-
-            // Reset disassembly-scroll timer?
-            if (repeatMode || (stallBrk != STALL_CMD)) {
-                disScrollTimer = 0;
-            }
-            // Send STALL/BRK command
-            if (repeatMode) {
-                long t = System.currentTimeMillis();
-                if ((t - oldTickCount) < 50) {
-                    transmitter.writeLong(STALL_CMD);
+                if (PCInCog) {
+                    disAddr = within(disAddr, 0x000, 0x400 - DIS_LINES);
                 }
                 else {
-                    transmitter.writeLong(breakValue);
-                    oldTickCount = t;
+                    disAddr = within(disAddr, 0x00000, 0x100000 - (DIS_LINES << 2));
                 }
+                curDisAddr = disAddr;
+                break;
+            case dmCOG:
+                curDisAddr = curCogAddr;
+                break;
+            case dmHUB:
+                curDisAddr = curHubAddr;
+                break;
+        }
+
+        // Is hub read needed for instructions?
+        getHubCode = (curDisMode == dmPC) && !PCInCog;
+
+        //  -----------------------------
+        //   Send requests/command to P2
+        //  -----------------------------
+
+        // Send reg/lut block requests
+        j = 0;
+        for (i = 0; i < cogBlock.length; i++) {
+            j >>= 1;
+            if (cogBlock[i] != cogBlockOld[i]) {
+                j |= 0x80;
+                if (i < cogBlock.length / 2) {
+                    regMapUpdate = true;
+                }
+                else {
+                    lutMapUpdate = true;
+                }
+            }
+            if ((i & 7) == 7) {
+                transmitter.write(j);
+            }
+        }
+
+        j = 0;
+        for (i = 0; i < ((hubBlock.length + 31) & ~31); i++) {
+            j >>= 1;
+            if (i < hubBlock.length && hubBlock[i] != hubBlockOld[i]) {
+                j |= 0x80;
+                hubMapUpdate = true;
+            }
+            if ((i & 7) == 7) {
+                transmitter.write(j);
+            }
+        }
+
+        // Send hub read requests
+        if (getHubCode) {
+            transmitter.writeLong(((DIS_LINES << 2) << 20) | curDisAddr); // DisLines
+        }
+        else {
+            transmitter.writeLong(0x00000000);
+        }
+        transmitter.writeLong((buffFptr.length << 20) | ((FPTR - PTR_CENTER) & 0xFFFFF)); // FPTR
+        transmitter.writeLong((buffPtra.length << 20) | ((PTRA - PTR_CENTER) & 0xFFFFF)); // PTRA
+        transmitter.writeLong((buffPtrb.length << 20) | ((PTRB - PTR_CENTER) & 0xFFFFF)); // PTRB
+        transmitter.writeLong((buffHub.length << 20) | curHubAddr); // CurHubAddr
+
+        // Send COGBRK requests
+        transmitter.writeLong(requestCOGBRK);
+        requestCOGBRK = 0;
+
+        // Reset disassembly-scroll timer?
+        if (repeatMode || (stallBrk != STALL_CMD)) {
+            disScrollTimer = 0;
+        }
+        // Send STALL/BRK command
+        if (repeatMode) {
+            long t = System.currentTimeMillis();
+            if ((t - oldTickCount) < 50) {
+                transmitter.writeLong(STALL_CMD);
             }
             else {
-                transmitter.writeLong(stallBrk);
-                stallBrk = STALL_CMD;
+                transmitter.writeLong(breakValue);
+                oldTickCount = t;
             }
+        }
+        else {
+            transmitter.writeLong(stallBrk);
+            stallBrk = STALL_CMD;
+        }
 
-            //  ----------------------------
-            //   Receive final data from P2
-            //  ----------------------------
+        //  ----------------------------
+        //   Receive final data from P2
+        //  ----------------------------
 
-            // Receive reg/lut blocks
-            j = 0;
-            for (i = 0; i < cogBlock.length; i++) {
-                if (cogBlockOld[i] != cogBlock[i]) {
-                    for (n = 0; n < COG_BLOCK_SIZE; n++) {
-                        cogImage[j + n] = receiver.readLong();
-                    }
-                }
-                j += COG_BLOCK_SIZE;
-            }
-
-            // Receive detailed hub checksum words
-            j = 0;
-            for (i = 0; i < hubBlock.length; i++) {
-                if (hubBlock[i] != hubBlockOld[i]) {
-                    for (n = 0; n < HUB_BLOCK_RATIO; n++) {
-                        hubSubBlock[j + n] = receiver.readWord();
-                    }
-                }
-                j += HUB_BLOCK_RATIO;
-            }
-
-            // Receive hub reads
-            if (getHubCode) {
-                for (i = 0; i < buffDis.length; i++) {
-                    buffDis[i] = receiver.readLong();
+        // Receive reg/lut blocks
+        j = 0;
+        for (i = 0; i < cogBlock.length; i++) {
+            if (cogBlockOld[i] != cogBlock[i]) {
+                for (n = 0; n < COG_BLOCK_SIZE; n++) {
+                    cogImage[j + n] = receiver.readLong();
                 }
             }
-            for (i = 0; i < buffFptr.length; i++) {
-                buffFptr[i] = (byte) receiver.read();
-            }
-            for (i = 0; i < buffPtra.length; i++) {
-                buffPtra[i] = (byte) receiver.read();
-            }
-            for (i = 0; i < buffPtrb.length; i++) {
-                buffPtrb[i] = (byte) receiver.read();
-            }
-            for (i = 0; i < buffHub.length; i++) {
-                buffHub[i] = (byte) receiver.read();
-            }
+            j += COG_BLOCK_SIZE;
+        }
 
-            // Receive smart pin data
-            i = j = 0;
-            for (i = 0; i < SMART_PINS; i++) {
+        // Receive detailed hub checksum words
+        j = 0;
+        for (i = 0; i < hubBlock.length; i++) {
+            if (hubBlock[i] != hubBlockOld[i]) {
+                for (n = 0; n < HUB_BLOCK_RATIO; n++) {
+                    hubSubBlock[j + n] = receiver.readWord();
+                }
+            }
+            j += HUB_BLOCK_RATIO;
+        }
+
+        // Receive hub reads
+        if (getHubCode) {
+            for (i = 0; i < buffDis.length; i++) {
+                buffDis[i] = receiver.readLong();
+            }
+        }
+        for (i = 0; i < buffFptr.length; i++) {
+            buffFptr[i] = (byte) receiver.read();
+        }
+        for (i = 0; i < buffPtra.length; i++) {
+            buffPtra[i] = (byte) receiver.read();
+        }
+        for (i = 0; i < buffPtrb.length; i++) {
+            buffPtrb[i] = (byte) receiver.read();
+        }
+        for (i = 0; i < buffHub.length; i++) {
+            buffHub[i] = (byte) receiver.read();
+        }
+
+        // Receive smart pin data
+        i = j = 0;
+        for (i = 0; i < SMART_PINS; i++) {
+            smartBuffOld[i] = smartBuff[i];
+            if ((i & 7) == 0) {
+                j = receiver.read();
+            }
+            if (((j >> (i & 7)) & 1) != 0) {
+                smartBuff[i] = receiver.readLong();
+            }
+            else {
+                smartBuff[i] = 0;
+            }
+            if (smartBuffOld[i] == -1) {
                 smartBuffOld[i] = smartBuff[i];
-                if ((i & 7) == 0) {
-                    j = receiver.read();
-                }
-                if (((j >> (i & 7)) & 1) != 0) {
-                    smartBuff[i] = receiver.readLong();
-                }
-                else {
-                    smartBuff[i] = 0;
-                }
-                if (smartBuffOld[i] == -1) {
-                    smartBuffOld[i] = smartBuff[i];
-                }
             }
+        }
 
-            //  --------------------
-            //   Process final data
-            //  --------------------
+        //  --------------------
+        //   Process final data
+        //  --------------------
 
-            // Patch disassembly buffer if needed
-            if (!getHubCode) {
-                for (i = 0; i < DIS_LINES; i++) {
-                    switch (curDisMode) {
-                        case dmPC:
-                        case dmCOG:
-                            buffDis[i] = cogImage[curDisAddr + i];
-                            break;
-                        case dmHUB:
-                            buffDis[i] = (buffHub[(i << 2)] & 0xFF)
-                                | ((buffHub[(i << 2) + 1] & 0xFF) << 8)
-                                | ((buffHub[(i << 2) + 2] & 0xFF) << 16)
-                                | ((buffHub[(i << 2) + 3] & 0xFF) << 24);
-                            break;
-                    }
+        // Patch disassembly buffer if needed
+        if (!getHubCode) {
+            for (i = 0; i < DIS_LINES; i++) {
+                switch (curDisMode) {
+                    case dmPC:
+                    case dmCOG:
+                        buffDis[i] = cogImage[curDisAddr + i];
+                        break;
+                    case dmHUB:
+                        buffDis[i] = (buffHub[(i << 2)] & 0xFF)
+                            | ((buffHub[(i << 2) + 1] & 0xFF) << 8)
+                            | ((buffHub[(i << 2) + 2] & 0xFF) << 16)
+                            | ((buffHub[(i << 2) + 3] & 0xFF) << 24);
+                        break;
                 }
             }
+        }
 
-            // Determine execution mode
-            execMode = 0;
-            if (((BRKCZ >> 2) & 3) == 3) {
-                execMode = 1;
-            }
-            else if (((BRKCZ >> 4) & 3) == 3) {
-                execMode = 2;
-            }
-            else if (((BRKCZ >> 6) & 3) == 3) {
-                execMode = 3;
-            }
-
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
+        // Determine execution mode
+        execMode = 0;
+        if (((BRKCZ >> 2) & 3) == 3) {
+            execMode = 1;
+        }
+        else if (((BRKCZ >> 4) & 3) == 3) {
+            execMode = 2;
+        }
+        else if (((BRKCZ >> 6) & 3) == 3) {
+            execMode = 3;
         }
     }
 
@@ -1977,6 +1976,10 @@ public class DebugPAsmWindow {
             gc.setAlpha(255);
             gc.setLineWidth(0);
         }
+    }
+
+    public Shell getShell() {
+        return shell;
     }
 
     public static void main(String[] args) {

@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.resource.StringConverter;
 import org.eclipse.swt.SWT;
@@ -40,6 +41,7 @@ import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Shell;
 
 import com.maccasoft.propeller.debug.DebugPAsmWindow;
 import com.maccasoft.propeller.debug.DebugWindow;
@@ -198,6 +200,8 @@ public class ConsoleView {
 
             while (consoleThreadRun) {
                 try {
+                    cogn = -1;
+
                     count = receiveBuffer.available();
                     while (count > 0) {
                         b = receiveBuffer.read();
@@ -206,19 +210,19 @@ public class ConsoleView {
                         if (b < 8) {
                             cogn = b;
                             if ((b = receiveBuffer.read()) == 0) {
-                                count--;
                                 if ((b = receiveBuffer.read()) == 0) {
-                                    count--;
                                     if ((b = receiveBuffer.read()) == 0) {
-                                        count--;
                                         break;
                                     }
                                 }
                             }
+                            cogn = -1;
+                            count = receiveBuffer.available();
                         }
 
                         os.write(b);
                     }
+
                     if (os.size() > 0) {
                         byte[] rx = os.toByteArray();
                         display.asyncExec(new Runnable() {
@@ -236,11 +240,26 @@ public class ConsoleView {
                         });
                         os.reset();
                     }
+
                     if (cogn != -1) {
                         DebugPAsmWindow window = debugger[cogn];
                         if (window != null) {
-                            window.breakPoint(receiveBuffer, transmitBuffer);
-                            window.update();
+                            try {
+                                window.breakPoint(receiveBuffer, transmitBuffer);
+                                window.update();
+                            } catch (IOException | InterruptedException e) {
+                                display.syncExec(new Runnable() {
+
+                                    @Override
+                                    public void run() {
+                                        Shell shell = window.getShell();
+                                        MessageDialog.openError(shell, shell.getText(), "Hardware lost");
+                                        window.dispose();
+                                    }
+
+                                });
+                                debugger[window.getCOGN()] = null;
+                            }
                         }
                         else {
                             DebugPAsmWindow newWindow = new DebugPAsmWindow(cogn);
@@ -249,21 +268,24 @@ public class ConsoleView {
                                 @Override
                                 public void run() {
                                     newWindow.create();
-                                    newWindow.open();
-                                    newWindow.breakPoint(receiveBuffer, transmitBuffer);
-                                    newWindow.update();
+                                    try {
+                                        newWindow.breakPoint(receiveBuffer, transmitBuffer);
+                                        newWindow.open();
+                                        newWindow.update();
+                                        debugger[newWindow.getCOGN()] = newWindow;
+                                    } catch (IOException | InterruptedException e) {
+                                        newWindow.dispose();
+                                    }
                                 }
 
                             });
-                            debugger[cogn] = newWindow;
                         }
                         cogn = -1;
                     }
+
                     Thread.sleep(1);
-                } catch (InterruptedException e) {
-                    // Do nothing
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    // Do nothing
                 }
             }
         }
