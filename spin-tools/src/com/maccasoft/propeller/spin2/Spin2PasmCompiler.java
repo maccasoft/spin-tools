@@ -223,17 +223,14 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
                 pasmLine.setInstructionObject(new FileInc(pasmLine.getScope(), data));
             }
             if ("DEBUG".equalsIgnoreCase(mnemonic)) {
-                if (node.condition != null) {
-                    throw new CompilerException("not allowed", node.condition);
-                }
                 if (node.modifier != null) {
                     throw new CompilerException("not allowed", node.modifier);
                 }
 
                 List<Token> tokens = new ArrayList<>(node.getTokens());
-                if (node.label != null) {
-                    tokens.remove(node.label);
-                }
+                tokens.remove(node.label);
+                tokens.remove(node.condition);
+
                 Spin2PAsmDebugLine debugLine = Spin2PAsmDebugLine.buildFrom(pasmLine.getScope(), tokens);
                 if (debugLine != null) {
                     debugSource.add(debugLine);

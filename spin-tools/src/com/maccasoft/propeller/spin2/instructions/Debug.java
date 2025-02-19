@@ -45,14 +45,41 @@ public class Debug extends Spin2PAsmInstructionFactory {
         // EEEE 1101011 00L DDDDDDDDD 000110110
 
         @Override
+        public int getSize() {
+            if (condition != null && !"__ret__".equalsIgnoreCase(condition)) {
+                return 8;
+            }
+            return 4;
+        }
+
+        @Override
         public byte[] getBytes() {
-            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
+            int value = 0;
+            if (condition == null || "__ret__".equalsIgnoreCase(condition)) {
+                value = e.setValue(value, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
+            }
+            else {
+                value = e.setValue(value, 0b1111);
+            }
             value = o.setValue(value, 0b1101011);
             value = cz.setValue(value, 0b00);
             value = i.setBoolean(value, true);
             value = d.setValue(value, dst.getInteger());
             value = s.setValue(value, 0b000110110);
+            if (condition != null && !"__ret__".equalsIgnoreCase(condition)) {
+                return getBytes(encodeSkip(), value);
+            }
             return getBytes(value);
+        }
+
+        int encodeSkip() {
+            int value = e.setValue(0, conditions.get(condition.toLowerCase()) ^ 0b1111);
+            value = o.setValue(value, 0b1101011);
+            value = cz.setValue(value, 0b00);
+            value = i.setBoolean(value, true);
+            value = d.setValue(value, 1);
+            value = s.setValue(value, 0b000110001);
+            return value;
         }
 
     }
