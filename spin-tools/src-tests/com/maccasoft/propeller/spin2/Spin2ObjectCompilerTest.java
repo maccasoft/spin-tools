@@ -7261,6 +7261,34 @@ class Spin2ObjectCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testRegistersInConstantExpressions() throws Exception {
+        String text = ""
+            + "CON\n"
+            + "   A = DIRA\n"
+            + "\n"
+            + "PUB main() | v\n"
+            + "  v := A\n"
+            + "  v := DIRA\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       11 00 00 00    End\n"
+            + "' PUB main() | v\n"
+            + "00008 00008       01             (stack size)\n"
+            + "'   v := A\n"
+            + "00009 00009       44 FA 01       CONSTANT ($1fa)\n"
+            + "0000C 0000C       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'   v := DIRA\n"
+            + "0000D 0000D       BA 80          REG_READ +$1FA (short)\n"
+            + "0000F 0000F       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00010 00010       04             RETURN\n"
+            + "00011 00011       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }

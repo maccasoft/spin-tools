@@ -830,7 +830,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
             Token token = iter.next();
             do {
                 if ("#".equals(token.getText())) {
-                    Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope);
+                    Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope, true);
                     while (iter.hasNext()) {
                         token = iter.next();
                         if ("[".equals(token.getText())) {
@@ -847,7 +847,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     }
                     enumIncrement = new NumberLiteral(1);
                     if ("[".equals(token.getText())) {
-                        builder = new Spin2ExpressionBuilder(scope);
+                        builder = new Spin2ExpressionBuilder(scope, true);
                         while (iter.hasNext()) {
                             token = iter.next();
                             if ("]".equals(token.getText())) {
@@ -901,7 +901,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                                 logMessage(new CompilerException(e, token));
                             }
 
-                            Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope);
+                            Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope, true);
                             while (iter.hasNext()) {
                                 token = iter.next();
                                 if ("]".equals(token.getText())) {
@@ -925,7 +925,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                             }
                         }
                         else if ("=".equals(token.getText())) {
-                            Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope);
+                            Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope, true);
                             while (iter.hasNext()) {
                                 token = iter.next();
                                 if ("]".equals(token.getText())) {

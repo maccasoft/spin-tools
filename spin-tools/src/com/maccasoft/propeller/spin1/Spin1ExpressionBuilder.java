@@ -150,17 +150,47 @@ public class Spin1ExpressionBuilder {
         postEffect.add("~~");
     }
 
+    static Map<String, Expression> constants = new HashMap<>();
+    static {
+        constants.put("PAR", new NumberLiteral(0x1F0, 16));
+        constants.put("CNT", new NumberLiteral(0x1F1, 16));
+        constants.put("INA", new NumberLiteral(0x1F2, 16));
+        constants.put("INB", new NumberLiteral(0x1F3, 16));
+        constants.put("OUTA", new NumberLiteral(0x1F4, 16));
+        constants.put("OUTB", new NumberLiteral(0x1F5, 16));
+        constants.put("DIRA", new NumberLiteral(0x1F6, 16));
+        constants.put("DIRB", new NumberLiteral(0x1F7, 16));
+        constants.put("CTRA", new NumberLiteral(0x1F8, 16));
+        constants.put("CTRB", new NumberLiteral(0x1F9, 16));
+        constants.put("FRQA", new NumberLiteral(0x1FA, 16));
+        constants.put("FRQB", new NumberLiteral(0x1FB, 16));
+        constants.put("PHSA", new NumberLiteral(0x1FC, 16));
+        constants.put("PHSB", new NumberLiteral(0x1FD, 16));
+        constants.put("VCFG", new NumberLiteral(0x1FE, 16));
+        constants.put("VSCL", new NumberLiteral(0x1FF, 16));
+    }
+
     Context context;
+    boolean allowRegisters;
     List<Token> tokens = new ArrayList<Token>();
 
     int index;
 
     public Spin1ExpressionBuilder(Context context) {
-        this.context = context;
+        this(context, false, new ArrayList<>());
+    }
+
+    public Spin1ExpressionBuilder(Context context, boolean allowRegisters) {
+        this(context, allowRegisters, new ArrayList<>());
     }
 
     public Spin1ExpressionBuilder(Context context, List<Token> tokens) {
+        this(context, false, tokens);
+    }
+
+    public Spin1ExpressionBuilder(Context context, boolean allowRegisters, List<Token> tokens) {
         this.context = context;
+        this.allowRegisters = allowRegisters;
         tokens.iterator().forEachRemaining((t) -> {
             addToken(t);
         });
@@ -370,6 +400,13 @@ public class Spin1ExpressionBuilder {
 
         if (token.type != Token.OPERATOR) {
             token = next();
+
+            if (allowRegisters) {
+                Expression expression = constants.get(token.getText().toUpperCase());
+                if (expression != null) {
+                    return expression;
+                }
+            }
 
             switch (token.getText().toUpperCase()) {
                 case "DEFINED": {
