@@ -756,38 +756,49 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
         }
 
         if (methods.size() != 0) {
+            boolean hasErrors = false;
             boolean loop;
             do {
                 loop = false;
                 address = object.getSize();
                 for (Spin2Method method : methods) {
-                    address = method.resolve(address);
-                    loop |= method.isAddressChanged();
+                    hasErrors = true;
+                    try {
+                        address = method.resolve(address);
+                        loop |= method.isAddressChanged();
+                        hasErrors = false;
+                    } catch (CompilerException e) {
+                        logMessage(e);
+                    } catch (Exception e) {
+                        logMessage(new CompilerException(e, method.getData()));
+                    }
                 }
-            } while (loop);
+            } while (loop && !hasErrors);
 
-            int index = 0;
-            for (Spin2Method method : methods) {
-                int value = 0;
+            if (!hasErrors) {
+                int index = 0;
+                for (Spin2Method method : methods) {
+                    int value = 0;
 
-                value = Spin2Method.address_bit.setValue(value, object.getSize());
-                value = Spin2Method.returns_bit.setValue(value, method.getReturnLongs());
-                value = Spin2Method.parameters_bit.setValue(value, method.getParameterLongs());
+                    value = Spin2Method.address_bit.setValue(value, object.getSize());
+                    value = Spin2Method.returns_bit.setValue(value, method.getReturnLongs());
+                    value = Spin2Method.parameters_bit.setValue(value, method.getParameterLongs());
 
-                methodData.get(index).setValue(value | 0x80000000L);
-                methodData.get(index).setText(
-                    String.format("Method %s @ $%05X (%d parameters, %d returns)", method.getLabel(), object.getSize(), method.getParameterLongs(), method.getReturnLongs()));
-                try {
-                    method.writeTo(object);
-                } catch (CompilerException e) {
-                    logMessage(e);
-                } catch (Exception e) {
-                    logMessage(new CompilerException(e, method.getData()));
+                    methodData.get(index).setValue(value | 0x80000000L);
+                    methodData.get(index).setText(
+                        String.format("Method %s @ $%05X (%d parameters, %d returns)", method.getLabel(), object.getSize(), method.getParameterLongs(), method.getReturnLongs()));
+                    try {
+                        method.writeTo(object);
+                    } catch (CompilerException e) {
+                        logMessage(e);
+                    } catch (Exception e) {
+                        logMessage(new CompilerException(e, method.getData()));
+                    }
+                    index++;
                 }
-                index++;
-            }
-            if (index > 0) {
-                methodData.get(index).setValue(object.getSize());
+                if (index > 0) {
+                    methodData.get(index).setValue(object.getSize());
+                }
             }
         }
 
@@ -2418,6 +2429,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
     void compileInlinePAsmStatements(Iterator<Node> linesIterator, Spin2MethodLine line) {
         int org = 0;
         int count = 0;
+        int code = Spin2Bytecode.bc_org;
         Context rootScope = new Context(line.getScope());
         Context lineScope = rootScope;
 
@@ -2441,6 +2453,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 if ("END".equalsIgnoreCase(node.getStartToken().getText())) {
                     processAliases();
                     Spin2PAsmLine pasmLine = new Spin2PAsmLine(line.getScope(), null, null, "ret", Collections.emptyList(), null);
+                    pasmLine.setData(node);
                     line.addSource(new InlinePAsm(rootScope, pasmLine));
                     break;
                 }
@@ -2452,37 +2465,52 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 Spin2PAsmLine pasmLine = ((InlinePAsm) bc).getLine();
                 List<Spin2PAsmExpression> arguments = pasmLine.getArguments();
                 if (pasmLine.getInstructionFactory() instanceof Org) {
+                    org = 0x00;
                     if (arguments.size() > 0) {
                         org = arguments.get(0).getInteger();
                     }
-                    continue;
                 }
-                if (pasmLine.getInstructionFactory() instanceof Empty) {
-                    continue;
-                }
-                count++;
-                if (arguments.size() > 0) {
-                    if (arguments.get(0).isLongLiteral()) {
-                        count++;
+                else if (pasmLine.getInstructionFactory() instanceof Orgh) {
+                    org = 0x400;
+                    if (arguments.size() > 0) {
+                        logMessage(new CompilerException("argument(s) not allowed", arguments.get(0).getExpression().getData()));
                     }
-                    if (arguments.size() > 1) {
-                        if (arguments.get(1).isLongLiteral()) {
+                    code = Spin2Bytecode.bc_orgh;
+                }
+                else if (!(pasmLine.getInstructionFactory() instanceof Empty)) {
+                    count++;
+                    if (arguments.size() > 0) {
+                        if (arguments.get(0).isLongLiteral()) {
                             count++;
+                        }
+                        if (arguments.size() > 1) {
+                            if (arguments.get(1).isLongLiteral()) {
+                                count++;
+                            }
                         }
                     }
                 }
             }
         }
 
-        count--;
+        if (code == Spin2Bytecode.bc_org) {
+            count--;
+            line.source.add(0, new Bytecode(line.getScope(), new byte[] {
+                (byte) org,
+                (byte) (org >> 8),
+                (byte) count,
+                (byte) (count >> 8),
+            }, String.format("%s=$%03x, %d", "ORG", org, count + 1)));
+        }
+        else {
+            line.source.add(0, new Bytecode(line.getScope(), new byte[] {
+                (byte) (org >> 8),
+                (byte) org,
+            }, String.format("%s=$%03x", "ORGH", org)));
+        }
+
         line.source.add(0, new Bytecode(line.getScope(), new byte[] {
-            (byte) org,
-            (byte) (org >> 8),
-            (byte) count,
-            (byte) (count >> 8),
-        }, String.format("ORG=$%03x, %d", org, count + 1)));
-        line.source.add(0, new Bytecode(line.getScope(), new byte[] {
-            Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_org
+            Spin2Bytecode.bc_hub_bytecode, (byte) code
         }, "INLINE-EXEC"));
     }
 

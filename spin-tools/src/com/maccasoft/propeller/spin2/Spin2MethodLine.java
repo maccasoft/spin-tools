@@ -20,6 +20,7 @@ import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin2.bytecode.InlinePAsm;
+import com.maccasoft.propeller.spin2.instructions.Orgh;
 
 public class Spin2MethodLine {
 
@@ -97,14 +98,23 @@ public class Spin2MethodLine {
 
     public int resolve(int address) {
         int pasmAddress = 0;
+        boolean hubMode = false;
 
         addressChanged = startAddress != address;
         startAddress = address;
 
         scope.setAddress(address);
+
         for (Spin2Bytecode bc : source) {
             if (bc instanceof InlinePAsm) {
-                pasmAddress = bc.resolve(pasmAddress);
+                Spin2PAsmLine inlinePAsm = ((InlinePAsm) bc).getLine();
+                if (inlinePAsm.getInstructionFactory() instanceof Orgh) {
+                    hubMode = true;
+                }
+                if (!hubMode && (pasmAddress >> 2) >= 0x120) {
+                    throw new CompilerException("inline cog address exceeds $120 limit", inlinePAsm.getData());
+                }
+                pasmAddress = inlinePAsm.resolve(pasmAddress, hubMode);
                 address += bc.getSize();
             }
             else {
@@ -195,7 +205,8 @@ public class Spin2MethodLine {
             if (bc instanceof InlinePAsm) {
                 Spin2PAsmLine line = ((InlinePAsm) bc).getLine();
                 try {
-                    obj.writeBytes(line.getScope().getAddress(), false, line.getInstructionObject().getBytes(), line.toString());
+                    int address = line.getScope().getAddress();
+                    obj.writeBytes(address, false, line.getInstructionObject().getBytes(), line.toString());
                 } catch (CompilerException e) {
                     msgs.addMessage(e);
                 } catch (Exception e) {

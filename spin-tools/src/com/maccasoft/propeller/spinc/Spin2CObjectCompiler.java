@@ -1731,6 +1731,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
         }
         else if ("asm".equalsIgnoreCase(token.getText())) {
             int org = 0;
+            int code = Spin2Bytecode.bc_org;
 
             line = new Spin2MethodLine(context, parent, token.getText(), node);
 
@@ -1758,23 +1759,24 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                 }
 
                 List<Spin2PAsmExpression> arguments = pasmLine.getArguments();
-                if (pasmLine.getInstructionFactory() instanceof Org) {
+                if ((pasmLine.getInstructionFactory() instanceof Org) || (pasmLine.getInstructionFactory() instanceof Orgh)) {
                     if (arguments.size() > 0) {
                         org = arguments.get(0).getInteger();
                     }
-                    continue;
-                }
-                if (pasmLine.getInstructionFactory() instanceof Empty) {
-                    continue;
-                }
-                count++;
-                if (arguments.size() > 0) {
-                    if (arguments.get(0).isLongLiteral()) {
-                        count++;
+                    if ((pasmLine.getInstructionFactory() instanceof Orgh)) {
+                        code = Spin2Bytecode.bc_orgh;
                     }
-                    if (arguments.size() > 1) {
-                        if (arguments.get(1).isLongLiteral()) {
+                }
+                else if (!(pasmLine.getInstructionFactory() instanceof Empty)) {
+                    count++;
+                    if (arguments.size() > 0) {
+                        if (arguments.get(0).isLongLiteral()) {
                             count++;
+                        }
+                        if (arguments.size() > 1) {
+                            if (arguments.get(1).isLongLiteral()) {
+                                count++;
+                            }
                         }
                     }
                 }
@@ -1788,9 +1790,9 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                 (byte) (org >> 8),
                 (byte) count,
                 (byte) (count >> 8),
-            }, String.format("ORG=$%03x, %d", org, count + 1)));
+            }, String.format("%s=$%03x, %d", code == Spin2Bytecode.bc_orgh ? "ORGH" : "ORG", org, count + 1)));
             line.addSource(0, new Bytecode(context, new byte[] {
-                Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_org
+                Spin2Bytecode.bc_hub_bytecode, (byte) code
             }, "INLINE-EXEC"));
         }
         else {

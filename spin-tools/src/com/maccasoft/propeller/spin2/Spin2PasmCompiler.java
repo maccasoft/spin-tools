@@ -206,6 +206,7 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
         }
 
         Spin2PAsmLine pasmLine = new Spin2PAsmLine(lineScope, label, condition, mnemonic, parameters, modifier);
+        pasmLine.setData(node);
 
         try {
             if ("FILE".equalsIgnoreCase(mnemonic)) {

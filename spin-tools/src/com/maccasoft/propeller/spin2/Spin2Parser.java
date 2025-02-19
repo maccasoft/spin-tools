@@ -839,7 +839,7 @@ public class Spin2Parser extends Parser {
             else if (token.column < column) {
                 break;
             }
-            else if ("ORG".equalsIgnoreCase(token.getText())) {
+            else if ("ORG".equalsIgnoreCase(token.getText()) || "ORGH".equalsIgnoreCase(token.getText())) {
                 parseInlineCode(parent);
                 token = stream.peekNext();
                 if (sections.contains(token.getText().toUpperCase())) {
