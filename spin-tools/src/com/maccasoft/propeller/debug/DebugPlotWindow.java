@@ -51,6 +51,7 @@ public class DebugPlotWindow extends DebugWindow {
     int colorTune;
     Color[] lutColors;
 
+    int precise;
     int lineSize;
 
     int textSize;
@@ -103,6 +104,7 @@ public class DebugPlotWindow extends DebugWindow {
         colorTune = 0;
         lutColors = new Color[256];
 
+        precise = 0;
         lineSize = 1;
 
         textSize = 10;
@@ -369,6 +371,7 @@ public class DebugPlotWindow extends DebugWindow {
                     break;
 
                 case "PRECISE":
+                    precise ^= 8;
                     break;
 
                 case "LINESIZE":
@@ -397,8 +400,8 @@ public class DebugPlotWindow extends DebugWindow {
                                 newX = pt.x;
                                 newY = pt.y;
                             }
-                            x = xDirection == 0 ? origin.x + newX : imageSize.x - (origin.x + newX);
-                            y = yDirection == 0 ? imageSize.y - (origin.y + newY) : origin.y + newY;
+                            x = xDirection == 0 ? (origin.x << precise) + newX : (imageSize.x << precise) - ((origin.x << precise) + newX);
+                            y = yDirection == 0 ? (imageSize.y << precise) - ((origin.y << precise) + newY) : (origin.y << precise) + newY;
                         }
                     }
                     break;
@@ -414,7 +417,7 @@ public class DebugPlotWindow extends DebugWindow {
                     }
                     imageGc.setBackground(color);
                     imageGc.setAlpha(opacityOverride);
-                    imageGc.fillOval(x - sizeOverride / 2, y - sizeOverride / 2, sizeOverride, sizeOverride);
+                    imageGc.fillOval((x - sizeOverride / 2) >> precise, (y - sizeOverride / 2) >> precise, sizeOverride >> precise, sizeOverride >> precise);
                     if (autoUpdate) {
                         update();
                     }
@@ -431,8 +434,8 @@ public class DebugPlotWindow extends DebugWindow {
                                 newX = pt.x;
                                 newY = pt.y;
                             }
-                            int dx = xDirection == 0 ? origin.x + newX : imageSize.x - (origin.x + newX);
-                            int dy = yDirection == 0 ? imageSize.y - (origin.y + newY) : origin.y + newY;
+                            int dx = xDirection == 0 ? (origin.x << precise) + newX : (imageSize.x << precise) - ((origin.x << precise) + newX);
+                            int dy = yDirection == 0 ? (imageSize.y << precise) - ((origin.y << precise) + newY) : (origin.y << precise) + newY;
                             int size = iter.hasNextNumber() ? iter.nextNumber() : lineSize;
                             line(dx, dy, size, color);
                             if (autoUpdate) {
@@ -963,10 +966,10 @@ public class DebugPlotWindow extends DebugWindow {
     void line(int dx, int dy, int lineSize, Color color) {
         imageGc.setAntialias(SWT.ON);
         imageGc.setForeground(color);
-        imageGc.setLineWidth(lineSize);
+        imageGc.setLineWidth(lineSize >> precise);
 
         imageGc.setAlpha(opacity);
-        imageGc.drawLine(x, y, dx, dy);
+        imageGc.drawLine(x >> precise, y >> precise, dx >> precise, dy >> precise);
 
         x = dx;
         y = dy;
