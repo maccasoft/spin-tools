@@ -232,11 +232,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
         objectVarSize = (objectVarSize + 3) & ~3;
 
-        for (Node node : root.getChilds()) {
-            if (node instanceof DataNode) {
-                compileDatBlock((DataNode) node);
-            }
-        }
+        compileDataBlocks(root);
 
         for (Node node : root.getChilds()) {
             if (node.isExclude()) {
@@ -1019,11 +1015,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                 }
             }
         }
-        for (Node node : root.getChilds()) {
-            if (node instanceof DataNode) {
-                compileDatBlock((DataNode) node);
-            }
-        }
+        compileDataBlocks(root);
     }
 
     Spin1Method compileMethod(MethodNode node) {

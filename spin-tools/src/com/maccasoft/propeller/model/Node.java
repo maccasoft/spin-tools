@@ -41,9 +41,9 @@ public class Node {
     }
 
     public void accept(NodeVisitor visitor) {
-        for (Node child : childs) {
+        getChilds().iterator().forEachRemaining((child) -> {
             child.accept(visitor);
-        }
+        });
     }
 
     public void addToken(Token token) {

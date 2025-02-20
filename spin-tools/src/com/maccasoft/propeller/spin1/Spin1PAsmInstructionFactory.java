@@ -120,6 +120,7 @@ public abstract class Spin1PAsmInstructionFactory {
         symbols.put("BYTEFIT", new Bytefit());
         symbols.put("WORDFIT", new Wordfit());
 
+        symbols.put("NAMESP", new Empty());
         symbols.put("FILE", new Empty());
         symbols.put("INCLUDE", new Empty());
 

@@ -298,11 +298,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
         }
         objectVarSize = (objectVarSize + 3) & ~3;
 
-        for (Node node : root.getChilds()) {
-            if (node instanceof DataNode) {
-                compileDatBlock((DataNode) node);
-            }
-        }
+        compileDataBlocks(root);
 
         for (Entry<String, ObjectInfo> infoEntry : objects.entrySet()) {
             ObjectInfo info = infoEntry.getValue();
@@ -1479,11 +1475,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 }
             }
         }
-        for (Node node : root.getChilds()) {
-            if (node instanceof DataNode) {
-                compileDatBlock((DataNode) node);
-            }
-        }
+        compileDataBlocks(root);
     }
 
     Spin2Method compileMethod(MethodNode node) {

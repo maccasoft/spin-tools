@@ -13,6 +13,7 @@ package com.maccasoft.propeller.spin1;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -47,83 +48,100 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
         this.compiler = compiler;
     }
 
-    protected void compileDatBlock(DataNode parent) {
-        Context datScope = new Context(scope);
-        Context lineScope = datScope;
+    protected void compileDataBlocks(Node root) {
         String namespace = "";
+        Context datScope = new Context(scope);
+        Context lineScope;
 
-        TokenIterator iter = parent.tokenIterator();
-        if (iter.hasNext()) {
-            Token section = iter.peekNext();
-            if ("DAT".equalsIgnoreCase(section.getText())) {
-                iter.next();
-            }
-        }
-        if (iter.hasNext()) {
-            namespace = iter.next().getText() + ".";
-            if (iter.hasNext()) {
-                logMessage(new CompilerException("syntax error", iter.next()));
-            }
-        }
+        for (Node n1 : root.getChilds()) {
+            if (!n1.isExclude() && (n1 instanceof DataNode)) {
+                DataNode node = (DataNode) n1;
 
-        for (Node child : parent.getChilds()) {
-            try {
-                if (child.isExclude()) {
-                    continue;
+                lineScope = datScope;
+
+                TokenIterator iter = node.tokenIterator();
+                if (iter.hasNext()) {
+                    Token section = iter.peekNext();
+                    if ("DAT".equalsIgnoreCase(section.getText())) {
+                        iter.next();
+                    }
                 }
-                if (child instanceof DataLineNode) {
-                    DataLineNode node = (DataLineNode) child;
-
-                    if (node.label != null && !node.label.getText().startsWith(":")) {
-                        lineScope = datScope;
+                if (iter.hasNext()) {
+                    namespace = iter.next().getText() + ".";
+                    if (iter.hasNext()) {
+                        logMessage(new CompilerException("syntax error", iter.next()));
                     }
+                    datScope = new Context(scope);
+                }
 
-                    Spin1PAsmLine pasmLine = compileDataLine(datScope, lineScope, node, namespace);
-                    pasmLine.setData(node);
-                    source.addAll(pasmLine.expand());
-
-                    if (node.label != null && !node.label.getText().startsWith(":")) {
-                        lineScope = pasmLine.getScope();
-                    }
-
-                    if ("INCLUDE".equalsIgnoreCase(pasmLine.getMnemonic())) {
-                        if (node.condition != null) {
-                            throw new CompilerException("not allowed", node.condition);
-                        }
-                        if (node.modifier != null) {
-                            throw new CompilerException("not allowed", node.modifier);
-                        }
-                        int index = 0;
-                        for (Spin1PAsmExpression argument : pasmLine.getArguments()) {
-                            String fileName = argument.getString();
-                            File includeFile = compiler.getFile(fileName, ".spin");
-                            Node includedNode = compiler.getParsedSource(includeFile);
-                            try {
-                                if (includedNode == null) {
-                                    throw new RuntimeException("file \"" + fileName + "\" not found");
-                                }
-                                compileDatInclude(includedNode);
-                            } catch (CompilerException e) {
-                                logMessage(e);
-                            } catch (Exception e) {
-                                logMessage(new CompilerException(e, node.parameters.get(index)));
+                for (Node n2 : node.getChilds()) {
+                    if (!n2.isExclude() && (n2 instanceof DataLineNode)) {
+                        DataLineNode lineNode = (DataLineNode) n2;
+                        try {
+                            if (lineNode.instruction != null && "NAMESP".equalsIgnoreCase(lineNode.instruction.getText())) {
+                                datScope = new Context(scope);
                             }
-                            index++;
+
+                            if (lineNode.label != null && !lineNode.label.getText().startsWith(":")) {
+                                lineScope = datScope;
+                            }
+
+                            Spin1PAsmLine pasmLine = compileDataLine(datScope, lineScope, lineNode, namespace);
+                            pasmLine.setData(lineNode);
+                            source.addAll(pasmLine.expand());
+
+                            if (lineNode.label != null && !lineNode.label.getText().startsWith(":")) {
+                                lineScope = pasmLine.getScope();
+                            }
+
+                            if ("NAMESP".equalsIgnoreCase(pasmLine.getMnemonic())) {
+                                Iterator<Spin1PAsmExpression> args = pasmLine.getArguments().iterator();
+                                if (args.hasNext()) {
+                                    namespace = args.next().toString() + ".";
+                                }
+                                else {
+                                    namespace = "";
+                                }
+                            }
+                            else if ("INCLUDE".equalsIgnoreCase(pasmLine.getMnemonic())) {
+                                if (lineNode.condition != null) {
+                                    throw new CompilerException("not allowed", lineNode.condition);
+                                }
+                                if (lineNode.modifier != null) {
+                                    throw new CompilerException("not allowed", lineNode.modifier);
+                                }
+                                int index = 0;
+                                for (Spin1PAsmExpression argument : pasmLine.getArguments()) {
+                                    String fileName = argument.getString();
+                                    File includeFile = compiler.getFile(fileName, ".spin");
+                                    Node includedNode = compiler.getParsedSource(includeFile);
+                                    try {
+                                        if (includedNode == null) {
+                                            throw new RuntimeException("file \"" + fileName + "\" not found");
+                                        }
+                                        compileDatInclude(includedNode);
+                                    } catch (CompilerException e) {
+                                        logMessage(e);
+                                    } catch (Exception e) {
+                                        logMessage(new CompilerException(e, lineNode.parameters.get(index)));
+                                    }
+                                    index++;
+                                }
+                            }
+                        } catch (CompilerException e) {
+                            logMessage(e);
+                        } catch (Exception e) {
+                            logMessage(new CompilerException(e, lineNode));
                         }
                     }
                 }
 
-            } catch (CompilerException e) {
-                logMessage(e);
-            } catch (Exception e) {
-                logMessage(new CompilerException(e, child));
+                processAliases("LONG", namespace);
             }
         }
-
-        processAliases("LONG", namespace);
     }
 
-    protected Spin1PAsmLine compileDataLine(Context globalScope, Context lineScope, DataLineNode node, String namespace) {
+    private Spin1PAsmLine compileDataLine(Context globalScope, Context lineScope, DataLineNode node, String namespace) {
         String label = node.label != null ? node.label.getText() : null;
         String condition = node.condition != null ? node.condition.getText() : null;
         String mnemonic = node.instruction != null ? node.instruction.getText() : null;
@@ -183,17 +201,39 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
         try {
             if ("FILE".equalsIgnoreCase(mnemonic)) {
                 if (node.condition != null) {
-                    throw new CompilerException("not allowed", node.condition);
+                    logMessage(new CompilerException("not allowed", node.condition));
                 }
-                if (node.modifier != null) {
-                    throw new CompilerException("not allowed", node.modifier);
-                }
+
                 String fileName = parameters.get(0).getString();
                 byte[] data = getBinaryFile(fileName);
                 if (data == null) {
                     throw new CompilerException("file \"" + fileName + "\" not found", node.parameters.get(0));
                 }
                 pasmLine.setInstructionObject(new FileInc(pasmLine.getScope(), data));
+
+                if (node.modifier != null) {
+                    logMessage(new CompilerException("not allowed", node.modifier));
+                }
+            }
+            else if ("NAMESP".equalsIgnoreCase(mnemonic)) {
+                if (node.condition != null) {
+                    logMessage(new CompilerException("not allowed", node.condition));
+                }
+
+                Iterator<Spin1PAsmExpression> args = parameters.iterator();
+                if (args.hasNext()) {
+                    namespace = args.next().toString() + ".";
+                    if (args.hasNext()) {
+                        logMessage(new CompilerException("expected one argument", args.next()));
+                    }
+                }
+                else {
+                    namespace = "";
+                }
+
+                if (node.modifier != null) {
+                    logMessage(new CompilerException("not allowed", node.modifier));
+                }
             }
         } catch (RuntimeException e) {
             throw new CompilerException(e, node);

@@ -19,7 +19,7 @@ import com.maccasoft.propeller.model.Node;
 public class Spin2Model extends SpinModel {
 
     public static Set<String> instructions = new HashSet<String>(Arrays.asList(new String[] {
-        "ORG", "ORGH", "ORGF", "FIT",
+        "ORG", "ORGH", "ORGF", "FIT", "NAMESP",
         "RES", "FILE", "INCLUDE", "ASMCLK", "ALIGNL", "ALIGNW",
         "NOP", "ROL", "ROR", "SHR", "SHL", "RCR", "RCL", "SAR", "SAL", "ADD", "ADDX", "ADDS", "ADDSX", "SUB", "SUBX", "SUBS",
         "SUBSX", "CMP", "CMPX", "CMPS", "CMPSX", "CMPR", "CMPM", "SUBR", "CMPSUB", "FGE", "FLE", "FGES", "FLES", "SUMC", "SUMNC",

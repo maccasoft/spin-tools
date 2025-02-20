@@ -1408,6 +1408,8 @@ public abstract class SourceTokenMarker {
             }
         }
 
+        String namespace = "";
+
         for (Node node : root.getChilds()) {
             if (node instanceof DataNode && parent != node) {
                 DataNode dataNode = (DataNode) node;
@@ -1415,16 +1417,22 @@ public abstract class SourceTokenMarker {
                     if (StringUtils.containsIgnoreCase(dataNode.getName(), filterText)) {
                         proposals.add(new ContentProposal(dataNode.getName(), dataNode.getName(), ""));
                     }
-
+                    namespace = dataNode.getName() + ".";
                 }
-                if (dot != -1) {
-                    String namespace = dataNode.getName() != null ? dataNode.getName() + "." : "";
 
-                    for (Node child : node.getChilds()) {
-                        if (!(child instanceof DataLineNode)) {
-                            continue;
+                for (Node child : node.getChilds()) {
+                    if (!(child instanceof DataLineNode)) {
+                        continue;
+                    }
+                    DataLineNode lineNode = (DataLineNode) child;
+                    if (lineNode.instruction != null && "NAMESP".equalsIgnoreCase(lineNode.instruction.getText()) && lineNode.parameters.size() == 1) {
+                        String text = lineNode.parameters.get(0).getText();
+                        if (StringUtils.containsIgnoreCase(text, filterText)) {
+                            proposals.add(new ContentProposal(text, text, ""));
                         }
-                        DataLineNode lineNode = (DataLineNode) child;
+                        namespace = text + ".";
+                    }
+                    if (dot != -1) {
                         if (lineNode.label != null && !lineNode.label.getText().startsWith(localLabelPrefix)) {
                             String text = namespace + lineNode.label.getText();
                             if (StringUtils.containsIgnoreCase(text, filterText)) {

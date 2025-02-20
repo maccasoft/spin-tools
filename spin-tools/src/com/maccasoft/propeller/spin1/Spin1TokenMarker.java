@@ -200,7 +200,6 @@ public class Spin1TokenMarker extends SourceTokenMarker {
         spinKeywords.put("@@LONG", TokenId.TYPE);
     }
 
-    String lastLabel;
     boolean collectLinkedObjects;
 
     public Spin1TokenMarker(SourceProvider sourceProvider) {
@@ -249,6 +248,8 @@ public class Spin1TokenMarker extends SourceTokenMarker {
     }
 
     NodeVisitor collectKeywordsVisitor = new NodeVisitor() {
+
+        String lastLabel = "";
 
         @Override
         public void visitDirective(DirectiveNode node) {
@@ -507,11 +508,12 @@ public class Spin1TokenMarker extends SourceTokenMarker {
     };
 
     void collectKeywords(Node root, TreeSet<TokenMarker> tokens) {
-        lastLabel = "";
         root.accept(collectKeywordsVisitor);
     }
 
     NodeVisitor updateReferencesVisitor = new NodeVisitor() {
+
+        String lastLabel = "";
 
         @Override
         public void visitDirective(DirectiveNode node) {
@@ -690,7 +692,6 @@ public class Spin1TokenMarker extends SourceTokenMarker {
     };
 
     void updateReferences(Node root, TreeSet<TokenMarker> tokens) {
-        lastLabel = "";
         root.accept(updateReferencesVisitor);
     }
 

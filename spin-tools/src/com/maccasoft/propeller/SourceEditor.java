@@ -2477,11 +2477,23 @@ public class SourceEditor {
                 }
             }
 
+            String namespace = "";
+
             for (Node node : tokenMarker.getRoot().getChilds()) {
                 if (node instanceof DataNode) {
-                    String namespace = ((DataNode) node).getName() != null ? ((DataNode) node).getName() + "." : "";
+                    DataNode dataNode = (DataNode) node;
+                    if (dataNode.getName() != null) {
+                        namespace = dataNode.getName() + ".";
+                    }
+
                     for (Node child : node.getChilds()) {
+                        if (!(child instanceof DataLineNode)) {
+                            continue;
+                        }
                         DataLineNode obj = (DataLineNode) child;
+                        if (obj.instruction != null && "NAMESP".equalsIgnoreCase(obj.instruction.getText()) && obj.parameters.size() == 1) {
+                            namespace = obj.parameters.get(0).getText() + ".";
+                        }
                         if (obj.label != null) {
                             String qualifiedName = namespace + obj.label.getText();
                             if (tokenMarker.isCaseSensitive() ? qualifiedName.equals(itemName) : qualifiedName.equalsIgnoreCase(itemName)) {
