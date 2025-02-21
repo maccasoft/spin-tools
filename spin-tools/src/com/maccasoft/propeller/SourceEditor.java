@@ -2079,6 +2079,7 @@ public class SourceEditor {
         else if (node != null) {
             if ((node instanceof StatementNode) || (node instanceof MethodNode) || (node instanceof FunctionNode)) {
                 proposals.addAll(tokenMarker.getMethodProposals(node, filterText));
+                proposals.addAll(tokenMarker.getPAsmLabelProposals(node, filterText));
             }
             proposals.addAll(tokenMarker.getConstantsProposals(node, filterText));
             proposals.addAll(helpProvider.fillProposals(node.getClass().getSimpleName(), filterText));

@@ -189,6 +189,7 @@ public class Spin2Parser extends Parser {
         int state = 0;
         ConstantNode node = null;
         TypeDefinitionNode typeDefinitionNode = null;
+        TypeDefinitionNode.Definition member = null;
 
         Token token;
         while ((token = nextToken()).type != Token.EOF) {
@@ -321,8 +322,9 @@ public class Spin2Parser extends Parser {
                         state = 1;
                         break;
                     }
-                    typeDefinitionNode.addChild(new Node());
-                    typeDefinitionNode.getChild(typeDefinitionNode.getChildCount() - 1).addToken(token);
+                    member = new TypeDefinitionNode.Definition(typeDefinitionNode);
+                    member.identifier = token;
+                    member.addToken(token);
                     state = 8;
                     break;
                 case 8:
@@ -337,7 +339,11 @@ public class Spin2Parser extends Parser {
                         state = 7;
                         break;
                     }
-                    typeDefinitionNode.getChild(typeDefinitionNode.getChildCount() - 1).addToken(token);
+                    if (member.type == null) {
+                        member.type = member.identifier;
+                        member.identifier = token;
+                    }
+                    member.addToken(token);
                     break;
             }
         }

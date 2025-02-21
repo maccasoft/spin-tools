@@ -578,32 +578,86 @@ public abstract class SourceTokenMarker {
         boolean address = textToken.startsWith("@");
         String filterText = address ? textToken.substring(1) : textToken;
 
+        String objectName = "";
+        int dot = filterText.indexOf('.');
+        if (dot != -1) {
+            objectName = filterText.substring(0, dot);
+            if (objectName.indexOf('[') != -1) {
+                objectName = objectName.substring(0, objectName.indexOf('['));
+            }
+        }
+        String refName = dot != -1 ? objectName + filterText.substring(dot) : filterText;
+
+        Map<String, TypeDefinitionNode> structs = new HashMap<>();
+
+        root.accept(new NodeVisitor() {
+
+            @Override
+            public void visitTypeDefinition(TypeDefinitionNode node) {
+                if (!node.isExclude() && node.identifier != null) {
+                    structs.put(node.identifier.getText(), node);
+                }
+            }
+
+        });
+
         context.accept(new NodeVisitor() {
 
             @Override
             public boolean visitMethod(MethodNode node) {
                 for (MethodNode.ParameterNode child : node.getParameters()) {
                     String text = child.getIdentifier().getText();
-                    if (StringUtils.containsIgnoreCase(text, filterText)) {
-                        proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                    if (dot == -1) {
+                        if (StringUtils.containsIgnoreCase(text, filterText)) {
+                            proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                        }
+                    }
+                    else if (child.getType() != null) {
+                        visitStructureMembers(child.getIdentifier().getText(), child.getType().getText());
                     }
                 }
 
                 for (MethodNode.LocalVariableNode child : node.getLocalVariables()) {
                     String text = child.getIdentifier().getText();
-                    if (StringUtils.containsIgnoreCase(text, filterText)) {
-                        proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                    if (dot == -1) {
+                        if (StringUtils.containsIgnoreCase(text, filterText)) {
+                            proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                        }
+                    }
+                    else if (child.getType() != null) {
+                        visitStructureMembers(child.getIdentifier().getText(), child.getType().getText());
                     }
                 }
 
                 for (MethodNode.ReturnNode child : node.getReturnVariables()) {
                     String text = child.getIdentifier().getText();
-                    if (StringUtils.containsIgnoreCase(text, filterText)) {
-                        proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                    if (dot == -1) {
+                        if (StringUtils.containsIgnoreCase(text, filterText)) {
+                            proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                        }
+                    }
+                    else if (child.getType() != null) {
+                        visitStructureMembers(child.getIdentifier().getText(), child.getType().getText());
                     }
                 }
 
                 return false;
+            }
+
+            void visitStructureMembers(String identifier, String type) {
+                TypeDefinitionNode typeNode = structs.get(type);
+                if (typeNode != null) {
+                    for (Node n : typeNode.getChilds()) {
+                        if (!(n instanceof TypeDefinitionNode.Definition)) {
+                            continue;
+                        }
+                        TypeDefinitionNode.Definition member = (TypeDefinitionNode.Definition) n;
+                        String text = identifier + "." + member.getIdentifier().getText();
+                        if (StringUtils.containsIgnoreCase(text, refName)) {
+                            proposals.add(new ContentProposal(member.getIdentifier().getText(), text, ""));
+                        }
+                    }
+                }
             }
 
         });
@@ -614,8 +668,29 @@ public abstract class SourceTokenMarker {
             public void visitVariable(VariableNode node) {
                 if (node.getIdentifier() != null && !contextMethodName.equals(node.getIdentifier().getText())) {
                     String text = node.getIdentifier().getText();
-                    if (StringUtils.containsIgnoreCase(text, filterText)) {
-                        proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                    if (dot == -1) {
+                        if (StringUtils.containsIgnoreCase(text, filterText)) {
+                            proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                        }
+                    }
+                    else if (node.getType() != null) {
+                        visitStructureMembers(node.getIdentifier().getText(), node.getType().getText());
+                    }
+                }
+            }
+
+            void visitStructureMembers(String identifier, String type) {
+                TypeDefinitionNode typeNode = structs.get(type);
+                if (typeNode != null) {
+                    for (Node n : typeNode.getChilds()) {
+                        if (!(n instanceof TypeDefinitionNode.Definition)) {
+                            continue;
+                        }
+                        TypeDefinitionNode.Definition member = (TypeDefinitionNode.Definition) n;
+                        String text = identifier + "." + member.getIdentifier().getText();
+                        if (StringUtils.containsIgnoreCase(text, refName)) {
+                            proposals.add(new ContentProposal(member.getIdentifier().getText(), text, ""));
+                        }
                     }
                 }
             }
@@ -687,13 +762,7 @@ public abstract class SourceTokenMarker {
 
         });
 
-        int dot = filterText.indexOf('.');
         if (dot != -1) {
-            String objectName = filterText.substring(0, dot);
-            if (objectName.indexOf('[') != -1) {
-                objectName = objectName.substring(0, objectName.indexOf('['));
-            }
-            String refName = objectName + filterText.substring(dot);
             root.accept(new NodeVisitor() {
 
                 @Override
@@ -701,9 +770,10 @@ public abstract class SourceTokenMarker {
                     if (node.getType() == null || node.getIdentifier() == null) {
                         return;
                     }
+                    String name = node.getIdentifier().getText();
+
                     Node objectRoot = getObjectTree(node.getType().getText());
                     if (objectRoot != null) {
-                        String name = node.getIdentifier().getText();
                         objectRoot.accept(new NodeVisitor() {
 
                             @Override
@@ -776,20 +846,6 @@ public abstract class SourceTokenMarker {
                 }
             });
         }
-
-        root.accept(new NodeVisitor() {
-
-            @Override
-            public void visitDataLine(DataLineNode node) {
-                if (node.label != null) {
-                    String text = node.label.getText();
-                    if (!text.startsWith(localLabelPrefix) && StringUtils.containsIgnoreCase(text, filterText)) {
-                        proposals.add(new ContentProposal(text, text, null));
-                    }
-                }
-            }
-
-        });
 
         return proposals;
     }
@@ -1432,7 +1488,7 @@ public abstract class SourceTokenMarker {
                         }
                         namespace = text + ".";
                     }
-                    if (dot != -1) {
+                    if (dot != -1 || namespace.isBlank()) {
                         if (lineNode.label != null && !lineNode.label.getText().startsWith(localLabelPrefix)) {
                             String text = namespace + lineNode.label.getText();
                             if (StringUtils.containsIgnoreCase(text, filterText)) {
@@ -1532,6 +1588,82 @@ public abstract class SourceTokenMarker {
                 }
             }
         });
+
+        return proposals;
+    }
+
+    public List<IContentProposal> getPAsmLabelProposals(Node ref, String filterText) {
+        List<IContentProposal> proposals = new ArrayList<IContentProposal>();
+        if (root == null) {
+            return proposals;
+        }
+
+        String namespace = "";
+        int dot = filterText.indexOf('.');
+
+        Map<String, TypeDefinitionNode> structs = new HashMap<>();
+
+        root.accept(new NodeVisitor() {
+
+            @Override
+            public void visitTypeDefinition(TypeDefinitionNode node) {
+                if (!node.isExclude() && node.identifier != null) {
+                    structs.put(node.identifier.getText(), node);
+                }
+            }
+
+        });
+
+        for (Node node : root.getChilds()) {
+            if (node instanceof DataNode) {
+                DataNode dataNode = (DataNode) node;
+                if (dataNode.getName() != null) {
+                    if (StringUtils.containsIgnoreCase(dataNode.getName(), filterText)) {
+                        proposals.add(new ContentProposal(dataNode.getName(), dataNode.getName(), ""));
+                    }
+                    namespace = dataNode.getName() + ".";
+                }
+
+                for (Node child : node.getChilds()) {
+                    if (!(child instanceof DataLineNode)) {
+                        continue;
+                    }
+                    DataLineNode lineNode = (DataLineNode) child;
+                    if (lineNode.instruction != null && "NAMESP".equalsIgnoreCase(lineNode.instruction.getText()) && lineNode.parameters.size() == 1) {
+                        String text = lineNode.parameters.get(0).getText();
+                        if (StringUtils.containsIgnoreCase(text, filterText)) {
+                            proposals.add(new ContentProposal(text, text, ""));
+                        }
+                        namespace = text + ".";
+                    }
+                    if (lineNode.label != null && !lineNode.label.getText().startsWith(localLabelPrefix)) {
+                        if (dot != -1 || namespace.isBlank()) {
+                            String text = namespace + lineNode.label.getText();
+                            if (StringUtils.containsIgnoreCase(text, filterText)) {
+                                String content = dot == -1 ? text : lineNode.label.getText();
+                                proposals.add(new ContentProposal(content, text, null));
+                            }
+                        }
+                        if (dot != -1 && lineNode.instruction != null) {
+                            TypeDefinitionNode typeNode = structs.get(lineNode.instruction.getText());
+                            if (typeNode != null) {
+                                String identifier = namespace + lineNode.label.getText();
+                                for (Node n : typeNode.getChilds()) {
+                                    if (!(n instanceof TypeDefinitionNode.Definition)) {
+                                        continue;
+                                    }
+                                    TypeDefinitionNode.Definition member = (TypeDefinitionNode.Definition) n;
+                                    String text = identifier + "." + member.getIdentifier().getText();
+                                    if (StringUtils.containsIgnoreCase(text, filterText)) {
+                                        proposals.add(new ContentProposal(member.getIdentifier().getText(), text, ""));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         return proposals;
     }

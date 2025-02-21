@@ -1302,6 +1302,13 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 }
             }
 
+            if (node.instruction != null) {
+                TokenId id = symbols.get(node.instruction.getText());
+                if (id != null && id == TokenId.TYPE) {
+                    tokens.add(new TokenMarker(node.instruction, id));
+                }
+            }
+
             boolean isModcz = node.instruction != null && modcz.contains(node.instruction.getText().toUpperCase());
 
             for (DataLineNode.ParameterNode parameter : node.parameters) {

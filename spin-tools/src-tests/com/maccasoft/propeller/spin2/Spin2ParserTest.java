@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -917,12 +917,12 @@ class Spin2ParserTest {
             + "Node []\n"
             + "+-- ConstantsNode [CON]\n"
             + "    +-- TypeDefinitionNode identifier=sPoint [sPoint(x, y)]\n"
-            + "        +-- Node [x]\n"
-            + "        +-- Node [y]\n"
+            + "        +-- Definition identifier=x [x]\n"
+            + "        +-- Definition identifier=y [y]\n"
             + "    +-- TypeDefinitionNode identifier=sLine [sLine(sPoint a, sPoint b, BYTE color)]\n"
-            + "        +-- Node [sPoint a]\n"
-            + "        +-- Node [sPoint b]\n"
-            + "        +-- Node [BYTE color]\n"
+            + "        +-- Definition type=sPoint identifier=a [sPoint a]\n"
+            + "        +-- Definition type=sPoint identifier=b [sPoint b]\n"
+            + "        +-- Definition type=BYTE identifier=color [BYTE color]\n"
             + "", tree(root));
     }
 
@@ -939,12 +939,12 @@ class Spin2ParserTest {
             + "Node []\n"
             + "+-- ConstantsNode [CON]\n"
             + "    +-- TypeDefinitionNode type=struct identifier=sPoint [struct sPoint(x, y)]\n"
-            + "        +-- Node [x]\n"
-            + "        +-- Node [y]\n"
+            + "        +-- Definition identifier=x [x]\n"
+            + "        +-- Definition identifier=y [y]\n"
             + "    +-- TypeDefinitionNode type=struct identifier=sLine [struct sLine(sPoint a, sPoint b, BYTE color)]\n"
-            + "        +-- Node [sPoint a]\n"
-            + "        +-- Node [sPoint b]\n"
-            + "        +-- Node [BYTE color]\n"
+            + "        +-- Definition type=sPoint identifier=a [sPoint a]\n"
+            + "        +-- Definition type=sPoint identifier=b [sPoint b]\n"
+            + "        +-- Definition type=BYTE identifier=color [BYTE color]\n"
             + "", tree(root));
     }
 
