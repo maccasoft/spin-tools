@@ -1112,6 +1112,94 @@ class Spin2PAsmCompilerTest {
     }
 
     @Test
+    void testStructure() throws Exception {
+        String text = ""
+            + "CON\n"
+            + "    sPoint(word x, word y)\n"
+            + "\n"
+            + "DAT\n"
+            + "pt              sPoint  0\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000 00000 00 00 00 00    pt                  sPoint  0\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testStructureAlias() throws Exception {
+        String text = ""
+            + "CON\n"
+            + "    sPoint(word x, word y)\n"
+            + "\n"
+            + "DAT\n"
+            + "pt              sPoint\n"
+            + "                word    1\n"
+            + "                word    2\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000 00000                pt                  sPoint\n"
+            + "00000 00000 00000 01 00                              word    1\n"
+            + "00002 00002 00002 02 00                              word    2\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testStructureRead() throws Exception {
+        String text = ""
+            + "CON\n"
+            + "    sPoint(byte x, word y)\n"
+            + "\n"
+            + "PUB start() | a, b\n"
+            + "\n"
+            + "    a := pt.x\n"
+            + "    a := pt.y\n"
+            + "\n"
+            + "    a := pt[1].x\n"
+            + "    a := pt[1].y\n"
+            + "\n"
+            + "    a := pt[b].x\n"
+            + "    a := pt[b].y\n"
+            + "\n"
+            + "DAT\n"
+            + "pt              sPoint\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method start @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       28 00 00 00    End\n"
+            + "00008 00008 00000                pt                  sPoint\n"
+            + "' PUB start() | a, b\n"
+            + "00008 00008       02             (stack size)\n"
+            + "'     a := pt.x\n"
+            + "00009 00009       4F 08 80       MEM_READ BYTE PBASE+$00008\n"
+            + "0000C 0000C       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     a := pt.y\n"
+            + "0000D 0000D       55 09 80       MEM_READ WORD PBASE+$00009\n"
+            + "00010 00010       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     a := pt[1].x\n"
+            + "00011 00011       4F 0B 80       MEM_READ BYTE PBASE+$0000B\n"
+            + "00014 00014       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     a := pt[1].y\n"
+            + "00015 00015       55 0C 80       MEM_READ WORD PBASE+$0000C\n"
+            + "00018 00018       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     a := pt[b].x\n"
+            + "00019 00019       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "0001A 0001A       67 85 01 03 80 STRUCT_READ BYTE PBASE+$00008 (indexed)\n"
+            + "0001F 0001F       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     a := pt[b].y\n"
+            + "00020 00020       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "00021 00021       67 99 01 03 80 STRUCT_READ WORD PBASE+$00009 (indexed)\n"
+            + "00026 00026       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00027 00027       04             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testDatName() throws Exception {
         String text = ""
             + "DAT\n"

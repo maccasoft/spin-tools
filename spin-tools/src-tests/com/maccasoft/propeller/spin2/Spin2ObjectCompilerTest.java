@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -7090,6 +7090,61 @@ class Spin2ObjectCompilerTest {
             + "00030 00030       6A 49 07 81    STRUCT_WRITE WORD POP+$00004 (indexed)\n"
             + "00034 00034       04             RETURN\n"
             + "00035 00035       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testStructureMethodCall() throws Exception {
+        String text = ""
+            + "CON\n"
+            + "    STRUCT sFunc(long ptr)\n"
+            + "\n"
+            + "VAR\n"
+            + "    sFunc tbl\n"
+            + "\n"
+            + "PUB main() | a, b, c\n"
+            + "\n"
+            + "    tbl.ptr(a, b)\n"
+            + "    tbl[1].ptr(a, b)\n"
+            + "    tbl[c].ptr(a, b)\n"
+            + "    tbl[c].ptr[b](a, b)\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 8)\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       2A 00 00 00    End\n"
+            + "' PUB main() | a, b, c\n"
+            + "00008 00008       03             (stack size)\n"
+            + "'     tbl.ptr(a, b)\n"
+            + "00009 00009       00             ANCHOR\n"
+            + "0000A 0000A       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000B 0000B       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "0000C 0000C       C1 80          VAR_READ SFUNC VBASE+$00001 (short)\n"
+            + "0000E 0000E       0B             CALL_PTR\n"
+            + "'     tbl[1].ptr(a, b)\n"
+            + "0000F 0000F       00             ANCHOR\n"
+            + "00010 00010       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00011 00011       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "00012 00012       C2 80          VAR_READ SFUNC VBASE+$00002 (short)\n"
+            + "00014 00014       0B             CALL_PTR\n"
+            + "'     tbl[c].ptr(a, b)\n"
+            + "00015 00015       00             ANCHOR\n"
+            + "00016 00016       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00017 00017       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "00018 00018       E2             VAR_READ LONG DBASE+$00002 (short)\n"
+            + "00019 00019       68 4D 04 80    STRUCT_READ LONG VBASE+$00004 (indexed)\n"
+            + "0001D 0001D       0B             CALL_PTR\n"
+            + "'     tbl[c].ptr[b](a, b)\n"
+            + "0001E 0001E       00             ANCHOR\n"
+            + "0001F 0001F       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00020 00020       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "00021 00021       E2             VAR_READ LONG DBASE+$00002 (short)\n"
+            + "00022 00022       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "00023 00023       68 4E 04 04 80 STRUCT_READ LONG VBASE+$00004 (indexed)\n"
+            + "00028 00028       0B             CALL_PTR\n"
+            + "00029 00029       04             RETURN\n"
+            + "0002A 0002A       00 00          Padding\n"
             + "", compile(text));
     }
 

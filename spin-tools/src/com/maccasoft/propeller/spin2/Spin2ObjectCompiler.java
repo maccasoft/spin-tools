@@ -75,6 +75,7 @@ import com.maccasoft.propeller.spin2.bytecode.Jz;
 import com.maccasoft.propeller.spin2.bytecode.Tjz;
 import com.maccasoft.propeller.spin2.instructions.Alignl;
 import com.maccasoft.propeller.spin2.instructions.Alignw;
+import com.maccasoft.propeller.spin2.instructions.DataType;
 import com.maccasoft.propeller.spin2.instructions.Debug;
 import com.maccasoft.propeller.spin2.instructions.Empty;
 import com.maccasoft.propeller.spin2.instructions.Fit;
@@ -661,6 +662,12 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
             }
             if (line.getInstructionFactory() instanceof Fit) {
                 ((Fit) line.getInstructionFactory()).setDefaultLimit(hubMode ? 0x80000 : (cogCode ? 0x1F8 : 0x400));
+            }
+
+            if (line.getInstructionFactory() instanceof DataType) {
+                if (!hubMode) {
+                    logMessage(new CompilerException("structures can only be declared in ORGH mode", ((DataLineNode) line.getData()).instruction));
+                }
             }
 
             try {
@@ -2492,13 +2499,13 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 (byte) (org >> 8),
                 (byte) count,
                 (byte) (count >> 8),
-            }, String.format("%s=$%03x, %d", "ORG", org, count + 1)));
+            }, String.format("ORG=$%03x, %d", org, count + 1)));
         }
         else {
             line.source.add(0, new Bytecode(line.getScope(), new byte[] {
                 (byte) (org >> 8),
                 (byte) org,
-            }, String.format("%s=$%03x", "ORGH", org)));
+            }, String.format("ORGH=$%03x", org)));
         }
 
         line.source.add(0, new Bytecode(line.getScope(), new byte[] {

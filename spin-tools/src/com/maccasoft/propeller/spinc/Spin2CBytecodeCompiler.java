@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -85,8 +85,8 @@ import com.maccasoft.propeller.spin2.bytecode.Bytecode;
 import com.maccasoft.propeller.spin2.bytecode.CallSub;
 import com.maccasoft.propeller.spin2.bytecode.Constant;
 import com.maccasoft.propeller.spin2.bytecode.MemoryOp;
-import com.maccasoft.propeller.spin2.bytecode.MemoryOp.Op;
 import com.maccasoft.propeller.spin2.bytecode.RegisterOp;
+import com.maccasoft.propeller.spin2.bytecode.StructOp;
 import com.maccasoft.propeller.spin2.bytecode.SubAddress;
 import com.maccasoft.propeller.spin2.bytecode.VariableOp;
 
@@ -1528,7 +1528,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                     }
                 }
                 else if (expression instanceof Variable) {
-                    if (((Variable) expression).hasMembers()) {
+                    if (isStructure(context, expression)) {
                         return compileStructure(context, method, node, expression, null, MemoryOp.Op.Read, push);
                     }
                     else if (isAddress(node.getText())) {
@@ -2083,7 +2083,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
             }
 
             if (expression instanceof Variable) {
-                if (((Variable) expression).hasMembers()) {
+                if (isStructure(context, expression)) {
                     return compileStructure(context, method, node, expression, null, MemoryOp.Op.Write, push);
                 }
             }
@@ -2226,7 +2226,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                     source.add(new BitField(context, push && !write ? BitField.Op.Setup : BitField.Op.Write, push, bitfield));
                 }
             }
-            else if ((expression instanceof Variable) && ((Variable) expression).hasMembers()) {
+            else if (isStructure(context, expression)) {
                 return compileStructure(context, method, node, expression, null, MemoryOp.Op.Write, push);
             }
             else {
@@ -2908,11 +2908,14 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
         return result;
     }
 
-    Spin2Struct struct = null;
-
-    List<Spin2Bytecode> compileStructure(Context context, Spin2Method method, Spin2StatementNode node, Expression expression, Spin2StatementNode preEffectNode, MemoryOp.Op op, boolean push) {
+    List<Spin2Bytecode> compileStructure(Context context, Spin2Method method, Spin2StatementNode node, Expression expression, Spin2StatementNode preEffectNode, MemoryOp.Op op, Boolean push) {
         int offset = 0;
         int index = 0;
+        int lastMemberSize = 0;
+        String varType;
+        boolean pointer;
+        Spin2Struct struct = null;
+        Spin2StatementNode varNode = node;
 
         List<Spin2StatementNode> indexNodes = new ArrayList<>();
         List<Integer> indexMultipliers = new ArrayList<>();
@@ -2924,14 +2927,22 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
             op = MemoryOp.Op.Address;
         }
 
-        Variable baseVariable = (Variable) expression;
-        MemoryOp.Base bb = baseVariable instanceof LocalVariable ? MemoryOp.Base.DBase : MemoryOp.Base.VBase;
-        if (baseVariable.isPointer()) {
-            bb = MemoryOp.Base.Pop;
+        MemoryOp.Base bb;
+        if (expression instanceof Variable) {
+            pointer = ((Variable) expression).isPointer();
+            if (pointer) {
+                bb = MemoryOp.Base.Pop;
+            }
+            else {
+                bb = expression instanceof LocalVariable ? MemoryOp.Base.DBase : MemoryOp.Base.VBase;
+            }
+            varType = ((Variable) expression).getType();
         }
-
-        String varType = ((Variable) expression).getType();
-        struct = null;
+        else {
+            pointer = false;
+            bb = MemoryOp.Base.PBase;
+            varType = ((DataVariable) expression).getType();
+        }
 
         int n = 0;
         while (true) {
@@ -2939,45 +2950,60 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
             if (struct == null && varType.startsWith("^")) {
                 struct = context.getStructureDefinition(varType.substring(1));
             }
+            lastMemberSize = struct.getTypeSize();
 
-            String[] ar = node.getText().split("[\\.]");
+            String[] ar = varNode.getText().split("[\\.]");
             for (int i = 1; i < ar.length; i++) {
                 Spin2StructMember member = struct.getMember(ar[i]);
                 if (member == null) {
-                    throw new CompilerException("undefined symbol " + node.getText(), node.getToken());
+                    throw new CompilerException("undefined symbol " + varNode.getText(), varNode.getToken());
                 }
 
                 offset += member.getOffset();
 
-                varType = member.getType().getText();
-                struct = context.getStructureDefinition(varType);
-                if (struct == null && varType.startsWith("^")) {
-                    struct = context.getStructureDefinition(varType.substring(1));
+                varType = member.getType() != null ? member.getType().getText() : "LONG";
+                struct = member.getStructureDefinition();
+
+                if (struct != null) {
+                    lastMemberSize = struct.getTypeSize();
+                }
+                else {
+                    switch (varType.toUpperCase()) {
+                        case "BYTE":
+                            lastMemberSize = 1;
+                            break;
+                        case "WORD":
+                            lastMemberSize = 2;
+                            break;
+                        default:
+                            lastMemberSize = 4;
+                            break;
+                    }
                 }
             }
 
-            if (n < node.getChildCount() && (node.getChild(n) instanceof Spin2StatementNode.Index)) {
+            if (n < varNode.getChildCount() && (varNode.getChild(n) instanceof Spin2StatementNode.Index)) {
                 boolean constantIndex = false;
-                Spin2StatementNode indexNode = node.getChild(n++);
+                Spin2StatementNode idxNode = varNode.getChild(n++);
                 try {
-                    Expression exp = buildConstantExpression(context, indexNode);
+                    Expression exp = buildConstantExpression(context, idxNode);
                     if (exp.isConstant()) {
-                        index += exp.getNumber().intValue() * struct.getTypeSize();
+                        index += exp.getNumber().intValue() * lastMemberSize;
                         constantIndex = true;
                     }
                 } catch (Exception e) {
                     // Do nothing
                 }
                 if (!constantIndex) {
-                    indexNodes.add(indexNode);
-                    indexMultipliers.add(0, struct.getTypeSize());
+                    indexNodes.add(idxNode);
+                    indexMultipliers.add(0, lastMemberSize);
                 }
             }
 
-            if (n >= node.getChildCount()) {
+            if (n >= varNode.getChildCount()) {
                 break;
             }
-            if (isPostEffect(node.getChild(n))) {
+            if (isPostEffect(varNode.getChild(n))) {
                 break;
             }
 
@@ -2985,23 +3011,43 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                 break;
             }
 
-            node = node.getChild(n);
+            varNode = varNode.getChild(n);
             n = 0;
         }
-        if (preEffectNode == null) {
-            if (n < node.getChildCount() && isPostEffect(node.getChild(n))) {
-                postEffectNode = node.getChild(n++);
+
+        if (varNode.isMethod()) {
+            if (push == null) {
+                push = varNode.getReturnLongs() != 0;
+            }
+            if (push) {
+                source.add(new Bytecode(context, Spin2Bytecode.bc_drop_push, "ANCHOR (push)"));
+            }
+            else {
+                source.add(new Bytecode(context, Spin2Bytecode.bc_drop, "ANCHOR"));
+            }
+
+            while (n < varNode.getChildCount()) {
+                if (!(varNode.getChild(n) instanceof Spin2StatementNode.Argument)) {
+                    throw new CompilerException("syntax error", varNode.getChild(n).getTokens());
+                }
+                source.addAll(compileConstantExpression(context, method, varNode.getChild(n++)));
             }
         }
-        if (n < node.getChildCount()) {
-            throw new CompilerException("unexpected '" + node.getChild(n).getText() + "'", node.getChild(n).getTokens());
+        else if (preEffectNode == null) {
+            if (n < varNode.getChildCount() && isPostEffect(varNode.getChild(n))) {
+                postEffectNode = varNode.getChild(n++);
+            }
+        }
+
+        if (n < varNode.getChildCount()) {
+            throw new CompilerException("unexpected '" + varNode.getChild(n).getText() + "'", varNode.getChild(n).getTokens());
         }
 
         if (preEffectNode != null && struct != null) {
-            throw new CompilerException("syntax error", node.getTokens());
+            throw new CompilerException("syntax error", varNode.getTokens());
         }
 
-        if (node.toString().startsWith("[")) {
+        if (varNode.toString().startsWith("[")) {
             source.add(new VariableOp(context, postEffectNode != null ? VariableOp.Op.Setup : VariableOp.Op.Write, false, (Variable) expression, false, 0));
             if (postEffectNode != null) {
                 int structSize = struct.getTypeSize();
@@ -3039,164 +3085,123 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                 } catch (Exception e) {
                     // Do nothing
                 }
+
             }
+
+            node.setReturnLongs(postEffectNode == null ? 1 : 0);
             return source;
         }
 
-        MemoryOp.Size ss = MemoryOp.Size.Long;
-        switch (varType) {
-            case "byte":
+        MemoryOp.Size ss;
+        switch (varType.toUpperCase()) {
+            case "BYTE":
                 ss = MemoryOp.Size.Byte;
                 break;
-            case "word":
+            case "WORD":
                 ss = MemoryOp.Size.Word;
+                break;
+            default:
+                ss = MemoryOp.Size.Long;
                 break;
         }
 
         if (indexNodes.size() > 3) {
-            throw new CompilerException("too many nested indexes", node.getTokens());
+            throw new CompilerException("too many nested indexes", varNode.getTokens());
         }
 
-        if (struct != null || indexNodes.size() > 0 || postEffectNode != null || baseVariable.isPointer()) {
-            for (Spin2StatementNode indexNode : indexNodes) {
-                source.addAll(compileBytecodeExpression(context, method, indexNode, true));
+        if (!varNode.isMethod()) {
+            node.setReturnLongs(struct != null ? (struct.getTypeSize() + 3) / 4 : 1);
+        }
+
+        if (struct != null || indexNodes.size() > 0 || postEffectNode != null || bb == MemoryOp.Base.Pop) {
+            for (Spin2StatementNode idxNode : indexNodes) {
+                source.addAll(compileBytecodeExpression(context, method, idxNode, true));
             }
 
-            if (baseVariable.isPointer()) {
-                source.add(new VariableOp(context, VariableOp.Op.Read, false, baseVariable, false, 0));
+            if (bb == MemoryOp.Base.Pop) {
+                source.add(new VariableOp(context, VariableOp.Op.Read, false, (Variable) expression, false, 0));
             }
 
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-            try {
-                int packedOffset;
-                if (baseVariable.isPointer()) {
-                    packedOffset = ((index + offset) << 4) | indexNodes.size();
-                    os.write(Spin2Bytecode.bc_setup_struct_pop);
+            source.add(new StructOp(context, postEffectNode != null ? MemoryOp.Op.Setup : op, bb, ss, struct, expression, index + offset, indexMultipliers, push));
+
+            if (op == MemoryOp.Op.Address) {
+                node.setReturnLongs(1);
+            }
+        }
+        else if (expression instanceof Variable) {
+            int address = ((Variable) expression).getOffset() + index + offset;
+            if ("LONG".equalsIgnoreCase(varType) && (address % 4) == 0) {
+                VariableOp.Op varOp;
+                if (op == MemoryOp.Op.Read) {
+                    varOp = VariableOp.Op.Read;
+                }
+                else if (op == MemoryOp.Op.Write) {
+                    varOp = VariableOp.Op.Write;
+                }
+                else if (op == MemoryOp.Op.Address) {
+                    varOp = VariableOp.Op.Address;
                 }
                 else {
-                    os.write(bb == MemoryOp.Base.DBase ? Spin2Bytecode.bc_setup_struct_dbase : Spin2Bytecode.bc_setup_struct_vbase);
-                    packedOffset = ((baseVariable.getOffset() + (index + offset)) << 4) | indexNodes.size();
+                    varOp = VariableOp.Op.Setup;
                 }
-                if (struct == null) {
-                    packedOffset |= ((ss.ordinal() + 1) << 2);
-                }
-                os.write(Constant.wrVar(packedOffset));
-
-                for (Integer multiplier : indexMultipliers) {
-                    os.write(Constant.wrVar(multiplier.intValue()));
-                }
-                if (op == Op.Address) {
-                    os.write(Constant.wrVar(0));
-                }
-
-                if (postEffectNode == null) {
-                    if (struct == null) {
-                        if (op == Op.Read) {
-                            os.write(Spin2Bytecode.bc_read);
-                        }
-                        else if (op == Op.Write) {
-                            os.write(push ? Spin2Bytecode.bc_write_push : Spin2Bytecode.bc_write);
-                        }
-                    }
-                    else {
-                        if (op == Op.Read) {
-                            os.write(0x80 | struct.getTypeSize());
-                            node.setReturnLongs((struct.getTypeSize() + 3) / 4);
-                        }
-                        else if (op == Op.Write) {
-                            os.write(struct.getTypeSize());
-                            node.setReturnLongs((struct.getTypeSize() + 3) / 4);
-                        }
-                    }
-                }
-
-                StringBuilder sb = new StringBuilder("STRUCT_");
-                if (postEffectNode == null) {
-                    if (op == Op.Read) {
-                        sb.append("READ");
-                    }
-                    else if (op == Op.Write) {
-                        sb.append("WRITE");
-                    }
-                    else if (op == Op.Setup) {
-                        sb.append("SETUP");
-                    }
-                    else if (op == Op.Address) {
-                        sb.append("ADDRESS");
-                    }
-                }
-                else {
-                    sb.append("SETUP");
-                }
-                switch (ss) {
-                    case Byte:
-                        sb.append(" BYTE");
-                        break;
-                    case Word:
-                        sb.append(" WORD");
-                        break;
-                    case Long:
-                        sb.append(" LONG");
-                        break;
-                }
-                switch (bb) {
-                    case PBase:
-                        sb.append(" PBASE");
-                        break;
-                    case VBase:
-                        sb.append(" VBASE");
-                        break;
-                    case DBase:
-                        sb.append(" DBASE");
-                        break;
-                    case Pop:
-                        sb.append(" POP");
-                        break;
-                }
-                sb.append(String.format("+$%05X (indexed)", packedOffset >> 4));
-                if (op == Op.Write && push) {
-                    sb.append(" (push)");
-                }
-
-                source.add(new Bytecode(context, os.toByteArray(), sb.toString()));
-
-            } catch (Exception e) {
-                // Do nothing
+                source.add(new VariableOp(context, postEffectNode != null ? VariableOp.Op.Setup : varOp, false, (Variable) expression, false, (index + offset) / 4));
+            }
+            else {
+                source.add(new MemoryOp(context, ss, bb, postEffectNode != null ? MemoryOp.Op.Setup : op, expression, index + offset));
             }
         }
         else {
-            source.add(new MemoryOp(context, ss, bb, postEffectNode != null ? MemoryOp.Op.Setup : op, baseVariable, index + offset));
+            source.add(new MemoryOp(context, ss, bb, postEffectNode != null ? MemoryOp.Op.Setup : op, expression, index + offset));
         }
 
-        if (postEffectNode != null) {
-            if (struct != null) {
-                int structSize = struct.getTypeSize();
-                ByteArrayOutputStream os = new ByteArrayOutputStream();
-                try {
-                    os.write(Spin2Bytecode.bc_drop);
-                    if ("~".equalsIgnoreCase(postEffectNode.getText())) {
-                        os.write(Spin2Bytecode.bc_con_n + 1);
-                    }
-                    else if ("~~".equalsIgnoreCase(postEffectNode.getText())) {
-                        os.write(Spin2Bytecode.bc_con_n);
-                    }
-                    else {
-                        logMessage(new CompilerException("invalid post effect '" + postEffectNode.getText() + "'", postEffectNode.getToken()));
-                    }
-                    os.write(Constant.wrAuto(structSize));
-                    os.write(Spin2Bytecode.bc_hub_bytecode);
-                    os.write(Spin2Bytecode.bc_bytefill);
-                } catch (Exception e) {
+        if (varNode.isMethod()) {
+            source.add(new Bytecode(context, new byte[] {
+                (byte) Spin2Bytecode.bc_call_ptr,
+            }, "CALL_PTR"));
 
+            if (push && node.getReturnLongs() == 0) {
+                logMessage(new CompilerException("method doesn't return any value", node.getToken()));
+            }
+            node.setReturnLongs(push ? node.getReturnLongs() : 0);
+        }
+        else {
+            if (postEffectNode != null) {
+                if (struct != null) {
+                    int structSize = struct.getTypeSize();
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
+                    try {
+                        os.write(Spin2Bytecode.bc_drop);
+                        if ("~".equalsIgnoreCase(postEffectNode.getText())) {
+                            os.write(Spin2Bytecode.bc_con_n + 1);
+                        }
+                        else if ("~~".equalsIgnoreCase(postEffectNode.getText())) {
+                            os.write(Spin2Bytecode.bc_con_n);
+                        }
+                        else {
+                            logMessage(new CompilerException("invalid post effect '" + postEffectNode.getText() + "'", postEffectNode.getToken()));
+                        }
+                        os.write(Constant.wrAuto(structSize));
+                        os.write(Spin2Bytecode.bc_hub_bytecode);
+                        os.write(Spin2Bytecode.bc_bytefill);
+
+                        node.setReturnLongs(0);
+                    } catch (Exception e) {
+
+                    }
+                    source.add(new Bytecode(context, os.toByteArray(), "BYTEFILL"));
                 }
-                source.add(new Bytecode(context, os.toByteArray(), "BYTEFILL"));
-            }
-            else {
-                compilePostEffect(context, postEffectNode, source, push);
+                else {
+                    compilePostEffect(context, postEffectNode, source, push);
+                    if (!push) {
+                        node.setReturnLongs(0);
+                    }
+                }
             }
         }
 
-        baseVariable.setCalledBy(method);
+        if (expression instanceof Variable) {
+            ((Variable) expression).setCalledBy(method);
+        }
 
         return source;
     }
@@ -3225,6 +3230,19 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
         else {
             throw new CompilerException("unhandled post effect " + node.getText(), node.getToken());
         }
+    }
+
+    boolean isStructure(Context context, Expression expression) {
+        String varType;
+
+        if (expression instanceof Variable) {
+            varType = ((Variable) expression).getType();
+            if (context.hasStructureDefinition(varType)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 }

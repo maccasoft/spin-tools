@@ -213,9 +213,10 @@ public class Spin2Parser extends Parser {
                     }
                     if ("struct".equalsIgnoreCase(token.getText())) {
                         typeDefinitionNode = new TypeDefinitionNode(parent, token, null);
-                        if ((token = nextToken()).type == Token.EOF || token.type == Token.NL) {
+                        if ((token = stream.peekNext()).type == Token.EOF || token.type == Token.NL) {
                             break;
                         }
+                        token = stream.nextToken();
                         typeDefinitionNode.identifier = token;
                         typeDefinitionNode.addToken(token);
                         if ("(".equals(stream.peekNext().getText())) {

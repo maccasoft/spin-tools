@@ -315,6 +315,9 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
                     else if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin2.instructions.Byte) {
                         type = "BYTE";
                     }
+                    else if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin2.instructions.DataType) {
+                        type = pasmLine.getMnemonic();
+                    }
                     else if ("FILE".equalsIgnoreCase(pasmLine.getMnemonic())) {
                         type = "BYTE";
                     }
@@ -345,6 +348,9 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
             }
             else if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin2.instructions.Byte) {
                 type = "BYTE";
+            }
+            else if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin2.instructions.DataType) {
+                type = pasmLine.getMnemonic();
             }
             else if ("FILE".equalsIgnoreCase(pasmLine.getMnemonic())) {
                 type = "BYTE";

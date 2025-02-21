@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.maccasoft.propeller.expressions.Context;
+import com.maccasoft.propeller.spin2.instructions.DataType;
 import com.maccasoft.propeller.spin2.instructions.Empty;
 
 public class Spin2PAsmLine {
@@ -45,6 +46,11 @@ public class Spin2PAsmLine {
 
         if (mnemonic != null) {
             this.instructionFactory = Spin2PAsmInstructionFactory.get(mnemonic);
+            if (this.instructionFactory == null) {
+                if (scope.getStructureDefinition(mnemonic) != null) {
+                    this.instructionFactory = new DataType(mnemonic);
+                }
+            }
             if (this.instructionFactory == null) {
                 throw new RuntimeException("invalid instruction " + mnemonic);
             }

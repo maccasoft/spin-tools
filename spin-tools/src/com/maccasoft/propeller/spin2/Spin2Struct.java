@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -62,7 +62,7 @@ public class Spin2Struct {
             Spin2Struct struct = null;
             if (type != null) {
                 struct = scope.getStructureDefinition(type.getText());
-                if (type.getText().startsWith("^")) {
+                if (struct == null && type.getText().startsWith("^")) {
                     struct = scope.getStructureDefinition(type.getText().substring(1));
                 }
             }

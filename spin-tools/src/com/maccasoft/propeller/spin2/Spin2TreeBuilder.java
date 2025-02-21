@@ -472,7 +472,8 @@ public class Spin2TreeBuilder {
                     Token next = peek();
                     if (next != null && ")".equals(next.getText())) {
                         token = next();
-                        Expression expression = scope.getLocalSymbol(node.getText());
+                        String[] ar = node.getText().split("[\\.]");
+                        Expression expression = scope.getLocalSymbol(ar[0]);
                         if ((expression instanceof Variable) || (expression instanceof DataVariable)) {
                             next = peek();
                             if (next != null && ":".equals(next.getText())) {
@@ -480,10 +481,17 @@ public class Spin2TreeBuilder {
                                 next = next();
                                 Token value = next();
                                 if (value != null) {
-                                    try {
+                                    if (value.type == Token.NUMBER) {
                                         node.setReturnLongs(Integer.valueOf(value.getText()).intValue());
-                                    } catch (Exception e) {
-                                        throw new CompilerException("expected integer constant", value);
+                                    }
+                                    else {
+                                        Spin2Struct struct = scope.getStructureDefinition(value.getText());
+                                        if (struct != null) {
+                                            node.setReturnLongs((struct.getTypeSize() + 3) / 4);
+                                        }
+                                        else {
+                                            throw new CompilerException("expected integer constant", value);
+                                        }
                                     }
                                     token = value;
                                 }
@@ -511,7 +519,8 @@ public class Spin2TreeBuilder {
                         }
                         if (")".equals(token.getText())) {
                             token = next();
-                            Expression expression = scope.getLocalSymbol(node.getText());
+                            String[] ar = node.getText().split("[\\.]");
+                            Expression expression = scope.getLocalSymbol(ar[0]);
                             if ((expression instanceof Variable) || (expression instanceof DataVariable)) {
                                 next = peek();
                                 if (next != null && ":".equals(next.getText())) {
@@ -519,10 +528,17 @@ public class Spin2TreeBuilder {
                                     next = next();
                                     Token value = next();
                                     if (value != null) {
-                                        try {
+                                        if (value.type == Token.NUMBER) {
                                             node.setReturnLongs(Integer.valueOf(value.getText()).intValue());
-                                        } catch (Exception e) {
-                                            throw new CompilerException("expected integer constant", value);
+                                        }
+                                        else {
+                                            Spin2Struct struct = scope.getStructureDefinition(value.getText());
+                                            if (struct != null) {
+                                                node.setReturnLongs((struct.getTypeSize() + 3) / 4);
+                                            }
+                                            else {
+                                                throw new CompilerException("expected integer constant", value);
+                                            }
                                         }
                                         token = value;
                                     }
