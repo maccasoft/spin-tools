@@ -34,6 +34,7 @@ import org.eclipse.swt.graphics.TextStyle;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 
+import com.maccasoft.propeller.internal.StyledStringBuilder;
 import com.maccasoft.propeller.model.ConstantNode;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
@@ -215,209 +216,62 @@ public class OutlineView {
 
     final OwnerDrawLabelProvider labelProvider = new StyledCellLabelProvider() {
 
-        StringBuilder sb;
-        List<StyleRange> styles;
-
         @Override
         public void update(ViewerCell cell) {
-            sb = new StringBuilder();
-            styles = new ArrayList<StyleRange>();
+            StyledStringBuilder sb = null;
 
             try {
                 Node element = (Node) cell.getElement();
                 if (element instanceof ConstantsNode || element instanceof VariablesNode || element instanceof ObjectsNode || element instanceof DataNode) {
-                    decorateBlockStart(element, cell);
+                    sb = decorateBlockStart(element);
                 }
                 else if (element instanceof Includes) {
-                    Includes node = (Includes) element;
-                    appendText(node.getStartToken().getText(), blockStyle);
+                    sb = decorateBlockStart(element);
                 }
                 else if (element instanceof DirectiveNode.IncludeNode) {
-                    DirectiveNode.IncludeNode node = (DirectiveNode.IncludeNode) element;
-                    if (!node.isExclude()) {
-                        appendText(node.getFile().getText(), stringStyle);
-                    }
+                    sb = decorateIncludes((DirectiveNode.IncludeNode) element);
                 }
                 else if (element instanceof DirectiveNode.DefineNode) {
-                    DirectiveNode.DefineNode node = (DirectiveNode.DefineNode) element;
-                    appendText("# ", blockStyle);
-                    if (node.getIdentifier() != null) {
-                        sb.append(node.getIdentifier().getText());
-                    }
+                    sb = decorateDefines((DirectiveNode.DefineNode) element);
                 }
                 else if (element instanceof TypeDefinitionNode) {
-                    TypeDefinitionNode node = (TypeDefinitionNode) element;
-                    sb.append(node.getIdentifier().getText());
+                    sb = decorateTypeDefinition((TypeDefinitionNode) element);
                 }
                 else if (element instanceof VariableNode) {
-                    VariableNode node = (VariableNode) element;
-                    if (node.identifier != null) {
-                        if (sb.length() != 0) {
-                            sb.append(" ");
-                        }
-                        sb.append(node.identifier.getText());
-                    }
-                    if (node.type != null) {
-                        sb.append(" : ");
-                        appendText(node.type.getText(), methodReturnStyle);
-                    }
-                    else if (node.getParent() instanceof VariablesNode) {
-                        VariablesNode parent = (VariablesNode) node.getParent();
-                        int index = 0;
-                        while (!(parent.getChild(index) instanceof VariableNode)) {
-                            index++;
-                        }
-                        Token type = ((VariableNode) parent.getChild(index)).type;
-                        if (type != null) {
-                            sb.append(" : ");
-                            appendText(type.getText(), methodReturnStyle);
-                        }
-                    }
+                    sb = decorateVariable((VariableNode) element);
                 }
                 else if (element instanceof ObjectNode) {
-                    ObjectNode node = (ObjectNode) element;
-                    if (node.name != null) {
-                        sb.append(node.name.getText());
-                        sb.append(" : ");
-                        if (node.file != null) {
-                            appendText(node.getFileName(), stringStyle);
-                        }
-                    }
+                    sb = decorateObject((ObjectNode) element);
                 }
                 else if (element instanceof MethodNode) {
-                    decorateMethod((MethodNode) element, cell);
+                    sb = decorateMethod((MethodNode) element);
                 }
                 else if (element instanceof FunctionNode) {
-                    decorateFunction((FunctionNode) element, cell);
+                    sb = decorateFunction((FunctionNode) element);
                 }
                 else if (element instanceof DataLineNode) {
-                    DataLineNode node = (DataLineNode) element;
-                    sb.append(node.label.getText());
-                }
-                else {
-                    Node node = element;
-                    sb.append(node.getStartToken().getText());
+                    sb = decorateData((DataLineNode) element);
                 }
 
-                cell.setText(sb.toString());
-                if (element.isExclude()) {
-                    StyleRange range = new StyleRange(commentStyle);
-                    range.start = 0;
-                    range.length = sb.length();
-                    cell.setStyleRanges(new StyleRange[] {
-                        range
-                    });
-                }
-                else {
-                    cell.setStyleRanges(styles.toArray(new StyleRange[0]));
+                if (sb != null) {
+                    cell.setText(sb.getText());
+                    if (element.isExclude()) {
+                        StyleRange range = new StyleRange(commentStyle);
+                        range.start = 0;
+                        range.length = sb.length();
+                        cell.setStyleRanges(new StyleRange[] {
+                            range
+                        });
+                    }
+                    else {
+                        cell.setStyleRanges(sb.getTextStyles());
+                    }
                 }
             } catch (Exception e) {
                 // Do nothing
             }
 
             super.update(cell);
-        }
-
-        void decorateMethod(MethodNode node, ViewerCell cell) {
-            if (node.getType() != null) {
-                appendText(node.getType().getText().toUpperCase(), blockStyle);
-            }
-            if (node.getName() != null) {
-                if (sb.length() != 0) {
-                    sb.append(" ");
-                }
-                sb.append(node.getName().getText());
-
-                sb.append("(");
-                boolean first = true;
-                for (Node child : node.getParameters()) {
-                    if (!first) {
-                        sb.append(", ");
-                    }
-                    appendText(child.getText(), methodLocalStyle);
-                    first = false;
-                }
-                sb.append(")");
-
-                if (node.getReturnVariables().size() != 0) {
-                    sb.append(" : ");
-                    first = true;
-                    for (Node child : node.getReturnVariables()) {
-                        if (!first) {
-                            sb.append(", ");
-                        }
-                        appendText(child.getText(), methodReturnStyle);
-                        first = false;
-                    }
-                }
-            }
-        }
-
-        void decorateBlockStart(Node node, ViewerCell cell) {
-            String text = "";
-            if (node.getStartToken() != null) {
-                text = node.getStartToken().getText().toUpperCase();
-            }
-            appendText(text, blockStyle);
-
-            if (node instanceof DataNode) {
-                String name = ((DataNode) node).getName();
-                if (name != null) {
-                    sb.append(" ");
-                    sb.append(name);
-                }
-            }
-
-            String comment = node.getDescription();
-            if (comment != null) {
-                while (comment.startsWith("'")) {
-                    comment = comment.substring(1);
-                }
-                comment = comment.trim();
-                if (!comment.isEmpty()) {
-                    sb.append(" ");
-                    appendText(comment, commentStyle);
-                }
-            }
-        }
-
-        void decorateFunction(FunctionNode node, ViewerCell cell) {
-            if (node.getIdentifier() != null) {
-                if (sb.length() != 0) {
-                    sb.append(" ");
-                }
-                appendText(node.getIdentifier().getText(), blockStyle);
-
-                sb.append("(");
-                boolean first = true;
-                for (FunctionNode.ParameterNode child : node.getParameters()) {
-                    if (!first) {
-                        sb.append(", ");
-                    }
-                    if (child.type != null) {
-                        appendText(child.type.getText(), methodLocalStyle);
-                    }
-                    else {
-                        appendText(child.identifier.getText(), methodLocalStyle);
-                    }
-                    first = false;
-                }
-                sb.append(")");
-
-                if (node.getType() != null) {
-                    sb.append(" : ");
-                    appendText(node.getType().getText(), methodReturnStyle);
-                }
-            }
-        }
-
-        void appendText(String text, TextStyle style) {
-            StyleRange range = new StyleRange(style);
-            range.start = sb.length();
-            range.length = text.length();
-
-            sb.append(text);
-            styles.add(range);
         }
 
     };
@@ -586,6 +440,185 @@ public class OutlineView {
 
     public void setForeground(Color color) {
         viewer.getControl().setForeground(color);
+    }
+
+    StyledStringBuilder decorateBlockStart(Node node) {
+        StyledStringBuilder sb = new StyledStringBuilder();
+
+        String text = "";
+        if (node.getStartToken() != null) {
+            text = node.getStartToken().getText().toUpperCase();
+        }
+        sb.append(text, blockStyle);
+
+        if (node instanceof DataNode) {
+            String name = ((DataNode) node).getName();
+            if (name != null) {
+                sb.append(" ");
+                sb.append(name);
+            }
+        }
+
+        String comment = node.getDescription();
+        if (comment != null) {
+            while (comment.startsWith("'")) {
+                comment = comment.substring(1);
+            }
+            comment = comment.trim();
+            if (!comment.isEmpty()) {
+                sb.append(" ");
+                sb.append(comment, commentStyle);
+            }
+        }
+
+        return sb;
+    }
+
+    StyledStringBuilder decorateVariable(VariableNode node) {
+        StyledStringBuilder sb = new StyledStringBuilder();
+
+        if (node.identifier != null) {
+            if (sb.length() != 0) {
+                sb.append(" ");
+            }
+            sb.append(node.identifier.getText());
+        }
+        if (node.type != null) {
+            sb.append(" : ");
+            sb.append(node.type.getText(), methodReturnStyle);
+        }
+        else if (node.getParent() instanceof VariablesNode) {
+            VariablesNode parent = (VariablesNode) node.getParent();
+            int index = 0;
+            while (!(parent.getChild(index) instanceof VariableNode)) {
+                index++;
+            }
+            Token type = ((VariableNode) parent.getChild(index)).type;
+            if (type != null) {
+                sb.append(" : ");
+                sb.append(type.getText(), methodReturnStyle);
+            }
+        }
+
+        return sb;
+    }
+
+    StyledStringBuilder decorateObject(ObjectNode node) {
+        StyledStringBuilder sb = new StyledStringBuilder();
+
+        if (node.name != null) {
+            sb.append(node.name.getText());
+            sb.append(" : ");
+            if (node.file != null) {
+                sb.append(node.getFileName(), stringStyle);
+            }
+        }
+
+        return sb;
+    }
+
+    StyledStringBuilder decorateMethod(MethodNode node) {
+        StyledStringBuilder sb = new StyledStringBuilder();
+
+        if (node.getType() != null) {
+            sb.append(node.getType().getText().toUpperCase(), blockStyle);
+            sb.append(" ");
+        }
+
+        if (node.getName() != null) {
+            sb.append(node.getName().getText());
+
+            sb.append("(");
+            boolean first = true;
+            for (Node child : node.getParameters()) {
+                if (!first) {
+                    sb.append(", ");
+                }
+                sb.append(child.getText(), methodLocalStyle);
+                first = false;
+            }
+            sb.append(")");
+
+            if (node.getReturnVariables().size() != 0) {
+                sb.append(" : ");
+                first = true;
+                for (Node child : node.getReturnVariables()) {
+                    if (!first) {
+                        sb.append(", ");
+                    }
+                    sb.append(child.getText(), methodReturnStyle);
+                    first = false;
+                }
+            }
+        }
+
+        return sb;
+    }
+
+    StyledStringBuilder decorateData(DataLineNode node) {
+        StyledStringBuilder sb = new StyledStringBuilder();
+
+        sb.append(node.label.getText());
+
+        return sb;
+    }
+
+    StyledStringBuilder decorateIncludes(DirectiveNode.IncludeNode node) {
+        StyledStringBuilder sb = new StyledStringBuilder();
+
+        sb.append(node.getFile().getText(), stringStyle);
+
+        return sb;
+    }
+
+    StyledStringBuilder decorateDefines(DirectiveNode.DefineNode node) {
+        StyledStringBuilder sb = new StyledStringBuilder();
+
+        sb.append("# ", blockStyle);
+        if (node.getIdentifier() != null) {
+            sb.append(node.getIdentifier().getText());
+        }
+
+        return sb;
+    }
+
+    StyledStringBuilder decorateTypeDefinition(TypeDefinitionNode node) {
+        StyledStringBuilder sb = new StyledStringBuilder();
+
+        sb.append(node.getIdentifier().getText());
+
+        return sb;
+    }
+
+    StyledStringBuilder decorateFunction(FunctionNode node) {
+        StyledStringBuilder sb = new StyledStringBuilder();
+
+        if (node.getIdentifier() != null) {
+            sb.append(node.getIdentifier().getText(), blockStyle);
+
+            sb.append("(");
+            boolean first = true;
+            for (FunctionNode.ParameterNode child : node.getParameters()) {
+                if (!first) {
+                    sb.append(", ");
+                }
+                if (child.type != null) {
+                    sb.append(child.type.getText(), methodLocalStyle);
+                }
+                else {
+                    sb.append(child.identifier.getText(), methodLocalStyle);
+                }
+                first = false;
+            }
+            sb.append(")");
+
+            if (node.getType() != null) {
+                sb.append(" : ");
+                sb.append(node.getType().getText(), methodReturnStyle);
+            }
+        }
+
+        return sb;
     }
 
 }
