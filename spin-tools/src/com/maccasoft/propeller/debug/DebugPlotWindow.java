@@ -677,7 +677,7 @@ public class DebugPlotWindow extends DebugWindow {
 
                 case "LAYER":
                     if (iter.hasNextNumber()) {
-                        int id = iter.nextNumber();
+                        int id = iter.nextNumber() - 1;
                         if (iter.hasNextString()) {
                             String fileName = iter.nextString();
                             File file = new File(getBaseDirectory(), fileName);
@@ -701,7 +701,7 @@ public class DebugPlotWindow extends DebugWindow {
 
                 case "CROP":
                     if (iter.hasNextNumber()) {
-                        int id = iter.nextNumber();
+                        int id = iter.nextNumber() - 1;
                         if (iter.hasNext() && "AUTO".equalsIgnoreCase(iter.peekNext())) {
                             iter.next();
                             if (iter.hasNextNumber()) {
