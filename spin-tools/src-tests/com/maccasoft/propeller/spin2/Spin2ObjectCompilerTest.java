@@ -6594,12 +6594,14 @@ class Spin2ObjectCompilerTest {
             + "\n"
             + "    pt[a].x := 1\n"
             + "    pt[a].y := 2\n"
+            + "\n"
+            + "    pt.x := pt.y\n"
             + "";
 
         Assertions.assertEquals(""
             + "' Object header (var size 4)\n"
             + "00000 00000       08 00 00 80    Method start @ $00008 (0 parameters, 0 returns)\n"
-            + "00004 00004       2A 00 00 00    End\n"
+            + "00004 00004       30 00 00 00    End\n"
             + "' PUB start() | sPoint pt[2], a\n"
             + "00008 00008       03             (stack size)\n"
             + "'     pt.x := 1\n"
@@ -6622,8 +6624,10 @@ class Spin2ObjectCompilerTest {
             + "00021 00021       A3             CONSTANT (2)\n"
             + "00022 00022       5D 06 80       VAR_READ LONG DBASE+$00006\n"
             + "00025 00025       69 19 03 81    STRUCT_WRITE WORD DBASE+$00001 (indexed)\n"
-            + "00029 00029       04             RETURN\n"
-            + "0002A 0002A       00 00          Padding\n"
+            + "'     pt.x := pt.y\n"
+            + "00029 00029       57 01 80       MEM_READ WORD DBASE+$00001\n"
+            + "0002C 0002C       51 00 81       MEM_WRITE BYTE DBASE+$00000\n"
+            + "0002F 0002F       04             RETURN\n"
             + "", compile(text));
     }
 

@@ -1174,17 +1174,11 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                             StructOp op = (StructOp) leftSource.get(leftSource.size() - 1);
                             leftStruct = op.getStruct();
                         }
-                        if (leftStruct == null) {
-                            logMessage(new CompilerException("not a structure", node.getChild(0).getTokens()));
-                        }
 
                         List<Spin2Bytecode> rightSource = compileStructure(context, method, node.getChild(1), right, null, MemoryOp.Op.Address, true);
                         if (rightSource.size() != 0 && rightSource.get(rightSource.size() - 1) instanceof StructOp) {
                             StructOp op = (StructOp) rightSource.get(rightSource.size() - 1);
                             rightStruct = op.getStruct();
-                        }
-                        if (rightStruct == null) {
-                            logMessage(new CompilerException("not a structure", node.getChild(1).getTokens()));
                         }
 
                         if (leftStruct != null && rightStruct != null) {
@@ -1206,6 +1200,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                                 return source;
                             }
                         }
+
                         source.clear();
                     }
                 }
@@ -1272,6 +1267,9 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     }
                 }
 
+                if (push) {
+                    logMessage(new CompilerException("expression doesn't return a value", node.getTokens()));
+                }
                 node.setReturnLongs(0);
                 return source;
             }
@@ -1312,6 +1310,10 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         source.add(new Bytecode(context, desc.code, "BYTECOMP"));
                         if ("<>".equals(node.getText())) {
                             source.add(new MathOp(context, "NOT", true));
+                        }
+
+                        if (!push) {
+                            logMessage(new CompilerException("expected assignment", node.getTokens()));
                         }
                         node.setReturnLongs(1);
                         return source;
