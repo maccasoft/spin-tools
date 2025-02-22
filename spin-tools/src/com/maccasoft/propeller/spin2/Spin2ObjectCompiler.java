@@ -381,6 +381,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 } catch (CompilerException e) {
                     logMessage(e);
                 } catch (Exception e) {
+                    e.printStackTrace();
                     logMessage(new CompilerException(e.getMessage(), node));
                 }
             }
@@ -1523,79 +1524,79 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
         method.setComment(node.getText());
         method.setData(node);
 
-        while (iter.hasNext()) {
+        if (iter.hasNext() && "(".equals(iter.peekNext().getText())) {
             token = iter.next();
-            if ("(".equals(token.getText())) {
-                if (!iter.hasNext()) {
-                    logMessage(new CompilerException("expecting parameter(s)", token.substring(token.stop - token.start)));
+            if (!iter.hasNext()) {
+                logMessage(new CompilerException("expecting parameter(s)", token.substring(token.stop - token.start)));
+            }
+            while (iter.hasNext()) {
+                Token type = null;
+                Token identifier = iter.next();
+                if (")".equals(identifier.getText())) {
+                    break;
                 }
-                while (iter.hasNext()) {
-                    Token type = null;
-                    Token identifier = iter.next();
-                    if (")".equals(identifier.getText())) {
-                        break;
+                if (iter.hasNext()) {
+                    Token next = iter.peekNext();
+                    if (next.type == 0 || next.type == Token.KEYWORD) {
+                        type = identifier;
+                        identifier = iter.next();
                     }
-                    if (iter.hasNext()) {
-                        Token next = iter.peekNext();
-                        if (next.type == 0 || next.type == Token.KEYWORD) {
-                            type = identifier;
-                            identifier = iter.next();
-                        }
-                    }
+                }
 
-                    if (type != null) {
-                        boolean valid = "LONG".equalsIgnoreCase(type.getText());
-                        if (!valid) {
-                            valid = scope.hasStructureDefinition(type.getText());
-                        }
-                        if (!valid) {
-                            if (type.getText().startsWith("^")) {
-                                valid = Spin2Model.isType(type.getText().substring(1));
-                                if (!valid) {
-                                    valid = scope.hasStructureDefinition(type.getText().substring(1));
-                                }
+                if (type != null) {
+                    boolean valid = "LONG".equalsIgnoreCase(type.getText());
+                    if (!valid) {
+                        valid = scope.hasStructureDefinition(type.getText());
+                    }
+                    if (!valid) {
+                        if (type.getText().startsWith("^")) {
+                            valid = Spin2Model.isType(type.getText().substring(1));
+                            if (!valid) {
+                                valid = scope.hasStructureDefinition(type.getText().substring(1));
                             }
-                        }
-                        if (!valid) {
-                            logMessage(new CompilerException("invalid type", type));
                         }
                     }
+                    if (!valid) {
+                        logMessage(new CompilerException("invalid type", type));
+                    }
+                }
 
-                    if (identifier.type == 0) {
-                        Expression expression = localScope.getLocalSymbol(identifier.getText());
-                        if (expression instanceof LocalVariable) {
-                            logMessage(new CompilerException("symbol '" + identifier + "' already defined", identifier));
+                if (identifier.type == 0) {
+                    Expression expression = localScope.getLocalSymbol(identifier.getText());
+                    if (expression instanceof LocalVariable) {
+                        logMessage(new CompilerException("symbol '" + identifier + "' already defined", identifier));
+                    }
+                    else {
+                        if (expression != null) {
+                            logMessage(new CompilerException(CompilerException.WARNING, "parameter '" + identifier + "' hides global variable", identifier));
                         }
-                        else {
-                            if (expression != null) {
-                                logMessage(new CompilerException(CompilerException.WARNING, "parameter '" + identifier + "' hides global variable", identifier));
-                            }
 
-                            Expression value = null;
-                            if ("=".equals(iter.peekNext().getText())) {
-                                iter.next();
-                                Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope);
-                                while (iter.hasNext()) {
-                                    token = iter.peekNext();
-                                    if (",".equals(token.getText()) || ")".equals(token.getText())) {
-                                        break;
-                                    }
-                                    builder.addToken(iter.next());
+                        Expression value = null;
+                        if ("=".equals(iter.peekNext().getText())) {
+                            iter.next();
+                            Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope);
+                            while (iter.hasNext()) {
+                                token = iter.peekNext();
+                                if (",".equals(token.getText()) || ")".equals(token.getText())) {
+                                    break;
                                 }
-                                try {
-                                    value = builder.getExpression();
-                                } catch (CompilerException e) {
-                                    logMessage(e);
-                                } catch (Exception e) {
-                                    logMessage(new CompilerException(e, node));
-                                }
+                                builder.addToken(iter.next());
                             }
-                            if (value == null && method.getParameterLongs() != 0) {
-                                if (method.getParameter(method.getParameterLongs() - 1).getValue() != null) {
-                                    logMessage(new CompilerException("expecting default value", identifier));
-                                }
+                            try {
+                                value = builder.getExpression();
+                            } catch (CompilerException e) {
+                                logMessage(e);
+                            } catch (Exception e) {
+                                logMessage(new CompilerException(e, node));
                             }
+                        }
+                        if (value == null && method.getParametersCount() != 0) {
+                            if (method.getParameter(method.getParametersCount() - 1).getValue() != null) {
+                                logMessage(new CompilerException("expecting default value", identifier));
+                            }
+                        }
 
+                        if (method.getParameterLongs() <= 127) {
                             String typeText = type != null ? type.getText().toUpperCase() : "LONG";
                             LocalVariable var = method.addParameter(typeText, identifier.getText(), value);
                             Spin2Struct struct = scope.getStructureDefinition(typeText);
@@ -1603,31 +1604,39 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                                 compileStructureVariable(var, struct);
                             }
                             var.setData(identifier);
-                        }
-                    }
-                    else {
-                        logMessage(new CompilerException("invalid identifier", identifier));
-                    }
-                    if (iter.hasNext()) {
-                        token = iter.next();
-                        if (")".equals(token.getText())) {
-                            break;
-                        }
-                        else if (",".equals(token.getText())) {
-                            if (!iter.hasNext()) {
-                                logMessage(new CompilerException("expecting identifier", token.substring(token.stop - token.start)));
+
+                            if (method.getParameterLongs() > 127) {
+                                logMessage(new CompilerException("limit of 127 parameters exceeded", identifier));
                             }
                         }
-                        else {
-                            logMessage(new CompilerException("expecting ',' or ')'", token));
+                    }
+                }
+                else {
+                    logMessage(new CompilerException("invalid identifier", identifier));
+                }
+                if (iter.hasNext()) {
+                    token = iter.next();
+                    if (")".equals(token.getText())) {
+                        break;
+                    }
+                    else if (",".equals(token.getText())) {
+                        if (!iter.hasNext()) {
+                            logMessage(new CompilerException("expecting identifier", token.substring(token.stop - token.start)));
                         }
                     }
                     else {
-                        logMessage(new CompilerException("expecting ',' or ')'", identifier.substring(identifier.stop - identifier.start)));
+                        logMessage(new CompilerException("expecting ',' or ')'", token));
                     }
                 }
+                else {
+                    logMessage(new CompilerException("expecting ',' or ')'", identifier.substring(identifier.stop - identifier.start)));
+                }
             }
-            else if ("|".equals(token.getText())) {
+        }
+
+        while (iter.hasNext()) {
+            token = iter.next();
+            if ("|".equals(token.getText())) {
                 if (!iter.hasNext()) {
                     logMessage(new CompilerException("expecting local variable(s)", token.substring(token.stop - token.start)));
                 }
@@ -1698,13 +1707,20 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                             if (expression != null) {
                                 logMessage(new CompilerException(CompilerException.WARNING, "local variable '" + identifier + "' hides global variable", identifier));
                             }
-                            String typeText = type != null ? type.getText().toUpperCase() : "LONG";
-                            LocalVariable var = method.addLocalVariable(typeText, identifier.getText(), size.getNumber().intValue()); // new LocalVariable(type, identifier.getText(), size, offset);
-                            Spin2Struct struct = scope.getStructureDefinition(typeText);
-                            if (struct != null) {
-                                compileStructureVariable(var, struct);
+
+                            if (method.getLocalVariableLongs() <= 16383) {
+                                String typeText = type != null ? type.getText().toUpperCase() : "LONG";
+                                LocalVariable var = method.addLocalVariable(typeText, identifier.getText(), size.getNumber().intValue()); // new LocalVariable(type, identifier.getText(), size, offset);
+                                Spin2Struct struct = scope.getStructureDefinition(typeText);
+                                if (struct != null) {
+                                    compileStructureVariable(var, struct);
+                                }
+                                var.setData(identifier);
+
+                                if (method.getLocalVariableLongs() > 16383) {
+                                    logMessage(new CompilerException("limit of 64Kb of local variables exceeded", identifier));
+                                }
                             }
-                            var.setData(identifier);
                         }
                     }
                     else {
@@ -1766,13 +1782,20 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                             if (expression != null) {
                                 logMessage(new CompilerException(CompilerException.WARNING, "return variable '" + identifier.getText() + "' hides global variable", identifier));
                             }
-                            String typeText = type != null ? type.getText().toUpperCase() : "LONG";
-                            LocalVariable var = method.addReturnVariable(typeText, identifier.getText());
-                            Spin2Struct struct = scope.getStructureDefinition(typeText);
-                            if (struct != null) {
-                                compileStructureVariable(var, struct);
+
+                            if (method.getReturnLongs() <= 15) {
+                                String typeText = type != null ? type.getText().toUpperCase() : "LONG";
+                                LocalVariable var = method.addReturnVariable(typeText, identifier.getText());
+                                Spin2Struct struct = scope.getStructureDefinition(typeText);
+                                if (struct != null) {
+                                    compileStructureVariable(var, struct);
+                                }
+                                var.setData(identifier);
+
+                                if (method.getReturnLongs() > 15) {
+                                    logMessage(new CompilerException("limit of 15 results exceeded", identifier));
+                                }
                             }
-                            var.setData(identifier);
                         }
                     }
                     else {

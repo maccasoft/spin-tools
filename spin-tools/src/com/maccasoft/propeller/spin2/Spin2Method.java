@@ -200,6 +200,10 @@ public class Spin2Method {
         return parameters;
     }
 
+    public int getParametersCount() {
+        return parameters.size();
+    }
+
     public int getParameterLongs() {
         int count = 0;
         for (LocalVariable var : parameters) {
@@ -235,7 +239,7 @@ public class Spin2Method {
         return list;
     }
 
-    public int getStackSize() {
+    public int getLocalVariableLongs() {
         int count = 0;
 
         for (LocalVariable var : localVariables) {
@@ -266,7 +270,7 @@ public class Spin2Method {
             obj.writeComment(comment);
         }
 
-        obj.writeBytes(Constant.wrVar(getStackSize()), "(stack size)");
+        obj.writeBytes(Constant.wrVar(getLocalVariableLongs()), "(stack size)");
 
         for (Spin2MethodLine line : lines) {
             line.writeTo(obj);

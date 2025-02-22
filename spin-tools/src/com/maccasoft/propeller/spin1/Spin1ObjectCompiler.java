@@ -1038,82 +1038,84 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
         method.setComment(node.getText());
         method.setData(node);
 
-        while (iter.hasNext()) {
+        if (iter.hasNext() && "(".equals(iter.peekNext().getText())) {
             token = iter.next();
-            if ("(".equals(token.getText())) {
-                if (!iter.hasNext()) {
-                    logMessage(new CompilerException("expecting parameter(s)", token.substring(token.stop - token.start)));
+            if (!iter.hasNext()) {
+                logMessage(new CompilerException("expecting parameter(s)", token.substring(token.stop - token.start)));
+            }
+            while (iter.hasNext()) {
+                Token identifier = iter.next();
+                if (")".equals(identifier.getText())) {
+                    break;
                 }
-                while (iter.hasNext()) {
-                    Token identifier = iter.next();
-                    if (")".equals(identifier.getText())) {
+                if (Spin1Model.isType(identifier.getText())) {
+                    logMessage(new CompilerException("type not allowed", identifier));
+                }
+                else if (identifier.type == 0) {
+                    Expression expression = localScope.getLocalSymbol(identifier.getText());
+                    if (expression instanceof LocalVariable) {
+                        logMessage(new CompilerException("symbol '" + identifier + "' already defined", identifier));
+                    }
+                    else {
+                        if (expression != null) {
+                            logMessage(new CompilerException(CompilerException.WARNING, "parameter '" + identifier + "' hides global variable", identifier));
+                        }
+
+                        Expression value = null;
+                        if ("=".equals(iter.peekNext().getText())) {
+                            iter.next();
+                            Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope);
+                            while (iter.hasNext()) {
+                                token = iter.peekNext();
+                                if (",".equals(token.getText()) || ")".equals(token.getText())) {
+                                    break;
+                                }
+                                builder.addToken(iter.next());
+                            }
+                            try {
+                                value = builder.getExpression();
+                            } catch (CompilerException e) {
+                                logMessage(e);
+                            } catch (Exception e) {
+                                logMessage(new CompilerException(e, node));
+                            }
+                        }
+                        if (value == null && method.getParametersCount() != 0) {
+                            if (method.getParameter(method.getParametersCount() - 1).getValue() != null) {
+                                logMessage(new CompilerException("expecting default value", identifier));
+                            }
+                        }
+
+                        LocalVariable var = method.addParameter("LONG", identifier.getText(), value);
+                        var.setData(identifier);
+                    }
+                }
+                else {
+                    logMessage(new CompilerException("invalid identifier", identifier));
+                }
+                if (iter.hasNext()) {
+                    token = iter.next();
+                    if (")".equals(token.getText())) {
                         break;
                     }
-                    if (Spin1Model.isType(identifier.getText())) {
-                        logMessage(new CompilerException("type not allowed", identifier));
-                    }
-                    else if (identifier.type == 0) {
-                        Expression expression = localScope.getLocalSymbol(identifier.getText());
-                        if (expression instanceof LocalVariable) {
-                            logMessage(new CompilerException("symbol '" + identifier + "' already defined", identifier));
-                        }
-                        else {
-                            if (expression != null) {
-                                logMessage(new CompilerException(CompilerException.WARNING, "parameter '" + identifier + "' hides global variable", identifier));
-                            }
-
-                            Expression value = null;
-                            if ("=".equals(iter.peekNext().getText())) {
-                                iter.next();
-                                Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope);
-                                while (iter.hasNext()) {
-                                    token = iter.peekNext();
-                                    if (",".equals(token.getText()) || ")".equals(token.getText())) {
-                                        break;
-                                    }
-                                    builder.addToken(iter.next());
-                                }
-                                try {
-                                    value = builder.getExpression();
-                                } catch (CompilerException e) {
-                                    logMessage(e);
-                                } catch (Exception e) {
-                                    logMessage(new CompilerException(e, node));
-                                }
-                            }
-                            if (value == null && method.getParametersCount() != 0) {
-                                if (method.getParameter(method.getParametersCount() - 1).getValue() != null) {
-                                    logMessage(new CompilerException("expecting default value", identifier));
-                                }
-                            }
-
-                            LocalVariable var = method.addParameter("LONG", identifier.getText(), value);
-                            var.setData(identifier);
+                    else if (",".equals(token.getText())) {
+                        if (!iter.hasNext()) {
+                            logMessage(new CompilerException("expecting identifier", token.substring(token.stop - token.start)));
                         }
                     }
                     else {
-                        logMessage(new CompilerException("invalid identifier", identifier));
-                    }
-                    if (iter.hasNext()) {
-                        token = iter.next();
-                        if (")".equals(token.getText())) {
-                            break;
-                        }
-                        else if (",".equals(token.getText())) {
-                            if (!iter.hasNext()) {
-                                logMessage(new CompilerException("expecting identifier", token.substring(token.stop - token.start)));
-                            }
-                        }
-                        else {
-                            logMessage(new CompilerException("expecting ',' or ')'", token));
-                        }
-                    }
-                    else {
-                        logMessage(new CompilerException("expecting ',' or ')'", identifier.substring(identifier.stop - identifier.start)));
+                        logMessage(new CompilerException("expecting ',' or ')'", token));
                     }
                 }
+                else {
+                    logMessage(new CompilerException("expecting ',' or ')'", identifier.substring(identifier.stop - identifier.start)));
+                }
             }
-            else if ("|".equals(token.getText())) {
+        }
+
+        while (iter.hasNext()) {
+            token = iter.next();
+            if ("|".equals(token.getText())) {
                 if (!iter.hasNext()) {
                     logMessage(new CompilerException("expecting local variable(s)", token.substring(token.stop - token.start)));
                 }
