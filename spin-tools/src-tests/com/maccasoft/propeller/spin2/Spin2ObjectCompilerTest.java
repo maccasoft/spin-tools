@@ -2345,6 +2345,43 @@ class Spin2ObjectCompilerTest {
     }
 
     @Test
+    void testVarAlign() throws Exception {
+        String text = ""
+            + "VAR\n"
+            + "    byte b\n"
+            + "    alignl\n"
+            + "    byte c\n"
+            + "    alignw\n"
+            + "    byte d\n"
+            + "\n"
+            + "PUB main() | a\n"
+            + "\n"
+            + "        a := @b\n"
+            + "        a := @c\n"
+            + "        a := @d\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 12)\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       16 00 00 00    End\n"
+            + "' PUB main() | a\n"
+            + "00008 00008       01             (stack size)\n"
+            + "'         a := @b\n"
+            + "00009 00009       50 04 7F       VAR_ADDRESS VBASE+$00004\n"
+            + "0000C 0000C       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'         a := @c\n"
+            + "0000D 0000D       50 08 7F       VAR_ADDRESS VBASE+$00008\n"
+            + "00010 00010       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'         a := @d\n"
+            + "00011 00011       50 0A 7F       VAR_ADDRESS VBASE+$0000A\n"
+            + "00014 00014       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00015 00015       04             RETURN\n"
+            + "00016 00016       00 00          Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testVarAbsoluteAddress() throws Exception {
         String text = ""
             + "VAR b[20], c\n"

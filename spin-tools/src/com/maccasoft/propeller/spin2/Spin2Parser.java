@@ -403,7 +403,7 @@ public class Spin2Parser extends Parser {
                             parent.getTokens().set(parent.getTokenCount() - 1, token);
                         }
                     }
-                    if (Spin2Model.isType(token.getText())) {
+                    if (Spin2Model.isType(token.getText()) || "alignl".equalsIgnoreCase(token.getText()) || "alignw".equalsIgnoreCase(token.getText())) {
                         node = new VariableNode(parent);
                         node.addToken(token);
                         node.type = token;

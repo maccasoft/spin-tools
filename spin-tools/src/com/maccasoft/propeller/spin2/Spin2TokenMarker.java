@@ -1115,6 +1115,9 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                     if (id == null) {
                         id = keywords.get(node.type.getText());
                     }
+                    if (id == null && ("alignl".equalsIgnoreCase(node.type.getText()) || "alignw".equalsIgnoreCase(node.type.getText()))) {
+                        id = TokenId.TYPE;
+                    }
                     if (id != null && id == TokenId.TYPE) {
                         tokens.add(new TokenMarker(node.type, id));
                     }

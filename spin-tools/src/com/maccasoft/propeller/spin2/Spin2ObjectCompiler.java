@@ -1132,6 +1132,21 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 Token type = null;
                 Token identifier = iter.next();
 
+                if ("alignl".equalsIgnoreCase(identifier.getText())) {
+                    objectVarSize = (objectVarSize + 3) & ~3;
+                    if (iter.hasNext()) {
+                        logMessage(new CompilerException("expecting end of line", iter.next()));
+                    }
+                    return;
+                }
+                if ("alignw".equalsIgnoreCase(identifier.getText())) {
+                    objectVarSize = (objectVarSize + 1) & ~1;
+                    if (iter.hasNext()) {
+                        logMessage(new CompilerException("expecting end of line", iter.next()));
+                    }
+                    return;
+                }
+
                 do {
                     int varSize = 1;
                     Token token = null;
