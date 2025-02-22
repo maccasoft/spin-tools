@@ -812,30 +812,6 @@ class Spin1ParserTest {
             + "", tree(root));
     }
 
-    @Test
-    void testDatName() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
-            + "DAT progA\n"
-            + "    mov a, #1\n"
-            + "\n"
-            + "DAT progB ' Alt\n"
-            + "    mov a, #1\n"
-            + ""));
-
-        Node root = subject.parse();
-        Assertions.assertEquals(""
-            + "Node []\n"
-            + "+-- DataNode name=progA [DAT progA]\n"
-            + "    +-- DataLineNode instruction=mov [    mov a, #1]\n"
-            + "        +-- ParameterNode [a]\n"
-            + "        +-- ParameterNode [#1]\n"
-            + "+-- DataNode name=progB [DAT progB ' Alt]\n"
-            + "    +-- DataLineNode instruction=mov [    mov a, #1]\n"
-            + "        +-- ParameterNode [a]\n"
-            + "        +-- ParameterNode [#1]\n"
-            + "", tree(root));
-    }
-
     String tree(Node root) throws Exception {
         return tree(root, 0);
     }

@@ -451,14 +451,6 @@ public class OutlineView {
         }
         sb.append(text, blockStyle);
 
-        if (node instanceof DataNode) {
-            String name = ((DataNode) node).getName();
-            if (name != null) {
-                sb.append(" ");
-                sb.append(name);
-            }
-        }
-
         String comment = node.getDescription();
         if (comment != null) {
             while (comment.startsWith("'")) {

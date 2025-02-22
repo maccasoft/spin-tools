@@ -372,19 +372,23 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
     protected void processAliases(Context scope, String type, String namespace) {
         for (Entry<Spin2PAsmLine, Context> entry : pendingAlias.entrySet()) {
             Spin2PAsmLine line = entry.getKey();
+            DataLineNode node = (DataLineNode) line.getData();
+            try {
+                Context aliasScope = entry.getValue();
+                aliasScope.addSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
+                aliasScope.addSymbol("#" + line.getLabel(), new RegisterAddress(line.getScope(), type));
+                aliasScope.addSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
+                aliasScope.addSymbol("@@" + line.getLabel(), new MemoryContextLiteral(line.getScope(), type));
 
-            Context aliasScope = entry.getValue();
-            aliasScope.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
-            aliasScope.addOrUpdateSymbol("#" + line.getLabel(), new RegisterAddress(line.getScope(), type));
-            aliasScope.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
-            aliasScope.addOrUpdateSymbol("@@" + line.getLabel(), new MemoryContextLiteral(line.getScope(), type));
-
-            if (!line.isLocalLabel() && scope != null) {
-                String qualifiedName = namespace + line.getLabel();
-                scope.addOrUpdateSymbol(qualifiedName, new DataVariable(line.getScope(), type));
-                scope.addOrUpdateSymbol("#" + qualifiedName, new RegisterAddress(line.getScope(), type));
-                scope.addOrUpdateSymbol("@" + qualifiedName, new ObjectContextLiteral(line.getScope(), type));
-                scope.addOrUpdateSymbol("@@" + qualifiedName, new MemoryContextLiteral(line.getScope(), type));
+                if (!line.isLocalLabel() && scope != null) {
+                    String qualifiedName = namespace + line.getLabel();
+                    scope.addSymbol(qualifiedName, new DataVariable(line.getScope(), type));
+                    scope.addSymbol("#" + qualifiedName, new RegisterAddress(line.getScope(), type));
+                    scope.addSymbol("@" + qualifiedName, new ObjectContextLiteral(line.getScope(), type));
+                    scope.addSymbol("@@" + qualifiedName, new MemoryContextLiteral(line.getScope(), type));
+                }
+            } catch (RuntimeException e) {
+                logMessage(new CompilerException(e, node.label));
             }
         }
         pendingAlias.clear();

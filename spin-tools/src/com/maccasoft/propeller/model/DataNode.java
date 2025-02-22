@@ -13,18 +13,8 @@ package com.maccasoft.propeller.model;
 
 public class DataNode extends Node {
 
-    public Token name;
-
     public DataNode(Node parent) {
         super(parent);
-    }
-
-    public String getName() {
-        return name != null ? name.getText() : null;
-    }
-
-    public void setName(Token name) {
-        this.name = name;
     }
 
     @Override
@@ -39,13 +29,7 @@ public class DataNode extends Node {
         StringBuilder sb = new StringBuilder();
 
         sb.append("/DAT");
-        if (name != null) {
-            sb.append(" ");
-            sb.append(name.getText().toUpperCase());
-        }
-        else {
-            sb.append(parent.indexOf(this));
-        }
+        sb.append(parent.indexOf(this));
 
         return sb.toString();
     }

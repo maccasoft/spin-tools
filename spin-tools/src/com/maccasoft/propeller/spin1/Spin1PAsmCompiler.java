@@ -294,17 +294,21 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
     protected void processAliases(String type, String namespace) {
         for (Entry<Spin1PAsmLine, Context> entry : pendingAlias.entrySet()) {
             Spin1PAsmLine line = entry.getKey();
+            DataLineNode node = (DataLineNode) line.getData();
+            try {
+                Context aliasScope = entry.getValue();
+                aliasScope.addSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
+                aliasScope.addSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
+                aliasScope.addSymbol("@@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
 
-            Context aliasScope = entry.getValue();
-            aliasScope.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
-            aliasScope.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
-            aliasScope.addOrUpdateSymbol("@@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
-
-            if (!line.isLocalLabel()) {
-                String qualifiedName = namespace + line.getLabel();
-                scope.addSymbol(qualifiedName, new DataVariable(line.getScope(), type));
-                scope.addSymbol("@" + qualifiedName, new ObjectContextLiteral(line.getScope(), type));
-                scope.addSymbol("@@" + qualifiedName, new ObjectContextLiteral(line.getScope(), type));
+                if (!line.isLocalLabel()) {
+                    String qualifiedName = namespace + line.getLabel();
+                    scope.addSymbol(qualifiedName, new DataVariable(line.getScope(), type));
+                    scope.addSymbol("@" + qualifiedName, new ObjectContextLiteral(line.getScope(), type));
+                    scope.addSymbol("@@" + qualifiedName, new ObjectContextLiteral(line.getScope(), type));
+                }
+            } catch (RuntimeException e) {
+                logMessage(new CompilerException(e, node.label));
             }
         }
         pendingAlias.clear();

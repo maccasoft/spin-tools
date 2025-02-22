@@ -2423,6 +2423,9 @@ public class SourceEditor {
                 while (index > 0) {
                     if (parent.getChild(index) instanceof DataLineNode) {
                         DataLineNode obj = (DataLineNode) parent.getChild(index);
+                        if (obj.instruction != null && "NAMESP".equalsIgnoreCase(obj.instruction.getText())) {
+                            break;
+                        }
                         if (obj.label != null) {
                             if (!obj.label.getText().startsWith(tokenMarker.localLabelPrefix)) {
                                 break;
@@ -2438,37 +2441,13 @@ public class SourceEditor {
                 while (index < parent.getChildCount()) {
                     if (parent.getChild(index) instanceof DataLineNode) {
                         DataLineNode obj = (DataLineNode) parent.getChild(index);
+                        if (obj.instruction != null && "NAMESP".equalsIgnoreCase(obj.instruction.getText())) {
+                            break;
+                        }
                         if (obj.label != null) {
                             if (!obj.label.getText().startsWith(tokenMarker.localLabelPrefix)) {
                                 break;
                             }
-                            if (obj.label.equals(itemName, tokenMarker.isCaseSensitive())) {
-                                return new NavigationTarget(token, obj.label);
-                            }
-                        }
-                    }
-                    index++;
-                }
-            }
-
-            if (((DataNode) parent).getName() != null) {
-                int index = parent.getChilds().indexOf(lineNode);
-                while (index > 0) {
-                    if (parent.getChild(index) instanceof DataLineNode) {
-                        DataLineNode obj = (DataLineNode) parent.getChild(index);
-                        if (obj.label != null) {
-                            if (obj.label.equals(itemName, tokenMarker.isCaseSensitive())) {
-                                return new NavigationTarget(token, obj.label);
-                            }
-                        }
-                    }
-                    index--;
-                }
-                index = parent.getChilds().indexOf(lineNode) + 1;
-                while (index < parent.getChildCount()) {
-                    if (parent.getChild(index) instanceof DataLineNode) {
-                        DataLineNode obj = (DataLineNode) parent.getChild(index);
-                        if (obj.label != null) {
                             if (obj.label.equals(itemName, tokenMarker.isCaseSensitive())) {
                                 return new NavigationTarget(token, obj.label);
                             }
@@ -2482,11 +2461,6 @@ public class SourceEditor {
 
             for (Node node : tokenMarker.getRoot().getChilds()) {
                 if (node instanceof DataNode) {
-                    DataNode dataNode = (DataNode) node;
-                    if (dataNode.getName() != null) {
-                        namespace = dataNode.getName() + ".";
-                    }
-
                     for (Node child : node.getChilds()) {
                         if (!(child instanceof DataLineNode)) {
                             continue;
@@ -2721,7 +2695,7 @@ public class SourceEditor {
             }
         }
         else if (node instanceof DataNode) {
-            String namespace = ((DataNode) node).getName() != null ? ((DataNode) node).getName() + "." : "";
+            String namespace = "";
             for (Node child : node.getChilds()) {
                 if (!(child instanceof DataLineNode)) {
                     continue;

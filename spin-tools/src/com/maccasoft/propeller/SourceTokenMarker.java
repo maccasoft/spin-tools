@@ -1468,14 +1468,6 @@ public abstract class SourceTokenMarker {
 
         for (Node node : root.getChilds()) {
             if (node instanceof DataNode && parent != node) {
-                DataNode dataNode = (DataNode) node;
-                if (dataNode.getName() != null) {
-                    if (StringUtils.containsIgnoreCase(dataNode.getName(), filterText)) {
-                        proposals.add(new ContentProposal(dataNode.getName(), dataNode.getName(), ""));
-                    }
-                    namespace = dataNode.getName() + ".";
-                }
-
                 for (Node child : node.getChilds()) {
                     if (!(child instanceof DataLineNode)) {
                         continue;
@@ -1616,14 +1608,6 @@ public abstract class SourceTokenMarker {
 
         for (Node node : root.getChilds()) {
             if (node instanceof DataNode) {
-                DataNode dataNode = (DataNode) node;
-                if (dataNode.getName() != null) {
-                    if (StringUtils.containsIgnoreCase(dataNode.getName(), filterText)) {
-                        proposals.add(new ContentProposal(dataNode.getName(), dataNode.getName(), ""));
-                    }
-                    namespace = dataNode.getName() + ".";
-                }
-
                 for (Node child : node.getChilds()) {
                     if (!(child instanceof DataLineNode)) {
                         continue;
