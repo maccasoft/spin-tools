@@ -1010,18 +1010,28 @@ public class SourceEditor {
                     gc.setLineWidth(0);
 
                     for (TokenMarker entry : tokenMarker.getCompilerTokens()) {
-                        try {
-                            Rectangle r = styledText.getTextBounds(entry.getStart(), entry.getStop());
-                            int[] polyline = computePolyline(new Point(r.x, r.y), new Point(r.x + r.width, r.y), styledText.getLineHeight());
-                            if (entry.id == TokenId.ERROR) {
-                                gc.setForeground(ColorRegistry.getColor(0xC0, 0x00, 0x00));
-                            }
-                            else {
+                        if (entry.id == TokenId.WARNING) {
+                            try {
+                                Rectangle r = styledText.getTextBounds(entry.getStart(), entry.getStop());
+                                int[] polyline = computePolyline(new Point(r.x, r.y), new Point(r.x + r.width, r.y), styledText.getLineHeight());
                                 gc.setForeground(ColorRegistry.getColor(0xF6, 0xD4, 0x56));
+                                gc.drawPolyline(polyline);
+                            } catch (Exception ex) {
+                                // Ignore
                             }
-                            gc.drawPolyline(polyline);
-                        } catch (Exception ex) {
-                            // Ignore
+                        }
+                    }
+
+                    for (TokenMarker entry : tokenMarker.getCompilerTokens()) {
+                        if (entry.id == TokenId.ERROR) {
+                            try {
+                                Rectangle r = styledText.getTextBounds(entry.getStart(), entry.getStop());
+                                int[] polyline = computePolyline(new Point(r.x, r.y), new Point(r.x + r.width, r.y), styledText.getLineHeight());
+                                gc.setForeground(ColorRegistry.getColor(0xC0, 0x00, 0x00));
+                                gc.drawPolyline(polyline);
+                            } catch (Exception ex) {
+                                // Ignore
+                            }
                         }
                     }
 
