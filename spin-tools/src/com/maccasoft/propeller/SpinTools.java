@@ -557,8 +557,9 @@ public class SpinTools {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 ComPort port = (ComPort) evt.getNewValue();
+
                 SerialTerminal serialTerminal = getSerialTerminal();
-                if (serialTerminal != null) {
+                if (serialTerminal != null && serialTerminal.getSerialPort() != null) {
                     if (!port.equals(serialTerminal.getSerialPort())) {
                         ComPort oldSerialPort = serialTerminal.getSerialPort();
                         try {
@@ -571,7 +572,21 @@ public class SpinTools {
                         serialTerminal.setSerialPort(port);
                     }
                 }
+
+                if (consoleView.getSerialPort() != null && !port.equals(consoleView.getSerialPort())) {
+                    ComPort oldSerialPort = consoleView.getSerialPort();
+                    try {
+                        if (oldSerialPort.isOpened()) {
+                            oldSerialPort.closePort();
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    consoleView.setSerialPort(port);
+                }
+
                 preferences.setPort(port.getPortName());
+
                 statusLine.setPortText(port.getName());
                 statusLine.setPortToolTipText(port.getDescription());
             }
@@ -3230,13 +3245,7 @@ public class SpinTools {
             serialTerminal.setFocus();
         }
 
-        serialPort = consoleView.getSerialPort();
-        if (serialPort == null && serialTerminal != null) {
-            serialPort = serialTerminal.getSerialPort();
-        }
-        if (serialPort == null) {
-            serialPort = serialPortList.getSelection();
-        }
+        serialPort = serialPortList.getSelection();
 
         if (serialTerminal != null) {
             serialTerminal.setSerialPort(null);
@@ -3284,12 +3293,8 @@ public class SpinTools {
             statusLine.setPortText(uploadPort.getName());
             statusLine.setPortToolTipText(uploadPort.getDescription());
             if (!uploadPort.equals(serialPort)) {
-                try {
-                    if (serialPort != null) {
-                        serialPort.closePort();
-                    }
-                } catch (ComPortException e) {
-                    // Do nothing
+                if (serialPort != null && serialPort.isOpened()) {
+                    serialPort.closePort();
                 }
             }
         }
@@ -3445,11 +3450,8 @@ public class SpinTools {
 
         if (selectedPort != null) {
             if (currentPort != null && currentPort != selectedPort) {
-                try {
+                if (currentPort.isOpened()) {
                     currentPort.closePort();
-                } catch (ComPortException e) {
-                    e.printStackTrace();
-                    // Do nothing
                 }
             }
             if (consoleView.getVisible()) {

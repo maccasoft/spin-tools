@@ -30,7 +30,7 @@ public abstract class ComPort {
 
     public abstract boolean setParams(int baudRate, int dataBits, int stopBits, int parity) throws ComPortException;
 
-    public abstract void closePort() throws ComPortException;
+    public abstract void closePort();
 
     public void hwreset() {
         hwreset(DEFAULT_RESET_DELAY);

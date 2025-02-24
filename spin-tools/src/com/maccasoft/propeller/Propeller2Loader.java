@@ -66,17 +66,21 @@ public class Propeller2Loader extends PropellerLoader {
         }
 
         try {
-            if (comPort != null) {
-                if (!comPort.isOpened()) {
-                    comPort.openPort();
-                }
-                comPort.setParams(
-                    2000000,
-                    SerialPort.DATABITS_8,
-                    SerialPort.STOPBITS_1,
-                    SerialPort.PARITY_NONE);
+            try {
+                if (comPort != null) {
+                    if (!comPort.isOpened()) {
+                        comPort.openPort();
+                    }
+                    comPort.setParams(
+                        2000000,
+                        SerialPort.DATABITS_8,
+                        SerialPort.STOPBITS_1,
+                        SerialPort.PARITY_NONE);
 
-                version = hwfind(comPort);
+                    version = hwfind(comPort);
+                }
+            } catch (Exception e) {
+                // Do nothing
             }
 
             if (version == 0) {

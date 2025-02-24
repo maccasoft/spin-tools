@@ -71,11 +71,11 @@ public class SerialComPort extends ComPort {
     }
 
     @Override
-    public void closePort() throws ComPortException {
+    public void closePort() {
         try {
             serialPort.closePort();
-        } catch (SerialPortException e) {
-            throw new ComPortException(e.getExceptionType(), e);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

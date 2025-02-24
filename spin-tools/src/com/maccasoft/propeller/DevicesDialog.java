@@ -49,6 +49,7 @@ import com.maccasoft.propeller.devices.DeviceDescriptor;
 import com.maccasoft.propeller.devices.NetworkComPort;
 import com.maccasoft.propeller.devices.NetworkUtils;
 import com.maccasoft.propeller.devices.SerialComPort;
+import com.maccasoft.propeller.internal.BusyIndicator;
 import com.maccasoft.propeller.internal.ColorRegistry;
 
 import jssc.SerialPort;
@@ -333,7 +334,7 @@ public class DevicesDialog extends Dialog {
             currentSelection = getPortName(viewer.getStructuredSelection().getFirstElement());
         }
 
-        Thread thread = new Thread(new Runnable() {
+        BusyIndicator.showWhile(viewer.getControl().getDisplay(), new Runnable() {
 
             byte LFSR;
 
@@ -558,8 +559,7 @@ public class DevicesDialog extends Dialog {
                 return sb.toString();
             }
 
-        });
-        thread.start();
+        }, true);
     }
 
     public ComPort getSelection() {

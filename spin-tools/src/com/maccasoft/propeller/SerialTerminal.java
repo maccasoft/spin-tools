@@ -1547,7 +1547,11 @@ public class SerialTerminal {
                     this.comPort.removeEventListener();
                 }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
+        try {
             if (serialPort != null) {
                 shell.setText(WINDOW_TITLE + " on " + serialPort.getDescription());
                 if (!serialPort.isOpened()) {
@@ -1583,7 +1587,9 @@ public class SerialTerminal {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         this.comPort = serialPort;
+
         setTerminalType(preferences.getTerminalType());
         updateButtonsEnablement();
     }

@@ -542,7 +542,11 @@ public class ConsoleView {
                     this.serialPort.removeEventListener();
                 }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
+        try {
             if (serialPort != null) {
                 if (this.serialPort != serialPort) {
                     serialPort.setEventListener(serialEventListener);
@@ -553,11 +557,11 @@ public class ConsoleView {
                     SerialPort.STOPBITS_1,
                     SerialPort.PARITY_NONE);
             }
-
-            this.serialPort = serialPort;
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        this.serialPort = serialPort;
     }
 
     public void setSerialBaudRate(int serialBaudRate) {

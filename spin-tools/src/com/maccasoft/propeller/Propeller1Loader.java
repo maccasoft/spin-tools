@@ -109,19 +109,23 @@ public class Propeller1Loader extends PropellerLoader {
                 bufferUpload((NetworkComPort) comPort, type, binaryImage, "binary image");
             }
             else {
-                if (comPort != null) {
-                    if (!comPort.isOpened()) {
-                        comPort.openPort();
-                    }
-                    comPort.setParams(
-                        SerialPort.BAUDRATE_115200,
-                        SerialPort.DATABITS_8,
-                        SerialPort.STOPBITS_1,
-                        SerialPort.PARITY_NONE);
-                }
+                try {
+                    if (comPort != null) {
+                        if (!comPort.isOpened()) {
+                            comPort.openPort();
+                        }
+                        comPort.setParams(
+                            SerialPort.BAUDRATE_115200,
+                            SerialPort.DATABITS_8,
+                            SerialPort.STOPBITS_1,
+                            SerialPort.PARITY_NONE);
 
-                comPort.hwreset(ComPort.P1_RESET_DELAY);
-                version = hwfind();
+                        comPort.hwreset(ComPort.P1_RESET_DELAY);
+                        version = hwfind();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
 
                 if (version == 0) {
                     if (comPort != null && !discoverDevice) {

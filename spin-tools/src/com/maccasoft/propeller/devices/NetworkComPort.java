@@ -220,13 +220,12 @@ public class NetworkComPort extends ComPort {
     }
 
     @Override
-    public void closePort() throws ComPortException {
+    public void closePort() {
         try {
             removeEventListener();
             socket.close();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-            throw new ComPortException(e.getMessage(), e);
         }
         socket = null;
     }
