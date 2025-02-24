@@ -402,12 +402,28 @@ public class SourceEditorTest {
             + "            nop             ' comment\n"
             + "";
 
-        SourceEditor subject = new SourceEditor(shell);
+        SourceEditor subject = new SourceEditor(shell) {
+
+            @Override
+            int[] getBlockTabStops(Node node) {
+                return new int[] {
+                    4, 8, 12, 16, 20
+                };
+            }
+
+        };
         subject.setTokenMarker(new SourceTokenMarker(null) {
 
             @Override
             public void refreshTokens(String text) {
+
             }
+
+            @Override
+            public Node getSectionAtLine(int lineIndex) {
+                return new Node();
+            }
+
         });
         subject.styledText.setText(text);
         subject.styledText.setCaretOffset(4);
@@ -433,12 +449,28 @@ public class SourceEditorTest {
             + "                nop         ' comment\n"
             + "";
 
-        SourceEditor subject = new SourceEditor(shell);
+        SourceEditor subject = new SourceEditor(shell) {
+
+            @Override
+            int[] getBlockTabStops(Node node) {
+                return new int[] {
+                    4, 8, 12, 16, 20
+                };
+            }
+
+        };
         subject.setTokenMarker(new SourceTokenMarker(null) {
 
             @Override
             public void refreshTokens(String text) {
+
             }
+
+            @Override
+            public Node getSectionAtLine(int lineIndex) {
+                return new Node();
+            }
+
         });
         subject.styledText.setText(text);
         subject.styledText.setCaretOffset(16);
@@ -456,12 +488,28 @@ public class SourceEditorTest {
             + "            nop             ' comment\n"
             + "";
 
-        SourceEditor subject = new SourceEditor(shell);
+        SourceEditor subject = new SourceEditor(shell) {
+
+            @Override
+            int[] getBlockTabStops(Node node) {
+                return new int[] {
+                    4, 8, 12, 16, 20
+                };
+            }
+
+        };
         subject.setTokenMarker(new SourceTokenMarker(null) {
 
             @Override
             public void refreshTokens(String text) {
+
             }
+
+            @Override
+            public Node getSectionAtLine(int lineIndex) {
+                return new Node();
+            }
+
         });
         subject.styledText.setText(text);
         subject.styledText.setCaretOffset(4 + 8);
@@ -487,12 +535,28 @@ public class SourceEditorTest {
             + "        nop                 ' comment\n"
             + "";
 
-        SourceEditor subject = new SourceEditor(shell);
+        SourceEditor subject = new SourceEditor(shell) {
+
+            @Override
+            int[] getBlockTabStops(Node node) {
+                return new int[] {
+                    4, 8, 12, 16, 20
+                };
+            }
+
+        };
         subject.setTokenMarker(new SourceTokenMarker(null) {
 
             @Override
             public void refreshTokens(String text) {
+
             }
+
+            @Override
+            public Node getSectionAtLine(int lineIndex) {
+                return new Node();
+            }
+
         });
         subject.styledText.setText(text);
         subject.styledText.setCaretOffset(16);
@@ -501,6 +565,110 @@ public class SourceEditorTest {
         subject.doBacktab();
         Assertions.assertEquals(expected, subject.styledText.getText());
         Assertions.assertEquals(16 - 4, subject.styledText.getCaretOffset());
+    }
+
+    @Test
+    public void testTabSelectionEmptyLine() throws Exception {
+        String text = ""
+            + "PUB main()\n"
+            + "\n"
+            + "    if a > 0\n"
+            + "        a--\n"
+            + "\n"
+            + "    repeat\n"
+            + "\n"
+            + "";
+        String expected = ""
+            + "PUB main()\n"
+            + "\n"
+            + "      if a > 0\n"
+            + "          a--\n"
+            + "\n"
+            + "    repeat\n"
+            + "\n"
+            + "";
+
+        SourceEditor subject = new SourceEditor(shell) {
+
+            @Override
+            int[] getBlockTabStops(Node node) {
+                return new int[] {
+                    2, 4, 6, 8, 10
+                };
+            }
+
+        };
+        subject.setTokenMarker(new SourceTokenMarker(null) {
+
+            @Override
+            public void refreshTokens(String text) {
+
+            }
+
+            @Override
+            public Node getSectionAtLine(int lineIndex) {
+                return new Node();
+            }
+
+        });
+        subject.styledText.setText(text);
+        subject.styledText.setSelection(text.indexOf("\n") + 1, text.indexOf("a--") + 3);
+
+        subject.doTab();
+
+        Assertions.assertEquals(expected, subject.styledText.getText());
+    }
+
+    @Test
+    public void testBacktabSelectionEmptyLine() throws Exception {
+        String text = ""
+            + "PUB main()\n"
+            + "\n"
+            + "        if a > 0\n"
+            + "            a--\n"
+            + "\n"
+            + "    repeat\n"
+            + "\n"
+            + "";
+        String expected = ""
+            + "PUB main()\n"
+            + "\n"
+            + "      if a > 0\n"
+            + "          a--\n"
+            + "\n"
+            + "    repeat\n"
+            + "\n"
+            + "";
+
+        SourceEditor subject = new SourceEditor(shell) {
+
+            @Override
+            int[] getBlockTabStops(Node node) {
+                return new int[] {
+                    2, 4, 6, 8, 10
+                };
+            }
+
+        };
+        subject.setTokenMarker(new SourceTokenMarker(null) {
+
+            @Override
+            public void refreshTokens(String text) {
+
+            }
+
+            @Override
+            public Node getSectionAtLine(int lineIndex) {
+                return new Node();
+            }
+
+        });
+        subject.styledText.setText(text);
+        subject.styledText.setSelection(text.indexOf("\n") + 1, text.indexOf("a--") + 3);
+
+        subject.doBacktab();
+
+        Assertions.assertEquals(expected, subject.styledText.getText());
     }
 
     void adjust(TokenMarker entry, TextChangingEvent event) {

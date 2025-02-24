@@ -1666,38 +1666,43 @@ public class SourceEditor {
     }
 
     void doTab() {
+        String lineDelimiter = styledText.getLineDelimiter();
+
         Point editorSelection = styledText.getSelection();
         if (editorSelection.x != editorSelection.y) {
             int lineNumber = styledText.getLineAtOffset(editorSelection.x);
             int lineStart = styledText.getOffsetAtLine(lineNumber);
             String text = styledText.getText(editorSelection.x, editorSelection.y - 1);
 
-            int[] tabStops = null;
-            Node node = tokenMarker.getSectionAtLine(lineNumber);
-            if (node != null) {
-                tabStops = Preferences.getInstance().getTabStops(node.getClass());
-            }
-
             int currentColumn = Integer.MAX_VALUE;
 
             int index = 0;
             do {
-                int count = index == 0 ? editorSelection.x - styledText.getOffsetAtLine(lineNumber) : 0;
-                while (index < text.length() && text.charAt(index) == ' ') {
-                    count++;
-                    index++;
-                }
-                currentColumn = Math.min(currentColumn, count);
+                int eol = text.indexOf(lineDelimiter, index);
 
-                index = text.indexOf(styledText.getLineDelimiter(), index);
+                if (eol != -1 && (eol - index) > lineDelimiter.length()) {
+                    int count = index == 0 ? editorSelection.x - styledText.getOffsetAtLine(lineNumber) : 0;
+                    while (index < text.length() && text.charAt(index) == ' ') {
+                        count++;
+                        index++;
+                    }
+                    currentColumn = Math.min(currentColumn, count);
+                }
+
+                index = eol;
                 if (index != -1) {
-                    index += styledText.getLineDelimiter().length();
+                    index += lineDelimiter.length();
                 }
             } while (index != -1 && index < text.length());
 
             boolean tabstopMatch = false;
             int nextTabColumn = currentColumn + 1;
 
+            int[] tabStops = null;
+            Node node = tokenMarker.getSectionAtLine(lineNumber);
+            if (node != null) {
+                tabStops = getBlockTabStops(node);
+            }
             if (tabStops != null) {
                 for (int i = 0; i < tabStops.length; i++) {
                     if (tabStops[i] >= nextTabColumn) {
@@ -1720,19 +1725,29 @@ public class SourceEditor {
 
             index = 0;
             do {
-                while (index < text.length() && text.charAt(index) == ' ') {
-                    index++;
+                int eol = text.indexOf(lineDelimiter, index);
+                if (eol == -1) {
+                    eol = text.length();
                 }
-                text = text.substring(0, index) + spaces + text.substring(index);
 
-                if (index == 0 && editorSelection.x != lineStart) {
-                    textSelection.x += spaces.length();
+                if ((eol - index) > lineDelimiter.length()) {
+                    int position = index;
+                    while (position < text.length() && text.charAt(position) == ' ') {
+                        position++;
+                    }
+                    text = text.substring(0, position) + spaces + text.substring(position);
+
+                    if (index == 0 && editorSelection.x != lineStart) {
+                        textSelection.x += spaces.length();
+                    }
+                    textSelection.y += spaces.length();
+
+                    eol = text.indexOf(lineDelimiter, index);
                 }
-                textSelection.y += spaces.length();
 
-                index = text.indexOf(styledText.getLineDelimiter(), index);
+                index = eol;
                 if (index != -1) {
-                    index += styledText.getLineDelimiter().length();
+                    index += lineDelimiter.length();
                 }
 
             } while (index != -1 && index < text.length());
@@ -1757,7 +1772,7 @@ public class SourceEditor {
 
             Node node = tokenMarker.getSectionAtLine(lineNumber);
             if (node != null) {
-                int[] tabStops = Preferences.getInstance().getTabStops(node.getClass());
+                int[] tabStops = getBlockTabStops(node);
                 if (tabStops != null) {
                     for (int i = 0; i < tabStops.length; i++) {
                         if (tabStops[i] >= nextTabColumn) {
@@ -1815,38 +1830,46 @@ public class SourceEditor {
     }
 
     void doBacktab() {
+        String lineDelimiter = styledText.getLineDelimiter();
+
         Point editorSelection = styledText.getSelection();
         if (editorSelection.x != editorSelection.y) {
             int lineNumber = styledText.getLineAtOffset(editorSelection.x);
             int lineStart = styledText.getOffsetAtLine(lineNumber);
             String text = styledText.getText(lineStart, editorSelection.y - 1);
 
-            int[] tabStops = null;
-            Node node = tokenMarker.getSectionAtLine(lineNumber);
-            if (node != null) {
-                tabStops = Preferences.getInstance().getTabStops(node.getClass());
-            }
-
             int currentColumn = Integer.MAX_VALUE;
 
             int index = 0;
             do {
-                int count = index == 0 ? editorSelection.x - styledText.getOffsetAtLine(lineNumber) : 0;
-                while (index < text.length() && text.charAt(index) == ' ') {
-                    count++;
-                    index++;
+                int eol = text.indexOf(lineDelimiter, index);
+                if (eol == -1) {
+                    eol = text.length();
                 }
-                currentColumn = Math.min(currentColumn, count);
 
-                index = text.indexOf(styledText.getLineDelimiter(), index);
+                if ((eol - index) > lineDelimiter.length()) {
+                    int count = index == 0 ? editorSelection.x - styledText.getOffsetAtLine(lineNumber) : 0;
+                    while (index < text.length() && text.charAt(index) == ' ') {
+                        count++;
+                        index++;
+                    }
+                    currentColumn = Math.min(currentColumn, count);
+                }
+
+                index = eol;
                 if (index != -1) {
-                    index += styledText.getLineDelimiter().length();
+                    index += lineDelimiter.length();
                 }
             } while (index != -1 && index < text.length());
 
             boolean tabstopMatch = false;
             int previousTabColumn = currentColumn - 1;
 
+            int[] tabStops = null;
+            Node node = tokenMarker.getSectionAtLine(lineNumber);
+            if (node != null) {
+                tabStops = getBlockTabStops(node);
+            }
             if (tabStops != null) {
                 for (int i = tabStops.length - 1; i >= 0; i--) {
                     if (previousTabColumn >= tabStops[i]) {
@@ -1877,19 +1900,23 @@ public class SourceEditor {
 
             index = 0;
             do {
+                int count = 0;
                 while (index < text.length() && text.charAt(index) == ' ') {
+                    count++;
                     index++;
                 }
-                text = text.substring(0, index - spaces) + text.substring(index);
-
-                if ((lineStart + index) == editorSelection.x && editorSelection.x != lineStart) {
-                    textSelection.x -= spaces;
+                if (count >= spaces) {
+                    text = text.substring(0, index - spaces) + text.substring(index);
+                    if ((lineStart + index) == editorSelection.x && editorSelection.x != lineStart) {
+                        textSelection.x -= spaces;
+                    }
+                    textSelection.y -= spaces;
+                    index -= spaces;
                 }
-                textSelection.y -= spaces;
 
-                index = text.indexOf(styledText.getLineDelimiter(), index - spaces);
+                index = text.indexOf(lineDelimiter, index);
                 if (index != -1) {
-                    index += styledText.getLineDelimiter().length();
+                    index += lineDelimiter.length();
                 }
 
             } while (index != -1 && index < text.length());
@@ -1920,7 +1947,7 @@ public class SourceEditor {
 
             Node node = tokenMarker.getSectionAtLine(lineNumber);
             if (node != null) {
-                int[] tabStops = Preferences.getInstance().getTabStops(node.getClass());
+                int[] tabStops = getBlockTabStops(node);
                 if (tabStops != null) {
                     for (int i = tabStops.length - 1; i >= 0; i--) {
                         if (previousTabColumn >= tabStops[i]) {
@@ -1986,6 +2013,10 @@ public class SourceEditor {
                 styledText.setRedraw(true);
             }
         }
+    }
+
+    int[] getBlockTabStops(Node node) {
+        return preferences.getTabStops(node.getClass());
     }
 
     public IContentProposal[] computeProposals(String contents, int position) {
