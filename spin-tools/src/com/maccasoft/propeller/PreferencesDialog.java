@@ -107,6 +107,8 @@ public class PreferencesDialog extends Dialog {
     TabStops pubTabStops;
     TabStops datTabStops;
     Button showSectionsBackground;
+    Button[] hoverDocModifiers;
+    Button[] hyperlinkModifiers;
 
     PathList spin1Paths;
     Button spin1RemoveUnusedMethods;
@@ -1016,6 +1018,48 @@ public class PreferencesDialog extends Dialog {
             }
         });
 
+        boolean IS_MAC = "cocoa".equals(Platform.PLATFORM);
+
+        group = new Composite(composite, SWT.NONE);
+        layout = new GridLayout(IS_MAC ? 5 : 4, false);
+        layout.marginHeight = layout.marginWidth = 0;
+        group.setLayout(layout);
+        group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false, 2, 1));
+
+        label = new Label(group, SWT.NONE);
+        label.setText("Code Navigation Modifiers");
+        hyperlinkModifiers = new Button[IS_MAC ? 4 : 3];
+        hyperlinkModifiers[0] = new Button(group, SWT.CHECK);
+        hyperlinkModifiers[0].setText(IS_MAC ? "COMMAND" : "CTRL");
+        hyperlinkModifiers[1] = new Button(group, SWT.CHECK);
+        hyperlinkModifiers[1].setText("SHIFT");
+        hyperlinkModifiers[2] = new Button(group, SWT.CHECK);
+        hyperlinkModifiers[2].setText("ALT");
+        if (IS_MAC) {
+            hyperlinkModifiers[3] = new Button(group, SWT.CHECK);
+            hyperlinkModifiers[3].setText("CTRL");
+        }
+        for (int i = 0; i < hyperlinkModifiers.length; i++) {
+            hyperlinkModifiers[i].setSelection((preferences.getHyperlinkModifiers() & (1 << i)) != 0);
+        }
+
+        label = new Label(group, SWT.NONE);
+        label.setText("Hover Doc Modifiers");
+        hoverDocModifiers = new Button[IS_MAC ? 4 : 3];
+        hoverDocModifiers[0] = new Button(group, SWT.CHECK);
+        hoverDocModifiers[0].setText(IS_MAC ? "COMMAND" : "CTRL");
+        hoverDocModifiers[1] = new Button(group, SWT.CHECK);
+        hoverDocModifiers[1].setText("SHIFT");
+        hoverDocModifiers[2] = new Button(group, SWT.CHECK);
+        hoverDocModifiers[2].setText("ALT");
+        if (IS_MAC) {
+            hoverDocModifiers[3] = new Button(group, SWT.CHECK);
+            hoverDocModifiers[3].setText("CTRL");
+        }
+        for (int i = 0; i < hoverDocModifiers.length; i++) {
+            hoverDocModifiers[i].setSelection((preferences.getHoverDocModifiers() & (1 << i)) != 0);
+        }
+
         Group tabStopGroup = new Group(composite, SWT.NONE);
         tabStopGroup.setText("Tab stops");
         tabStopGroup.setLayout(new GridLayout(2, false));
@@ -1856,6 +1900,8 @@ public class PreferencesDialog extends Dialog {
 
     @Override
     protected void okPressed() {
+        int value;
+
         String[] items = roots.getItems();
         File[] elements = new File[items.length];
         for (int i = 0; i < elements.length; i++) {
@@ -1868,6 +1914,22 @@ public class PreferencesDialog extends Dialog {
         preferences.setTabStops(ObjectsNode.class, objTabStops.getSelection());
         preferences.setTabStops(MethodNode.class, pubTabStops.getSelection());
         preferences.setTabStops(DataNode.class, datTabStops.getSelection());
+
+        value = 0;
+        for (int i = 0; i < hyperlinkModifiers.length; i++) {
+            if (hyperlinkModifiers[i].getSelection()) {
+                value |= 1 << i;
+            }
+        }
+        preferences.setHyperlinkModifiers(value);
+
+        value = 0;
+        for (int i = 0; i < hoverDocModifiers.length; i++) {
+            if (hoverDocModifiers[i].getSelection()) {
+                value |= 1 << i;
+            }
+        }
+        preferences.setHoverDocModifiers(value);
 
         preferences.setSpin1LibraryPath(spin1Paths.getFileItems());
         preferences.setSpin1Template(spin1Template.getSelection());

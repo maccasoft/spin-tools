@@ -85,6 +85,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 
 import com.maccasoft.propeller.SourceTokenMarker.TokenId;
@@ -137,6 +138,9 @@ public class SourceEditor {
     int currentLine;
     Color currentLineBackground;
     boolean highlightCurrentLine;
+
+    int hoverDocModifiers;
+    int hyperlinkModifiers;
 
     Caret insertCaret;
     Caret overwriteCaret;
@@ -239,6 +243,12 @@ public class SourceEditor {
                     highlightCurrentLine = (Boolean) evt.getNewValue();
                     styledText.redraw();
                     break;
+                case Preferences.PROP_HOVERDOC_MOD:
+                    hoverDocModifiers = getModifiers(preferences.getHoverDocModifiers());
+                    break;
+                case Preferences.PROP_HYPERLINK_MOD:
+                    hyperlinkModifiers = getModifiers(preferences.getHyperlinkModifiers());
+                    break;
                 case Preferences.PROP_THEME:
                     applyTheme((String) evt.getNewValue());
                     styledText.redraw();
@@ -256,6 +266,19 @@ public class SourceEditor {
     NavigationTarget hoverTarget;
 
     Preferences preferences;
+
+    Listener modifiersFilterListener = new Listener() {
+
+        @Override
+        public void handleEvent(Event event) {
+            if (event.widget == styledText) {
+                if (event.button == 1 && hoverTarget != null) {
+                    event.stateMask &= ~hyperlinkModifiers;
+                }
+            }
+        }
+
+    };
 
     public SourceEditor(Composite parent) {
         display = parent.getDisplay();
@@ -332,6 +355,9 @@ public class SourceEditor {
         showIndentLines = preferences.getShowIndentLines();
         indentLinesSize = preferences.getIndentLinesSize();
         highlightCurrentLine = preferences.getHighlightCurrentLine();
+
+        hyperlinkModifiers = getModifiers(preferences.getHyperlinkModifiers());
+        hoverDocModifiers = getModifiers(preferences.getHoverDocModifiers());
 
         preferences.addPropertyChangeListener(preferencesChangeListener);
 
@@ -424,14 +450,22 @@ public class SourceEditor {
 
             @Override
             public void keyPressed(KeyEvent e) {
-                if (e.keyCode == SWT.CTRL) {
-                    if (popupWindow != null) {
-                        popupWindow.dispose();
-                        popupWindow = null;
-                        popupMouseBounds = null;
-                        styledText.setFocus();
-                    }
+                int stateMask = e.stateMask;
+                if ((e.keyCode & SWT.MODIFIER_MASK) != 0) {
+                    stateMask |= e.keyCode & SWT.MODIFIER_MASK;
+                }
 
+                if ((e.keyCode & hoverDocModifiers) != 0 && (stateMask & hoverDocModifiers) == hoverDocModifiers) {
+                    if (popupWindow == null && mousePosition != null) {
+                        Event event = new Event();
+                        event.x = mousePosition.x;
+                        event.y = mousePosition.y;
+                        event.stateMask = stateMask;
+                        styledText.notifyListeners(SWT.MouseHover, event);
+                    }
+                }
+
+                if ((e.keyCode & hyperlinkModifiers) != 0 && (stateMask & hyperlinkModifiers) == hyperlinkModifiers) {
                     if (!mouseButton1 && mousePosition != null) {
                         hoverHighlight = true;
                         int offset = styledText.getOffsetAtPoint(mousePosition);
@@ -449,7 +483,18 @@ public class SourceEditor {
 
             @Override
             public void keyReleased(KeyEvent e) {
-                if (e.keyCode == SWT.CTRL) {
+                int stateMask = e.stateMask;
+
+                if ((e.keyCode & hoverDocModifiers) != 0 && (stateMask & hoverDocModifiers) == hoverDocModifiers) {
+                    if (popupWindow != null) {
+                        popupWindow.dispose();
+                        popupWindow = null;
+                        popupMouseBounds = null;
+                        styledText.setFocus();
+                    }
+                }
+
+                if ((e.keyCode & hyperlinkModifiers) != 0) {
                     if (!mouseButton1) {
                         hoverHighlight = false;
                         styledText.setCursor(null);
@@ -623,6 +668,12 @@ public class SourceEditor {
                 }
 
                 if (hoverTarget != null) {
+                    if (popupWindow != null) {
+                        popupWindow.dispose();
+                        popupWindow = null;
+                        popupMouseBounds = null;
+                    }
+
                     final SourceElement element = hoverTarget;
                     display.asyncExec(new Runnable() {
 
@@ -632,8 +683,8 @@ public class SourceEditor {
                         }
 
                     });
-
                     hoverTarget = null;
+
                     styledText.setCursor(null);
                     styledText.redraw();
                 }
@@ -667,7 +718,7 @@ public class SourceEditor {
                     return;
                 }
 
-                hoverHighlight = (e.stateMask & SWT.CTRL) != 0;
+                hoverHighlight = (e.stateMask & SWT.MODIFIER_MASK) == hyperlinkModifiers;
                 hoverTarget = null;
 
                 if (hoverHighlight) {
@@ -690,7 +741,10 @@ public class SourceEditor {
 
             @Override
             public void mouseHover(MouseEvent e) {
-                if (popupWindow != null || hoverHighlight) {
+                if (popupWindow != null) {
+                    return;
+                }
+                if ((e.stateMask & SWT.MODIFIER_MASK) != hoverDocModifiers) {
                     return;
                 }
 
@@ -1137,16 +1191,22 @@ public class SourceEditor {
             }
         });
 
+        display.addFilter(SWT.MouseDown, modifiersFilterListener);
+
         styledText.addDisposeListener(new DisposeListener() {
 
             @Override
             public void widgetDisposed(DisposeEvent e) {
+                display.removeFilter(SWT.MouseDown, modifiersFilterListener);
                 preferences.removePropertyChangeListener(preferencesChangeListener);
+
                 font.dispose();
                 fontBold.dispose();
                 fontItalic.dispose();
                 fontBoldItalic.dispose();
+
                 currentLineBackground.dispose();
+
                 insertCaret.dispose();
                 overwriteCaret.dispose();
                 alignCaret.dispose();
@@ -1156,6 +1216,25 @@ public class SourceEditor {
         container.setTabList(new Control[] {
             styledText
         });
+    }
+
+    int getModifiers(int value) {
+        int rc = 0;
+
+        if ((value & 0x01) != 0) {
+            rc |= SWT.MOD1;
+        }
+        if ((value & 0x02) != 0) {
+            rc |= SWT.MOD2;
+        }
+        if ((value & 0x04) != 0) {
+            rc |= SWT.MOD3;
+        }
+        if ((value & 0x08) != 0) {
+            rc |= SWT.MOD4;
+        }
+
+        return rc;
     }
 
     void updateFontsFrom(FontData fontData) {

@@ -52,6 +52,8 @@ public class Preferences {
     public static final String PROP_SHOW_SECTIONS_BACKGROUND = "showSectionsBackground";
     public static final String PROP_HIGHLIGHT_CURRENT_LINE = "highlightCurrentLine";
     public static final String PROP_SHOW_EDITOR_OUTLINE = "showEditorOutline";
+    public static final String PROP_HOVERDOC_MOD = "hoverDocModifiers";
+    public static final String PROP_HYPERLINK_MOD = "hyperlinkModifiers";
     public static final String PROP_LRU = "lru";
     public static final String PROP_TOP_OBJECT = "topObject";
     public static final String PROP_PORT = "port";
@@ -167,6 +169,9 @@ public class Preferences {
             highlightCurrentLine = true;
             reloadOpenTabs = true;
 
+            hoverDocModifiers = 0;
+            hyperlinkModifiers = 1;
+
             spin1RemovedUnusedMethods = true;
             spin1WarnUnusedMethods = true;
             spin1WarnUnusedMethodVariables = true;
@@ -200,6 +205,9 @@ public class Preferences {
         public int indentLinesSize;
         public boolean showEditorOutline;
         public boolean highlightCurrentLine;
+        public int hoverDocModifiers;
+        public int hyperlinkModifiers;
+
         public String port;
 
         public String[] spin1LibraryPath;
@@ -772,6 +780,22 @@ public class Preferences {
 
     public void setHighlightCurrentLine(boolean highlightCurrentLine) {
         changeSupport.firePropertyChange(PROP_HIGHLIGHT_CURRENT_LINE, preferences.highlightCurrentLine, preferences.highlightCurrentLine = highlightCurrentLine);
+    }
+
+    public int getHoverDocModifiers() {
+        return preferences.hoverDocModifiers;
+    }
+
+    public void setHoverDocModifiers(int hoverDocModifiers) {
+        changeSupport.firePropertyChange(PROP_HOVERDOC_MOD, preferences.hoverDocModifiers, preferences.hoverDocModifiers = hoverDocModifiers);
+    }
+
+    public int getHyperlinkModifiers() {
+        return preferences.hyperlinkModifiers;
+    }
+
+    public void setHyperlinkModifiers(int hyperlinkModifiers) {
+        changeSupport.firePropertyChange(PROP_HYPERLINK_MOD, preferences.hyperlinkModifiers, preferences.hyperlinkModifiers = hyperlinkModifiers);
     }
 
     public List<String> getLru() {
