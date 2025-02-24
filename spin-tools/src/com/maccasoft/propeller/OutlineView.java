@@ -132,7 +132,9 @@ public class OutlineView {
 
                 @Override
                 public boolean visitFunction(FunctionNode node) {
-                    list.add(node);
+                    if (node.getIdentifier() != null) {
+                        list.add(node);
+                    }
                     return true;
                 }
 
@@ -234,6 +236,9 @@ public class OutlineView {
                 else if (element instanceof DirectiveNode.DefineNode) {
                     sb = decorateDefines((DirectiveNode.DefineNode) element);
                 }
+                else if (element instanceof ConstantNode) {
+                    sb = decorateConstant((ConstantNode) element);
+                }
                 else if (element instanceof TypeDefinitionNode) {
                     sb = decorateTypeDefinition((TypeDefinitionNode) element);
                 }
@@ -280,11 +285,17 @@ public class OutlineView {
 
         @Override
         public int hashCode(Object element) {
+            if (element == null) {
+                return 0;
+            }
             return getPath(element).hashCode();
         }
 
         @Override
         public boolean equals(Object a, Object b) {
+            if (a == null || b == null) {
+                return false;
+            }
             return getPath(a).equals(getPath(b));
         }
 
@@ -510,6 +521,7 @@ public class OutlineView {
     }
 
     StyledStringBuilder decorateMethod(MethodNode node) {
+        boolean first;
         StyledStringBuilder sb = new StyledStringBuilder();
 
         if (node.getType() != null) {
@@ -519,28 +531,28 @@ public class OutlineView {
 
         if (node.getName() != null) {
             sb.append(node.getName().getText());
+        }
 
-            sb.append("(");
-            boolean first = true;
-            for (Node child : node.getParameters()) {
+        first = true;
+        sb.append("(");
+        for (Node child : node.getParameters()) {
+            if (!first) {
+                sb.append(", ");
+            }
+            sb.append(child.getText(), methodLocalStyle);
+            first = false;
+        }
+        sb.append(")");
+
+        if (node.getReturnVariables().size() != 0) {
+            first = true;
+            sb.append(" : ");
+            for (Node child : node.getReturnVariables()) {
                 if (!first) {
                     sb.append(", ");
                 }
-                sb.append(child.getText(), methodLocalStyle);
+                sb.append(child.getText(), methodReturnStyle);
                 first = false;
-            }
-            sb.append(")");
-
-            if (node.getReturnVariables().size() != 0) {
-                sb.append(" : ");
-                first = true;
-                for (Node child : node.getReturnVariables()) {
-                    if (!first) {
-                        sb.append(", ");
-                    }
-                    sb.append(child.getText(), methodReturnStyle);
-                    first = false;
-                }
             }
         }
 
@@ -567,9 +579,15 @@ public class OutlineView {
         StyledStringBuilder sb = new StyledStringBuilder();
 
         sb.append("# ", blockStyle);
-        if (node.getIdentifier() != null) {
-            sb.append(node.getIdentifier().getText());
-        }
+        sb.append(node.getIdentifier().getText());
+
+        return sb;
+    }
+
+    StyledStringBuilder decorateConstant(ConstantNode node) {
+        StyledStringBuilder sb = new StyledStringBuilder();
+
+        sb.append(node.getIdentifier().getText());
 
         return sb;
     }
@@ -587,27 +605,27 @@ public class OutlineView {
 
         if (node.getIdentifier() != null) {
             sb.append(node.getIdentifier().getText(), blockStyle);
+        }
 
-            sb.append("(");
-            boolean first = true;
-            for (FunctionNode.ParameterNode child : node.getParameters()) {
-                if (!first) {
-                    sb.append(", ");
-                }
-                if (child.type != null) {
-                    sb.append(child.type.getText(), methodLocalStyle);
-                }
-                else {
-                    sb.append(child.identifier.getText(), methodLocalStyle);
-                }
-                first = false;
+        sb.append("(");
+        boolean first = true;
+        for (FunctionNode.ParameterNode child : node.getParameters()) {
+            if (!first) {
+                sb.append(", ");
             }
-            sb.append(")");
+            if (child.type != null) {
+                sb.append(child.type.getText(), methodLocalStyle);
+            }
+            else {
+                sb.append(child.identifier.getText(), methodLocalStyle);
+            }
+            first = false;
+        }
+        sb.append(")");
 
-            if (node.getType() != null) {
-                sb.append(" : ");
-                sb.append(node.getType().getText(), methodReturnStyle);
-            }
+        if (node.getType() != null) {
+            sb.append(" : ");
+            sb.append(node.getType().getText(), methodReturnStyle);
         }
 
         return sb;
