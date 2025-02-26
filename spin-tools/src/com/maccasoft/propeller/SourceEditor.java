@@ -2576,6 +2576,42 @@ public class SourceEditor {
                     index++;
                 }
             }
+            else if (itemName.indexOf('.') == -1) {
+                int index = parent.getChilds().indexOf(lineNode);
+                while (index > 0) {
+                    if (parent.getChild(index) instanceof DataLineNode) {
+                        DataLineNode obj = (DataLineNode) parent.getChild(index);
+                        if (obj.instruction != null && "NAMESP".equalsIgnoreCase(obj.instruction.getText())) {
+                            break;
+                        }
+                        if (obj.label != null) {
+                            if (!obj.label.getText().startsWith(tokenMarker.localLabelPrefix)) {
+                                if (obj.label.equals(itemName, tokenMarker.isCaseSensitive())) {
+                                    return new NavigationTarget(token, obj.label);
+                                }
+                            }
+                        }
+                    }
+                    index--;
+                }
+                index = parent.getChilds().indexOf(lineNode) + 1;
+                while (index < parent.getChildCount()) {
+                    if (parent.getChild(index) instanceof DataLineNode) {
+                        DataLineNode obj = (DataLineNode) parent.getChild(index);
+                        if (obj.instruction != null && "NAMESP".equalsIgnoreCase(obj.instruction.getText())) {
+                            break;
+                        }
+                        if (obj.label != null) {
+                            if (!obj.label.getText().startsWith(tokenMarker.localLabelPrefix)) {
+                                if (obj.label.equals(itemName, tokenMarker.isCaseSensitive())) {
+                                    return new NavigationTarget(token, obj.label);
+                                }
+                            }
+                        }
+                    }
+                    index++;
+                }
+            }
 
             String namespace = "";
 
@@ -2586,8 +2622,13 @@ public class SourceEditor {
                             continue;
                         }
                         DataLineNode obj = (DataLineNode) child;
-                        if (obj.instruction != null && "NAMESP".equalsIgnoreCase(obj.instruction.getText()) && obj.parameters.size() == 1) {
-                            namespace = obj.parameters.get(0).getText() + ".";
+                        if (obj.instruction != null && "NAMESP".equalsIgnoreCase(obj.instruction.getText())) {
+                            if (obj.parameters.size() != 0) {
+                                namespace = obj.parameters.get(0).getText() + ".";
+                            }
+                            else {
+                                namespace = "";
+                            }
                         }
                         if (obj.label != null) {
                             String qualifiedName = namespace + obj.label.getText();
@@ -2821,6 +2862,14 @@ public class SourceEditor {
                     continue;
                 }
                 DataLineNode obj = (DataLineNode) child;
+                if (obj.instruction != null && "NAMESP".equalsIgnoreCase(obj.instruction.getText())) {
+                    if (obj.parameters.size() != 0) {
+                        namespace = obj.parameters.get(0).getText() + ".";
+                    }
+                    else {
+                        namespace = "";
+                    }
+                }
                 if (obj.label != null) {
                     String qualifiedName = namespace + obj.label.getText();
                     if (tokenMarker.isCaseSensitive() ? qualifiedName.equals(itemName) : qualifiedName.equalsIgnoreCase(itemName)) {

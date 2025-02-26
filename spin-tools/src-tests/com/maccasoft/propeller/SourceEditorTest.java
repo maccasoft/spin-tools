@@ -1099,4 +1099,37 @@ public class SourceEditorTest {
         Assertions.assertEquals(offset2, target2.start);
     }
 
+    @Test
+    public void testGetNamespaceLabelNavigationTarget() throws Exception {
+        String text = ""
+            + "DAT     org $000\n"
+            + "        namesp  proga\n"
+            + "        mov     label, #VALUE1\n"
+            + "\n"
+            + "label   long    0\n"
+            + "\n"
+            + "        namesp  progb\n"
+            + "        mov     label, #VALUE2\n"
+            + "\n"
+            + ".a      long    0\n"
+            + "";
+
+        SourceEditor subject = new SourceEditor(shell);
+        subject.setTokenMarker(new Spin2TokenMarker(null));
+
+        subject.styledText.setText(text);
+        subject.tokenMarker.refreshTokens(subject.styledText.getText());
+
+        int offset1 = text.indexOf("label, #VALUE1");
+        NavigationTarget target1 = subject.getNavigationTarget(offset1 + 1);
+        Assertions.assertNotNull(target1);
+        Assertions.assertEquals(4, target1.line);
+        Assertions.assertEquals(0, target1.column);
+        Assertions.assertEquals(offset1, target1.start);
+
+        int offset2 = text.indexOf("label, #VALUE2");
+        NavigationTarget target2 = subject.getNavigationTarget(offset2 + 1);
+        Assertions.assertNull(target2);
+    }
+
 }

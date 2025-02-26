@@ -80,9 +80,9 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
                         try {
                             if (lineNode.instruction != null && "NAMESP".equalsIgnoreCase(lineNode.instruction.getText())) {
                                 datScope = new Context(scope);
+                                lineScope = datScope;
                             }
-
-                            if (lineNode.label != null && !lineNode.label.getText().startsWith(":")) {
+                            else if (lineNode.label != null && !lineNode.label.getText().startsWith(":")) {
                                 lineScope = datScope;
                             }
 

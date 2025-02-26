@@ -86,9 +86,9 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
                         try {
                             if (lineNode.instruction != null && "NAMESP".equalsIgnoreCase(lineNode.instruction.getText())) {
                                 datScope = new Context(scope);
+                                localScope = datScope;
                             }
-
-                            if (lineNode.label != null && !lineNode.label.getText().startsWith(".")) {
+                            else if (lineNode.label != null && !lineNode.label.getText().startsWith(".")) {
                                 localScope = datScope;
                             }
 
