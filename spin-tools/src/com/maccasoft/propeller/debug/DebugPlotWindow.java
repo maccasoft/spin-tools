@@ -366,7 +366,6 @@ public class DebugPlotWindow extends DebugWindow {
                 case "OPACITY":
                     if (iter.hasNextNumber()) {
                         opacity = iter.nextNumber() & 255;
-                        imageGc.setAlpha(opacity);
                     }
                     break;
 
@@ -713,6 +712,7 @@ public class DebugPlotWindow extends DebugWindow {
                                         while (y < imageSize.y) {
                                             int x1 = x;
                                             while (x1 < imageSize.x) {
+                                                imageGc.setAlpha(255);
                                                 imageGc.drawImage(layer[id], x1, y);
                                                 x1 += rect.width;
                                             }
@@ -736,6 +736,7 @@ public class DebugPlotWindow extends DebugWindow {
                                         int y1 = iter.hasNextNumber() ? iter.nextNumber() : y0;
 
                                         if (id >= 0 && id < layer.length && layer[id] != null) {
+                                            imageGc.setAlpha(255);
                                             imageGc.drawImage(layer[id], x0, y0, width, height, x1, y1, width, height);
                                         }
                                     }
@@ -744,6 +745,7 @@ public class DebugPlotWindow extends DebugWindow {
                             break;
                         }
                         if (layer[id] != null) {
+                            imageGc.setAlpha(255);
                             imageGc.drawImage(layer[id], 0, 0);
                         }
                     }
