@@ -1402,7 +1402,7 @@ public class SerialTerminal {
                 setTerminalType(preferences.getTerminalType());
                 try {
                     if (comPort != null) {
-                        comPort.hwreset();
+                        comPort.hwreset(ComPort.Control.DtrRts, 0);
                     }
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -1654,7 +1654,7 @@ public class SerialTerminal {
         terminalType.select(0);
 
         try {
-            comPort.hwreset(ComPort.P2_RESET_DELAY);
+            comPort.hwreset(preferences.getP2ResetControl(), ComPort.P2_RESET_DELAY);
             comPort.writeBytes(new byte[] {
                 '>', ' ', 0x04
             });
@@ -1668,7 +1668,7 @@ public class SerialTerminal {
         terminalType.select(0);
 
         try {
-            comPort.hwreset(ComPort.P2_RESET_DELAY);
+            comPort.hwreset(preferences.getP2ResetControl(), ComPort.P2_RESET_DELAY);
             comPort.writeBytes(new byte[] {
                 '>', ' ', 0x1B
             });

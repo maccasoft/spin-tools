@@ -231,7 +231,7 @@ public class NetworkComPort extends ComPort {
     }
 
     @Override
-    public void hwreset(int delay) { /* delay ignored */
+    public void hwreset(Control control, int delay) { /* control and delay ignored */
         try {
             StringBuilder sb = new StringBuilder(128);
             sb.append("http://");

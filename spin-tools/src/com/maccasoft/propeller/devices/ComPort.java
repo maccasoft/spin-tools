@@ -13,10 +13,23 @@ package com.maccasoft.propeller.devices;
 
 public abstract class ComPort {
 
-    public static final int DEFAULT_RESET_DELAY = 100;
-
     public static final int P1_RESET_DELAY = 90;
     public static final int P2_RESET_DELAY = 15;
+
+    public static enum Control {
+        DtrRts, Dtr, Rts;
+
+        public static Control valueOf(int ordinal) {
+            if (ordinal == Dtr.ordinal()) {
+                return Dtr;
+            }
+            if (ordinal == Rts.ordinal()) {
+                return Rts;
+            }
+            return DtrRts;
+        }
+
+    }
 
     public abstract String getName();
 
@@ -32,11 +45,7 @@ public abstract class ComPort {
 
     public abstract void closePort();
 
-    public void hwreset() {
-        hwreset(DEFAULT_RESET_DELAY);
-    }
-
-    public abstract void hwreset(int delay);
+    public abstract void hwreset(Control control, int delay);
 
     public abstract int readByteWithTimeout(int timeout) throws ComPortException;
 

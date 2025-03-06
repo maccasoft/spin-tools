@@ -80,14 +80,24 @@ public class SerialComPort extends ComPort {
     }
 
     @Override
-    public void hwreset(int delay) {
+    public void hwreset(Control control, int delay) {
         try {
-            serialPort.setDTR(true);
-            serialPort.setRTS(true);
+            if (control == Control.DtrRts || control == Control.Dtr) {
+                serialPort.setDTR(true);
+            }
+            if (control == Control.DtrRts || control == Control.Rts) {
+                serialPort.setRTS(true);
+            }
             Thread.sleep(5);
-            serialPort.setDTR(false);
-            serialPort.setRTS(false);
-            Thread.sleep(delay);
+            if (control == Control.DtrRts || control == Control.Dtr) {
+                serialPort.setDTR(false);
+            }
+            if (control == Control.DtrRts || control == Control.Rts) {
+                serialPort.setRTS(false);
+            }
+            if (delay != 0) {
+                Thread.sleep(delay);
+            }
             serialPort.purgePort(SerialPort.PURGE_TXCLEAR | SerialPort.PURGE_RXCLEAR);
         } catch (Exception e) {
             // Do nothing

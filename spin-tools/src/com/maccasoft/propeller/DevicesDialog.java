@@ -13,6 +13,7 @@ package com.maccasoft.propeller;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
@@ -323,6 +324,9 @@ public class DevicesDialog extends Dialog {
 
     void scheduleUpdate() {
         List<Object> list = new ArrayList<>();
+        ComPort.Control p1ResetControl = Preferences.getInstance().getP1ResetControl();
+        ComPort.Control p2ResetControl = Preferences.getInstance().getP2ResetControl();
+        Set<String> blacklistedPorts = Preferences.getInstance().getBlacklistedPorts();
 
         viewer.getControl().setEnabled(false);
 
@@ -342,6 +346,10 @@ public class DevicesDialog extends Dialog {
             public void run() {
                 String[] portNames = SerialPortList.getPortNames();
                 for (int i = 0; i < portNames.length; i++) {
+                    if (blacklistedPorts.contains(portNames[i])) {
+                        continue;
+                    }
+
                     ComPort serialPort = null;
                     if (selection != null) {
                         if (selection.getPortName().equals(portNames[i])) {
@@ -447,7 +455,7 @@ public class DevicesDialog extends Dialog {
                 byte[] buffer;
 
                 comPort.setParams(115200, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
-                comPort.hwreset(ComPort.P1_RESET_DELAY);
+                comPort.hwreset(p1ResetControl, ComPort.P1_RESET_DELAY);
 
                 // send the calibration pulse
                 comPort.writeInt(0xF9);
@@ -527,19 +535,32 @@ public class DevicesDialog extends Dialog {
                 return bit;
             }
 
+            static final String PROP_CHK = "> \r> Prop_Chk 0 0 0 0\r";
+            static final String PROP_VER = "Prop_Ver ";
+
             protected int hwfind2(SerialComPort comPort) throws ComPortException {
-                String result = new String();
+                String result = null;
 
                 comPort.setParams(2000000, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
-                comPort.hwreset(ComPort.P2_RESET_DELAY);
+                comPort.hwreset(p2ResetControl, ComPort.P2_RESET_DELAY);
 
-                comPort.writeString("> \r> Prop_Chk 0 0 0 0\r");
+                for (int i = 0; i < 3; i++) {
+                    comPort.writeString(PROP_CHK);
+                    if ((result = readStringWithTimeout(comPort, 50)) != null) {
+                        break;
+                    }
+                }
 
-                readStringWithTimeout(comPort, 50);
+                if (result == null) {
+                    return 0;
+                }
 
-                result = readStringWithTimeout(comPort, 50);
-                if (result.startsWith("Prop_Ver ")) {
-                    return result.charAt(9);
+                for (int i = 0; i < 3; i++) {
+                    if ((result = readStringWithTimeout(comPort, 50)) != null) {
+                        if (result.startsWith(PROP_VER)) {
+                            return result.charAt(9);
+                        }
+                    }
                 }
 
                 return 0;

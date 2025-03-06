@@ -32,6 +32,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.maccasoft.propeller.devices.ComPort;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.FunctionNode;
@@ -186,6 +187,9 @@ public class Preferences {
             console = new ConsolePreferences();
 
             packageLru = new ArrayList<>();
+
+            autoDiscoverDevice = true;
+            blacklistedPorts = new ArrayList<>();
         }
 
         public Bounds window;
@@ -255,6 +259,13 @@ public class Preferences {
 
         public List<PackageFile> packageLru;
 
+        public String p1ResetControl;
+        public int p1ResetDelay;
+        public String p2ResetControl;
+        public int p2ResetDelay;
+
+        public boolean autoDiscoverDevice;
+        public List<String> blacklistedPorts;
     }
 
     @JsonInclude(Include.NON_DEFAULT)
@@ -1259,6 +1270,73 @@ public class Preferences {
         while (preferences.packageLru.size() > 10) {
             preferences.packageLru.remove(preferences.packageLru.size() - 1);
         }
+    }
+
+    public ComPort.Control getP1ResetControl() {
+        if ("dtr".equalsIgnoreCase(preferences.p1ResetControl)) {
+            return ComPort.Control.Dtr;
+        }
+        if ("rts".equalsIgnoreCase(preferences.p1ResetControl)) {
+            return ComPort.Control.Rts;
+        }
+        return ComPort.Control.DtrRts;
+    }
+
+    public void setP1ResetControl(ComPort.Control p1ResetControl) {
+        switch (p1ResetControl) {
+            case Dtr:
+                preferences.p1ResetControl = "dtr";
+                break;
+            case Rts:
+                preferences.p1ResetControl = "rts";
+                break;
+            default:
+                preferences.p1ResetControl = "dtr-rts";
+                break;
+        }
+    }
+
+    public ComPort.Control getP2ResetControl() {
+        if ("dtr".equalsIgnoreCase(preferences.p2ResetControl)) {
+            return ComPort.Control.Dtr;
+        }
+        if ("rts".equalsIgnoreCase(preferences.p2ResetControl)) {
+            return ComPort.Control.Rts;
+        }
+        return ComPort.Control.DtrRts;
+    }
+
+    public void setP2ResetControl(ComPort.Control p2ResetControl) {
+        switch (p2ResetControl) {
+            case Dtr:
+                preferences.p2ResetControl = "dtr";
+                break;
+            case Rts:
+                preferences.p2ResetControl = "rts";
+                break;
+            default:
+                preferences.p2ResetControl = "dtr-rts";
+                break;
+        }
+    }
+
+    public Set<String> getBlacklistedPorts() {
+        Set<String> result = new HashSet<>();
+        result.addAll(preferences.blacklistedPorts);
+        return result;
+    }
+
+    public void setBlacklistedPorts(Set<String> blacklistedPorts) {
+        preferences.blacklistedPorts.clear();
+        preferences.blacklistedPorts.addAll(blacklistedPorts);
+    }
+
+    public boolean isAutoDiscoverDevice() {
+        return preferences.autoDiscoverDevice;
+    }
+
+    public void setAutoDiscoverDevice(boolean autoDiscoverDevice) {
+        preferences.autoDiscoverDevice = autoDiscoverDevice;
     }
 
     public void save() throws IOException {

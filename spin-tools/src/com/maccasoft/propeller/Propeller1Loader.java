@@ -67,11 +67,12 @@ public class Propeller1Loader extends PropellerLoader {
     double floatClockSpeed = 80000000.0;
 
     ComPort comPort;
+    boolean shared;
+
     byte LFSR;
 
-    private boolean shared;
-
-    public Propeller1Loader(ComPort serialPort, boolean shared) {
+    public Propeller1Loader(ComPort serialPort, ComPort.Control resetControl, boolean shared) {
+        super(resetControl);
         this.comPort = serialPort;
         this.shared = shared;
     }
@@ -120,7 +121,7 @@ public class Propeller1Loader extends PropellerLoader {
                             SerialPort.STOPBITS_1,
                             SerialPort.PARITY_NONE);
 
-                        comPort.hwreset(ComPort.P1_RESET_DELAY);
+                        comPort.hwreset(getResetControl(), ComPort.P1_RESET_DELAY);
                         version = hwfind();
                     }
                 } catch (Exception e) {
@@ -128,8 +129,8 @@ public class Propeller1Loader extends PropellerLoader {
                 }
 
                 if (version == 0) {
-                    if (comPort != null && !discoverDevice) {
-                        throw new ComPortException("No propeller chip on port " + comPort.getPortName());
+                    if (!discoverDevice) {
+                        throw new ComPortException("No propeller chip on port " + (comPort != null ? comPort.getPortName() : "unknown"));
                     }
                     SerialComPort discoveredComPort = discover();
                     if (discoveredComPort == null) {
@@ -202,6 +203,9 @@ public class Propeller1Loader extends PropellerLoader {
             if (comPort != null && portNames[i].equals(comPort.getPortName())) {
                 continue;
             }
+            if (isBlacklisted(portNames[i])) {
+                continue;
+            }
             SerialComPort serialComPort = new SerialComPort(portNames[i]);
             try {
                 serialComPort.openPort();
@@ -213,7 +217,7 @@ public class Propeller1Loader extends PropellerLoader {
 
                 try {
                     comPort = serialComPort;
-                    comPort.hwreset(ComPort.P1_RESET_DELAY);
+                    comPort.hwreset(getResetControl(), ComPort.P1_RESET_DELAY);
                     if (hwfind() != 0) {
                         comPort = currentComPort;
                         return serialComPort;

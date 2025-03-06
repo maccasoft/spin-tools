@@ -495,7 +495,7 @@ public class ConsoleView {
     public void setVisible(boolean visible) {
         if (enabled && console.getVisible() && !visible && preferences.getConsoleResetDeviceOnClose()) {
             if (serialPort != null && serialPort.isOpened()) {
-                serialPort.hwreset();
+                serialPort.hwreset(preferences.getP2ResetControl(), 0);
             }
         }
         console.setVisible(visible);

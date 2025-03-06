@@ -105,6 +105,12 @@ public class SpinCompiler {
             terminalOptions.addOption(Option.builder("T").desc("enter PST terminal mode after upload (optional baud rate)").hasArg().argName("baud").optionalArg(true).build());
             options.addOptionGroup(terminalOptions);
 
+            OptionGroup resetOptions = new OptionGroup();
+            resetOptions.addOption(new Option("dtr", false, "use DTR for reset"));
+            resetOptions.addOption(new Option("rts", false, "use RTS for reset"));
+            resetOptions.addOption(new Option(null, "reset-control", true, "set reset control dtr-rts (default), dtr or rts"));
+            options.addOptionGroup(resetOptions);
+
             options.addOption(new Option("W", false, "show all discovered wifi modules"));
             options.addOption(new Option(null, "reset-pin", true, "set wifi module reset pin number"));
 
@@ -350,6 +356,17 @@ public class SpinCompiler {
                     }
                 }
 
+                ComPort.Control resetControl;
+                if (cmd.hasOption("dtr") || "dtr".equals(cmd.getOptionValue("reset-control"))) {
+                    resetControl = ComPort.Control.Dtr;
+                }
+                else if (cmd.hasOption("rts") || "rts".equals(cmd.getOptionValue("reset-control"))) {
+                    resetControl = ComPort.Control.Rts;
+                }
+                else {
+                    resetControl = ComPort.Control.DtrRts;
+                }
+
                 AtomicBoolean error = new AtomicBoolean();
 
                 int flags = 0;
@@ -358,7 +375,7 @@ public class SpinCompiler {
                 if (compiler instanceof Spin1Compiler) {
                     flags = cmd.hasOption("f") ? Propeller1Loader.DOWNLOAD_RUN_EEPROM : Propeller1Loader.DOWNLOAD_RUN_BINARY;
 
-                    loader = new Propeller1Loader(serialPort, true) {
+                    loader = new Propeller1Loader(serialPort, resetControl, true) {
 
                         @Override
                         protected void bufferUpload(int type, byte[] binaryImage, String text) throws ComPortException {
@@ -413,7 +430,7 @@ public class SpinCompiler {
                 else if (compiler instanceof Spin2Compiler) {
                     flags = cmd.hasOption("f") ? Propeller2Loader.DOWNLOAD_RUN_FLASH : Propeller2Loader.DOWNLOAD_RUN_RAM;
 
-                    loader = new Propeller2Loader(serialPort, true) {
+                    loader = new Propeller2Loader(serialPort, resetControl, true) {
 
                         @Override
                         protected void bufferUpload(int type, byte[] binaryImage, String text) throws ComPortException {

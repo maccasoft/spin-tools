@@ -14,8 +14,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -28,6 +30,7 @@ import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.resource.StringConverter;
 import org.eclipse.jface.viewers.ArrayContentProvider;
+import org.eclipse.jface.viewers.CheckboxTableViewer;
 import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -70,6 +73,7 @@ import org.eclipse.swt.widgets.Text;
 
 import com.maccasoft.propeller.Preferences.ExternalTool;
 import com.maccasoft.propeller.Preferences.RemoteDevice;
+import com.maccasoft.propeller.devices.ComPort;
 import com.maccasoft.propeller.devices.DeviceDescriptor;
 import com.maccasoft.propeller.devices.NetworkUtils;
 import com.maccasoft.propeller.internal.BusyIndicator;
@@ -80,6 +84,8 @@ import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.VariablesNode;
+
+import jssc.SerialPortList;
 
 public class PreferencesDialog extends Dialog {
 
@@ -144,6 +150,11 @@ public class PreferencesDialog extends Dialog {
     ToolsList externalTools;
 
     RemoteList remoteDevices;
+
+    Combo p1ResetControl;
+    Combo p2ResetControl;
+    Button autoDiscoverDevice;
+    CheckboxTableViewer blacklistedPortsViewer;
 
     Preferences preferences;
     FontData defaultFont;
@@ -472,6 +483,7 @@ public class PreferencesDialog extends Dialog {
         createConsolePage(stack);
         createEditorPage(stack);
         createRemoteDevicesPage(stack);
+        createSerialPage(stack);
         createSpin1CompilerPage(stack);
         createSpin2CompilerPage(stack);
         createTerminalPage(stack);
@@ -1748,6 +1760,76 @@ public class PreferencesDialog extends Dialog {
         });
     }
 
+    void createSerialPage(Composite parent) {
+        Composite composite = createPage(parent, "Serial");
+
+        Label label = new Label(composite, SWT.NONE);
+        label.setText("P1 reset control");
+        label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
+
+        p1ResetControl = new Combo(composite, SWT.READ_ONLY | SWT.DROP_DOWN);
+        p1ResetControl.setItems("DTR+RTS", "DTR", "RTS");
+        switch (preferences.getP1ResetControl()) {
+            case Dtr:
+                p1ResetControl.select(1);
+                break;
+            case Rts:
+                p1ResetControl.select(2);
+                break;
+            default:
+                p1ResetControl.select(0);
+                break;
+        }
+
+        label = new Label(composite, SWT.NONE);
+        label.setText("P2 reset control");
+        label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
+
+        p2ResetControl = new Combo(composite, SWT.READ_ONLY | SWT.DROP_DOWN);
+        p2ResetControl.setItems("DTR+RTS", "DTR", "RTS");
+        switch (preferences.getP2ResetControl()) {
+            case Dtr:
+                p2ResetControl.select(1);
+                break;
+            case Rts:
+                p2ResetControl.select(2);
+                break;
+            default:
+                p2ResetControl.select(0);
+                break;
+        }
+
+        label = new Label(composite, SWT.NONE);
+
+        autoDiscoverDevice = new Button(composite, SWT.CHECK);
+        autoDiscoverDevice.setText("Automatic device discovery");
+        autoDiscoverDevice.setSelection(preferences.isAutoDiscoverDevice());
+
+        label = new Label(composite, SWT.NONE);
+        label.setText("Ignored serial ports");
+        label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
+
+        blacklistedPortsViewer = CheckboxTableViewer.newCheckList(composite, SWT.CHECK | SWT.SINGLE | SWT.BORDER | SWT.V_SCROLL);
+        blacklistedPortsViewer.setContentProvider(new ArrayContentProvider());
+        blacklistedPortsViewer.setLabelProvider(new LabelProvider());
+        GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true, 2, 1);
+        gridData.widthHint = convertWidthInCharsToPixels(50);
+        gridData.heightHint = convertHeightInCharsToPixels(10) + blacklistedPortsViewer.getTable().getBorderWidth() * 2;
+        blacklistedPortsViewer.getControl().setLayoutData(gridData);
+
+        java.util.List<String> list = new ArrayList<>();
+        list.addAll(Arrays.asList(SerialPortList.getPortNames()));
+        for (String s : preferences.getBlacklistedPorts()) {
+            if (!list.contains(s)) {
+                list.add(s);
+            }
+        }
+        Collections.sort(list);
+
+        blacklistedPortsViewer.setInput(list);
+        blacklistedPortsViewer.setCheckedElements(preferences.getBlacklistedPorts().toArray());
+    }
+
     Composite createPage(Composite parent, String text) {
         Composite composite = new Composite(parent, SWT.NONE);
         GridLayout layout = new GridLayout(2, false);
@@ -1943,6 +2025,38 @@ public class PreferencesDialog extends Dialog {
 
         preferences.setExternalTools(externalTools.getItems());
         preferences.setRemoteDevices(remoteDevices.getItems());
+
+        switch (p1ResetControl.getSelectionIndex()) {
+            case 1:
+                preferences.setP1ResetControl(ComPort.Control.Dtr);
+                break;
+            case 2:
+                preferences.setP1ResetControl(ComPort.Control.Rts);
+                break;
+            default:
+                preferences.setP1ResetControl(ComPort.Control.DtrRts);
+                break;
+        }
+
+        switch (p2ResetControl.getSelectionIndex()) {
+            case 1:
+                preferences.setP2ResetControl(ComPort.Control.Dtr);
+                break;
+            case 2:
+                preferences.setP2ResetControl(ComPort.Control.Rts);
+                break;
+            default:
+                preferences.setP2ResetControl(ComPort.Control.DtrRts);
+                break;
+        }
+
+        preferences.setAutoDiscoverDevice(autoDiscoverDevice.getSelection());
+
+        Set<String> set = new HashSet<>();
+        for (Object o : blacklistedPortsViewer.getCheckedElements()) {
+            set.add(o.toString());
+        }
+        preferences.setBlacklistedPorts(set);
 
         if (!Objects.equals(oldTheme, preferences.getTheme())) {
             MessageDialog.openWarning(getShell(), SpinTools.APP_TITLE, "Close and reopen the application for the theme changes to take full effect.");

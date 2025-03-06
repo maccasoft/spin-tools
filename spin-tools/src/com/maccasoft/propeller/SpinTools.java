@@ -99,6 +99,7 @@ import com.maccasoft.propeller.Preferences.PackageFile;
 import com.maccasoft.propeller.Preferences.SearchPreferences;
 import com.maccasoft.propeller.devices.ComPort;
 import com.maccasoft.propeller.devices.ComPortException;
+import com.maccasoft.propeller.devices.ComPortList;
 import com.maccasoft.propeller.devices.NetworkComPort;
 import com.maccasoft.propeller.devices.SerialComPort;
 import com.maccasoft.propeller.internal.BusyIndicator;
@@ -152,7 +153,7 @@ public class SpinTools {
     ToolItem consoleToolItem;
 
     SourcePool sourcePool;
-    SerialPortList serialPortList;
+    ComPortList comPortList;
 
     Preferences preferences;
 
@@ -540,19 +541,19 @@ public class SpinTools {
 
         sourcePool = new SourcePool();
 
-        serialPortList = new SerialPortList(preferences);
+        comPortList = new ComPortList(preferences);
 
         String portName = preferences.getPort();
         if (portName != null) {
-            serialPortList.setSelection(portName);
+            comPortList.setSelection(portName);
         }
-        ComPort selection = serialPortList.getSelection();
+        ComPort selection = comPortList.getSelection();
         if (selection != null) {
             statusLine.setPortText(selection.getName());
             statusLine.setPortToolTipText(selection.getDescription());
         }
 
-        serialPortList.addPropertyChangeListener(new PropertyChangeListener() {
+        comPortList.addPropertyChangeListener(new PropertyChangeListener() {
 
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
@@ -1762,7 +1763,7 @@ public class SpinTools {
 
                             @Override
                             public void run() {
-                                newTerminal.setSerialPort(serialPortList.getSelection());
+                                newTerminal.setSerialPort(comPortList.getSelection());
                             }
 
                         });
@@ -2885,7 +2886,7 @@ public class SpinTools {
 
                         @Override
                         public void run() {
-                            newTerminal.setSerialPort(serialPortList.getSelection());
+                            newTerminal.setSerialPort(comPortList.getSelection());
                         }
 
                     });
@@ -3009,7 +3010,7 @@ public class SpinTools {
                 .replace("${file.name}", fileName) //
                 .replace("${file.loc}", fileLoc);
 
-            ComPort comPort = serialPortList.getSelection();
+            ComPort comPort = comPortList.getSelection();
             if (comPort instanceof SerialComPort) {
                 cmdline = cmdline.replace("${serial}", comPort.getPortName());
             }
@@ -3112,7 +3113,7 @@ public class SpinTools {
 
             @Override
             public void menuShown(MenuEvent e) {
-                serialPortList.fillMenu(menu);
+                comPortList.fillMenu(menu);
             }
 
             @Override
@@ -3245,7 +3246,7 @@ public class SpinTools {
             serialTerminal.setFocus();
         }
 
-        serialPort = serialPortList.getSelection();
+        serialPort = comPortList.getSelection();
 
         if (serialTerminal != null) {
             serialTerminal.setSerialPort(null);
@@ -3288,7 +3289,7 @@ public class SpinTools {
         }
 
         if (uploadPort != null) {
-            serialPortList.setSelection(uploadPort);
+            comPortList.setSelection(uploadPort);
             preferences.setPort(uploadPort.getPortName());
             statusLine.setPortText(uploadPort.getName());
             statusLine.setPortToolTipText(uploadPort.getDescription());
@@ -3333,7 +3334,7 @@ public class SpinTools {
                     monitor.beginTask(text, IProgressMonitor.UNKNOWN);
 
                     if (obj instanceof Spin1Object) {
-                        loader = new Propeller1Loader(comPort, serialPortShared) {
+                        loader = new Propeller1Loader(comPort, preferences.getP1ResetControl(), serialPortShared) {
 
                             @Override
                             protected void bufferUpload(int type, byte[] binaryImage, String text) throws ComPortException {
@@ -3345,7 +3346,7 @@ public class SpinTools {
                         flags = writeToFlash ? Propeller1Loader.DOWNLOAD_RUN_EEPROM : Propeller1Loader.DOWNLOAD_RUN_BINARY;
                     }
                     else {
-                        loader = new Propeller2Loader(comPort, serialPortShared) {
+                        loader = new Propeller2Loader(comPort, preferences.getP2ResetControl(), serialPortShared) {
 
                             @Override
                             protected void bufferUpload(int type, byte[] binaryImage, String text) throws ComPortException {
@@ -3381,6 +3382,8 @@ public class SpinTools {
 
                     });
 
+                    loader.setBlacklistedPorts(preferences.getBlacklistedPorts());
+
                     Display.getDefault().syncExec(new Runnable() {
 
                         @Override
@@ -3390,7 +3393,7 @@ public class SpinTools {
                     });
 
                     byte[] image = obj.getBinary();
-                    port.set(loader.upload(image, flags, true));
+                    port.set(loader.upload(image, flags, preferences.isAutoDiscoverDevice()));
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -3461,7 +3464,7 @@ public class SpinTools {
                 serialTerminal.setSerialPort(selectedPort);
             }
 
-            serialPortList.setSelection(selectedPort);
+            comPortList.setSelection(selectedPort);
             preferences.setPort(selectedPort.getPortName());
             statusLine.setPortText(selectedPort.getName());
             statusLine.setPortToolTipText(selectedPort.getDescription());
