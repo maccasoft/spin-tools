@@ -151,9 +151,8 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         Spin2StatementNode child = node.getChild(i);
 
                         boolean isByte = false;
-                        if (child.getType() == Token.STRING) {
-                            String s = child.getText();
-                            os.write(s.substring(1, s.length() - 1).getBytes());
+                        if (child.getType() == Token.STRING && child.getText().startsWith("\"")) {
+                            os.write(getString(child.getToken()).getBytes());
                             isByte = true;
                         }
                         else {
@@ -734,10 +733,15 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                             source.add(new Bytecode(context, code_range, node.getText().toUpperCase()));
                         }
                         else if (arg.getType() == Token.STRING) {
-                            String s = arg.getText().substring(1, arg.getText().length() - 1);
-                            for (int x = 0; x < s.length(); x++) {
-                                source.add(new Constant(context, new CharacterLiteral(s.substring(x, x + 1))));
-                                source.add(new Bytecode(context, code, node.getText().toUpperCase()));
+                            if (arg.getText().startsWith("\"")) {
+                                String s = getString(arg.getToken());
+                                for (int x = 0; x < s.length(); x++) {
+                                    source.add(new Constant(context, new CharacterLiteral(s.substring(x, x + 1))));
+                                    source.add(new Bytecode(context, code, node.getText().toUpperCase()));
+                                }
+                            }
+                            else {
+                                logMessage(new CompilerException("invalid argument", arg.getToken()));
                             }
                         }
                         else {
@@ -758,8 +762,12 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     ByteArrayOutputStream sb = new ByteArrayOutputStream();
                     for (Spin2StatementNode child : node.getChilds()) {
                         if (child.getType() == Token.STRING) {
-                            String s = child.getText().substring(1);
-                            sb.write(s.substring(0, s.length() - 1).getBytes());
+                            if (child.getText().startsWith("\"")) {
+                                sb.write(getString(child.getToken()).getBytes());
+                            }
+                            else {
+                                logMessage(new CompilerException("invalid argument", child.getToken()));
+                            }
                         }
                         else {
                             Expression expression;
@@ -976,8 +984,12 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     ByteArrayOutputStream os = new ByteArrayOutputStream();
                     for (int i = 0; i < node.getChildCount(); i++) {
                         if (node.getChild(i).getType() == Token.STRING && i == node.getChildCount() - 1) {
-                            text = node.getChild(i).getText();
-                            text = text.substring(1, text.length() - 1);
+                            if (node.getChild(i).getText().startsWith("\"")) {
+                                text = getString(node.getChild(i).getToken());
+                            }
+                            else {
+                                logMessage(new CompilerException("invalid string argument", node.getChild(i).getToken()));
+                            }
                             break;
                         }
                         try {
@@ -1930,11 +1942,10 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             return new NumberLiteral(node.getText());
         }
         else if (node.getType() == Token.STRING) {
-            String s = node.getText();
-            if (!s.startsWith("\"")) {
+            if (!node.getText().startsWith("\"")) {
                 throw new RuntimeException("not a constant (" + node.getText() + ")");
             }
-            return new CharacterLiteral(s.substring(1, s.length() - 1));
+            return new CharacterLiteral(getString(node.getToken()));
         }
 
         String nodeText = node.getText();
@@ -3680,18 +3691,22 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 }
 
                 if (child.getType() == Token.STRING) {
-                    String s = child.getText().substring(1);
-                    byte[] b = s.substring(0, s.length() - 1).getBytes();
-                    for (int i = 0; i < b.length; i++) {
-                        os.write(b[i]);
-                        if ("WORD".equalsIgnoreCase(overrideType)) {
-                            os.write(0x00);
+                    if (child.getText().startsWith("\"")) {
+                        byte[] b = getString(child.getToken()).getBytes();
+                        for (int i = 0; i < b.length; i++) {
+                            os.write(b[i]);
+                            if ("WORD".equalsIgnoreCase(overrideType)) {
+                                os.write(0x00);
+                            }
+                            else if ("LONG".equalsIgnoreCase(overrideType)) {
+                                os.write(0x00);
+                                os.write(0x00);
+                                os.write(0x00);
+                            }
                         }
-                        else if ("LONG".equalsIgnoreCase(overrideType)) {
-                            os.write(0x00);
-                            os.write(0x00);
-                            os.write(0x00);
-                        }
+                    }
+                    else {
+                        logMessage(new CompilerException("invalid argument", child.getToken()));
                     }
                 }
                 else {

@@ -3281,6 +3281,43 @@ class Spin2ObjectCompilerTest {
     }
 
     @Test
+    void testSendStrings() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    SEND(\"Hello\")\n"
+            + "    SEND(@\"Hello\")\n"
+            + "    SEND(@\\\"Hello\")\n"
+            + "    SEND(%\"4321\")\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       29 00 00 00    End\n"
+            + "' PUB main() | a\n"
+            + "00008 00008       01             (stack size)\n"
+            + "'     SEND(\"Hello\")\n"
+            + "00009 00009       0E 05 48 65 6C SEND_BYTES\n"
+            + "0000E 0000E       6C 6F\n"
+            + "'     SEND(@\"Hello\")\n"
+            + "00010 00010       9E 06 48 65 6C STRING\n"
+            + "00015 00015       6C 6F 00\n"
+            + "00018 00018       0D             SEND\n"
+            + "'     SEND(@\\\"Hello\")\n"
+            + "00019 00019       9E 06 48 65 6C STRING\n"
+            + "0001E 0001E       6C 6F 00\n"
+            + "00021 00021       0D             SEND\n"
+            + "'     SEND(%\"4321\")\n"
+            + "00022 00022       46 34 33 32 31 CONSTANT (%\"4321\")\n"
+            + "00027 00027       0D             SEND\n"
+            + "00028 00028       04             RETURN\n"
+            + "00029 00029       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testSendAssign() throws Exception {
         String text = ""
             + "PUB main()\n"
