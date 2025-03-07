@@ -872,7 +872,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     }
                 }
                 else {
-                    if (token.type != 0) {
+                    if (token.type != Token.KEYWORD) {
                         logMessage(new CompilerException("expecting identifier", token));
                         break;
                     }
@@ -985,7 +985,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 }
                 identifier = iter.next();
             }
-            if (identifier.type != 0 && identifier.type != Token.KEYWORD) {
+            if (identifier.type != Token.KEYWORD) {
                 logMessage(new CompilerException("expecting identifier", identifier));
                 return;
             }
@@ -1002,7 +1002,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     if (")".equals(member.getText())) {
                         break;
                     }
-                    if (member.type != 0 && member.type != Token.KEYWORD) {
+                    if (member.type != Token.KEYWORD) {
                         logMessage(new CompilerException("expecting identifier", member));
                         break;
                     }
@@ -1019,14 +1019,14 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                             break;
                         }
                         member = iter.next();
-                        if (member.type != 0 && member.type != Token.KEYWORD) {
+                        if (member.type != Token.KEYWORD) {
                             logMessage(new CompilerException("expecting identifier", member));
                             break;
                         }
                     }
                     else if (iter.hasNext()) {
                         token = iter.peekNext();
-                        if (token.type == 0 || token.type == Token.KEYWORD) {
+                        if (token.type == Token.KEYWORD) {
                             type = member;
                             member = iter.next();
                         }
@@ -1101,7 +1101,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         break;
                     }
                     identifier = iter.next();
-                    if (identifier.type != 0 && identifier.type != Token.KEYWORD) {
+                    if (identifier.type != Token.KEYWORD) {
                         logMessage(new CompilerException("expecting identifier", identifier));
                         break;
                     }
@@ -1154,7 +1154,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
                     if (iter.hasNext()) {
                         Token next = iter.peekNext();
-                        if (next.type == 0 || next.type == Token.KEYWORD) {
+                        if (next.type == Token.KEYWORD) {
                             type = identifier;
                             identifier = iter.next();
                         }
@@ -1368,7 +1368,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 }
                 while (iter.hasNext()) {
                     token = iter.next();
-                    if (token.type != 0) {
+                    if (token.type != Token.KEYWORD) {
                         logMessage(new CompilerException("expecting identifier", token));
                         break;
                     }
@@ -1515,7 +1515,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
             return null;
         }
         token = iter.next();
-        if (token.type != 0) {
+        if (token.type != Token.KEYWORD) {
             logMessage(new CompilerException("expecting identifier", token));
             return null;
         }
@@ -1537,7 +1537,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 }
                 if (iter.hasNext()) {
                     Token next = iter.peekNext();
-                    if (next.type == 0 || next.type == Token.KEYWORD) {
+                    if (next.type == Token.KEYWORD) {
                         type = identifier;
                         identifier = iter.next();
                     }
@@ -1561,7 +1561,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     }
                 }
 
-                if (identifier.type == 0) {
+                if (identifier.type == Token.KEYWORD) {
                     Expression expression = localScope.getLocalSymbol(identifier.getText());
                     if (expression instanceof LocalVariable) {
                         logMessage(new CompilerException("symbol '" + identifier + "' already defined", identifier));
@@ -1646,7 +1646,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
                     if (iter.hasNext()) {
                         Token next = iter.peekNext();
-                        if (next.type == 0 || next.type == Token.KEYWORD) {
+                        if (next.type == Token.KEYWORD) {
                             type = identifier;
                             identifier = iter.next();
                         }
@@ -1670,7 +1670,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         }
                     }
 
-                    if (identifier.type == 0) {
+                    if (identifier.type == Token.KEYWORD) {
                         Expression size = new NumberLiteral(1);
 
                         if (iter.hasNext() && "[".equals(iter.peekNext().getText())) {
@@ -1752,7 +1752,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     Token identifier = iter.next();
                     if (iter.hasNext()) {
                         Token next = iter.peekNext();
-                        if (next.type == 0 || next.type == Token.KEYWORD) {
+                        if (next.type == Token.KEYWORD) {
                             type = identifier;
                             identifier = iter.next();
                         }
@@ -1773,7 +1773,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         }
                     }
 
-                    if (identifier.type == 0) {
+                    if (identifier.type == Token.KEYWORD) {
                         Expression expression = localScope.getLocalSymbol(identifier.getText());
                         if (expression instanceof LocalVariable) {
                             logMessage(new CompilerException("symbol '" + identifier.getText() + "' already defined", identifier));
@@ -2657,7 +2657,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     throw new CompilerException("expecting identifier", new Token(token.getStream(), token.stop));
                 }
                 token = iter.next();
-                if (token.type != 0 && token.type != Token.KEYWORD) {
+                if (token.type != Token.KEYWORD) {
                     throw new CompilerException("invalid identifier", token);
                 }
                 String identifier = token.getText();
@@ -2688,7 +2688,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     throw new CompilerException("expecting identifier", new Token(token.getStream(), token.stop));
                 }
                 Token identifier = iter.next();
-                if (token.type != 0 && token.type != Token.KEYWORD) {
+                if (token.type != Token.KEYWORD) {
                     throw new CompilerException("invalid identifier", identifier);
                 }
                 skip = !(scope.isDefined(identifier.getText()) || scope.hasSymbol(identifier.getText()));
@@ -2712,7 +2712,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     conditionStack.pop();
 
                     Token identifier = iter.next();
-                    if (token.type != 0 && token.type != Token.KEYWORD) {
+                    if (token.type != Token.KEYWORD) {
                         throw new CompilerException("invalid identifier", identifier);
                     }
                     skip = !(scope.isDefined(identifier.getText()) || scope.hasSymbol(identifier.getText()));
@@ -2727,7 +2727,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     throw new CompilerException("expecting identifier", new Token(token.getStream(), token.stop));
                 }
                 Token identifier = iter.next();
-                if (token.type != 0 && token.type != Token.KEYWORD) {
+                if (token.type != Token.KEYWORD) {
                     throw new CompilerException("invalid identifier", identifier);
                 }
                 skip = scope.isDefined(identifier.getText()) || scope.hasSymbol(identifier.getText());
@@ -2751,7 +2751,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     conditionStack.pop();
 
                     Token identifier = iter.next();
-                    if (token.type != 0 && token.type != Token.KEYWORD) {
+                    if (token.type != Token.KEYWORD) {
                         throw new CompilerException("invalid identifier", identifier);
                     }
                     skip = scope.isDefined(identifier.getText()) || scope.hasSymbol(identifier.getText());

@@ -221,14 +221,6 @@ public class Spin1StatementNode {
                     sb.append(childs.get(1));
                 }
                 break;
-            case Token.FUNCTION:
-                sb.append(token.getText());
-                sb.append("(");
-                if (childs.size() != 0) {
-                    sb.append(childs.get(0));
-                }
-                sb.append(")");
-                break;
             default:
                 sb.append(token.getText());
                 for (int i = 0; i < childs.size(); i++) {

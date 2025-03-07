@@ -682,7 +682,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                     }
                 }
                 else {
-                    if (token.type != 0) {
+                    if (token.type != Token.KEYWORD) {
                         logMessage(new CompilerException("expecting identifier", token));
                         break;
                     }
@@ -800,7 +800,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
                 if (iter.hasNext()) {
                     Token next = iter.peekNext();
-                    if (next.type == 0 || next.type == Token.KEYWORD) {
+                    if (next.type == Token.KEYWORD) {
                         type = identifier;
                         identifier = iter.next();
                     }
@@ -1029,7 +1029,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
             return null;
         }
         token = iter.next();
-        if (token.type != 0) {
+        if (token.type != Token.KEYWORD) {
             logMessage(new CompilerException("expecting identifier", token));
             return null;
         }
@@ -1051,7 +1051,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                 if (Spin1Model.isType(identifier.getText())) {
                     logMessage(new CompilerException("type not allowed", identifier));
                 }
-                else if (identifier.type == 0) {
+                else if (identifier.type == Token.KEYWORD) {
                     Expression expression = localScope.getLocalSymbol(identifier.getText());
                     if (expression instanceof LocalVariable) {
                         logMessage(new CompilerException("symbol '" + identifier + "' already defined", identifier));
@@ -1130,7 +1130,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                         }
                         identifier = iter.next();
                     }
-                    if (identifier.type == 0) {
+                    if (identifier.type == Token.KEYWORD) {
                         Expression size = new NumberLiteral(1);
 
                         if (iter.hasNext() && "[".equals(iter.peekNext().getText())) {
@@ -1200,7 +1200,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                     if (Spin1Model.isType(identifier.getText())) {
                         logMessage(new CompilerException("type not allowed", identifier));
                     }
-                    else if (identifier.type == 0) {
+                    else if (identifier.type == Token.KEYWORD) {
                         if (!"RESULT".equalsIgnoreCase(identifier.getText())) {
                             Expression expression = localScope.getLocalSymbol(identifier.getText());
                             if (expression instanceof LocalVariable) {
@@ -1744,7 +1744,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                     throw new CompilerException("expecting identifier", new Token(token.getStream(), token.stop));
                 }
                 token = iter.next();
-                if (token.type != 0 && token.type != Token.KEYWORD) {
+                if (token.type != Token.KEYWORD) {
                     throw new CompilerException("invalid identifier", token);
                 }
                 String identifier = token.getText();
@@ -1775,7 +1775,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                     throw new CompilerException("expecting identifier", new Token(token.getStream(), token.stop));
                 }
                 Token identifier = iter.next();
-                if (token.type != 0 && token.type != Token.KEYWORD) {
+                if (token.type != Token.KEYWORD) {
                     throw new CompilerException("invalid identifier", identifier);
                 }
                 skip = !(scope.isDefined(identifier.getText()) || scope.hasSymbol(identifier.getText()));
@@ -1799,7 +1799,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                     conditionStack.pop();
 
                     Token identifier = iter.next();
-                    if (token.type != 0 && token.type != Token.KEYWORD) {
+                    if (token.type != Token.KEYWORD) {
                         throw new CompilerException("invalid identifier", identifier);
                     }
                     skip = !(scope.isDefined(identifier.getText()) || scope.hasSymbol(identifier.getText()));
@@ -1814,7 +1814,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                     throw new CompilerException("expecting identifier", new Token(token.getStream(), token.stop));
                 }
                 Token identifier = iter.next();
-                if (token.type != 0 && token.type != Token.KEYWORD) {
+                if (token.type != Token.KEYWORD) {
                     throw new CompilerException("invalid identifier", identifier);
                 }
                 skip = scope.isDefined(identifier.getText()) || scope.hasSymbol(identifier.getText());
@@ -1838,7 +1838,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                     conditionStack.pop();
 
                     Token identifier = iter.next();
-                    if (token.type != 0 && token.type != Token.KEYWORD) {
+                    if (token.type != Token.KEYWORD) {
                         throw new CompilerException("invalid identifier", identifier);
                     }
                     skip = scope.isDefined(identifier.getText()) || scope.hasSymbol(identifier.getText());

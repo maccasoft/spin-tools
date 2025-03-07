@@ -276,7 +276,7 @@ public class Spin1CTreeBuilder {
             return node;
         }
 
-        if (token.type == 0 || token.type == Token.KEYWORD || token.type == Token.FUNCTION) {
+        if (token.type == Token.KEYWORD) {
             Spin1StatementNode node = new Spin1StatementNode(next());
             if (peek() != null) {
                 if (".".equals(peek().getText())) {

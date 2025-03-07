@@ -345,7 +345,7 @@ public class Spin2CTreeBuilder {
             return node;
         }
 
-        if (token.type == 0 || token.type == Token.KEYWORD || token.type == Token.FUNCTION) {
+        if (token.type == Token.KEYWORD) {
             Spin2StatementNode node = new Spin2StatementNode(next());
             if (peek() != null) {
                 if (".".equals(peek().getText())) {

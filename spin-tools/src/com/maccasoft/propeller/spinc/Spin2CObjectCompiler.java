@@ -431,7 +431,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                     throw new CompilerException("expecting identifier", new Token(token.getStream(), token.stop));
                 }
                 Token identifier = iter.next();
-                if (token.type != 0 && token.type != Token.KEYWORD) {
+                if (token.type != Token.KEYWORD) {
                     throw new CompilerException("invalid identifier", identifier);
                 }
                 skip = !(scope.isDefined(identifier.getText()) || scope.hasSymbol(identifier.getText()));
@@ -455,7 +455,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                     conditionStack.pop();
 
                     Token identifier = iter.next();
-                    if (token.type != 0 && token.type != Token.KEYWORD) {
+                    if (token.type != Token.KEYWORD) {
                         throw new CompilerException("invalid identifier", identifier);
                     }
                     skip = !(scope.isDefined(identifier.getText()) || scope.hasSymbol(identifier.getText()));
@@ -470,7 +470,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                     throw new CompilerException("expecting identifier", new Token(token.getStream(), token.stop));
                 }
                 Token identifier = iter.next();
-                if (token.type != 0 && token.type != Token.KEYWORD) {
+                if (token.type != Token.KEYWORD) {
                     throw new CompilerException("invalid identifier", identifier);
                 }
                 skip = scope.isDefined(identifier.getText()) || scope.hasSymbol(identifier.getText());
@@ -494,7 +494,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                     conditionStack.pop();
 
                     Token identifier = iter.next();
-                    if (token.type != 0 && token.type != Token.KEYWORD) {
+                    if (token.type != Token.KEYWORD) {
                         throw new CompilerException("invalid identifier", identifier);
                     }
                     skip = scope.isDefined(identifier.getText()) || scope.hasSymbol(identifier.getText());
@@ -615,7 +615,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                 }
                 identifier = iter.next();
             }
-            if (identifier.type != 0 && identifier.type != Token.KEYWORD) {
+            if (identifier.type != Token.KEYWORD) {
                 logMessage(new CompilerException("expecting identifier", identifier));
                 return;
             }
@@ -635,7 +635,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                         }
                         break;
                     }
-                    if (type.type != 0 && type.type != Token.KEYWORD) {
+                    if (type.type != Token.KEYWORD) {
                         logMessage(new CompilerException("expecting type", type));
                         break;
                     }
@@ -652,7 +652,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                         break;
                     }
                     Token member = iter.next();
-                    if (member.type != 0 && member.type != Token.KEYWORD) {
+                    if (member.type != Token.KEYWORD) {
                         logMessage(new CompilerException("expecting identifier", member));
                         break;
                     }

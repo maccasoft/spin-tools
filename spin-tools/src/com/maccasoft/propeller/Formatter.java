@@ -211,7 +211,7 @@ public abstract class Formatter {
             switch (state) {
                 case 1:
                     sb.alignToColumn(sb.tabspaces);
-                    if (token.type == 0 && sb.lastChar() != ' ') {
+                    if (token.type == Token.KEYWORD && sb.lastChar() != ' ') {
                         sb.append(" ");
                     }
                     sb.append(token);
@@ -1064,7 +1064,7 @@ public abstract class Formatter {
         }
         else if ("^".equals(token.getText())) {
             Token nextToken = stream.peekNext();
-            if (token.isAdjacent(nextToken) && nextToken.type == 0) {
+            if (token.isAdjacent(nextToken) && nextToken.type == Token.KEYWORD) {
                 token = token.merge(stream.nextToken());
                 token.type = 0;
             }

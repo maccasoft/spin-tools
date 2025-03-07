@@ -56,13 +56,13 @@ public class Spin1Formatter extends Formatter {
                 token = token.merge(stream.nextToken());
                 nextToken = stream.peekNext();
             }
-            if (token.isAdjacent(nextToken) && nextToken.type == 0) {
+            if (token.isAdjacent(nextToken) && nextToken.type == Token.KEYWORD) {
                 token = token.merge(stream.nextToken());
             }
         }
         else if (":".equals(token.getText())) {
             Token nextToken = stream.peekNext();
-            if (token.isAdjacent(nextToken) && nextToken.type == 0) {
+            if (token.isAdjacent(nextToken) && nextToken.type == Token.KEYWORD) {
                 token = token.merge(stream.nextToken());
             }
         }

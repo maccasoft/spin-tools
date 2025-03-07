@@ -435,7 +435,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                     for (int i = 0; i < node.getChildCount(); i++) {
                         if (isFloat(context, node.getChild(i))) {
                             logMessage(new CompilerException(CompilerException.WARNING, "float to integer conversion", node.getChild(i).getTokens()));
-                            Spin2StatementNode exp = new Spin2StatementNode(new Token(Token.FUNCTION, "round"), true);
+                            Spin2StatementNode exp = new Spin2StatementNode(new Token(Token.KEYWORD, "round"), true);
                             exp.getChilds().add(node.getChild(i));
                             source.addAll(compileConstantExpression(context, method, exp));
                         }
@@ -481,7 +481,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                         throw new RuntimeException("expected " + 1 + " argument(s), found " + actual);
                     }
                     if (!isFloat(context, node.getChild(0))) {
-                        Spin2StatementNode exp = new Spin2StatementNode(new Token(Token.FUNCTION, "float"), true);
+                        Spin2StatementNode exp = new Spin2StatementNode(new Token(Token.KEYWORD, "float"), true);
                         exp.getChilds().add(node.getChild(0));
                         source.addAll(compileConstantExpression(context, method, exp));
                     }
@@ -931,13 +931,13 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                 boolean rightIsFloat = isFloat(context, node.getChild(1));
 
                 if (leftIsFloat && !rightIsFloat) {
-                    Spin2StatementNode exp = new Spin2StatementNode(new Token(Token.FUNCTION, "float"), true);
+                    Spin2StatementNode exp = new Spin2StatementNode(new Token(Token.KEYWORD, "float"), true);
                     exp.getChilds().add(node.getChild(1));
                     source.addAll(compileConstantExpression(context, method, exp));
                 }
                 else if (!leftIsFloat && rightIsFloat) {
                     logMessage(new CompilerException(CompilerException.WARNING, "float to integer conversion", node.getChild(0).getToken()));
-                    Spin2StatementNode exp = new Spin2StatementNode(new Token(Token.FUNCTION, "round"), true);
+                    Spin2StatementNode exp = new Spin2StatementNode(new Token(Token.KEYWORD, "round"), true);
                     exp.getChilds().add(node.getChild(1));
                     source.addAll(compileConstantExpression(context, method, exp));
                 }
@@ -956,13 +956,13 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                 Descriptor desc = assignOperators.get(node.getText());
 
                 if (leftIsFloat && !rightIsFloat) {
-                    Spin2StatementNode exp = new Spin2StatementNode(new Token(Token.FUNCTION, "float"), true);
+                    Spin2StatementNode exp = new Spin2StatementNode(new Token(Token.KEYWORD, "float"), true);
                     exp.getChilds().add(node.getChild(1));
                     source.addAll(compileConstantExpression(context, method, exp));
                 }
                 else if (!leftIsFloat && rightIsFloat) {
                     logMessage(new CompilerException(CompilerException.WARNING, "float to integer conversion", node.getChild(0).getToken()));
-                    Spin2StatementNode exp = new Spin2StatementNode(new Token(Token.FUNCTION, "round"), true);
+                    Spin2StatementNode exp = new Spin2StatementNode(new Token(Token.KEYWORD, "round"), true);
                     exp.getChilds().add(node.getChild(1));
                     source.addAll(compileConstantExpression(context, method, exp));
                 }
@@ -992,7 +992,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                 }
 
                 if (!leftIsFloat && rightIsFloat) {
-                    Spin2StatementNode exp = new Spin2StatementNode(new Token(Token.FUNCTION, "float"), true);
+                    Spin2StatementNode exp = new Spin2StatementNode(new Token(Token.KEYWORD, "float"), true);
                     exp.getChilds().add(node.getChild(0));
                     source.addAll(compileBytecodeExpression(context, method, exp, true));
                 }
@@ -1001,7 +1001,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                 }
 
                 if (leftIsFloat && !rightIsFloat) {
-                    Spin2StatementNode exp = new Spin2StatementNode(new Token(Token.FUNCTION, "float"), true);
+                    Spin2StatementNode exp = new Spin2StatementNode(new Token(Token.KEYWORD, "float"), true);
                     exp.getChilds().add(node.getChild(1));
                     source.addAll(compileConstantExpression(context, method, exp));
                 }
@@ -2349,13 +2349,13 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                     boolean rightIsFloat = isFloat(context, node.getChild(i));
 
                     if (leftIsFloat && !rightIsFloat) {
-                        Spin2StatementNode exp = new Spin2StatementNode(new Token(Token.FUNCTION, "float"), true);
+                        Spin2StatementNode exp = new Spin2StatementNode(new Token(Token.KEYWORD, "float"), true);
                         exp.getChilds().add(node.getChild(i));
                         source.addAll(compileConstantExpression(context, method, exp));
                     }
                     else if (!leftIsFloat && rightIsFloat) {
                         logMessage(new CompilerException(CompilerException.WARNING, "float to integer conversion", node.getChild(i).getTokens()));
-                        Spin2StatementNode exp = new Spin2StatementNode(new Token(Token.FUNCTION, "round"), true);
+                        Spin2StatementNode exp = new Spin2StatementNode(new Token(Token.KEYWORD, "round"), true);
                         exp.getChilds().add(node.getChild(i));
                         source.addAll(compileConstantExpression(context, method, exp));
                     }

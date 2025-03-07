@@ -142,7 +142,7 @@ public class Spin1TreeBuilder {
     }
 
     public void addToken(Token token) {
-        if (token.type == 0 || token.type == Token.KEYWORD) {
+        if (token.type == Token.KEYWORD) {
             List<Token> l = scope.getDefinition(token.getText());
             if (l != null && l.size() != 0) {
                 if (dependencies.contains(token.getText())) {
@@ -275,7 +275,7 @@ public class Spin1TreeBuilder {
             return node;
         }
 
-        if (token.type == 0 || token.type == Token.FUNCTION) {
+        if (token.type == Token.KEYWORD) {
             Spin1StatementNode node = new Spin1StatementNode(next());
             if (peek() != null) {
                 if (".".equals(peek().getText())) {

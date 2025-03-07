@@ -1309,7 +1309,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 source.add(compilePostEffect(context, postEffectNode, s[1], push));
             }
         }
-        else if (node.getType() != 0 && node.getType() != Token.KEYWORD) {
+        else if (node.getType() != Token.KEYWORD) {
             throw new CompilerException("syntax error", node.getToken());
         }
         else if ("BYTE".equalsIgnoreCase(node.getText()) || "WORD".equalsIgnoreCase(node.getText()) || "LONG".equalsIgnoreCase(node.getText())) {

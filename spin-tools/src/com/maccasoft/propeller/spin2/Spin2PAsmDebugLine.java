@@ -149,7 +149,7 @@ public class Spin2PAsmDebugLine {
                         }
                         break;
                     }
-                    if (token.type != 0 && token.type != Token.KEYWORD) {
+                    if (token.type != Token.KEYWORD) {
                         throw new CompilerException("unexpected operator '" + token.getText() + "'", token);
                     }
                     if (!isBacktickExpression && !Spin2Model.isDebugKeyword(token.getText())) {

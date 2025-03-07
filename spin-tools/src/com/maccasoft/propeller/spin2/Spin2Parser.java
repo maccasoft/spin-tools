@@ -397,7 +397,7 @@ public class Spin2Parser extends Parser {
                 case 1:
                     if ("^".equals(token.getText())) {
                         Token nextToken = stream.peekNext();
-                        if (token.isAdjacent(nextToken) && (nextToken.type == 0 || nextToken.type == Token.KEYWORD)) {
+                        if (token.isAdjacent(nextToken) && nextToken.type == Token.KEYWORD) {
                             token = token.merge(stream.nextToken());
                             token.type = 0;
                             parent.getTokens().set(parent.getTokenCount() - 1, token);
@@ -410,9 +410,9 @@ public class Spin2Parser extends Parser {
                         state = 2;
                         break;
                     }
-                    else if (token.type == 0 || token.type == Token.KEYWORD) {
+                    else if (token.type == Token.KEYWORD) {
                         Token next = stream.peekNext();
-                        if (next != null && (next.type == 0 || next.type == Token.KEYWORD)) {
+                        if (next != null && next.type == Token.KEYWORD) {
                             node = new VariableNode(parent);
                             node.addToken(token);
                             node.type = token;
@@ -634,15 +634,15 @@ public class Spin2Parser extends Parser {
                         param = new MethodNode.ParameterNode(node);
                         if ("^".equals(token.getText())) {
                             Token nextToken = stream.peekNext();
-                            if (token.isAdjacent(nextToken) && (nextToken.type == 0 || nextToken.type == Token.KEYWORD)) {
+                            if (token.isAdjacent(nextToken) && nextToken.type == Token.KEYWORD) {
                                 token = token.merge(stream.nextToken());
                                 token.type = 0;
                                 node.getTokens().set(node.getTokenCount() - 1, token);
                             }
                         }
-                        if (token.type == 0 || token.type == Token.KEYWORD) {
+                        if (token.type == Token.KEYWORD) {
                             Token next = stream.peekNext();
-                            if (next != null && (next.type == 0 || next.type == Token.KEYWORD)) {
+                            if (next != null && next.type == Token.KEYWORD) {
                                 param.type = token;
                                 param.addToken(token);
                                 token = stream.nextToken();
@@ -688,15 +688,15 @@ public class Spin2Parser extends Parser {
                     ret = new MethodNode.ReturnNode(node);
                     if ("^".equals(token.getText())) {
                         Token nextToken = stream.peekNext();
-                        if (token.isAdjacent(nextToken) && (nextToken.type == 0 || nextToken.type == Token.KEYWORD)) {
+                        if (token.isAdjacent(nextToken) && nextToken.type == Token.KEYWORD) {
                             token = token.merge(stream.nextToken());
                             token.type = 0;
                             node.getTokens().set(node.getTokenCount() - 1, token);
                         }
                     }
-                    if (token.type == 0 || token.type == Token.KEYWORD) {
+                    if (token.type == Token.KEYWORD) {
                         Token next = stream.peekNext();
-                        if (next != null && (next.type == 0 || next.type == Token.KEYWORD)) {
+                        if (next != null && next.type == Token.KEYWORD) {
                             ret.type = token;
                             ret.addToken(token);
                             token = stream.nextToken();
@@ -723,7 +723,7 @@ public class Spin2Parser extends Parser {
                     local = new MethodNode.LocalVariableNode(node);
                     if ("^".equals(token.getText())) {
                         Token nextToken = stream.peekNext();
-                        if (token.isAdjacent(nextToken) && (nextToken.type == 0 || nextToken.type == Token.KEYWORD)) {
+                        if (token.isAdjacent(nextToken) && nextToken.type == Token.KEYWORD) {
                             token = token.merge(stream.nextToken());
                             token.type = 0;
                             node.getTokens().set(node.getTokenCount() - 1, token);
@@ -735,9 +735,9 @@ public class Spin2Parser extends Parser {
                         state = 10;
                         break;
                     }
-                    else if (token.type == 0 || token.type == Token.KEYWORD) {
+                    else if (token.type == Token.KEYWORD) {
                         Token next = stream.peekNext();
-                        if (next != null && (next.type == 0 || next.type == Token.KEYWORD)) {
+                        if (next != null && next.type == Token.KEYWORD) {
                             local.type = token;
                             local.addToken(token);
                             state = 10;
@@ -1155,7 +1155,7 @@ public class Spin2Parser extends Parser {
             Token nextToken = stream.peekNext();
             if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
                 token = token.merge(stream.nextToken());
-                token.type = Token.FUNCTION;
+                token.type = Token.KEYWORD;
             }
         }
         else if ("%".equals(token.getText())) {

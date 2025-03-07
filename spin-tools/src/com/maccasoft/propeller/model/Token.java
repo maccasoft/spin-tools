@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -14,18 +14,16 @@ import java.util.Objects;
 
 public class Token {
 
-    public static final int START = 0;
+    public static final int KEYWORD = 0;
     public static final int COMMENT = 1;
     public static final int BLOCK_COMMENT = 2;
     public static final int STRING = 3;
     public static final int CHAR = 4;
     public static final int NUMBER = 5;
-    public static final int KEYWORD = 6;
-    public static final int OPERATOR = 7;
-    public static final int FUNCTION = 8;
-    public static final int DEBUG = 9;
-    public static final int NL = 10;
-    public static final int NEXT_LINE = 11;
+    public static final int OPERATOR = 6;
+    public static final int DEBUG = 7;
+    public static final int NL = 8;
+    public static final int NEXT_LINE = 9;
     public static final int EOF = -1;
 
     public int type;

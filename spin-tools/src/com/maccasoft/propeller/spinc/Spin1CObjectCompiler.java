@@ -382,7 +382,7 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
                     throw new CompilerException("expecting identifier", new Token(token.getStream(), token.stop));
                 }
                 Token identifier = iter.next();
-                if (token.type != 0 && token.type != Token.KEYWORD) {
+                if (token.type != Token.KEYWORD) {
                     throw new CompilerException("invalid identifier", identifier);
                 }
                 skip = !(scope.isDefined(identifier.getText()) || scope.hasSymbol(identifier.getText()));
@@ -406,7 +406,7 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
                     conditionStack.pop();
 
                     Token identifier = iter.next();
-                    if (token.type != 0 && token.type != Token.KEYWORD) {
+                    if (token.type != Token.KEYWORD) {
                         throw new CompilerException("invalid identifier", identifier);
                     }
                     skip = !(scope.isDefined(identifier.getText()) || scope.hasSymbol(identifier.getText()));
@@ -421,7 +421,7 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
                     throw new CompilerException("expecting identifier", new Token(token.getStream(), token.stop));
                 }
                 Token identifier = iter.next();
-                if (token.type != 0 && token.type != Token.KEYWORD) {
+                if (token.type != Token.KEYWORD) {
                     throw new CompilerException("invalid identifier", identifier);
                 }
                 skip = scope.isDefined(identifier.getText()) || scope.hasSymbol(identifier.getText());
@@ -445,7 +445,7 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
                     conditionStack.pop();
 
                     Token identifier = iter.next();
-                    if (token.type != 0 && token.type != Token.KEYWORD) {
+                    if (token.type != Token.KEYWORD) {
                         throw new CompilerException("invalid identifier", identifier);
                     }
                     skip = scope.isDefined(identifier.getText()) || scope.hasSymbol(identifier.getText());

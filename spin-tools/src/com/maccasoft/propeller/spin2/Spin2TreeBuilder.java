@@ -218,7 +218,7 @@ public class Spin2TreeBuilder {
     }
 
     public void addToken(Token token) {
-        if (token.type == 0 || token.type == Token.KEYWORD) {
+        if (token.type == Token.KEYWORD) {
             List<Token> l = scope.getDefinition(token.getText());
             if (l != null && l.size() != 0) {
                 if (dependencies.contains(token.getText())) {
@@ -382,7 +382,7 @@ public class Spin2TreeBuilder {
             if ((token = next()) == null) {
                 throw new CompilerException("syntax error", tokens.get(tokens.size() - 1));
             }
-            if (token.type != 0 && !"++".equals(token.getText()) && !"--".equals(token.getText())) {
+            if (token.type != Token.KEYWORD && !"++".equals(token.getText()) && !"--".equals(token.getText())) {
                 throw new CompilerException("expecting variable", token == null ? tokens.get(tokens.size() - 1) : token);
             }
             Spin2StatementNode node = new Spin2StatementNode(token);
@@ -397,7 +397,7 @@ public class Spin2TreeBuilder {
                 if ("++".equals(token.getText()) || "--".equals(token.getText())) {
                     node.addChild(new Spin2StatementNode(next()));
                 }
-                else if (token.type == 0 || token.type == Token.KEYWORD) {
+                else if (token.type == Token.KEYWORD) {
                     node.addChild(parseAtom());
                 }
             }
@@ -405,7 +405,7 @@ public class Spin2TreeBuilder {
             return node;
         }
 
-        if (token.type == 0 || token.type == Token.FUNCTION) {
+        if (token.type == Token.KEYWORD) {
             Spin2StatementNode node = new Spin2StatementNode(next());
             if (peek() != null) {
                 if (".".equals(peek().getText())) {

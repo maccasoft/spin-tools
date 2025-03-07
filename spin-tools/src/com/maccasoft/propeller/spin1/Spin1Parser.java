@@ -935,7 +935,7 @@ public class Spin1Parser extends Parser {
             Token nextToken = stream.peekNext();
             if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
                 token = token.merge(stream.nextToken());
-                token.type = Token.FUNCTION;
+                token.type = Token.KEYWORD;
             }
         }
         return token;

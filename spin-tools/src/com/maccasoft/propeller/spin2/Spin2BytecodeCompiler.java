@@ -1869,7 +1869,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 }
                 return new ArrayList<Spin2Bytecode>();
             }
-            if (node.getType() != 0 && node.getType() != Token.KEYWORD) {
+            if (node.getType() != Token.KEYWORD) {
                 throw new CompilerException("unexpected operator '" + node.getText() + "'", node.getToken());
             }
             else {
@@ -2335,7 +2335,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             }
             node.setReturnLongs(pop);
         }
-        else if (node.getType() != 0 && node.getType() != Token.KEYWORD) {
+        else if (node.getType() != Token.KEYWORD) {
             if (!node.toString().startsWith("[")) {
                 throw new CompilerException("syntax error", node.getToken());
             }

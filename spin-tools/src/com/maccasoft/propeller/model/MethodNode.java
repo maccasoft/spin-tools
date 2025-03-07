@@ -109,18 +109,6 @@ public class MethodNode extends Node {
         addToken(type);
     }
 
-    public MethodNode(Node parent, Token type, Token name) {
-        super(parent);
-        this.type = type;
-        this.name = name;
-        if (type != null) {
-            addToken(type);
-        }
-        if (name != null) {
-            addToken(name);
-        }
-    }
-
     @Override
     public void accept(NodeVisitor visitor) {
         if (visitor.visitMethod(this)) {
