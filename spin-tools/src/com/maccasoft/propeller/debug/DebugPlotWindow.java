@@ -741,6 +741,12 @@ public class DebugPlotWindow extends DebugWindow {
                                         }
                                     }
                                 }
+                                else {
+                                    if (id >= 0 && id < layer.length && layer[id] != null) {
+                                        imageGc.setAlpha(255);
+                                        imageGc.drawImage(layer[id], x0, y0);
+                                    }
+                                }
                             }
                             break;
                         }
