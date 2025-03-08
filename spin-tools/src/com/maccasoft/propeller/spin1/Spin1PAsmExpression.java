@@ -121,6 +121,13 @@ public class Spin1PAsmExpression {
 
         if (expression instanceof Type) {
             switch (((Type) expression).getType().toUpperCase()) {
+                case "BYTE": {
+                    byte[] r = new byte[value.length];
+                    for (int s = 0, d = 0; s < value.length; s++) {
+                        r[d++] = (byte) value[s];
+                    }
+                    return r;
+                }
                 case "LONG": {
                     byte[] r = new byte[value.length * 4];
                     for (int s = 0, d = 0; s < value.length; s++) {
@@ -154,6 +161,10 @@ public class Spin1PAsmExpression {
 
         if (expression instanceof Type) {
             switch (((Type) expression).getType().toUpperCase()) {
+                case "BYTE":
+                    size = value.length;
+                    break;
+
                 case "LONG":
                     size = value.length * 4;
                     break;
@@ -172,6 +183,26 @@ public class Spin1PAsmExpression {
 
     public byte[] getLong() {
         int[] value = getValue();
+
+        if (expression instanceof Type) {
+            switch (((Type) expression).getType().toUpperCase()) {
+                case "BYTE": {
+                    byte[] r = new byte[value.length];
+                    for (int s = 0, d = 0; s < value.length; s++) {
+                        r[d++] = (byte) value[s];
+                    }
+                    return r;
+                }
+                case "WORD": {
+                    byte[] r = new byte[value.length * 2];
+                    for (int s = 0, d = 0; s < value.length; s++) {
+                        r[d++] = (byte) value[s];
+                        r[d++] = (byte) (value[s] >> 8);
+                    }
+                    return r;
+                }
+            }
+        }
 
         byte[] r = new byte[value.length * 4];
         for (int s = 0, d = 0; s < value.length; s++) {
@@ -192,6 +223,18 @@ public class Spin1PAsmExpression {
         }
 
         int size = value.length * 4;
+
+        if (expression instanceof Type) {
+            switch (((Type) expression).getType().toUpperCase()) {
+                case "BYTE":
+                    size = value.length;
+                    break;
+
+                case "WORD":
+                    size = value.length * 2;
+                    break;
+            }
+        }
 
         int count;
         try {

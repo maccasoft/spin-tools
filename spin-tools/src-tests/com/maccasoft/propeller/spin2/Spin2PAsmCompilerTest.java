@@ -400,6 +400,31 @@ class Spin2PAsmCompilerTest {
     }
 
     @Test
+    void testDataOverride() throws Exception {
+        String text = ""
+            + "DAT\n"
+            + "                long    1, byte 2, 3, word 4, 5\n"
+            + "                word    1, byte 2, 3, long 4, 5\n"
+            + "                byte    1, word 2, 3, long 4, 5\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000 00000 01 00 00 00                        long    1, byte 2, 3, word 4, 5\n"
+            + "00004 00004 00004 02 03 00 00   \n"
+            + "00008 00008 00008 00 04 00 05   \n"
+            + "0000C 0000C 0000C 00 00 00\n"
+            + "0000F 0000F 0000F 01 00 02 03                        word    1, byte 2, 3, long 4, 5\n"
+            + "00013 00013 00013 00 04 00 00   \n"
+            + "00017 00017 00017 00 05 00\n"
+            + "0001A 0001A 0001A 01 02 00 03                        byte    1, word 2, 3, long 4, 5\n"
+            + "0001E 0001E 0001E 04 00 00 00   \n"
+            + "00022 00022 00022 05\n"
+            + "00023 00023       00             Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testBytefit() throws Exception {
         String text = ""
             + "DAT             org   $000\n"

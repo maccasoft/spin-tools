@@ -437,6 +437,34 @@ class Spin1PAsmCompilerTest {
     }
 
     @Test
+    void testDataOverride() throws Exception {
+        String text = ""
+            + "DAT\n"
+            + "                long    1, byte 2, 3, word 4, 5\n"
+            + "                word    1, byte 2, 3, long 4, 5\n"
+            + "                byte    1, word 2, 3, long 4, 5\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 0)\n"
+            + "00000 00000       28 00          Object size\n"
+            + "00002 00002       01             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004   000 01 00 00 00                        long    1, byte 2, 3, word 4, 5\n"
+            + "00008 00008   001 02 03 00 00   \n"
+            + "0000C 0000C   002 00 04 00 05   \n"
+            + "00010 00010   003 00 00 00\n"
+            + "00013 00013       00             (filler)\n"
+            + "00014 00014   004 01 00 02 03                        word    1, byte 2, 3, long 4, 5\n"
+            + "00018 00018   005 00 04 00 00   \n"
+            + "0001C 0001C   006 00 05 00\n"
+            + "0001F 0001F   006 01 02 00 03                        byte    1, word 2, 3, long 4, 5\n"
+            + "00023 00023   007 04 00 00 00   \n"
+            + "00027 00027   008 05\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testAbsoluteAddress() throws Exception {
         String text = ""
             + "DAT             org   $000\n"

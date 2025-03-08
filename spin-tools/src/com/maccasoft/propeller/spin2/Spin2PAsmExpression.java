@@ -309,6 +309,13 @@ public class Spin2PAsmExpression {
 
         if (expression instanceof Type) {
             switch (((Type) expression).getType().toUpperCase()) {
+                case "BYTE": {
+                    byte[] r = new byte[value.length];
+                    for (int s = 0, d = 0; s < value.length; s++) {
+                        r[d++] = (byte) value[s];
+                    }
+                    return r;
+                }
                 case "LONG": {
                     byte[] r = new byte[value.length * 4];
                     for (int s = 0, d = 0; s < value.length; s++) {
@@ -363,6 +370,10 @@ public class Spin2PAsmExpression {
 
         if (expression instanceof Type) {
             switch (((Type) expression).getType().toUpperCase()) {
+                case "BYTE":
+                    size = value.length;
+                    break;
+
                 case "LONG":
                     size = value.length * 4;
                     break;
@@ -408,6 +419,21 @@ public class Spin2PAsmExpression {
 
         if (expression instanceof Type) {
             switch (((Type) expression).getType().toUpperCase()) {
+                case "BYTE": {
+                    byte[] r = new byte[value.length];
+                    for (int s = 0, d = 0; s < value.length; s++) {
+                        r[d++] = (byte) value[s];
+                    }
+                    return r;
+                }
+                case "WORD": {
+                    byte[] r = new byte[value.length * 2];
+                    for (int s = 0, d = 0; s < value.length; s++) {
+                        r[d++] = (byte) value[s];
+                        r[d++] = (byte) (value[s] >> 8);
+                    }
+                    return r;
+                }
                 case "FVAR": {
                     ByteArrayOutputStream os = new ByteArrayOutputStream();
                     try {
@@ -454,6 +480,12 @@ public class Spin2PAsmExpression {
 
         if (expression instanceof Type) {
             switch (((Type) expression).getType().toUpperCase()) {
+                case "BYTE":
+                    size = value.length;
+                    break;
+                case "WORD":
+                    size = value.length * 2;
+                    break;
                 case "FVAR": {
                     ByteArrayOutputStream os = new ByteArrayOutputStream();
                     try {
