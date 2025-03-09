@@ -146,6 +146,7 @@ public class PreferencesDialog extends Dialog {
     Spinner consoleMaxLines;
     Button consoleWriteLogFile;
     Button consoleResetDeviceOnClose;
+    Button consoleHideBacktickCommands;
 
     ToolsList externalTools;
 
@@ -1350,6 +1351,10 @@ public class PreferencesDialog extends Dialog {
         consoleResetDeviceOnClose = new Button(group, SWT.CHECK);
         consoleResetDeviceOnClose.setText("Reset Device on Close");
         consoleResetDeviceOnClose.setSelection(preferences.getConsoleResetDeviceOnClose());
+
+        consoleHideBacktickCommands = new Button(group, SWT.CHECK);
+        consoleHideBacktickCommands.setText("Hide backtick commands");
+        consoleHideBacktickCommands.setSelection(preferences.getConsoleHideBacktickCommands());
     }
 
     class ToolsList {
@@ -2022,6 +2027,7 @@ public class PreferencesDialog extends Dialog {
         preferences.setConsoleMaxLines(consoleMaxLines.getSelection());
         preferences.setConsoleWriteLogFile(consoleWriteLogFile.getSelection());
         preferences.setConsoleResetDeviceOnClose(consoleResetDeviceOnClose.getSelection());
+        preferences.setConsoleHideBacktickCommands(consoleHideBacktickCommands.getSelection());
 
         preferences.setExternalTools(externalTools.getItems());
         preferences.setRemoteDevices(remoteDevices.getItems());

@@ -306,17 +306,21 @@ public class ConsoleView {
                 }
                 else if (b == '\n' || b == '\r') {
                     if (lineBuilder.length() != 0) {
+                        boolean doDisplay = true;
                         String text = lineBuilder.toString();
 
                         if (text.startsWith("`")) {
                             handleDebugWindowCommand(text);
+                            doDisplay = !preferences.getConsoleHideBacktickCommands();
                         }
 
-                        if (pendingText.length() == 0) {
-                            display.asyncExec(textUpdateRunnable);
+                        if (doDisplay) {
+                            if (pendingText.length() == 0) {
+                                display.asyncExec(textUpdateRunnable);
+                            }
+                            pendingText.append(text);
+                            pendingText.append(System.lineSeparator());
                         }
-                        pendingText.append(text);
-                        pendingText.append(System.lineSeparator());
 
                         lineBuilder.setLength(0);
                     }

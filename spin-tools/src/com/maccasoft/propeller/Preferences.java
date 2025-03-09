@@ -325,6 +325,7 @@ public class Preferences {
         public int maxLines;
         public boolean writeLogFile;
         public boolean resetDeviceOnClose;
+        public boolean hideBacktickCommands;
 
         @Override
         public int hashCode() {
@@ -1206,6 +1207,14 @@ public class Preferences {
 
     public void setConsoleResetDeviceOnClose(boolean resetDeviceOnClose) {
         preferences.console.resetDeviceOnClose = resetDeviceOnClose;
+    }
+
+    public boolean getConsoleHideBacktickCommands() {
+        return preferences.console.hideBacktickCommands;
+    }
+
+    public void setConsoleHideBacktickCommands(boolean hideBacktickCommands) {
+        preferences.console.hideBacktickCommands = hideBacktickCommands;
     }
 
     public SearchPreferences getSearchPreferences() {
