@@ -906,9 +906,9 @@ public class Spin2TokenMarker extends SourceTokenMarker {
 
                     @Override
                     public boolean visitMethod(MethodNode node) {
-                        if (!node.isExclude()) {
-                            if ("PUB".equalsIgnoreCase(node.type.getText())) {
-                                externals.put(qualifier + "." + node.name.getText(), TokenId.METHOD_PUB);
+                        if (!node.isExclude() && node.getName() != null) {
+                            if ("PUB".equalsIgnoreCase(node.getType().getText())) {
+                                externals.put(qualifier + "." + node.getName().getText(), TokenId.METHOD_PUB);
                             }
                         }
                         return false;

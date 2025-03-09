@@ -998,8 +998,8 @@ public class CTokenMarker extends SourceTokenMarker {
                         if (!child.isExclude()) {
                             if (child instanceof MethodNode) {
                                 MethodNode methodNode = (MethodNode) child;
-                                if ("PUB".equalsIgnoreCase(methodNode.type.getText())) {
-                                    if (methodNode.name != null) {
+                                if ("PUB".equalsIgnoreCase(methodNode.getType().getText())) {
+                                    if (methodNode.getName() != null) {
                                         externals.put(objectPrefix + methodNode.name.getText(), TokenId.METHOD_PUB);
                                     }
                                 }
