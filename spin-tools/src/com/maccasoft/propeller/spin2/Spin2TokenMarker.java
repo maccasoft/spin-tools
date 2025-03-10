@@ -684,8 +684,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
 
     @Override
     public void refreshTokens(String text) {
-        Spin2TokenStream stream = new Spin2TokenStream(text);
-        Spin2Parser subject = new Spin2Parser(stream);
+        Spin2Parser subject = new Spin2Parser(text);
         root = subject.parse();
 
         tokens.clear();

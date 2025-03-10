@@ -43,7 +43,6 @@ import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin1.Spin1Compiler;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
 import com.maccasoft.propeller.spinc.CParser;
-import com.maccasoft.propeller.spinc.CTokenStream;
 import com.maccasoft.propeller.spinc.Spin1CCompiler;
 import com.maccasoft.propeller.spinc.Spin2CCompiler;
 
@@ -197,7 +196,7 @@ public class SpinCompiler {
                 }
                 else {
                     String text = FileUtils.loadFromFile(fileToCompile);
-                    CParser parser = new CParser(new CTokenStream(text));
+                    CParser parser = new CParser(text);
                     for (Node node : parser.parse().getChilds()) {
                         if (node instanceof DirectiveNode) {
                             int index = 1;

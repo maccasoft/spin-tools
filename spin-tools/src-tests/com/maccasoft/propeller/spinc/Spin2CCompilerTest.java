@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -35,12 +35,7 @@ class Spin2CCompilerTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
-        Node root = parser.parse();
-
-        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2CCompiler(), new File("test.spin2"));
-        compiler.compileObject(root);
+        Spin2CObjectCompiler compiler = buildCompiler(text);
 
         Assertions.assertEquals(0b00_00, compiler.getScope().getLocalSymbol("CLKMODE_").getNumber().intValue() & 0b11_11);
         Assertions.assertEquals(20_000_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
@@ -56,12 +51,7 @@ class Spin2CCompilerTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
-        Node root = parser.parse();
-
-        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2CCompiler(), new File("test.spin2"));
-        compiler.compileObject(root);
+        Spin2CObjectCompiler compiler = buildCompiler(text);
 
         Assertions.assertEquals(250_000_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
         Assertions.assertEquals(0b10_11, compiler.getScope().getLocalSymbol("CLKMODE_").getNumber().intValue() & 0b11_11);
@@ -78,12 +68,7 @@ class Spin2CCompilerTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
-        Node root = parser.parse();
-
-        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2CCompiler(), new File("test.spin2"));
-        compiler.compileObject(root);
+        Spin2CObjectCompiler compiler = buildCompiler(text);
 
         Assertions.assertEquals(148_500_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
         Assertions.assertEquals("011C62FF", String.format("%08X", compiler.getScope().getLocalSymbol("CLKMODE_").getNumber().intValue()));
@@ -100,12 +85,7 @@ class Spin2CCompilerTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
-        Node root = parser.parse();
-
-        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2CCompiler(), new File("test.spin2"));
-        compiler.compileObject(root);
+        Spin2CObjectCompiler compiler = buildCompiler(text);
 
         Assertions.assertEquals(100_000_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
         Assertions.assertEquals("0100090B", String.format("%08X", compiler.getScope().getLocalSymbol("CLKMODE_").getNumber().intValue()));
@@ -121,12 +101,7 @@ class Spin2CCompilerTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
-        Node root = parser.parse();
-
-        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2CCompiler(), new File("test.spin2"));
-        compiler.compileObject(root);
+        Spin2CObjectCompiler compiler = buildCompiler(text);
 
         Assertions.assertEquals(16_000_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
         Assertions.assertEquals("0000000A", String.format("%08X", compiler.getScope().getLocalSymbol("CLKMODE_").getNumber().intValue()));
@@ -143,12 +118,7 @@ class Spin2CCompilerTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
-        Node root = parser.parse();
-
-        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2CCompiler(), new File("test.spin2"));
-        compiler.compileObject(root);
+        Spin2CObjectCompiler compiler = buildCompiler(text);
 
         Assertions.assertEquals(297_500_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
         Assertions.assertEquals("01FE52F7", String.format("%08X", compiler.getScope().getLocalSymbol("CLKMODE_").getNumber().intValue()));
@@ -164,12 +134,7 @@ class Spin2CCompilerTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
-        Node root = parser.parse();
-
-        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2CCompiler(), new File("test.spin2"));
-        compiler.compileObject(root);
+        Spin2CObjectCompiler compiler = buildCompiler(text);
 
         Assertions.assertEquals(16_000_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
         Assertions.assertEquals("00000006", String.format("%08X", compiler.getScope().getLocalSymbol("CLKMODE_").getNumber().intValue()));
@@ -185,12 +150,7 @@ class Spin2CCompilerTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
-        Node root = parser.parse();
-
-        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2CCompiler(), new File("test.spin2"));
-        compiler.compileObject(root);
+        Spin2CObjectCompiler compiler = buildCompiler(text);
 
         Assertions.assertEquals(20_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
         Assertions.assertEquals("00000001", String.format("%08X", compiler.getScope().getLocalSymbol("CLKMODE_").getNumber().intValue()));
@@ -206,15 +166,20 @@ class Spin2CCompilerTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
+        Spin2CObjectCompiler compiler = buildCompiler(text);
+
+        Assertions.assertEquals(20_000_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
+        Assertions.assertEquals("00000000", String.format("%08X", compiler.getScope().getLocalSymbol("CLKMODE_").getNumber().intValue()));
+    }
+
+    Spin2CObjectCompiler buildCompiler(String text) {
+        CParser parser = new CParser(text);
         Node root = parser.parse();
 
         Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2CCompiler(), new File("test.spin2"));
         compiler.compileObject(root);
 
-        Assertions.assertEquals(20_000_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
-        Assertions.assertEquals("00000000", String.format("%08X", compiler.getScope().getLocalSymbol("CLKMODE_").getNumber().intValue()));
+        return compiler;
     }
 
     @Test
@@ -559,8 +524,7 @@ class Spin2CCompilerTest {
     }
 
     String compile(String rootFile, Map<String, String> sources, boolean removeUnused, boolean debugEnabled) throws Exception {
-        CTokenStream stream = new CTokenStream(sources.get(rootFile));
-        CParser subject = new CParser(stream);
+        CParser subject = new CParser(sources.get(rootFile));
         Node root = subject.parse();
 
         Spin2CCompiler compiler = new Spin2CCompiler();

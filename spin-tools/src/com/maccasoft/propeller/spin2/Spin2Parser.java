@@ -46,8 +46,8 @@ public class Spin2Parser extends Parser {
 
     Node root;
 
-    public Spin2Parser(Spin2TokenStream stream) {
-        this.stream = stream;
+    public Spin2Parser(String text) {
+        this.stream = new Spin2TokenStream(text);
     }
 
     @Override

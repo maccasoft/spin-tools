@@ -210,8 +210,7 @@ public class Spin1TokenMarker extends SourceTokenMarker {
 
     @Override
     public void refreshTokens(String text) {
-        Spin1TokenStream stream = new Spin1TokenStream(text);
-        Spin1Parser subject = new Spin1Parser(stream);
+        Spin1Parser subject = new Spin1Parser(text);
         root = subject.parse();
 
         tokens.clear();

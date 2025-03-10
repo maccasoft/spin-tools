@@ -25,10 +25,8 @@ import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.spin1.Spin1Parser;
 import com.maccasoft.propeller.spin1.Spin1TokenMarker;
-import com.maccasoft.propeller.spin1.Spin1TokenStream;
 import com.maccasoft.propeller.spin2.Spin2Parser;
 import com.maccasoft.propeller.spin2.Spin2TokenMarker;
-import com.maccasoft.propeller.spin2.Spin2TokenStream;
 
 public class SourceTokenMarkerTest {
 
@@ -131,8 +129,7 @@ public class SourceTokenMarkerTest {
             protected Node getObjectTree(String fileName) {
                 switch (fileName) {
                     case "object": {
-                        Spin2TokenStream stream = new Spin2TokenStream(objectText);
-                        Spin2Parser parser = new Spin2Parser(stream);
+                        Spin2Parser parser = new Spin2Parser(objectText);
                         return parser.parse();
                     }
                 }
@@ -175,8 +172,7 @@ public class SourceTokenMarkerTest {
             protected Node getObjectTree(String fileName) {
                 switch (fileName) {
                     case "object": {
-                        Spin2TokenStream stream = new Spin2TokenStream(objectText);
-                        Spin2Parser parser = new Spin2Parser(stream);
+                        Spin2Parser parser = new Spin2Parser(objectText);
                         return parser.parse();
                     }
                 }
@@ -223,8 +219,7 @@ public class SourceTokenMarkerTest {
             protected Node getObjectTree(String fileName) {
                 switch (fileName) {
                     case "object": {
-                        Spin2TokenStream stream = new Spin2TokenStream(objectText);
-                        Spin2Parser parser = new Spin2Parser(stream);
+                        Spin2Parser parser = new Spin2Parser(objectText);
                         return parser.parse();
                     }
                 }
@@ -267,8 +262,7 @@ public class SourceTokenMarkerTest {
             protected Node getObjectTree(String fileName) {
                 switch (fileName) {
                     case "object": {
-                        Spin2TokenStream stream = new Spin2TokenStream(objectText);
-                        Spin2Parser parser = new Spin2Parser(stream);
+                        Spin2Parser parser = new Spin2Parser(objectText);
                         return parser.parse();
                     }
                 }
@@ -311,8 +305,7 @@ public class SourceTokenMarkerTest {
             protected Node getObjectTree(String fileName) {
                 switch (fileName) {
                     case "object": {
-                        Spin2TokenStream stream = new Spin2TokenStream(objectText);
-                        Spin2Parser parser = new Spin2Parser(stream);
+                        Spin2Parser parser = new Spin2Parser(objectText);
                         return parser.parse();
                     }
                 }
@@ -366,13 +359,11 @@ public class SourceTokenMarkerTest {
             protected Node getObjectTree(String fileName) {
                 switch (fileName) {
                     case "object1": {
-                        Spin2TokenStream stream = new Spin2TokenStream(object1Text);
-                        Spin2Parser parser = new Spin2Parser(stream);
+                        Spin2Parser parser = new Spin2Parser(object1Text);
                         return parser.parse();
                     }
                     case "object2": {
-                        Spin2TokenStream stream = new Spin2TokenStream(object2Text);
-                        Spin2Parser parser = new Spin2Parser(stream);
+                        Spin2Parser parser = new Spin2Parser(object2Text);
                         return parser.parse();
                     }
                 }
@@ -426,13 +417,11 @@ public class SourceTokenMarkerTest {
             protected Node getObjectTree(String fileName) {
                 switch (fileName) {
                     case "object1": {
-                        Spin2TokenStream stream = new Spin2TokenStream(object1Text);
-                        Spin2Parser parser = new Spin2Parser(stream);
+                        Spin2Parser parser = new Spin2Parser(object1Text);
                         return parser.parse();
                     }
                     case "object2": {
-                        Spin2TokenStream stream = new Spin2TokenStream(object2Text);
-                        Spin2Parser parser = new Spin2Parser(stream);
+                        Spin2Parser parser = new Spin2Parser(object2Text);
                         return parser.parse();
                     }
                 }
@@ -479,8 +468,7 @@ public class SourceTokenMarkerTest {
             protected Node getObjectTree(String fileName) {
                 switch (fileName) {
                     case "object": {
-                        Spin1TokenStream stream = new Spin1TokenStream(objectText);
-                        Spin1Parser parser = new Spin1Parser(stream);
+                        Spin1Parser parser = new Spin1Parser(objectText);
                         return parser.parse();
                     }
                 }
@@ -527,8 +515,7 @@ public class SourceTokenMarkerTest {
             protected Node getObjectTree(String fileName) {
                 switch (fileName) {
                     case "object": {
-                        Spin2TokenStream stream = new Spin2TokenStream(objectText);
-                        Spin2Parser parser = new Spin2Parser(stream);
+                        Spin2Parser parser = new Spin2Parser(objectText);
                         return parser.parse();
                     }
                 }

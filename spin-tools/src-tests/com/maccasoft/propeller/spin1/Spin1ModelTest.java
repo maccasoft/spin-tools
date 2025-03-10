@@ -40,7 +40,7 @@ class Spin1ModelTest {
 
     @Test
     void testGetNodeAt() {
-        Spin1Parser parser = new Spin1Parser(new Spin1TokenStream(text1));
+        Spin1Parser parser = new Spin1Parser(text1);
         Spin1Model subject = new Spin1Model(parser.parse());
 
         Node node1 = subject.getNodeAt(15);
@@ -58,7 +58,7 @@ class Spin1ModelTest {
 
     @Test
     void testGetMethodProposals() {
-        Spin1Parser parser = new Spin1Parser(new Spin1TokenStream(text1));
+        Spin1Parser parser = new Spin1Parser(text1);
         Spin1Model subject = new Spin1Model(parser.parse());
 
         Node node = subject.getNodeAt(15);
@@ -72,7 +72,7 @@ class Spin1ModelTest {
 
     @Test
     void testGetMethodProposalsInitialText() {
-        Spin1Parser parser = new Spin1Parser(new Spin1TokenStream(text1));
+        Spin1Parser parser = new Spin1Parser(text1);
         Spin1Model subject = new Spin1Model(parser.parse());
 
         Node node = subject.getNodeAt(15);
@@ -86,7 +86,7 @@ class Spin1ModelTest {
 
     @Test
     void testGetParametersProposals() {
-        Spin1Parser parser = new Spin1Parser(new Spin1TokenStream(text1));
+        Spin1Parser parser = new Spin1Parser(text1);
         Spin1Model subject = new Spin1Model(parser.parse());
 
         Node node = subject.getNodeAt(67);
@@ -102,7 +102,7 @@ class Spin1ModelTest {
 
     @Test
     void testGetLocalVariablesProposals() {
-        Spin1Parser parser = new Spin1Parser(new Spin1TokenStream(text1));
+        Spin1Parser parser = new Spin1Parser(text1);
         Spin1Model subject = new Spin1Model(parser.parse());
 
         Node node = subject.getNodeAt(99);
@@ -118,7 +118,7 @@ class Spin1ModelTest {
 
     @Test
     void testGetGlobalVariablesProposals() {
-        Spin1Parser parser = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser parser = new Spin1Parser(""
             + "VAR\n"
             + "\n"
             + "    var0\n"
@@ -127,7 +127,7 @@ class Spin1ModelTest {
             + "PUB start\n"
             + "\n"
             + "    \n"
-            + "\n"));
+            + "\n");
         Spin1Model subject = new Spin1Model(parser.parse());
 
         Node node = subject.getNodeAt(48);
@@ -141,7 +141,7 @@ class Spin1ModelTest {
 
     @Test
     void testGetConstansProposals() {
-        Spin1Parser parser = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser parser = new Spin1Parser(""
             + "CON\n"
             + "\n"
             + "    con0 = 1\n"
@@ -150,7 +150,7 @@ class Spin1ModelTest {
             + "PUB start\n"
             + "\n"
             + "    \n"
-            + "\n"));
+            + "\n");
         Spin1Model subject = new Spin1Model(parser.parse());
 
         Node node = subject.getNodeAt(47);
@@ -164,7 +164,7 @@ class Spin1ModelTest {
 
     @Test
     void testGetDatLabelProposals() {
-        Spin1Parser parser = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser parser = new Spin1Parser(""
             + "PUB start\n"
             + "\n"
             + "    \n"
@@ -174,7 +174,7 @@ class Spin1ModelTest {
             + "label0      nop\n"
             + ".local      nop\n"
             + "label1      long 0, 1, 2\n"
-            + "\n"));
+            + "\n");
         Spin1Model subject = new Spin1Model(parser.parse());
 
         Node node = subject.getNodeAt(15);

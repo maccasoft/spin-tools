@@ -22,54 +22,54 @@ class Spin1ParserTest {
 
     @Test
     void testLocalLabel() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + ":label\n"
-            + ""));
+            + "");
 
         Assertions.assertEquals(":label", subject.nextPAsmToken().getText());
     }
 
     @Test
     void testAddress() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "@label\n"
-            + ""));
+            + "");
 
         Assertions.assertEquals("@label", subject.nextPAsmToken().getText());
     }
 
     @Test
     void testAbsoluteAddress() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "@@label\n"
-            + ""));
+            + "");
 
         Assertions.assertEquals("@@label", subject.nextPAsmToken().getText());
     }
 
     @Test
     void testLocalLabelAddress() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "@:label\n"
-            + ""));
+            + "");
 
         Assertions.assertEquals("@:label", subject.nextPAsmToken().getText());
     }
 
     @Test
     void testAbsoluteLocalLabelAddress() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "@@:label\n"
-            + ""));
+            + "");
 
         Assertions.assertEquals("@@:label", subject.nextPAsmToken().getText());
     }
 
     @Test
     void testImmediateLabel() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "#label\n"
-            + ""));
+            + "");
 
         Assertions.assertEquals("#", subject.nextPAsmToken().getText());
         Assertions.assertEquals("label", subject.nextPAsmToken().getText());
@@ -77,9 +77,9 @@ class Spin1ParserTest {
 
     @Test
     void testImmediateLocalLabel() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "#:label\n"
-            + ""));
+            + "");
 
         Assertions.assertEquals("#", subject.nextPAsmToken().getText());
         Assertions.assertEquals(":label", subject.nextPAsmToken().getText());
@@ -87,9 +87,9 @@ class Spin1ParserTest {
 
     @Test
     void testRangeValue() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "a..b\n"
-            + ""));
+            + "");
 
         Assertions.assertEquals("a", subject.nextToken().getText());
         Assertions.assertEquals("..", subject.nextToken().getText());
@@ -98,9 +98,9 @@ class Spin1ParserTest {
 
     @Test
     void testSpinLocalLabel() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + ":label\n"
-            + ""));
+            + "");
 
         Assertions.assertEquals(":", subject.nextToken().getText());
         Assertions.assertEquals("label", subject.nextToken().getText());
@@ -108,18 +108,18 @@ class Spin1ParserTest {
 
     @Test
     void testObjectMethod() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "obj.method\n"
-            + ""));
+            + "");
 
         Assertions.assertEquals("obj.method", subject.nextToken().getText());
     }
 
     @Test
     void testObjectArrayMethod() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "obj[0].method\n"
-            + ""));
+            + "");
 
         Assertions.assertEquals("obj", subject.nextToken().getText());
         Assertions.assertEquals("[", subject.nextToken().getText());
@@ -130,10 +130,10 @@ class Spin1ParserTest {
 
     @Test
     void testSingleAssigments() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "CON  EnableFlow = 8\n"
             + "     DisableFlow = 4\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -148,10 +148,10 @@ class Spin1ParserTest {
 
     @Test
     void testCommaSeparatedAssignments() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "CON\n"
             + "     x = 5, y = -5, z = 1\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -168,10 +168,10 @@ class Spin1ParserTest {
 
     @Test
     void testEnum() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "CON\n"
             + "    #0,a,b,c,d\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -188,9 +188,9 @@ class Spin1ParserTest {
 
     @Test
     void testConLineEnum() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "CON  #0,a,b,c,d\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -207,10 +207,10 @@ class Spin1ParserTest {
 
     @Test
     void testEnumAssigmentStepMultiplier() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "CON\n"
             + "     u[2]\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -223,10 +223,10 @@ class Spin1ParserTest {
 
     @Test
     void testDefaultSection() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "     EnableFlow = 8\n"
             + "     DisableFlow = 4\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -241,10 +241,10 @@ class Spin1ParserTest {
 
     @Test
     void testParseObject() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "OBJ\n"
             + "    obj0 : \"file0\"\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -256,11 +256,11 @@ class Spin1ParserTest {
 
     @Test
     void testParseObjects() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "OBJ\n"
             + "    obj0 : \"file0\"\n"
             + "    obj1 : \"file1\"\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -273,10 +273,10 @@ class Spin1ParserTest {
 
     @Test
     void testParseObjectArray() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "OBJ\n"
             + "    obj0[10] : \"file0\"\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -289,10 +289,10 @@ class Spin1ParserTest {
 
     @Test
     void testParseObjectSyntaxError1() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "OBJ\n"
             + "    obj0 = \n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -304,10 +304,10 @@ class Spin1ParserTest {
 
     @Test
     void testParseObjectSyntaxError2() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "OBJ\n"
             + "    obj0 : \"file0\" a0\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -319,9 +319,9 @@ class Spin1ParserTest {
 
     @Test
     void testMethod() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "PUB go\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -332,25 +332,25 @@ class Spin1ParserTest {
 
     @Test
     void testMethodInvalidDeclarations() throws Exception {
-        Node root = new Spin1Parser(new Spin1TokenStream(""
+        Node root = new Spin1Parser(""
             + "PUB go to\n"
-            + "")).parse();
+            + "").parse();
         Assertions.assertEquals(""
             + "Node []\n"
             + "+-- MethodNode type=PUB name=go [PUB go to]\n"
             + "", tree(root));
 
-        root = new Spin1Parser(new Spin1TokenStream(""
+        root = new Spin1Parser(""
             + "PUB go to\n"
-            + "")).parse();
+            + "").parse();
         Assertions.assertEquals(""
             + "Node []\n"
             + "+-- MethodNode type=PUB name=go [PUB go to]\n"
             + "", tree(root));
 
-        root = new Spin1Parser(new Spin1TokenStream(""
+        root = new Spin1Parser(""
             + "PUB go(a,b) to\n"
-            + "")).parse();
+            + "").parse();
         Assertions.assertEquals(""
             + "Node []\n"
             + "+-- MethodNode type=PUB name=go [PUB go(a,b) to]\n"
@@ -361,9 +361,9 @@ class Spin1ParserTest {
 
     @Test
     void testMethodParameters() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "PUB StartTx(pin, baud)\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -376,9 +376,9 @@ class Spin1ParserTest {
 
     @Test
     void testMethodParameterDefaultValue() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "PUB StartTx(pin, baud = 115_200)\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -392,9 +392,9 @@ class Spin1ParserTest {
 
     @Test
     void testMethodInvalidParameters() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "PUB StartTx(pin baud)\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -406,9 +406,9 @@ class Spin1ParserTest {
 
     @Test
     void testMethodLocalVariables() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "PRI FFT1024 | a, b\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -421,9 +421,9 @@ class Spin1ParserTest {
 
     @Test
     void testMethodInvalidLocalVariables() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "PRI FFT1024 | a b\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -435,9 +435,9 @@ class Spin1ParserTest {
 
     @Test
     void testMethodLocalVariableType() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "PRI FFT1024 | LONG a, WORD b\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -450,9 +450,9 @@ class Spin1ParserTest {
 
     @Test
     void testMethodLocalVariableSize() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "PRI FFT1024(DataPtr) | x[1024], y[512]\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -468,9 +468,9 @@ class Spin1ParserTest {
 
     @Test
     void testMethodReturnVariables() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "PRI FFT1024 : a, b\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -483,9 +483,9 @@ class Spin1ParserTest {
 
     @Test
     void testMethodInvalidReturnVariables() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "PRI FFT1024 : a b\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -497,9 +497,9 @@ class Spin1ParserTest {
 
     @Test
     void testMethodUnexpectedTokens2() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "PUB go(a,b) : c to\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -513,9 +513,9 @@ class Spin1ParserTest {
 
     @Test
     void testMethodUnexpectedTokens3() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "PUB go(a,b) | d, e to\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -530,9 +530,9 @@ class Spin1ParserTest {
 
     @Test
     void testMethodUnexpectedTokens4() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "PUB go(a,b) : c | d, e to\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -548,10 +548,10 @@ class Spin1ParserTest {
 
     @Test
     void testVariables() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "VAR a\n"
             + "    b\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -565,10 +565,10 @@ class Spin1ParserTest {
 
     @Test
     void testTypedVariables() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "VAR long a\n"
             + "    word b\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -582,10 +582,10 @@ class Spin1ParserTest {
 
     @Test
     void testVariablesList() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "VAR long a, b, c\n"
             + "    word d, e\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -602,10 +602,10 @@ class Spin1ParserTest {
 
     @Test
     void testVariableSize() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "VAR a[10]\n"
             + "    b[20]\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -621,10 +621,10 @@ class Spin1ParserTest {
 
     @Test
     void testVariablesListAndSize() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "VAR a, b[10], c\n"
             + "    word d[20], e\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -643,13 +643,13 @@ class Spin1ParserTest {
 
     @Test
     void testVariablesPreprocessor() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "VAR a, b[10], c\n"
             + "#ifdef KEY\n"
             + "    word d[20], e\n"
             + "#endif\n"
             + "    long f, g\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -673,13 +673,13 @@ class Spin1ParserTest {
 
     @Test
     void testDefaultSectionPreprocessorDirective() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "     A = 1\n"
             + "  #ifdef P\n"
             + "     B = 2\n"
             + "  #endif\n"
             + "     C = 3\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -698,14 +698,14 @@ class Spin1ParserTest {
 
     @Test
     void testConstantsPreprocessorDirective() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "CON\n"
             + "     A = 1\n"
             + "  #ifdef P\n"
             + "     B = 2\n"
             + "  #endif\n"
             + "     C = 3\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -724,12 +724,12 @@ class Spin1ParserTest {
 
     @Test
     void testConstantsEnumAndPreprocessor() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "CON\n"
             + "#ifdef P\n"
             + "#0,a,b,c,d\n"
             + "#endif\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -748,12 +748,12 @@ class Spin1ParserTest {
 
     @Test
     void testMethodPreprocessorDirective() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "PUB main()\n"
             + "  #ifdef A\n"
             + "    a := b * 2\n"
             + "  #endif\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -767,13 +767,13 @@ class Spin1ParserTest {
 
     @Test
     void testStatementBlockPreprocessorDirective() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "PUB main()\n"
             + "    if 1\n"
             + "  #ifdef A\n"
             + "        a := b * 2\n"
             + "  #endif\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -788,14 +788,14 @@ class Spin1ParserTest {
 
     @Test
     void testPAsmPreprocessorDirective() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "DAT\n"
             + "        org $000\n"
             + "  #ifdef A\n"
             + "        mov a, #1\n"
             + "  #endif\n"
             + "        ret\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""

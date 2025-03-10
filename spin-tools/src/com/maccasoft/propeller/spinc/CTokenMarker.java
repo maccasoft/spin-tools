@@ -802,8 +802,7 @@ public class CTokenMarker extends SourceTokenMarker {
 
     @Override
     public void refreshTokens(String text) {
-        CTokenStream stream = new CTokenStream(text);
-        CParser subject = new CParser(stream);
+        CParser subject = new CParser(text);
         root = subject.parse();
 
         tokens.clear();

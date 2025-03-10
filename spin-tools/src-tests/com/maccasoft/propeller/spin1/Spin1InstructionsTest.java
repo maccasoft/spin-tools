@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -521,8 +521,7 @@ class Spin1InstructionsTest {
     }
 
     byte[] compile(String text) throws Exception {
-        Spin1TokenStream stream = new Spin1TokenStream(text);
-        Spin1Parser parser = new Spin1Parser(stream);
+        Spin1Parser parser = new Spin1Parser(text);
         Node root = parser.parse();
 
         Spin1ObjectCompiler compiler = new Spin1ObjectCompiler(new Spin1Compiler(), new File("test.spin"));

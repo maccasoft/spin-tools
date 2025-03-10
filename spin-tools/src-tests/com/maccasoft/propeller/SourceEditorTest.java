@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -33,10 +33,8 @@ import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.spin1.Spin1Parser;
 import com.maccasoft.propeller.spin1.Spin1TokenMarker;
-import com.maccasoft.propeller.spin1.Spin1TokenStream;
 import com.maccasoft.propeller.spin2.Spin2Parser;
 import com.maccasoft.propeller.spin2.Spin2TokenMarker;
-import com.maccasoft.propeller.spin2.Spin2TokenStream;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class SourceEditorTest {
@@ -791,7 +789,7 @@ public class SourceEditorTest {
             + "    d := child.VALUE2\n"
             + "";
 
-        String text_child = ""
+        String childText = ""
             + "CON  VALUE1 = 1\n"
             + "     VALUE2 = 2\n"
             + "\n"
@@ -807,8 +805,7 @@ public class SourceEditorTest {
 
             @Override
             public Node getParsedSource(File file) {
-                Spin2TokenStream stream = new Spin2TokenStream(text_child);
-                Spin2Parser parser = new Spin2Parser(stream);
+                Spin2Parser parser = new Spin2Parser(childText);
                 return parser.parse();
             }
 
@@ -864,8 +861,7 @@ public class SourceEditorTest {
 
             @Override
             public Node getParsedSource(File file) {
-                Spin1TokenStream stream = new Spin1TokenStream(childText);
-                Spin1Parser parser = new Spin1Parser(stream);
+                Spin1Parser parser = new Spin1Parser(childText);
                 return parser.parse();
             }
 
@@ -954,8 +950,7 @@ public class SourceEditorTest {
 
             @Override
             public Node getParsedSource(File file) {
-                Spin2TokenStream stream = new Spin2TokenStream(childText);
-                Spin2Parser parser = new Spin2Parser(stream);
+                Spin2Parser parser = new Spin2Parser(childText);
                 return parser.parse();
             }
 
@@ -1001,8 +996,7 @@ public class SourceEditorTest {
 
             @Override
             public Node getParsedSource(File file) {
-                Spin1TokenStream stream = new Spin1TokenStream(childText);
-                Spin1Parser parser = new Spin1Parser(stream);
+                Spin1Parser parser = new Spin1Parser(childText);
                 return parser.parse();
             }
 

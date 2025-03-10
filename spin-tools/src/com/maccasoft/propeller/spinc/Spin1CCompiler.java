@@ -40,8 +40,7 @@ public class Spin1CCompiler extends Spin1Compiler {
         if (text == null) {
             throw new FileNotFoundException();
         }
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
+        CParser parser = new CParser(text);
         Spin1Object object = compile(file, parser.parse());
 
         if (hasErrors()) {

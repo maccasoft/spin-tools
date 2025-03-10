@@ -821,8 +821,7 @@ class Spin1PAsmCompilerTest {
     }
 
     String compile(String text, boolean openspinCompatible) throws Exception {
-        Spin1TokenStream stream = new Spin1TokenStream(text);
-        Spin1Parser subject = new Spin1Parser(stream);
+        Spin1Parser subject = new Spin1Parser(text);
         Node root = subject.parse();
 
         Spin1ObjectCompiler compiler = new Spin1ObjectCompiler(new Spin1Compiler(), new File("test.spin"));

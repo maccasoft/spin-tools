@@ -664,8 +664,7 @@ class Spin2PAsmCompilerTest {
             + "                jmp     #$-1\n"
             + "";
 
-        Spin2TokenStream stream = new Spin2TokenStream(text);
-        Spin2Parser parser = new Spin2Parser(stream);
+        Spin2Parser parser = new Spin2Parser(text);
         Node root = parser.parse();
 
         Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler(), new File("test.spin2"));
@@ -1360,8 +1359,7 @@ class Spin2PAsmCompilerTest {
     }
 
     String compile(String text, boolean debugEnabled) throws Exception {
-        Spin2TokenStream stream = new Spin2TokenStream(text);
-        Spin2Parser parser = new Spin2Parser(stream);
+        Spin2Parser parser = new Spin2Parser(text);
         Node root = parser.parse();
 
         Spin2Compiler compiler = new Spin2Compiler();

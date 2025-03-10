@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -21,7 +21,6 @@ import com.maccasoft.propeller.spin2.Spin2Compiler;
 import com.maccasoft.propeller.spin2.Spin2Object;
 import com.maccasoft.propeller.spin2.Spin2ObjectCompiler;
 import com.maccasoft.propeller.spin2.Spin2Parser;
-import com.maccasoft.propeller.spin2.Spin2TokenStream;
 
 class DataTypeTest {
 
@@ -80,8 +79,7 @@ class DataTypeTest {
     }
 
     byte[] compile(String text) throws Exception {
-        Spin2TokenStream stream = new Spin2TokenStream(text);
-        Spin2Parser subject = new Spin2Parser(stream);
+        Spin2Parser subject = new Spin2Parser(text);
         Node root = subject.parse();
 
         Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler(), new File("test.spin2"));

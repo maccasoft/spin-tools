@@ -2616,8 +2616,7 @@ class Spin2CompilerTest {
     }
 
     String compile(String rootFile, Map<String, String> sources, boolean removeUnused, boolean debugEnabled) throws Exception {
-        Spin2TokenStream stream = new Spin2TokenStream(sources.get(rootFile));
-        Spin2Parser subject = new Spin2Parser(stream);
+        Spin2Parser subject = new Spin2Parser(sources.get(rootFile));
         Node root = subject.parse();
 
         Spin2Compiler compiler = new Spin2Compiler();

@@ -114,7 +114,7 @@ class Spin2CTreeBuilderTest {
     String parse(String text) {
         Spin2CTreeBuilder builder = new Spin2CTreeBuilder(new Context());
 
-        CParser parser = new CParser(new CTokenStream(text));
+        CParser parser = new CParser(text);
         while (true) {
             Token token = parser.nextTokenSkipNL();
             if (token.type == Token.EOF) {

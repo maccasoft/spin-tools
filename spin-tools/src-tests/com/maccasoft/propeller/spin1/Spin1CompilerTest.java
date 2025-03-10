@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -1226,8 +1226,7 @@ class Spin1CompilerTest {
     }
 
     String compile(String rootFile, Map<String, String> sources, boolean removeUnused) throws Exception {
-        Spin1TokenStream stream = new Spin1TokenStream(sources.get(rootFile));
-        Spin1Parser subject = new Spin1Parser(stream);
+        Spin1Parser subject = new Spin1Parser(sources.get(rootFile));
         Node root = subject.parse();
 
         Spin1Compiler compiler = new Spin1Compiler();

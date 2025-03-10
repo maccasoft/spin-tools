@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -119,8 +119,7 @@ class Spin2ExamplesTest {
         String text = FileUtils.replaceTabs(loadFromFile(source), 8);
         byte[] expected = loadBinaryFromFile(binary);
 
-        Spin2TokenStream stream = new Spin2TokenStream(text);
-        Spin2Parser subject = new Spin2Parser(stream);
+        Spin2Parser subject = new Spin2Parser(text);
         Node root = subject.parse();
 
         Spin2Compiler compiler = new Spin2Compiler();

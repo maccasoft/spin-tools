@@ -23,9 +23,9 @@ class Spin1ParseMethodTest {
 
     @Test
     void testParseMethod() {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "PUB start\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         MethodNode pub0 = (MethodNode) root.getChild(0);
@@ -41,9 +41,9 @@ class Spin1ParseMethodTest {
 
     @Test
     void testParseMethodEmptParameters() {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "PUB start()\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         MethodNode pub0 = (MethodNode) root.getChild(0);
@@ -59,9 +59,9 @@ class Spin1ParseMethodTest {
 
     @Test
     void testParseParameter() {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "PUB start(arg0)\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         MethodNode pub0 = (MethodNode) root.getChild(0);
@@ -78,9 +78,9 @@ class Spin1ParseMethodTest {
 
     @Test
     void testParseParameters() {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "PUB start(arg0,arg1,arg2)\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         MethodNode pub0 = (MethodNode) root.getChild(0);
@@ -99,9 +99,9 @@ class Spin1ParseMethodTest {
 
     @Test
     void testParseLocal() {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "PUB start | var0\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         MethodNode pub0 = (MethodNode) root.getChild(0);
@@ -118,9 +118,9 @@ class Spin1ParseMethodTest {
 
     @Test
     void testParseLocals() {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "PUB start | var0, var1, var2\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         MethodNode pub0 = (MethodNode) root.getChild(0);
@@ -142,9 +142,9 @@ class Spin1ParseMethodTest {
 
     @Test
     void testParseTypedLocals() {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "PUB start | byte var0, word var1, long var2\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         MethodNode pub0 = (MethodNode) root.getChild(0);
@@ -166,9 +166,9 @@ class Spin1ParseMethodTest {
 
     @Test
     void testParseArrayLocal() {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "PUB start | var0[10]\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         MethodNode pub0 = (MethodNode) root.getChild(0);
@@ -186,9 +186,9 @@ class Spin1ParseMethodTest {
 
     @Test
     void testParseResult() {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "PUB start : result\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         MethodNode pub0 = (MethodNode) root.getChild(0);
@@ -205,9 +205,9 @@ class Spin1ParseMethodTest {
 
     @Test
     void testParseFull() {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "PUB start(arg0, arg1) : var0 | byte var1, word var2\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         MethodNode pub0 = (MethodNode) root.getChild(0);
@@ -228,9 +228,9 @@ class Spin1ParseMethodTest {
 
     @Test
     void testParseFullOrder() {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "PUB start(arg0, arg1) | byte var1, word var2 : var0\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         MethodNode pub0 = (MethodNode) root.getChild(0);
@@ -251,12 +251,12 @@ class Spin1ParseMethodTest {
 
     @Test
     void testParseIndentedBlock() {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "PUB start()\n"
             + "\n"
             + "    repeat\n"
             + "        a := b\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         MethodNode pub0 = (MethodNode) root.getChild(0);
@@ -272,13 +272,13 @@ class Spin1ParseMethodTest {
 
     @Test
     void testParseIndentedBlockWithoutStatements() {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "PUB start()\n"
             + "\n"
             + "    repeat\n"
             + "    if\n"
             + "        a := b\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         MethodNode pub0 = (MethodNode) root.getChild(0);
@@ -297,13 +297,13 @@ class Spin1ParseMethodTest {
 
     @Test
     void testParseMisplacedBlocks() {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "PUB start()\n"
             + "\n"
             + "    repeat\n"
             + "        a := b\n"
             + "         c := d\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         MethodNode pub0 = (MethodNode) root.getChild(0);
@@ -321,13 +321,13 @@ class Spin1ParseMethodTest {
 
     @Test
     void testParseCaseBlock() {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "PUB start()\n"
             + "\n"
             + "    case a\n"
             + "        0: a := b\n"
             + "        1: c := d\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         MethodNode pub0 = (MethodNode) root.getChild(0);
@@ -338,14 +338,14 @@ class Spin1ParseMethodTest {
 
     @Test
     void testParseCaseBlockWithMultipleStatements() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "PUB start()\n"
             + "\n"
             + "    case a\n"
             + "        0: a := b\n"
             + "        1: c := d\n"
             + "           e := f\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -362,7 +362,7 @@ class Spin1ParseMethodTest {
 
     @Test
     void testColumnZeroCaseBlocks() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+        Spin1Parser subject = new Spin1Parser(""
             + "PUB start()\n"
             + "\n"
             + "case a\n"
@@ -371,7 +371,7 @@ class Spin1ParseMethodTest {
             + "repeat\n"
             + "  if a<>0\n"
             + "    a := b\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""

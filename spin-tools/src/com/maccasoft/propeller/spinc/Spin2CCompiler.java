@@ -51,8 +51,7 @@ public class Spin2CCompiler extends Spin2Compiler {
         if (text == null) {
             throw new FileNotFoundException();
         }
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
+        CParser parser = new CParser(text);
         Spin2Object object = compile(file, parser.parse());
 
         if (hasErrors()) {

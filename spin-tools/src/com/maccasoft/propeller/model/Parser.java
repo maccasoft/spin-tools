@@ -11,11 +11,8 @@
 package com.maccasoft.propeller.model;
 
 import com.maccasoft.propeller.spin1.Spin1Parser;
-import com.maccasoft.propeller.spin1.Spin1TokenStream;
 import com.maccasoft.propeller.spin2.Spin2Parser;
-import com.maccasoft.propeller.spin2.Spin2TokenStream;
 import com.maccasoft.propeller.spinc.CParser;
-import com.maccasoft.propeller.spinc.CTokenStream;
 
 public abstract class Parser {
 
@@ -30,12 +27,12 @@ public abstract class Parser {
     public static Parser getInstance(String suffix, String text) {
         switch (suffix.toLowerCase()) {
             case ".spin":
-                return new Spin1Parser(new Spin1TokenStream(text));
+                return new Spin1Parser(text);
             case ".spin2":
-                return new Spin2Parser(new Spin2TokenStream(text));
+                return new Spin2Parser(text);
             case ".c":
             case ".cpp":
-                return new CParser(new CTokenStream(text));
+                return new CParser(text);
         }
         return null;
     }

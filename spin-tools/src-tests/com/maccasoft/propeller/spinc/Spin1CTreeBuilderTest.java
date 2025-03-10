@@ -69,7 +69,7 @@ class Spin1CTreeBuilderTest {
     String parse(String text) {
         Spin1CTreeBuilder builder = new Spin1CTreeBuilder(new Context());
 
-        CParser parser = new CParser(new CTokenStream(text));
+        CParser parser = new CParser(text);
         while (true) {
             Token token = parser.nextTokenSkipNL();
             if (token.type == Token.EOF) {

@@ -22,10 +22,10 @@ class CParserTest {
 
     @Test
     void testGlobalVariables() throws Exception {
-        CParser subject = new CParser(new CTokenStream(""
+        CParser subject = new CParser(""
             + "int a, b, c;\n"
             + "short d;\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -39,10 +39,10 @@ class CParserTest {
 
     @Test
     void testGlobalVariablesAssignment() throws Exception {
-        CParser subject = new CParser(new CTokenStream(""
+        CParser subject = new CParser(""
             + "int a = 1, b = 2, c = 3;\n"
             + "short d = 4;\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -56,7 +56,7 @@ class CParserTest {
 
     @Test
     void testMethods() throws Exception {
-        CParser subject = new CParser(new CTokenStream(""
+        CParser subject = new CParser(""
             + "void main() {\n"
             + "    method(1, 2);\n"
             + "    a = function(1, 2);\n"
@@ -70,7 +70,7 @@ class CParserTest {
             + "    d = a * b;\n"
             + "    return d;\n"
             + "}\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -95,14 +95,14 @@ class CParserTest {
 
     @Test
     void testIfBlock() throws Exception {
-        CParser subject = new CParser(new CTokenStream(""
+        CParser subject = new CParser(""
             + "void main() {\n"
             + "    if (a == 1) {\n"
             + "        method(1, 2);\n"
             + "    }\n"
             + "    a = function(1, 2);\n"
             + "}\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -118,7 +118,7 @@ class CParserTest {
 
     @Test
     void testIfElseBlock() throws Exception {
-        CParser subject = new CParser(new CTokenStream(""
+        CParser subject = new CParser(""
             + "void main() {\n"
             + "    if (a == 1) {\n"
             + "        method(1, 2);\n"
@@ -126,7 +126,7 @@ class CParserTest {
             + "        a = function(1, 2);\n"
             + "    }\n"
             + "}\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -144,7 +144,7 @@ class CParserTest {
 
     @Test
     void testIfElseIfElseBlock() throws Exception {
-        CParser subject = new CParser(new CTokenStream(""
+        CParser subject = new CParser(""
             + "void main()\n"
             + "{\n"
             + "    int a;\n"
@@ -162,7 +162,7 @@ class CParserTest {
             + "        a = 4;\n"
             + "    }\n"
             + "}\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -187,13 +187,13 @@ class CParserTest {
 
     @Test
     void testSimpleIfBlock() throws Exception {
-        CParser subject = new CParser(new CTokenStream(""
+        CParser subject = new CParser(""
             + "void main() {\n"
             + "    if (a == 1)\n"
             + "        method(1, 2);\n"
             + "    a = function(1, 2);\n"
             + "}\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -208,14 +208,14 @@ class CParserTest {
 
     @Test
     void testSimpleIfElseBlock() throws Exception {
-        CParser subject = new CParser(new CTokenStream(""
+        CParser subject = new CParser(""
             + "void main() {\n"
             + "    if (a == 1)\n"
             + "        method(1, 2);\n"
             + "    else\n"
             + "        a = function(1, 2);\n"
             + "}\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -231,7 +231,7 @@ class CParserTest {
 
     @Test
     void testSimpleIfElseIfElseBlock() throws Exception {
-        CParser subject = new CParser(new CTokenStream(""
+        CParser subject = new CParser(""
             + "void main()\n"
             + "{\n"
             + "    int a;\n"
@@ -245,7 +245,7 @@ class CParserTest {
             + "    else\n"
             + "        a = 4;\n"
             + "}\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -266,7 +266,7 @@ class CParserTest {
 
     @Test
     void testWhileBlock() throws Exception {
-        CParser subject = new CParser(new CTokenStream(""
+        CParser subject = new CParser(""
             + "void main() {\n"
             + "    while (a == 1) {\n"
             + "        method(1, 2);\n"
@@ -274,7 +274,7 @@ class CParserTest {
             + "    }\n"
             + "    a = function(1, 2);\n"
             + "}\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -291,7 +291,7 @@ class CParserTest {
 
     @Test
     void testDoWhileBlock() throws Exception {
-        CParser subject = new CParser(new CTokenStream(""
+        CParser subject = new CParser(""
             + "void main() {\n"
             + "    do {\n"
             + "        method(1, 2);\n"
@@ -299,7 +299,7 @@ class CParserTest {
             + "    } while (a == 1);\n"
             + "    a = function(1, 2);\n"
             + "}\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -316,7 +316,7 @@ class CParserTest {
 
     @Test
     void testFor() throws Exception {
-        CParser subject = new CParser(new CTokenStream(""
+        CParser subject = new CParser(""
             + "void main() {\n"
             + "    for(a = 1; a < 100; a++) {\n"
             + "        method(a, 2);\n"
@@ -325,7 +325,7 @@ class CParserTest {
             + "        method(a++, 2);\n"
             + "    }\n"
             + "}\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -343,11 +343,11 @@ class CParserTest {
 
     @Test
     void testDefine() throws Exception {
-        CParser subject = new CParser(new CTokenStream(""
+        CParser subject = new CParser(""
             + "#define CLKFREQ 160_000_000\n"
             + "#define PIN_RX  63\n"
             + "#define PIN_TX  62\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -360,10 +360,10 @@ class CParserTest {
 
     @Test
     void testInclude() throws Exception {
-        CParser subject = new CParser(new CTokenStream(""
+        CParser subject = new CParser(""
             + "#include \"object\"\n"
             + "#include <object>\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -375,13 +375,13 @@ class CParserTest {
 
     @Test
     void testSameLineBlocks() throws Exception {
-        CParser subject = new CParser(new CTokenStream(""
+        CParser subject = new CParser(""
             + "void main() {\n"
             + "    if (a == 1) method(1, 2);\n"
             + "    while (a < 10) { a++; }\n"
             + "    a = function(1, 2);\n"
             + "}\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -399,7 +399,7 @@ class CParserTest {
 
     @Test
     void testGlobalVariablesAndFunctions() throws Exception {
-        CParser subject = new CParser(new CTokenStream(""
+        CParser subject = new CParser(""
             + "int a = 1, b = 2, c = 3;\n"
             + "short d;\n"
             + "\n"
@@ -416,7 +416,7 @@ class CParserTest {
             + "    d = a * b;\n"
             + "    return d;\n"
             + "}\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -445,7 +445,7 @@ class CParserTest {
 
     @Test
     void testParseInlinePAsmBlock() throws Exception {
-        CParser subject = new CParser(new CTokenStream(""
+        CParser subject = new CParser(""
             + "void main()\n"
             + "{\n"
             + "    asm {\n"
@@ -453,7 +453,7 @@ class CParserTest {
             + "        ret\n"
             + "    }\n"
             + "}\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -469,10 +469,10 @@ class CParserTest {
 
     @Test
     void testUnknownTypeVariable() throws Exception {
-        CParser subject = new CParser(new CTokenStream(""
+        CParser subject = new CParser(""
             + "object a, b, c;\n"
             + "object d;\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -486,18 +486,18 @@ class CParserTest {
 
     @Test
     void testObjectMethod() throws Exception {
-        CParser subject = new CParser(new CTokenStream(""
+        CParser subject = new CParser(""
             + "obj.method\n"
-            + ""));
+            + "");
 
         Assertions.assertEquals("obj.method", subject.nextToken().getText());
     }
 
     @Test
     void testObjectArrayMethod() throws Exception {
-        CParser subject = new CParser(new CTokenStream(""
+        CParser subject = new CParser(""
             + "obj[0].method\n"
-            + ""));
+            + "");
 
         Assertions.assertEquals("obj", subject.nextToken().getText());
         Assertions.assertEquals("[", subject.nextToken().getText());
@@ -508,7 +508,7 @@ class CParserTest {
 
     @Test
     void testPointerVariables() throws Exception {
-        CParser subject = new CParser(new CTokenStream(""
+        CParser subject = new CParser(""
             + "int *a, *b;\n"
             + "short *c;\n"
             + "\n"
@@ -516,7 +516,7 @@ class CParserTest {
             + "{\n"
             + "    int *d;\n"
             + "}\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -532,7 +532,7 @@ class CParserTest {
 
     @Test
     void testSwitch() throws Exception {
-        CParser subject = new CParser(new CTokenStream(""
+        CParser subject = new CParser(""
             + "void main()\n"
             + "{\n"
             + "    switch(a) {\n"
@@ -547,7 +547,7 @@ class CParserTest {
             + "            break;\n"
             + "    }\n"
             + "}\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -570,7 +570,7 @@ class CParserTest {
 
     @Test
     void testSwitchDefault() throws Exception {
-        CParser subject = new CParser(new CTokenStream(""
+        CParser subject = new CParser(""
             + "void main()\n"
             + "{\n"
             + "    switch(a) {\n"
@@ -585,7 +585,7 @@ class CParserTest {
             + "            break;\n"
             + "    }\n"
             + "}\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -608,7 +608,7 @@ class CParserTest {
 
     @Test
     void testSwitchCaseWithoutBreak() throws Exception {
-        CParser subject = new CParser(new CTokenStream(""
+        CParser subject = new CParser(""
             + "void main()\n"
             + "{\n"
             + "    switch(a) {\n"
@@ -621,7 +621,7 @@ class CParserTest {
             + "            break;\n"
             + "    }\n"
             + "}\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -642,7 +642,7 @@ class CParserTest {
 
     @Test
     void testPreprocessor() throws Exception {
-        CParser subject = new CParser(new CTokenStream(""
+        CParser subject = new CParser(""
             + "void main(int a)\n"
             + "{\n"
             + "#ifdef TEST\n"
@@ -650,7 +650,7 @@ class CParserTest {
             + "#endif\n"
             + "    a++;\n"
             + "}\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -667,13 +667,13 @@ class CParserTest {
 
     @Test
     void testStructureDefinition() throws Exception {
-        CParser subject = new CParser(new CTokenStream(""
+        CParser subject = new CParser(""
             + "struct data {\n"
             + "    byte a;\n"
             + "    byte b, c;\n"
             + "    byte d[10];\n"
             + "};\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -688,13 +688,13 @@ class CParserTest {
 
     @Test
     void testStructureDefinitionAndVariables() throws Exception {
-        CParser subject = new CParser(new CTokenStream(""
+        CParser subject = new CParser(""
             + "struct data {\n"
             + "    byte a;\n"
             + "    byte b, c;\n"
             + "    byte d[10];\n"
             + "} a, *b, c;\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -712,11 +712,11 @@ class CParserTest {
 
     @Test
     void testStructureVariables() throws Exception {
-        CParser subject = new CParser(new CTokenStream(""
+        CParser subject = new CParser(""
             + "struct data a;\n"
             + "struct data b, c;\n"
             + "struct data *d, e, *f;\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
@@ -732,7 +732,7 @@ class CParserTest {
 
     @Test
     void testSimpleIfBlock2() throws Exception {
-        CParser subject = new CParser(new CTokenStream(""
+        CParser subject = new CParser(""
             + "void main() {\n"
             + "    if (a == 1)\n"
             + "    while (a == 1) {\n"
@@ -741,7 +741,7 @@ class CParserTest {
             + "    }\n"
             + "    a = function(1, 2);\n"
             + "}\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""

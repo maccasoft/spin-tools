@@ -1161,8 +1161,7 @@ class Spin2DebugTest {
     }
 
     String compile(String text) throws Exception {
-        Spin2TokenStream stream = new Spin2TokenStream(text);
-        Spin2Parser parser = new Spin2Parser(stream);
+        Spin2Parser parser = new Spin2Parser(text);
         Node root = parser.parse();
 
         Spin2Compiler compiler = new Spin2Compiler();

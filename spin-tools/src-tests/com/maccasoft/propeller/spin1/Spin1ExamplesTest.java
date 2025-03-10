@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -93,10 +93,7 @@ class Spin1ExamplesTest {
 
     void compileAndCompare(File source, File binary) throws Exception {
         String text = FileUtils.loadFromFile(source);
-        byte[] expected = loadBinaryFromFile(binary);
-
-        Spin1TokenStream stream = new Spin1TokenStream(text);
-        Spin1Parser subject = new Spin1Parser(stream);
+        Spin1Parser subject = new Spin1Parser(text);
         Node root = subject.parse();
 
         Spin1Compiler compiler = new Spin1Compiler();
@@ -117,6 +114,7 @@ class Spin1ExamplesTest {
         obj.generateListing(new PrintStream(os));
         String actualListing = os.toString();
 
+        byte[] expected = loadBinaryFromFile(binary);
         obj.setBytes(expected, 0);
 
         os = new ByteArrayOutputStream();

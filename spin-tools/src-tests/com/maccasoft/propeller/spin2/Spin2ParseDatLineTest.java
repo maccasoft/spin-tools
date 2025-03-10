@@ -20,10 +20,10 @@ class Spin2ParseDatLineTest {
 
     @Test
     void testParseLabel() {
-        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+        Spin2Parser subject = new Spin2Parser(""
             + "DAT\n"
             + "label\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         DataLineNode line0 = (DataLineNode) root.getChild(0).getChild(0);
@@ -39,10 +39,10 @@ class Spin2ParseDatLineTest {
 
     @Test
     void testParseCondition() {
-        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+        Spin2Parser subject = new Spin2Parser(""
             + "DAT\n"
             + "        if_c\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         DataLineNode line0 = (DataLineNode) root.getChild(0).getChild(0);
@@ -58,10 +58,10 @@ class Spin2ParseDatLineTest {
 
     @Test
     void testParseInstruction() {
-        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+        Spin2Parser subject = new Spin2Parser(""
             + "DAT\n"
             + "                mov\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         DataLineNode line0 = (DataLineNode) root.getChild(0).getChild(0);
@@ -77,10 +77,10 @@ class Spin2ParseDatLineTest {
 
     @Test
     void testParseInstructionParameters() {
-        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+        Spin2Parser subject = new Spin2Parser(""
             + "DAT\n"
             + "                mov     a, b\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         DataLineNode line0 = (DataLineNode) root.getChild(0).getChild(0);
@@ -98,10 +98,10 @@ class Spin2ParseDatLineTest {
 
     @Test
     void testParseModifier() {
-        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+        Spin2Parser subject = new Spin2Parser(""
             + "DAT\n"
             + "                mov     a, b    wz\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         DataLineNode line0 = (DataLineNode) root.getChild(0).getChild(0);
@@ -119,10 +119,10 @@ class Spin2ParseDatLineTest {
 
     @Test
     void testParseFullLine() {
-        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+        Spin2Parser subject = new Spin2Parser(""
             + "DAT\n"
             + "label   if_c    mov     a, b    wz\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         DataLineNode line0 = (DataLineNode) root.getChild(0).getChild(0);
@@ -140,10 +140,10 @@ class Spin2ParseDatLineTest {
 
     @Test
     void testUnknownModifierParsedAsParameter() {
-        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+        Spin2Parser subject = new Spin2Parser(""
             + "DAT\n"
             + "label   if_c    mov     a, b    wz1\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         DataLineNode line0 = (DataLineNode) root.getChild(0).getChild(0);
@@ -161,10 +161,10 @@ class Spin2ParseDatLineTest {
 
     @Test
     void testParseData() {
-        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+        Spin2Parser subject = new Spin2Parser(""
             + "DAT\n"
             + "                long    1, 2, 3, 4\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         DataLineNode line0 = (DataLineNode) root.getChild(0).getChild(0);
@@ -184,10 +184,10 @@ class Spin2ParseDatLineTest {
 
     @Test
     void testParseDataArray() {
-        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+        Spin2Parser subject = new Spin2Parser(""
             + "DAT\n"
             + "                long    1[2], 3, 4, 5[6]\n"
-            + ""));
+            + "");
 
         Node root = subject.parse();
         DataLineNode line0 = (DataLineNode) root.getChild(0).getChild(0);

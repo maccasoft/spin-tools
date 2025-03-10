@@ -87,8 +87,7 @@ public class Spin1Compiler extends Compiler {
         if (text == null) {
             throw new FileNotFoundException();
         }
-        Spin1TokenStream stream = new Spin1TokenStream(text);
-        Spin1Parser parser = new Spin1Parser(stream);
+        Spin1Parser parser = new Spin1Parser(text);
         Spin1Object object = compile(file, parser.parse());
 
         if (hasErrors()) {

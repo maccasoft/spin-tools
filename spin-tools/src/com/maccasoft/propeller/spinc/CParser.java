@@ -33,8 +33,8 @@ public class CParser extends Parser {
 
     Node root;
 
-    public CParser(CTokenStream stream) {
-        this.stream = stream;
+    public CParser(String text) {
+        this.stream = new CTokenStream(text);
     }
 
     @Override

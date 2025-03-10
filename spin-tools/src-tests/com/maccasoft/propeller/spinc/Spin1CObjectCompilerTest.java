@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -2111,8 +2111,7 @@ class Spin1CObjectCompilerTest {
     }
 
     String compile(String text) throws Exception {
-        CTokenStream stream = new CTokenStream(text);
-        CParser subject = new CParser(stream);
+        CParser subject = new CParser(text);
         Node root = subject.parse();
 
         Spin1CObjectCompiler compiler = new Spin1CObjectCompiler(new Spin1Compiler(), new File("test.spin1"));

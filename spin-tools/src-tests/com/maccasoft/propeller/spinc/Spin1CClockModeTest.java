@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -27,12 +27,7 @@ class Spin1CClockModeTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
-        Node root = parser.parse();
-
-        Spin1CObjectCompiler subject = new Spin1CObjectCompiler(new Spin1CCompiler(), new File("test.spin"));
-        subject.compileObject(root);
+        Spin1CObjectCompiler subject = buildCompiler(text);
 
         Assertions.assertEquals(0b0_0_0_00_000, subject.getScope().getSymbol("CLKMODE").getNumber().intValue());
         Assertions.assertEquals(12_000_000, subject.getScope().getSymbol("CLKFREQ").getNumber().intValue());
@@ -48,12 +43,7 @@ class Spin1CClockModeTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
-        Node root = parser.parse();
-
-        Spin1CObjectCompiler subject = new Spin1CObjectCompiler(new Spin1CCompiler(), new File("test.spin"));
-        subject.compileObject(root);
+        Spin1CObjectCompiler subject = buildCompiler(text);
 
         Assertions.assertEquals(0b0_0_0_00_000, subject.getScope().getSymbol("CLKMODE").getNumber().intValue());
         Assertions.assertEquals(12_000_000, subject.getScope().getSymbol("CLKFREQ").getNumber().intValue());
@@ -69,12 +59,7 @@ class Spin1CClockModeTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
-        Node root = parser.parse();
-
-        Spin1CObjectCompiler subject = new Spin1CObjectCompiler(new Spin1CCompiler(), new File("test.spin"));
-        subject.compileObject(root);
+        Spin1CObjectCompiler subject = buildCompiler(text);
 
         Assertions.assertEquals(0b0_0_0_00_001, subject.getScope().getSymbol("CLKMODE").getNumber().intValue());
         Assertions.assertEquals(20_000, subject.getScope().getSymbol("CLKFREQ").getNumber().intValue());
@@ -91,12 +76,7 @@ class Spin1CClockModeTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
-        Node root = parser.parse();
-
-        Spin1CObjectCompiler subject = new Spin1CObjectCompiler(new Spin1CCompiler(), new File("test.spin"));
-        subject.compileObject(root);
+        Spin1CObjectCompiler subject = buildCompiler(text);
 
         Assertions.assertEquals(0b0_0_1_00_010, subject.getScope().getSymbol("CLKMODE").getNumber().intValue());
         Assertions.assertEquals(5_000_000, subject.getScope().getSymbol("CLKFREQ").getNumber().intValue());
@@ -113,12 +93,7 @@ class Spin1CClockModeTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
-        Node root = parser.parse();
-
-        Spin1CObjectCompiler subject = new Spin1CObjectCompiler(new Spin1CCompiler(), new File("test.spin"));
-        subject.compileObject(root);
+        Spin1CObjectCompiler subject = buildCompiler(text);
 
         Assertions.assertEquals(0b0_1_1_00_011, subject.getScope().getSymbol("CLKMODE").getNumber().intValue());
         Assertions.assertEquals(5_000_000, subject.getScope().getSymbol("CLKFREQ").getNumber().intValue());
@@ -135,12 +110,7 @@ class Spin1CClockModeTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
-        Node root = parser.parse();
-
-        Spin1CObjectCompiler subject = new Spin1CObjectCompiler(new Spin1CCompiler(), new File("test.spin"));
-        subject.compileObject(root);
+        Spin1CObjectCompiler subject = buildCompiler(text);
 
         Assertions.assertEquals(0b0_1_1_00_100, subject.getScope().getSymbol("CLKMODE").getNumber().intValue());
         Assertions.assertEquals(10_000_000, subject.getScope().getSymbol("CLKFREQ").getNumber().intValue());
@@ -157,12 +127,7 @@ class Spin1CClockModeTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
-        Node root = parser.parse();
-
-        Spin1CObjectCompiler subject = new Spin1CObjectCompiler(new Spin1CCompiler(), new File("test.spin"));
-        subject.compileObject(root);
+        Spin1CObjectCompiler subject = buildCompiler(text);
 
         Assertions.assertEquals(0b0_1_1_00_101, subject.getScope().getSymbol("CLKMODE").getNumber().intValue());
         Assertions.assertEquals(20_000_000, subject.getScope().getSymbol("CLKFREQ").getNumber().intValue());
@@ -179,12 +144,7 @@ class Spin1CClockModeTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
-        Node root = parser.parse();
-
-        Spin1CObjectCompiler subject = new Spin1CObjectCompiler(new Spin1CCompiler(), new File("test.spin"));
-        subject.compileObject(root);
+        Spin1CObjectCompiler subject = buildCompiler(text);
 
         Assertions.assertEquals(0b0_1_1_00_110, subject.getScope().getSymbol("CLKMODE").getNumber().intValue());
         Assertions.assertEquals(40_000_000, subject.getScope().getSymbol("CLKFREQ").getNumber().intValue());
@@ -201,12 +161,7 @@ class Spin1CClockModeTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
-        Node root = parser.parse();
-
-        Spin1CObjectCompiler subject = new Spin1CObjectCompiler(new Spin1CCompiler(), new File("test.spin"));
-        subject.compileObject(root);
+        Spin1CObjectCompiler subject = buildCompiler(text);
 
         Assertions.assertEquals(0b0_1_1_00_111, subject.getScope().getSymbol("CLKMODE").getNumber().intValue());
         Assertions.assertEquals(80_000_000, subject.getScope().getSymbol("CLKFREQ").getNumber().intValue());
@@ -223,12 +178,7 @@ class Spin1CClockModeTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
-        Node root = parser.parse();
-
-        Spin1CObjectCompiler subject = new Spin1CObjectCompiler(new Spin1CCompiler(), new File("test.spin"));
-        subject.compileObject(root);
+        Spin1CObjectCompiler subject = buildCompiler(text);
 
         Assertions.assertEquals(0b0_1_1_01_011, subject.getScope().getSymbol("CLKMODE").getNumber().intValue());
         Assertions.assertEquals(5_000_000, subject.getScope().getSymbol("CLKFREQ").getNumber().intValue());
@@ -245,12 +195,7 @@ class Spin1CClockModeTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
-        Node root = parser.parse();
-
-        Spin1CObjectCompiler subject = new Spin1CObjectCompiler(new Spin1CCompiler(), new File("test.spin"));
-        subject.compileObject(root);
+        Spin1CObjectCompiler subject = buildCompiler(text);
 
         Assertions.assertEquals(0b0_1_1_01_100, subject.getScope().getSymbol("CLKMODE").getNumber().intValue());
         Assertions.assertEquals(10_000_000, subject.getScope().getSymbol("CLKFREQ").getNumber().intValue());
@@ -267,12 +212,7 @@ class Spin1CClockModeTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
-        Node root = parser.parse();
-
-        Spin1CObjectCompiler subject = new Spin1CObjectCompiler(new Spin1CCompiler(), new File("test.spin"));
-        subject.compileObject(root);
+        Spin1CObjectCompiler subject = buildCompiler(text);
 
         Assertions.assertEquals(0b0_1_1_01_101, subject.getScope().getSymbol("CLKMODE").getNumber().intValue());
         Assertions.assertEquals(20_000_000, subject.getScope().getSymbol("CLKFREQ").getNumber().intValue());
@@ -289,12 +229,7 @@ class Spin1CClockModeTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
-        Node root = parser.parse();
-
-        Spin1CObjectCompiler subject = new Spin1CObjectCompiler(new Spin1CCompiler(), new File("test.spin"));
-        subject.compileObject(root);
+        Spin1CObjectCompiler subject = buildCompiler(text);
 
         Assertions.assertEquals(0b0_1_1_01_110, subject.getScope().getSymbol("CLKMODE").getNumber().intValue());
         Assertions.assertEquals(40_000_000, subject.getScope().getSymbol("CLKFREQ").getNumber().intValue());
@@ -311,12 +246,7 @@ class Spin1CClockModeTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
-        Node root = parser.parse();
-
-        Spin1CObjectCompiler subject = new Spin1CObjectCompiler(new Spin1CCompiler(), new File("test.spin"));
-        subject.compileObject(root);
+        Spin1CObjectCompiler subject = buildCompiler(text);
 
         Assertions.assertEquals(0b0_1_1_01_111, subject.getScope().getSymbol("CLKMODE").getNumber().intValue());
         Assertions.assertEquals(80_000_000, subject.getScope().getSymbol("CLKFREQ").getNumber().intValue());
@@ -333,12 +263,7 @@ class Spin1CClockModeTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
-        Node root = parser.parse();
-
-        Spin1CObjectCompiler subject = new Spin1CObjectCompiler(new Spin1CCompiler(), new File("test.spin"));
-        subject.compileObject(root);
+        Spin1CObjectCompiler subject = buildCompiler(text);
 
         Assertions.assertEquals(0b0_1_1_10_011, subject.getScope().getSymbol("CLKMODE").getNumber().intValue());
         Assertions.assertEquals(5_000_000, subject.getScope().getSymbol("CLKFREQ").getNumber().intValue());
@@ -355,12 +280,7 @@ class Spin1CClockModeTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
-        Node root = parser.parse();
-
-        Spin1CObjectCompiler subject = new Spin1CObjectCompiler(new Spin1CCompiler(), new File("test.spin"));
-        subject.compileObject(root);
+        Spin1CObjectCompiler subject = buildCompiler(text);
 
         Assertions.assertEquals(0b0_1_1_10_100, subject.getScope().getSymbol("CLKMODE").getNumber().intValue());
         Assertions.assertEquals(10_000_000, subject.getScope().getSymbol("CLKFREQ").getNumber().intValue());
@@ -377,12 +297,7 @@ class Spin1CClockModeTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
-        Node root = parser.parse();
-
-        Spin1CObjectCompiler subject = new Spin1CObjectCompiler(new Spin1CCompiler(), new File("test.spin"));
-        subject.compileObject(root);
+        Spin1CObjectCompiler subject = buildCompiler(text);
 
         Assertions.assertEquals(0b0_1_1_10_101, subject.getScope().getSymbol("CLKMODE").getNumber().intValue());
         Assertions.assertEquals(20_000_000, subject.getScope().getSymbol("CLKFREQ").getNumber().intValue());
@@ -399,12 +314,7 @@ class Spin1CClockModeTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
-        Node root = parser.parse();
-
-        Spin1CObjectCompiler subject = new Spin1CObjectCompiler(new Spin1CCompiler(), new File("test.spin"));
-        subject.compileObject(root);
+        Spin1CObjectCompiler subject = buildCompiler(text);
 
         Assertions.assertEquals(0b0_1_1_10_110, subject.getScope().getSymbol("CLKMODE").getNumber().intValue());
         Assertions.assertEquals(40_000_000, subject.getScope().getSymbol("CLKFREQ").getNumber().intValue());
@@ -421,12 +331,7 @@ class Spin1CClockModeTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
-        Node root = parser.parse();
-
-        Spin1CObjectCompiler subject = new Spin1CObjectCompiler(new Spin1CCompiler(), new File("test.spin"));
-        subject.compileObject(root);
+        Spin1CObjectCompiler subject = buildCompiler(text);
 
         Assertions.assertEquals(0b0_1_1_10_111, subject.getScope().getSymbol("CLKMODE").getNumber().intValue());
         Assertions.assertEquals(80_000_000, subject.getScope().getSymbol("CLKFREQ").getNumber().intValue());
@@ -443,12 +348,7 @@ class Spin1CClockModeTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
-        Node root = parser.parse();
-
-        Spin1CObjectCompiler subject = new Spin1CObjectCompiler(new Spin1CCompiler(), new File("test.spin"));
-        subject.compileObject(root);
+        Spin1CObjectCompiler subject = buildCompiler(text);
 
         Assertions.assertEquals(0b0_1_1_11_011, subject.getScope().getSymbol("CLKMODE").getNumber().intValue());
         Assertions.assertEquals(5_000_000, subject.getScope().getSymbol("CLKFREQ").getNumber().intValue());
@@ -465,12 +365,7 @@ class Spin1CClockModeTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
-        Node root = parser.parse();
-
-        Spin1CObjectCompiler subject = new Spin1CObjectCompiler(new Spin1CCompiler(), new File("test.spin"));
-        subject.compileObject(root);
+        Spin1CObjectCompiler subject = buildCompiler(text);
 
         Assertions.assertEquals(0b0_1_1_11_100, subject.getScope().getSymbol("CLKMODE").getNumber().intValue());
         Assertions.assertEquals(10_000_000, subject.getScope().getSymbol("CLKFREQ").getNumber().intValue());
@@ -487,12 +382,7 @@ class Spin1CClockModeTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
-        Node root = parser.parse();
-
-        Spin1CObjectCompiler subject = new Spin1CObjectCompiler(new Spin1CCompiler(), new File("test.spin"));
-        subject.compileObject(root);
+        Spin1CObjectCompiler subject = buildCompiler(text);
 
         Assertions.assertEquals(0b0_1_1_11_101, subject.getScope().getSymbol("CLKMODE").getNumber().intValue());
         Assertions.assertEquals(20_000_000, subject.getScope().getSymbol("CLKFREQ").getNumber().intValue());
@@ -509,12 +399,7 @@ class Spin1CClockModeTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
-        Node root = parser.parse();
-
-        Spin1CObjectCompiler subject = new Spin1CObjectCompiler(new Spin1CCompiler(), new File("test.spin"));
-        subject.compileObject(root);
+        Spin1CObjectCompiler subject = buildCompiler(text);
 
         Assertions.assertEquals(0b0_1_1_11_110, subject.getScope().getSymbol("CLKMODE").getNumber().intValue());
         Assertions.assertEquals(40_000_000, subject.getScope().getSymbol("CLKFREQ").getNumber().intValue());
@@ -531,15 +416,20 @@ class Spin1CClockModeTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
-        Node root = parser.parse();
-
-        Spin1CObjectCompiler subject = new Spin1CObjectCompiler(new Spin1CCompiler(), new File("test.spin"));
-        subject.compileObject(root);
+        Spin1CObjectCompiler subject = buildCompiler(text);
 
         Assertions.assertEquals(0b0_1_1_11_111, subject.getScope().getSymbol("CLKMODE").getNumber().intValue());
         Assertions.assertEquals(80_000_000, subject.getScope().getSymbol("CLKFREQ").getNumber().intValue());
+    }
+
+    Spin1CObjectCompiler buildCompiler(String text) {
+        CParser parser = new CParser(text);
+        Node root = parser.parse();
+
+        Spin1CObjectCompiler compiler = new Spin1CObjectCompiler(new Spin1CCompiler(), new File("test.spin"));
+        compiler.compileObject(root);
+
+        return compiler;
     }
 
 }

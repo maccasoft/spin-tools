@@ -24,9 +24,7 @@ import org.junit.jupiter.api.TestInstance.Lifecycle;
 
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin2.Spin2Parser;
-import com.maccasoft.propeller.spin2.Spin2TokenStream;
 import com.maccasoft.propeller.spinc.CParser;
-import com.maccasoft.propeller.spinc.CTokenStream;
 
 @TestInstance(Lifecycle.PER_CLASS)
 class OutlineViewTest {
@@ -70,8 +68,7 @@ class OutlineViewTest {
             + "  word c\n"
             + "";
 
-        Spin2TokenStream stream = new Spin2TokenStream(text);
-        Spin2Parser parser = new Spin2Parser(stream);
+        Spin2Parser parser = new Spin2Parser(text);
         Node root = parser.parse();
 
         Node varNode = root.getChild(0);
@@ -94,8 +91,7 @@ class OutlineViewTest {
             + "'\n"
             + "";
 
-        Spin2TokenStream stream = new Spin2TokenStream(text);
-        Spin2Parser parser = new Spin2Parser(stream);
+        Spin2Parser parser = new Spin2Parser(text);
         Node root = parser.parse();
 
         Assertions.assertEquals("/PUB MAIN", view.getPath(root.getChild(0)));
@@ -108,8 +104,7 @@ class OutlineViewTest {
             + "'\n"
             + "";
 
-        Spin2TokenStream stream = new Spin2TokenStream(text);
-        Spin2Parser parser = new Spin2Parser(stream);
+        Spin2Parser parser = new Spin2Parser(text);
         Node root = parser.parse();
 
         TreePath path0 = new TreePath(new Object[] {
@@ -127,8 +122,7 @@ class OutlineViewTest {
             + "driver\n"
             + "";
 
-        Spin2TokenStream stream = new Spin2TokenStream(text);
-        Spin2Parser parser = new Spin2Parser(stream);
+        Spin2Parser parser = new Spin2Parser(text);
         Node root = parser.parse();
 
         Assertions.assertEquals("/DAT0", view.getPath(root.getChild(0)));
@@ -147,8 +141,7 @@ class OutlineViewTest {
             + "driver2\n"
             + "";
 
-        Spin2TokenStream stream = new Spin2TokenStream(text);
-        Spin2Parser parser = new Spin2Parser(stream);
+        Spin2Parser parser = new Spin2Parser(text);
         Node root = parser.parse();
 
         Assertions.assertEquals("/DAT0", view.getPath(root.getChild(0)));
@@ -165,8 +158,7 @@ class OutlineViewTest {
             + "driver\n"
             + "";
 
-        Spin2TokenStream stream = new Spin2TokenStream(text);
-        Spin2Parser parser = new Spin2Parser(stream);
+        Spin2Parser parser = new Spin2Parser(text);
         Node root = parser.parse();
 
         TreePath path0 = new TreePath(new Object[] {
@@ -186,8 +178,7 @@ class OutlineViewTest {
             + "#include <object>\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
+        CParser parser = new CParser(text);
         Node root = parser.parse();
 
         Assertions.assertEquals("/<OBJECT>", view.getPath(root.getChild(0)));
@@ -201,8 +192,7 @@ class OutlineViewTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
+        CParser parser = new CParser(text);
         Node root = parser.parse();
 
         Assertions.assertEquals("/VOID MAIN", view.getPath(root.getChild(0)));
@@ -216,8 +206,7 @@ class OutlineViewTest {
             + "}\n"
             + "";
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser parser = new CParser(stream);
+        CParser parser = new CParser(text);
         Node root = parser.parse();
 
         TreePath path0 = new TreePath(new Object[] {

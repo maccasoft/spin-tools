@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -143,8 +143,7 @@ class Spin2CExamplesTest {
     }
 
     String compile(String text, boolean debugEnabled) throws Exception {
-        CTokenStream stream = new CTokenStream(text);
-        CParser subject = new CParser(stream);
+        CParser subject = new CParser(text);
         Node root = subject.parse();
 
         Spin2CCompiler compiler = new Spin2CCompiler();
@@ -172,8 +171,7 @@ class Spin2CExamplesTest {
         String text = loadFromFile(source);
         byte[] expected = loadBinaryFromFile(binary);
 
-        CTokenStream stream = new CTokenStream(text);
-        CParser subject = new CParser(stream);
+        CParser subject = new CParser(text);
         Node root = subject.parse();
 
         Spin2CCompiler compiler = new Spin2CCompiler();

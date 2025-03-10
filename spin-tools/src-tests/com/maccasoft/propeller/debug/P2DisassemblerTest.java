@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -22,7 +22,6 @@ import com.maccasoft.propeller.spin2.Spin2Compiler;
 import com.maccasoft.propeller.spin2.Spin2Object;
 import com.maccasoft.propeller.spin2.Spin2ObjectCompiler;
 import com.maccasoft.propeller.spin2.Spin2Parser;
-import com.maccasoft.propeller.spin2.Spin2TokenStream;
 
 class P2DisassemblerTest {
 
@@ -1318,8 +1317,7 @@ class P2DisassemblerTest {
     }
 
     String compileAndDisassemble(String text) throws Exception {
-        Spin2TokenStream stream = new Spin2TokenStream(text);
-        Spin2Parser parser = new Spin2Parser(stream);
+        Spin2Parser parser = new Spin2Parser(text);
         Node root = parser.parse();
 
         Spin2Compiler compiler = new Spin2Compiler();
