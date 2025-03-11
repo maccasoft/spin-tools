@@ -26,7 +26,7 @@ import com.maccasoft.propeller.SpinObject.LinkDataObject;
 import com.maccasoft.propeller.SpinObject.LongDataObject;
 import com.maccasoft.propeller.SpinObject.WordDataObject;
 import com.maccasoft.propeller.expressions.Expression;
-import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenStream;
 
@@ -98,7 +98,7 @@ public class Spin1Compiler extends Compiler {
     }
 
     @Override
-    public Spin1Object compile(File rootFile, Node root) {
+    public Spin1Object compile(File rootFile, RootNode root) {
         Spin1Object obj = compileObject(rootFile, root);
 
         Spin1Object object = new Spin1Object();
@@ -150,7 +150,7 @@ public class Spin1Compiler extends Compiler {
         return object;
     }
 
-    public Spin1Object compileObject(File rootFile, Node root) {
+    public Spin1Object compileObject(File rootFile, RootNode root) {
         int memoryOffset = 16;
 
         Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompiler(this, rootFile);
@@ -227,7 +227,7 @@ public class Spin1Compiler extends Compiler {
 
     @Override
     public ObjectInfo getObjectInfo(ObjectCompiler parent, File file, Map<String, Expression> parameters) throws Exception {
-        Node objectRoot = getParsedSource(file);
+        RootNode objectRoot = getParsedSource(file);
         ObjectCompiler objectCompiler = new Spin1ObjectCompiler(this, parent, file);
 
         while (parent != null) {
@@ -252,7 +252,7 @@ public class Spin1Compiler extends Compiler {
     public ObjectInfo getObjectInclude(String fileName, Map<String, Expression> parameters) {
         File objectFile = getFile(fileName, ".spin");
         if (objectFile != null) {
-            Node objectRoot = getParsedSource(objectFile);
+            RootNode objectRoot = getParsedSource(objectFile);
             if (objectRoot != null) {
                 ObjectCompiler objectCompiler = new Spin1ObjectCompiler(this, objectFile);
                 ObjectInfo info = new ObjectInfo(objectFile, objectCompiler, parameters);

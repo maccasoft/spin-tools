@@ -27,6 +27,7 @@ import com.maccasoft.propeller.expressions.ObjectContextLiteral;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenIterator;
 import com.maccasoft.propeller.spin1.instructions.FileInc;
@@ -114,7 +115,7 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
                                 for (Spin1PAsmExpression argument : pasmLine.getArguments()) {
                                     String fileName = argument.getString();
                                     File includeFile = compiler.getFile(fileName, ".spin");
-                                    Node includedNode = compiler.getParsedSource(includeFile);
+                                    RootNode includedNode = compiler.getParsedSource(includeFile);
                                     try {
                                         if (includedNode == null) {
                                             throw new RuntimeException("file \"" + fileName + "\" not found");
@@ -314,7 +315,7 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
         pendingAlias.clear();
     }
 
-    protected abstract void compileDatInclude(Node root);
+    protected abstract void compileDatInclude(RootNode root);
 
     protected byte[] getBinaryFile(String fileName) {
         return compiler.getBinaryFile(fileName);

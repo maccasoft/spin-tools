@@ -23,7 +23,7 @@ import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.SpinObject.DataObject;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.NumberLiteral;
-import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.Token;
 
 class Spin2DebugTest {
@@ -1162,7 +1162,7 @@ class Spin2DebugTest {
 
     String compile(String text) throws Exception {
         Spin2Parser parser = new Spin2Parser(text);
-        Node root = parser.parse();
+        RootNode root = parser.parse();
 
         Spin2Compiler compiler = new Spin2Compiler();
         compiler.setDebugEnabled(true);

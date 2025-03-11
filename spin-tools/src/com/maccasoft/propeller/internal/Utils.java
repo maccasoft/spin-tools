@@ -132,4 +132,11 @@ public class Utils {
         return result.toArray(new String[result.size()]);
     }
 
+    public boolean equals(String text1, String text2, boolean caseSensitive) {
+        if (text1 != null) {
+            return caseSensitive ? text1.equals(text2) : text1.equalsIgnoreCase(text2);
+        }
+        return (text1 == text2);
+    }
+
 }

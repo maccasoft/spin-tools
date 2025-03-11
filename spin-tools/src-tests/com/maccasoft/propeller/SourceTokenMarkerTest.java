@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import com.maccasoft.propeller.SourceTokenMarker.TokenId;
 import com.maccasoft.propeller.SourceTokenMarker.TokenMarker;
 import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.spin1.Spin1Parser;
 import com.maccasoft.propeller.spin1.Spin1TokenMarker;
@@ -126,7 +127,7 @@ public class SourceTokenMarkerTest {
         SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL) {
 
             @Override
-            protected Node getObjectTree(String fileName) {
+            protected RootNode getObjectTree(String fileName) {
                 switch (fileName) {
                     case "object": {
                         Spin2Parser parser = new Spin2Parser(objectText);
@@ -169,7 +170,7 @@ public class SourceTokenMarkerTest {
         SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL) {
 
             @Override
-            protected Node getObjectTree(String fileName) {
+            protected RootNode getObjectTree(String fileName) {
                 switch (fileName) {
                     case "object": {
                         Spin2Parser parser = new Spin2Parser(objectText);
@@ -216,7 +217,7 @@ public class SourceTokenMarkerTest {
         SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL) {
 
             @Override
-            protected Node getObjectTree(String fileName) {
+            protected RootNode getObjectTree(String fileName) {
                 switch (fileName) {
                     case "object": {
                         Spin2Parser parser = new Spin2Parser(objectText);
@@ -259,7 +260,7 @@ public class SourceTokenMarkerTest {
         SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL) {
 
             @Override
-            protected Node getObjectTree(String fileName) {
+            protected RootNode getObjectTree(String fileName) {
                 switch (fileName) {
                     case "object": {
                         Spin2Parser parser = new Spin2Parser(objectText);
@@ -302,7 +303,7 @@ public class SourceTokenMarkerTest {
         SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL) {
 
             @Override
-            protected Node getObjectTree(String fileName) {
+            protected RootNode getObjectTree(String fileName) {
                 switch (fileName) {
                     case "object": {
                         Spin2Parser parser = new Spin2Parser(objectText);
@@ -356,7 +357,7 @@ public class SourceTokenMarkerTest {
         SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL) {
 
             @Override
-            protected Node getObjectTree(String fileName) {
+            protected RootNode getObjectTree(String fileName) {
                 switch (fileName) {
                     case "object1": {
                         Spin2Parser parser = new Spin2Parser(object1Text);
@@ -414,7 +415,7 @@ public class SourceTokenMarkerTest {
         SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL) {
 
             @Override
-            protected Node getObjectTree(String fileName) {
+            protected RootNode getObjectTree(String fileName) {
                 switch (fileName) {
                     case "object1": {
                         Spin2Parser parser = new Spin2Parser(object1Text);
@@ -465,7 +466,7 @@ public class SourceTokenMarkerTest {
         SourceTokenMarker subject = new Spin1TokenMarker(SourceProvider.NULL) {
 
             @Override
-            protected Node getObjectTree(String fileName) {
+            protected RootNode getObjectTree(String fileName) {
                 switch (fileName) {
                     case "object": {
                         Spin1Parser parser = new Spin1Parser(objectText);
@@ -512,7 +513,7 @@ public class SourceTokenMarkerTest {
         SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL) {
 
             @Override
-            protected Node getObjectTree(String fileName) {
+            protected RootNode getObjectTree(String fileName) {
                 switch (fileName) {
                     case "object": {
                         Spin2Parser parser = new Spin2Parser(objectText);

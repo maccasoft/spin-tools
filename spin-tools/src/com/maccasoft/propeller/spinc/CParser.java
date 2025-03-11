@@ -20,6 +20,7 @@ import com.maccasoft.propeller.model.ExpressionNode;
 import com.maccasoft.propeller.model.FunctionNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.Parser;
+import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenStream.Position;
@@ -31,15 +32,15 @@ public class CParser extends Parser {
 
     CTokenStream stream;
 
-    Node root;
+    RootNode root;
 
     public CParser(String text) {
         this.stream = new CTokenStream(text);
     }
 
     @Override
-    public Node parse() {
-        root = new Node();
+    public RootNode parse() {
+        root = new RootNode();
 
         Token token, commentToken = null;
         while ((token = stream.nextToken()).type != Token.EOF) {

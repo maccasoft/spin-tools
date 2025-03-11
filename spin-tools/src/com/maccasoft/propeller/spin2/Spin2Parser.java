@@ -25,6 +25,7 @@ import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.Parser;
+import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TypeDefinitionNode;
@@ -44,18 +45,18 @@ public class Spin2Parser extends Parser {
 
     final Spin2TokenStream stream;
 
-    Node root;
+    RootNode root;
 
     public Spin2Parser(String text) {
         this.stream = new Spin2TokenStream(text);
     }
 
     @Override
-    public Node parse() {
+    public RootNode parse() {
         Token token;
         ConstantsNode defaultNode = null;
 
-        root = new Node();
+        root = new RootNode();
 
         while ((token = stream.peekNext()).type != Token.EOF) {
             if (token.type == Token.EOF) {

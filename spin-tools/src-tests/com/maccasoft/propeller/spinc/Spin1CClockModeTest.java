@@ -15,7 +15,7 @@ import java.io.File;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.RootNode;
 
 class Spin1CClockModeTest {
 
@@ -424,7 +424,7 @@ class Spin1CClockModeTest {
 
     Spin1CObjectCompiler buildCompiler(String text) {
         CParser parser = new CParser(text);
-        Node root = parser.parse();
+        RootNode root = parser.parse();
 
         Spin1CObjectCompiler compiler = new Spin1CObjectCompiler(new Spin1CCompiler(), new File("test.spin"));
         compiler.compileObject(root);

@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.CompilerException;
-import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.spin1.Spin1Compiler;
 import com.maccasoft.propeller.spin1.Spin1Object;
 
@@ -2112,7 +2112,7 @@ class Spin1CObjectCompilerTest {
 
     String compile(String text) throws Exception {
         CParser subject = new CParser(text);
-        Node root = subject.parse();
+        RootNode root = subject.parse();
 
         Spin1CObjectCompiler compiler = new Spin1CObjectCompiler(new Spin1Compiler(), new File("test.spin1"));
         Spin1Object obj = compiler.compileObject(root);

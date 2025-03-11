@@ -121,7 +121,7 @@ public class FunctionNode extends Node {
 
     }
 
-    public FunctionNode(Node parent, Token modifier, Token type, Token identifier) {
+    public FunctionNode(RootNode parent, Token modifier, Token type, Token identifier) {
         super(parent);
         this.modifier = modifier;
         this.type = type;

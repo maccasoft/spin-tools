@@ -29,6 +29,7 @@ import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
 import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.ObjectsNode;
+import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
@@ -1042,7 +1043,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
 
     };
 
-    void collectKeywords(Node root) {
+    void collectKeywords(RootNode root) {
         root.accept(collectKeywordsVisitor);
     }
 
@@ -1371,7 +1372,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
 
     };
 
-    void updateReferences(Node root) {
+    void updateReferences(RootNode root) {
         root.accept(updateReferencesVisitor);
     }
 

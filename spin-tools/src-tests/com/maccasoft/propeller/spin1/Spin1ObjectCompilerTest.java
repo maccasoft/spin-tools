@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.CompilerException;
-import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.RootNode;
 
 class Spin1ObjectCompilerTest {
 
@@ -3431,7 +3431,7 @@ class Spin1ObjectCompilerTest {
 
     String compile(String text, boolean openspinCompatible) throws Exception {
         Spin1Parser subject = new Spin1Parser(text);
-        Node root = subject.parse();
+        RootNode root = subject.parse();
 
         Spin1Compiler compiler = new Spin1Compiler();
         compiler.setOpenspinCompatible(openspinCompatible);

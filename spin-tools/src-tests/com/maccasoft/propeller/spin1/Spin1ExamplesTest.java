@@ -28,7 +28,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import com.maccasoft.propeller.Compiler.FileSourceProvider;
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.internal.FileUtils;
-import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.RootNode;
 
 @TestInstance(Lifecycle.PER_CLASS)
 class Spin1ExamplesTest {
@@ -94,7 +94,7 @@ class Spin1ExamplesTest {
     void compileAndCompare(File source, File binary) throws Exception {
         String text = FileUtils.loadFromFile(source);
         Spin1Parser subject = new Spin1Parser(text);
-        Node root = subject.parse();
+        RootNode root = subject.parse();
 
         Spin1Compiler compiler = new Spin1Compiler();
         compiler.setSourceProvider(new FileSourceProvider(new File[] {

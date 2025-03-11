@@ -30,6 +30,7 @@ import com.maccasoft.propeller.SourceEditor.NavigationTarget;
 import com.maccasoft.propeller.SourceTokenMarker.TokenId;
 import com.maccasoft.propeller.SourceTokenMarker.TokenMarker;
 import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.spin1.Spin1Parser;
 import com.maccasoft.propeller.spin1.Spin1TokenMarker;
@@ -804,7 +805,7 @@ public class SourceEditorTest {
             }
 
             @Override
-            public Node getParsedSource(File file) {
+            public RootNode getParsedSource(File file) {
                 Spin2Parser parser = new Spin2Parser(childText);
                 return parser.parse();
             }
@@ -860,7 +861,7 @@ public class SourceEditorTest {
             }
 
             @Override
-            public Node getParsedSource(File file) {
+            public RootNode getParsedSource(File file) {
                 Spin1Parser parser = new Spin1Parser(childText);
                 return parser.parse();
             }
@@ -949,7 +950,7 @@ public class SourceEditorTest {
             }
 
             @Override
-            public Node getParsedSource(File file) {
+            public RootNode getParsedSource(File file) {
                 Spin2Parser parser = new Spin2Parser(childText);
                 return parser.parse();
             }
@@ -995,7 +996,7 @@ public class SourceEditorTest {
             }
 
             @Override
-            public Node getParsedSource(File file) {
+            public RootNode getParsedSource(File file) {
                 Spin1Parser parser = new Spin1Parser(childText);
                 return parser.parse();
             }

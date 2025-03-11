@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 
 import com.maccasoft.propeller.CompilerException;
-import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.RootNode;
 
 class Spin1PAsmCompilerTest {
 
@@ -822,7 +822,7 @@ class Spin1PAsmCompilerTest {
 
     String compile(String text, boolean openspinCompatible) throws Exception {
         Spin1Parser subject = new Spin1Parser(text);
-        Node root = subject.parse();
+        RootNode root = subject.parse();
 
         Spin1ObjectCompiler compiler = new Spin1ObjectCompiler(new Spin1Compiler(), new File("test.spin"));
         Spin1Object obj = compiler.compileObject(root);

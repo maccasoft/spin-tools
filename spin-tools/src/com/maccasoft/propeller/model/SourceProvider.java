@@ -19,7 +19,7 @@ public abstract class SourceProvider {
     public static final SourceProvider NULL = new SourceProvider() {
 
         @Override
-        public Node getParsedSource(File file) {
+        public RootNode getParsedSource(File file) {
             return null;
         }
 
@@ -30,7 +30,7 @@ public abstract class SourceProvider {
 
     };
 
-    public Node getParsedSource(File file) {
+    public RootNode getParsedSource(File file) {
         try {
             String fileName = file.getName();
             if (fileName.indexOf('.') != -1) {
@@ -46,7 +46,7 @@ public abstract class SourceProvider {
         return null;
     }
 
-    protected String getSource(File file) {
+    public String getSource(File file) {
         try {
             return FileUtils.loadFromFile(file);
         } catch (Exception e) {

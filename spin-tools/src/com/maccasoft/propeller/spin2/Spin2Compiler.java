@@ -27,7 +27,7 @@ import com.maccasoft.propeller.SpinObject.LinkDataObject;
 import com.maccasoft.propeller.SpinObject.WordDataObject;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.Method;
-import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenStream;
 import com.maccasoft.propeller.spinc.Spin2CObjectCompiler;
@@ -98,7 +98,7 @@ public class Spin2Compiler extends Compiler {
     }
 
     @Override
-    public Spin2Object compile(File rootFile, Node root) {
+    public Spin2Object compile(File rootFile, RootNode root) {
         Spin2Object obj = compileObject(rootFile, root);
 
         if (interpreter != null) {
@@ -112,7 +112,7 @@ public class Spin2Compiler extends Compiler {
         return obj;
     }
 
-    protected Spin2Object compileObject(File rootFile, Node root) {
+    protected Spin2Object compileObject(File rootFile, RootNode root) {
         Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompiler(this, rootFile);
         objectCompiler.compileStep1(root);
 
@@ -244,7 +244,7 @@ public class Spin2Compiler extends Compiler {
 
     @Override
     public ObjectInfo getObjectInfo(ObjectCompiler parent, File file, Map<String, Expression> parameters) throws Exception {
-        Node objectRoot = getParsedSource(file);
+        RootNode objectRoot = getParsedSource(file);
 
         ObjectCompiler objectCompiler;
         if (file.getName().toLowerCase().endsWith(".c")) {
@@ -262,6 +262,8 @@ public class Spin2Compiler extends Compiler {
         }
 
         ObjectInfo info = new ObjectInfo(file, objectCompiler, parameters);
+        info.root = objectRoot;
+
         int index = childObjects.indexOf(info);
 
         if (index != -1) {
@@ -283,7 +285,7 @@ public class Spin2Compiler extends Compiler {
     public ObjectInfo getObjectInclude(String fileName, Map<String, Expression> parameters) {
         File objectFile = getFile(fileName, ".c", ".spin2");
         if (objectFile != null) {
-            Node objectRoot = getParsedSource(objectFile);
+            RootNode objectRoot = getParsedSource(objectFile);
             if (objectRoot != null) {
                 ObjectCompiler objectCompiler;
                 if (objectFile.getName().toLowerCase().endsWith(".c")) {

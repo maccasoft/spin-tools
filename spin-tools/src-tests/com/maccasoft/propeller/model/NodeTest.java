@@ -61,7 +61,7 @@ class NodeTest {
 
     @Test
     void testStatementsBlockPath() {
-        Node node = new Node();
+        RootNode node = new RootNode();
         MethodNode m0 = new MethodNode(node, new Token(0, "PUB"));
         m0.name = new Token(0, "main");
         StatementNode s0 = new StatementNode(m0);

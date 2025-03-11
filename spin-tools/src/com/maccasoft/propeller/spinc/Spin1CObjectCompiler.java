@@ -42,6 +42,7 @@ import com.maccasoft.propeller.model.DirectiveNode;
 import com.maccasoft.propeller.model.FunctionNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
+import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenIterator;
@@ -97,13 +98,13 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
     }
 
     @Override
-    public Spin1Object compileObject(Node root) {
+    public Spin1Object compileObject(RootNode root) {
         compileStep1(root);
         return generateObject(0);
     }
 
     @Override
-    public void compileStep1(Node root) {
+    public void compileStep1(RootNode root) {
         objectVarSize = 0;
 
         root.accept(new NodeVisitor() {
@@ -311,7 +312,6 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
                     }
                 }
             }
-            return;
         }
         else {
             super.compileDirective(node);
@@ -1618,7 +1618,7 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
     }
 
     @Override
-    protected void compileDatInclude(Node root) {
+    protected void compileDatInclude(RootNode root) {
 
     }
 

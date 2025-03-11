@@ -50,6 +50,7 @@ import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
 import com.maccasoft.propeller.model.ObjectNode;
+import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenIterator;
@@ -120,13 +121,13 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
     }
 
     @Override
-    public Spin2Object compileObject(Node root) {
+    public Spin2Object compileObject(RootNode root) {
         compileStep1(root);
         return generateObject(0);
     }
 
     @Override
-    public void compileStep1(Node root) {
+    public void compileStep1(RootNode root) {
 
         root.accept(new NodeVisitor() {
 
@@ -1482,7 +1483,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
     }
 
     @Override
-    protected void compileDatInclude(Node root) {
+    protected void compileDatInclude(RootNode root) {
         for (Node node : root.getChilds()) {
             if (!(node instanceof ConstantsNode) && !(node instanceof DataNode)) {
                 throw new RuntimeException("only CON and DAT sections allowed in included files");

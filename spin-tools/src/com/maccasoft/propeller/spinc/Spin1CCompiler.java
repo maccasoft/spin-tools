@@ -19,7 +19,7 @@ import com.maccasoft.propeller.ObjectCompiler;
 import com.maccasoft.propeller.SpinObject;
 import com.maccasoft.propeller.SpinObject.LinkDataObject;
 import com.maccasoft.propeller.expressions.Expression;
-import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.spin1.Spin1Compiler;
 import com.maccasoft.propeller.spin1.Spin1Object;
 import com.maccasoft.propeller.spin1.Spin1ObjectCompiler;
@@ -51,7 +51,7 @@ public class Spin1CCompiler extends Spin1Compiler {
     }
 
     @Override
-    public Spin1Object compileObject(File rootFile, Node root) {
+    public Spin1Object compileObject(File rootFile, RootNode root) {
         int memoryOffset = 16;
 
         Spin1CObjectCompiler objectCompiler = new Spin1CObjectCompiler(this, rootFile);
@@ -128,7 +128,7 @@ public class Spin1CCompiler extends Spin1Compiler {
 
     @Override
     public ObjectInfo getObjectInfo(ObjectCompiler parent, File file, Map<String, Expression> parameters) throws Exception {
-        Node objectRoot = getParsedSource(file);
+        RootNode objectRoot = getParsedSource(file);
 
         ObjectCompiler objectCompiler;
         if (file.getName().toLowerCase().endsWith(".spin")) {

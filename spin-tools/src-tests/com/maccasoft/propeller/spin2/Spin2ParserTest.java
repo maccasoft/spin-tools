@@ -159,7 +159,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- ConstantsNode [CON]\n"
             + "    +-- ConstantNode identifier=EnableFlow [EnableFlow = 8]\n"
             + "        +-- expression = ExpressionNode [8]\n"
@@ -177,7 +177,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- ConstantsNode [CON]\n"
             + "    +-- ConstantNode identifier=x [x = 5]\n"
             + "        +-- expression = ExpressionNode [5]\n"
@@ -197,7 +197,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- ConstantsNode [CON]\n"
             + "    +-- ConstantNode [#0]\n"
             + "        +-- start = ExpressionNode [0]\n"
@@ -216,7 +216,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- ConstantsNode [CON]\n"
             + "    +-- ConstantNode [#0]\n"
             + "        +-- start = ExpressionNode [0]\n"
@@ -236,7 +236,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- ConstantsNode [CON]\n"
             + "    +-- ConstantNode identifier=u [u[2]]\n"
             + "        +-- multiplier = ExpressionNode [2]\n"
@@ -252,7 +252,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- ConstantsNode []\n"
             + "    +-- ConstantNode identifier=EnableFlow [EnableFlow = 8]\n"
             + "        +-- expression = ExpressionNode [8]\n"
@@ -270,7 +270,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- ObjectsNode [OBJ]\n"
             + "    +-- ObjectNode name=obj0 file=\"file0\" [obj0 : \"file0\"]\n"
             + "", tree(root));
@@ -285,7 +285,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- ObjectsNode [OBJ]\n"
             + "    +-- ObjectNode name=obj0 file=\"file0\" [obj0 : \"file0\" | par0 = 1, par1 = 1]\n"
             + "        +-- ParameterNode identifier=par0 [par0 = 1]\n"
@@ -318,7 +318,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- ObjectsNode [OBJ]\n"
             + "    +-- ObjectNode name=obj0 file=\"file0\" [obj0 : \"file0\"]\n"
             + "    +-- ObjectNode name=obj1 file=\"file1\" [obj1 : \"file1\"]\n"
@@ -334,7 +334,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- ObjectsNode [OBJ]\n"
             + "    +-- ObjectNode name=obj0 file=\"file0\" [obj0[10] : \"file0\"]\n"
             + "        +-- count = ExpressionNode [10]\n"
@@ -350,7 +350,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- ObjectsNode [OBJ]\n"
             + "    +-- ObjectNode name=obj0 [obj0 =]\n"
             + "", tree(root));
@@ -365,7 +365,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- ObjectsNode [OBJ]\n"
             + "    +-- ObjectNode name=obj0 file=\"file0\" [obj0 : \"file0\" a0]\n"
             + "", tree(root));
@@ -379,7 +379,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- MethodNode type=PUB name=go [PUB go()]\n"
             + "", tree(root));
     }
@@ -390,7 +390,7 @@ class Spin2ParserTest {
             + "PUB go to()\n"
             + "").parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- MethodNode type=PUB name=go [PUB go to()]\n"
             + "", tree(root));
 
@@ -398,7 +398,7 @@ class Spin2ParserTest {
             + "PUB go() to\n"
             + "").parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- MethodNode type=PUB name=go [PUB go() to]\n"
             + "", tree(root));
 
@@ -406,7 +406,7 @@ class Spin2ParserTest {
             + "PUB go(a,b) to\n"
             + "").parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- MethodNode type=PUB name=go [PUB go(a,b) to]\n"
             + "    +-- ParameterNode identifier=a [a]\n"
             + "    +-- ParameterNode identifier=b [b]\n"
@@ -421,7 +421,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- MethodNode type=PUB name=StartTx [PUB StartTx(pin, baud)]\n"
             + "    +-- ParameterNode identifier=pin [pin]\n"
             + "    +-- ParameterNode identifier=baud [baud]\n"
@@ -436,7 +436,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- MethodNode type=PUB name=StartTx [PUB StartTx(pin, baud = 115_200)]\n"
             + "    +-- ParameterNode identifier=pin [pin]\n"
             + "    +-- ParameterNode identifier=baud [baud = 115_200]\n"
@@ -452,7 +452,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- MethodNode type=PRI name=FFT1024 [PRI FFT1024() | a, b]\n"
             + "    +-- LocalVariableNode identifier=a [a]\n"
             + "    +-- LocalVariableNode identifier=b [b]\n"
@@ -467,7 +467,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- MethodNode type=PRI name=FFT1024 [PRI FFT1024() | LONG a, WORD b]\n"
             + "    +-- LocalVariableNode type=LONG identifier=a [LONG a]\n"
             + "    +-- LocalVariableNode type=WORD identifier=b [WORD b]\n"
@@ -482,7 +482,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- MethodNode type=PRI name=FFT1024 [PRI FFT1024(DataPtr) | x[1024], y[512]]\n"
             + "    +-- ParameterNode identifier=DataPtr [DataPtr]\n"
             + "    +-- LocalVariableNode identifier=x [x[1024]]\n"
@@ -500,7 +500,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- MethodNode type=PRI name=FFT1024 [PRI FFT1024() : a, b]\n"
             + "    +-- ReturnNode identifier=a [a]\n"
             + "    +-- ReturnNode identifier=b [b]\n"
@@ -519,7 +519,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- MethodNode type=PUB name=go [PUB go(a,b) : c | d, e]\n"
             + "    +-- ParameterNode identifier=a [a]\n"
             + "    +-- ParameterNode identifier=b [b]\n"
@@ -551,7 +551,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- DataNode [DAT]\n"
             + "    +-- DataLineNode instruction=wrlong [DAT    wrlong a,ptra]\n"
             + "        +-- ParameterNode [a]\n"
@@ -586,7 +586,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- VariablesNode [VAR a]\n"
             + "    +-- VariableNode identifier=a [a]\n"
             + "    +-- VariablesNode [b]\n"
@@ -603,7 +603,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- VariablesNode [VAR long a]\n"
             + "    +-- VariableNode type=long identifier=a [long a]\n"
             + "    +-- VariablesNode [word b]\n"
@@ -620,7 +620,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- VariablesNode [VAR long a, b, c]\n"
             + "    +-- VariableNode type=long identifier=a [long a]\n"
             + "    +-- VariableNode identifier=b [b]\n"
@@ -640,7 +640,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- VariablesNode [VAR a[10]]\n"
             + "    +-- VariableNode identifier=a [a[10]]\n"
             + "        +-- size = ExpressionNode [10]\n"
@@ -659,7 +659,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- VariablesNode [VAR a, b[10], c]\n"
             + "    +-- VariableNode identifier=a [a]\n"
             + "    +-- VariableNode identifier=b [b[10]]\n"
@@ -684,7 +684,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- VariablesNode [VAR a, b[10], c]\n"
             + "    +-- VariableNode identifier=a [a]\n"
             + "    +-- VariableNode identifier=b [b[10]]\n"
@@ -711,7 +711,7 @@ class Spin2ParserTest {
             + "");
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- MethodNode type=PUB name=main [PUB main()]\n"
             + "    +-- StatementNode [    a := ...\\n         1 + 2 * 3]\n"
             + "", tree(root));
@@ -750,7 +750,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- MethodNode type=PUB name=main [PUB main() | a]\n"
             + "    +-- LocalVariableNode identifier=a [a]\n"
             + "    +-- StatementNode [    case a]\n"
@@ -775,7 +775,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- ConstantsNode []\n"
             + "    +-- ConstantNode identifier=A [A = 1]\n"
             + "        +-- expression = ExpressionNode [1]\n"
@@ -801,7 +801,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- ConstantsNode [CON]\n"
             + "    +-- ConstantNode identifier=A [A = 1]\n"
             + "        +-- expression = ExpressionNode [1]\n"
@@ -825,7 +825,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- ConstantsNode [CON]\n"
             + "    +-- DirectiveNode [#ifdef P]\n"
             + "    +-- ConstantNode [#0]\n"
@@ -849,7 +849,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- MethodNode type=PUB name=main [PUB main()]\n"
             + "    +-- DirectiveNode [#ifdef A]\n"
             + "    +-- StatementNode [    a := b * 2]\n"
@@ -869,7 +869,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- MethodNode type=PUB name=main [PUB main()]\n"
             + "    +-- StatementNode [    if 1]\n"
             + "        +-- DirectiveNode [#ifdef A]\n"
@@ -891,7 +891,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- DataNode [DAT]\n"
             + "    +-- DataLineNode instruction=org [        org $000]\n"
             + "        +-- ParameterNode [$000]\n"
@@ -914,7 +914,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- ConstantsNode [CON]\n"
             + "    +-- TypeDefinitionNode identifier=sPoint [sPoint(x, y)]\n"
             + "        +-- Definition identifier=x [x]\n"
@@ -936,7 +936,7 @@ class Spin2ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- ConstantsNode [CON]\n"
             + "    +-- TypeDefinitionNode type=struct identifier=sPoint [struct sPoint(x, y)]\n"
             + "        +-- Definition identifier=x [x]\n"

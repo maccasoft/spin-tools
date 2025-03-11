@@ -17,7 +17,7 @@ import java.io.PrintStream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.RootNode;
 
 public class Spin1FunctionalTest {
 
@@ -86,7 +86,7 @@ public class Spin1FunctionalTest {
 
     String compile(String text, boolean foldConstants) throws Exception {
         Spin1Parser subject = new Spin1Parser(text);
-        Node root = subject.parse();
+        RootNode root = subject.parse();
 
         Spin1Compiler compiler = new Spin1Compiler();
         compiler.setFoldConstants(foldConstants);

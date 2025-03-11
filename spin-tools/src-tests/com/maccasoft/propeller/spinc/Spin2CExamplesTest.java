@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.Compiler.FileSourceProvider;
 import com.maccasoft.propeller.CompilerException;
-import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.spin2.Spin2Debugger;
 import com.maccasoft.propeller.spin2.Spin2Object;
 
@@ -144,7 +144,7 @@ class Spin2CExamplesTest {
 
     String compile(String text, boolean debugEnabled) throws Exception {
         CParser subject = new CParser(text);
-        Node root = subject.parse();
+        RootNode root = subject.parse();
 
         Spin2CCompiler compiler = new Spin2CCompiler();
         compiler.setDebugEnabled(debugEnabled);
@@ -172,7 +172,7 @@ class Spin2CExamplesTest {
         byte[] expected = loadBinaryFromFile(binary);
 
         CParser subject = new CParser(text);
-        Node root = subject.parse();
+        RootNode root = subject.parse();
 
         Spin2CCompiler compiler = new Spin2CCompiler();
         compiler.setSourceProvider(new FileSourceProvider(new File[] {

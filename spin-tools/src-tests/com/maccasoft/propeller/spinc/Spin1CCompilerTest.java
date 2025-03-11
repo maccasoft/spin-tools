@@ -20,8 +20,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.CompilerException;
-import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.Parser;
+import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.spin1.Spin1Object;
 
@@ -331,7 +331,7 @@ class Spin1CCompilerTest {
 
     String compile(String rootFile, Map<String, String> sources, boolean removeUnused) throws Exception {
         CParser subject = new CParser(sources.get(rootFile));
-        Node root = subject.parse();
+        RootNode root = subject.parse();
 
         Spin1CCompiler compiler = new Spin1CCompiler();
         compiler.setSourceProvider(new SourceProvider() {
@@ -345,7 +345,7 @@ class Spin1CCompilerTest {
             }
 
             @Override
-            public Node getParsedSource(File file) {
+            public RootNode getParsedSource(File file) {
                 String text = sources.get(file.getName());
                 if (text == null) {
                     return null;

@@ -39,6 +39,7 @@ import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
 import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.ObjectsNode;
+import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
@@ -157,7 +158,7 @@ public abstract class SourceTokenMarker {
 
     protected SourceProvider sourceProvider;
 
-    protected Node root;
+    protected RootNode root;
     protected TreeSet<TokenMarker> tokens = new TreeSet<>();
     protected TreeSet<TokenMarker> compilerTokens = new TreeSet<>();
     protected TreeSet<TokenMarker> excludedNodes = new TreeSet<>();
@@ -170,13 +171,13 @@ public abstract class SourceTokenMarker {
     protected Map<String, TokenId> symbols = new CaseInsensitiveMap<>();
     protected Map<String, TokenId> locals = new CaseInsensitiveMap<>();
 
-    protected Map<File, Node> cache = new HashMap<>();
+    protected Map<File, RootNode> cache = new HashMap<>();
 
     public SourceTokenMarker(SourceProvider sourceProvider) {
         this.sourceProvider = sourceProvider;
     }
 
-    public void setSourceRoot(Node root) {
+    public void setSourceRoot(RootNode root) {
         this.root = root;
         this.constantSeparator = "";
         this.localLabelPrefix = "";
@@ -194,7 +195,7 @@ public abstract class SourceTokenMarker {
 
     public abstract void refreshTokens(String text);
 
-    public Node getRoot() {
+    public RootNode getRoot() {
         return root;
     }
 
@@ -1402,18 +1403,21 @@ public abstract class SourceTokenMarker {
         return s;
     }
 
-    protected Node getObjectTree(String fileName) {
+    protected RootNode getObjectTree(String fileName) {
+        RootNode root = null;
+
         File file = sourceProvider.getFile(fileName);
-        Node node = cache.get(file);
-        if (node == null && sourceProvider != null) {
-            if (file != null) {
-                node = sourceProvider.getParsedSource(file);
-                if (node != null) {
-                    cache.put(file, node);
+        if (file != null) {
+            root = cache.get(file);
+            if (root == null) {
+                root = sourceProvider.getParsedSource(file);
+                if (root != null) {
+                    cache.put(file, root);
                 }
             }
         }
-        return node;
+
+        return root;
     }
 
     public List<IContentProposal> getPAsmProposals(Node ref, String filterText) {

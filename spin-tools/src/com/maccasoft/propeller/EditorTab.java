@@ -56,6 +56,7 @@ import com.maccasoft.propeller.model.FunctionNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.ObjectsNode;
+import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenStream;
@@ -352,7 +353,7 @@ public class EditorTab implements FindReplaceTarget {
         }
 
         @Override
-        protected String getSource(File file) {
+        public String getSource(File file) {
             String source = sourcePool.getSource(file);
             if (source != null) {
                 return source;
@@ -395,21 +396,6 @@ public class EditorTab implements FindReplaceTarget {
             return null;
         }
 
-        EditorTab getTabForFile(File file) {
-            CTabItem[] tabItems = tabItem.getParent().getItems();
-            for (int i = 0; i < tabItems.length; i++) {
-                if (tabItems[i] == tabItem) {
-                    continue;
-                }
-                EditorTab editorTab = (EditorTab) tabItems[i].getData();
-                File editorTabFile = editorTab.getFile() != null ? editorTab.getFile() : new File(editorTab.getText()).getAbsoluteFile();
-                if (editorTabFile.equals(file)) {
-                    return editorTab;
-                }
-            }
-            return null;
-        }
-
     }
 
     class Spin1TokenMarkerAdatper extends Spin1TokenMarker {
@@ -427,8 +413,8 @@ public class EditorTab implements FindReplaceTarget {
         }
 
         @Override
-        protected Node getObjectTree(String fileName) {
-            Node node = super.getObjectTree(fileName + ".spin");
+        protected RootNode getObjectTree(String fileName) {
+            RootNode node = super.getObjectTree(fileName + ".spin");
             if (node == null) {
                 node = super.getObjectTree(fileName + ".c");
             }
@@ -455,8 +441,8 @@ public class EditorTab implements FindReplaceTarget {
         }
 
         @Override
-        protected Node getObjectTree(String fileName) {
-            Node node = super.getObjectTree(fileName + ".spin2");
+        protected RootNode getObjectTree(String fileName) {
+            RootNode node = super.getObjectTree(fileName + ".spin2");
             if (node == null) {
                 node = super.getObjectTree(fileName + ".c");
             }
@@ -496,8 +482,8 @@ public class EditorTab implements FindReplaceTarget {
         }
 
         @Override
-        protected Node getObjectTree(String fileName) {
-            Node node = super.getObjectTree(fileName + ".c");
+        protected RootNode getObjectTree(String fileName) {
+            RootNode node = super.getObjectTree(fileName + ".c");
             if (node == null && isP1()) {
                 node = super.getObjectTree(fileName + ".spin");
             }
@@ -534,7 +520,7 @@ public class EditorTab implements FindReplaceTarget {
                         boolean warnUnusedVariables = true;
 
                         File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
-                        Node root = tokenMarker.getRoot();
+                        RootNode root = tokenMarker.getRoot();
 
                         dependencies.clear();
 

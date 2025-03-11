@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.CompilerException;
-import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.RootNode;
 
 class Spin2ObjectCompilerTest {
 
@@ -149,7 +149,7 @@ class Spin2ObjectCompilerTest {
             + "";
 
         Spin2Parser parser = new Spin2Parser(text);
-        Node root = parser.parse();
+        RootNode root = parser.parse();
 
         Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler(), new File("test.spin2"));
         compiler.compileObject(root);
@@ -166,7 +166,7 @@ class Spin2ObjectCompilerTest {
             + "";
 
         Spin2Parser parser = new Spin2Parser(text);
-        Node root = parser.parse();
+        RootNode root = parser.parse();
 
         Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler(), new File("test.spin2"));
         compiler.compileObject(root);
@@ -184,7 +184,7 @@ class Spin2ObjectCompilerTest {
             + "";
 
         Spin2Parser parser = new Spin2Parser(text);
-        Node root = parser.parse();
+        RootNode root = parser.parse();
 
         Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler(), new File("test.spin2"));
         compiler.compileObject(root);
@@ -202,7 +202,7 @@ class Spin2ObjectCompilerTest {
             + "";
 
         Spin2Parser parser = new Spin2Parser(text);
-        Node root = parser.parse();
+        RootNode root = parser.parse();
 
         Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler(), new File("test.spin2"));
         compiler.compileObject(root);
@@ -219,7 +219,7 @@ class Spin2ObjectCompilerTest {
             + "";
 
         Spin2Parser parser = new Spin2Parser(text);
-        Node root = parser.parse();
+        RootNode root = parser.parse();
 
         Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler(), new File("test.spin2"));
         compiler.compileObject(root);
@@ -237,7 +237,7 @@ class Spin2ObjectCompilerTest {
             + "";
 
         Spin2Parser parser = new Spin2Parser(text);
-        Node root = parser.parse();
+        RootNode root = parser.parse();
 
         Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler(), new File("test.spin2"));
         compiler.compileObject(root);
@@ -254,7 +254,7 @@ class Spin2ObjectCompilerTest {
             + "";
 
         Spin2Parser parser = new Spin2Parser(text);
-        Node root = parser.parse();
+        RootNode root = parser.parse();
 
         Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler(), new File("test.spin2"));
         compiler.compileObject(root);
@@ -271,7 +271,7 @@ class Spin2ObjectCompilerTest {
             + "";
 
         Spin2Parser parser = new Spin2Parser(text);
-        Node root = parser.parse();
+        RootNode root = parser.parse();
 
         Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler(), new File("test.spin2"));
         compiler.compileObject(root);
@@ -288,7 +288,7 @@ class Spin2ObjectCompilerTest {
             + "";
 
         Spin2Parser parser = new Spin2Parser(text);
-        Node root = parser.parse();
+        RootNode root = parser.parse();
 
         Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler(), new File("test.spin2"));
         compiler.compileObject(root);
@@ -7419,7 +7419,7 @@ class Spin2ObjectCompilerTest {
 
     String compile(String text, boolean debugEnabled) throws Exception {
         Spin2Parser parser = new Spin2Parser(text);
-        Node root = parser.parse();
+        RootNode root = parser.parse();
 
         Spin2Compiler compiler = new Spin2Compiler();
         compiler.setDebugEnabled(debugEnabled);

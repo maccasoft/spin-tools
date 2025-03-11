@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -16,7 +16,7 @@ import com.maccasoft.propeller.spinc.CParser;
 
 public abstract class Parser {
 
-    public static Node parse(String suffix, String text) {
+    public static RootNode parse(String suffix, String text) {
         Parser parser = getInstance(suffix, text);
         if (parser != null) {
             return parser.parse();
@@ -37,5 +37,5 @@ public abstract class Parser {
         return null;
     }
 
-    public abstract Node parse();
+    public abstract RootNode parse();
 }

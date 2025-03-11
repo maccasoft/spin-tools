@@ -22,6 +22,7 @@ import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.model.DirectiveNode;
 import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenIterator;
 import com.maccasoft.propeller.spin2.Spin2ExpressionBuilder;
@@ -64,9 +65,9 @@ public abstract class ObjectCompiler {
         return scope;
     }
 
-    public abstract SpinObject compileObject(Node root);
+    public abstract SpinObject compileObject(RootNode root);
 
-    public abstract void compileStep1(Node root);
+    public abstract void compileStep1(RootNode root);
 
     public abstract void compileStep2(boolean keepFirst);
 

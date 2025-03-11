@@ -20,7 +20,7 @@ import java.util.Objects;
 
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.internal.FileUtils;
-import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.model.Token;
 
@@ -32,6 +32,7 @@ public abstract class Compiler {
         public ObjectCompiler compiler;
         public Map<String, Expression> parameters;
 
+        public RootNode root;
         public long offset;
         public Expression count;
 
@@ -201,7 +202,7 @@ public abstract class Compiler {
 
     public abstract SpinObject compile(File file) throws Exception;
 
-    public abstract SpinObject compile(File rootFile, Node root);
+    public abstract SpinObject compile(File rootFile, RootNode root);
 
     public ObjectInfo getObjectInfo(ObjectCompiler parent, File file, Map<String, Expression> parameters) throws Exception {
         return null;
@@ -233,9 +234,9 @@ public abstract class Compiler {
         return null;
     }
 
-    public Node getParsedSource(File file) {
+    public RootNode getParsedSource(File file) {
         if (sourceProvider != null) {
-            Node node = sourceProvider.getParsedSource(file);
+            RootNode node = sourceProvider.getParsedSource(file);
             if (node != null) {
                 return node;
             }

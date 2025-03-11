@@ -31,7 +31,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import com.maccasoft.propeller.Compiler.FileSourceProvider;
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.internal.FileUtils;
-import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.RootNode;
 
 @TestInstance(Lifecycle.PER_CLASS)
 class Spin2ExamplesTest {
@@ -120,7 +120,7 @@ class Spin2ExamplesTest {
         byte[] expected = loadBinaryFromFile(binary);
 
         Spin2Parser subject = new Spin2Parser(text);
-        Node root = subject.parse();
+        RootNode root = subject.parse();
 
         Spin2Compiler compiler = new Spin2Compiler();
         compiler.setSourceProvider(new FileSourceProvider(new File[] {

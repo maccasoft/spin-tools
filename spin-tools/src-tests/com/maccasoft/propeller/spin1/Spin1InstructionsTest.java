@@ -15,7 +15,7 @@ import java.io.File;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.RootNode;
 
 class Spin1InstructionsTest {
 
@@ -522,7 +522,7 @@ class Spin1InstructionsTest {
 
     byte[] compile(String text) throws Exception {
         Spin1Parser parser = new Spin1Parser(text);
-        Node root = parser.parse();
+        RootNode root = parser.parse();
 
         Spin1ObjectCompiler compiler = new Spin1ObjectCompiler(new Spin1Compiler(), new File("test.spin"));
         compiler.compileObject(root);

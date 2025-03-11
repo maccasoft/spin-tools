@@ -369,7 +369,7 @@ class Spin2ParseMethodTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- MethodNode type=PUB name=start [PUB start()]\n"
             + "    +-- StatementNode [    case a]\n"
             + "        +-- StatementNode [        0:]\n"
@@ -438,7 +438,7 @@ class Spin2ParseMethodTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- MethodNode type=PUB name=start [PUB start()]\n"
             + "    +-- StatementNode [case a]\n"
             + "        +-- StatementNode [  0:]\n"

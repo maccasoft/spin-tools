@@ -29,7 +29,7 @@ class CParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- VariableNode type=int identifier=a [int a, b, c]\n"
             + "    +-- VariableNode identifier=b [b]\n"
             + "    +-- VariableNode identifier=c [c]\n"
@@ -46,7 +46,7 @@ class CParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- VariableNode type=int identifier=a [int a = 1, b = 2, c = 3]\n"
             + "    +-- VariableNode identifier=b [b = 2]\n"
             + "    +-- VariableNode identifier=c [c = 3]\n"
@@ -74,7 +74,7 @@ class CParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
             + "    +-- StatementNode [    method(1, 2);]\n"
             + "    +-- StatementNode [    a = function(1, 2);]\n"
@@ -106,7 +106,7 @@ class CParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
             + "    +-- StatementNode [    if (a == 1) {]\n"
             + "        +-- StatementNode [        method(1, 2);]\n"
@@ -130,7 +130,7 @@ class CParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
             + "    +-- StatementNode [    if (a == 1) {]\n"
             + "        +-- StatementNode [        method(1, 2);]\n"
@@ -166,7 +166,7 @@ class CParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
             + "    +-- StatementNode [    int a;]\n"
             + "    +-- StatementNode [    if (a == 0) {]\n"
@@ -197,7 +197,7 @@ class CParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
             + "    +-- StatementNode [    if (a == 1)]\n"
             + "        +-- StatementNode [        method(1, 2);]\n"
@@ -219,7 +219,7 @@ class CParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
             + "    +-- StatementNode [    if (a == 1)]\n"
             + "        +-- StatementNode [        method(1, 2);]\n"
@@ -249,7 +249,7 @@ class CParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
             + "    +-- StatementNode [    int a;]\n"
             + "    +-- StatementNode [    if (a == 0)]\n"
@@ -278,7 +278,7 @@ class CParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
             + "    +-- StatementNode [    while (a == 1) {]\n"
             + "        +-- StatementNode [        method(1, 2);]\n"
@@ -303,7 +303,7 @@ class CParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
             + "    +-- StatementNode [    do {]\n"
             + "        +-- StatementNode [        method(1, 2);]\n"
@@ -329,7 +329,7 @@ class CParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
             + "    +-- StatementNode [    for(a = 1; a < 100; a++) {]\n"
             + "        +-- StatementNode [        method(a, 2);]\n"
@@ -351,7 +351,7 @@ class CParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- DefineNode identifier=CLKFREQ [#define CLKFREQ 160_000_000]\n"
             + "+-- DefineNode identifier=PIN_RX [#define PIN_RX  63]\n"
             + "+-- DefineNode identifier=PIN_TX [#define PIN_TX  62]\n"
@@ -367,7 +367,7 @@ class CParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- IncludeNode [#include \"object\"]\n"
             + "+-- IncludeNode [#include <object>]\n"
             + "", tree(root));
@@ -385,7 +385,7 @@ class CParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
             + "    +-- StatementNode [    if (a == 1)]\n"
             + "        +-- StatementNode [    if (a == 1) method(1, 2);]\n"
@@ -420,7 +420,7 @@ class CParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- VariableNode type=int identifier=a [int a = 1, b = 2, c = 3]\n"
             + "    +-- VariableNode identifier=b [b = 2]\n"
             + "    +-- VariableNode identifier=c [c = 3]\n"
@@ -457,7 +457,7 @@ class CParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
             + "    +-- StatementNode [    asm {]\n"
             + "        +-- DataLineNode instruction=nop [        nop]\n"
@@ -476,7 +476,7 @@ class CParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- VariableNode type=object identifier=a [object a, b, c]\n"
             + "    +-- VariableNode identifier=b [b]\n"
             + "    +-- VariableNode identifier=c [c]\n"
@@ -520,7 +520,7 @@ class CParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- VariableNode type=int * identifier=a [int *a, *b]\n"
             + "    +-- VariableNode type=* identifier=b [*b]\n"
             + "+-- VariableNode type=short * identifier=c [short *c]\n"
@@ -551,7 +551,7 @@ class CParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
             + "    +-- StatementNode [    switch(a) {]\n"
             + "        +-- StatementNode [        case 1:]\n"
@@ -589,7 +589,7 @@ class CParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
             + "    +-- StatementNode [    switch(a) {]\n"
             + "        +-- StatementNode [        case 1:]\n"
@@ -625,7 +625,7 @@ class CParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
             + "    +-- StatementNode [    switch(a) {]\n"
             + "        +-- StatementNode [        case 1:]\n"
@@ -654,7 +654,7 @@ class CParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main(int a) {]\n"
             + "    +-- ParameterNode type=int identifier=a [int a]\n"
             + "    +-- DirectiveNode [#ifdef TEST]\n"
@@ -677,7 +677,7 @@ class CParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- TypeDefinitionNode type=struct identifier=data [struct data { byte a; byte b, c; byte d[10]; };]\n"
             + "    +-- Definition type=byte identifier=a [byte a]\n"
             + "    +-- Definition type=byte identifier=b [byte b]\n"
@@ -698,7 +698,7 @@ class CParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- TypeDefinitionNode type=struct identifier=data [struct data { byte a; byte b, c; byte d[10]; } a, *b, c;]\n"
             + "    +-- Definition type=byte identifier=a [byte a]\n"
             + "    +-- Definition type=byte identifier=b [byte b]\n"
@@ -720,7 +720,7 @@ class CParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- VariableNode modifier=struct type=data identifier=a [struct data a]\n"
             + "+-- VariableNode modifier=struct type=data identifier=b [struct data b, c]\n"
             + "    +-- VariableNode identifier=c [c]\n"
@@ -745,7 +745,7 @@ class CParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node []\n"
+            + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
             + "    +-- StatementNode [    if (a == 1)]\n"
             + "        +-- StatementNode [    while (a == 1) {]\n"

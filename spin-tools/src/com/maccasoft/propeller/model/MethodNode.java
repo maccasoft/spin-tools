@@ -103,7 +103,7 @@ public class MethodNode extends Node {
         }
     }
 
-    public MethodNode(Node parent, Token type) {
+    public MethodNode(RootNode parent, Token type) {
         super(parent);
         this.type = type;
         addToken(type);

@@ -26,7 +26,7 @@ import com.maccasoft.propeller.SpinObject.LinkDataObject;
 import com.maccasoft.propeller.SpinObject.WordDataObject;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.Method;
-import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
 import com.maccasoft.propeller.spin2.Spin2Debugger;
 import com.maccasoft.propeller.spin2.Spin2Interpreter;
@@ -62,7 +62,7 @@ public class Spin2CCompiler extends Spin2Compiler {
     }
 
     @Override
-    protected Spin2Object compileObject(File rootFile, Node root) {
+    protected Spin2Object compileObject(File rootFile, RootNode root) {
         Spin2CObjectCompiler objectCompiler = new Spin2CObjectCompiler(this, rootFile);
         objectCompiler.compileStep1(root);
 
@@ -192,7 +192,7 @@ public class Spin2CCompiler extends Spin2Compiler {
 
     @Override
     public ObjectInfo getObjectInfo(ObjectCompiler parent, File file, Map<String, Expression> parameters) throws Exception {
-        Node objectRoot = getParsedSource(file);
+        RootNode objectRoot = getParsedSource(file);
 
         ObjectCompiler objectCompiler;
         if (file.getName().toLowerCase().endsWith(".spin2")) {

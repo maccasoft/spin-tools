@@ -21,7 +21,6 @@ public class Node {
     final List<Node> childs = new ArrayList<Node>();
 
     List<Token> document = new ArrayList<Token>();
-    List<Token> comments = new ArrayList<Token>();
 
     String description;
     boolean exclude;
@@ -128,18 +127,6 @@ public class Node {
         return document;
     }
 
-    public void addComment(Token token) {
-        comments.add(token);
-    }
-
-    public void addAllComments(Collection<Token> c) {
-        comments.addAll(c);
-    }
-
-    public List<Token> getComments() {
-        return comments;
-    }
-
     public TokenIterator tokenIterator() {
         return new TokenIterator(tokens);
     }
@@ -207,6 +194,19 @@ public class Node {
             }
         }
         return -1;
+    }
+
+    public RootNode getRoot() {
+        Node root = this;
+
+        while (!(root instanceof RootNode)) {
+            root = root.getParent();
+            if (root == null) {
+                return null;
+            }
+        }
+
+        return (RootNode) root;
     }
 
     @Override

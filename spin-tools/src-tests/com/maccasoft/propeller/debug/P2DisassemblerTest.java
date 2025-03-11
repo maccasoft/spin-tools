@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.CompilerException;
-import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
 import com.maccasoft.propeller.spin2.Spin2Object;
 import com.maccasoft.propeller.spin2.Spin2ObjectCompiler;
@@ -1318,7 +1318,7 @@ class P2DisassemblerTest {
 
     String compileAndDisassemble(String text) throws Exception {
         Spin2Parser parser = new Spin2Parser(text);
-        Node root = parser.parse();
+        RootNode root = parser.parse();
 
         Spin2Compiler compiler = new Spin2Compiler();
         compiler.setDebugEnabled(false);
