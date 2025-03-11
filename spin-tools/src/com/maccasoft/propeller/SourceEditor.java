@@ -2623,12 +2623,7 @@ public class SourceEditor {
                         }
                         DataLineNode obj = (DataLineNode) child;
                         if (obj.instruction != null && "NAMESP".equalsIgnoreCase(obj.instruction.getText())) {
-                            if (obj.parameters.size() != 0) {
-                                namespace = obj.parameters.get(0).getText() + ".";
-                            }
-                            else {
-                                namespace = "";
-                            }
+                            namespace = obj.parameters.size() != 0 ? obj.parameters.get(0).getText() + "." : "";
                         }
                         if (obj.label != null) {
                             String qualifiedName = namespace + obj.label.getText();
@@ -2764,7 +2759,9 @@ public class SourceEditor {
                             if (objectName != null) {
                                 if (offset >= objstart && offset <= objstop) {
                                     if (obj.name.equals(objectName, tokenMarker.isCaseSensitive())) {
-                                        return new NavigationTarget(token.substring(0, dot - 1), obj.name);
+                                        Token highlight =
+                                            new Token(token.getStream(), token.start, token.line, token.column, token.type, token.getText().substring(0, dot));
+                                        return new NavigationTarget(highlight, obj.name);
                                     }
                                 }
                                 else if (obj.name.equals(objectName, tokenMarker.isCaseSensitive())) {
@@ -2777,7 +2774,9 @@ public class SourceEditor {
                                                     if (objectChildNode instanceof ConstantNode) {
                                                         ConstantNode constant = (ConstantNode) objectChildNode;
                                                         if (constant.identifier != null && constant.identifier.equals(itemName, tokenMarker.isCaseSensitive())) {
-                                                            return new NavigationTarget(token.substring(dot + 1, token.stop - token.start), obj, constant.identifier);
+                                                            Token highlight =
+                                                                new Token(token.getStream(), token.start + dot + 1, token.line, token.column + dot + 1, token.type, token.getText().substring(dot + 1));
+                                                            return new NavigationTarget(highlight, obj, constant.identifier);
                                                         }
                                                     }
                                                 }
@@ -2785,7 +2784,9 @@ public class SourceEditor {
                                             else if (objectNode instanceof MethodNode) {
                                                 MethodNode method = (MethodNode) objectNode;
                                                 if (method.name.equals(itemName, tokenMarker.isCaseSensitive())) {
-                                                    return new NavigationTarget(token.substring(dot + 1, token.stop - token.start), obj, method.name);
+                                                    Token highlight =
+                                                        new Token(token.getStream(), token.start + dot + 1, token.line, token.column + dot + 1, token.type, token.getText().substring(dot + 1));
+                                                    return new NavigationTarget(highlight, obj, method.name);
                                                 }
                                             }
                                         }
@@ -2863,12 +2864,7 @@ public class SourceEditor {
                 }
                 DataLineNode obj = (DataLineNode) child;
                 if (obj.instruction != null && "NAMESP".equalsIgnoreCase(obj.instruction.getText())) {
-                    if (obj.parameters.size() != 0) {
-                        namespace = obj.parameters.get(0).getText() + ".";
-                    }
-                    else {
-                        namespace = "";
-                    }
+                    namespace = obj.parameters.size() != 0 ? obj.parameters.get(0).getText() + "." : "";
                 }
                 if (obj.label != null) {
                     String qualifiedName = namespace + obj.label.getText();

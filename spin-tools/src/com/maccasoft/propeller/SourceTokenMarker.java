@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -1433,16 +1434,20 @@ public abstract class SourceTokenMarker {
 
         int dot = filterText.indexOf('.');
 
+        List<IContentProposal> list = new ArrayList<IContentProposal>();
         int index = parent.getChilds().indexOf(ref);
-        while (index > 0) {
+        while (index >= 0) {
             if (parent.getChild(index) instanceof DataLineNode) {
-                DataLineNode obj = (DataLineNode) parent.getChild(index);
-                if (obj.label != null) {
-                    if (!obj.label.getText().startsWith(localLabelPrefix)) {
+                DataLineNode lineNode = (DataLineNode) parent.getChild(index);
+                if (lineNode.instruction != null && "NAMESP".equalsIgnoreCase(lineNode.instruction.getText())) {
+                    break;
+                }
+                if (lineNode.label != null) {
+                    if (!lineNode.label.getText().startsWith(localLabelPrefix)) {
                         break;
                     }
-                    if (StringUtils.containsIgnoreCase(obj.label.getText(), filterText)) {
-                        proposals.add(0, new ContentProposal(obj.label.getText(), obj.label.getText(), null));
+                    if (StringUtils.containsIgnoreCase(lineNode.label.getText(), filterText)) {
+                        list.add(0, new ContentProposal(lineNode.label.getText(), lineNode.label.getText(), null));
                     }
                 }
             }
@@ -1451,56 +1456,99 @@ public abstract class SourceTokenMarker {
         index = parent.getChilds().indexOf(ref) + 1;
         while (index < parent.getChildCount()) {
             if (parent.getChild(index) instanceof DataLineNode) {
-                DataLineNode obj = (DataLineNode) parent.getChild(index);
-                if (obj.label != null) {
-                    if (!obj.label.getText().startsWith(localLabelPrefix)) {
+                DataLineNode lineNode = (DataLineNode) parent.getChild(index);
+                if (lineNode.instruction != null && "NAMESP".equalsIgnoreCase(lineNode.instruction.getText())) {
+                    break;
+                }
+                if (lineNode.label != null) {
+                    if (!lineNode.label.getText().startsWith(localLabelPrefix)) {
                         break;
                     }
-                    if (StringUtils.containsIgnoreCase(obj.label.getText(), filterText)) {
-                        proposals.add(new ContentProposal(obj.label.getText(), obj.label.getText(), null));
+                    if (StringUtils.containsIgnoreCase(lineNode.label.getText(), filterText)) {
+                        list.add(new ContentProposal(lineNode.label.getText(), lineNode.label.getText(), null));
                     }
                 }
             }
             index++;
         }
+        proposals.addAll(list);
 
-        for (Node child : parent.getChilds()) {
-            if (!(child instanceof DataLineNode)) {
-                continue;
+        List<Node> dataLineNodes = new ArrayList<>();
+        for (Node node : root.getChilds()) {
+            if (node instanceof DataNode) {
+                dataLineNodes.addAll(node.getChilds());
             }
-            DataLineNode lineNode = (DataLineNode) child;
-            if (lineNode.label != null && !lineNode.label.getText().startsWith(localLabelPrefix)) {
-                String text = lineNode.label.getText();
-                if (StringUtils.containsIgnoreCase(text, filterText)) {
-                    proposals.add(new ContentProposal(lineNode.label.getText(), text, null));
+        }
+
+        String refNamespace = "";
+
+        index = dataLineNodes.indexOf(ref);
+        while (index >= 0) {
+            if (dataLineNodes.get(index) instanceof DataLineNode) {
+                DataLineNode lineNode = (DataLineNode) dataLineNodes.get(index);
+                if (lineNode.instruction != null && "NAMESP".equalsIgnoreCase(lineNode.instruction.getText())) {
+                    refNamespace = lineNode.parameters.size() != 0 ? lineNode.parameters.get(0).getText() + "." : "";
+                    break;
                 }
             }
+            index--;
         }
 
         String namespace = "";
 
-        for (Node node : root.getChilds()) {
-            if (node instanceof DataNode && parent != node) {
-                for (Node child : node.getChilds()) {
-                    if (!(child instanceof DataLineNode)) {
-                        continue;
-                    }
-                    DataLineNode lineNode = (DataLineNode) child;
-                    if (lineNode.instruction != null && "NAMESP".equalsIgnoreCase(lineNode.instruction.getText()) && lineNode.parameters.size() == 1) {
-                        String text = lineNode.parameters.get(0).getText();
-                        if (StringUtils.containsIgnoreCase(text, filterText)) {
-                            proposals.add(new ContentProposal(text, text, ""));
+        if (dot == -1) {
+            for (Node child : dataLineNodes) {
+                if (!(child instanceof DataLineNode)) {
+                    continue;
+                }
+                DataLineNode lineNode = (DataLineNode) child;
+                if (lineNode.instruction != null && "NAMESP".equalsIgnoreCase(lineNode.instruction.getText())) {
+                    namespace = lineNode.parameters.size() != 0 ? lineNode.parameters.get(0).getText() + "." : "";
+                }
+                if (lineNode.label != null && !lineNode.label.getText().startsWith(localLabelPrefix)) {
+                    if (namespace.isBlank() || namespace.equalsIgnoreCase(refNamespace)) {
+                        if (StringUtils.containsIgnoreCase(lineNode.label.getText(), filterText)) {
+                            proposals.add(new ContentProposal(lineNode.label.getText(), lineNode.label.getText(), null));
                         }
-                        namespace = text + ".";
                     }
-                    if (dot != -1 || namespace.isBlank()) {
-                        if (lineNode.label != null && !lineNode.label.getText().startsWith(localLabelPrefix)) {
-                            String text = namespace + lineNode.label.getText();
+                }
+            }
+
+            Set<String> ns = new HashSet<>();
+            for (Node child : dataLineNodes) {
+                if (!(child instanceof DataLineNode)) {
+                    continue;
+                }
+                DataLineNode lineNode = (DataLineNode) child;
+                if (lineNode.instruction != null && "NAMESP".equalsIgnoreCase(lineNode.instruction.getText())) {
+                    if (lineNode.parameters.size() != 0) {
+                        namespace = lineNode.parameters.get(0).getText() + ".";
+                        if (!namespace.equalsIgnoreCase(refNamespace) && ns.add(namespace.toLowerCase())) {
+                            String text = lineNode.parameters.get(0).getText();
                             if (StringUtils.containsIgnoreCase(text, filterText)) {
-                                String content = dot == -1 ? text : lineNode.label.getText();
-                                proposals.add(new ContentProposal(content, text, null));
+                                proposals.add(new ContentProposal(text, text, null));
                             }
                         }
+                    }
+                }
+            }
+        }
+        else {
+            for (Node child : dataLineNodes) {
+                if (!(child instanceof DataLineNode)) {
+                    continue;
+                }
+                DataLineNode lineNode = (DataLineNode) child;
+                if (lineNode.instruction != null && "NAMESP".equalsIgnoreCase(lineNode.instruction.getText())) {
+                    namespace = lineNode.parameters.size() != 0 ? lineNode.parameters.get(0).getText() + "." : "";
+                }
+                if (namespace.equalsIgnoreCase(refNamespace)) {
+                    continue;
+                }
+                if (lineNode.label != null && !lineNode.label.getText().startsWith(localLabelPrefix)) {
+                    String text = namespace + lineNode.label.getText();
+                    if (StringUtils.containsIgnoreCase(text, filterText)) {
+                        proposals.add(new ContentProposal(lineNode.label.getText(), lineNode.label.getText(), null));
                     }
                 }
             }
@@ -1626,19 +1674,28 @@ public abstract class SourceTokenMarker {
                         continue;
                     }
                     DataLineNode lineNode = (DataLineNode) child;
-                    if (lineNode.instruction != null && "NAMESP".equalsIgnoreCase(lineNode.instruction.getText()) && lineNode.parameters.size() == 1) {
-                        String text = lineNode.parameters.get(0).getText();
-                        if (StringUtils.containsIgnoreCase(text, filterText)) {
-                            proposals.add(new ContentProposal(text, text, ""));
+                    if (lineNode.instruction != null && "NAMESP".equalsIgnoreCase(lineNode.instruction.getText())) {
+                        if (lineNode.parameters.size() == 1) {
+                            String text = lineNode.parameters.get(0).getText();
+                            if (StringUtils.containsIgnoreCase(text, filterText)) {
+                                proposals.add(new ContentProposal(text, text, ""));
+                            }
                         }
-                        namespace = text + ".";
+                        namespace = lineNode.parameters.size() != 0 ? lineNode.parameters.get(0).getText() + "." : "";
                     }
                     if (lineNode.label != null && !lineNode.label.getText().startsWith(localLabelPrefix)) {
                         if (dot != -1 || namespace.isBlank()) {
                             String text = namespace + lineNode.label.getText();
                             if (StringUtils.containsIgnoreCase(text, filterText)) {
                                 String content = dot == -1 ? text : lineNode.label.getText();
-                                proposals.add(new ContentProposal(content, text, null));
+                                String description = "";
+                                if (lineNode.instruction != null) {
+                                    TypeDefinitionNode typeNode = structs.get(lineNode.instruction.getText());
+                                    if (typeNode != null) {
+                                        description = "<b>" + typeNode.getText() + "</b>";
+                                    }
+                                }
+                                proposals.add(new ContentProposal(content, text, description));
                             }
                         }
                         if (dot != -1 && lineNode.instruction != null) {
@@ -1652,7 +1709,7 @@ public abstract class SourceTokenMarker {
                                     TypeDefinitionNode.Definition member = (TypeDefinitionNode.Definition) n;
                                     String text = identifier + "." + member.getIdentifier().getText();
                                     if (StringUtils.containsIgnoreCase(text, filterText)) {
-                                        proposals.add(new ContentProposal(member.getIdentifier().getText(), text, ""));
+                                        proposals.add(new ContentProposal(member.getIdentifier().getText(), member.getIdentifier().getText(), "<b>" + typeNode.getText() + "</b>"));
                                     }
                                 }
                             }
