@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.Stack;
 
 import org.apache.commons.collections4.map.ListOrderedMap;
 
@@ -258,24 +257,8 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
         return null;
     }
 
-    class Condition {
-
-        Node node;
-        boolean evaluated;
-        boolean skip;
-        boolean flipped;
-
-        public Condition(Node node, boolean evaluated, boolean skip) {
-            this.node = node;
-            this.evaluated = evaluated;
-            this.skip = skip;
-        }
-
-    }
-
-    Stack<Condition> conditionStack = new Stack<>();
-
-    void compileDirective(DirectiveNode node) {
+    @Override
+    protected void compileDirective(DirectiveNode node) {
         Token token;
         boolean skip = !conditionStack.isEmpty() && conditionStack.peek().skip;
 
@@ -286,6 +269,7 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
         }
         token = iter.next();
         if ("include".equals(token.getText())) {
+            node.setExclude(skip);
             if (!skip) {
                 if (!iter.hasNext()) {
                     throw new CompilerException("expecting object file", new Token(token.getStream(), token.stop));
@@ -329,228 +313,8 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
             }
             return;
         }
-        else if ("define".equals(token.getText())) {
-            if (!skip) {
-                if (!iter.hasNext()) {
-                    throw new CompilerException("expecting identifier", new Token(token.getStream(), token.stop));
-                }
-                token = iter.next();
-                if (token.type != Token.KEYWORD) {
-                    throw new CompilerException("invalid identifier", token);
-                }
-                String identifier = token.getText();
-                if (scope.hasSymbol(identifier) || scope.isDefined(identifier)) {
-                    logMessage(new CompilerException(CompilerException.WARNING, "duplicated definition: " + identifier, token));
-                }
-
-                List<Token> list = new ArrayList<>();
-                if (iter.hasNext()) {
-                    while (iter.hasNext()) {
-                        list.add(iter.next());
-                    }
-                }
-                scope.addDefinition(identifier, list);
-            }
-            else {
-                Node root = node.getParent();
-                while (root.getParent() != null) {
-                    root = root.getParent();
-                }
-                for (Token t : node.getTokens()) {
-                    root.addComment(t);
-                }
-                node.getParent().getChilds().remove(node);
-            }
-            return;
-        }
-        else if ("error".equals(token.getText())) {
-            if (!skip) {
-                throw new CompilerException(CompilerException.ERROR, node.getText(), node);
-            }
-        }
-        else if ("warning".equals(token.getText())) {
-            if (!skip) {
-                throw new CompilerException(CompilerException.WARNING, node.getText(), node);
-            }
-        }
-        else if ("pragma".equals(token.getText())) {
-            // Ignore
-        }
-        else if ("ifdef".equals(token.getText())) {
-            if (!skip) {
-                if (!iter.hasNext()) {
-                    throw new CompilerException("expecting identifier", new Token(token.getStream(), token.stop));
-                }
-                Token identifier = iter.next();
-                if (token.type != Token.KEYWORD) {
-                    throw new CompilerException("invalid identifier", identifier);
-                }
-                skip = !(scope.isDefined(identifier.getText()) || scope.hasSymbol(identifier.getText()));
-                conditionStack.push(new Condition(node, true, skip));
-            }
-            else {
-                conditionStack.push(new Condition(node, false, skip));
-            }
-        }
-        else if ("elifdef".equals(token.getText()) || "elseifdef".equals(token.getText())) {
-            if (conditionStack.isEmpty()) {
-                throw new CompilerException("misplaced #" + token.getText(), token);
-            }
-            Condition condition = conditionStack.peek();
-            if (condition.evaluated) {
-                if (!condition.flipped) {
-                    condition.skip = !condition.skip;
-                    condition.flipped = true;
-                }
-                if (!condition.skip) {
-                    conditionStack.pop();
-
-                    Token identifier = iter.next();
-                    if (token.type != Token.KEYWORD) {
-                        throw new CompilerException("invalid identifier", identifier);
-                    }
-                    skip = !(scope.isDefined(identifier.getText()) || scope.hasSymbol(identifier.getText()));
-
-                    conditionStack.push(new Condition(node, true, skip));
-                }
-            }
-        }
-        else if ("ifndef".equals(token.getText())) {
-            if (!skip) {
-                if (!iter.hasNext()) {
-                    throw new CompilerException("expecting identifier", new Token(token.getStream(), token.stop));
-                }
-                Token identifier = iter.next();
-                if (token.type != Token.KEYWORD) {
-                    throw new CompilerException("invalid identifier", identifier);
-                }
-                skip = scope.isDefined(identifier.getText()) || scope.hasSymbol(identifier.getText());
-                conditionStack.push(new Condition(node, true, skip));
-            }
-            else {
-                conditionStack.push(new Condition(node, false, skip));
-            }
-        }
-        else if ("elifndef".equals(token.getText()) || "elseifndef".equals(token.getText())) {
-            if (conditionStack.isEmpty()) {
-                throw new CompilerException("misplaced #" + token.getText(), token);
-            }
-            Condition condition = conditionStack.peek();
-            if (condition.evaluated) {
-                if (!condition.flipped) {
-                    condition.skip = !condition.skip;
-                    condition.flipped = true;
-                }
-                if (!condition.skip) {
-                    conditionStack.pop();
-
-                    Token identifier = iter.next();
-                    if (token.type != Token.KEYWORD) {
-                        throw new CompilerException("invalid identifier", identifier);
-                    }
-                    skip = scope.isDefined(identifier.getText()) || scope.hasSymbol(identifier.getText());
-
-                    conditionStack.push(new Condition(node, true, skip));
-                }
-            }
-        }
-        else if ("else".equals(token.getText())) {
-            if (conditionStack.isEmpty()) {
-                throw new CompilerException("misplaced #" + token.getText(), token);
-            }
-            Condition condition = conditionStack.peek();
-            if (condition.evaluated) {
-                if (!condition.flipped) {
-                    condition.skip = !condition.skip;
-                    condition.flipped = true;
-                }
-            }
-        }
-        else if ("if".equals(token.getText())) {
-            if (!skip) {
-                CExpressionBuilder builder = new CExpressionBuilder(scope);
-                while (iter.hasNext()) {
-                    token = iter.next();
-                    if ("defined".equals(token.getText())) {
-                        builder.addToken(token);
-                        if (iter.hasNext()) {
-                            builder.addTokenLiteral(iter.next());
-                        }
-                        if (iter.hasNext()) {
-                            builder.addTokenLiteral(iter.next());
-                        }
-                        if (iter.hasNext()) {
-                            builder.addTokenLiteral(iter.next());
-                        }
-                    }
-                    else {
-                        builder.addToken(token);
-                    }
-                }
-                Expression expression = builder.getExpression();
-                if (!expression.isConstant()) {
-                    throw new RuntimeException("expression is not constant");
-                }
-                skip = expression.getNumber().intValue() == 0;
-                conditionStack.push(new Condition(node, true, skip));
-            }
-            else {
-                conditionStack.push(new Condition(node, false, skip));
-            }
-        }
-        else if ("elif".equals(token.getText()) || "elseif".equals(token.getText())) {
-            if (conditionStack.isEmpty()) {
-                throw new CompilerException("misplaced #" + token.getText(), token);
-            }
-            Condition condition = conditionStack.peek();
-            if (condition.evaluated) {
-                if (!condition.flipped) {
-                    condition.skip = !condition.skip;
-                    condition.flipped = true;
-                }
-                if (!condition.skip) {
-                    conditionStack.pop();
-
-                    CExpressionBuilder builder = new CExpressionBuilder(scope);
-                    while (iter.hasNext()) {
-                        token = iter.next();
-                        if ("defined".equals(token.getText())) {
-                            builder.addToken(token);
-                            if (iter.hasNext()) {
-                                builder.addTokenLiteral(iter.next());
-                            }
-                            if (iter.hasNext()) {
-                                builder.addTokenLiteral(iter.next());
-                            }
-                            if (iter.hasNext()) {
-                                builder.addTokenLiteral(iter.next());
-                            }
-                        }
-                        else {
-                            builder.addToken(token);
-                        }
-                    }
-                    Expression expression = builder.getExpression();
-                    if (!expression.isConstant()) {
-                        throw new RuntimeException("expression is not constant");
-                    }
-                    skip = expression.getNumber().intValue() == 0;
-
-                    conditionStack.push(new Condition(node, true, skip));
-                }
-            }
-            else {
-                conditionStack.push(new Condition(node, false, skip));
-            }
-        }
-        else if ("endif".equals(token.getText())) {
-            if (conditionStack.isEmpty()) {
-                throw new CompilerException("misplaced #" + token.getText(), token);
-            }
-            conditionStack.pop();
-        }
         else {
-            logMessage(new CompilerException("unsupported directive", token));
+            super.compileDirective(node);
         }
     }
 
