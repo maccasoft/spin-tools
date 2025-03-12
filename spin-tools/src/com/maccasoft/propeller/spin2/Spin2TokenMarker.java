@@ -691,8 +691,8 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         tokens.clear();
         for (Token token : root.getComments()) {
             if (token.type == Token.NEXT_LINE) {
-                tokens.add(new TokenMarker(token.substring(0, 2), TokenId.OPERATOR));
-                tokens.add(new TokenMarker(token.substring(3), TokenId.COMMENT));
+                tokens.add(new TokenMarker(token.start, token.start + 2, TokenId.OPERATOR));
+                tokens.add(new TokenMarker(token.start + 3, token.stop, TokenId.COMMENT));
             }
             else {
                 tokens.add(new TokenMarker(token, TokenId.COMMENT));
@@ -713,12 +713,12 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         externals.clear();
         cache.clear();
 
-        excludedNodes.clear();
+        super.refreshCompilerTokens(messages);
 
         for (Token token : root.getComments()) {
             if (token.type == Token.NEXT_LINE) {
-                tokens.add(new TokenMarker(token.substring(0, 2), TokenId.OPERATOR));
-                tokens.add(new TokenMarker(token.substring(3), TokenId.COMMENT));
+                tokens.add(new TokenMarker(token.start, token.start + 2, TokenId.OPERATOR));
+                tokens.add(new TokenMarker(token.start + 3, token.stop, TokenId.COMMENT));
             }
             else {
                 tokens.add(new TokenMarker(token, TokenId.COMMENT));
@@ -729,8 +729,6 @@ public class Spin2TokenMarker extends SourceTokenMarker {
 
         collectKeywords(root);
         updateReferences(root);
-
-        super.refreshCompilerTokens(messages);
     }
 
     NodeVisitor collectKeywordsVisitor = new NodeVisitor() {
@@ -739,11 +737,8 @@ public class Spin2TokenMarker extends SourceTokenMarker {
 
         @Override
         public void visitDirective(DirectiveNode node) {
-            if (!node.isExclude()) {
+            if (!isExcludedNode(node)) {
                 collectTokens(node);
-            }
-            else {
-                addToExcluded(node);
             }
         }
 
@@ -761,33 +756,27 @@ public class Spin2TokenMarker extends SourceTokenMarker {
 
         @Override
         public boolean visitConstants(ConstantsNode node) {
-            if (!node.isExclude()) {
+            if (!isExcludedNode(node)) {
                 if (node.getTextToken() != null) {
                     tokens.add(new TokenMarker(node.getTextToken(), TokenId.SECTION));
                 }
-            }
-            else {
-                addToExcluded(node);
             }
             return true;
         }
 
         @Override
         public void visitConstant(ConstantNode node) {
-            if (!node.isExclude()) {
+            if (!isExcludedNode(node)) {
                 if (node.getIdentifier() != null) {
                     symbols.put(node.getIdentifier().getText(), TokenId.CONSTANT);
                     tokens.add(new TokenMarker(node.getIdentifier(), TokenId.CONSTANT));
                 }
             }
-            else {
-                addToExcluded(node);
-            }
         }
 
         @Override
         public void visitTypeDefinition(TypeDefinitionNode node) {
-            if (!node.isExclude()) {
+            if (!isExcludedNode(node)) {
                 if (node.getType() != null) {
                     tokens.add(new TokenMarker(node.getType(), TokenId.TYPE));
                 }
@@ -797,27 +786,21 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                     tokens.add(new TokenMarker(node.getIdentifier(), TokenId.CONSTANT));
                 }
             }
-            else {
-                addToExcluded(node);
-            }
         }
 
         @Override
         public boolean visitVariables(VariablesNode node) {
-            if (!node.isExclude()) {
+            if (!isExcludedNode(node)) {
                 if (!(node.getParent() instanceof VariablesNode) && node.getTokenCount() != 0) {
                     tokens.add(new TokenMarker(node.getStartToken(), TokenId.SECTION));
                 }
-            }
-            else {
-                addToExcluded(node);
             }
             return true;
         }
 
         @Override
         public void visitVariable(VariableNode node) {
-            if (!node.isExclude()) {
+            if (!isExcludedNode(node)) {
                 if (node.getIdentifier() != null) {
                     String identifier = node.getIdentifier().getText();
                     symbols.put(identifier, TokenId.VARIABLE);
@@ -826,29 +809,20 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                     tokens.add(new TokenMarker(node.getIdentifier(), TokenId.VARIABLE));
                 }
             }
-            else {
-                addToExcluded(node);
-            }
         }
 
         @Override
         public boolean visitObjects(ObjectsNode node) {
-            if (!node.isExclude()) {
+            if (!isExcludedNode(node)) {
                 tokens.add(new TokenMarker(node.getTokens().get(0), TokenId.SECTION));
-            }
-            else {
-                addToExcluded(node);
             }
             return true;
         }
 
         @Override
         public void visitObject(ObjectNode node) {
-            if (!node.isExclude()) {
+            if (!isExcludedNode(node)) {
                 collectTokens(node);
-            }
-            else {
-                addToExcluded(node);
             }
         }
 
@@ -925,11 +899,8 @@ public class Spin2TokenMarker extends SourceTokenMarker {
 
         @Override
         public boolean visitMethod(MethodNode node) {
-            if (!node.isExclude()) {
+            if (!isExcludedNode(node)) {
                 collectTokens(node);
-            }
-            else {
-                addToExcluded(node);
             }
             return true;
         }
@@ -957,31 +928,22 @@ public class Spin2TokenMarker extends SourceTokenMarker {
 
         @Override
         public boolean visitStatement(StatementNode node) {
-            if (node.isExclude()) {
-                addToExcluded(node);
-            }
             return true;
         }
 
         @Override
         public boolean visitData(DataNode node) {
-            if (!node.isExclude()) {
+            if (!isExcludedNode(node)) {
                 lastLabel = "";
                 tokens.add(new TokenMarker(node.getTokens().get(0), TokenId.SECTION));
-            }
-            else {
-                addToExcluded(node);
             }
             return true;
         }
 
         @Override
         public void visitDataLine(DataLineNode node) {
-            if (!node.isExclude()) {
+            if (!isExcludedNode(node)) {
                 collectTokens(node);
-            }
-            else {
-                addToExcluded(node);
             }
         }
 
@@ -1138,8 +1100,8 @@ public class Spin2TokenMarker extends SourceTokenMarker {
 
         @Override
         public void visitDirective(DirectiveNode node) {
-            if (!node.isExclude()) {
-                markTokens(node, 2, null);
+            if (!node.isExclude() && node.getTokenCount() != 0) {
+                tokens.add(new TokenMarker(node.getStartIndex(), node.getStopIndex(), TokenId.DIRECTIVE));
             }
         }
 
@@ -1222,7 +1184,11 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                     locals.put("@" + child.identifier.getText(), TokenId.METHOD_LOCAL);
                     locals.put("@@" + child.identifier.getText(), TokenId.METHOD_LOCAL);
                 }
+                if (child.defaultValue != null) {
+                    markTokens(child, 1, null);
+                }
             }
+
             for (MethodNode.ReturnNode child : node.getReturnVariables()) {
                 if (child.type != null) {
                     TokenId id = symbols.get(child.type.getText());
@@ -1242,12 +1208,6 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                     locals.put(child.identifier.getText(), TokenId.METHOD_RETURN);
                     locals.put("@" + child.identifier.getText(), TokenId.METHOD_RETURN);
                     locals.put("@@" + child.identifier.getText(), TokenId.METHOD_RETURN);
-                }
-            }
-
-            for (MethodNode.ParameterNode child : node.getParameters()) {
-                if (child.defaultValue != null) {
-                    markTokens(child, 1, null);
                 }
             }
 

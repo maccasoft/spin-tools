@@ -49,6 +49,7 @@ import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
 import com.maccasoft.propeller.model.ObjectNode;
+import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
@@ -110,9 +111,11 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
     @Override
     public void compileStep1(RootNode root) {
-        objectVarSize = 0;
+        List<VariablesNode> variableNodes = new ArrayList<>();
 
         root.accept(new NodeVisitor() {
+
+            Node lastParent;
 
             @Override
             public void visitDirective(DirectiveNode node) {
@@ -127,8 +130,12 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
             @Override
             public boolean visitConstants(ConstantsNode node) {
-                enumValue = new NumberLiteral(0);
-                enumIncrement = new NumberLiteral(1);
+                node.setExclude(!conditionStack.isEmpty() && conditionStack.peek().skip);
+                if (!node.isExclude()) {
+                    enumValue = new NumberLiteral(0);
+                    enumIncrement = new NumberLiteral(1);
+                    lastParent = node;
+                }
                 return true;
             }
 
@@ -136,8 +143,31 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
             public void visitConstant(ConstantNode node) {
                 node.setExclude(!conditionStack.isEmpty() && conditionStack.peek().skip);
                 if (!node.isExclude()) {
-                    compileConstant(node);
+                    if (!(lastParent instanceof ConstantsNode)) {
+                        logMessage(new CompilerException("misplaced constant", node));
+                    }
+                    else {
+                        compileConstant(node);
+                    }
                 }
+            }
+
+            @Override
+            public boolean visitVariables(VariablesNode node) {
+                node.setExclude(!conditionStack.isEmpty() && conditionStack.peek().skip);
+                if (!node.isExclude()) {
+                    if (node.getParent() instanceof RootNode) {
+                        lastParent = node;
+                        variableNodes.add(node);
+                    }
+                    else if (lastParent instanceof VariablesNode) {
+                        variableNodes.add(node);
+                    }
+                    else {
+                        logMessage(new CompilerException("misplaced variables", node));
+                    }
+                }
+                return true;
             }
 
             @Override
@@ -146,22 +176,48 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
             }
 
             @Override
+            public boolean visitObjects(ObjectsNode node) {
+                node.setExclude(!conditionStack.isEmpty() && conditionStack.peek().skip);
+                if (!node.isExclude()) {
+                    lastParent = node;
+                }
+                return true;
+            }
+
+            @Override
             public void visitObject(ObjectNode node) {
                 node.setExclude(!conditionStack.isEmpty() && conditionStack.peek().skip);
                 if (!node.isExclude()) {
-                    compileObject(node);
+                    if (!(lastParent instanceof ObjectsNode)) {
+                        logMessage(new CompilerException("misplaced object", node));
+                    }
+                    else {
+                        compileObject(node);
+                    }
                 }
             }
 
             @Override
             public boolean visitMethod(MethodNode node) {
                 node.setExclude(!conditionStack.isEmpty() && conditionStack.peek().skip);
+                if (!node.isExclude()) {
+                    lastParent = node;
+                }
                 return true;
             }
 
             @Override
             public boolean visitStatement(StatementNode node) {
                 node.setExclude(!conditionStack.isEmpty() && conditionStack.peek().skip);
+                return true;
+            }
+
+            @Override
+            public boolean visitData(DataNode node) {
+                node.setExclude(!conditionStack.isEmpty() && conditionStack.peek().skip);
+                if (!node.isExclude()) {
+                    lastParent = node;
+                }
                 return true;
             }
 
@@ -209,12 +265,11 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
             }
         }
 
-        for (Node node : root.getChilds()) {
-            if (node instanceof VariablesNode) {
-                if (!node.isExclude()) {
-                    compileVarBlock(node);
-                }
-            }
+        objectVarSize = 0;
+        variables.clear();
+
+        for (VariablesNode node : variableNodes) {
+            compileVarBlock(node);
         }
 
         Collections.sort(variables, new Comparator<Variable>() {
@@ -875,14 +930,6 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                 logMessage(e);
             } catch (Exception e) {
                 logMessage(new CompilerException(e, node));
-            }
-        }
-
-        for (Node child : node.getChilds()) {
-            if (child instanceof VariablesNode) {
-                if (!child.isExclude()) {
-                    compileVarBlock(child);
-                }
             }
         }
     }

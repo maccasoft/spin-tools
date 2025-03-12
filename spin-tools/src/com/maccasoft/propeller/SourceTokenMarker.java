@@ -173,6 +173,7 @@ public abstract class SourceTokenMarker {
     protected Map<String, TokenId> locals = new CaseInsensitiveMap<>();
 
     protected Map<File, RootNode> cache = new HashMap<>();
+    protected Set<String> excludedPaths = new HashSet<>();
 
     public SourceTokenMarker(SourceProvider sourceProvider) {
         this.sourceProvider = sourceProvider;
@@ -219,6 +220,95 @@ public abstract class SourceTokenMarker {
                 tokens.add(marker);
             }
         }
+
+        excludedPaths.clear();
+        excludedNodes.clear();
+
+        root.accept(new NodeVisitor() {
+
+            @Override
+            public void visitDirective(DirectiveNode node) {
+                if (node.isExclude()) {
+                    addToExcluded(node);
+                }
+            }
+
+            @Override
+            public boolean visitConstants(ConstantsNode node) {
+                if (node.isExclude()) {
+                    addToExcluded(node);
+                }
+                return true;
+            }
+
+            @Override
+            public void visitConstant(ConstantNode node) {
+                if (node.isExclude()) {
+                    addToExcluded(node);
+                }
+            }
+
+            @Override
+            public boolean visitVariables(VariablesNode node) {
+                if (node.isExclude()) {
+                    addToExcluded(node);
+                }
+                return true;
+            }
+
+            @Override
+            public boolean visitObjects(ObjectsNode node) {
+                if (node.isExclude()) {
+                    addToExcluded(node);
+                }
+                return true;
+            }
+
+            @Override
+            public void visitObject(ObjectNode node) {
+                if (node.isExclude()) {
+                    addToExcluded(node);
+                }
+            }
+
+            @Override
+            public boolean visitMethod(MethodNode node) {
+                if (node.isExclude()) {
+                    addToExcluded(node);
+                }
+                return true;
+            }
+
+            @Override
+            public boolean visitFunction(FunctionNode node) {
+                if (node.isExclude()) {
+                    addToExcluded(node);
+                }
+                return true;
+            }
+
+            @Override
+            public boolean visitStatement(StatementNode node) {
+                if (node.isExclude()) {
+                    addToExcluded(node);
+                }
+                return true;
+            }
+
+            @Override
+            public boolean visitData(DataNode node) {
+                if (node.isExclude()) {
+                    addToExcluded(node);
+                }
+                return true;
+            }
+
+            @Override
+            public void visitDataLine(DataLineNode node) {
+                super.visitDataLine(node);
+            }
+
+        });
 
         compilerTokens = tokens;
     }
@@ -1741,6 +1831,14 @@ public abstract class SourceTokenMarker {
             tokens.add(marker);
             excludedNodes.add(marker);
         }
+        excludedPaths.add(node.getPath());
+    }
+
+    protected boolean isExcludedNode(Node node) {
+        if (excludedPaths.contains(node.getPath())) {
+            return true;
+        }
+        return node.isExclude();
     }
 
 }

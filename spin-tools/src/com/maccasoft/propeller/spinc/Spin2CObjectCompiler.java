@@ -164,22 +164,10 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                     if (conditionStack.isEmpty() || !conditionStack.peek().skip) {
                         compileTypeDefinition((TypeDefinitionNode) node);
                     }
-                    else {
-                        Token token = new Token(node.getStartToken().getStream(), node.getStartIndex());
-                        token.stop = node.getStopIndex();
-                        root.addComment(token);
-                        node.getParent().getChilds().remove(node);
-                    }
                 }
                 else if (node instanceof VariableNode) {
                     if (conditionStack.isEmpty() || !conditionStack.peek().skip) {
                         compileVariable((VariableNode) node);
-                    }
-                    else {
-                        Token token = new Token(node.getStartToken().getStream(), node.getStartIndex());
-                        token.stop = node.getStopIndex();
-                        root.addComment(token);
-                        node.getParent().getChilds().remove(node);
                     }
                 }
                 else if (node instanceof FunctionNode) {

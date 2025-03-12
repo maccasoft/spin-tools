@@ -173,22 +173,10 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
                             structures.put(symbol, typeNode);
                         }
                     }
-                    else {
-                        Token token = new Token(node.getStartToken().getStream(), node.getStartIndex());
-                        token.stop = node.getStopIndex();
-                        root.addComment(token);
-                        node.getParent().getChilds().remove(node);
-                    }
                 }
                 else if (node instanceof VariableNode) {
                     if (conditionStack.isEmpty() || !conditionStack.peek().skip) {
                         compileVariable((VariableNode) node);
-                    }
-                    else {
-                        Token token = new Token(node.getStartToken().getStream(), node.getStartIndex());
-                        token.stop = node.getStopIndex();
-                        root.addComment(token);
-                        node.getParent().getChilds().remove(node);
                     }
                 }
                 else if (node instanceof FunctionNode) {
