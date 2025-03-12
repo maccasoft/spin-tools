@@ -1354,6 +1354,35 @@ class Spin2PAsmCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testDitto() throws Exception {
+        String text = ""
+            + "CON\n"
+            + "    pin_nco = 0\n"
+            + "    pin_base = 8\n"
+            + "\n"
+            + "DAT\n"
+            + "\n"
+            + "                DITTO   8\n"
+            + "                wypin   pin_nco+$$, #pin_base+$$\n"
+            + "                DITTO   END\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000 00000                                    DITTO   8\n"
+            + "00000 00000 00000 08 00 24 FC                        wypin   pin_nco + $$, #pin_base + $$\n"
+            + "00004 00004 00004 09 02 24 FC                        wypin   pin_nco + $$, #pin_base + $$\n"
+            + "00008 00008 00008 0A 04 24 FC                        wypin   pin_nco + $$, #pin_base + $$\n"
+            + "0000C 0000C 0000C 0B 06 24 FC                        wypin   pin_nco + $$, #pin_base + $$\n"
+            + "00010 00010 00010 0C 08 24 FC                        wypin   pin_nco + $$, #pin_base + $$\n"
+            + "00014 00014 00014 0D 0A 24 FC                        wypin   pin_nco + $$, #pin_base + $$\n"
+            + "00018 00018 00018 0E 0C 24 FC                        wypin   pin_nco + $$, #pin_base + $$\n"
+            + "0001C 0001C 0001C 0F 0E 24 FC                        wypin   pin_nco + $$, #pin_base + $$\n"
+            + "00020 00020 00020                                    DITTO   END\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }

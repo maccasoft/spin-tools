@@ -81,58 +81,85 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
                     datScope = new Context(scope);
                 }
 
-                for (Node n2 : node.getChilds()) {
+                Iterator<Node> nodeIterator = node.getChilds().iterator();
+                while (nodeIterator.hasNext()) {
+                    Node n2 = nodeIterator.next();
                     if (!n2.isExclude() && (n2 instanceof DataLineNode)) {
                         DataLineNode lineNode = (DataLineNode) n2;
                         try {
-                            if (lineNode.instruction != null && "NAMESP".equalsIgnoreCase(lineNode.instruction.getText())) {
-                                datScope = new Context(scope);
-                                localScope = datScope;
-                            }
-                            else if (lineNode.label != null && !lineNode.label.getText().startsWith(".")) {
-                                localScope = datScope;
-                            }
+                            if (lineNode.instruction != null && "DITTO".equalsIgnoreCase(lineNode.instruction.getText())) {
+                                DataLineNode beginLineNode = lineNode;
+                                DataLineNode endLineNode = null;
 
-                            Spin2PAsmLine pasmLine = compileDataLine(scope, datScope, localScope, lineNode, namespace);
-                            pasmLine.setData(lineNode);
-                            source.addAll(pasmLine.expand());
-
-                            if (lineNode.label != null && !lineNode.label.getText().startsWith(".")) {
-                                localScope = pasmLine.getScope();
-                            }
-
-                            if ("NAMESP".equalsIgnoreCase(pasmLine.getMnemonic())) {
-                                Iterator<Spin2PAsmExpression> args = pasmLine.getArguments().iterator();
-                                if (args.hasNext()) {
-                                    namespace = args.next().toString() + ".";
-                                }
-                                else {
-                                    namespace = "";
-                                }
-                            }
-                            else if ("INCLUDE".equalsIgnoreCase(pasmLine.getMnemonic())) {
-                                if (lineNode.condition != null) {
-                                    throw new CompilerException("not allowed", lineNode.condition);
-                                }
-                                if (lineNode.modifier != null) {
-                                    throw new CompilerException("not allowed", lineNode.modifier);
-                                }
-                                int index = 0;
-                                for (Spin2PAsmExpression argument : pasmLine.getArguments()) {
-                                    String fileName = argument.getString();
-                                    File includeFile = compiler.getFile(fileName, ".spin2");
-                                    RootNode includedNode = compiler.getParsedSource(includeFile);
-                                    try {
-                                        if (includedNode == null) {
-                                            throw new RuntimeException("file \"" + fileName + "\" not found");
+                                List<DataLineNode> list = new ArrayList<>();
+                                while (nodeIterator.hasNext()) {
+                                    n2 = nodeIterator.next();
+                                    if (!n2.isExclude() && (n2 instanceof DataLineNode)) {
+                                        lineNode = (DataLineNode) n2;
+                                        if ("DITTO".equalsIgnoreCase(lineNode.instruction.getText())) {
+                                            if (lineNode.parameters.size() != 0 && "END".equalsIgnoreCase(lineNode.parameters.get(0).getText())) {
+                                                endLineNode = lineNode;
+                                                break;
+                                            }
                                         }
-                                        compileDatInclude(includedNode);
-                                    } catch (CompilerException e) {
-                                        logMessage(e);
-                                    } catch (Exception e) {
-                                        logMessage(new CompilerException(e, lineNode.parameters.get(index)));
+                                        list.add(lineNode);
                                     }
-                                    index++;
+                                }
+                                if (endLineNode == null) {
+                                    logMessage(new CompilerException("missing DITTO END line", beginLineNode));
+                                }
+                                processDittoBlock(scope, datScope, localScope, beginLineNode, list, endLineNode);
+                            }
+                            else {
+                                if (lineNode.instruction != null && "NAMESP".equalsIgnoreCase(lineNode.instruction.getText())) {
+                                    datScope = new Context(scope);
+                                    localScope = datScope;
+                                }
+                                else if (lineNode.label != null && !lineNode.label.getText().startsWith(".")) {
+                                    localScope = datScope;
+                                }
+
+                                Spin2PAsmLine pasmLine = compileDataLine(scope, datScope, localScope, lineNode, namespace);
+                                pasmLine.setData(lineNode);
+                                source.addAll(pasmLine.expand());
+
+                                if (lineNode.label != null && !lineNode.label.getText().startsWith(".")) {
+                                    localScope = pasmLine.getScope();
+                                }
+
+                                if ("NAMESP".equalsIgnoreCase(pasmLine.getMnemonic())) {
+                                    Iterator<Spin2PAsmExpression> args = pasmLine.getArguments().iterator();
+                                    if (args.hasNext()) {
+                                        namespace = args.next().toString() + ".";
+                                    }
+                                    else {
+                                        namespace = "";
+                                    }
+                                }
+                                else if ("INCLUDE".equalsIgnoreCase(pasmLine.getMnemonic())) {
+                                    if (lineNode.condition != null) {
+                                        throw new CompilerException("not allowed", lineNode.condition);
+                                    }
+                                    if (lineNode.modifier != null) {
+                                        throw new CompilerException("not allowed", lineNode.modifier);
+                                    }
+                                    int index = 0;
+                                    for (Spin2PAsmExpression argument : pasmLine.getArguments()) {
+                                        String fileName = argument.getString();
+                                        File includeFile = compiler.getFile(fileName, ".spin2");
+                                        RootNode includedNode = compiler.getParsedSource(includeFile);
+                                        try {
+                                            if (includedNode == null) {
+                                                throw new RuntimeException("file \"" + fileName + "\" not found");
+                                            }
+                                            compileDatInclude(includedNode);
+                                        } catch (CompilerException e) {
+                                            logMessage(e);
+                                        } catch (Exception e) {
+                                            logMessage(new CompilerException(e, lineNode.parameters.get(index)));
+                                        }
+                                        index++;
+                                    }
                                 }
                             }
                         } catch (CompilerException e) {
@@ -465,6 +492,65 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
 
     protected byte[] getBinaryFile(String fileName) {
         return compiler.getBinaryFile(fileName);
+    }
+
+    void processDittoBlock(Context scope, Context datScope, Context localScope, DataLineNode beginLineNode, List<DataLineNode> list, DataLineNode endLineNode) {
+        int count = 0;
+
+        Spin2PAsmLine beginPasmLine = compileDataLine(scope, datScope, localScope, beginLineNode, "");
+        if (beginLineNode.condition != null) {
+            logMessage(new CompilerException("condition not allowed", beginLineNode.condition));
+        }
+        if (beginLineNode.parameters.size() == 0) {
+            logMessage(new CompilerException("missing count parameter", beginLineNode.instruction));
+        }
+        source.addAll(beginPasmLine.expand());
+
+        DataLineNode.ParameterNode param = beginLineNode.parameters.get(0);
+        try {
+            Spin2ExpressionBuilder expressionBuilder = new Spin2ExpressionBuilder(beginPasmLine.getScope(), param.getTokens());
+            Expression expression = expressionBuilder.getExpression();
+            if (!expression.isConstant()) {
+                logMessage(new CompilerException("expecting constant expression", param));
+                return;
+            }
+            count = expression.getNumber().intValue();
+        } catch (CompilerException e) {
+            logMessage(e);
+        } catch (Exception e) {
+            logMessage(new CompilerException(e, param));
+        }
+
+        if (beginLineNode.parameters.size() > 1) {
+            logMessage(new CompilerException("expecting end of line", beginLineNode.parameters.get(1)));
+        }
+        else if (beginLineNode.modifier != null) {
+            logMessage(new CompilerException("expecting end of line", beginLineNode.modifier));
+        }
+
+        for (int ii = 0; ii < count; ii++) {
+            for (DataLineNode lineNode : list) {
+                if (lineNode.label != null) {
+                    logMessage(new CompilerException("labels not allowed in DITTO block", lineNode.label));
+                }
+                Spin2PAsmLine pasmLine = compileDataLine(scope, datScope, localScope, lineNode, "");
+                pasmLine.getScope().addSymbol("$$", new NumberLiteral(Long.valueOf(ii)));
+                pasmLine.setData(lineNode);
+                source.addAll(pasmLine.expand());
+            }
+        }
+
+        if (endLineNode.condition != null) {
+            logMessage(new CompilerException("condition not allowed", endLineNode.condition));
+        }
+        if (endLineNode.parameters.size() > 1) {
+            logMessage(new CompilerException("expecting end of line", endLineNode.parameters.get(1)));
+        }
+        else if (endLineNode.modifier != null) {
+            logMessage(new CompilerException("expecting end of line", endLineNode.modifier));
+        }
+        Spin2PAsmLine endPasmLine = compileDataLine(scope, datScope, localScope, endLineNode, "");
+        source.addAll(endPasmLine.expand());
     }
 
 }

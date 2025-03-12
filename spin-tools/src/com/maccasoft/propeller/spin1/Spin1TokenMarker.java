@@ -187,6 +187,8 @@ public class Spin1TokenMarker extends SourceTokenMarker {
         pasmKeywords.put("VSCL", TokenId.PASM_INSTRUCTION);
         pasmKeywords.put("PAR", TokenId.PASM_INSTRUCTION);
         pasmKeywords.put("SPR", TokenId.PASM_INSTRUCTION);
+
+        pasmKeywords.put("END", TokenId.PASM_INSTRUCTION);
     }
 
     static Map<String, TokenId> spinKeywords = new CaseInsensitiveMap<>();

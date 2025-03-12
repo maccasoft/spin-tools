@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -68,6 +68,12 @@ public class Spin1TokenStream extends TokenStream {
                 return parseString();
             }
             else if (ch == '$') {
+                if (index + 1 < text.length() && text.charAt(index + 1) == '$') {
+                    Token token = new Token(this, index, line, column, Token.KEYWORD, text.substring(index, index + 2));
+                    index += 2;
+                    column += 2;
+                    return token;
+                }
                 return parseHexNumber();
             }
             else if (ch == '%') {

@@ -816,6 +816,38 @@ class Spin1PAsmCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testDitto() throws Exception {
+        String text = ""
+            + "CON\n"
+            + "    pin_nco = 0\n"
+            + "    pin_base = 8\n"
+            + "\n"
+            + "DAT\n"
+            + "\n"
+            + "                DITTO   8\n"
+            + "                mov     pin_nco+$$, #pin_base+$$\n"
+            + "                DITTO   END\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 0)\n"
+            + "00000 00000       24 00          Object size\n"
+            + "00002 00002       01             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004   000                                    DITTO   8\n"
+            + "00004 00004   000 08 00 FC A0                        mov     pin_nco + $$, #pin_base + $$\n"
+            + "00008 00008   001 09 02 FC A0                        mov     pin_nco + $$, #pin_base + $$\n"
+            + "0000C 0000C   002 0A 04 FC A0                        mov     pin_nco + $$, #pin_base + $$\n"
+            + "00010 00010   003 0B 06 FC A0                        mov     pin_nco + $$, #pin_base + $$\n"
+            + "00014 00014   004 0C 08 FC A0                        mov     pin_nco + $$, #pin_base + $$\n"
+            + "00018 00018   005 0D 0A FC A0                        mov     pin_nco + $$, #pin_base + $$\n"
+            + "0001C 0001C   006 0E 0C FC A0                        mov     pin_nco + $$, #pin_base + $$\n"
+            + "00020 00020   007 0F 0E FC A0                        mov     pin_nco + $$, #pin_base + $$\n"
+            + "00024 00024   008                                    DITTO   END\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }

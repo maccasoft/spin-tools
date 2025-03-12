@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -44,6 +44,7 @@ public abstract class Spin2PAsmInstructionFactory extends Expression {
         symbols.put("FILE", new Empty());
         symbols.put("INCLUDE", new Empty());
         symbols.put("DEBUG", new Debug());
+        symbols.put("DITTO", new Empty());
 
         // Instructions
         symbols.put("NOP", new Nop());

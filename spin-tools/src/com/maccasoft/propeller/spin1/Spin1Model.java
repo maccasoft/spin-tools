@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -20,7 +20,7 @@ import com.maccasoft.propeller.spin2.SpinModel;
 public class Spin1Model extends SpinModel {
 
     static Set<String> pasmInstructions = new HashSet<>(Arrays.asList(new String[] {
-        "ORG", "FIT", "RES", "FILE", "INCLUDE", "NAMESP",
+        "ORG", "FIT", "RES", "FILE", "INCLUDE", "NAMESP", "DITTO",
         "ABS", "ABSNEG", "ADD", "ADDABS", "ADDS", "ADDSX", "ADDX", "AND", "ANDN", "CALL", "CLKSET", "CMP", "CMPS", "CMPSUB",
         "CMPSX", "CMPX", "COGID", "COGINIT", "COGSTOP", "DEC", "DJNZ", "ENC", "HUBOP", "JMP", "JMPRET", "LOCKCLR", "LOCKNEW",
         "LOCKRET", "LOCKSET", "MAX", "MAXS", "MIN", "MINS", "MOV", "MOVD", "MOVI", "MOVS", "MUL", "MULS", "MUXC", "MUXNC", "MUXNZ",

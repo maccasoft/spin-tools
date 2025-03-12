@@ -175,8 +175,6 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         keywords.put("QUIT", TokenId.KEYWORD);
         keywords.put("RETURN", TokenId.KEYWORD);
 
-        keywords.put("END", TokenId.KEYWORD);
-
         keywords.put("DEBUG", TokenId.KEYWORD);
 
         keywords.put("ABS", TokenId.KEYWORD);
@@ -477,6 +475,8 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         keywords.put("OUTB", TokenId.PASM_INSTRUCTION);
         keywords.put("INA", TokenId.PASM_INSTRUCTION);
         keywords.put("INB", TokenId.PASM_INSTRUCTION);
+
+        keywords.put("END", TokenId.PASM_INSTRUCTION);
 
         keywords.put("defined", TokenId.DIRECTIVE);
     }
