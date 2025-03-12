@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -45,6 +45,13 @@ public class ColorRegistry {
     }
 
     public static Color getColor(int r, int g, int b) {
+        return getColor(new RGB(r, g, b));
+    }
+
+    public static Color getColor(int r, int g, int b, int percent) {
+        r += (int) (r / 100.0 * percent);
+        g += (int) (g / 100.0 * percent);
+        b += (int) (b / 100.0 * percent);
         return getColor(new RGB(r, g, b));
     }
 

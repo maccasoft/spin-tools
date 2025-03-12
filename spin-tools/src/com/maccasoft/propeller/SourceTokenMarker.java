@@ -81,6 +81,20 @@ public abstract class SourceTokenMarker {
         PASM_INSTRUCTION,
         PASM_MODIFIER,
 
+        CON,
+        VAR,
+        OBJ,
+        PUB,
+        PRI,
+        DAT,
+
+        CON_ALT,
+        VAR_ALT,
+        OBJ_ALT,
+        PUB_ALT,
+        PRI_ALT,
+        DAT_ALT,
+
         WARNING,
         ERROR
     }
@@ -1839,6 +1853,70 @@ public abstract class SourceTokenMarker {
             return true;
         }
         return node.isExclude();
+    }
+
+    public TokenId getLineBackgroundId(Node root, int lineOffset) {
+        TokenId color = getSectionBackgroundId(null);
+
+        if (root != null) {
+            for (Node child : root.getChilds()) {
+                if (lineOffset < child.getStartIndex()) {
+                    break;
+                }
+                if (!isExcludedNode(child)) {
+                    color = getSectionBackgroundId(child);
+                }
+            }
+        }
+
+        return color;
+    }
+
+    boolean[] blockToggle = new boolean[6];
+
+    TokenId getSectionBackgroundId(Node node) {
+        TokenId result = null;
+
+        if (node == null) {
+            blockToggle[0] = blockToggle[1] = blockToggle[2] = blockToggle[3] = blockToggle[4] = blockToggle[5] = false;
+        }
+
+        if (node instanceof VariablesNode) {
+            result = blockToggle[1] ? TokenId.VAR_ALT : TokenId.VAR;
+            blockToggle[1] = !blockToggle[1];
+            blockToggle[0] = blockToggle[2] = blockToggle[3] = blockToggle[4] = blockToggle[5] = false;
+        }
+        else if (node instanceof ObjectsNode) {
+            result = blockToggle[2] ? TokenId.OBJ_ALT : TokenId.OBJ;
+            blockToggle[2] = !blockToggle[2];
+            blockToggle[0] = blockToggle[1] = blockToggle[3] = blockToggle[4] = blockToggle[5] = false;
+        }
+        else if (node instanceof MethodNode) {
+            if (((MethodNode) node).isPublic()) {
+                result = blockToggle[3] ? TokenId.PUB_ALT : TokenId.PUB;
+                blockToggle[3] = !blockToggle[3];
+                blockToggle[0] = blockToggle[1] = blockToggle[2] = blockToggle[4] = blockToggle[5] = false;
+            }
+            else {
+                result = blockToggle[4] ? TokenId.PRI_ALT : TokenId.PRI;
+                blockToggle[4] = !blockToggle[4];
+                blockToggle[0] = blockToggle[1] = blockToggle[2] = blockToggle[3] = blockToggle[5] = false;
+            }
+        }
+        else if (node instanceof DataNode) {
+            result = blockToggle[5] ? TokenId.DAT_ALT : TokenId.DAT;
+            blockToggle[5] = !blockToggle[5];
+            blockToggle[0] = blockToggle[1] = blockToggle[2] = blockToggle[3] = blockToggle[4] = false;
+        }
+        else {
+            result = blockToggle[0] ? TokenId.CON_ALT : TokenId.CON;
+            if (node != null && node.getTokenCount() != 0) {
+                blockToggle[0] = !blockToggle[0];
+                blockToggle[1] = blockToggle[2] = blockToggle[3] = blockToggle[4] = blockToggle[5] = false;
+            }
+        }
+
+        return result;
     }
 
 }

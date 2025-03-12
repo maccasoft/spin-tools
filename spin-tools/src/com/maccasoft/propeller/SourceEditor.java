@@ -146,9 +146,6 @@ public class SourceEditor {
     Caret overwriteCaret;
     Caret alignCaret;
 
-    Color[][] sectionColor = new Color[6][2];
-    int[] sectionCount = new int[6];
-
     SourceTokenMarker tokenMarker;
     Map<TokenId, TextStyle> styleMap = new HashMap<TokenId, TextStyle>();
     Map<Integer, StyleRange[]> lineStylesCache = new HashMap<>();
@@ -1339,8 +1336,6 @@ public class SourceEditor {
         if ("dark".equals(id)) {
             currentLineBackground = new Color(display, 0x3B, 0x3B, 0x3B);
 
-            sectionColor = new Color[6][2];
-
             styleMap.put(TokenId.COMMENT, new TextStyle(font, new Color(0x7E, 0x7E, 0x7E), null));
             styleMap.put(TokenId.SECTION, new TextStyle(fontBold, new Color(0x12, 0x90, 0xC3), null));
 
@@ -1370,18 +1365,18 @@ public class SourceEditor {
         else if ("light".equals(id)) {
             currentLineBackground = new Color(display, 0xE8, 0xF2, 0xFE);
 
-            sectionColor[0][0] = getColor(255, 248, 192, 0);
-            sectionColor[0][1] = getColor(255, 248, 192, -6);
-            sectionColor[1][0] = getColor(255, 223, 191, 0);
-            sectionColor[1][1] = getColor(255, 223, 191, -6);
-            sectionColor[2][0] = getColor(255, 191, 191, 0);
-            sectionColor[2][1] = getColor(255, 191, 191, -6);
-            sectionColor[3][0] = getColor(191, 223, 255, 0);
-            sectionColor[3][1] = getColor(191, 223, 255, -6);
-            sectionColor[4][0] = getColor(191, 248, 255, 0);
-            sectionColor[4][1] = getColor(191, 248, 255, -6);
-            sectionColor[5][0] = getColor(191, 255, 200, 0);
-            sectionColor[5][1] = getColor(191, 255, 200, -6);
+            styleMap.put(TokenId.CON, new TextStyle(null, null, ColorRegistry.getColor(255, 248, 192, 0)));
+            styleMap.put(TokenId.CON_ALT, new TextStyle(null, null, ColorRegistry.getColor(255, 248, 192, -6)));
+            styleMap.put(TokenId.VAR, new TextStyle(null, null, ColorRegistry.getColor(255, 223, 191, 0)));
+            styleMap.put(TokenId.VAR_ALT, new TextStyle(null, null, ColorRegistry.getColor(255, 223, 191, -6)));
+            styleMap.put(TokenId.OBJ, new TextStyle(null, null, ColorRegistry.getColor(255, 191, 191, 0)));
+            styleMap.put(TokenId.OBJ_ALT, new TextStyle(null, null, ColorRegistry.getColor(255, 191, 191, -6)));
+            styleMap.put(TokenId.PUB, new TextStyle(null, null, ColorRegistry.getColor(191, 223, 255, 0)));
+            styleMap.put(TokenId.PUB_ALT, new TextStyle(null, null, ColorRegistry.getColor(191, 223, 255, -6)));
+            styleMap.put(TokenId.PRI, new TextStyle(null, null, ColorRegistry.getColor(191, 248, 255, 0)));
+            styleMap.put(TokenId.PRI_ALT, new TextStyle(null, null, ColorRegistry.getColor(191, 248, 255, -6)));
+            styleMap.put(TokenId.DAT, new TextStyle(null, null, ColorRegistry.getColor(191, 255, 200, 0)));
+            styleMap.put(TokenId.DAT_ALT, new TextStyle(null, null, ColorRegistry.getColor(191, 255, 200, -6)));
 
             styleMap.put(TokenId.COMMENT, new TextStyle(font, new Color(0x7E, 0x7E, 0x7E), null));
             styleMap.put(TokenId.SECTION, new TextStyle(fontBold, new Color(0x00, 0x00, 0xA0), null));
@@ -2312,64 +2307,16 @@ public class SourceEditor {
     }
 
     public Color getLineBackground(Node root, int lineOffset) {
-        Color color = getSectionBackground(null);
-
-        if (root != null) {
-            for (Node child : root.getChilds()) {
-                if (lineOffset < child.getStartIndex()) {
-                    break;
+        if (tokenMarker != null) {
+            TokenId id = tokenMarker.getLineBackgroundId(root, lineOffset);
+            if (id != null) {
+                TextStyle style = styleMap.get(id);
+                if (style != null) {
+                    return style.background;
                 }
-                color = getSectionBackground(child);
             }
         }
-
-        return color;
-    }
-
-    Color getSectionBackground(Node node) {
-        Color result = null;
-
-        if (node == null) {
-            sectionCount[0] = sectionCount[1] = sectionCount[2] = sectionCount[3] = sectionCount[4] = sectionCount[5] = 0;
-        }
-
-        if (node instanceof VariablesNode) {
-            result = sectionColor[1][sectionCount[1]];
-            sectionCount[1] = sectionCount[1] == 0 ? 1 : 0;
-        }
-        else if (node instanceof ObjectsNode) {
-            result = sectionColor[2][sectionCount[2]];
-            sectionCount[2] = sectionCount[2] == 0 ? 1 : 0;
-        }
-        else if (node instanceof MethodNode) {
-            if (((MethodNode) node).isPublic()) {
-                result = sectionColor[3][sectionCount[3]];
-                sectionCount[3] = sectionCount[3] == 0 ? 1 : 0;
-            }
-            else {
-                result = sectionColor[4][sectionCount[4]];
-                sectionCount[4] = sectionCount[4] == 0 ? 1 : 0;
-            }
-        }
-        else if (node instanceof DataNode) {
-            result = sectionColor[5][sectionCount[5]];
-            sectionCount[5] = sectionCount[5] == 0 ? 1 : 0;
-        }
-        else {
-            result = sectionColor[0][sectionCount[0]];
-            if (node != null) {
-                sectionCount[0] = sectionCount[0] == 0 ? 1 : 0;
-            }
-        }
-
-        return result;
-    }
-
-    Color getColor(int r, int g, int b, int percent) {
-        r += (int) (r / 100.0 * percent);
-        g += (int) (g / 100.0 * percent);
-        b += (int) (b / 100.0 * percent);
-        return ColorRegistry.getColor(r, g, b);
+        return null;
     }
 
     public void addSourceListener(SourceListener listener) {
