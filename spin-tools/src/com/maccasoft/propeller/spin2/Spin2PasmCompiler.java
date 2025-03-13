@@ -74,11 +74,7 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
                     }
                 }
                 if (iter.hasNext()) {
-                    namespace = iter.next().getText() + ".";
-                    if (iter.hasNext()) {
-                        logMessage(new CompilerException("syntax error", iter.next()));
-                    }
-                    datScope = new Context(scope);
+                    logMessage(new CompilerException("syntax error", iter.next()));
                 }
 
                 Iterator<Node> nodeIterator = node.getChilds().iterator();

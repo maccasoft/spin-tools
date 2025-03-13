@@ -1448,8 +1448,6 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
         }
         object.setVarSize(linkedVarOffset);
 
-        object.addAllSymbols(publicSymbols);
-
         hubAddress = object.getSize();
 
         for (Spin1PAsmLine line : source) {

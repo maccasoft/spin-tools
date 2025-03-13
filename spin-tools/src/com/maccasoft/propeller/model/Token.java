@@ -105,28 +105,6 @@ public class Token {
         return result;
     }
 
-    public Token substring(int start) {
-        Token result = new Token();
-        result.stream = stream;
-        result.line = line;
-        result.column = column + start;
-        result.start = this.start + start;
-        result.stop = this.stop;
-        result.type = this.type;
-        return result;
-    }
-
-    public Token substring(int start, int stop) {
-        Token result = new Token();
-        result.stream = stream;
-        result.line = line;
-        result.column = column + start;
-        result.start = this.start + start;
-        result.stop = this.start + stop;
-        result.type = this.type;
-        return result;
-    }
-
     public boolean equals(String text, boolean caseSensitive) {
         return caseSensitive ? getText().equals(text) : getText().equalsIgnoreCase(text);
     }

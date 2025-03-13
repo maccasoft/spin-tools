@@ -1739,8 +1739,6 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
             methodData.add(dataObject);
         }
 
-        object.addAllSymbols(publicSymbols);
-
         int address = 0;
         int objectAddress = object.getSize();
         int fitAddress = 0x1F8 << 2;

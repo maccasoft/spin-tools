@@ -17,12 +17,8 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-
-import com.maccasoft.propeller.expressions.Expression;
 
 public abstract class SpinObject {
 
@@ -32,8 +28,6 @@ public abstract class SpinObject {
     int clkfreq;
     int clkmode;
     int varSize;
-
-    Map<String, Expression> symbols = new HashMap<String, Expression>();
 
     public static class DataObject {
         protected byte[] bytes;
@@ -442,22 +436,6 @@ public abstract class SpinObject {
         this.varSize = varSize;
     }
 
-    public void addSymbol(String name, Expression expression) {
-        symbols.put(name, expression);
-    }
-
-    public Expression getSymbol(String name) {
-        return symbols.get(name);
-    }
-
-    public void addAllSymbols(Map<String, Expression> map) {
-        symbols.putAll(map);
-    }
-
-    public Map<String, Expression> getSymbols() {
-        return symbols;
-    }
-
     public void generateBinary(OutputStream os) throws IOException {
         for (DataObject obj : data) {
             if (obj instanceof ObjectDataObject) {
@@ -596,7 +574,7 @@ public abstract class SpinObject {
 
     @Override
     public int hashCode() {
-        return Objects.hash(data, symbols, varSize);
+        return Objects.hash(data, varSize);
     }
 
     @Override
@@ -611,7 +589,7 @@ public abstract class SpinObject {
             return false;
         }
         SpinObject other = (SpinObject) obj;
-        return Objects.equals(data, other.data) && Objects.equals(symbols, other.symbols) && varSize == other.varSize;
+        return Objects.equals(data, other.data) && varSize == other.varSize;
     }
 
 }

@@ -675,7 +675,6 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                         }
                     }
                     debug.compileDebugStatement(node);
-                    node.setData("context", context);
 
                     if (isDebugEnabled()) {
                         method.debugNodes.add(node);

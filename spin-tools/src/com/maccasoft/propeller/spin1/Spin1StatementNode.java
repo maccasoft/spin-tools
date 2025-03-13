@@ -11,10 +11,7 @@
 package com.maccasoft.propeller.spin1;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import com.maccasoft.propeller.model.Token;
 
@@ -22,23 +19,16 @@ public class Spin1StatementNode {
 
     Token token;
 
-    Map<String, Spin1StatementNode> properties = new HashMap<String, Spin1StatementNode>();
     List<Spin1StatementNode> childs = new ArrayList<Spin1StatementNode>();
 
     String comment;
     Spin1StatementNode parent;
 
-    protected Object data;
-    protected Map<String, Object> keyedData = new HashMap<String, Object>();
-
     public static class Index extends Spin1StatementNode {
 
         public Index(Spin1StatementNode node) {
             super(node.token);
-            this.properties.putAll(node.properties);
             this.childs.addAll(node.childs);
-            this.data = node.data;
-            this.keyedData = node.keyedData;
         }
     }
 
@@ -50,10 +40,7 @@ public class Spin1StatementNode {
 
         public Method(Spin1StatementNode node) {
             super(node.token);
-            this.properties.putAll(node.properties);
             this.childs.addAll(node.childs);
-            this.data = node.data;
-            this.keyedData = node.keyedData;
         }
     }
 
@@ -61,10 +48,7 @@ public class Spin1StatementNode {
 
         public Argument(Spin1StatementNode node) {
             super(node.token);
-            this.properties.putAll(node.properties);
             this.childs.addAll(node.childs);
-            this.data = node.data;
-            this.keyedData = node.keyedData;
         }
     }
 
@@ -105,29 +89,6 @@ public class Spin1StatementNode {
         return list;
     }
 
-    public void setProperty(String name, Spin1StatementNode node) {
-        properties.put(name, node);
-    }
-
-    public String getPropertiesText() {
-        StringBuilder sb = new StringBuilder();
-        for (Entry<String, Spin1StatementNode> entry : properties.entrySet()) {
-            if (sb.length() != 0) {
-                sb.append(", ");
-            }
-            sb.append("[");
-            sb.append(entry.getKey());
-            sb.append("(");
-            sb.append(entry.getValue());
-            sb.append(")]");
-        }
-        return sb.toString();
-    }
-
-    public Spin1StatementNode getProperty(String name) {
-        return properties.get(name);
-    }
-
     public Spin1StatementNode getParent() {
         return parent;
     }
@@ -160,22 +121,6 @@ public class Spin1StatementNode {
 
     public void setComment(String comment) {
         this.comment = comment;
-    }
-
-    public Object getData() {
-        return data;
-    }
-
-    public void setData(Object data) {
-        this.data = data;
-    }
-
-    public Object getData(String key) {
-        return keyedData.get(key);
-    }
-
-    public void setData(String key, Object data) {
-        this.keyedData.put(key, data);
     }
 
     @Override

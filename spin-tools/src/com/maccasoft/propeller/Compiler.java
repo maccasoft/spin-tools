@@ -274,10 +274,6 @@ public abstract class Compiler {
         return null;
     }
 
-    public Map<String, Expression> getPublicSymbols() {
-        return Collections.emptyMap();
-    }
-
     public ObjectTree getObjectTree() {
         return tree;
     }

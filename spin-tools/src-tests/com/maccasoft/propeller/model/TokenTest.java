@@ -30,34 +30,4 @@ class TokenTest {
         Assertions.assertEquals(token2.stop, result.stop);
     }
 
-    @Test
-    void testSubstringStart() {
-        Spin1TokenStream stream = new Spin1TokenStream("\n    prefix.suffix");
-        stream.nextToken(); // NL
-        Token token = stream.nextToken();
-        Assertions.assertEquals("prefix.suffix", token.getText());
-
-        Token result = token.substring(6);
-        Assertions.assertEquals(".suffix", result.getText());
-        Assertions.assertEquals(token.column + 6, result.column);
-        Assertions.assertEquals(token.line, result.line);
-        Assertions.assertEquals(token.start + 6, result.start);
-        Assertions.assertEquals(token.stop, result.stop);
-    }
-
-    @Test
-    void testSubstringStartStop() {
-        Spin1TokenStream stream = new Spin1TokenStream("\n    prefix.middle.suffix");
-        stream.nextToken(); // NL
-        Token token = stream.nextToken();
-        Assertions.assertEquals("prefix.middle.suffix", token.getText());
-
-        Token result = token.substring(6, 12);
-        Assertions.assertEquals(".middle", result.getText());
-        Assertions.assertEquals(token.column + 6, result.column);
-        Assertions.assertEquals(token.line, result.line);
-        Assertions.assertEquals(token.start + 6, result.start);
-        Assertions.assertEquals(token.start + 12, result.stop);
-    }
-
 }

@@ -926,7 +926,6 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         }
                     }
                     debug.compileDebugStatement(node);
-                    node.setData("context", context);
 
                     if (push) {
                         logMessage(new CompilerException("method doesn't return a value", node.getTokens()));

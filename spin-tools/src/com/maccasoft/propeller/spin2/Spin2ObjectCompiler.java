@@ -686,8 +686,6 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
             methodData.add(dataObject);
         }
 
-        object.addAllSymbols(publicSymbols);
-
         int address = 0;
         int hubAddress = -1;
         int objectAddress = object.getSize();
