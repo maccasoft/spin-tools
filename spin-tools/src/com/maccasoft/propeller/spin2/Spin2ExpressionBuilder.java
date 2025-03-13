@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -81,26 +81,6 @@ import com.maccasoft.propeller.expressions.Zerox;
 import com.maccasoft.propeller.model.Token;
 
 public class Spin2ExpressionBuilder {
-
-    static class SpinIdentifier extends Identifier {
-
-        Token token;
-
-        public SpinIdentifier(Token token, Context context) {
-            super(token.getText(), context);
-            this.token = token;
-        }
-
-        @Override
-        public Expression resolve() {
-            try {
-                return super.resolve();
-            } catch (Exception e) {
-                throw new CompilerException(e, token);
-            }
-        }
-
-    }
 
     static Map<String, Integer> precedence = new HashMap<String, Integer>();
     static {
@@ -272,6 +252,14 @@ public class Spin2ExpressionBuilder {
         tokens.add(token);
     }
 
+    public List<Token> getTokens() {
+        return tokens;
+    }
+
+    public int getTokenCount() {
+        return tokens.size();
+    }
+
     public Expression getExpression() {
         if (tokens.size() == 0) {
             throw new RuntimeException("expecting expression");
@@ -287,7 +275,7 @@ public class Spin2ExpressionBuilder {
         return node;
     }
 
-    protected Expression parseLevel(Expression left, int level) {
+    Expression parseLevel(Expression left, int level) {
         for (;;) {
             Token token = peek();
             if (token == null) {
@@ -476,7 +464,7 @@ public class Spin2ExpressionBuilder {
         }
     }
 
-    protected Expression parseAtom() {
+    Expression parseAtom() {
         Token token = peek();
         if (token == null) {
             throw new CompilerException("expecting operand", tokens.get(tokens.size() - 1));
@@ -558,7 +546,10 @@ public class Spin2ExpressionBuilder {
                 return expression;
             }
             case "FLOAT": {
-                next();
+                token = next();
+                if (token == null || !"(".equals(token.getText())) {
+                    throw new CompilerException("expecting (", token == null ? tokens.get(tokens.size() - 1) : token);
+                }
                 Expression expression = new com.maccasoft.propeller.expressions.Float(parseLevel(parseAtom(), 0));
                 token = next();
                 if (token == null || !")".equals(token.getText())) {
@@ -567,7 +558,10 @@ public class Spin2ExpressionBuilder {
                 return expression;
             }
             case "TRUNC": {
-                next();
+                token = next();
+                if (token == null || !"(".equals(token.getText())) {
+                    throw new CompilerException("expecting (", token == null ? tokens.get(tokens.size() - 1) : token);
+                }
                 Expression expression = new Trunc(parseLevel(parseAtom(), 0));
                 token = next();
                 if (token == null || !")".equals(token.getText())) {
@@ -576,7 +570,10 @@ public class Spin2ExpressionBuilder {
                 return expression;
             }
             case "ROUND": {
-                next();
+                token = next();
+                if (token == null || !"(".equals(token.getText())) {
+                    throw new CompilerException("expecting (", token == null ? tokens.get(tokens.size() - 1) : token);
+                }
                 Expression expression = new Round(parseLevel(parseAtom(), 0));
                 token = next();
                 if (token == null || !")".equals(token.getText())) {
@@ -586,7 +583,10 @@ public class Spin2ExpressionBuilder {
             }
             case "SQRT":
             case "FSQRT": {
-                next();
+                token = next();
+                if (token == null || !"(".equals(token.getText())) {
+                    throw new CompilerException("expecting (", token == null ? tokens.get(tokens.size() - 1) : token);
+                }
                 Expression expression = new Sqrt(parseLevel(parseAtom(), 0));
                 token = next();
                 if (token == null || !")".equals(token.getText())) {
@@ -596,7 +596,10 @@ public class Spin2ExpressionBuilder {
             }
             case "ABS":
             case "FABS": {
-                next();
+                token = next();
+                if (token == null || !"(".equals(token.getText())) {
+                    throw new CompilerException("expecting (", token == null ? tokens.get(tokens.size() - 1) : token);
+                }
                 Expression expression = new Abs(parseLevel(parseAtom(), 0));
                 token = next();
                 if (token == null || !")".equals(token.getText())) {
@@ -605,7 +608,10 @@ public class Spin2ExpressionBuilder {
                 return expression;
             }
             case "NAN": {
-                next();
+                token = next();
+                if (token == null || !"(".equals(token.getText())) {
+                    throw new CompilerException("expecting (", token == null ? tokens.get(tokens.size() - 1) : token);
+                }
                 Expression expression = new Nan(parseLevel(parseAtom(), 0));
                 token = next();
                 if (token == null || !")".equals(token.getText())) {
@@ -616,7 +622,7 @@ public class Spin2ExpressionBuilder {
             default:
                 if (token.type == Token.NUMBER) {
                     if ("$".equals(token.getText())) {
-                        return new SpinIdentifier(token, context);
+                        return new Identifier(token.getText(), context);
                     }
                     return new NumberLiteral(token.getText());
                 }
@@ -624,26 +630,22 @@ public class Spin2ExpressionBuilder {
                     String s = token.getText().substring(1);
                     return new CharacterLiteral(s.substring(0, s.length() - 1));
                 }
-                return new SpinIdentifier(token, context);
+                return new Identifier(token.getText(), context);
         }
     }
 
-    protected Token peek() {
+    Token peek() {
         if (index < tokens.size()) {
             return tokens.get(index);
         }
         return null;
     }
 
-    protected Token next() {
+    Token next() {
         if (index < tokens.size()) {
             return tokens.get(index++);
         }
         return null;
-    }
-
-    public List<Token> getTokens() {
-        return tokens;
     }
 
 }

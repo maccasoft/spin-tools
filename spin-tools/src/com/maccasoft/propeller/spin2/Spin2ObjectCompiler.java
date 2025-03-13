@@ -34,6 +34,7 @@ import com.maccasoft.propeller.expressions.BinaryOperator;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Expression;
+import com.maccasoft.propeller.expressions.Identifier;
 import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.expressions.Multiply;
@@ -58,8 +59,6 @@ import com.maccasoft.propeller.model.TokenIterator;
 import com.maccasoft.propeller.model.TypeDefinitionNode;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
-import com.maccasoft.propeller.spin1.Spin1ExpressionBuilder;
-import com.maccasoft.propeller.spin2.Spin2ExpressionBuilder.SpinIdentifier;
 import com.maccasoft.propeller.spin2.Spin2Object.Spin2LinkDataObject;
 import com.maccasoft.propeller.spin2.Spin2Struct.Spin2StructMember;
 import com.maccasoft.propeller.spin2.bytecode.Address;
@@ -271,8 +270,8 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
             Entry<String, Expression> entry = iter.next();
             try {
                 Expression expression = entry.getValue();
-                if (expression instanceof SpinIdentifier) {
-                    String identifier = ((SpinIdentifier) expression).getName();
+                if (expression instanceof Identifier) {
+                    String identifier = ((Identifier) expression).getName();
                     Spin2Struct struct = scope.getStructureDefinition(identifier);
                     if (struct == null) {
                         for (Entry<String, ObjectInfo> infoEntry : objects.entrySet()) {
@@ -1147,7 +1146,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         logMessage(new CompilerException("structure " + identifier.getText() + " already defined", identifier));
                     }
                     else {
-                        publicSymbols.put(identifier.getText(), new SpinIdentifier(token, scope));
+                        publicSymbols.put(identifier.getText(), new Identifier(token.getText(), scope));
                     }
                     if (!iter.hasNext()) {
                         break;
@@ -1731,7 +1730,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                             if (!iter.hasNext()) {
                                 logMessage(new CompilerException("expecting expression", token.substring(token.stop - token.start)));
                             }
-                            Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(scope);
+                            Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope);
                             while (iter.hasNext()) {
                                 token = iter.next();
                                 if ("]".equals(token.getText())) {

@@ -70,7 +70,6 @@ import com.maccasoft.propeller.spin1.bytecode.RepeatLoop;
 import com.maccasoft.propeller.spin1.bytecode.Tjz;
 import com.maccasoft.propeller.spin1.instructions.Org;
 import com.maccasoft.propeller.spin1.instructions.Res;
-import com.maccasoft.propeller.spin2.Spin2ExpressionBuilder;
 
 public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
@@ -879,7 +878,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                             if (!iter.hasNext()) {
                                 throw new CompilerException("expecting expression", token);
                             }
-                            Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope);
+                            Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(scope);
                             while (iter.hasNext()) {
                                 token = iter.next();
                                 if ("]".equals(token.getText())) {
@@ -1111,7 +1110,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                         Expression value = null;
                         if ("=".equals(iter.peekNext().getText())) {
                             iter.next();
-                            Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope);
+                            Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(scope);
                             while (iter.hasNext()) {
                                 token = iter.peekNext();
                                 if (",".equals(token.getText()) || ")".equals(token.getText())) {
