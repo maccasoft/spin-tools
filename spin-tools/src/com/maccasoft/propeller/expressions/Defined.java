@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -31,10 +31,7 @@ public class Defined extends Literal {
 
     @Override
     public Number getNumber() {
-        if (context.isDefined(identifier)) {
-            return Long.valueOf(-1);
-        }
-        return Long.valueOf(context.hasSymbol(identifier) ? -1 : 0);
+        return Long.valueOf(context.isDefined(identifier) ? -1 : 0);
     }
 
     @Override

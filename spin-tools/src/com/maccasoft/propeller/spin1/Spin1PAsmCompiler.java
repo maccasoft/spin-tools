@@ -408,4 +408,31 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
         source.addAll(endPasmLine.expand());
     }
 
+    @Override
+    protected Expression buildPreprocessorExpression(TokenIterator iter) {
+        Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(scope);
+        builder.setIgnoreMissing(true);
+
+        while (iter.hasNext()) {
+            Token token = iter.next();
+            if ("defined".equals(token.getText())) {
+                builder.addToken(token);
+                if (iter.hasNext()) {
+                    builder.addTokenLiteral(iter.next());
+                }
+                if (iter.hasNext()) {
+                    builder.addTokenLiteral(iter.next());
+                }
+                if (iter.hasNext()) {
+                    builder.addTokenLiteral(iter.next());
+                }
+            }
+            else {
+                builder.addToken(token);
+            }
+        }
+
+        return builder.getExpression();
+    }
+
 }

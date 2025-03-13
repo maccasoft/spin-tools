@@ -25,7 +25,6 @@ import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenIterator;
-import com.maccasoft.propeller.spin2.Spin2ExpressionBuilder;
 
 public abstract class ObjectCompiler {
 
@@ -252,26 +251,7 @@ public abstract class ObjectCompiler {
             case "if":
                 node.setExclude(skip);
                 if (!skip) {
-                    Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope);
-                    while (iter.hasNext()) {
-                        token = iter.next();
-                        if ("defined".equalsIgnoreCase(token.getText())) {
-                            builder.addToken(token);
-                            if (iter.hasNext()) {
-                                builder.addTokenLiteral(iter.next());
-                            }
-                            if (iter.hasNext()) {
-                                builder.addTokenLiteral(iter.next());
-                            }
-                            if (iter.hasNext()) {
-                                builder.addTokenLiteral(iter.next());
-                            }
-                        }
-                        else {
-                            builder.addToken(token);
-                        }
-                    }
-                    Expression expression = builder.getExpression();
+                    Expression expression = buildPreprocessorExpression(iter);
                     if (!expression.isConstant()) {
                         throw new RuntimeException("expression is not constant");
                     }
@@ -298,26 +278,7 @@ public abstract class ObjectCompiler {
                     if (!condition.skip) {
                         conditionStack.pop();
 
-                        Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope);
-                        while (iter.hasNext()) {
-                            token = iter.next();
-                            if ("defined".equals(token.getText())) {
-                                builder.addToken(token);
-                                if (iter.hasNext()) {
-                                    builder.addTokenLiteral(iter.next());
-                                }
-                                if (iter.hasNext()) {
-                                    builder.addTokenLiteral(iter.next());
-                                }
-                                if (iter.hasNext()) {
-                                    builder.addTokenLiteral(iter.next());
-                                }
-                            }
-                            else {
-                                builder.addToken(token);
-                            }
-                        }
-                        Expression expression = builder.getExpression();
+                        Expression expression = buildPreprocessorExpression(iter);
                         if (!expression.isConstant()) {
                             throw new RuntimeException("expression is not constant");
                         }
@@ -344,6 +305,8 @@ public abstract class ObjectCompiler {
                 break;
         }
     }
+
+    protected abstract Expression buildPreprocessorExpression(TokenIterator iter);
 
     protected void logMessage(CompilerException message) {
         message.fileName = file.getName();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -14,10 +14,17 @@ public class Identifier extends Passthrough {
 
     String name;
     Context context;
+    Expression defaultValue;
 
     public Identifier(String name, Context context) {
         this.name = name;
         this.context = context;
+    }
+
+    public Identifier(String name, Context context, Number defaultValue) {
+        this.name = name;
+        this.context = context;
+        this.defaultValue = new NumberLiteral(defaultValue);
     }
 
     public String getName() {
@@ -30,6 +37,9 @@ public class Identifier extends Passthrough {
 
     @Override
     public Expression resolve() {
+        if (defaultValue != null && !context.hasSymbol(name)) {
+            return defaultValue;
+        }
         return context.getSymbol(name);
     }
 

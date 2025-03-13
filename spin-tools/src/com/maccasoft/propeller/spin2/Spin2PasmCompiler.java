@@ -553,4 +553,31 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
         source.addAll(endPasmLine.expand());
     }
 
+    @Override
+    protected Expression buildPreprocessorExpression(TokenIterator iter) {
+        Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope);
+        builder.setIgnoreMissing(true);
+
+        while (iter.hasNext()) {
+            Token token = iter.next();
+            if ("defined".equals(token.getText())) {
+                builder.addTokenLiteral(token);
+                if (iter.hasNext() && "(".equals(iter.peekNext().getText())) {
+                    builder.addToken(iter.next());
+                    if (iter.hasNext()) {
+                        builder.addTokenLiteral(iter.next());
+                        if (iter.hasNext() && ")".equals(iter.peekNext().getText())) {
+                            builder.addToken(iter.next());
+                        }
+                    }
+                }
+            }
+            else {
+                builder.addToken(token);
+            }
+        }
+
+        return builder.getExpression();
+    }
+
 }

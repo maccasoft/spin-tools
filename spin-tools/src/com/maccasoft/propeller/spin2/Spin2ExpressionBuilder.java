@@ -205,6 +205,7 @@ public class Spin2ExpressionBuilder {
 
     Context context;
     boolean allowRegisters;
+    boolean ignoreMissing;
     List<Token> tokens = new ArrayList<Token>();
 
     int index;
@@ -229,6 +230,10 @@ public class Spin2ExpressionBuilder {
         tokens.iterator().forEachRemaining((t) -> {
             addToken(t);
         });
+    }
+
+    public void setIgnoreMissing(boolean ignoreMissing) {
+        this.ignoreMissing = ignoreMissing;
     }
 
     public void addToken(Token token) {
@@ -630,7 +635,7 @@ public class Spin2ExpressionBuilder {
                     String s = token.getText().substring(1);
                     return new CharacterLiteral(s.substring(0, s.length() - 1));
                 }
-                return new Identifier(token.getText(), context);
+                return new Identifier(token.getText(), context, ignoreMissing ? Long.valueOf(0) : null);
         }
     }
 
