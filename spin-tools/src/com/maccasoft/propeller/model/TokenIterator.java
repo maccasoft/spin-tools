@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -19,6 +19,8 @@ public class TokenIterator {
     int index;
     Token[] tokens;
 
+    Token currentToken;
+
     public TokenIterator(List<Token> list) {
         this.index = 0;
         this.tokens = list.toArray(new Token[0]);
@@ -27,7 +29,7 @@ public class TokenIterator {
     public boolean hasNext() {
         int index = this.index;
         while (index < tokens.length) {
-            if (tokens[index].type != Token.COMMENT && tokens[index].type != Token.BLOCK_COMMENT) {
+            if (tokens[index].type != Token.COMMENT && tokens[index].type != Token.BLOCK_COMMENT && tokens[index].type != Token.NEXT_LINE) {
                 break;
             }
             index++;
@@ -38,7 +40,7 @@ public class TokenIterator {
     public Token peekNext() {
         int index = this.index;
         while (index < tokens.length) {
-            if (tokens[index].type != Token.COMMENT && tokens[index].type != Token.BLOCK_COMMENT) {
+            if (tokens[index].type != Token.COMMENT && tokens[index].type != Token.BLOCK_COMMENT && tokens[index].type != Token.NEXT_LINE) {
                 break;
             }
             index++;
@@ -48,12 +50,12 @@ public class TokenIterator {
 
     public Token next() {
         while (index < tokens.length) {
-            if (tokens[index].type != Token.COMMENT && tokens[index].type != Token.BLOCK_COMMENT) {
+            if (tokens[index].type != Token.COMMENT && tokens[index].type != Token.BLOCK_COMMENT && tokens[index].type != Token.NEXT_LINE) {
                 break;
             }
             index++;
         }
-        return tokens[index++];
+        return currentToken = tokens[index++];
     }
 
     public void forEachRemaining(Consumer<Token> action) {
@@ -61,6 +63,10 @@ public class TokenIterator {
         while (hasNext()) {
             action.accept(next());
         }
+    }
+
+    public Token current() {
+        return currentToken;
     }
 
 }

@@ -838,6 +838,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
     }
 
     void compileVarBlock(Node node) {
+        Token token;
         TokenIterator iter = node.tokenIterator();
 
         if (iter.hasNext()) {
@@ -850,33 +851,37 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
         if (iter.hasNext()) {
             try {
                 Token type = null;
-                Token identifier = iter.next();
 
-                if (iter.hasNext()) {
-                    Token next = iter.peekNext();
-                    if (next.type == Token.KEYWORD) {
-                        type = identifier;
-                        identifier = iter.next();
+                token = iter.next();
+                if (Spin1Model.isType(token.getText())) {
+                    type = token;
+                    if (!iter.hasNext()) {
+                        logMessage(new CompilerException("expecting identifier after type", token));
+                        return;
                     }
+                    token = iter.next();
                 }
 
-                if (type != null) {
-                    boolean valid = Spin1Model.isType(type.getText());
-                    if (!valid) {
-                        throw new CompilerException("invalid type '" + type.getText() + "'", type);
-                    }
-                }
+                String typeText = type != null ? type.getText().toUpperCase() : "LONG";
 
                 do {
                     int varSize = 1;
-                    Token token = null;
+
+                    if (token.type != Token.KEYWORD) {
+                        throw new CompilerException("expecting identifier", token);
+                    }
+                    if (Spin1Model.isType(token.getText())) {
+                        throw new CompilerException("expecting identifier", token);
+                    }
+                    Token identifier = token;
 
                     if (iter.hasNext()) {
-                        token = iter.next();
+                        token = iter.peekNext();
 
                         if ("[".equals(token.getText())) {
+                            token = iter.next();
                             if (!iter.hasNext()) {
-                                throw new CompilerException("expecting expression", token);
+                                throw new CompilerException("expecting expression after '['", token);
                             }
                             Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(scope);
                             while (iter.hasNext()) {
@@ -900,30 +905,32 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                             if (!"]".equals(token.getText())) {
                                 throw new CompilerException("expecting ']'", token);
                             }
-                            else {
-                                token = iter.hasNext() ? iter.next() : null;
-                            }
                         }
                     }
 
                     try {
-                        String typeText = type != null ? type.getText().toUpperCase() : "LONG";
                         Variable var = new Variable(typeText.toUpperCase(), identifier.getText(), varSize);
-
+                        var.setData(identifier);
                         scope.addSymbol(identifier.getText(), var);
                         variables.add(var);
-                        var.setData(identifier);
                     } catch (Exception e) {
                         logMessage(new CompilerException(e, identifier));
                     }
 
-                    if (token != null && !",".equals(token.getText())) {
-                        throw new CompilerException("expecting ','", token);
+                    if (!iter.hasNext()) {
+                        break;
                     }
 
-                    identifier = iter.hasNext() ? iter.next() : null;
+                    token = iter.next();
+                    if (!",".equals(token.getText())) {
+                        throw new CompilerException("expecting ',' or end of line", token);
+                    }
+                    if (!iter.hasNext()) {
+                        throw new CompilerException("expecting identifier after ','", token);
+                    }
+                    token = iter.next();
 
-                } while (identifier != null);
+                } while (true);
 
             } catch (CompilerException e) {
                 logMessage(e);
@@ -942,14 +949,14 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
             Expression count = new NumberLiteral(1);
 
             if (!iter.hasNext()) {
-                logMessage(new CompilerException("expecting file name", token.substring(token.stop - token.start)));
+                logMessage(new CompilerException("expecting ':' or '[' after '" + token.getText() + "'", token));
                 return;
             }
             token = iter.next();
 
             if ("[".equals(token.getText())) {
                 if (!iter.hasNext()) {
-                    logMessage(new CompilerException("expecting expression", token.substring(token.stop - token.start)));
+                    logMessage(new CompilerException("expecting expression after '" + token.getText() + "'", token));
                     return;
                 }
                 Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(scope);
@@ -973,7 +980,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                     return;
                 }
                 if (!iter.hasNext()) {
-                    logMessage(new CompilerException("expecting file name", token.substring(token.stop - token.start)));
+                    logMessage(new CompilerException("expecting ':' after '" + token.getText() + "'", token));
                     return;
                 }
                 token = iter.next();
@@ -984,18 +991,17 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                 return;
             }
             if (!iter.hasNext()) {
-                logMessage(new CompilerException("expecting file name", token.substring(token.stop - token.start)));
+                logMessage(new CompilerException("expecting object file name '" + token.getText() + "'", token));
                 return;
             }
             Token fileToken = iter.next();
             if (fileToken.type != Token.STRING) {
-                logMessage(new CompilerException("expecting file name", fileToken));
+                logMessage(new CompilerException("expecting object file name", fileToken));
                 return;
             }
 
             if (iter.hasNext()) {
-                token = iter.next();
-                logMessage(new CompilerException("unexpected '" + token.getText() + "'", token));
+                logMessage(new CompilerException("expecting end of line", iter.next()));
             }
 
             String fileName = fileToken.getText();
@@ -1071,7 +1077,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
         Token token = iter.next(); // First token is PUB/PRI already checked
 
         if (!iter.hasNext()) {
-            logMessage(new CompilerException("expecting method name", token));
+            logMessage(new CompilerException("expecting method name after '" + token.getText() + "'", token));
             return null;
         }
         token = iter.next();
@@ -1087,7 +1093,8 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
         if (iter.hasNext() && "(".equals(iter.peekNext().getText())) {
             token = iter.next();
             if (!iter.hasNext()) {
-                logMessage(new CompilerException("expecting parameter(s)", token.substring(token.stop - token.start)));
+                logMessage(new CompilerException("expecting identifier or ')' after '" + token.getText() + "'", token));
+                return method;
             }
             while (iter.hasNext()) {
                 Token identifier = iter.next();
@@ -1108,22 +1115,30 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                         }
 
                         Expression value = null;
-                        if ("=".equals(iter.peekNext().getText())) {
-                            iter.next();
+                        if (iter.hasNext() && "=".equals(iter.peekNext().getText())) {
+                            token = iter.next();
                             Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(scope);
                             while (iter.hasNext()) {
                                 token = iter.peekNext();
                                 if (",".equals(token.getText()) || ")".equals(token.getText())) {
+                                    if (builder.getTokenCount() != 0) {
+                                        try {
+                                            value = builder.getExpression();
+                                            if (!value.isConstant()) {
+                                                logMessage(new CompilerException("expecting constant expression", builder.getTokens()));
+                                            }
+                                        } catch (CompilerException e) {
+                                            logMessage(e);
+                                        } catch (Exception e) {
+                                            logMessage(new CompilerException(e, builder.getTokens()));
+                                        }
+                                    }
+                                    else {
+                                        logMessage(new CompilerException("expecting expression after '='", token));
+                                    }
                                     break;
                                 }
                                 builder.addToken(iter.next());
-                            }
-                            try {
-                                value = builder.getExpression();
-                            } catch (CompilerException e) {
-                                logMessage(e);
-                            } catch (Exception e) {
-                                logMessage(new CompilerException(e, node));
                             }
                         }
                         if (value == null && method.getParametersCount() != 0) {
@@ -1146,145 +1161,157 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                     }
                     else if (",".equals(token.getText())) {
                         if (!iter.hasNext()) {
-                            logMessage(new CompilerException("expecting identifier", token.substring(token.stop - token.start)));
+                            logMessage(new CompilerException("expecting identifier after '" + iter.current() + "'", iter.current()));
                         }
                     }
                     else {
-                        logMessage(new CompilerException("expecting ',' or ')'", token));
+                        logMessage(new CompilerException("expecting ',' or ')'", iter.current()));
                     }
                 }
                 else {
-                    logMessage(new CompilerException("expecting ',' or ')'", identifier.substring(identifier.stop - identifier.start)));
+                    logMessage(new CompilerException("expecting ',' or ')' after '" + iter.current() + "'", iter.current()));
                 }
             }
         }
 
-        while (iter.hasNext()) {
+        if (iter.hasNext() && ":".equals(iter.peekNext().getText())) {
             token = iter.next();
-            if ("|".equals(token.getText())) {
-                if (!iter.hasNext()) {
-                    logMessage(new CompilerException("expecting local variable(s)", token.substring(token.stop - token.start)));
+            if (!iter.hasNext()) {
+                logMessage(new CompilerException("expecting return variable name after '" + token.getText() + "'", token));
+            }
+            while (iter.hasNext()) {
+                Token identifier = iter.next();
+                if (Spin1Model.isType(identifier.getText())) {
+                    logMessage(new CompilerException("type not allowed", identifier));
                 }
-                while (iter.hasNext()) {
-                    Token identifier = iter.next();
-
-                    String type = "LONG";
-                    if (Spin1Model.isType(identifier.getText())) {
-                        type = identifier.getText().toUpperCase();
-                        if (!iter.hasNext()) {
-                            logMessage(new CompilerException("expecting identifier", token.substring(token.stop - token.start)));
+                else if (identifier.type == Token.KEYWORD) {
+                    if (!"RESULT".equalsIgnoreCase(identifier.getText())) {
+                        Expression expression = localScope.getLocalSymbol(identifier.getText());
+                        if (expression instanceof LocalVariable) {
+                            logMessage(new CompilerException("symbol '" + identifier.getText() + "' already defined", identifier));
                         }
-                        identifier = iter.next();
-                    }
-                    if (identifier.type == Token.KEYWORD) {
-                        Expression size = new NumberLiteral(1);
-
-                        if (iter.hasNext() && "[".equals(iter.peekNext().getText())) {
-                            token = iter.next();
-                            if (!iter.hasNext()) {
-                                logMessage(new CompilerException("expecting expression", token.substring(token.stop - token.start)));
+                        else {
+                            if (expression != null) {
+                                logMessage(new CompilerException(CompilerException.WARNING, "return variable '" + identifier.getText() + "' hides global variable", identifier));
                             }
+                            LocalVariable var = method.addReturnVariable(identifier.getText());
+                            var.setData(identifier);
+                        }
+                    }
+                }
+                else {
+                    logMessage(new CompilerException("invalid identifier", identifier));
+                }
+
+                if (iter.hasNext()) {
+                    if ("|".equals(iter.peekNext().getText())) {
+                        break;
+                    }
+                    token = iter.next();
+                    if (",".equals(token.getText())) {
+                        if (!iter.hasNext()) {
+                            logMessage(new CompilerException("expecting identifier after ','", token));
+                            return method;
+                        }
+                    }
+                    else {
+                        logMessage(new CompilerException("expecting ',' or ':'", token));
+                        return method;
+                    }
+                }
+            }
+        }
+
+        if (iter.hasNext() && "|".equals(iter.peekNext().getText())) {
+            token = iter.next();
+            if (!iter.hasNext()) {
+                logMessage(new CompilerException("expecting local variable name after '" + token.getText() + "'", token));
+            }
+            while (iter.hasNext()) {
+                Token identifier = iter.next();
+
+                String type = "LONG";
+                if (Spin1Model.isType(identifier.getText())) {
+                    type = identifier.getText().toUpperCase();
+                    if (!iter.hasNext()) {
+                        logMessage(new CompilerException("expecting local variable name after '" + identifier.getText() + "'", identifier));
+                    }
+                    identifier = iter.next();
+                }
+
+                if (identifier.type == Token.KEYWORD) {
+                    int size = 1;
+
+                    if (iter.hasNext() && "[".equals(iter.peekNext().getText())) {
+                        Token start = iter.next();
+                        if (!iter.hasNext()) {
+                            logMessage(new CompilerException("expecting expression after '['", start));
+                        }
+                        else {
                             Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(scope);
                             while (iter.hasNext()) {
                                 token = iter.next();
                                 if ("]".equals(token.getText())) {
-                                    try {
-                                        size = builder.getExpression();
-                                        size.getNumber().intValue();
-                                    } catch (CompilerException e) {
-                                        logMessage(e);
-                                    } catch (Exception e) {
-                                        logMessage(new CompilerException(e, builder.getTokens()));
+                                    if (builder.getTokenCount() != 0) {
+                                        try {
+                                            Expression expression = builder.getExpression();
+                                            if (expression.isConstant()) {
+                                                size = expression.getNumber().intValue();
+                                            }
+                                            else {
+                                                logMessage(new CompilerException("expecting constant expression", builder.getTokens()));
+                                            }
+                                        } catch (CompilerException e) {
+                                            logMessage(e);
+                                        } catch (Exception e) {
+                                            logMessage(new CompilerException(e, builder.getTokens()));
+                                        }
+                                    }
+                                    else {
+                                        logMessage(new CompilerException("expecting expression after '['", start));
                                     }
                                     break;
                                 }
                                 builder.addToken(token);
                             }
                             if (!"]".equals(token.getText())) {
-                                logMessage(new CompilerException("expecting ']'", token));
+                                logMessage(new CompilerException("expecting ']' after '" + token.getText() + "'", token));
                             }
                         }
+                    }
 
-                        Expression expression = localScope.getLocalSymbol(identifier.getText());
-                        if (expression instanceof LocalVariable) {
-                            logMessage(new CompilerException("symbol '" + identifier + "' already defined", identifier));
+                    Expression expression = localScope.getLocalSymbol(identifier.getText());
+                    if (expression instanceof LocalVariable) {
+                        logMessage(new CompilerException("symbol '" + identifier + "' already defined", identifier));
+                    }
+                    else {
+                        if (expression != null) {
+                            logMessage(new CompilerException(CompilerException.WARNING, "local variable '" + identifier + "' hides global variable", identifier));
                         }
-                        else {
-                            if (expression != null) {
-                                logMessage(new CompilerException(CompilerException.WARNING, "local variable '" + identifier + "' hides global variable", identifier));
-                            }
-                            LocalVariable var = method.addLocalVariable(type, identifier.getText(), size.getNumber().intValue()); // new LocalVariable(type, identifier.getText(), size, offset);
-                            var.setData(identifier);
+                        LocalVariable var = method.addLocalVariable(type, identifier.getText(), size); // new LocalVariable(type, identifier.getText(), size, offset);
+                        var.setData(identifier);
+                    }
+                }
+                else {
+                    logMessage(new CompilerException("invalid identifier", identifier));
+                }
+
+                if (iter.hasNext()) {
+                    token = iter.next();
+                    if (",".equals(token.getText())) {
+                        if (!iter.hasNext()) {
+                            logMessage(new CompilerException("expecting identifier after '" + token.getText() + "'", token));
                         }
                     }
                     else {
-                        logMessage(new CompilerException("invalid identifier", identifier));
+                        logMessage(new CompilerException("expecting ',' or end of line", token));
                     }
+                }
+            }
+        }
 
-                    if (iter.hasNext()) {
-                        if (":".equals(iter.peekNext().getText())) {
-                            break;
-                        }
-                        token = iter.next();
-                        if (",".equals(token.getText())) {
-                            if (!iter.hasNext()) {
-                                logMessage(new CompilerException("expecting identifier", token.substring(token.stop - token.start)));
-                            }
-                        }
-                        else {
-                            logMessage(new CompilerException("expecting ',' or ':'", token));
-                        }
-                    }
-                }
-            }
-            else if (":".equals(token.getText())) {
-                if (!iter.hasNext()) {
-                    logMessage(new CompilerException("expecting return variable(s)", token.substring(token.stop - token.start)));
-                }
-                while (iter.hasNext()) {
-                    Token identifier = iter.next();
-                    if (Spin1Model.isType(identifier.getText())) {
-                        logMessage(new CompilerException("type not allowed", identifier));
-                    }
-                    else if (identifier.type == Token.KEYWORD) {
-                        if (!"RESULT".equalsIgnoreCase(identifier.getText())) {
-                            Expression expression = localScope.getLocalSymbol(identifier.getText());
-                            if (expression instanceof LocalVariable) {
-                                logMessage(new CompilerException("symbol '" + identifier.getText() + "' already defined", identifier));
-                            }
-                            else {
-                                if (expression != null) {
-                                    logMessage(new CompilerException(CompilerException.WARNING, "return variable '" + identifier.getText() + "' hides global variable", identifier));
-                                }
-                                LocalVariable var = method.addReturnVariable(identifier.getText());
-                                var.setData(identifier);
-                            }
-                        }
-                    }
-                    else {
-                        logMessage(new CompilerException("invalid identifier", identifier));
-                    }
-
-                    if (iter.hasNext()) {
-                        if ("|".equals(iter.peekNext().getText())) {
-                            break;
-                        }
-                        token = iter.next();
-                        if (",".equals(token.getText())) {
-                            if (!iter.hasNext()) {
-                                logMessage(new CompilerException("expecting identifier", token.substring(token.stop - token.start)));
-                            }
-                        }
-                        else {
-                            logMessage(new CompilerException("expecting ',' or ':'", token));
-                        }
-                    }
-                }
-            }
-            else {
-                logMessage(new CompilerException("unexpected '" + token.getText() + "'", token));
-                break;
-            }
+        if (iter.hasNext()) {
+            logMessage(new CompilerException("expecting end of line", iter.next()));
         }
 
         return method;
