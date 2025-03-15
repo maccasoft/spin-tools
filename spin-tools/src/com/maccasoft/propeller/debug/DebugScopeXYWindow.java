@@ -10,13 +10,10 @@
 
 package com.maccasoft.propeller.debug;
 
-import java.util.function.Consumer;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.eclipse.core.databinding.observable.Realm;
-import org.eclipse.jface.databinding.swt.DisplayRealm;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.DisposeEvent;
-import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.Color;
@@ -27,14 +24,10 @@ import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.widgets.Display;
 
 import com.maccasoft.propeller.internal.CircularBuffer;
 
 public class DebugScopeXYWindow extends DebugWindow {
-
-    Image image;
-    GC imageGc;
 
     Color backColor;
     Color gridColor;
@@ -70,16 +63,34 @@ public class DebugScopeXYWindow extends DebugWindow {
     Channel[] channelData;
 
     double scale;
-    int sampleX;
-    int sampleY;
+
+    boolean xy;
+    int sample0;
 
     class Channel {
         String name;
         Color color;
+        List<Point> points = new ArrayList<>();
 
         Channel(String name, Color color) {
             this.name = name;
             this.color = color;
+        }
+
+        void add(Point pt) {
+            points.add(pt);
+            if (samples != 0) {
+                while (points.size() > samples) {
+                    points.remove(0);
+                }
+            }
+        }
+
+        void draw(GC gc) {
+            gc.setBackground(color);
+            for (Point pt : points) {
+                gc.fillOval(pt.x - dotSize / 2, pt.y - dotSize / 2, dotSize + 1, dotSize + 1);
+            }
         }
 
     }
@@ -94,7 +105,7 @@ public class DebugScopeXYWindow extends DebugWindow {
         colorTune = 0;
         lutColors = new Color[256];
 
-        dotSize = 6;
+        dotSize = 6 / 2;
         textSize = 0;
 
         packMode = PackMode.NONE();
@@ -164,7 +175,7 @@ public class DebugScopeXYWindow extends DebugWindow {
 
                     case "DOTSIZE":
                         if (iter.hasNextNumber()) {
-                            dotSize = iter.nextNumber();
+                            dotSize = iter.nextNumber() / 2;
                         }
                         break;
 
@@ -231,41 +242,11 @@ public class DebugScopeXYWindow extends DebugWindow {
         imageSize.x = imageSize.y = (size * 2) + 1;
         origin = new Point(imageSize.x / 2, imageSize.y / 2);
 
-        image = new Image(display, new ImageData(imageSize.x, imageSize.y, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF)));
-        imageGc = new GC(image);
-
-        imageGc.setAdvanced(true);
-        imageGc.setAdvanced(true);
-        imageGc.setAntialias(SWT.OFF);
-        imageGc.setTextAntialias(SWT.ON);
-        imageGc.setInterpolation(SWT.NONE);
-        imageGc.setLineCap(SWT.CAP_SQUARE);
-        imageGc.setLineWidth(dotSize / 2);
-        imageGc.setFont(font);
-
-        update();
-
         canvas.addPaintListener(new PaintListener() {
 
             @Override
             public void paintControl(PaintEvent e) {
-                Point canvasSize = canvas.getSize();
-
-                e.gc.setAdvanced(true);
-                e.gc.setAntialias(SWT.ON);
-                e.gc.setInterpolation(SWT.HIGH);
-
-                e.gc.drawImage(image, 0, 0, imageSize.x, imageSize.y, 0, 0, canvasSize.x, canvasSize.y);
-            }
-
-        });
-
-        canvas.addDisposeListener(new DisposeListener() {
-
-            @Override
-            public void widgetDisposed(DisposeEvent e) {
-                imageGc.dispose();
-                image.dispose();
+                paint(e.gc);
             }
 
         });
@@ -276,6 +257,34 @@ public class DebugScopeXYWindow extends DebugWindow {
 
         shell.pack();
         shell.redraw();
+    }
+
+    void paint(GC gc) {
+        gc.setAdvanced(true);
+        gc.setAntialias(SWT.ON);
+        gc.setInterpolation(SWT.HIGH);
+
+        gc.setBackground(backColor);
+        gc.fillRectangle(0, 0, imageSize.x, imageSize.y);
+
+        gc.setLineStyle(SWT.LINE_SOLID);
+
+        int x = (imageSize.x / 2) + (int) Math.round(0 * scale);
+        int y = (imageSize.y / 2) - (int) Math.round(0 * scale);
+        gc.setForeground(gridColor);
+        gc.drawLine(x, 0, x, imageSize.y - 1);
+        gc.drawLine(0, y, imageSize.x - 1, y);
+
+        gc.drawOval(0, 0, imageSize.x - 1, imageSize.y - 1);
+
+        int textX = 5;
+        gc.setLineWidth(dotSize);
+        for (int i = 0; i < channelData.length; i++) {
+            gc.setForeground(channelData[i].color);
+            gc.drawText(channelData[i].name, textX, 5, true);
+            textX += gc.stringExtent(channelData[i].name).x + 5;
+            channelData[i].draw(gc);
+        }
     }
 
     void channel(String name, KeywordIterator iter) {
@@ -349,6 +358,9 @@ public class DebugScopeXYWindow extends DebugWindow {
             else {
                 switch (cmd.toUpperCase()) {
                     case "CLEAR":
+                        for (int i = 0; i < channelData.length; i++) {
+                            channelData[i].points.clear();
+                        }
                         break;
 
                     case "SAVE":
@@ -364,6 +376,13 @@ public class DebugScopeXYWindow extends DebugWindow {
                                 key = iter.next();
                             }
                             if (isString(key)) {
+                                Image image = new Image(display, new ImageData(imageSize.x, imageSize.y, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF)));
+                                GC gc = new GC(image);
+                                try {
+                                    paint(gc);
+                                } finally {
+                                    gc.dispose();
+                                }
                                 doSaveBitmap(image, stringStrip(key), window);
                             }
                         }
@@ -386,24 +405,23 @@ public class DebugScopeXYWindow extends DebugWindow {
     }
 
     void processSample(int sample) {
-        if (channelIndex == 0) {
-            sampleX = sample;
+        if (xy) {
+            Point pt = translatePoint(sample0, sample);
+            channelData[channelIndex].add(pt);
+
+            channelIndex++;
+            if (channelIndex >= channelData.length) {
+                if (++rateCount >= rate) {
+                    canvas.redraw();
+                    rateCount = 0;
+                }
+                channelIndex = 0;
+            }
         }
         else {
-            sampleY = sample;
+            sample0 = sample;
         }
-        if (++channelIndex >= 2) {
-            Point pt = translatePoint(sampleX, sampleY);
-            imageGc.setForeground(new Color(0, 250, 0));
-            imageGc.drawPoint(pt.x, pt.y);
-
-            if (++rateCount >= rate) {
-                canvas.redraw();
-                rateCount = 0;
-            }
-
-            channelIndex = 0;
-        }
+        xy = !xy;
     }
 
     Point translatePoint(int x, int y) {
@@ -427,91 +445,18 @@ public class DebugScopeXYWindow extends DebugWindow {
             return new Point((int) Math.round(xf * rf), (int) Math.round(yf * rf));
         }
         else if (logScale) {
-            rf = (Math.log(Math.hypot(sampleX, sampleY) + 1) / Math.log((double) range + 1)) * (imageSize.x / 2);
-            tf = Math.atan2(sampleX, sampleY);
+            rf = (Math.log(Math.hypot(x, y) + 1) / Math.log((double) range + 1)) * (imageSize.x / 2);
+            tf = Math.atan2(x, y);
             yf = Math.sin(tf);
             xf = Math.cos(tf);
             return new Point((imageSize.x / 2) + (int) Math.round(xf * rf), (imageSize.y / 2) - (int) Math.round(yf * rf));
         }
 
-        return new Point((imageSize.x / 2) + (int) Math.round(sampleX * scale), (imageSize.y / 2) - (int) Math.round(sampleY * scale));
+        return new Point((imageSize.x / 2) + (int) Math.round(x * scale), (imageSize.y / 2) - (int) Math.round(y * scale));
     }
 
     void update() {
-        imageGc.setBackground(backColor);
-        imageGc.fillRectangle(0, 0, imageSize.x, imageSize.y);
-
-        imageGc.setLineStyle(SWT.LINE_SOLID);
-
-        int x = (imageSize.x / 2) + (int) Math.round(0 * scale);
-        int y = (imageSize.y / 2) - (int) Math.round(0 * scale);
-        imageGc.setForeground(gridColor);
-        imageGc.drawLine(x, 0, x, imageSize.y - 1);
-        imageGc.drawLine(0, y, imageSize.x - 1, y);
-
-        imageGc.drawOval(0, 0, imageSize.x - 1, imageSize.y - 1);
-
         canvas.redraw();
-    }
-
-    static final String[] data = new String[] {
-        "`size 200 range 1000 samples 200 dotsize 5 'Goertzel'",
-    };
-
-    public static void main(String[] args) {
-        final Display display = new Display();
-
-        display.setErrorHandler(new Consumer<Error>() {
-
-            @Override
-            public void accept(Error t) {
-                t.printStackTrace();
-            }
-
-        });
-        display.setRuntimeExceptionHandler(new Consumer<RuntimeException>() {
-
-            @Override
-            public void accept(RuntimeException t) {
-                t.printStackTrace();
-            }
-
-        });
-
-        Realm.runWithDefault(DisplayRealm.getRealm(display), new Runnable() {
-
-            @Override
-            public void run() {
-                try {
-                    DebugWindow window = new DebugScopeXYWindow(new CircularBuffer(128));
-                    window.create();
-                    window.setup(new KeywordIterator(data[0]));
-                    window.open();
-
-                    display.asyncExec(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            for (int i = 1; i < data.length; i++) {
-                                window.update(new KeywordIterator(data[i]));
-                            }
-                        }
-
-                    });
-
-                    while (display.getShells().length != 0) {
-                        if (!display.readAndDispatch()) {
-                            display.sleep();
-                        }
-                    }
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-
-        display.dispose();
     }
 
 }
