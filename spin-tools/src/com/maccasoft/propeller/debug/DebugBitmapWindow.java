@@ -37,6 +37,8 @@ public class DebugBitmapWindow extends DebugWindow {
     int y;
     int traceMode;
 
+    Point dotSize;
+
     ColorMode colorMode;
     int colorTune;
     int[] lutColors;
@@ -52,6 +54,8 @@ public class DebugBitmapWindow extends DebugWindow {
 
         x = y = 0;
         traceMode = 0;
+
+        dotSize = new Point(1, 1);
 
         colorMode = ColorMode.RGB24;
         colorTune = 0;
@@ -84,7 +88,13 @@ public class DebugBitmapWindow extends DebugWindow {
                     break;
 
                 case "DOTSIZE":
-                    dotsize(iter);
+                    if (iter.hasNextNumber()) {
+                        dotSize.x = iter.nextNumber();
+                        dotSize.y = dotSize.x;
+                        if (iter.hasNextNumber()) {
+                            dotSize.y = iter.nextNumber();
+                        }
+                    }
                     break;
 
                 case "SPARSE": // TODO

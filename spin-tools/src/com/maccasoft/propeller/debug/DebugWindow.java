@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -75,7 +75,6 @@ public abstract class DebugWindow {
     protected Canvas canvas;
 
     protected Point imageSize;
-    protected Point dotSize;
 
     protected CircularBuffer transmitBuffer;
 
@@ -124,7 +123,7 @@ public abstract class DebugWindow {
         this.transmitBuffer = transmitBuffer;
 
         imageSize = new Point(256, 256);
-        dotSize = new Point(1, 1);
+        origin = new Point(0, 0);
 
         xDirection = 0;
         yDirection = 0;
@@ -172,8 +171,8 @@ public abstract class DebugWindow {
         canvas = new Canvas(container, SWT.DOUBLE_BUFFERED);
 
         GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
-        gridData.widthHint = imageSize.x * dotSize.x;
-        gridData.heightHint = imageSize.y * dotSize.y;
+        gridData.widthHint = imageSize.x;
+        gridData.heightHint = imageSize.y;
         canvas.setLayoutData(gridData);
 
         canvas.addKeyListener(new KeyAdapter() {
@@ -370,16 +369,6 @@ public abstract class DebugWindow {
             if (iter.hasNextNumber()) {
                 imageSize.x = width;
                 imageSize.y = iter.nextNumber();
-            }
-        }
-    }
-
-    protected void dotsize(KeywordIterator iter) {
-        if (iter.hasNextNumber()) {
-            dotSize.x = iter.nextNumber();
-            dotSize.y = dotSize.x;
-            if (iter.hasNextNumber()) {
-                dotSize.y = iter.nextNumber();
             }
         }
     }

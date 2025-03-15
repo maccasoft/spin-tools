@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -41,6 +41,8 @@ public class DebugPlotWindow extends DebugWindow {
 
     int x;
     int y;
+
+    Point dotSize;
 
     Color color;
     Color textColor;
@@ -95,6 +97,8 @@ public class DebugPlotWindow extends DebugWindow {
         x = y = 0;
         origin = new Point(0, 0);
 
+        dotSize = new Point(1, 1);
+
         color = new Color(255, 255, 255);
         textColor = new Color(255, 255, 255);
         backColor = new Color(0, 0, 0);
@@ -142,7 +146,13 @@ public class DebugPlotWindow extends DebugWindow {
                     break;
 
                 case "DOTSIZE":
-                    dotsize(iter);
+                    if (iter.hasNextNumber()) {
+                        dotSize.x = iter.nextNumber();
+                        dotSize.y = dotSize.x;
+                        if (iter.hasNextNumber()) {
+                            dotSize.y = iter.nextNumber();
+                        }
+                    }
                     break;
 
                 case "LUT1":

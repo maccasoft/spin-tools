@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -47,6 +47,7 @@ public class DebugScopeWindow extends DebugWindow {
     int colorTune;
     Color[] lutColors;
 
+    int dotSize;
     int lineSize;
     int textSize;
 
@@ -127,15 +128,20 @@ public class DebugScopeWindow extends DebugWindow {
             double sy = (double) y_size / (double) (max - min);
             int index = (sampleIndex + triggerOffset + sampleData.length / 2) % sampleData.length;
 
+            gc.setLineWidth(dotSize);
+            gc.setForeground(color);
+            gc.setBackground(color);
+
             double x = 0;
             for (int i = 0, idx = 0; i < sampleData.length; i++) {
-                array[idx++] = (int) Math.round(x);
-                array[idx++] = (imageSize.y - y_base) - (int) Math.round((sampleData[index] - min) * sy);
+                int px = array[idx++] = (int) Math.round(x);
+                int py = array[idx++] = (imageSize.y - y_base) - (int) Math.round((sampleData[index] - min) * sy);
+                gc.fillOval(px - dotSize / 2, py - dotSize / 2, dotSize + 1, dotSize + 1);
                 index = (index + 1) % sampleData.length;
                 x += sx;
             }
 
-            gc.setForeground(color);
+            gc.setLineWidth(lineSize);
             gc.drawPolyline(array);
         }
 
@@ -151,6 +157,7 @@ public class DebugScopeWindow extends DebugWindow {
         colorTune = 0;
         lutColors = new Color[256];
 
+        dotSize = 0;
         lineSize = 1;
         textSize = 0;
 
@@ -206,12 +213,14 @@ public class DebugScopeWindow extends DebugWindow {
                     break;
 
                 case "DOTSIZE":
-                    dotsize(iter);
+                    if (iter.hasNextNumber()) {
+                        dotSize = iter.nextNumber();
+                    }
                     break;
 
                 case "LINESIZE":
                     if (iter.hasNextNumber()) {
-                        lineSize = iter.nextNumber();
+                        lineSize = iter.nextNumber() / 2;
                     }
                     break;
 
@@ -283,7 +292,6 @@ public class DebugScopeWindow extends DebugWindow {
         imageGc.setTextAntialias(SWT.ON);
         imageGc.setInterpolation(SWT.NONE);
         imageGc.setLineCap(SWT.CAP_SQUARE);
-        imageGc.setLineWidth(lineSize);
         imageGc.setFont(font);
 
         imageGc.setBackground(backColor);
@@ -315,8 +323,8 @@ public class DebugScopeWindow extends DebugWindow {
         });
 
         GridData gridData = (GridData) canvas.getLayoutData();
-        gridData.widthHint = imageSize.x * dotSize.x;
-        gridData.heightHint = imageSize.y * dotSize.y;
+        gridData.widthHint = imageSize.x;
+        gridData.heightHint = imageSize.y;
 
         shell.pack();
         shell.redraw();
@@ -571,6 +579,8 @@ public class DebugScopeWindow extends DebugWindow {
     void update() {
         int x;
 
+        imageGc.setLineWidth(0);
+
         imageGc.setBackground(backColor);
         imageGc.fillRectangle(0, 0, imageSize.x, imageSize.y);
 
@@ -588,6 +598,8 @@ public class DebugScopeWindow extends DebugWindow {
         for (int i = 0; i < channelData.length; i++) {
             channelData[i].plot(imageGc);
         }
+
+        imageGc.setLineWidth(0);
 
         x = 0;
         for (int i = 0; i < channelData.length; i++) {
