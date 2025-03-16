@@ -98,7 +98,6 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
         scope.addDefinitions(compiler.getDefines());
 
         scope.addDefinition("__P1__", new NumberLiteral(1));
-        scope.addDefinition("__P2__", new NumberLiteral(0));
         scope.addDefinition("__SPINTOOLS__", new NumberLiteral(1));
     }
 

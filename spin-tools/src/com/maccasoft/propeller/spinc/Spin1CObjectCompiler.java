@@ -92,9 +92,8 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
         }
         scope.addDefinitions(compiler.getDefines());
 
-        this.scope.addDefinition("__P1__", new NumberLiteral(1));
-        this.scope.addDefinition("__P2__", new NumberLiteral(0));
-        this.scope.addDefinition("__SPINTOOLS__", new NumberLiteral(1));
+        scope.addDefinition("__P1__", new NumberLiteral(1));
+        scope.addDefinition("__SPINTOOLS__", new NumberLiteral(1));
     }
 
     @Override
@@ -300,6 +299,9 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
                     }
                 }
             }
+        }
+        else if ("pragma".equals(token.getText())) {
+            node.setExclude(skip);
         }
         else {
             super.compileDirective(node);

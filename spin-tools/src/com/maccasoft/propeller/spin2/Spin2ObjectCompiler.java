@@ -112,7 +112,6 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
         scope.addDefinitions(compiler.getDefines());
         scope.addParameters(parameters);
 
-        scope.addDefinition("__P1__", new NumberLiteral(0));
         scope.addDefinition("__P2__", new NumberLiteral(1));
         scope.addDefinition("__SPINTOOLS__", new NumberLiteral(1));
         if (compiler.isDebugEnabled()) {

@@ -1334,7 +1334,7 @@ class Spin1CObjectCompilerTest {
             + "\n"
             + "void main(int a)\n"
             + "{\n"
-            + "#if defined(__P2__)\n"
+            + "#if defined(__P1__)\n"
             + "  #if TEST\n"
             + "    a = 1;\n"
             + "  #else\n"
