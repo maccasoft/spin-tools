@@ -4057,6 +4057,9 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         os.write(Spin2Bytecode.bc_bytefill);
 
                         node.setReturnLongs(0);
+                        if (push) {
+                            logMessage(new CompilerException("expression doesn't return any value", node.getTokens()));
+                        }
                     } catch (Exception e) {
 
                     }
@@ -4068,6 +4071,9 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         node.setReturnLongs(0);
                     }
                 }
+            }
+            else if (op == MemoryOp.Op.Read && !push) {
+                logMessage(new CompilerException("expected assignment", node.getTokens()));
             }
         }
 
