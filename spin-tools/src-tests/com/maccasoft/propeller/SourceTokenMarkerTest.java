@@ -189,11 +189,11 @@ public class SourceTokenMarkerTest {
 
         Assertions.assertEquals(2, result.size());
 
-        Assertions.assertEquals("object.null", result.get(0).getLabel());
+        Assertions.assertEquals("null", result.get(0).getLabel());
         Assertions.assertEquals("null()", result.get(0).getContent());
         Assertions.assertEquals(6, result.get(0).getCursorPosition());
 
-        Assertions.assertEquals("object.method", result.get(1).getLabel());
+        Assertions.assertEquals("method", result.get(1).getLabel());
         Assertions.assertEquals("method()", result.get(1).getContent());
         Assertions.assertEquals(8, result.get(1).getCursorPosition());
     }
@@ -279,7 +279,7 @@ public class SourceTokenMarkerTest {
 
         Assertions.assertEquals(1, result.size());
 
-        Assertions.assertEquals("object.method", result.get(0).getLabel());
+        Assertions.assertEquals("method", result.get(0).getLabel());
         Assertions.assertEquals("method()", result.get(0).getContent());
         Assertions.assertEquals(8, result.get(0).getCursorPosition());
     }
@@ -322,11 +322,11 @@ public class SourceTokenMarkerTest {
 
         Assertions.assertEquals(2, result.size());
 
-        Assertions.assertEquals("object.null", result.get(0).getLabel());
+        Assertions.assertEquals("null", result.get(0).getLabel());
         Assertions.assertEquals("null()", result.get(0).getContent());
         Assertions.assertEquals(6, result.get(0).getCursorPosition());
 
-        Assertions.assertEquals("object.method", result.get(1).getLabel());
+        Assertions.assertEquals("method", result.get(1).getLabel());
         Assertions.assertEquals("method()", result.get(1).getContent());
         Assertions.assertEquals(8, result.get(1).getCursorPosition());
     }
@@ -380,11 +380,11 @@ public class SourceTokenMarkerTest {
 
         Assertions.assertEquals(2, result.size());
 
-        Assertions.assertEquals("object.null", result.get(0).getLabel());
+        Assertions.assertEquals("null", result.get(0).getLabel());
         Assertions.assertEquals("null()", result.get(0).getContent());
         Assertions.assertEquals(6, result.get(0).getCursorPosition());
 
-        Assertions.assertEquals("object.method", result.get(1).getLabel());
+        Assertions.assertEquals("method", result.get(1).getLabel());
         Assertions.assertEquals("method()", result.get(1).getContent());
         Assertions.assertEquals(8, result.get(1).getCursorPosition());
     }
@@ -438,11 +438,11 @@ public class SourceTokenMarkerTest {
 
         Assertions.assertEquals(2, result.size());
 
-        Assertions.assertEquals("object.null", result.get(0).getLabel());
+        Assertions.assertEquals("null", result.get(0).getLabel());
         Assertions.assertEquals("null()", result.get(0).getContent());
         Assertions.assertEquals(6, result.get(0).getCursorPosition());
 
-        Assertions.assertEquals("object.method", result.get(1).getLabel());
+        Assertions.assertEquals("method", result.get(1).getLabel());
         Assertions.assertEquals("method()", result.get(1).getContent());
         Assertions.assertEquals(8, result.get(1).getCursorPosition());
     }
@@ -485,11 +485,11 @@ public class SourceTokenMarkerTest {
 
         Assertions.assertEquals(2, result.size());
 
-        Assertions.assertEquals("object#PIN_RX", result.get(0).getLabel());
+        Assertions.assertEquals("PIN_RX", result.get(0).getLabel());
         Assertions.assertEquals("PIN_RX", result.get(0).getContent());
         Assertions.assertEquals(6, result.get(0).getCursorPosition());
 
-        Assertions.assertEquals("object#PIN_TX", result.get(1).getLabel());
+        Assertions.assertEquals("PIN_TX", result.get(1).getLabel());
         Assertions.assertEquals("PIN_TX", result.get(1).getContent());
         Assertions.assertEquals(6, result.get(1).getCursorPosition());
     }
@@ -532,11 +532,11 @@ public class SourceTokenMarkerTest {
 
         Assertions.assertEquals(2, result.size());
 
-        Assertions.assertEquals("object.PIN_RX", result.get(0).getLabel());
+        Assertions.assertEquals("PIN_RX", result.get(0).getLabel());
         Assertions.assertEquals("PIN_RX", result.get(0).getContent());
         Assertions.assertEquals(6, result.get(0).getCursorPosition());
 
-        Assertions.assertEquals("object.PIN_TX", result.get(1).getLabel());
+        Assertions.assertEquals("PIN_TX", result.get(1).getLabel());
         Assertions.assertEquals("PIN_TX", result.get(1).getContent());
         Assertions.assertEquals(6, result.get(1).getCursorPosition());
     }

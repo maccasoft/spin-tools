@@ -693,15 +693,16 @@ public abstract class SourceTokenMarker {
         boolean address = textToken.startsWith("@");
         String filterText = address ? textToken.substring(1) : textToken;
 
-        String objectName = "";
         int dot = filterText.indexOf('.');
+        String objectName = "";
         if (dot != -1) {
             objectName = filterText.substring(0, dot);
             if (objectName.indexOf('[') != -1) {
                 objectName = objectName.substring(0, objectName.indexOf('['));
             }
         }
-        String refName = dot != -1 ? objectName + filterText.substring(dot) : filterText;
+        String refName = dot != -1 ? filterText.substring(dot + 1) : filterText;
+        String refObject = objectName;
 
         Map<String, TypeDefinitionNode> structs = new HashMap<>();
 
@@ -728,7 +729,9 @@ public abstract class SourceTokenMarker {
                         }
                     }
                     else if (child.getType() != null) {
-                        visitStructureMembers(child.getIdentifier().getText(), child.getType().getText());
+                        if (refObject.equalsIgnoreCase(child.getIdentifier().getText())) {
+                            visitStructureMembers(child.getIdentifier().getText(), child.getType().getText());
+                        }
                     }
                 }
 
@@ -740,7 +743,9 @@ public abstract class SourceTokenMarker {
                         }
                     }
                     else if (child.getType() != null) {
-                        visitStructureMembers(child.getIdentifier().getText(), child.getType().getText());
+                        if (refObject.equalsIgnoreCase(child.getIdentifier().getText())) {
+                            visitStructureMembers(child.getIdentifier().getText(), child.getType().getText());
+                        }
                     }
                 }
 
@@ -752,7 +757,9 @@ public abstract class SourceTokenMarker {
                         }
                     }
                     else if (child.getType() != null) {
-                        visitStructureMembers(child.getIdentifier().getText(), child.getType().getText());
+                        if (refObject.equalsIgnoreCase(child.getIdentifier().getText())) {
+                            visitStructureMembers(child.getIdentifier().getText(), child.getType().getText());
+                        }
                     }
                 }
 
@@ -767,9 +774,9 @@ public abstract class SourceTokenMarker {
                             continue;
                         }
                         TypeDefinitionNode.Definition member = (TypeDefinitionNode.Definition) n;
-                        String text = identifier + "." + member.getIdentifier().getText();
+                        String text = member.getIdentifier().getText();
                         if (StringUtils.containsIgnoreCase(text, refName)) {
-                            proposals.add(new ContentProposal(member.getIdentifier().getText(), text, ""));
+                            proposals.add(new ContentProposal(text, text, "<b>" + typeNode.getText() + "</b>"));
                         }
                     }
                 }
@@ -789,7 +796,9 @@ public abstract class SourceTokenMarker {
                         }
                     }
                     else if (node.getType() != null) {
-                        visitStructureMembers(node.getIdentifier().getText(), node.getType().getText());
+                        if (refObject.equalsIgnoreCase(node.getIdentifier().getText())) {
+                            visitStructureMembers(node.getIdentifier().getText(), node.getType().getText());
+                        }
                     }
                 }
             }
@@ -802,9 +811,9 @@ public abstract class SourceTokenMarker {
                             continue;
                         }
                         TypeDefinitionNode.Definition member = (TypeDefinitionNode.Definition) n;
-                        String text = identifier + "." + member.getIdentifier().getText();
+                        String text = member.getIdentifier().getText();
                         if (StringUtils.containsIgnoreCase(text, refName)) {
-                            proposals.add(new ContentProposal(member.getIdentifier().getText(), text, ""));
+                            proposals.add(new ContentProposal(text, text, "<b>" + typeNode.getText() + "</b>"));
                         }
                     }
                 }
@@ -878,6 +887,8 @@ public abstract class SourceTokenMarker {
         });
 
         if (dot != -1) {
+            List<IContentProposal> secondary = new ArrayList<>();
+
             root.accept(new NodeVisitor() {
 
                 @Override
@@ -886,6 +897,9 @@ public abstract class SourceTokenMarker {
                         return;
                     }
                     String name = node.getIdentifier().getText();
+                    if (!refObject.equalsIgnoreCase(name)) {
+                        return;
+                    }
 
                     Node objectRoot = getObjectTree(node.getType().getText());
                     if (objectRoot != null) {
@@ -894,9 +908,12 @@ public abstract class SourceTokenMarker {
                             @Override
                             public boolean visitFunction(FunctionNode node) {
                                 if (node.getIdentifier() != null) {
-                                    String text = name + "." + node.getIdentifier().getText();
-                                    if (StringUtils.containsIgnoreCase(text, refName)) {
+                                    String text = node.getIdentifier().getText();
+                                    if (StringUtils.startsWithIgnoreCase(text, refName)) {
                                         proposals.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
+                                    }
+                                    else if (StringUtils.containsIgnoreCase(text, refName)) {
+                                        secondary.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
                                     }
                                 }
                                 return false;
@@ -908,9 +925,12 @@ public abstract class SourceTokenMarker {
                                     return false;
                                 }
                                 if ("PUB".equalsIgnoreCase(node.getType().getText())) {
-                                    String text = name + "." + node.getName().getText();
-                                    if (StringUtils.containsIgnoreCase(text, refName)) {
+                                    String text = node.getName().getText();
+                                    if (StringUtils.startsWithIgnoreCase(text, refName)) {
                                         proposals.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
+                                    }
+                                    else if (StringUtils.containsIgnoreCase(text, refName)) {
+                                        secondary.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
                                     }
                                 }
                                 return false;
@@ -925,6 +945,9 @@ public abstract class SourceTokenMarker {
                     if (objectNode.name == null || objectNode.file == null) {
                         return;
                     }
+                    if (!refObject.equalsIgnoreCase(objectNode.name.getText())) {
+                        return;
+                    }
                     String fileName = objectNode.getFileName();
                     Node objectRoot = getObjectTree(fileName);
                     if (objectRoot == null) {
@@ -935,9 +958,12 @@ public abstract class SourceTokenMarker {
                         @Override
                         public boolean visitFunction(FunctionNode node) {
                             if (node.getIdentifier() != null) {
-                                String text = objectNode.name.getText() + "." + node.getIdentifier().getText();
-                                if (StringUtils.containsIgnoreCase(text, refName)) {
+                                String text = node.getIdentifier().getText();
+                                if (StringUtils.startsWithIgnoreCase(text, refName)) {
                                     proposals.add(new ContentProposal(getMethodInsert(node), text, ""));
+                                }
+                                else if (StringUtils.containsIgnoreCase(text, refName)) {
+                                    secondary.add(new ContentProposal(getMethodInsert(node), text, ""));
                                 }
                             }
                             return false;
@@ -949,9 +975,12 @@ public abstract class SourceTokenMarker {
                                 return false;
                             }
                             if ("PUB".equalsIgnoreCase(node.getType().getText())) {
-                                String text = objectNode.name.getText() + "." + node.getName().getText();
-                                if (StringUtils.containsIgnoreCase(text, refName)) {
+                                String text = node.getName().getText();
+                                if (StringUtils.startsWithIgnoreCase(text, refName)) {
                                     proposals.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
+                                }
+                                else if (StringUtils.containsIgnoreCase(text, refName)) {
+                                    secondary.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
                                 }
                             }
                             return false;
@@ -960,6 +989,8 @@ public abstract class SourceTokenMarker {
                     });
                 }
             });
+
+            proposals.addAll(secondary);
         }
 
         return proposals;
@@ -1292,7 +1323,7 @@ public abstract class SourceTokenMarker {
     }
 
     public List<IContentProposal> getConstantsProposals(Node context, String filterText) {
-        List<IContentProposal> proposals = new ArrayList<IContentProposal>();
+        List<IContentProposal> proposals = new ArrayList<>();
         if (root == null) {
             return proposals;
         }
@@ -1327,6 +1358,10 @@ public abstract class SourceTokenMarker {
         });
 
         if (dot != -1) {
+            String refObject = dot != -1 ? filterText.substring(0, dot) : "";
+            String refName = dot != -1 ? filterText.substring(dot + 1) : filterText;
+            List<IContentProposal> secondary = new ArrayList<>();
+
             root.accept(new NodeVisitor() {
 
                 @Override
@@ -1374,6 +1409,9 @@ public abstract class SourceTokenMarker {
                     if (objectNode.name == null || objectNode.file == null) {
                         return;
                     }
+                    if (!refObject.equalsIgnoreCase(objectNode.name.getText())) {
+                        return;
+                    }
                     String fileName = objectNode.getFileName();
                     Node objectRoot = getObjectTree(fileName);
                     if (objectRoot == null) {
@@ -1384,9 +1422,12 @@ public abstract class SourceTokenMarker {
                         @Override
                         public void visitConstant(ConstantNode node) {
                             if (node.identifier != null) {
-                                String text = objectNode.name.getText() + constantSeparator + node.identifier.getText();
-                                if (StringUtils.containsIgnoreCase(text, filterText)) {
+                                String text = node.identifier.getText();
+                                if (StringUtils.startsWithIgnoreCase(text, refName)) {
                                     proposals.add(new ContentProposal(node.identifier.getText(), text, "<b>" + node.getText() + "</b>"));
+                                }
+                                else if (StringUtils.containsIgnoreCase(text, refName)) {
+                                    secondary.add(new ContentProposal(node.identifier.getText(), text, "<b>" + node.getText() + "</b>"));
                                 }
                             }
                         }
@@ -1394,6 +1435,8 @@ public abstract class SourceTokenMarker {
                     });
                 }
             });
+
+            proposals.addAll(secondary);
         }
 
         return proposals;
