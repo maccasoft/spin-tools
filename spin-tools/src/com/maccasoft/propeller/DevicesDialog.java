@@ -535,7 +535,7 @@ public class DevicesDialog extends Dialog {
                 return bit;
             }
 
-            static final String PROP_CHK = "> \r> Prop_Chk 0 0 0 0\r";
+            static final String PROP_CHK = "> Prop_Chk 0 0 0 0\r";
             static final String PROP_VER = "Prop_Ver ";
 
             protected int hwfind2(SerialComPort comPort) throws ComPortException {
@@ -546,20 +546,13 @@ public class DevicesDialog extends Dialog {
 
                 for (int i = 0; i < 3; i++) {
                     comPort.writeString(PROP_CHK);
-                    if ((result = readStringWithTimeout(comPort, 50)) != null) {
-                        break;
-                    }
-                }
-
-                if (result == null) {
-                    return 0;
-                }
-
-                for (int i = 0; i < 3; i++) {
-                    if ((result = readStringWithTimeout(comPort, 50)) != null) {
-                        if (result.startsWith(PROP_VER)) {
-                            return result.charAt(9);
+                    if (readStringWithTimeout(comPort, 50) != null) {
+                        if ((result = readStringWithTimeout(comPort, 50)) != null) {
+                            if (result.startsWith(PROP_VER)) {
+                                return result.charAt(9);
+                            }
                         }
+                        break;
                     }
                 }
 

@@ -32,7 +32,7 @@ public class Propeller2Loader extends PropellerLoader {
     public static final int DOWNLOAD_RUN_RAM = 0;
     public static final int DOWNLOAD_RUN_FLASH = 1;
 
-    static final String PROP_CHK = "> \r> Prop_Chk 0 0 0 0\r";
+    static final String PROP_CHK = "> Prop_Chk 0 0 0 0\r";
     static final String PROP_VER = "Prop_Ver ";
 
     ComPort comPort;
@@ -193,20 +193,13 @@ public class Propeller2Loader extends PropellerLoader {
 
         for (int i = 0; i < 3; i++) {
             comPort.writeString(PROP_CHK);
-            if ((result = readStringWithTimeout(comPort, 50)) != null) {
-                break;
-            }
-        }
-
-        if (result == null) {
-            return 0;
-        }
-
-        for (int i = 0; i < 3; i++) {
-            if ((result = readStringWithTimeout(comPort, 50)) != null) {
-                if (result.startsWith(PROP_VER)) {
-                    return result.charAt(9);
+            if (readStringWithTimeout(comPort, 50) != null) {
+                if ((result = readStringWithTimeout(comPort, 50)) != null) {
+                    if (result.startsWith(PROP_VER)) {
+                        return result.charAt(9);
+                    }
                 }
+                break;
             }
         }
 
@@ -348,12 +341,11 @@ public class Propeller2Loader extends PropellerLoader {
         image[image.length - 1] = (byte) (sum >> 24);
         binaryImage = image;
 
-        comPort.writeString("> Prop_Txt 0 0 0 0");
+        comPort.writeString("> Prop_Txt 0 0 0 0 ");
 
         String encodedImage = encoder.encodeToString(binaryImage);
         for (n = 0, sent = 0; n < encodedImage.length(); n += 64, sent += 48) {
-            comPort.writeString("\r> ");
-            comPort.writeString(encodedImage.substring(n, n + Math.min(64, encodedImage.length() - n)));
+            comPort.writeString(">" + encodedImage.substring(n, n + Math.min(64, encodedImage.length() - n)));
             notifyProgress(sent, binaryImage.length);
         }
         notifyProgress(sent, binaryImage.length);
