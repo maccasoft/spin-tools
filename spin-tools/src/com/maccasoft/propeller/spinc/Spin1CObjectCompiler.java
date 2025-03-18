@@ -1411,8 +1411,12 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
         int address = 0, hubAddress = 0;
         Spin1Object object = new Spin1Object();
 
-        object.setClkFreq(scope.getLocalSymbol("CLKFREQ").getNumber().intValue());
-        object.setClkMode(scope.getLocalSymbol("CLKMODE").getNumber().intValue());
+        if (scope.hasSymbol("CLKFREQ")) {
+            object.setClkFreq(scope.getLocalSymbol("CLKFREQ").getNumber().intValue());
+        }
+        if (scope.hasSymbol("CLKMODE")) {
+            object.setClkMode(scope.getLocalSymbol("CLKMODE").getNumber().intValue());
+        }
 
         object.writeComment("Object header (var size " + objectVarSize + ")");
 
