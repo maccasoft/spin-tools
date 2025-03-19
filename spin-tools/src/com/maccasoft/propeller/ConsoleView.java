@@ -252,9 +252,11 @@ public class ConsoleView {
 
                                     @Override
                                     public void run() {
-                                        Shell shell = window.getShell();
-                                        MessageDialog.openError(shell, shell.getText(), "Hardware lost");
-                                        window.dispose();
+                                        if (!window.isDisposed()) {
+                                            Shell shell = window.getShell();
+                                            MessageDialog.openError(shell, shell.getText(), "Hardware lost");
+                                            window.dispose();
+                                        }
                                     }
 
                                 });
