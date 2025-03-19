@@ -1328,7 +1328,7 @@ public abstract class SourceTokenMarker {
             return proposals;
         }
 
-        int dot = filterText.indexOf(constantSeparator);
+        int dot = constantSeparator.isBlank() ? -1 : filterText.indexOf(constantSeparator);
 
         root.accept(new NodeVisitor() {
 
@@ -1358,8 +1358,8 @@ public abstract class SourceTokenMarker {
         });
 
         if (dot != -1) {
-            String refObject = dot != -1 ? filterText.substring(0, dot) : "";
-            String refName = dot != -1 ? filterText.substring(dot + 1) : filterText;
+            String refObject = filterText.substring(0, dot);
+            String refName = filterText.substring(dot + 1);
             List<IContentProposal> secondary = new ArrayList<>();
 
             root.accept(new NodeVisitor() {
