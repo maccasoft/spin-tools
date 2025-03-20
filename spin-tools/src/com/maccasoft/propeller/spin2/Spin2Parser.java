@@ -722,6 +722,10 @@ public class Spin2Parser extends Parser {
 
                 case 9:
                     local = new MethodNode.LocalVariableNode(node);
+                    if ("alignw".equalsIgnoreCase(token.getText()) || "alignl".equalsIgnoreCase(token.getText())) {
+                        local.addToken(token);
+                        break;
+                    }
                     if ("^".equals(token.getText())) {
                         Token nextToken = stream.peekNext();
                         if (token.isAdjacent(nextToken) && nextToken.type == Token.KEYWORD) {

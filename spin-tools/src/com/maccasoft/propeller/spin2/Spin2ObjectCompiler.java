@@ -1683,12 +1683,15 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
                 if (method.getParameterLongs() <= 127) {
                     String typeText = type != null ? type.getText().toUpperCase() : "LONG";
-                    LocalVariable var = method.addParameter(typeText, identifier.getText(), value);
+                    LocalVariable var = new LocalVariable(typeText, identifier.getText(), value, 1, method.getVarOffset());
+
                     Spin2Struct struct = scope.getStructureDefinition(typeText);
                     if (struct != null) {
                         compileStructureVariable(var, struct);
                     }
                     var.setData(identifier);
+
+                    method.addParameter(var);
 
                     if (method.getParameterLongs() > 127) {
                         logMessage(new CompilerException("limit of 127 parameters exceeded", identifier));
@@ -1770,12 +1773,15 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
                         if (method.getReturnLongs() <= 15) {
                             String typeText = type != null ? type.getText().toUpperCase() : "LONG";
-                            LocalVariable var = method.addReturnVariable(typeText, identifier.getText());
+                            LocalVariable var = new LocalVariable(typeText, identifier.getText(), 1, method.getVarOffset());
+
                             Spin2Struct struct = scope.getStructureDefinition(typeText);
                             if (struct != null) {
                                 compileStructureVariable(var, struct);
                             }
                             var.setData(identifier);
+
+                            method.addReturnVariable(var);
 
                             if (method.getReturnLongs() > 15) {
                                 logMessage(new CompilerException("limit of 15 results exceeded", identifier));
@@ -1813,6 +1819,21 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
             while (iter.hasNext()) {
                 Token type = null;
                 Token identifier = iter.next();
+
+                if ("alignl".equalsIgnoreCase(identifier.getText())) {
+                    method.alignLong();
+                    if (!iter.hasNext()) {
+                        logMessage(new CompilerException("expecting local variable name after '" + identifier.getText() + "'", identifier));
+                    }
+                    identifier = iter.next();
+                }
+                else if ("alignw".equalsIgnoreCase(identifier.getText())) {
+                    method.alignWord();
+                    if (!iter.hasNext()) {
+                        logMessage(new CompilerException("expecting local variable name after '" + identifier.getText() + "'", identifier));
+                    }
+                    identifier = iter.next();
+                }
 
                 if (iter.hasNext()) {
                     Token next = iter.peekNext();
@@ -1892,12 +1913,15 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
                         if (method.getLocalVariableLongs() <= 16383) {
                             String typeText = type != null ? type.getText().toUpperCase() : "LONG";
-                            LocalVariable var = method.addLocalVariable(typeText, identifier.getText(), size); // new LocalVariable(type, identifier.getText(), size, offset);
+                            LocalVariable var = new LocalVariable(typeText, identifier.getText(), size, method.getVarOffset());
+
                             Spin2Struct struct = scope.getStructureDefinition(typeText);
                             if (struct != null) {
                                 compileStructureVariable(var, struct);
                             }
                             var.setData(identifier);
+
+                            method.addLocalVariable(var);
 
                             if (method.getLocalVariableLongs() > 16383) {
                                 logMessage(new CompilerException("limit of 64Kb of local variables exceeded", identifier));
@@ -1958,8 +1982,24 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
                     int address = 0x1E0;
                     for (LocalVariable var : method.getAllLocalVariables()) {
-                        lineScope.addSymbol(var.getName(), new NumberLiteral(address));
-                        address += var.getSize();
+                        lineScope.addSymbol(var.getName(), new NumberLiteral(address) {
+
+                            @Override
+                            public Number getNumber() {
+                                if (var.getOffset() >= 0x1F0) {
+                                    throw new CompilerException("local variable must be within the first 16 longs", var.getData());
+                                }
+                                if ("BYTE".equalsIgnoreCase(var.getType()) || "WORD".equalsIgnoreCase(var.getType())) {
+                                    throw new CompilerException("local variable must be long or structure", var.getData());
+                                }
+                                if ((var.getOffset() & 3) != 0) {
+                                    throw new CompilerException("local variable must be long-aligned", var.getData());
+                                }
+                                return super.getNumber();
+                            }
+
+                        });
+                        address += (var.getTypeSize() * var.getSize() + 3) >> 2;
                         var.setCalledBy(method);
                         if (address >= 0x1F0) {
                             break;

@@ -21,6 +21,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 
 import com.maccasoft.propeller.expressions.Context;
+import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.expressions.Variable;
@@ -62,16 +63,16 @@ class Spin2BytecodeCompilerTest {
         method = new Spin2Method(context, "main");
 
         Spin2Method f2 = new Spin2Method(new Context(context), "f2");
-        f2.addParameter("LONG", "p1", null);
-        f2.addParameter("LONG", "p2", null);
+        f2.addParameter(new LocalVariable("LONG", "p1", null, 1, f2.getVarOffset()));
+        f2.addParameter(new LocalVariable("LONG", "p2", null, 1, f2.getVarOffset()));
         Method methodExpression = new Method(f2.getLabel(), f2.getParameterLongs(), f2.getReturnLongs());
         methodExpression.setData(Spin2Method.class.getName(), f2);
         context.addSymbol(f2.getLabel(), methodExpression);
 
         Spin2Method f2r = new Spin2Method(new Context(context), "f2r");
-        f2r.addParameter("LONG", "p1", null);
-        f2r.addParameter("LONG", "p2", null);
-        f2r.addReturnVariable("LONG", "r1");
+        f2r.addParameter(new LocalVariable("LONG", "p1", null, 1, f2r.getVarOffset()));
+        f2r.addParameter(new LocalVariable("LONG", "p2", null, 1, f2r.getVarOffset()));
+        f2r.addReturnVariable(new LocalVariable("LONG", "r1", 1, f2r.getVarOffset()));
         methodExpression = new Method(f2r.getLabel(), f2r.getParameterLongs(), f2r.getReturnLongs());
         methodExpression.setData(Spin2Method.class.getName(), f2r);
         context.addSymbol(f2r.getLabel(), methodExpression);

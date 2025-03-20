@@ -1212,6 +1212,10 @@ public class Spin2TokenMarker extends SourceTokenMarker {
             }
 
             for (MethodNode.LocalVariableNode child : node.getLocalVariables()) {
+                Token token = child.getToken(0);
+                if ("alignw".equalsIgnoreCase(token.getText()) || "alignl".equalsIgnoreCase(token.getText())) {
+                    tokens.add(new TokenMarker(token, TokenId.TYPE));
+                }
                 if (child.type != null) {
                     TokenId id = symbols.get(child.type.getText());
                     if (id == null) {

@@ -835,7 +835,8 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
             if (!"int".equals(type.getText()) && !"float".equals(type.getText())) {
                 throw new CompilerException("unsupported return type", type);
             }
-            method.addReturnVariable("float".equals(type.getText()) ? "FLOAT" : "LONG", "__default_return__");
+            LocalVariable var = new LocalVariable("float".equals(type.getText()) ? "FLOAT" : "LONG", "__default_return__", 1, method.getVarOffset());
+            method.addReturnVariable(var);
         }
 
         token = iter.next();
@@ -860,7 +861,8 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
             }
             Token identifier = token;
 
-            LocalVariable var = method.addParameter(paramType, identifier.getText(), null);
+            LocalVariable var = new LocalVariable(paramType, identifier.getText(), null, 1, method.getVarOffset());
+            method.addParameter(var);
             var.setData(identifier);
 
             if (!iter.hasNext()) {
@@ -972,11 +974,12 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                 varSize = buildIndexExpression(iter).getNumber().intValue();
             }
 
-            LocalVariable var = method.addLocalVariable(typeText, identifier.getText(), varSize);
+            LocalVariable var = new LocalVariable(typeText, identifier.getText(), varSize, method.getVarOffset());
             Spin2Struct memberStruct = scope.getStructureDefinition(typeText);
             if (memberStruct != null) {
                 compileStructureVariable(var, memberStruct);
             }
+            method.addLocalVariable(var);
 
             scope.addSymbol(identifier.getText(), var);
             variables.add(var);
@@ -1025,8 +1028,9 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                         }
                     }
 
-                    LocalVariable variable = method.addLocalVariable(typeText, identifierText, size.getNumber().intValue());
-                    variable.setData(identifier);
+                    LocalVariable var = new LocalVariable(typeText, identifierText, size.getNumber().intValue(), method.getVarOffset());
+                    method.addLocalVariable(var);
+                    var.setData(identifier);
 
                     boolean add = true;
                     FunctionNode functionNode = (FunctionNode) method.getData();
@@ -1133,8 +1137,9 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                     }
                     try {
                         String identifierText = identifier.getText();
-                        LocalVariable variable = method.addLocalVariable(type, identifierText, 1);
-                        variable.setData(identifier);
+                        LocalVariable var = new LocalVariable(type, identifierText, 1, method.getVarOffset());
+                        method.addLocalVariable(var);
+                        var.setData(identifier);
                     } catch (Exception e) {
                         logMessage(new CompilerException(e, identifier));
                     }

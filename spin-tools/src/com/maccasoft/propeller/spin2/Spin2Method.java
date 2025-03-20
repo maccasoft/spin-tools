@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -17,7 +17,6 @@ import org.apache.commons.collections4.iterators.ReverseListIterator;
 import org.apache.commons.lang3.BitField;
 
 import com.maccasoft.propeller.expressions.Context;
-import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.spin2.bytecode.Constant;
 
@@ -33,6 +32,8 @@ public class Spin2Method {
     List<LocalVariable> parameters;
     List<LocalVariable> returns;
     List<LocalVariable> localVariables;
+
+    int varOffset;
 
     List<Spin2MethodLine> lines = new ArrayList<>();
     public List<Spin2StatementNode> debugNodes = new ArrayList<>();
@@ -63,94 +64,34 @@ public class Spin2Method {
         return label;
     }
 
-    public LocalVariable addParameter(String type, String name, Expression value) {
-        LocalVariable var = new LocalVariable(type, name, value, 1, 0) {
+    public int getVarOffset() {
+        return varOffset;
+    }
 
-            @Override
-            public int getOffset() {
-                int offset = 0;
-
-                for (LocalVariable var : parameters) {
-                    if (var == this) {
-                        break;
-                    }
-                    offset += (var.getTypeSize() * var.getSize() + 3) & ~3;
-                }
-
-                return offset;
-            }
-
-        };
-        scope.addSymbol(name, var);
+    public void addParameter(LocalVariable var) {
+        scope.addSymbol(var.getName(), var);
         parameters.add(var);
-        return var;
+        varOffset += (var.getTypeSize() * var.getSize() + 3) & ~3;
     }
 
-    public LocalVariable addReturnVariable(String type, String name) {
-        LocalVariable var = new LocalVariable(type, name, 1, 0) {
-
-            @Override
-            public int getOffset() {
-                int offset = 0;
-
-                for (LocalVariable var : parameters) {
-                    if (var == this) {
-                        break;
-                    }
-                    offset += (var.getTypeSize() * var.getSize() + 3) & ~3;
-                }
-
-                for (LocalVariable var : returns) {
-                    if (var == this) {
-                        break;
-                    }
-                    offset += (var.getTypeSize() * var.getSize() + 3) & ~3;
-                }
-
-                return offset;
-            }
-
-        };
-        scope.addSymbol(name, var);
+    public void addReturnVariable(LocalVariable var) {
+        scope.addSymbol(var.getName(), var);
         returns.add(var);
-        return var;
+        varOffset += (var.getTypeSize() * var.getSize() + 3) & ~3;
     }
 
-    public LocalVariable addLocalVariable(String type, String name, int size) {
-        LocalVariable var = new LocalVariable(type, name, size, 0) {
-
-            @Override
-            public int getOffset() {
-                int offset = 0;
-
-                for (LocalVariable var : parameters) {
-                    if (var == this) {
-                        break;
-                    }
-                    offset += (var.getTypeSize() * var.getSize() + 3) & ~3;
-                }
-
-                for (LocalVariable var : returns) {
-                    if (var == this) {
-                        break;
-                    }
-                    offset += (var.getTypeSize() * var.getSize() + 3) & ~3;
-                }
-
-                for (LocalVariable var : localVariables) {
-                    if (var == this) {
-                        break;
-                    }
-                    offset += var.getTypeSize() * var.getSize();
-                }
-
-                return offset;
-            }
-
-        };
-        scope.addSymbol(name, var);
+    public void addLocalVariable(LocalVariable var) {
+        scope.addSymbol(var.getName(), var);
         localVariables.add(var);
-        return var;
+        varOffset += var.getTypeSize() * var.getSize();
+    }
+
+    public void alignWord() {
+        varOffset = (varOffset + 1) & ~1;
+    }
+
+    public void alignLong() {
+        varOffset = (varOffset + 3) & ~3;
     }
 
     public void register() {
