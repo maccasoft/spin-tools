@@ -76,9 +76,11 @@ import com.maccasoft.propeller.expressions.Trunc;
 import com.maccasoft.propeller.expressions.Type;
 import com.maccasoft.propeller.expressions.UnsignedDivide;
 import com.maccasoft.propeller.expressions.UnsignedModulo;
+import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.expressions.Xor;
 import com.maccasoft.propeller.expressions.Zerox;
 import com.maccasoft.propeller.model.Token;
+import com.maccasoft.propeller.spin2.Spin2Struct.Spin2StructMember;
 
 public class Spin2ExpressionBuilder {
 
@@ -624,6 +626,22 @@ public class Spin2ExpressionBuilder {
                 }
                 return expression;
             }
+            case "SIZEOF": {
+                token = next();
+                if (token == null || !"(".equals(token.getText())) {
+                    throw new CompilerException("expecting (", token == null ? tokens.get(tokens.size() - 1) : token);
+                }
+                token = next();
+                if (token == null || token.type != Token.KEYWORD) {
+                    throw new CompilerException("expecting identifier", token == null ? tokens.get(tokens.size() - 1) : token);
+                }
+                Expression expression = getSizeof(context, token.getText());
+                token = next();
+                if (token == null || !")".equals(token.getText())) {
+                    throw new CompilerException("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
+                }
+                return expression;
+            }
             default:
                 if (token.type == Token.NUMBER) {
                     if ("$".equals(token.getText())) {
@@ -637,6 +655,64 @@ public class Spin2ExpressionBuilder {
                 }
                 return new Identifier(token.getText(), context, ignoreMissing ? Long.valueOf(0) : null);
         }
+    }
+
+    Expression getSizeof(Context context, String identifier) {
+        Expression expression = context.getLocalSymbol(identifier);
+        if (expression instanceof Variable) {
+            Variable var = (Variable) expression;
+            return new NumberLiteral(var.getTypeSize() * var.getSize());
+        }
+        else if (context.hasStructureDefinition(identifier)) {
+            Spin2Struct struct = context.getStructureDefinition(identifier);
+            return new NumberLiteral(getStructureSize(context, struct));
+        }
+        else if ("BYTE".equalsIgnoreCase(identifier)) {
+            return new NumberLiteral(1);
+        }
+        else if ("WORD".equalsIgnoreCase(identifier)) {
+            return new NumberLiteral(2);
+        }
+        else if ("LONG".equalsIgnoreCase(identifier)) {
+            return new NumberLiteral(4);
+        }
+        else if ("^BYTE".equalsIgnoreCase(identifier) || "^WORD".equalsIgnoreCase(identifier) || "^LONG".equalsIgnoreCase(identifier)) {
+            return new NumberLiteral(4);
+        }
+        return null;
+    }
+
+    int getStructureSize(Context context, Spin2Struct struct) {
+        int size = 0;
+
+        for (Spin2StructMember member : struct.getMembers()) {
+            int memberSize = 1;
+            if (member.getSize() != null) {
+                memberSize = member.getSize().getNumber().intValue();
+            }
+
+            String memberType = "LONG";
+            if (member.getType() != null) {
+                memberType = member.getType().getText();
+            }
+            if ("LONG".equalsIgnoreCase(memberType)) {
+                size += 4 * memberSize;
+            }
+            else if ("WORD".equalsIgnoreCase(memberType)) {
+                size += 2 * memberSize;
+            }
+            else if ("BYTE".equalsIgnoreCase(memberType)) {
+                size += 1 * memberSize;
+            }
+            else {
+                Spin2Struct memberStruct = context.getStructureDefinition(memberType);
+                if (memberStruct != null) {
+                    size += getStructureSize(context, memberStruct) * memberSize;
+                }
+            }
+        }
+
+        return size;
     }
 
     Token peek() {
