@@ -647,6 +647,9 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                         }
                     }
                 }
+                if (parameter.count != null) {
+                    markTokens(parameter.count.getTokens(), 0, "");
+                }
             }
         }
 
