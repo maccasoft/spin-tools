@@ -1328,10 +1328,70 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                     source.addAll(compilePostEffect(context, postEffectNode, push));
                 }
             }
-            else if ("CLKFREQ".equalsIgnoreCase(node.getText())) {
-                source.add(new Bytecode(context, new byte[] {
-                    Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_read_clkfreq
-                }, node.getText().toUpperCase()));
+            else if ("CLKMODE".equalsIgnoreCase(node.getText()) || "CLKFREQ".equalsIgnoreCase(node.getText())) {
+                Spin2StatementNode indexNode = null;
+                Spin2StatementNode bitfieldNode = null;
+                Spin2StatementNode postEffectNode = null;
+
+                int n = 0;
+                if (n < node.getChildCount() && (node.getChild(n) instanceof Spin2StatementNode.Index)) {
+                    indexNode = node.getChild(n++);
+                }
+                if (n < node.getChildCount() && ".".equals(node.getChild(n).getText())) {
+                    if (node.getText().startsWith("@")) {
+                        throw new CompilerException("bitfield expression not allowed", node.getChild(n).getToken());
+                    }
+                    n++;
+                    if (n >= node.getChildCount()) {
+                        throw new RuntimeException("expected bitfield expression");
+                    }
+                    if (!(node.getChild(n) instanceof Spin2StatementNode.Index)) {
+                        throw new RuntimeException("syntax error");
+                    }
+                    bitfieldNode = node.getChild(n++);
+                }
+                if (n < node.getChildCount() && isPostEffect(node.getChild(n))) {
+                    postEffectNode = node.getChild(n++);
+                }
+                if (n < node.getChildCount()) {
+                    throw new RuntimeException("syntax error");
+                }
+
+                int bitfield = -1;
+                if (bitfieldNode != null) {
+                    bitfield = compileBitfield(context, method, bitfieldNode, source);
+                }
+
+                if ("CLKMODE".equalsIgnoreCase(node.getText())) {
+                    source.add(new Constant(context, new NumberLiteral(0x40, 16)));
+                }
+                if ("CLKFREQ".equalsIgnoreCase(node.getText())) {
+                    source.add(new Constant(context, new NumberLiteral(0x44, 16)));
+                }
+
+                if (indexNode != null) {
+                    source.addAll(compileBytecodeExpression(context, method, indexNode, true));
+                }
+
+                MemoryOp.Size ss = MemoryOp.Size.Long;
+                MemoryOp.Op op = bitfieldNode == null && postEffectNode == null ? (push ? MemoryOp.Op.Read : MemoryOp.Op.Write) : MemoryOp.Op.Setup;
+                source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, op, indexNode != null));
+
+                if (bitfieldNode != null) {
+                    source.add(new BitField(context, postEffectNode == null ? BitField.Op.Read : BitField.Op.Setup, bitfield));
+                }
+
+                if (postEffectNode != null) {
+                    compilePostEffect(context, postEffectNode, source, push);
+                    node.setReturnLongs(push ? 1 : 0);
+                }
+                else {
+                    if (!push) {
+                        logMessage(new CompilerException("expected assignment", node.getTokens()));
+                    }
+                    node.setReturnLongs(1);
+                }
+
                 return source;
             }
             else {

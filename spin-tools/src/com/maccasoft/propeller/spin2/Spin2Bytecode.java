@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -17,7 +17,9 @@ import com.maccasoft.propeller.expressions.Context;
 
 public class Spin2Bytecode {
 
-    public static final int bc_drop = 0x00; // main bytecodes
+    // main bytecodes
+
+    public static final int bc_drop = 0x00;
     public static final int bc_drop_push = 0x01;
     public static final int bc_drop_trap = 0x02;
     public static final int bc_drop_trap_push = 0x03;
@@ -220,6 +222,8 @@ public class Spin2Bytecode {
     public static final int bc_read_local_0_15 = 0xE0;
     public static final int bc_write_local_0_15 = 0xF0;
 
+    // altcodes
+
     public static final int bc_set_incdec = 0x79;
 
     public static final int bc_repeat_var_init_n = 0x7A;
@@ -335,14 +339,16 @@ public class Spin2Bytecode {
 
     public static final int bc_setup_bfield_pop = 0xDE;
     public static final int bc_setup_bfield_rfvar = 0xDF;
-    public static final int bc_setup_bfield_0_31 = 0xE0; //,32
+    public static final int bc_setup_bfield_0_31 = 0xE0;
 
-    public static final int bc_hubset = 0x54; // hub bytecodes, miscellaneous (step by 2)
+    // miscellaneous routines
+
+    public static final int bc_hubset = 0x54;
     public static final int bc_clkset = 0x56;
-    public static final int bc_read_clkfreq = 0x58;
-    public static final int bc_cogspin = 0x5A;
-    public static final int bc_cogchk = 0x5C;
-    public static final int bc_org = 0x5E;
+    public static final int bc_cogspin = 0x58;
+    public static final int bc_cogchk = 0x5A;
+    public static final int bc_org = 0x5C;
+    public static final int bc_orgh = 0x5E;
     public static final int bc_regexec = 0x60;
     public static final int bc_regload = 0x62;
     public static final int bc_call = 0x64;
@@ -374,39 +380,47 @@ public class Spin2Bytecode {
     public static final int bc_rotxy = 0x98;
     public static final int bc_polxy = 0x9A;
     public static final int bc_xypol = 0x9C;
+    public static final int bc_pinread = 0x9E;
+    public static final int bc_pinwrite = 0xA0;
+    public static final int bc_pinstart = 0xA2;
+    public static final int bc_pinclear = 0xA4;
 
-    public static final int bc_float = 0x9E; // hub bytecodes, floating point
-    public static final int bc_trunc = 0xA0;
-    public static final int bc_round = 0xA2;
-    public static final int bc_fneg = 0xA4;
-    public static final int bc_fabs = 0xA6;
-    public static final int bc_fsqrt = 0xA8;
-    public static final int bc_fadd = 0xAA;
-    public static final int bc_fsub = 0xAC;
-    public static final int bc_fmul = 0xAE;
-    public static final int bc_fdiv = 0xB0;
+    // floating-point routines
+
+    public static final int bc_float = 0xA6;
+    public static final int bc_round = 0xA8;
+    public static final int bc_trunc = 0xAA;
+    public static final int bc_nan = 0xAC;
+    public static final int bc_fneg = 0xAE;
+    public static final int bc_fabs = 0xB0;
     public static final int bc_flt = 0xB2;
     public static final int bc_fgt = 0xB4;
     public static final int bc_fne = 0xB6;
     public static final int bc_fe = 0xB8;
     public static final int bc_flte = 0xBA;
     public static final int bc_fgte = 0xBC;
-    public static final int bc_nan = 0xBE;
+    public static final int bc_fadd = 0xBE;
+    public static final int bc_fsub = 0xC0;
+    public static final int bc_fmul = 0xC2;
+    public static final int bc_fdiv = 0xC4;
+    public static final int bc_pow = 0xC6;
+    public static final int bc_log2 = 0xC8;
+    public static final int bc_log10 = 0xCA;
+    public static final int bc_log = 0xCC;
+    public static final int bc_exp2 = 0xCE;
+    public static final int bc_exp10 = 0xD0;
+    public static final int bc_exp = 0xD2;
+    public static final int bc_fsqrt = 0xD4;
 
-    public static final int bc_pinread = 0xC0;
-    public static final int bc_pinwrite = 0xC2;
-    public static final int bc_pinstart = 0xC4;
-    public static final int bc_pinclear = 0xC6;
+    // multitasking routines
 
-    public static final int bc_taskspin = 0xC8;
-    public static final int bc_taskstop = 0xCA;
-    public static final int bc_taskhalt = 0xCC;
-    public static final int bc_taskcont = 0xCE;
-    public static final int bc_taskchk = 0xD0;
-    public static final int bc_taskid = 0xD2;
-    public static final int bc_task_return = 0xD4;
-
-    public static final int bc_orgh = 0xD6;
+    public static final int bc_taskspin = 0xD6;
+    public static final int bc_taskstop = 0xD8;
+    public static final int bc_taskhalt = 0xDA;
+    public static final int bc_taskcont = 0xDC;
+    public static final int bc_taskchk = 0xDE;
+    public static final int bc_taskid = 0xE0;
+    public static final int bc_task_return = 0xE2;
 
     public static class Descriptor {
         public byte[] code;

@@ -1,4 +1,4 @@
-{Spin2_v50}
+{Spin2_v51}
 CON ' Constants
 
     _CLKFREQ = 160_000_000
@@ -15,4 +15,3 @@ PUB start()
         ' Loop
 
 DAT ' Data
-        

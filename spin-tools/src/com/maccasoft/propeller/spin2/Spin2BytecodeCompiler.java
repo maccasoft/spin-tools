@@ -1015,16 +1015,6 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 return source;
             }
 
-            if ("CLKFREQ".equalsIgnoreCase(node.getText()) && node.getChildCount() == 0) {
-                source.add(new Bytecode(context, new byte[] {
-                    Spin2Bytecode.bc_hub_bytecode, Spin2Bytecode.bc_read_clkfreq
-                }, node.getText().toUpperCase()));
-                if (!push) {
-                    logMessage(new CompilerException("expected assignment", node.getTokens()));
-                }
-                node.setReturnLongs(1);
-                return source;
-            }
             if ("CLKMODE".equalsIgnoreCase(node.getText()) || "CLKFREQ".equalsIgnoreCase(node.getText())) {
                 Spin2StatementNode indexNode = null;
                 Spin2StatementNode bitfieldNode = null;

@@ -1,7 +1,7 @@
 'TESTT add registers stack_start (on launch) and stack_max (on call or return) to track stack size for allocation need
 
 '******************************************
-'*  Spin2 Interpreter - v49 - 2025.02.16  *
+'*  Spin2 Interpreter - v51 - 2025.04.02  *
 '******************************************
 '
 CON     bc_setup_reg_1D8_1F8    = $B0
@@ -65,10 +65,10 @@ pri_sendb       byte    0                               'no locals              
 
 bc_hubset       word    @hubset_        'HUBSET(val)                            $54     miscellaneous routines
 bc_clkset       word    @clkset_        'CLKSET(clkmode,clkfreq)                $56     (use ctrl-l to determine address)
-bc_read_clkfreq word    @read_clkfreq   'CLKFREQ                        (push)  $58
-bc_cogspin      word    @cogspin_       'COGSPIN(cog,method(params),stackaddr)  $5A
-bc_cogchk       word    @cogchk_        'COGCHK(cog)                    (push)  $5C
-bc_org          word    @inline         'ORG inline pasm code                   $5E
+bc_cogspin      word    @cogspin_       'COGSPIN(cog,method(params),stackaddr)  $58
+bc_cogchk       word    @cogchk_        'COGCHK(cog)                    (push)  $5A
+bc_org          word    @inline         'ORG inline pasm code                   $5C
+bc_orgh         word    @inline         'ORGH inline pasm code                  $5E
 bc_regexec      word    @regexec_       'REGEXEC(hubadr)                        $60
 bc_regload      word    @regload_       'REGLOAD(hubadr)                        $62
 bc_call         word    @call_          'CALL(anyadr)                           $64
@@ -100,39 +100,43 @@ bc_qcos         word    @qsin_          'QCOS(rho,theta,twopi)          (push)  
 bc_rotxy        word    @rotxy_         'ROTXY(x,y,t)                   (push2) $98     (<bc_polxy)
 bc_polxy        word    @polxy_         'POLXY(r,t)                     (push2) $9A     (=bc_polxy)
 bc_xypol        word    @polxy_         'XYPOL(x,y)                     (push2) $9C     (>bc_polxy)
+bc_pinread      word    @pinread_       'PINREAD(pins)                  (push)  $9E
+bc_pinwrite     word    @pinwrite_      'PINWRITE(pins,val)                     $A0
+bc_pinstart     word    @pinstart_      'PINSTART(pins,mode,xval,yval)          $A2
+bc_pinclear     word    @pinclear_      'PINCLEAR(pins)                         $A4
 
-bc_float        word    @float_         'FLOAT(integer)                 (push)  $9E     floating-point routines
-bc_trunc        word    @round_         'TRUNC(float)                   (push)  $A0     (bit1=0)
-bc_round        word    @round_         'ROUND(float)                   (push)  $A2     (bit1=1)
-bc_fneg         word    @fneg_          '-. float                       (push)  $A4
-bc_fabs         word    @fabs_          'FABS(float)                    (push)  $A6
-bc_fsqrt        word    @fsqrt_         'FSQRT(float)                   (push)  $A8
-bc_fadd         word    @fadd_          'float +. float                 (push)  $AA
-bc_fsub         word    @fsub_          'float -. float                 (push)  $AC
-bc_fmul         word    @fmul_          'float *. float                 (push)  $AE
-bc_fdiv         word    @fdiv_          'float /. float                 (push)  $B0
-bc_flt          word    @frel_          'float <.  float                (push)  $B2     (bit3..1=001)
-bc_fgt          word    @frel_          'float >.  float                (push)  $B4     (bit3..1=010)
+bc_float        word    @float_         'FLOAT(integer)                 (push)  $A6     floating-point routines
+bc_round        word    @round_         'ROUND(float)                   (push)  $A8     (bit1=0)
+bc_trunc        word    @round_         'TRUNC(float)                   (push)  $AA     (bit1=1)
+bc_nan          word    @nan_           'NAN(float)                     (push)  $AC
+bc_fneg         word    @fneg_          '-. float                       (push)  $AE
+bc_fabs         word    @fabs_          'FABS float                     (push)  $B0
+bc_flt          word    @frel_          'float <. float                 (push)  $B2     (bit3..1=001)
+bc_fgt          word    @frel_          'float >. float                 (push)  $B4     (bit3..1=010)
 bc_fne          word    @frel_          'float <>. float                (push)  $B6     (bit3..1=011)
 bc_fe           word    @frel_          'float ==. float                (push)  $B8     (bit3..1=100)
 bc_flte         word    @frel_          'float <=. float                (push)  $BA     (bit3..1=101)
 bc_fgte         word    @frel_          'float >=. float                (push)  $BC     (bit3..1=110)
-bc_nan          word    @nan_           'NAN(float)                     (push)  $BE
+bc_fadd         word    @fadd_          'float +. float                 (push)  $BE
+bc_fsub         word    @fsub_          'float -. float                 (push)  $C0
+bc_fmul         word    @fmul_          'float *. float                 (push)  $C2
+bc_fdiv         word    @fdiv_          'float /. float                 (push)  $C4
+bc_pow          word    @fpow_          'floatx POW floaty              (push)  $C6     (<bc_log2)
+bc_log2         word    @flog_          'LOG2 float                     (push)  $C8     (<bc_log10)
+bc_log10        word    @flog_          'LOG10 float                    (push)  $CA     (=bc_log10)
+bc_log          word    @flog_          'LOG float                      (push)  $CC     (>bc_log10)
+bc_exp2         word    @fexp_          'EXP2 float                     (push)  $CE     (<bc_exp10)
+bc_exp10        word    @fexp_          'EXP10 float                    (push)  $D0     (=bc_exp10)
+bc_exp          word    @fexp_          'EXP float                      (push)  $D2     (>bc_exp10)
+bc_fsqrt        word    @fsqrt_         'FSQRT float                    (push)  $D4
 
-bc_pinread      word    @pinread_       'PINREAD(pins)                  (push)  $C0     pin routines
-bc_pinwrite     word    @pinwrite_      'PINWRITE(pins,val)                     $C2
-bc_pinstart     word    @pinstart_      'PINSTART(pins,mode,xval,yval)          $C4
-bc_pinclear     word    @pinclear_      'PINCLEAR(pins)                         $C6
-
-bc_taskspin     word    @taskspin_      'TASKSPIN(task,method(pars),stackaddr)  $C8     multitasking routines
-bc_taskstop     word    @taskctrl_      'TASKSTOP(task)                         $CA
-bc_taskhalt     word    @taskctrl_      'TASKHALT(task)                         $CC
-bc_taskcont     word    @taskctrl_      'TASKCONT(task)                         $CE
-bc_taskchk      word    @taskctrl_      'TASKCHK(task)                          $D0
-bc_taskid       word    @taskid_        'TASKID()                       (push)  $D2
-bc_task_return  word    @task_return_   'task return, stops task or cog         $D4
-
-bc_orgh         word    @inline         'ORGH inline pasm code                  $D6
+bc_taskspin     word    @taskspin_      'TASKSPIN(task,method(pars),stackaddr)  $D6     multitasking routines
+bc_taskstop     word    @taskctrl_      'TASKSTOP(task)                         $D8
+bc_taskhalt     word    @taskctrl_      'TASKHALT(task)                         $DA
+bc_taskcont     word    @taskctrl_      'TASKCONT(task)                         $DC
+bc_taskchk      word    @taskctrl_      'TASKCHK(task)                          $DE
+bc_taskid       word    @taskid_        'TASKID()                       (push)  $E0
+bc_task_return  word    @task_return_   'task return, stops task or cog         $E2
 
                 alignl                  'long-align for rest of interpreter
 '
@@ -1911,13 +1915,6 @@ _debugnop3_     dirl    #63-63                  '(these 3 are NOP'd by compiler 
         _ret_   wrlong  y,#@clkmode_hub
 '
 '
-' Read CLKFREQ
-'
-read_clkfreq    pusha   x
-
-        _ret_   rdlong  x,#@clkfreq_hub
-'
-'
 ' COGSPIN(cog,method(parameters),stackaddr)
 '
 ' compile sequence:
@@ -2466,6 +2463,38 @@ pinclear_       fltl    x                       'float pin to put smart pin in r
 '************************************************
 '
 '
+' FLOAT(integer)        integer ma --> float ma
+'
+float_          mov     na,#0                   'clear NaN
+                abs     ma              wc      'get sign, make integer absolute
+                wrc     sa                      'set sign
+                encod   xa,ma                   'get exponent
+                ror     ma,xa                   'bit29-justify mantissa
+                ror     ma,#1
+                shr     ma,#2
+
+                jmp     #packf                  'pack result
+'
+'
+' ROUND(float)          float ma --> integer ma
+' TRUNC(float)          float ma --> integer ma
+'
+round_          call    #unpackf                'unpack float
+
+                add     xa,#1                   'if exponent < -1 or exponent > 30 then return zero
+                cmp     xa,#32          wc
+        if_nc   mov     ma,#0
+
+                shl     ma,#31-29
+                subr    xa,#31
+                shr     ma,xa
+                testbn  pa,#1           wc      'TRUNC or ROUND?
+        if_c    add     ma,#1
+                shr     ma,#1
+                testb   sa,#0           wc
+        _ret_   negc    ma
+'
+'
 ' NAN(float)            float ma --> boolean x
 '
 nan_            call    #unpackf                'unpack float
@@ -2478,32 +2507,41 @@ nan_            call    #unpackf                'unpack float
 fneg_   _ret_   bitnot  ma,#31                  'negate float
 '
 '
-' FABS(float)           float ma --> float ma
+' FABS float            float ma --> float ma
 '
 fabs_   _ret_   bitl    ma,#31                  'absolutize float
 '
 '
-' FSQRT(float)          float ma --> float ma
+' 001: float <.  float  --> boolean x
+' 010: float >.  float  --> boolean x
+' 011: float <>. float  --> boolean x
+' 100: float ==. float  --> boolean x
+' 101: float <=. float  --> boolean x
+' 110: float >=. float  --> boolean x
 '
-fsqrt_          call    #unpackf                'unpack float
+frel_           popa    w                       'pop left-side float
 
-                tjz     ma,#fabs_               'if mantissa zero, got result, use _ret_ in FABS
+                bitl    w,#31           wcz     'make left side comparable, converts -0.0 to 0.0
+                cmp     w,##$7F800001   wc      'NaN?
+        if_nc   skip    #%1111                  'if NaN, return false
+        if_z    neg     w                       '+/- %0_xxxxxxxx_mmmmmmmmmmmmmmmmmmmmmmm
 
-                or      na,sa                   'if negative, result = NaN
+                bitl    x,#31           wcz     'make right side comparable, converts -0.0 to 0.0
+                cmp     x,##$7F800001   wc      'NaN?
+        if_nc   skip    #%111111                'if NaN, return false
+        if_z    neg     x                       '+/- %0_xxxxxxxx_mmmmmmmmmmmmmmmmmmmmmmm
 
-                sar     xa,#1           wc      'halve root exponent
-        if_nc   shr     ma,#1                   'if exponent was even, shift mantissa down
-                sub     xa,#1                   'decrement to account for bit29 justification
+                cmps    w,x             wcz     'do comparison
+        if_z    mov     y,#%1000                'equal?
+        if_nz   mov     y,#%0100                'above?
+        if_c    mov     y,#%0010                'below?
+                test    y,pa            wc      'test mask
 
-                rep     @.stall,#1              'use REP to stall interrupts to protect cordic operation
-                qsqrt   #0,ma                   'compute square root of mantissa
-                getqx   ma
-.stall
-                jmp     #packf                  'pack result
+        _ret_   muxc    x,_FFFFFFFF             'return boolean
 '
 '
-' float -. float
-' float +. float
+' float -. float        float ma,mb --> float ma
+' float +. float        float ma,mb --> float ma
 '
 fsub_           bitnot  ma,#31                  'negate right-hand float
 
@@ -2534,10 +2572,10 @@ fadd_           call    #unpackf2               'unpack two floats
                 jmp     #packf                  'pack result
 '
 '
-' float *. float
+' float *. float        float ma,mb --> float ma
 '
 fmul_           call    #unpackf2               'unpack two floats
-
+fmul_u
                 or      na,nb                   'if either NaN, result NaN
 
                 xor     sa,sb                   'xor signs
@@ -2552,7 +2590,7 @@ fmul_           call    #unpackf2               'unpack two floats
                 jmp     #packf                  'pack result
 '
 '
-' float /. float
+' float /. float        float ma,mb --> float ma
 '
 fdiv_           call    #unpackf2               'unpack two floats
 
@@ -2575,63 +2613,112 @@ fdiv_           call    #unpackf2               'unpack two floats
                 jmp     #packf                  'pack result
 '
 '
-' 001: float <.  float           --> boolean x
-' 010: float >.  float           --> boolean x
-' 011: float <>. float           --> boolean x
-' 100: float ==. float           --> boolean x
-' 101: float <=. float           --> boolean x
-' 110: float >=. float           --> boolean x
+' LOG2 float            float ma --> float ma
+' LOG10 float           float ma --> float ma
+' LOG float             float ma --> float ma
 '
-frel_           popa    w                       'pop left-side float
+flog_           call    #unpackf                'unpack float
+flog_u
+                or      na,sa                   'if negative, result NaN
+                test    ma              wz      'if zero, result NaN
+        if_z    mov     na,#1
 
-                bitl    w,#31           wcz     'make left-side comparable
-                cmp     w,##$7F800001   wc      'NaN?
-        if_nc   skip    #%1111                  'if NaN, return false
-        if_z    neg     w                       '+/- %0_xxxxxxxx_mmmmmmmmmmmmmmmmmmmmmmm
+                rep     @.stall,#1              'use REP to stall interrupts to protect cordic operation
+                qlog    ma                      'compute log2 of mantissa
+                getqx   ma
+                shl     ma,#5                   'bit31-justify log of mantissa
+.stall
+                cmps    xa,#0           wc      'if exponent < 0
+        if_c    mov     sa,#1                   '..set sign bit
+        if_c    not     xa                      '..not exponent (avoids dead spot at +/-0)
+        if_c    not     ma                      '..not mantissa (inverts value)
 
-                bitl    x,#31           wcz     'make right-side comparable
-                cmp     x,##$7F800001   wc      'NaN?
-        if_nc   skip    #%111111                'if NaN, return false
-        if_z    neg     x                       '+/- %0_xxxxxxxx_mmmmmmmmmmmmmmmmmmmmmmm
+                encod   w,xa                    'get number of exponent bits to head mantissa
+                add     w,#1                    'add 1 for 1..8 bits
+                shr     ma,w                    'make room at mantissa head for exponent bit(s)
+                ror     xa,w                    'get exponent bit(s) into head position
+                or      ma,xa                   'place exponent bit(s) at head of mantissa
+                mov     xa,w                    'set exponent to number of exponent bits (1..8)
+                shr     ma,#3                   'bit28-justify mantissa
 
-                cmps    w,x             wcz     'do comparison
-        if_z    mov     y,#%1000                'equal?
-        if_nz   mov     y,#%0100                'above?
-        if_c    mov     y,#%0010                'below?
-                test    y,pa            wc      'test mask
-
-        _ret_   muxc    x,_FFFFFFFF             'return boolean
-'
-'
-' TRUNC(float)          float ma --> integer ma
-' ROUND(float)          float ma --> integer ma
-'
-round_          call    #unpackf                'unpack float
-
-                add     xa,#1                   'if exponent < -1 or exponent > 30 then return zero
-                cmp     xa,#32          wc
-        if_nc   mov     ma,#0
-
-                shl     ma,#31-29
-                subr    xa,#31
-                shr     ma,xa
-                testb   pa,#1           wc      'TRUNC or ROUND?
-        if_c    add     ma,#1
-                shr     ma,#1
-                testb   sa,#0           wc
-        _ret_   negc    ma
+                cmp     pa,#bc_log10    wcz     'log10 or log scale adjustment needed?
+        if_0x   rep     @.stall2,#1             'use REP to stall interrupts to protect cordic operation
+        if_01   qmul    ma,##$4D104D42          '2^32 * (log10(2.0) = 0.3010299957)
+        if_00   qmul    ma,##$B17217F8          '2^32 * (log(2.0) = 0.6931471806)
+        if_0x   getqy   ma                      'get scaled result
+.stall2
+                jmp     #packf                  'pack result
 '
 '
-' FLOAT(integer)        integer ma --> float ma
+' floatx POW floaty     float ma,mb --> float ma
+' EXP2 float            float ma --> float ma
+' EXP10 float           float ma --> float ma
+' EXP float             float ma --> float ma
 '
-float_          mov     na,#0                   'clear NaN
-                abs     ma              wc      'get sign, make integer absolute
-                wrc     sa                      'set sign
-                encod   xa,ma                   'get exponent
-                ror     ma,xa                   'bit29-justify mantissa
-                ror     ma,#1
-                shr     ma,#2
+fpow_           call    #unpackf2               'unpack floaty into nb/sb/xb/mb, floatx into na/sa/xa/ma
+                call    #flog_u                 'get log2 of floatx (skip unpack)
+                call    #unpackf                'unpack log2 result
+                call    #fmul_u                 'multiply by floaty (skip unpack), then do exp2 on product
 
+fexp_           call    #unpackf                'unpack float
+
+                cmp     pa,#bc_exp10    wcz     'exp10 or exp scale adjustment needed?
+        if_0x   shl     ma,#2                   'preshift mantissa by two to get 2^32 scaled result
+        if_0x   rep     @.stall,#1              'use REP to stall interrupts to protect cordic operation
+        if_01   qmul    ma,##$D49A784C          '2^30 * (1.0 / log10(2.0) = 3.321928095)
+        if_00   qmul    ma,##$5C551D95          '2^30 * (1.0 / log(2.0) = 1.442695041)
+        if_0x   getqy   ma                      'get scaled result
+.stall
+                encod   w,ma                    'bit31-justify mantissa, adjusting exponent
+                subr    w,#31
+                shl     ma,w
+                sub     xa,w                    'exponent is now off by -2, compensated for in next ADD
+
+                add     xa,#1+2                 'get number of whole exponent bits (1..8) in mantissa head
+                cmps    xa,#8           wcz     'if > 8 exponent bits, result NaN
+        if_a    mov     na,#1
+                cmps    xa,#1           wc      'c=0 if 1..8 whole exponent bits are in mantissa head
+
+                neg     w,xa                    'get negated exponent for right shifting
+
+        if_nc   mov     y,ma                    'extract 1..8 whole exponent bits from mantissa head
+        if_nc   shr     y,w
+        if_nc   shl     ma,xa                   'bit31-justify remaining fractional exponent in mantissa
+        if_nc   mov     xa,y                    'set exponent to extracted bits
+
+        if_c    shr     ma,w                    'no whole exponent bits, shift fractional exponent right
+        if_c    mov     xa,#0                   'set exponent to 0
+
+                bitl    sa,#0           wcz     'if sign bit set (clear sign bit)
+        if_c    not     xa                      '..not exponent (avoids dead spot at +/-0)
+        if_c    not     ma                      '..not mantissa (inverts value)
+
+                shr     ma,#5                   'ready to make bit29-justified exp2 value
+                or      ma,##29<<27
+
+                rep     @.stall2,#1             'use REP to stall interrupts to protect cordic operation
+                qexp    ma                      'compute exp2 of mantissa
+                getqx   ma
+.stall2
+                jmp     #packf                  'pack result
+'
+'
+' FSQRT float           float ma --> float ma
+'
+fsqrt_          call    #unpackf                'unpack float
+
+                tjz     ma,#fabs_               'if mantissa zero, got result, use _ret_ in FABS
+
+                or      na,sa                   'if negative, result NaN
+
+                sar     xa,#1           wc      'halve root exponent
+        if_nc   shr     ma,#1                   'if exponent was even, shift mantissa down
+                sub     xa,#1                   'decrement to account for bit29 justification
+
+                rep     @.stall,#1              'use REP to stall interrupts to protect cordic operation
+                qsqrt   #0,ma                   'compute square root of mantissa
+                getqx   ma
+.stall
                 jmp     #packf                  'pack result
 '
 '
@@ -2682,11 +2769,7 @@ packf           testbn  na,#0           wc      'if NaN, result $FFFFFFFF (c=0 i
                 ror     ma,y                    'msb-justify mantissa without leading 1
                 bitl    ma,#0                   'clear leading 1 now in lsb
 
-                mov     mb,ma                   'check if mantissa is even with 0.500 fraction
-                zerox   mb,#9           wc      'clear msb's, c=0 for addx in case no rounding
-                cmp     mb,#%0100000000 wz      'even with 0.500 fraction?
-        if_nz   add     ma,#%0100000000 wc      'if not, round up mantissa by 0.500
-
+                add     ma,#$100        wc      'round up mantissa by 0.5
                 addx    xa,y                    'adjust exponent and account for rounding overflow
                 add     xa,#127-29              'bias exponent
 

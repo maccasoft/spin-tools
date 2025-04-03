@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -22,9 +22,9 @@ public class Spin2Interpreter {
     static final int _clkmode_hub = 0x0040;
     static final int _clkfreq_hub = 0x0044;
 
-    static final int _debugnop1 = 0x00F20;
-    static final int _debugnop2 = 0x00F24;
-    static final int _debugnop3 = 0x00F28;
+    static final int _debugnop1 = 0x00F2C;
+    static final int _debugnop2 = 0x00F30;
+    static final int _debugnop3 = 0x00F34;
 
     int[] debugnop = new int[3];
 

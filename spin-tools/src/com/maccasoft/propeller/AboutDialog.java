@@ -114,7 +114,7 @@ public class AboutDialog extends Dialog {
         final String ourLink = "https://www.maccasoft.com/";
         final String message = title + "\r\n" + "Copyright (c) 2021-25 " + our + " and others. All rights reserved.\r\n"
             + "\r\n"
-            + "Spin2 Interpreter: v49 - 2025.02.16\r\n"
+            + "Spin2 Interpreter: v51 - 2025.04.02\r\n"
             + "\r\n"
             + "This program and the accompanying materials, unless otherwise specified,\r\n"
             + "are made available under the terms of the " + epl + ".\r\n"
