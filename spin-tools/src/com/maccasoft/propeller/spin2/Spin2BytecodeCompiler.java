@@ -2346,7 +2346,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     else {
                         ByteArrayOutputStream os = new ByteArrayOutputStream();
                         os.write(Spin2Bytecode.bc_pop_rfvar);
-                        os.write(Constant.wrVars(pop));
+                        os.write(Constant.wrVars(pop - 4));
                         source.add(new Bytecode(context, os.toByteArray(), String.format("POP %d", pop)));
                     }
                 } catch (Exception e) {

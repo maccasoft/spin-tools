@@ -97,6 +97,10 @@ public class Spin2StatementNode {
     public List<Token> getTokens() {
         List<Token> list = new ArrayList<>();
 
+        if (firstToken != null) {
+            list.add(firstToken);
+        }
+
         list.add(token);
 
         int i = 0;
