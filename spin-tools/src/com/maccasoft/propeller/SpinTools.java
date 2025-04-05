@@ -2367,8 +2367,25 @@ public class SpinTools {
         SimpleDateFormat dateTimeFormat = new SimpleDateFormat("EEEE, LLLL d, yyyy 'at' HH:mm", Locale.US);
 
         String rootFileName = editorTab.getText();
-        String archiveName = String.format("%s - Archive [Date %s Time %s].zip",
-            rootFileName.substring(0, rootFileName.lastIndexOf('.')),
+
+        String processor;
+        if (rootFileName.toLowerCase().endsWith(".spin")) {
+            processor = "P1";
+        }
+        else if (rootFileName.toLowerCase().endsWith(".spin2")) {
+            processor = "P2";
+        }
+        else {
+            processor = "C";
+        }
+
+        if (rootFileName.indexOf('.') != -1) {
+            rootFileName = rootFileName.substring(0, rootFileName.lastIndexOf('.'));
+        }
+
+        String archiveName = String.format("%s - %s - Archive [Date %s Time %s].zip",
+            rootFileName,
+            processor,
             dateFormat.format(now),
             timeFormat.format(now));
 
@@ -2421,7 +2438,7 @@ public class SpinTools {
                 StringBuilder sb = new StringBuilder();
                 sb.append("----------------------------------");
                 sb.append(System.lineSeparator());
-                sb.append("Parallax Propeller Project Archive");
+                sb.append("Parallax Propeller " + processor + " Project Archive");
                 sb.append(System.lineSeparator());
                 sb.append("----------------------------------");
                 sb.append(System.lineSeparator());
