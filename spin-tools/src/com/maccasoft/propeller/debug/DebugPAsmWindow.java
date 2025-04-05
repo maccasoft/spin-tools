@@ -342,13 +342,10 @@ public class DebugPAsmWindow {
     Canvas canvas;
 
     Font font;
-    Image image;
     Image baseImage;
     Image regMapImage;
     Image lutMapImage;
     Image hubMapImage;
-
-    GC imageGc;
 
     int COGN, BRKCZ, BRKC, BRKZ, CTH2, CTL2;
     int IRET, FPTR, PTRA, PTRB, FREQ, COND;
@@ -621,8 +618,7 @@ public class DebugPAsmWindow {
             @Override
             public void paintControl(PaintEvent e) {
                 e.gc.setAdvanced(true);
-                e.gc.setInterpolation(SWT.NONE);
-                e.gc.drawImage(image, 0, 0);
+                paint(e.gc);
                 pendingPaint.set(false);
             }
 
@@ -632,8 +628,6 @@ public class DebugPAsmWindow {
 
             @Override
             public void widgetDisposed(DisposeEvent e) {
-                image.dispose();
-                imageGc.dispose();
                 baseImage.dispose();
             }
 
@@ -1154,9 +1148,6 @@ public class DebugPAsmWindow {
         ButtonMain = boxBoundary(bMAINl, bMAINt, bMAINw, bMAINh, 1);
         ButtonGo = boxBoundary(bGOl, bGOt, bGOw, bGOh, 1);
 
-        image = new Image(display, new ImageData(imageSize.x, imageSize.y, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF)));
-        imageGc = new GC(image);
-
         regMapImage = new Image(display, new ImageData(32, 512, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF)));
         lutMapImage = new Image(display, new ImageData(32, 512, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF)));
         hubMapImage = new Image(display, new ImageData(HUB_MAP_WIDTH, HUB_MAP_HEIGHT, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF)));
@@ -1475,8 +1466,6 @@ public class DebugPAsmWindow {
             return;
         }
 
-        updateBitmap();
-
         if (!pendingPaint.getAndSet(true)) {
             display.asyncExec(new Runnable() {
 
@@ -1492,27 +1481,26 @@ public class DebugPAsmWindow {
         }
     }
 
-    void updateBitmap() {
+    void paint(GC gc) {
         //Color i;
 
         try {
-            imageGc.setAdvanced(true);
-            imageGc.setAntialias(SWT.ON);
-            imageGc.setTextAntialias(SWT.ON);
-            imageGc.setInterpolation(SWT.NONE);
-            imageGc.setFont(font);
+            gc.setAdvanced(true);
+            gc.setAntialias(SWT.ON);
+            gc.setTextAntialias(SWT.ON);
+            gc.setFont(font);
 
-            imageGc.drawImage(baseImage, 0, 0);
+            gc.drawImage(baseImage, 0, 0);
 
             // Draw C flag
-            drawText(imageGc, CFl + 2, CFt, cData, "" + (char) ((IRET >> 31 & 1) + '0'));
+            drawText(gc, CFl + 2, CFt, cData, "" + (char) ((IRET >> 31 & 1) + '0'));
             // Draw Z flag
-            drawText(imageGc, ZFl + 2, ZFt, cData, "" + (char) ((IRET >> 30 & 1) + '0'));
+            drawText(gc, ZFl + 2, ZFt, cData, "" + (char) ((IRET >> 30 & 1) + '0'));
             // Draw PC
-            drawText(imageGc, PCl + 3, PCt, cData, String.format("%05X", IRET & 0xFFFFF));
+            drawText(gc, PCl + 3, PCt, cData, String.format("%05X", IRET & 0xFFFFF));
             //// Draw SKIP/SKIPF
             if (((BRKC >> 27) & 1) == 0) {
-                drawText(imageGc, SKIPl + 4, SKIPt, cName, "F");
+                drawText(gc, SKIPl + 4, SKIPt, cName, "F");
             }
             int CallDepth = (BRKC >> 28) & 0xF;
             boolean SkipOn = (execMode == 0) && (CallDepth == 0);
@@ -1522,7 +1510,7 @@ public class DebugPAsmWindow {
             else {
             i = cDataDim;
             }*/
-            drawRegBin(imageGc, SKIPl + 6, SKIPt, BRKZ, SkipOn ? cData : cDataDim);
+            drawRegBin(gc, SKIPl + 6, SKIPt, BRKZ, SkipOn ? cData : cDataDim);
             /*if (!SkipOn) {
             String s;
             if ((ExecMode == 0) && (CallDepth != 0)) {
@@ -1534,69 +1522,69 @@ public class DebugPAsmWindow {
             drawText(gc, SKIPl + 15 - (s.length() + 1) >> 1, SKIPt, cData, "Suspended during " + s);
             }*/
             // Draw XBYTE
-            drawText(imageGc, XBYTEl + 6, XBYTEt, cData, String.format("%03X", (BRKC >> 16) & 0x1FF));
+            drawText(gc, XBYTEl + 6, XBYTEt, cData, String.format("%03X", (BRKC >> 16) & 0x1FF));
             if (((BRKC >> 25) & 1) != 0) {
-                drawText(imageGc, XBYTEl + 10, XBYTEt, cIndicator, "\u2713");
+                drawText(gc, XBYTEl + 10, XBYTEt, cIndicator, "\u2713");
             }
             // Draw CT
-            drawText(imageGc, CTl + 3, CTt, cData, String.format("%08X %08X", CTH2, CTL2));
+            drawText(gc, CTl + 3, CTt, cData, String.format("%08X %08X", CTH2, CTL2));
             // Draw special function registers
             for (int i = 0; i < 16; i++) {
-                drawText(imageGc, SFRl + 10, SFRt + (i << 1), cData, String.format("%08X", cogImage[0x1F0 + i]));
+                drawText(gc, SFRl + 10, SFRt + (i << 1), cData, String.format("%08X", cogImage[0x1F0 + i]));
             }
             // Draw events
             for (int i = 0; i < 16; i++) {
-                drawText(imageGc, EVENTl + 4, EVENTt + (i << 1), cData, "" + (char) ('0' + ((BRKC >> i) & 1)));
+                drawText(gc, EVENTl + 4, EVENTt + (i << 1), cData, "" + (char) ('0' + ((BRKC >> i) & 1)));
             }
             // Draw execution mode
-            drawText(imageGc, EXECl, EXECt + 2, cData2, ModeName[execMode]);
+            drawText(gc, EXECl, EXECt + 2, cData2, ModeName[execMode]);
             // Draw STACK
             for (int i = 0; i < STK.length; i++) {
-                drawText(imageGc, STACKl + 6 + i * 9, STACKt, cData, String.format("%08X", STK[i]));
+                drawText(gc, STACKl + 6 + i * 9, STACKt, cData, String.format("%08X", STK[i]));
             }
             // Draw interrupts
-            drawInt(imageGc, INTl, INTt + (0 << 1), 1);
-            drawInt(imageGc, INTl, INTt + (1 << 1), 2);
-            drawInt(imageGc, INTl, INTt + (2 << 1), 3);
+            drawInt(gc, INTl, INTt + (0 << 1), 1);
+            drawInt(gc, INTl, INTt + (1 << 1), 2);
+            drawInt(gc, INTl, INTt + (2 << 1), 3);
             // Draw RFxx/WFxx, PTRA, PTRB
-            drawText(imageGc, PTRl, PTRt, cName, ((BRKCZ >> 20) & 1) != 0 ? "W" : "R");
-            drawPtrBytes(imageGc, PTRl, PTRt + (0 << 1), FPTR, buffFptr);
-            drawPtrBytes(imageGc, PTRl, PTRt + (1 << 1), cogImage[0x1F8], buffPtra);
-            drawPtrBytes(imageGc, PTRl, PTRt + (2 << 1), cogImage[0x1F9], buffPtrb);
+            drawText(gc, PTRl, PTRt, cName, ((BRKCZ >> 20) & 1) != 0 ? "W" : "R");
+            drawPtrBytes(gc, PTRl, PTRt + (0 << 1), FPTR, buffFptr);
+            drawPtrBytes(gc, PTRl, PTRt + (1 << 1), cogImage[0x1F8], buffPtra);
+            drawPtrBytes(gc, PTRl, PTRt + (2 << 1), cogImage[0x1F9], buffPtrb);
             // Draw INIT, STALLI, STR, MOD, LUTS
             if (((BRKCZ >> 23) & 1) != 0) {
-                drawText(imageGc, STATUSl + 1, STATUSt - 1 + q3, cIndicator, "INIT");
+                drawText(gc, STATUSl + 1, STATUSt - 1 + q3, cIndicator, "INIT");
             }
             if (((BRKCZ >> 1) & 1) != 0) {
-                drawText(imageGc, STATUSl, STATUSt + 1 + q1, cIndicator, "STALLI");
+                drawText(gc, STATUSl, STATUSt + 1 + q1, cIndicator, "STALLI");
             }
             if (((BRKCZ >> 21) & 1) != 0) {
-                drawText(imageGc, STATUSl - 1 + q3, STATUSt + 2 + q3, cIndicator, "STR");
+                drawText(gc, STATUSl - 1 + q3, STATUSt + 2 + q3, cIndicator, "STR");
             }
             if (((BRKCZ >> 22) & 1) != 0) {
-                drawText(imageGc, STATUSl + 3 + q1, STATUSt + 2 + q3, cIndicator, "MOD");
+                drawText(gc, STATUSl + 3 + q1, STATUSt + 2 + q3, cIndicator, "MOD");
             }
             if (((BRKC >> 26) & 1) != 0) {
-                drawText(imageGc, STATUSl + 1, STATUSt + 4 + q1, cIndicator, "LUTS");
+                drawText(gc, STATUSl + 1, STATUSt + 4 + q1, cIndicator, "LUTS");
             }
             // Draw pins in binary
-            drawRegBin(imageGc, PINl + 4, PINt + (0 << 1), cogImage[0x1FB], cData);
-            drawRegBin(imageGc, PINl + 40, PINt + (0 << 1), cogImage[0x1FA], cData);
-            drawRegBin(imageGc, PINl + 4, PINt + (1 << 1), cogImage[0x1FD], cData);
-            drawRegBin(imageGc, PINl + 40, PINt + (1 << 1), cogImage[0x1FC], cData);
-            drawRegBin(imageGc, PINl + 4, PINt + (2 << 1), cogImage[0x1FF], cData);
-            drawRegBin(imageGc, PINl + 40, PINt + (2 << 1), cogImage[0x1FE], cData);
+            drawRegBin(gc, PINl + 4, PINt + (0 << 1), cogImage[0x1FB], cData);
+            drawRegBin(gc, PINl + 40, PINt + (0 << 1), cogImage[0x1FA], cData);
+            drawRegBin(gc, PINl + 4, PINt + (1 << 1), cogImage[0x1FD], cData);
+            drawRegBin(gc, PINl + 40, PINt + (1 << 1), cogImage[0x1FC], cData);
+            drawRegBin(gc, PINl + 4, PINt + (2 << 1), cogImage[0x1FF], cData);
+            drawRegBin(gc, PINl + 40, PINt + (2 << 1), cogImage[0x1FE], cData);
             // Draw hub data
             for (int j = 0; j < 8; j++) {
                 int i = (curHubAddr + (j << 4)) & 0xFFFFF;
-                drawText(imageGc, HUBl, HUBt + (j << 1), cData, String.format("%05X", i));
+                drawText(gc, HUBl, HUBt + (j << 1), cData, String.format("%05X", i));
                 for (int k = 0; k < 16; k++) {
                     i = buffHub[(j << 4) + k] & 0xFF;
-                    drawText(imageGc, HUBl + 6 + k * 3, HUBt + (j << 1), cData, String.format("%02X", i));
+                    drawText(gc, HUBl + 6 + k * 3, HUBt + (j << 1), cData, String.format("%02X", i));
                     if ((i < 0x20) || (i > 0x7E)) {
                         i = '.';
                     }
-                    drawText(imageGc, HUBl + 55 + k, HUBt + (j << 1), cData2, "" + (char) i);
+                    drawText(gc, HUBl + 55 + k, HUBt + (j << 1), cData2, "" + (char) i);
                 }
             }
 
@@ -1624,11 +1612,11 @@ public class DebugPAsmWindow {
                     addr = (curDisAddr + (i << 2)) & 0xFFFFF;
                     s = String.format("%05X", addr);
                 }
-                drawText(imageGc, DISl, DISt + (i << 1), cData2, s);
+                drawText(gc, DISl, DISt + (i << 1), cData2, s);
 
                 // Draw instruction long
                 int inst = buffDis[i];
-                drawText(imageGc, DISl + 6, DISt + (i << 1), cData, String.format("%08X", inst));
+                drawText(gc, DISl + 6, DISt + (i << 1), cData, String.format("%08X", inst));
 
                 // Disassemble instruction long, may be register ROM
                 if (disCog && (addr >= 0x1F8) && (addr <= 0x1FF)) {
@@ -1644,21 +1632,21 @@ public class DebugPAsmWindow {
 
                 // Inverse if instruction at PC
                 if ((addr == curPC) && !HiddenPC) {
-                    smoothShape(imageGc, x, y - (charHeight >> 1), xs, ys, r, r, 0, cData, 255);
-                    drawText(imageGc, DISl + 15, DISt + (i << 1), cBox2, s);
+                    smoothShape(gc, x, y - (charHeight >> 1), xs, ys, r, r, 0, cData, 255);
+                    drawText(gc, DISl + 15, DISt + (i << 1), cBox2, s);
                 }
                 else {
-                    drawText(imageGc, DISl + 15, DISt + (i << 1), cData2, s);
+                    drawText(gc, DISl + 15, DISt + (i << 1), cData2, s);
 
                     // Strikethrough if instruction is to be skipped
                     int j = (addr < 0x400) ? (addr - curPC) : (addr - curPC) / 4;
                     if (SkipOn && (j >= 0) && (j <= 31) && ((BRKZ >> j) & 1) != 0 && !HiddenPC) {
-                        smoothShape(imageGc, x, y - 1, xs, ys >> 1, r, r, 0, cData2, 160);
+                        smoothShape(gc, x, y - 1, xs, ys >> 1, r, r, 0, cData2, 160);
                     }
 
                     // Highlight if breakpoint instruction
                     if ((breakValue & 0x400) != 0 && (breakAddr == addr) && !HiddenPC) {
-                        smoothShape(imageGc, x, y - (charHeight >> 1), xs, ys, r, r, 0, cName, 64);
+                        smoothShape(gc, x, y - (charHeight >> 1), xs, ys, r, r, 0, cName, 64);
                     }
                 }
             }
@@ -1701,14 +1689,14 @@ public class DebugPAsmWindow {
             }
             // Draw reg watch
             if ((watchRegList[0] & 0xFFFF) == 0) {
-                drawText(imageGc, WATCHl + 3, WATCHt, cName, "REG \u0394");
+                drawText(gc, WATCHl + 3, WATCHt, cName, "REG \u0394");
             }
             else {
                 for (int i = 0; i < REG_WATCH_LIST_SIZE; i++) {
                     if ((watchRegList[i] & 0xFFFF) > 0) {
                         int y = WATCHt + (i << 1);
-                        drawText(imageGc, WATCHl, y, cData2, String.format("%03X", watchRegList[i] >> 16));
-                        drawText(imageGc, WATCHl + 4, y, cData, String.format("%08X", cogImage[watchRegList[i] >> 16]));
+                        drawText(gc, WATCHl, y, cData2, String.format("%03X", watchRegList[i] >> 16));
+                        drawText(gc, WATCHl + 4, y, cData, String.format("%08X", cogImage[watchRegList[i] >> 16]));
                     }
                 }
             }
@@ -1748,15 +1736,15 @@ public class DebugPAsmWindow {
             }
             // Draw smart pin watch
             if ((watchSmartList[0] & 0xFFFF) == 0) {
-                drawText(imageGc, SMARTl, SMARTt, cName, "RQPIN \u0394");
+                drawText(gc, SMARTl, SMARTt, cName, "RQPIN \u0394");
             }
             else {
                 for (int i = 0; i < watchSmartList.length; i++) {
                     if ((watchSmartList[i] & 0xFFFF) > 0) {
                         x = SMARTl + (i * 14);
                         int k = watchSmartList[i] >> 16;
-                        drawText(imageGc, x, SMARTt, cData2, String.format("P%d", k));
-                        drawText(imageGc, x + 4, SMARTt, cData, String.format("%08X", smartBuff[k] >> 16));
+                        drawText(gc, x, SMARTt, cData2, String.format("P%d", k));
+                        drawText(gc, x + 4, SMARTt, cData, String.format("%08X", smartBuff[k] >> 16));
                     }
                 }
             }
@@ -1767,62 +1755,62 @@ public class DebugPAsmWindow {
 
             // Highlight MAIN button?
             if ((breakValue & 0x00000001) != 0) {
-                drawBox(imageGc, bMAINl, bMAINt, bMAINw, bMAINh, cModeButton);
-                drawText(imageGc, bMAINl, bMAINt, cModeText, "MAIN");
+                drawBox(gc, bMAINl, bMAINt, bMAINw, bMAINh, cModeButton);
+                drawText(gc, bMAINl, bMAINt, cModeText, "MAIN");
             }
             if ((breakValue & 0x00000002) != 0) {
-                drawBox(imageGc, bINT1l, bINT1t, bINT1w, bINT1h, cModeButton);
-                drawText(imageGc, bINT1l, bINT1t, cModeText, "INT1");
+                drawBox(gc, bINT1l, bINT1t, bINT1w, bINT1h, cModeButton);
+                drawText(gc, bINT1l, bINT1t, cModeText, "INT1");
             }
             if ((breakValue & 0x00000004) != 0) {
-                drawBox(imageGc, bINT2l, bINT2t, bINT2w, bINT2h, cModeButton);
-                drawText(imageGc, bINT2l, bINT2t, cModeText, "INT2");
+                drawBox(gc, bINT2l, bINT2t, bINT2w, bINT2h, cModeButton);
+                drawText(gc, bINT2l, bINT2t, cModeText, "INT2");
             }
             if ((breakValue & 0x00000008) != 0) {
-                drawBox(imageGc, bINT3l, bINT3t, bINT3w, bINT3h, cModeButton);
-                drawText(imageGc, bINT3l, bINT3t, cModeText, "INT3");
+                drawBox(gc, bINT3l, bINT3t, bINT3w, bINT3h, cModeButton);
+                drawText(gc, bINT3l, bINT3t, cModeText, "INT3");
             }
             if ((breakValue & 0x00000010) != 0) {
-                drawBox(imageGc, bDEBUGl, bDEBUGt, bDEBUGw, bDEBUGh, cModeButton);
-                drawText(imageGc, bDEBUGl, bDEBUGt, cModeText, "DEBUG");
+                drawBox(gc, bDEBUGl, bDEBUGt, bDEBUGw, bDEBUGh, cModeButton);
+                drawText(gc, bDEBUGl, bDEBUGt, cModeText, "DEBUG");
             }
             if ((breakValue & 0x00000020) != 0) {
-                drawBox(imageGc, bINT1El, bINT1Et, bINT1Ew, bINT1Eh, cModeButton);
-                drawText(imageGc, bINT1El, bINT1Et, cModeText, "\u2794INT1");
+                drawBox(gc, bINT1El, bINT1Et, bINT1Ew, bINT1Eh, cModeButton);
+                drawText(gc, bINT1El, bINT1Et, cModeText, "\u2794INT1");
             }
             if ((breakValue & 0x00000040) != 0) {
-                drawBox(imageGc, bINT2El, bINT2Et, bINT2Ew, bINT2Eh, cModeButton);
-                drawText(imageGc, bINT2El, bINT2Et, cModeText, "\u2794INT2");
+                drawBox(gc, bINT2El, bINT2Et, bINT2Ew, bINT2Eh, cModeButton);
+                drawText(gc, bINT2El, bINT2Et, cModeText, "\u2794INT2");
             }
             if ((breakValue & 0x00000080) != 0) {
-                drawBox(imageGc, bINT3El, bINT3Et, bINT3Ew, bINT3Eh, cModeButton);
-                drawText(imageGc, bINT3El, bINT3Et, cModeText, "\u2794INT3");
+                drawBox(gc, bINT3El, bINT3Et, bINT3Ew, bINT3Eh, cModeButton);
+                drawText(gc, bINT3El, bINT3Et, cModeText, "\u2794INT3");
             }
             if ((breakValue & 0x00000100) != 0) {
-                drawBox(imageGc, bINITl, bINITt, bINITw, bINITh, cModeButton);
-                drawText(imageGc, bINITl, bINITt, cModeTextDim, "INIT");
+                drawBox(gc, bINITl, bINITt, bINITw, bINITh, cModeButton);
+                drawText(gc, bINITl, bINITt, cModeTextDim, "INIT");
             }
             if ((breakValue & 0x00000200) != 0) {
-                drawBox(imageGc, bEVENTl, bEVENTt, bEVENTw, bEVENTh, cModeButton);
-                drawText(imageGc, bEVENTl, bEVENTt, cModeText, EventName[breakEvent] + "\u2191");
+                drawBox(gc, bEVENTl, bEVENTt, bEVENTw, bEVENTh, cModeButton);
+                drawText(gc, bEVENTl, bEVENTt, cModeText, EventName[breakEvent] + "\u2191");
             }
             else {
-                drawText(imageGc, bEVENTl, bEVENTt, cModeTextDim, EventName[breakEvent]);
+                drawText(gc, bEVENTl, bEVENTt, cModeTextDim, EventName[breakEvent]);
             }
             if ((breakValue & 0x00000400) != 0) {
-                drawBox(imageGc, bADDRl, bADDRt, bADDRw, bADDRh, cModeButton);
-                drawText(imageGc, bADDRl, bADDRt, cModeText, String.format("%05X", breakAddr & 0xFFFFF));
+                drawBox(gc, bADDRl, bADDRt, bADDRw, bADDRh, cModeButton);
+                drawText(gc, bADDRl, bADDRt, cModeText, String.format("%05X", breakAddr & 0xFFFFF));
             }
             else {
-                drawText(imageGc, bADDRl, bADDRt, cModeTextDim, String.format("%05X", breakAddr & 0xFFFFF));
+                drawText(gc, bADDRl, bADDRt, cModeTextDim, String.format("%05X", breakAddr & 0xFFFFF));
             }
             if ((breakValue & 0x000006FF) == 0) {
-                drawBox(imageGc, bBREAKl, bBREAKt, bBREAKw, bBREAKh, cModeButtonDim);
-                drawText(imageGc, bBREAKl, bBREAKt, cModeTextDim, "BREAK");
+                drawBox(gc, bBREAKl, bBREAKt, bBREAKw, bBREAKh, cModeButtonDim);
+                drawText(gc, bBREAKl, bBREAKt, cModeTextDim, "BREAK");
             }
 
-            drawBox(imageGc, bGOl, bGOt, bGOw, bGOh, cCmdButton);
-            drawText(imageGc, bGOl + 3 + q2, bGOt, cCmdText, repeatMode ? "STOP" : " GO");
+            drawBox(gc, bGOl, bGOt, bGOw, bGOh, cCmdButton);
+            drawText(gc, bGOl + 3 + q2, bGOt, cCmdText, repeatMode ? "STOP" : " GO");
 
             //  ----------------------------
             //   Update reg/lut/hub bitmaps
@@ -1844,7 +1832,7 @@ public class DebugPAsmWindow {
                 }
                 regMapUpdate = false;
             }
-            imageGc.drawImage(regMapImage, 0, 0, 32, 512, RegMap.x, RegMap.y, RegMap.width, RegMap.height);
+            gc.drawImage(regMapImage, 0, 0, 32, 512, RegMap.x, RegMap.y, RegMap.width, RegMap.height);
 
             if (lutMapUpdate) {
                 GC gcMap = new GC(lutMapImage);
@@ -1862,7 +1850,7 @@ public class DebugPAsmWindow {
                 }
                 lutMapUpdate = false;
             }
-            imageGc.drawImage(lutMapImage, 0, 0, 32, 512, LutMap.x, LutMap.y, LutMap.width, LutMap.height);
+            gc.drawImage(lutMapImage, 0, 0, 32, 512, LutMap.x, LutMap.y, LutMap.width, LutMap.height);
 
             if (hubMapUpdate) {
                 GC gcMap = new GC(hubMapImage);
@@ -1881,7 +1869,7 @@ public class DebugPAsmWindow {
                 }
                 hubMapUpdate = false;
             }
-            imageGc.drawImage(hubMapImage, 0, 0, HUB_MAP_WIDTH, HUB_MAP_HEIGHT, HubMap.x, HubMap.y, HubMap.width, HubMap.height);
+            gc.drawImage(hubMapImage, 0, 0, HUB_MAP_WIDTH, HUB_MAP_HEIGHT, HubMap.x, HubMap.y, HubMap.width, HubMap.height);
 
         } catch (Exception e) {
             e.printStackTrace();

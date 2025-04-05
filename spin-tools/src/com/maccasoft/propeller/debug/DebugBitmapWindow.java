@@ -19,6 +19,7 @@ import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
+import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
@@ -168,11 +169,7 @@ public class DebugBitmapWindow extends DebugWindow {
 
             @Override
             public void paintControl(PaintEvent e) {
-                e.gc.setAdvanced(true);
-                e.gc.setAntialias(SWT.ON);
-                e.gc.setInterpolation(SWT.OFF);
-                Point canvasSize = canvas.getSize();
-                e.gc.drawImage(image, 0, 0, imageSize.x, imageSize.y, 0, 0, canvasSize.x, canvasSize.y);
+                paint(e.gc);
             }
 
         });
@@ -189,9 +186,6 @@ public class DebugBitmapWindow extends DebugWindow {
         GridData gridData = (GridData) canvas.getLayoutData();
         gridData.widthHint = imageSize.x * dotSize.x;
         gridData.heightHint = imageSize.y * dotSize.y;
-
-        shell.pack();
-        shell.redraw();
     }
 
     void trace(KeywordIterator iter) {
@@ -230,6 +224,16 @@ public class DebugBitmapWindow extends DebugWindow {
         if (iter.hasNextNumber()) {
             rate = iter.nextNumber();
         }
+    }
+
+    @Override
+    protected void paint(GC gc) {
+        Point canvasSize = canvas.getSize();
+
+        gc.setAdvanced(true);
+        gc.setAntialias(SWT.ON);
+        gc.setInterpolation(SWT.OFF);
+        gc.drawImage(image, 0, 0, imageSize.x, imageSize.y, 0, 0, canvasSize.x, canvasSize.y);
     }
 
     @Override
@@ -323,21 +327,7 @@ public class DebugBitmapWindow extends DebugWindow {
                         break;
 
                     case "SAVE":
-                        if (iter.hasNext()) {
-                            boolean window = false;
-
-                            String key = iter.next();
-                            if (key.equalsIgnoreCase("WINDOW")) {
-                                window = true;
-                                if (!iter.hasNext()) {
-                                    break;
-                                }
-                                key = iter.next();
-                            }
-                            if (isString(key)) {
-                                doSaveBitmap(image, stringStrip(key), window);
-                            }
-                        }
+                        save(iter);
                         break;
 
                     case "CLOSE":

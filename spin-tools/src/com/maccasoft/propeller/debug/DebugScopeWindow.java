@@ -17,17 +17,12 @@ import org.eclipse.jface.databinding.swt.DisplayRealm;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.resource.StringConverter;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.DisposeEvent;
-import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.GC;
-import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.graphics.ImageData;
-import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Display;
@@ -36,9 +31,6 @@ import com.maccasoft.propeller.Preferences;
 import com.maccasoft.propeller.internal.CircularBuffer;
 
 public class DebugScopeWindow extends DebugWindow {
-
-    Image image;
-    GC imageGc;
 
     Color backColor;
     Color gridColor;
@@ -58,7 +50,6 @@ public class DebugScopeWindow extends DebugWindow {
     Channel[] channelData;
 
     int sampleCount;
-    int sampleIndex;
 
     int triggerChannel;
     int triggerArm;
@@ -73,7 +64,8 @@ public class DebugScopeWindow extends DebugWindow {
     int rate;
     int rateCount;
 
-    Font font;
+    Font legendFont;
+    Font channelFont;
     int charHeight;
 
     class Channel {
@@ -90,6 +82,11 @@ public class DebugScopeWindow extends DebugWindow {
         Color color;
 
         int[] sampleData;
+
+        String legendMax;
+        int legendMaxY;
+        String legendMin;
+        int legendMinY;
         int[] array;
 
         Channel(String name, int min, int max, boolean auto, int y_size, int y_base, int legend, Color color) {
@@ -109,7 +106,8 @@ public class DebugScopeWindow extends DebugWindow {
             this.array = new int[sampleData.length * 2];
         }
 
-        void plot(GC gc) {
+        void update() {
+
             if (auto) {
                 min = Integer.MAX_VALUE;
                 max = Integer.MIN_VALUE;
@@ -126,21 +124,48 @@ public class DebugScopeWindow extends DebugWindow {
 
             double sx = (double) imageSize.x / (double) samples;
             double sy = (double) y_size / (double) (max - min);
-            int index = (sampleIndex + triggerOffset + sampleData.length / 2) % sampleData.length;
 
-            gc.setLineWidth(dotSize);
-            gc.setForeground(color);
-            gc.setBackground(color);
+            if (legend != 0) {
+                legendMax = String.format("%d", max);
+                legendMaxY = MARGIN_HEIGHT + charHeight + (imageSize.y - y_base) - (int) Math.round((max - min) * sy);
+
+                legendMin = String.format("%d", min);
+                legendMinY = MARGIN_HEIGHT + charHeight + (imageSize.y - y_base) - (int) Math.round((min - min) * sy);
+            }
 
             double x = 0;
             for (int i = 0, idx = 0; i < sampleData.length; i++) {
-                int px = array[idx++] = (int) Math.round(x);
-                int py = array[idx++] = (imageSize.y - y_base) - (int) Math.round((sampleData[index] - min) * sy);
-                gc.fillOval(px - dotSize / 2, py - dotSize / 2, dotSize + 1, dotSize + 1);
-                index = (index + 1) % sampleData.length;
+                array[idx++] = MARGIN_WIDTH + (int) Math.round(x);
+                array[idx++] = MARGIN_HEIGHT + charHeight + (imageSize.y - y_base) - (int) Math.round((sampleData[i] - min) * sy);
                 x += sx;
             }
+        }
 
+        void plot(GC gc) {
+            if (legend != 0) {
+                gc.setLineWidth(0);
+                gc.setLineStyle(SWT.LINE_DOT);
+                gc.setFont(legendFont);
+                gc.setForeground(gridColor);
+                gc.setBackground(backColor);
+
+                if (legendMax != null) {
+                    Point extent = gc.stringExtent(legendMax);
+                    gc.drawText(legendMax, MARGIN_WIDTH, legendMaxY - extent.y / 2, true);
+                    gc.drawLine(MARGIN_WIDTH + extent.x + 5, legendMaxY, imageSize.x, legendMaxY);
+                }
+
+                if (legendMin != null) {
+                    Point extent = gc.stringExtent(legendMin);
+                    gc.drawText(legendMin, MARGIN_WIDTH, legendMinY - extent.y / 2, true);
+                    gc.drawLine(MARGIN_WIDTH + extent.x + 5, legendMinY, imageSize.x, legendMinY);
+                }
+            }
+
+            gc.setLineWidth(dotSize);
+            gc.setLineStyle(SWT.LINE_SOLID);
+
+            gc.setForeground(color);
             gc.setLineWidth(lineSize);
             gc.drawPolyline(array);
         }
@@ -265,11 +290,13 @@ public class DebugScopeWindow extends DebugWindow {
             fontData = StringConverter.asFontData(Preferences.getInstance().getEditorFont());
         }
         fontData.setStyle(SWT.NONE);
-        font = new Font(display, fontData.getName(), textSize != 0 ? textSize : fontData.getHeight(), SWT.NONE);
+
+        channelFont = new Font(display, fontData.getName(), textSize != 0 ? textSize : fontData.getHeight(), SWT.BOLD);
+        legendFont = new Font(display, fontData.getName(), textSize != 0 ? textSize : fontData.getHeight(), SWT.NONE);
 
         GC gc = new GC(canvas);
         try {
-            gc.setFont(font);
+            gc.setFont(channelFont);
             charHeight = gc.stringExtent("X").y;
             for (Channel ch : channelData) {
                 Point extent = gc.stringExtent(ch.name);
@@ -280,54 +307,19 @@ public class DebugScopeWindow extends DebugWindow {
         } finally {
             gc.dispose();
         }
-        charHeight += 5;
-        imageSize.y += charHeight;
-
-        image = new Image(display, new ImageData(imageSize.x, imageSize.y, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF)));
-        imageGc = new GC(image);
-
-        imageGc.setAdvanced(true);
-        imageGc.setAdvanced(true);
-        imageGc.setAntialias(SWT.OFF);
-        imageGc.setTextAntialias(SWT.ON);
-        imageGc.setInterpolation(SWT.NONE);
-        imageGc.setLineCap(SWT.CAP_SQUARE);
-        imageGc.setFont(font);
-
-        imageGc.setBackground(backColor);
-        imageGc.fillRectangle(0, 0, imageSize.x, imageSize.y);
 
         canvas.addPaintListener(new PaintListener() {
 
             @Override
             public void paintControl(PaintEvent e) {
-                Point canvasSize = canvas.getSize();
-
-                e.gc.setAdvanced(true);
-                e.gc.setAntialias(SWT.ON);
-                e.gc.setInterpolation(SWT.HIGH);
-
-                e.gc.drawImage(image, 0, 0, imageSize.x, imageSize.y, 0, 0, canvasSize.x, canvasSize.y);
-            }
-
-        });
-
-        canvas.addDisposeListener(new DisposeListener() {
-
-            @Override
-            public void widgetDisposed(DisposeEvent e) {
-                imageGc.dispose();
-                image.dispose();
+                paint(e.gc);
             }
 
         });
 
         GridData gridData = (GridData) canvas.getLayoutData();
-        gridData.widthHint = imageSize.x;
-        gridData.heightHint = imageSize.y;
-
-        shell.pack();
-        shell.redraw();
+        gridData.widthHint = MARGIN_WIDTH + imageSize.x + MARGIN_WIDTH;
+        gridData.heightHint = MARGIN_HEIGHT + charHeight + imageSize.y + MARGIN_HEIGHT;
     }
 
     void rate(KeywordIterator iter) {
@@ -339,12 +331,51 @@ public class DebugScopeWindow extends DebugWindow {
     }
 
     @Override
+    protected void paint(GC gc) {
+        gc.setAdvanced(true);
+        gc.setAntialias(SWT.OFF);
+        gc.setTextAntialias(SWT.ON);
+        gc.setInterpolation(SWT.NONE);
+        gc.setLineCap(SWT.CAP_SQUARE);
+
+        gc.setBackground(backColor);
+        gc.fillRectangle(canvas.getClientArea());
+
+        gc.setLineWidth(0);
+        gc.setLineStyle(SWT.LINE_SOLID);
+        gc.setForeground(gridColor);
+        gc.drawRectangle(MARGIN_WIDTH - 1, MARGIN_HEIGHT + charHeight - 1, imageSize.x + 1, imageSize.y + 1);
+
+        int x = MARGIN_WIDTH;
+        int space = gc.stringExtent("A").x;
+
+        gc.setFont(channelFont);
+        for (int i = 0; i < channelData.length; i++) {
+            Point extent = gc.stringExtent(channelData[i].name);
+            gc.setForeground(channelData[i].color);
+            gc.drawString(channelData[i].name, x, MARGIN_HEIGHT + charHeight - 1 - extent.y, true);
+            x += extent.x + space;
+        }
+
+        if (triggerChannel != -1) {
+            double sx = (double) imageSize.x / (double) samples;
+            x = MARGIN_WIDTH + (int) Math.round(triggerOffset * sx);
+            gc.setForeground(gridColor);
+            gc.drawLine(x, MARGIN_HEIGHT + charHeight, x, MARGIN_HEIGHT + charHeight + imageSize.y);
+        }
+
+        for (int i = 0; i < channelData.length; i++) {
+            channelData[i].plot(gc);
+        }
+    }
+
+    @Override
     public void update(KeywordIterator iter) {
         int sample;
         String cmd;
 
         while (iter.hasNext()) {
-            cmd = iter.peekNext();
+            cmd = iter.next();
 
             if (isNumber(cmd)) {
                 try {
@@ -356,14 +387,12 @@ public class DebugScopeWindow extends DebugWindow {
                 } catch (Exception e) {
                     // Do nothing
                 }
-                iter.next();
             }
-            else if (iter.hasNextString()) {
-                channel(iter);
+            else if (isString(cmd)) {
+                channel(stringStrip(cmd), iter);
             }
             else {
-                cmd = iter.next().toUpperCase();
-                switch (cmd) {
+                switch (cmd.toUpperCase()) {
                     case "TRIGGER":
                         triggerChannel = -1;
                         triggerArm = -1;
@@ -397,21 +426,7 @@ public class DebugScopeWindow extends DebugWindow {
                         break;
 
                     case "SAVE":
-                        if (iter.hasNext()) {
-                            boolean window = false;
-
-                            String key = iter.next();
-                            if (key.equalsIgnoreCase("WINDOW")) {
-                                window = true;
-                                if (!iter.hasNext()) {
-                                    break;
-                                }
-                                key = iter.next();
-                            }
-                            if (isString(key)) {
-                                doSaveBitmap(image, stringStrip(key), window);
-                            }
-                        }
+                        save(iter);
                         break;
 
                     case "CLOSE":
@@ -430,12 +445,11 @@ public class DebugScopeWindow extends DebugWindow {
         }
     }
 
-    void channel(KeywordIterator iter) {
+    void channel(String name, KeywordIterator iter) {
         int min = 0, max = 0;
         boolean auto = false;
         Color color = new Color(0, 250, 0);
 
-        String name = iter.nextString();
         if (iter.hasNext() && "AUTO".equalsIgnoreCase(iter.peekNext())) {
             auto = true;
             iter.next();
@@ -490,67 +504,64 @@ public class DebugScopeWindow extends DebugWindow {
     }
 
     void processSample(int sample) {
-        channelData[channelIndex].sampleData[sampleIndex] = sample;
+        System.arraycopy(channelData[channelIndex].sampleData, 1, channelData[channelIndex].sampleData, 0, samples - 1);
+        channelData[channelIndex].sampleData[samples - 1] = sample;
 
         channelIndex++;
         if (channelIndex >= channelData.length) {
-            sampleIndex++;
-            if (sampleIndex >= samples) {
-                sampleIndex = 0;
-            }
-
             if (sampleCount < samples) {
                 sampleCount++;
             }
+            else {
+                triggered = false;
 
-            triggered = false;
-
-            if (triggerChannel >= 0) {
-                sample = channelData[triggerChannel].sampleData[(sampleIndex + triggerOffset - 1) % samples];
-                if (armed) {
-                    if (triggerFire >= triggerArm) {
-                        if (sample >= triggerFire) {
-                            triggered = true;
-                            armed = false;
+                if (triggerChannel >= 0) {
+                    sample = channelData[triggerChannel].sampleData[(triggerOffset - 1) % samples];
+                    if (armed) {
+                        if (triggerFire >= triggerArm) {
+                            if (sample >= triggerFire) {
+                                triggered = true;
+                                armed = false;
+                            }
+                        }
+                        else {
+                            if (sample <= triggerFire) {
+                                triggered = true;
+                                armed = false;
+                            }
                         }
                     }
                     else {
-                        if (sample <= triggerFire) {
-                            triggered = true;
-                            armed = false;
+                        if (triggerFire >= triggerArm) {
+                            if (sample <= triggerFire) {
+                                armed = true;
+                            }
                         }
+                        else {
+                            if (sample >= triggerFire) {
+                                armed = true;
+                            }
+                        }
+                    }
+                    if (holdOffCount > 0) {
+                        holdOffCount--;
+                    }
+
+                    if (triggered && holdOffCount == 0) {
+                        rateCount++;
+                        if (rateCount >= rate) {
+                            update();
+                            rateCount = 0;
+                        }
+                        holdOffCount = holdOff;
                     }
                 }
                 else {
-                    if (triggerFire >= triggerArm) {
-                        if (sample <= triggerFire) {
-                            armed = true;
-                        }
-                    }
-                    else {
-                        if (sample >= triggerFire) {
-                            armed = true;
-                        }
-                    }
-                }
-                if (holdOffCount > 0) {
-                    holdOffCount--;
-                }
-
-                if (triggered && holdOffCount == 0) {
                     rateCount++;
                     if (rateCount >= rate) {
                         update();
                         rateCount = 0;
                     }
-                    holdOffCount = holdOff;
-                }
-            }
-            else {
-                rateCount++;
-                if (rateCount >= rate) {
-                    update();
-                    rateCount = 0;
                 }
             }
 
@@ -577,38 +588,9 @@ public class DebugScopeWindow extends DebugWindow {
     }
 
     void update() {
-        int x;
-
-        imageGc.setLineWidth(0);
-
-        imageGc.setBackground(backColor);
-        imageGc.fillRectangle(0, 0, imageSize.x, imageSize.y);
-
-        imageGc.setLineStyle(SWT.LINE_SOLID);
-        imageGc.setForeground(gridColor);
-
-        imageGc.drawLine(0, charHeight, imageSize.x, charHeight);
-
-        if (triggerChannel != -1) {
-            double sx = (double) imageSize.x / (double) samples;
-            x = (int) Math.round(triggerOffset * sx);
-            imageGc.drawLine(x, charHeight, x, imageSize.y);
-        }
-
         for (int i = 0; i < channelData.length; i++) {
-            channelData[i].plot(imageGc);
+            channelData[i].update();
         }
-
-        imageGc.setLineWidth(0);
-
-        x = 0;
-        for (int i = 0; i < channelData.length; i++) {
-            imageGc.setForeground(channelData[i].color);
-            imageGc.drawString(channelData[i].name, x, 0, true);
-            x += imageGc.stringExtent(channelData[i].name).x;
-            x += imageGc.stringExtent("A").x;
-        }
-
         canvas.redraw();
     }
 

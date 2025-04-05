@@ -70,10 +70,8 @@ public class DebugPlotWindow extends DebugWindow {
     boolean autoUpdate;
 
     Image canvasImage;
-    GC canvasImageGc;
 
     Image image;
-    GC imageGc;
 
     class Sprite {
 
@@ -200,26 +198,29 @@ public class DebugPlotWindow extends DebugWindow {
 
         image = new Image(display, new ImageData(imageSize.x, imageSize.y, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF)));
 
-        imageGc = new GC(image);
-        imageGc.setInterpolation(SWT.NONE);
-        imageGc.setBackground(backColor);
-        imageGc.fillRectangle(0, 0, imageSize.x, imageSize.y);
+        GC imageGc = new GC(image);
+        try {
+            imageGc.setBackground(backColor);
+            imageGc.fillRectangle(0, 0, imageSize.x, imageSize.y);
+        } finally {
+            imageGc.dispose();
+        }
 
         canvasImage = new Image(display, new ImageData(imageSize.x, imageSize.y, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF)));
 
-        canvasImageGc = new GC(canvasImage);
-        canvasImageGc.setBackground(backColor);
-        canvasImageGc.fillRectangle(0, 0, imageSize.x, imageSize.y);
+        GC canvasImageGc = new GC(canvasImage);
+        try {
+            canvasImageGc.setBackground(backColor);
+            canvasImageGc.fillRectangle(0, 0, imageSize.x, imageSize.y);
+        } finally {
+            canvasImageGc.dispose();
+        }
 
         canvas.addPaintListener(new PaintListener() {
 
             @Override
             public void paintControl(PaintEvent e) {
-                e.gc.setAdvanced(true);
-                e.gc.setAntialias(SWT.ON);
-                e.gc.setInterpolation(SWT.OFF);
-                Point canvasSize = canvas.getSize();
-                e.gc.drawImage(canvasImage, 0, 0, imageSize.x, imageSize.y, 0, 0, canvasSize.x, canvasSize.y);
+                paint(e.gc);
             }
 
         });
@@ -243,9 +244,6 @@ public class DebugPlotWindow extends DebugWindow {
         GridData gridData = (GridData) canvas.getLayoutData();
         gridData.widthHint = imageSize.x * dotSize.x;
         gridData.heightHint = imageSize.y * dotSize.y;
-
-        shell.pack();
-        shell.redraw();
     }
 
     void colorMode(String cmd, KeywordIterator iter) {
@@ -306,467 +304,446 @@ public class DebugPlotWindow extends DebugWindow {
     }
 
     @Override
+    protected void paint(GC gc) {
+        Point canvasSize = canvas.getSize();
+
+        gc.setAdvanced(true);
+        gc.setAntialias(SWT.ON);
+        gc.setInterpolation(SWT.OFF);
+
+        gc.drawImage(canvasImage, 0, 0, imageSize.x, imageSize.y, 0, 0, canvasSize.x, canvasSize.y);
+    }
+
+    @Override
     public void update(KeywordIterator iter) {
         String cmd;
         Color tempColor;
 
-        while (iter.hasNext()) {
-            cmd = iter.next().toUpperCase();
-            switch (cmd) {
-                case "LUT1":
-                case "LUT2":
-                case "LUT4":
-                case "LUT8":
-                case "LUMA8":
-                case "LUMA8W":
-                case "LUMA8X":
-                case "HSV8":
-                case "HSV8W":
-                case "HSV8X":
-                case "RGBI8":
-                case "RGBI8W":
-                case "RGBI8X":
-                case "HSV16":
-                case "HSV16W":
-                case "HSV16X":
-                case "RGB8":
-                case "RGB16":
-                case "RGB24":
-                    colorMode(cmd, iter);
-                    break;
+        GC imageGc = new GC(image);
+        try {
+            while (iter.hasNext()) {
+                cmd = iter.next().toUpperCase();
+                switch (cmd) {
+                    case "LUT1":
+                    case "LUT2":
+                    case "LUT4":
+                    case "LUT8":
+                    case "LUMA8":
+                    case "LUMA8W":
+                    case "LUMA8X":
+                    case "HSV8":
+                    case "HSV8W":
+                    case "HSV8X":
+                    case "RGBI8":
+                    case "RGBI8W":
+                    case "RGBI8X":
+                    case "HSV16":
+                    case "HSV16W":
+                    case "HSV16X":
+                    case "RGB8":
+                    case "RGB16":
+                    case "RGB24":
+                        colorMode(cmd, iter);
+                        break;
 
-                case "LUTCOLORS":
-                    lutColors(iter);
-                    break;
+                    case "LUTCOLORS":
+                        lutColors(iter);
+                        break;
 
-                case "BACKCOLOR":
-                    tempColor = color(iter);
-                    if (tempColor != null) {
-                        backColor.dispose();
-                        backColor = tempColor;
-                    }
-                    break;
-
-                case "BLACK":
-                case "WHITE":
-                case "ORANGE":
-                case "BLUE":
-                case "GREEN":
-                case "CYAN":
-                case "RED":
-                case "MAGENTA":
-                case "YELLOW":
-                case "GREY":
-                    iter.back();
-                    // Fall-through
-                case "COLOR":
-                    tempColor = color(iter);
-                    if (tempColor != null) {
-                        if (iter.hasNext() && "TEXT".equalsIgnoreCase(iter.peekNext())) {
-                            textColor.dispose();
-                            textColor = tempColor;
+                    case "BACKCOLOR":
+                        tempColor = color(iter);
+                        if (tempColor != null) {
+                            backColor.dispose();
+                            backColor = tempColor;
                         }
-                        else {
-                            color.dispose();
-                            color = tempColor;
+                        break;
+
+                    case "BLACK":
+                    case "WHITE":
+                    case "ORANGE":
+                    case "BLUE":
+                    case "GREEN":
+                    case "CYAN":
+                    case "RED":
+                    case "MAGENTA":
+                    case "YELLOW":
+                    case "GREY":
+                        iter.back();
+                        // Fall-through
+                    case "COLOR":
+                        tempColor = color(iter);
+                        if (tempColor != null) {
+                            if (iter.hasNext() && "TEXT".equalsIgnoreCase(iter.peekNext())) {
+                                textColor.dispose();
+                                textColor = tempColor;
+                            }
+                            else {
+                                color.dispose();
+                                color = tempColor;
+                            }
                         }
-                    }
-                    break;
+                        break;
 
-                case "OPACITY":
-                    if (iter.hasNextNumber()) {
-                        opacity = iter.nextNumber() & 255;
-                    }
-                    break;
-
-                case "PRECISE":
-                    precise ^= 8;
-                    break;
-
-                case "LINESIZE":
-                    if (iter.hasNextNumber()) {
-                        lineSize = iter.nextNumber();
-                    }
-                    break;
-
-                case "ORIGIN":
-                    if (iter.hasNextNumber()) {
-                        int newX = iter.nextNumber();
+                    case "OPACITY":
                         if (iter.hasNextNumber()) {
-                            int newY = iter.nextNumber();
-                            origin = new Point(newX, newY);
+                            opacity = iter.nextNumber() & 255;
                         }
-                    }
-                    break;
+                        break;
 
-                case "SET":
-                    if (iter.hasNextNumber()) {
-                        int newX = iter.nextNumber();
+                    case "PRECISE":
+                        precise ^= 8;
+                        break;
+
+                    case "LINESIZE":
                         if (iter.hasNextNumber()) {
-                            int newY = iter.nextNumber();
-                            if (polar) {
-                                Point pt = polarToCartesian(newX, newY);
-                                newX = pt.x;
-                                newY = pt.y;
-                            }
-                            x = xDirection == 0 ? (origin.x << precise) + newX : (imageSize.x << precise) - ((origin.x << precise) + newX);
-                            y = yDirection == 0 ? (imageSize.y << precise) - ((origin.y << precise) + newY) : (origin.y << precise) + newY;
+                            lineSize = iter.nextNumber();
                         }
-                    }
-                    break;
+                        break;
 
-                case "DOT": {
-                    int sizeOverride = lineSize;
-                    int opacityOverride = opacity;
-                    if (iter.hasNextNumber()) { // line size
-                        sizeOverride = iter.nextNumber();
-                    }
-                    if (iter.hasNextNumber()) { // opacity
-                        opacityOverride = iter.nextNumber() & 255;
-                    }
-                    imageGc.setBackground(color);
-                    imageGc.setAlpha(opacityOverride);
-                    imageGc.fillOval((x - sizeOverride / 2) >> precise, (y - sizeOverride / 2) >> precise, sizeOverride >> precise, sizeOverride >> precise);
-                    if (autoUpdate) {
-                        update();
-                    }
-                    break;
-                }
-
-                case "LINE":
-                    if (iter.hasNextNumber()) {
-                        int newX = iter.nextNumber();
+                    case "ORIGIN":
                         if (iter.hasNextNumber()) {
-                            int newY = iter.nextNumber();
-                            if (polar) {
-                                Point pt = polarToCartesian(newX, newY);
-                                newX = pt.x;
-                                newY = pt.y;
-                            }
-                            int dx = xDirection == 0 ? (origin.x << precise) + newX : (imageSize.x << precise) - ((origin.x << precise) + newX);
-                            int dy = yDirection == 0 ? (imageSize.y << precise) - ((origin.y << precise) + newY) : (origin.y << precise) + newY;
-                            int size = iter.hasNextNumber() ? iter.nextNumber() : lineSize;
-                            line(dx, dy, size, color);
-                            if (autoUpdate) {
-                                update();
-                            }
-                        }
-                    }
-                    break;
-
-                case "CIRCLE":
-                    if (iter.hasNextNumber()) {
-                        int diameter = iter.nextNumber();
-                        int sizeOverride = iter.hasNextNumber() ? iter.nextNumber() : 0;
-                        int opacityOverride = iter.hasNextNumber() ? iter.nextNumber() : opacity;
-                        oval(diameter, diameter, sizeOverride, opacityOverride, color);
-                        if (autoUpdate) {
-                            update();
-                        }
-                    }
-                    break;
-
-                case "OVAL":
-                    if (iter.hasNextNumber()) {
-                        int width = iter.nextNumber();
-                        if (iter.hasNext()) {
-                            int height = iter.nextNumber();
-                            int sizeOverride = iter.hasNextNumber() ? iter.nextNumber() : 0;
-                            int opacityOverride = iter.hasNextNumber() ? iter.nextNumber() : opacity;
-                            oval(width, height, sizeOverride, opacityOverride, color);
-                            if (autoUpdate) {
-                                update();
-                            }
-                        }
-                    }
-                    break;
-
-                case "BOX":
-                    if (iter.hasNextNumber()) {
-                        int width = iter.nextNumber();
-                        if (iter.hasNext()) {
-                            int height = iter.nextNumber();
-                            int sizeOverride = iter.hasNextNumber() ? iter.nextNumber() : 0;
-                            int opacityOverride = iter.hasNextNumber() ? iter.nextNumber() : opacity;
-                            box(width, height, sizeOverride, opacityOverride, color);
-                            if (autoUpdate) {
-                                update();
-                            }
-                        }
-                    }
-                    break;
-
-                case "OBOX":
-                    if (iter.hasNextNumber()) {
-                        int width = iter.nextNumber();
-                        if (iter.hasNext()) {
-                            int height = iter.nextNumber();
-                            if (iter.hasNext()) {
-                                int radiusX = iter.nextNumber();
-                                if (iter.hasNext()) {
-                                    int radiusY = iter.nextNumber();
-                                    int sizeOverride = iter.hasNextNumber() ? iter.nextNumber() : 0;
-                                    int opacityOverride = iter.hasNextNumber() ? iter.nextNumber() : opacity;
-                                    obox(width, height, sizeOverride, radiusX, radiusY, opacityOverride, color);
-                                    if (autoUpdate) {
-                                        update();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    break;
-
-                case "TEXTSIZE":
-                    if (iter.hasNextNumber()) {
-                        textSize = iter.nextNumber();
-                    }
-                    break;
-                case "TEXTSTYLE":
-                    if (iter.hasNextNumber()) {
-                        textStyle = iter.nextNumber() & 0xFF;
-                    }
-                    break;
-                case "TEXTANGLE":
-                    if (iter.hasNextNumber()) {
-                        textAngle = iter.nextNumber();
-                    }
-                    break;
-                case "TEXT": {
-                    int sizeOverride = textSize;
-                    int styleOverride = textStyle;
-                    if (iter.hasNextNumber()) {
-                        sizeOverride = iter.nextNumber();
-                    }
-                    if (iter.hasNextNumber()) {
-                        styleOverride = iter.nextNumber();
-                    }
-                    if (iter.hasNextNumber()) {
-                        iter.nextNumber();
-                    }
-                    if (iter.hasNextString()) {
-                        text(iter.nextString(), sizeOverride, styleOverride, textColor);
-                        if (autoUpdate) {
-                            update();
-                        }
-                    }
-                    break;
-                }
-
-                case "SPRITEDEF":
-                    if (iter.hasNextNumber()) {
-                        int id = iter.nextNumber();
-                        if (iter.hasNextNumber()) {
-                            int xDim = iter.nextNumber();
+                            int newX = iter.nextNumber();
                             if (iter.hasNextNumber()) {
-                                int yDim = iter.nextNumber();
-
-                                RGB[] palette = new RGB[256];
-                                byte[] pixels = new byte[xDim * yDim];
-
-                                int idx = 0;
-                                while (idx < pixels.length) {
-                                    pixels[idx++] = (byte) iter.nextNumber();
-                                }
-
-                                idx = 0;
-                                while (iter.hasNextNumber() && idx < palette.length) {
-                                    int c = iter.nextNumber();
-                                    palette[idx++] = new RGB((c >> 16) & 0xFF, (c >> 8) & 0xFF, c & 0xFF);
-                                }
-
-                                if (id >= 0 && id < sprites.length) {
-                                    sprites[id] = new Sprite(xDim, yDim, palette, pixels);
-                                }
+                                int newY = iter.nextNumber();
+                                origin = new Point(newX, newY);
                             }
                         }
-                    }
-                    break;
-                case "SPRITE":
-                    if (iter.hasNextNumber()) {
-                        int id = iter.nextNumber();
-                        int orient = 0;
-                        int scale = 1;
+                        break;
+
+                    case "SET":
+                        if (iter.hasNextNumber()) {
+                            int newX = iter.nextNumber();
+                            if (iter.hasNextNumber()) {
+                                int newY = iter.nextNumber();
+                                if (polar) {
+                                    Point pt = polarToCartesian(newX, newY);
+                                    newX = pt.x;
+                                    newY = pt.y;
+                                }
+                                x = xDirection == 0 ? (origin.x << precise) + newX : (imageSize.x << precise) - ((origin.x << precise) + newX);
+                                y = yDirection == 0 ? (imageSize.y << precise) - ((origin.y << precise) + newY) : (origin.y << precise) + newY;
+                            }
+                        }
+                        break;
+
+                    case "DOT": {
+                        int sizeOverride = lineSize;
                         int opacityOverride = opacity;
-                        if (iter.hasNextNumber()) {
-                            orient = iter.nextNumber() & 7; // orient
+                        if (iter.hasNextNumber()) { // line size
+                            sizeOverride = iter.nextNumber();
                         }
-                        if (iter.hasNextNumber()) {
-                            scale = iter.nextNumber() & 63; // scale
-                        }
-                        if (iter.hasNextNumber()) {
+                        if (iter.hasNextNumber()) { // opacity
                             opacityOverride = iter.nextNumber() & 255;
                         }
-                        if (id >= 0 && id < sprites.length && sprites[id] != null && scale >= 1) {
-                            Image image = transformImage(sprites[id], orient);
-                            try {
-                                Rectangle bounds = image.getBounds();
-                                imageGc.setAlpha(opacityOverride);
-                                imageGc.drawImage(image, 0, 0, bounds.width, bounds.height, x, y, bounds.width * scale, bounds.height * scale);
-                            } finally {
-                                image.dispose();
-                            }
-                            if (autoUpdate) {
-                                update();
-                            }
-                        }
+                        imageGc.setBackground(color);
+                        imageGc.setAlpha(opacityOverride);
+                        imageGc.fillOval((x - sizeOverride / 2) >> precise, (y - sizeOverride / 2) >> precise, sizeOverride >> precise, sizeOverride >> precise);
+                        break;
                     }
-                    break;
 
-                case "POLAR":
-                    polar = true;
-                    twoPi = 0x100000000L;
-                    theta = 0;
-                    if (iter.hasNextNumber()) {
-                        twoPi = iter.nextNumber();
-                        if (twoPi == -1) {
-                            twoPi = -0x100000000L;
+                    case "LINE":
+                        if (iter.hasNextNumber()) {
+                            int newX = iter.nextNumber();
+                            if (iter.hasNextNumber()) {
+                                int newY = iter.nextNumber();
+                                if (polar) {
+                                    Point pt = polarToCartesian(newX, newY);
+                                    newX = pt.x;
+                                    newY = pt.y;
+                                }
+                                int dx = xDirection == 0 ? (origin.x << precise) + newX : (imageSize.x << precise) - ((origin.x << precise) + newX);
+                                int dy = yDirection == 0 ? (imageSize.y << precise) - ((origin.y << precise) + newY) : (origin.y << precise) + newY;
+                                int size = iter.hasNextNumber() ? iter.nextNumber() : lineSize;
+                                line(imageGc, dx, dy, size, color);
+                            }
                         }
-                        else if (twoPi == 0) {
-                            twoPi = 0x100000000L;
+                        break;
+
+                    case "CIRCLE":
+                        if (iter.hasNextNumber()) {
+                            int diameter = iter.nextNumber();
+                            int sizeOverride = iter.hasNextNumber() ? iter.nextNumber() : 0;
+                            int opacityOverride = iter.hasNextNumber() ? iter.nextNumber() : opacity;
+                            oval(imageGc, diameter, diameter, sizeOverride, opacityOverride, color);
+                        }
+                        break;
+
+                    case "OVAL":
+                        if (iter.hasNextNumber()) {
+                            int width = iter.nextNumber();
+                            if (iter.hasNext()) {
+                                int height = iter.nextNumber();
+                                int sizeOverride = iter.hasNextNumber() ? iter.nextNumber() : 0;
+                                int opacityOverride = iter.hasNextNumber() ? iter.nextNumber() : opacity;
+                                oval(imageGc, width, height, sizeOverride, opacityOverride, color);
+                            }
+                        }
+                        break;
+
+                    case "BOX":
+                        if (iter.hasNextNumber()) {
+                            int width = iter.nextNumber();
+                            if (iter.hasNext()) {
+                                int height = iter.nextNumber();
+                                int sizeOverride = iter.hasNextNumber() ? iter.nextNumber() : 0;
+                                int opacityOverride = iter.hasNextNumber() ? iter.nextNumber() : opacity;
+                                box(imageGc, width, height, sizeOverride, opacityOverride, color);
+                            }
+                        }
+                        break;
+
+                    case "OBOX":
+                        if (iter.hasNextNumber()) {
+                            int width = iter.nextNumber();
+                            if (iter.hasNext()) {
+                                int height = iter.nextNumber();
+                                if (iter.hasNext()) {
+                                    int radiusX = iter.nextNumber();
+                                    if (iter.hasNext()) {
+                                        int radiusY = iter.nextNumber();
+                                        int sizeOverride = iter.hasNextNumber() ? iter.nextNumber() : 0;
+                                        int opacityOverride = iter.hasNextNumber() ? iter.nextNumber() : opacity;
+                                        obox(imageGc, width, height, sizeOverride, radiusX, radiusY, opacityOverride, color);
+                                    }
+                                }
+                            }
+                        }
+                        break;
+
+                    case "TEXTSIZE":
+                        if (iter.hasNextNumber()) {
+                            textSize = iter.nextNumber();
+                        }
+                        break;
+                    case "TEXTSTYLE":
+                        if (iter.hasNextNumber()) {
+                            textStyle = iter.nextNumber() & 0xFF;
+                        }
+                        break;
+                    case "TEXTANGLE":
+                        if (iter.hasNextNumber()) {
+                            textAngle = iter.nextNumber();
+                        }
+                        break;
+                    case "TEXT": {
+                        int sizeOverride = textSize;
+                        int styleOverride = textStyle;
+                        if (iter.hasNextNumber()) {
+                            sizeOverride = iter.nextNumber();
                         }
                         if (iter.hasNextNumber()) {
-                            theta = iter.nextNumber();
+                            styleOverride = iter.nextNumber();
                         }
-                    }
-                    break;
-
-                case "CARTESIAN":
-                    polar = false;
-                    yDirection = xDirection = 0;
-                    if (iter.hasNextNumber()) {
-                        yDirection = iter.nextNumber() == 0 ? 0 : 1;
                         if (iter.hasNextNumber()) {
-                            xDirection = iter.nextNumber() == 0 ? 0 : 1;
+                            iter.nextNumber();
                         }
+                        if (iter.hasNextString()) {
+                            text(imageGc, iter.nextString(), sizeOverride, styleOverride, textColor);
+                        }
+                        break;
                     }
-                    break;
 
-                case "CLEAR":
-                    imageGc.setBackground(backColor);
-                    imageGc.fillRectangle(0, 0, imageSize.x, imageSize.y);
-                    if (autoUpdate) {
+                    case "SPRITEDEF":
+                        if (iter.hasNextNumber()) {
+                            int id = iter.nextNumber();
+                            if (iter.hasNextNumber()) {
+                                int xDim = iter.nextNumber();
+                                if (iter.hasNextNumber()) {
+                                    int yDim = iter.nextNumber();
+
+                                    RGB[] palette = new RGB[256];
+                                    byte[] pixels = new byte[xDim * yDim];
+
+                                    int idx = 0;
+                                    while (idx < pixels.length) {
+                                        pixels[idx++] = (byte) iter.nextNumber();
+                                    }
+
+                                    idx = 0;
+                                    while (iter.hasNextNumber() && idx < palette.length) {
+                                        int c = iter.nextNumber();
+                                        palette[idx++] = new RGB((c >> 16) & 0xFF, (c >> 8) & 0xFF, c & 0xFF);
+                                    }
+
+                                    if (id >= 0 && id < sprites.length) {
+                                        sprites[id] = new Sprite(xDim, yDim, palette, pixels);
+                                    }
+                                }
+                            }
+                        }
+                        break;
+                    case "SPRITE":
+                        if (iter.hasNextNumber()) {
+                            int id = iter.nextNumber();
+                            int orient = 0;
+                            int scale = 1;
+                            int opacityOverride = opacity;
+                            if (iter.hasNextNumber()) {
+                                orient = iter.nextNumber() & 7; // orient
+                            }
+                            if (iter.hasNextNumber()) {
+                                scale = iter.nextNumber() & 63; // scale
+                            }
+                            if (iter.hasNextNumber()) {
+                                opacityOverride = iter.nextNumber() & 255;
+                            }
+                            if (id >= 0 && id < sprites.length && sprites[id] != null && scale >= 1) {
+                                Image image = transformImage(sprites[id], orient);
+                                try {
+                                    Rectangle bounds = image.getBounds();
+                                    imageGc.setAlpha(opacityOverride);
+                                    imageGc.drawImage(image, 0, 0, bounds.width, bounds.height, x, y, bounds.width * scale, bounds.height * scale);
+                                } finally {
+                                    image.dispose();
+                                }
+                            }
+                        }
+                        break;
+
+                    case "POLAR":
+                        polar = true;
+                        twoPi = 0x100000000L;
+                        theta = 0;
+                        if (iter.hasNextNumber()) {
+                            twoPi = iter.nextNumber();
+                            if (twoPi == -1) {
+                                twoPi = -0x100000000L;
+                            }
+                            else if (twoPi == 0) {
+                                twoPi = 0x100000000L;
+                            }
+                            if (iter.hasNextNumber()) {
+                                theta = iter.nextNumber();
+                            }
+                        }
+                        break;
+
+                    case "CARTESIAN":
+                        polar = false;
+                        yDirection = xDirection = 0;
+                        if (iter.hasNextNumber()) {
+                            yDirection = iter.nextNumber() == 0 ? 0 : 1;
+                            if (iter.hasNextNumber()) {
+                                xDirection = iter.nextNumber() == 0 ? 0 : 1;
+                            }
+                        }
+                        break;
+
+                    case "CLEAR":
+                        imageGc.setBackground(backColor);
+                        imageGc.fillRectangle(0, 0, imageSize.x, imageSize.y);
+                        break;
+
+                    case "UPDATE":
                         update();
-                    }
-                    break;
+                        break;
 
-                case "UPDATE":
-                    update();
-                    break;
+                    case "SAVE":
+                        save(iter);
+                        break;
 
-                case "SAVE":
-                    if (iter.hasNext()) {
-                        boolean window = false;
+                    case "CLOSE":
+                        shell.dispose();
+                        break;
 
-                        String key = iter.next();
-                        if (key.equalsIgnoreCase("WINDOW")) {
-                            window = true;
-                            if (!iter.hasNext()) {
+                    case "PC_KEY":
+                        sendKeyPress();
+                        break;
+
+                    case "PC_MOUSE":
+                        sendMouse();
+                        break;
+
+                    case "LAYER":
+                        if (iter.hasNextNumber()) {
+                            int id = iter.nextNumber() - 1;
+                            if (iter.hasNextString()) {
+                                String fileName = iter.nextString();
+                                File file = new File(getBaseDirectory(), fileName);
+                                if (file.exists() && id >= 0 && id < layer.length) {
+                                    try {
+                                        ImageData[] imageData = new ImageLoader().load(file.getAbsolutePath());
+                                        if (imageData != null && imageData.length != 0) {
+                                            if (layer[id] != null) {
+                                                layer[id].dispose();
+                                                layer[id] = null;
+                                            }
+                                            layer[id] = new Image(display, imageData[0]);
+                                        }
+                                    } catch (Exception e) {
+                                        // Do nothing
+                                    }
+                                }
+                            }
+                        }
+                        break;
+
+                    case "CROP":
+                        if (iter.hasNextNumber()) {
+                            int id = iter.nextNumber() - 1;
+                            if (iter.hasNext() && "AUTO".equalsIgnoreCase(iter.peekNext())) {
+                                iter.next();
+                                if (iter.hasNextNumber()) {
+                                    int x = iter.nextNumber();
+                                    if (iter.hasNextNumber()) {
+                                        int y = iter.nextNumber();
+                                        if (id >= 0 && id < layer.length && layer[id] != null) {
+                                            Rectangle rect = layer[id].getBounds();
+                                            while (y < imageSize.y) {
+                                                int x1 = x;
+                                                while (x1 < imageSize.x) {
+                                                    imageGc.setAlpha(255);
+                                                    imageGc.drawImage(layer[id], x1, y);
+                                                    x1 += rect.width;
+                                                }
+                                                y += rect.height;
+                                            }
+                                        }
+                                    }
+                                }
                                 break;
                             }
-                            key = iter.next();
-                        }
-                        if (isString(key)) {
-                            doSaveBitmap(image, stringStrip(key), window);
-                        }
-                    }
-                    break;
-
-                case "CLOSE":
-                    shell.dispose();
-                    break;
-
-                case "PC_KEY":
-                    sendKeyPress();
-                    break;
-
-                case "PC_MOUSE":
-                    sendMouse();
-                    break;
-
-                case "LAYER":
-                    if (iter.hasNextNumber()) {
-                        int id = iter.nextNumber() - 1;
-                        if (iter.hasNextString()) {
-                            String fileName = iter.nextString();
-                            File file = new File(getBaseDirectory(), fileName);
-                            if (file.exists() && id >= 0 && id < layer.length) {
-                                try {
-                                    ImageData[] imageData = new ImageLoader().load(file.getAbsolutePath());
-                                    if (imageData != null && imageData.length != 0) {
-                                        if (layer[id] != null) {
-                                            layer[id].dispose();
-                                            layer[id] = null;
-                                        }
-                                        layer[id] = new Image(display, imageData[0]);
-                                    }
-                                } catch (Exception e) {
-                                    // Do nothing
-                                }
-                            }
-                        }
-                    }
-                    break;
-
-                case "CROP":
-                    if (iter.hasNextNumber()) {
-                        int id = iter.nextNumber() - 1;
-                        if (iter.hasNext() && "AUTO".equalsIgnoreCase(iter.peekNext())) {
-                            iter.next();
                             if (iter.hasNextNumber()) {
-                                int x = iter.nextNumber();
+                                int x0 = iter.nextNumber();
                                 if (iter.hasNextNumber()) {
-                                    int y = iter.nextNumber();
-                                    if (id >= 0 && id < layer.length && layer[id] != null) {
-                                        Rectangle rect = layer[id].getBounds();
-                                        while (y < imageSize.y) {
-                                            int x1 = x;
-                                            while (x1 < imageSize.x) {
-                                                imageGc.setAlpha(255);
-                                                imageGc.drawImage(layer[id], x1, y);
-                                                x1 += rect.width;
-                                            }
-                                            y += rect.height;
-                                        }
-                                    }
-                                }
-                            }
-                            break;
-                        }
-                        if (iter.hasNextNumber()) {
-                            int x0 = iter.nextNumber();
-                            if (iter.hasNextNumber()) {
-                                int y0 = iter.nextNumber();
-                                if (iter.hasNextNumber()) {
-                                    int width = iter.nextNumber();
+                                    int y0 = iter.nextNumber();
                                     if (iter.hasNextNumber()) {
-                                        int height = iter.nextNumber();
+                                        int width = iter.nextNumber();
+                                        if (iter.hasNextNumber()) {
+                                            int height = iter.nextNumber();
 
-                                        int x1 = iter.hasNextNumber() ? iter.nextNumber() : x0;
-                                        int y1 = iter.hasNextNumber() ? iter.nextNumber() : y0;
+                                            int x1 = iter.hasNextNumber() ? iter.nextNumber() : x0;
+                                            int y1 = iter.hasNextNumber() ? iter.nextNumber() : y0;
 
+                                            if (id >= 0 && id < layer.length && layer[id] != null) {
+                                                imageGc.setAlpha(255);
+                                                imageGc.drawImage(layer[id], x0, y0, width, height, x1, y1, width, height);
+                                            }
+                                        }
+                                    }
+                                    else {
                                         if (id >= 0 && id < layer.length && layer[id] != null) {
                                             imageGc.setAlpha(255);
-                                            imageGc.drawImage(layer[id], x0, y0, width, height, x1, y1, width, height);
+                                            imageGc.drawImage(layer[id], x0, y0);
                                         }
                                     }
                                 }
-                                else {
-                                    if (id >= 0 && id < layer.length && layer[id] != null) {
-                                        imageGc.setAlpha(255);
-                                        imageGc.drawImage(layer[id], x0, y0);
-                                    }
-                                }
+                                break;
                             }
-                            break;
+                            if (layer[id] != null) {
+                                imageGc.setAlpha(255);
+                                imageGc.drawImage(layer[id], 0, 0);
+                            }
                         }
-                        if (layer[id] != null) {
-                            imageGc.setAlpha(255);
-                            imageGc.drawImage(layer[id], 0, 0);
-                        }
-                    }
-                    break;
+                        break;
+                }
             }
+        } finally {
+            imageGc.dispose();
+        }
+
+        if (autoUpdate) {
+            update();
         }
     }
 
@@ -941,7 +918,7 @@ public class DebugPlotWindow extends DebugWindow {
         }
     }
 
-    void oval(int width, int height, int lineSize, int opacity, Color color) {
+    void oval(GC imageGc, int width, int height, int lineSize, int opacity, Color color) {
         imageGc.setAlpha(opacity);
         imageGc.setLineWidth(lineSize);
         imageGc.setAntialias(SWT.ON);
@@ -957,7 +934,7 @@ public class DebugPlotWindow extends DebugWindow {
         imageGc.drawOval(x - width / 2, y - height / 2, width, height);
     }
 
-    void box(int width, int height, int lineSize, int opacity, Color color) {
+    void box(GC imageGc, int width, int height, int lineSize, int opacity, Color color) {
         imageGc.setAlpha(opacity);
         imageGc.setLineWidth(lineSize);
         imageGc.setAntialias(SWT.ON);
@@ -969,7 +946,7 @@ public class DebugPlotWindow extends DebugWindow {
         imageGc.drawRectangle(x - width / 2, y - height / 2, width, height);
     }
 
-    void obox(int width, int height, int radiusX, int radiusY, int lineSize, int opacity, Color color) {
+    void obox(GC imageGc, int width, int height, int radiusX, int radiusY, int lineSize, int opacity, Color color) {
         imageGc.setAlpha(opacity);
         imageGc.setLineWidth(lineSize);
         imageGc.setAntialias(SWT.ON);
@@ -981,7 +958,7 @@ public class DebugPlotWindow extends DebugWindow {
         imageGc.drawRoundRectangle(x - width / 2, y - height / 2, width, height, radiusX, radiusY);
     }
 
-    void line(int dx, int dy, int lineSize, Color color) {
+    void line(GC imageGc, int dx, int dy, int lineSize, Color color) {
         imageGc.setAntialias(SWT.ON);
         imageGc.setForeground(color);
         imageGc.setLineWidth(lineSize >> precise);
@@ -993,7 +970,7 @@ public class DebugPlotWindow extends DebugWindow {
         y = dy;
     }
 
-    void text(String str, int size, int style, Color color) {
+    void text(GC imageGc, String str, int size, int style, Color color) {
         imageGc.setAntialias(SWT.ON);
         imageGc.setForeground(color);
 
@@ -1048,7 +1025,12 @@ public class DebugPlotWindow extends DebugWindow {
     }
 
     void update() {
-        canvasImageGc.drawImage(image, 0, 0);
+        GC canvasImageGc = new GC(canvasImage);
+        try {
+            canvasImageGc.drawImage(image, 0, 0);
+        } finally {
+            canvasImageGc.dispose();
+        }
         canvas.redraw();
     }
 

@@ -12,19 +12,24 @@ package com.maccasoft.propeller.debug;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
+import org.eclipse.core.databinding.observable.Realm;
+import org.eclipse.jface.databinding.swt.DisplayRealm;
+import org.eclipse.jface.resource.JFaceResources;
+import org.eclipse.jface.resource.StringConverter;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.GC;
-import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.graphics.ImageData;
-import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.widgets.Display;
 
+import com.maccasoft.propeller.Preferences;
 import com.maccasoft.propeller.internal.CircularBuffer;
 
 public class DebugScopeXYWindow extends DebugWindow {
@@ -78,7 +83,11 @@ public class DebugScopeXYWindow extends DebugWindow {
         }
 
         void add(Point pt) {
+            pt.x += MARGIN_WIDTH;
+            pt.y += MARGIN_HEIGHT + charHeight * channelData.length + MARGIN_HEIGHT;
+
             points.add(pt);
+
             if (samples != 0) {
                 while (points.size() > samples) {
                     points.remove(0);
@@ -110,6 +119,7 @@ public class DebugScopeXYWindow extends DebugWindow {
 
         packMode = PackMode.NONE();
 
+        size = 128;
         range = 0x7FFFFFFF;
         logScale = false;
 
@@ -237,6 +247,28 @@ public class DebugScopeXYWindow extends DebugWindow {
             }
         }
 
+        Font textFont = JFaceResources.getTextFont();
+        FontData fontData = textFont.getFontData()[0];
+        if (Preferences.getInstance().getEditorFont() != null) {
+            fontData = StringConverter.asFontData(Preferences.getInstance().getEditorFont());
+        }
+
+        font = new Font(display, fontData.getName(), textSize != 0 ? textSize : fontData.getHeight(), SWT.BOLD);
+
+        GC gc = new GC(canvas);
+        try {
+            gc.setFont(font);
+            charHeight = gc.stringExtent("X").y;
+            for (Channel ch : channelData) {
+                Point extent = gc.stringExtent(ch.name);
+                if (extent.y > charHeight) {
+                    charHeight = extent.y;
+                }
+            }
+        } finally {
+            gc.dispose();
+        }
+
         scale = (double) size / (double) range;
 
         imageSize.x = imageSize.y = (size * 2) + 1;
@@ -252,39 +284,8 @@ public class DebugScopeXYWindow extends DebugWindow {
         });
 
         GridData gridData = (GridData) canvas.getLayoutData();
-        gridData.widthHint = imageSize.x;
-        gridData.heightHint = imageSize.y;
-
-        shell.pack();
-        shell.redraw();
-    }
-
-    void paint(GC gc) {
-        gc.setAdvanced(true);
-        gc.setAntialias(SWT.ON);
-        gc.setInterpolation(SWT.HIGH);
-
-        gc.setBackground(backColor);
-        gc.fillRectangle(0, 0, imageSize.x, imageSize.y);
-
-        gc.setLineStyle(SWT.LINE_SOLID);
-
-        int x = (imageSize.x / 2) + (int) Math.round(0 * scale);
-        int y = (imageSize.y / 2) - (int) Math.round(0 * scale);
-        gc.setForeground(gridColor);
-        gc.drawLine(x, 0, x, imageSize.y - 1);
-        gc.drawLine(0, y, imageSize.x - 1, y);
-
-        gc.drawOval(0, 0, imageSize.x - 1, imageSize.y - 1);
-
-        int textX = 5;
-        gc.setLineWidth(dotSize);
-        for (int i = 0; i < channelData.length; i++) {
-            gc.setForeground(channelData[i].color);
-            gc.drawText(channelData[i].name, textX, 5, true);
-            textX += gc.stringExtent(channelData[i].name).x + 5;
-            channelData[i].draw(gc);
-        }
+        gridData.widthHint = MARGIN_WIDTH + imageSize.x + MARGIN_WIDTH;
+        gridData.heightHint = MARGIN_HEIGHT + charHeight * channelData.length + MARGIN_HEIGHT + imageSize.y + MARGIN_HEIGHT;
     }
 
     void channel(String name, KeywordIterator iter) {
@@ -337,8 +338,38 @@ public class DebugScopeXYWindow extends DebugWindow {
     }
 
     @Override
+    protected void paint(GC gc) {
+        gc.setAdvanced(true);
+        gc.setAntialias(SWT.ON);
+        gc.setInterpolation(SWT.HIGH);
+
+        gc.setBackground(backColor);
+        gc.fillRectangle(canvas.getClientArea());
+
+        gc.setLineStyle(SWT.LINE_SOLID);
+
+        int x = MARGIN_WIDTH + (imageSize.x / 2) + (int) Math.round(0 * scale);
+        int y = MARGIN_HEIGHT + charHeight * channelData.length + MARGIN_HEIGHT + (imageSize.y / 2) - (int) Math.round(0 * scale);
+        gc.setForeground(gridColor);
+        gc.drawLine(x, 0, x, MARGIN_HEIGHT + charHeight * channelData.length + MARGIN_HEIGHT + imageSize.y + MARGIN_HEIGHT);
+        gc.drawLine(0, y, MARGIN_WIDTH + imageSize.x + MARGIN_WIDTH, y);
+
+        gc.drawOval(MARGIN_WIDTH, MARGIN_HEIGHT + charHeight * channelData.length + MARGIN_HEIGHT, imageSize.x, imageSize.y);
+
+        gc.setLineWidth(dotSize);
+        gc.setFont(font);
+
+        int textX = MARGIN_WIDTH;
+        for (int i = 0; i < channelData.length; i++) {
+            gc.setForeground(channelData[i].color);
+            gc.drawText(channelData[i].name, textX, MARGIN_HEIGHT, true);
+            textX += gc.stringExtent(channelData[i].name).x + 5;
+            channelData[i].draw(gc);
+        }
+    }
+
+    @Override
     public void update(KeywordIterator iter) {
-        int sample;
         String cmd;
 
         while (iter.hasNext()) {
@@ -346,8 +377,7 @@ public class DebugScopeXYWindow extends DebugWindow {
 
             if (isNumber(cmd)) {
                 try {
-                    sample = stringToNumber(cmd);
-                    packMode.newPack(sample);
+                    packMode.newPack(stringToNumber(cmd));
                     for (int i = 0; i < packMode.size; i++) {
                         processSample(packMode.unpack());
                     }
@@ -364,28 +394,7 @@ public class DebugScopeXYWindow extends DebugWindow {
                         break;
 
                     case "SAVE":
-                        if (iter.hasNext()) {
-                            boolean window = false;
-
-                            String key = iter.next();
-                            if (key.equalsIgnoreCase("WINDOW")) {
-                                window = true;
-                                if (!iter.hasNext()) {
-                                    break;
-                                }
-                                key = iter.next();
-                            }
-                            if (isString(key)) {
-                                Image image = new Image(display, new ImageData(imageSize.x, imageSize.y, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF)));
-                                GC gc = new GC(image);
-                                try {
-                                    paint(gc);
-                                } finally {
-                                    gc.dispose();
-                                }
-                                doSaveBitmap(image, stringStrip(key), window);
-                            }
-                        }
+                        save(iter);
                         break;
 
                     case "CLOSE":
@@ -439,17 +448,17 @@ public class DebugScopeXYWindow extends DebugWindow {
             else {
                 rf = x * scale;
             }
-            tf = Math.PI / 2 - (y + theta) / twoPi * Math.PI * 2;
+            tf = (Math.PI / 2 - (y + theta)) / twoPi * Math.PI * 2;
             yf = Math.sin(tf);
             xf = Math.cos(tf);
-            return new Point((int) Math.round(xf * rf), (int) Math.round(yf * rf));
+            return new Point((imageSize.x / 2) + (int) Math.round(rf * xf), (imageSize.y / 2) + (int) Math.round(rf * yf));
         }
         else if (logScale) {
             rf = (Math.log(Math.hypot(x, y) + 1) / Math.log((double) range + 1)) * (imageSize.x / 2);
             tf = Math.atan2(x, y);
             yf = Math.sin(tf);
             xf = Math.cos(tf);
-            return new Point((imageSize.x / 2) + (int) Math.round(xf * rf), (imageSize.y / 2) - (int) Math.round(yf * rf));
+            return new Point((imageSize.x / 2) + (int) Math.round(rf * xf), (imageSize.y / 2) - (int) Math.round(rf * yf));
         }
 
         return new Point((imageSize.x / 2) + (int) Math.round(x * scale), (imageSize.y / 2) - (int) Math.round(y * scale));
@@ -457,6 +466,355 @@ public class DebugScopeXYWindow extends DebugWindow {
 
     void update() {
         canvas.redraw();
+    }
+
+    static final String[] data = new String[] {
+        "SIZE 80 RANGE 8 SAMPLES 0 LOGSCALE 'LogScale'",
+        "-8, -8",
+        "-8, -7",
+        "-8, -6",
+        "-8, -5",
+        "-8, -4",
+        "-8, -3",
+        "-8, -2",
+        "-8, -1",
+        "-8, 0",
+        "-8, 1",
+        "-8, 2",
+        "-8, 3",
+        "-8, 4",
+        "-8, 5",
+        "-8, 6",
+        "-8, 7",
+        "-8, 8",
+        "-7, -8",
+        "-7, -7",
+        "-7, -6",
+        "-7, -5",
+        "-7, -4",
+        "-7, -3",
+        "-7, -2",
+        "-7, -1",
+        "-7, 0",
+        "-7, 1",
+        "-7, 2",
+        "-7, 3",
+        "-7, 4",
+        "-7, 5",
+        "-7, 6",
+        "-7, 7",
+        "-7, 8",
+        "-6, -8",
+        "-6, -7",
+        "-6, -6",
+        "-6, -5",
+        "-6, -4",
+        "-6, -3",
+        "-6, -2",
+        "-6, -1",
+        "-6, 0",
+        "-6, 1",
+        "-6, 2",
+        "-6, 3",
+        "-6, 4",
+        "-6, 5",
+        "-6, 6",
+        "-6, 7",
+        "-6, 8",
+        "-5, -8",
+        "-5, -7",
+        "-5, -6",
+        "-5, -5",
+        "-5, -4",
+        "-5, -3",
+        "-5, -2",
+        "-5, -1",
+        "-5, 0",
+        "-5, 1",
+        "-5, 2",
+        "-5, 3",
+        "-5, 4",
+        "-5, 5",
+        "-5, 6",
+        "-5, 7",
+        "-5, 8",
+        "-4, -8",
+        "-4, -7",
+        "-4, -6",
+        "-4, -5",
+        "-4, -4",
+        "-4, -3",
+        "-4, -2",
+        "-4, -1",
+        "-4, 0",
+        "-4, 1",
+        "-4, 2",
+        "-4, 3",
+        "-4, 4",
+        "-4, 5",
+        "-4, 6",
+        "-4, 7",
+        "-4, 8",
+        "-3, -8",
+        "-3, -7",
+        "-3, -6",
+        "-3, -5",
+        "-3, -4",
+        "-3, -3",
+        "-3, -2",
+        "-3, -1",
+        "-3, 0",
+        "-3, 1",
+        "-3, 2",
+        "-3, 3",
+        "-3, 4",
+        "-3, 5",
+        "-3, 6",
+        "-3, 7",
+        "-3, 8",
+        "-2, -8",
+        "-2, -7",
+        "-2, -6",
+        "-2, -5",
+        "-2, -4",
+        "-2, -3",
+        "-2, -2",
+        "-2, -1",
+        "-2, 0",
+        "-2, 1",
+        "-2, 2",
+        "-2, 3",
+        "-2, 4",
+        "-2, 5",
+        "-2, 6",
+        "-2, 7",
+        "-2, 8",
+        "-1, -8",
+        "-1, -7",
+        "-1, -6",
+        "-1, -5",
+        "-1, -4",
+        "-1, -3",
+        "-1, -2",
+        "-1, -1",
+        "-1, 0",
+        "-1, 1",
+        "-1, 2",
+        "-1, 3",
+        "-1, 4",
+        "-1, 5",
+        "-1, 6",
+        "-1, 7",
+        "-1, 8",
+        "0, -8",
+        "0, -7",
+        "0, -6",
+        "0, -5",
+        "0, -4",
+        "0, -3",
+        "0, -2",
+        "0, -1",
+        "0, 0",
+        "0, 1",
+        "0, 2",
+        "0, 3",
+        "0, 4",
+        "0, 5",
+        "0, 6",
+        "0, 7",
+        "0, 8",
+        "1, -8",
+        "1, -7",
+        "1, -6",
+        "1, -5",
+        "1, -4",
+        "1, -3",
+        "1, -2",
+        "1, -1",
+        "1, 0",
+        "1, 1",
+        "1, 2",
+        "1, 3",
+        "1, 4",
+        "1, 5",
+        "1, 6",
+        "1, 7",
+        "1, 8",
+        "2, -8",
+        "2, -7",
+        "2, -6",
+        "2, -5",
+        "2, -4",
+        "2, -3",
+        "2, -2",
+        "2, -1",
+        "2, 0",
+        "2, 1",
+        "2, 2",
+        "2, 3",
+        "2, 4",
+        "2, 5",
+        "2, 6",
+        "2, 7",
+        "2, 8",
+        "3, -8",
+        "3, -7",
+        "3, -6",
+        "3, -5",
+        "3, -4",
+        "3, -3",
+        "3, -2",
+        "3, -1",
+        "3, 0",
+        "3, 1",
+        "3, 2",
+        "3, 3",
+        "3, 4",
+        "3, 5",
+        "3, 6",
+        "3, 7",
+        "3, 8",
+        "4, -8",
+        "4, -7",
+        "4, -6",
+        "4, -5",
+        "4, -4",
+        "4, -3",
+        "4, -2",
+        "4, -1",
+        "4, 0",
+        "4, 1",
+        "4, 2",
+        "4, 3",
+        "4, 4",
+        "4, 5",
+        "4, 6",
+        "4, 7",
+        "4, 8",
+        "5, -8",
+        "5, -7",
+        "5, -6",
+        "5, -5",
+        "5, -4",
+        "5, -3",
+        "5, -2",
+        "5, -1",
+        "5, 0",
+        "5, 1",
+        "5, 2",
+        "5, 3",
+        "5, 4",
+        "5, 5",
+        "5, 6",
+        "5, 7",
+        "5, 8",
+        "6, -8",
+        "6, -7",
+        "6, -6",
+        "6, -5",
+        "6, -4",
+        "6, -3",
+        "6, -2",
+        "6, -1",
+        "6, 0",
+        "6, 1",
+        "6, 2",
+        "6, 3",
+        "6, 4",
+        "6, 5",
+        "6, 6",
+        "6, 7",
+        "6, 8",
+        "7, -8",
+        "7, -7",
+        "7, -6",
+        "7, -5",
+        "7, -4",
+        "7, -3",
+        "7, -2",
+        "7, -1",
+        "7, 0",
+        "7, 1",
+        "7, 2",
+        "7, 3",
+        "7, 4",
+        "7, 5",
+        "7, 6",
+        "7, 7",
+        "7, 8",
+        "8, -8",
+        "8, -7",
+        "8, -6",
+        "8, -5",
+        "8, -4",
+        "8, -3",
+        "8, -2",
+        "8, -1",
+        "8, 0",
+        "8, 1",
+        "8, 2",
+        "8, 3",
+        "8, 4",
+        "8, 5",
+        "8, 6",
+        "8, 7",
+        "8, 8"
+    };
+
+    public static void main(String[] args) {
+        final Display display = new Display();
+
+        display.setErrorHandler(new Consumer<Error>() {
+
+            @Override
+            public void accept(Error t) {
+                t.printStackTrace();
+            }
+
+        });
+        display.setRuntimeExceptionHandler(new Consumer<RuntimeException>() {
+
+            @Override
+            public void accept(RuntimeException t) {
+                t.printStackTrace();
+            }
+
+        });
+
+        Realm.runWithDefault(DisplayRealm.getRealm(display), new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+                    DebugWindow window = new DebugScopeXYWindow(new CircularBuffer(128));
+                    window.create();
+                    window.setup(new KeywordIterator(data[0]));
+                    window.open();
+
+                    display.asyncExec(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            for (int i = 1; i < data.length; i++) {
+                                window.update(new KeywordIterator(data[i]));
+                            }
+                        }
+
+                    });
+
+                    while (display.getShells().length != 0) {
+                        if (!display.readAndDispatch()) {
+                            display.sleep();
+                        }
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        display.dispose();
     }
 
 }

@@ -27,6 +27,7 @@ import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.ImageLoader;
+import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
@@ -68,6 +69,9 @@ public abstract class DebugWindow {
         YELLOW,
         GREY
     }
+
+    public static final int MARGIN_WIDTH = 6;
+    public static final int MARGIN_HEIGHT = 6;
 
     protected Display display;
     protected Shell shell;
@@ -267,6 +271,10 @@ public abstract class DebugWindow {
         });
     }
 
+    protected void paint(GC gc) {
+
+    }
+
     protected void sendKeyPress() {
         try {
             transmitBuffer.writeLong(keyPress);
@@ -417,7 +425,25 @@ public abstract class DebugWindow {
         return PackMode.NONE();
     }
 
-    protected void doSaveBitmap(Image image, String name, boolean window) {
+    protected void save(KeywordIterator iter) {
+        boolean window = false;
+
+        if (iter.hasNext()) {
+            String key = iter.next();
+            if (key.equalsIgnoreCase("WINDOW")) {
+                window = true;
+                if (!iter.hasNext()) {
+                    return;
+                }
+                key = iter.next();
+            }
+            if (isString(key)) {
+                doSaveBitmap(stringStrip(key), window);
+            }
+        }
+    }
+
+    void doSaveBitmap(String name, boolean window) {
         String fileName = new File(name).getAbsoluteFile().getName();
 
         int format = SWT.IMAGE_BMP;
@@ -451,10 +477,22 @@ public abstract class DebugWindow {
             }
         }
         else {
-            loader.data = new ImageData[] {
-                image.getImageData()
-            };
-            loader.save(fileName, format);
+            Point size = canvas.getSize();
+            Image image = new Image(display, new ImageData(size.x, size.y, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF)));
+            try {
+                GC gc = new GC(image);
+                try {
+                    paint(gc);
+                } finally {
+                    gc.dispose();
+                }
+                loader.data = new ImageData[] {
+                    image.getImageData()
+                };
+                loader.save(fileName, format);
+            } finally {
+                image.dispose();
+            }
         }
     }
 

@@ -10,6 +10,7 @@
 
 package com.maccasoft.propeller.debug;
 
+import java.util.Arrays;
 import java.util.function.Consumer;
 
 import org.eclipse.core.databinding.observable.Realm;
@@ -25,9 +26,6 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.GC;
-import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.graphics.ImageData;
-import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Display;
@@ -37,11 +35,9 @@ import com.maccasoft.propeller.internal.CircularBuffer;
 
 public class DebugLogicWindow extends DebugWindow {
 
-    Image image;
-    GC imageGc;
+    public static final int VERTICAL_SPACING = 6;
 
     int[] sampleData;
-    int sampleDataIndex;
 
     int spacing;
     int lineSize;
@@ -86,24 +82,20 @@ public class DebugLogicWindow extends DebugWindow {
 
         void plot(GC gc, int lineY) {
             int y;
-            int x = textWidth + 5;
-            int index = (sampleDataIndex + triggerOffset + sampleData.length / 2) % sampleData.length;
+            int x = MARGIN_WIDTH * 2 + textWidth;
+            int index = 0;
 
             gc.setForeground(color);
-            gc.drawText(name, textWidth - gc.stringExtent(name).x, lineY, true);
-
             gc.setLineWidth(lineSize);
 
             y = lineY;
-            if ((sampleData[index] & mask) == 0) {
+            if ((sampleData[index++] & mask) == 0) {
                 y += charHeight;
             }
             gc.drawLine(x, y, x + spacing, y);
             x += spacing;
 
-            for (int i = 1; i < sampleData.length; i++) {
-                index = (index + 1) % sampleData.length;
-
+            for (int i = 1; i < sampleData.length; i++, index++) {
                 int newY = lineY;
                 if ((sampleData[index] & mask) == 0) {
                     newY += charHeight;
@@ -122,7 +114,6 @@ public class DebugLogicWindow extends DebugWindow {
         super(transmitBuffer);
 
         sampleData = new int[32];
-        sampleDataIndex = 0;
 
         packMode = PackMode.NONE();
 
@@ -242,8 +233,8 @@ public class DebugLogicWindow extends DebugWindow {
         if (Preferences.getInstance().getEditorFont() != null) {
             fontData = StringConverter.asFontData(Preferences.getInstance().getEditorFont());
         }
-        fontData.setStyle(SWT.NONE);
-        font = new Font(display, fontData.getName(), textSize != 0 ? textSize : fontData.getHeight(), SWT.NONE);
+
+        font = new Font(display, fontData.getName(), textSize != 0 ? textSize : fontData.getHeight(), SWT.BOLD);
 
         triggerMask = 0;
         triggerMatch = 1;
@@ -268,30 +259,14 @@ public class DebugLogicWindow extends DebugWindow {
             gc.dispose();
         }
 
-        imageSize.x = textWidth + 5 + sampleData.length * spacing;
-        imageSize.y = 5 + (charHeight + 5) * channelData.length;
-        image = new Image(display, new ImageData(imageSize.x, imageSize.y, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF)));
-
-        imageGc = new GC(image);
-        imageGc.setAdvanced(true);
-        imageGc.setAntialias(SWT.OFF);
-        imageGc.setTextAntialias(SWT.ON);
-        imageGc.setInterpolation(SWT.NONE);
-        imageGc.setLineCap(SWT.CAP_SQUARE);
-        imageGc.setLineWidth(lineSize);
-        imageGc.setFont(font);
+        imageSize.x = sampleData.length * spacing;
+        imageSize.y = (charHeight * channelData.length) + (VERTICAL_SPACING * (channelData.length - 1));
 
         canvas.addPaintListener(new PaintListener() {
 
             @Override
             public void paintControl(PaintEvent e) {
-                Point canvasSize = canvas.getSize();
-
-                e.gc.setAdvanced(true);
-                e.gc.setAntialias(SWT.ON);
-                e.gc.setInterpolation(SWT.HIGH);
-
-                e.gc.drawImage(image, 0, 0, imageSize.x, imageSize.y, 0, 0, canvasSize.x, canvasSize.y);
+                paint(e.gc);
             }
 
         });
@@ -300,19 +275,14 @@ public class DebugLogicWindow extends DebugWindow {
 
             @Override
             public void widgetDisposed(DisposeEvent e) {
-                imageGc.dispose();
-                image.dispose();
                 font.dispose();
             }
 
         });
 
         GridData gridData = (GridData) canvas.getLayoutData();
-        gridData.widthHint = imageSize.x;
-        gridData.heightHint = imageSize.y;
-
-        shell.pack();
-        shell.redraw();
+        gridData.widthHint = MARGIN_WIDTH * 2 + textWidth + imageSize.x + MARGIN_WIDTH;
+        gridData.heightHint = MARGIN_HEIGHT + imageSize.y + MARGIN_HEIGHT;
     }
 
     void channel(String name, KeywordIterator iter) {
@@ -420,8 +390,54 @@ public class DebugLogicWindow extends DebugWindow {
     }
 
     @Override
+    protected void paint(GC gc) {
+        gc.setAdvanced(true);
+        gc.setAntialias(SWT.OFF);
+        gc.setTextAntialias(SWT.ON);
+        gc.setInterpolation(SWT.NONE);
+        gc.setLineCap(SWT.CAP_SQUARE);
+
+        gc.setBackground(backColor);
+        gc.fillRectangle(canvas.getClientArea());
+
+        gc.setLineWidth(0);
+        gc.setLineStyle(SWT.LINE_SOLID);
+        gc.setForeground(gridColor);
+        gc.drawRectangle(MARGIN_WIDTH * 2 + textWidth - 1, MARGIN_HEIGHT - 1, imageSize.x + 1, imageSize.y + 1);
+
+        int y = MARGIN_HEIGHT + charHeight;
+
+        gc.setFont(font);
+        for (int i = 0; i < channelData.length; i++) {
+            Point extent = gc.stringExtent(channelData[i].name);
+            gc.setForeground(channelData[i].color);
+            gc.drawString(channelData[i].name, MARGIN_WIDTH + textWidth - extent.x, y - extent.y - 1, true);
+            y += charHeight + VERTICAL_SPACING;
+        }
+
+        gc.setLineStyle(SWT.LINE_DOT);
+
+        if (triggerOffset != 0) {
+            int x = (sampleData.length * spacing / 2) - spacing / 2;
+            gc.setForeground(new Color(64, 64, 64));
+            gc.drawLine(x, 0, x, imageSize.y);
+        }
+
+        y = MARGIN_HEIGHT;
+        for (int i = 0; i < channelData.length; i++) {
+            gc.setLineStyle(SWT.LINE_DOT);
+            gc.setForeground(gridColor);
+            gc.drawLine(MARGIN_WIDTH + textWidth, y, MARGIN_WIDTH + textWidth + imageSize.x, y);
+
+            gc.setLineStyle(SWT.LINE_SOLID);
+            channelData[i].plot(gc, y);
+
+            y += charHeight + VERTICAL_SPACING - 1;
+        }
+    }
+
+    @Override
     public void update(KeywordIterator iter) {
-        int pixel;
         String cmd;
 
         while (iter.hasNext()) {
@@ -429,8 +445,7 @@ public class DebugLogicWindow extends DebugWindow {
 
             if (isNumber(cmd)) {
                 try {
-                    pixel = stringToNumber(cmd);
-                    packMode.newPack(pixel);
+                    packMode.newPack(stringToNumber(cmd));
                     for (int i = 0; i < packMode.size; i++) {
                         processSample(packMode.unpack());
                     }
@@ -465,28 +480,14 @@ public class DebugLogicWindow extends DebugWindow {
                         break;
 
                     case "CLEAR":
+                        Arrays.fill(sampleData, 0);
                         triggered = false;
-                        sampleDataIndex = 0;
                         sampleCount = 0;
                         update();
                         break;
 
                     case "SAVE":
-                        if (iter.hasNext()) {
-                            boolean window = false;
-
-                            String key = iter.next();
-                            if (key.equalsIgnoreCase("WINDOW")) {
-                                window = true;
-                                if (!iter.hasNext()) {
-                                    break;
-                                }
-                                key = iter.next();
-                            }
-                            if (isString(key)) {
-                                doSaveBitmap(image, stringStrip(key), window);
-                            }
-                        }
+                        save(iter);
                         break;
 
                     case "CLOSE":
@@ -506,72 +507,53 @@ public class DebugLogicWindow extends DebugWindow {
     }
 
     void processSample(int sample) {
-        sampleData[sampleDataIndex++] = sample;
-        if (sampleDataIndex >= sampleData.length) {
-            sampleDataIndex = 0;
-        }
+        System.arraycopy(sampleData, 1, sampleData, 0, sampleData.length - 1);
+        sampleData[sampleData.length - 1] = sample;
 
         if (sampleCount < sampleData.length) {
             sampleCount++;
         }
+        else {
+            triggered = false;
 
-        triggered = false;
-
-        if (triggerMask != 0) {
-            if (sampleCount >= sampleData.length) {
-                sample = sampleData[(sampleDataIndex + triggerOffset - 1) % sampleData.length];
-                if (armed) {
-                    if (((sample ^ triggerMatch) & triggerMask) == 0) {
-                        triggered = true;
-                        armed = false;
+            if (triggerMask != 0) {
+                if (sampleCount >= sampleData.length) {
+                    sample = sampleData[(triggerOffset - 1) % sampleData.length];
+                    if (armed) {
+                        if (((sample ^ triggerMatch) & triggerMask) == 0) {
+                            triggered = true;
+                            armed = false;
+                        }
                     }
-                }
-                else {
-                    if (((sample ^ triggerMatch) & triggerMask) != 0) {
-                        armed = true;
+                    else {
+                        if (((sample ^ triggerMatch) & triggerMask) != 0) {
+                            armed = true;
+                        }
                     }
-                }
-                if (holdOffCount > 0) {
-                    holdOffCount--;
-                }
-                if (triggered && holdOffCount == 0) {
-                    rateCount++;
-                    if (rateCount >= rate) {
-                        update();
-                        rateCount = 0;
+                    if (holdOffCount > 0) {
+                        holdOffCount--;
                     }
-                    holdOffCount = holdOff;
+                    if (triggered && holdOffCount == 0) {
+                        rateCount++;
+                        if (rateCount >= rate) {
+                            update();
+                            rateCount = 0;
+                        }
+                        holdOffCount = holdOff;
+                    }
                 }
             }
-        }
-        else {
-            rateCount++;
-            if (rateCount >= rate) {
-                update();
-                rateCount = 0;
+            else {
+                rateCount++;
+                if (rateCount >= rate) {
+                    update();
+                    rateCount = 0;
+                }
             }
         }
     }
 
     void update() {
-        int y;
-
-        imageGc.setBackground(backColor);
-        imageGc.fillRectangle(0, 0, imageSize.x, imageSize.y);
-
-        imageGc.setLineStyle(SWT.LINE_SOLID);
-
-        int x = textWidth + 5 + (sampleData.length * spacing / 2) - spacing / 2;
-        imageGc.setForeground(new Color(64, 64, 64));
-        imageGc.drawLine(textWidth + 5, 0, textWidth + 5, imageSize.y);
-        imageGc.drawLine(x, 0, x, imageSize.y);
-
-        y = imageSize.y - charHeight - 5;
-        for (int i = 0; i < channelData.length; i++) {
-            channelData[i].plot(imageGc, y);
-            y -= charHeight + 5;
-        }
-
         canvas.redraw();
     }
 
@@ -580,8 +562,8 @@ public class DebugLogicWindow extends DebugWindow {
         "trigger %10 %10", //"trigger %10 %10 22",
         "$AABF_FD55 $FFFF_FFAA",
         "$ABBF_FD55 $FFFF_FFAA",
-        //"%10_10_10_10_10_11_11_11_11_11_11_01_01_01_01_01 %11_11_11_11_11_11_11_11_11_11_11_11_10_10_10_10",
-        //"%10_10_10_11_10_11_11_11_11_11_11_01_01_01_01_01" // %11_11_11_11_11_11_11_11_11_11_11_11_10_10_10_10",
+        "%10_10_10_10_10_11_11_11_11_11_11_01_01_01_01_01 %11_11_11_11_11_11_11_11_11_11_11_11_10_10_10_10",
+        "%10_10_10_11_10_11_11_11_11_11_11_01_01_01_01_01" // %11_11_11_11_11_11_11_11_11_11_11_11_10_10_10_10",
     };
 
     public static void main(String[] args) {
