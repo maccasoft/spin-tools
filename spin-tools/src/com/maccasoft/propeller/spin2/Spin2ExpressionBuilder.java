@@ -32,6 +32,9 @@ import com.maccasoft.propeller.expressions.Defined;
 import com.maccasoft.propeller.expressions.Divide;
 import com.maccasoft.propeller.expressions.Encod;
 import com.maccasoft.propeller.expressions.Equals;
+import com.maccasoft.propeller.expressions.Exp;
+import com.maccasoft.propeller.expressions.Exp10;
+import com.maccasoft.propeller.expressions.Exp2;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.Frac;
 import com.maccasoft.propeller.expressions.GreaterOrEquals;
@@ -47,6 +50,9 @@ import com.maccasoft.propeller.expressions.LessThan;
 import com.maccasoft.propeller.expressions.LessThanUnsigned;
 import com.maccasoft.propeller.expressions.LimitMax;
 import com.maccasoft.propeller.expressions.LimitMin;
+import com.maccasoft.propeller.expressions.Log;
+import com.maccasoft.propeller.expressions.Log10;
+import com.maccasoft.propeller.expressions.Log2;
 import com.maccasoft.propeller.expressions.LogicalAnd;
 import com.maccasoft.propeller.expressions.LogicalNot;
 import com.maccasoft.propeller.expressions.LogicalOr;
@@ -59,6 +65,7 @@ import com.maccasoft.propeller.expressions.Not;
 import com.maccasoft.propeller.expressions.NotEquals;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.expressions.Or;
+import com.maccasoft.propeller.expressions.Pow;
 import com.maccasoft.propeller.expressions.Rev;
 import com.maccasoft.propeller.expressions.Rol;
 import com.maccasoft.propeller.expressions.Ror;
@@ -94,6 +101,8 @@ public class Spin2ExpressionBuilder {
         precedence.put("REV", 14);
         precedence.put("ZEROX", 14);
         precedence.put("SIGNX", 14);
+
+        precedence.put("POW", 15);
 
         precedence.put("&", 13);
         precedence.put("^", 12);
@@ -170,6 +179,12 @@ public class Spin2ExpressionBuilder {
         unary.add("SQRT");
         unary.add("QLOG");
         unary.add("QEXP");
+        unary.add("LOG2");
+        unary.add("LOG10");
+        unary.add("LOG");
+        unary.add("EXP2");
+        unary.add("EXP10");
+        unary.add("EXP");
     }
 
     static Set<String> postEffect = new HashSet<String>();
@@ -334,6 +349,10 @@ public class Spin2ExpressionBuilder {
                     left = new Zerox(left, right);
                     break;
 
+                case "POW":
+                    left = new Pow(left, right);
+                    break;
+
                 case "&":
                     left = new And(left, right);
                     break;
@@ -493,6 +512,18 @@ public class Spin2ExpressionBuilder {
                     return new Encod(parseAtom());
                 case "DECOD":
                     return new Decod(parseAtom());
+                case "LOG":
+                    return new Log(parseAtom());
+                case "LOG2":
+                    return new Log2(parseAtom());
+                case "LOG10":
+                    return new Log10(parseAtom());
+                case "EXP":
+                    return new Exp(parseAtom());
+                case "EXP2":
+                    return new Exp2(parseAtom());
+                case "EXP10":
+                    return new Exp10(parseAtom());
                 default:
                     throw new CompilerException("invalid unary operator " + token.getText(), token);
             }

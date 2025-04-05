@@ -34,6 +34,9 @@ import com.maccasoft.propeller.expressions.Decod;
 import com.maccasoft.propeller.expressions.Divide;
 import com.maccasoft.propeller.expressions.Encod;
 import com.maccasoft.propeller.expressions.Equals;
+import com.maccasoft.propeller.expressions.Exp;
+import com.maccasoft.propeller.expressions.Exp10;
+import com.maccasoft.propeller.expressions.Exp2;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.GreaterOrEquals;
 import com.maccasoft.propeller.expressions.GreaterOrEqualsUnsigned;
@@ -45,6 +48,9 @@ import com.maccasoft.propeller.expressions.LessOrEqualsUnsigned;
 import com.maccasoft.propeller.expressions.LessThan;
 import com.maccasoft.propeller.expressions.LessThanUnsigned;
 import com.maccasoft.propeller.expressions.LocalVariable;
+import com.maccasoft.propeller.expressions.Log;
+import com.maccasoft.propeller.expressions.Log10;
+import com.maccasoft.propeller.expressions.Log2;
 import com.maccasoft.propeller.expressions.LogicalAnd;
 import com.maccasoft.propeller.expressions.LogicalNot;
 import com.maccasoft.propeller.expressions.LogicalOr;
@@ -60,6 +66,7 @@ import com.maccasoft.propeller.expressions.NotEquals;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.expressions.ObjectContextLiteral;
 import com.maccasoft.propeller.expressions.Or;
+import com.maccasoft.propeller.expressions.Pow;
 import com.maccasoft.propeller.expressions.Register;
 import com.maccasoft.propeller.expressions.Rev;
 import com.maccasoft.propeller.expressions.Rol;
@@ -1972,6 +1979,41 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 return new Zerox(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case "SIGNX":
                 return new Signx(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
+
+            case "POW":
+                return new Pow(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
+
+            case "LOG":
+                if (node.getChildCount() != 1) {
+                    throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
+                }
+                return new Log(buildConstantExpression(context, node.getChild(0), registerConstant));
+            case "LOG2":
+                if (node.getChildCount() != 1) {
+                    throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
+                }
+                return new Log2(buildConstantExpression(context, node.getChild(0), registerConstant));
+            case "LOG10":
+                if (node.getChildCount() != 1) {
+                    throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
+                }
+                return new Log10(buildConstantExpression(context, node.getChild(0), registerConstant));
+
+            case "EXP":
+                if (node.getChildCount() != 1) {
+                    throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
+                }
+                return new Exp(buildConstantExpression(context, node.getChild(0), registerConstant));
+            case "EXP2":
+                if (node.getChildCount() != 1) {
+                    throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
+                }
+                return new Exp2(buildConstantExpression(context, node.getChild(0), registerConstant));
+            case "EXP10":
+                if (node.getChildCount() != 1) {
+                    throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
+                }
+                return new Exp10(buildConstantExpression(context, node.getChild(0), registerConstant));
 
             case "&":
                 return new And(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));

@@ -203,6 +203,13 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         keywords.put("ROUND", TokenId.KEYWORD);
         keywords.put("FABS", TokenId.KEYWORD);
         keywords.put("FSQRT", TokenId.KEYWORD);
+        keywords.put("LOG2", TokenId.KEYWORD);
+        keywords.put("LOG10", TokenId.KEYWORD);
+        keywords.put("LOG", TokenId.KEYWORD);
+        keywords.put("EXP2", TokenId.KEYWORD);
+        keywords.put("EXP10", TokenId.KEYWORD);
+        keywords.put("EXP", TokenId.KEYWORD);
+        keywords.put("POW", TokenId.KEYWORD);
 
         keywords.put("_CLKFREQ", TokenId.CONSTANT);
         keywords.put("_CLKMODE", TokenId.CONSTANT);

@@ -28,14 +28,16 @@ public class Spin2TreeBuilder {
 
     static Map<String, Integer> precedence = new HashMap<>();
     static {
-        precedence.put(">>", 16);
-        precedence.put("<<", 16);
-        precedence.put("SAR", 16);
-        precedence.put("ROR", 16);
-        precedence.put("ROL", 16);
-        precedence.put("REV", 16);
-        precedence.put("ZEROX", 16);
-        precedence.put("SIGNX", 16);
+        precedence.put(">>", 17);
+        precedence.put("<<", 17);
+        precedence.put("SAR", 17);
+        precedence.put("ROR", 17);
+        precedence.put("ROL", 17);
+        precedence.put("REV", 17);
+        precedence.put("ZEROX", 17);
+        precedence.put("SIGNX", 17);
+
+        precedence.put("POW", 16);
 
         precedence.put("&", 15);
         precedence.put("^", 14);
@@ -188,6 +190,12 @@ public class Spin2TreeBuilder {
         unary.add("QEXP=");
         unary.add("+.");
         unary.add("-.");
+        unary.add("LOG2");
+        unary.add("LOG10");
+        unary.add("LOG");
+        unary.add("EXP2");
+        unary.add("EXP10");
+        unary.add("EXP");
     }
 
     static Set<String> postEffect = new HashSet<>();

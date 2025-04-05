@@ -132,7 +132,9 @@ public class MathOp extends Spin2Bytecode {
         operations.put(">=.", new Descriptor(new byte[] {
             bc_hub_bytecode, (byte) bc_fgte
         }, "FLOAT_GREATER_THAN_OR_EQUAL"));
-
+        operations.put("POW", new Descriptor(new byte[] {
+            bc_hub_bytecode, (byte) bc_pow
+        }, "POW"));
     }
 
     public static boolean isMathOp(String s) {
@@ -153,6 +155,24 @@ public class MathOp extends Spin2Bytecode {
         unary.put("SQRT", new Descriptor(bc_sqrt, "SQRT"));
         unary.put("QLOG", new Descriptor(bc_qlog, "QLOG"));
         unary.put("QEXP", new Descriptor(bc_qexp, "QEXP"));
+        unary.put("LOG2", new Descriptor(new byte[] {
+            bc_hub_bytecode, (byte) bc_log2
+        }, "LOG2"));
+        unary.put("LOG10", new Descriptor(new byte[] {
+            bc_hub_bytecode, (byte) bc_log10
+        }, "LOG10"));
+        unary.put("LOG", new Descriptor(new byte[] {
+            bc_hub_bytecode, (byte) bc_log
+        }, "LOG"));
+        unary.put("EXP2", new Descriptor(new byte[] {
+            bc_hub_bytecode, (byte) bc_exp2
+        }, "EXP2"));
+        unary.put("EXP10", new Descriptor(new byte[] {
+            bc_hub_bytecode, (byte) bc_exp10
+        }, "EXP10"));
+        unary.put("EXP", new Descriptor(new byte[] {
+            bc_hub_bytecode, (byte) bc_exp
+        }, "EXP"));
     }
 
     public static boolean isUnaryMathOp(String s) {
