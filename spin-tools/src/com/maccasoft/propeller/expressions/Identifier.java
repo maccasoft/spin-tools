@@ -24,7 +24,7 @@ public class Identifier extends Passthrough {
     public Identifier(String name, Context context, Number defaultValue) {
         this.name = name;
         this.context = context;
-        this.defaultValue = new NumberLiteral(defaultValue);
+        this.defaultValue = defaultValue != null ? new NumberLiteral(defaultValue) : null;
     }
 
     public String getName() {

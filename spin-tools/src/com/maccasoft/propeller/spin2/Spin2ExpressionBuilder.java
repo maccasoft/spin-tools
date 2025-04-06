@@ -684,7 +684,9 @@ public class Spin2ExpressionBuilder {
                     String s = token.getText().substring(1);
                     return new CharacterLiteral(s.substring(0, s.length() - 1));
                 }
-                return new Identifier(token.getText(), context, ignoreMissing ? Long.valueOf(0) : null);
+                Expression result = new Identifier(token.getText(), context, ignoreMissing ? Long.valueOf(0) : null);
+                result.setData(token);
+                return result;
         }
     }
 

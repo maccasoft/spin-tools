@@ -16,6 +16,7 @@ import java.io.PrintStream;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.model.RootNode;
@@ -7412,6 +7413,27 @@ class Spin2ObjectCompilerTest {
             + "00010 00010       04             RETURN\n"
             + "00011 00011       00 00 00       Padding\n"
             + "", compile(text));
+    }
+
+    @Test
+    void testConstantValidation() throws Exception {
+        String text = ""
+            + "CON\n"
+            + "\n"
+            + "    PIN = 1\n"
+            + "    DELAY = 1_000 / MS\n"
+            + "\n"
+            + "PUB main()\n"
+            + "\n"
+            + "";
+
+        Assertions.assertThrows(CompilerException.class, new Executable() {
+
+            @Override
+            public void execute() throws Throwable {
+                compile(text);
+            }
+        });
     }
 
     String compile(String text) throws Exception {

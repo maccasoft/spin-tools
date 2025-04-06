@@ -16,6 +16,7 @@ import java.io.PrintStream;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.model.RootNode;
@@ -3341,6 +3342,27 @@ class Spin1ObjectCompilerTest {
             + "00022 00022       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
             + "00023 00023       32             RETURN\n"
             + "", compile(text, true));
+    }
+
+    @Test
+    void testConstantValidation() throws Exception {
+        String text = ""
+            + "CON\n"
+            + "\n"
+            + "    PIN = 1\n"
+            + "    DELAY = 1_000 / MS\n"
+            + "\n"
+            + "PUB main\n"
+            + "\n"
+            + "";
+
+        Assertions.assertThrows(CompilerException.class, new Executable() {
+
+            @Override
+            public void execute() throws Throwable {
+                compile(text);
+            }
+        });
     }
 
     String compile(String text) throws Exception {
