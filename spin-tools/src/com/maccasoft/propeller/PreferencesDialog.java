@@ -119,6 +119,8 @@ public class PreferencesDialog extends Dialog {
     PathList spin1Paths;
     Button spin1RemoveUnusedMethods;
     Button spin1CaseSensitive;
+    Button spin1FastByteConstants;
+    Button spin1FoldConstants;
     Button spin1WarnUnusedMethods;
     Button spin1WarnUnusedMethodVariables;
     Button spin1WarnUnusedVariables;
@@ -179,6 +181,8 @@ public class PreferencesDialog extends Dialog {
     boolean oldShowEditorOutline;
     boolean oldHighlightCurrentLine;
     boolean oldSpin1CaseSensitive;
+    boolean oldSpin1FastByteConstants;
+    boolean oldSpin1FoldConstants;
     boolean oldSpin1RemoveUnusedMethods;
     boolean oldSpin1WarnUnusedMethods;
     boolean oldSpin1WarnUnusedMethodVariables;
@@ -516,6 +520,8 @@ public class PreferencesDialog extends Dialog {
         oldShowSectionsBackground = preferences.getShowSectionsBackground();
         oldSpin1RemoveUnusedMethods = preferences.getSpin1RemoveUnusedMethods();
         oldSpin1CaseSensitive = preferences.getSpin1CaseSensitiveSymbols();
+        oldSpin1FastByteConstants = preferences.getSpin1FastByteConstants();
+        oldSpin1FoldConstants = preferences.getSpin1FoldConstants();
         oldSpin1WarnUnusedMethods = preferences.getSpin1WarnUnusedMethods();
         oldSpin1WarnUnusedMethodVariables = preferences.getSpin1WarnUnusedMethodVariables();
         oldSpin1WarnUnusedVariables = preferences.getSpin1WarnUnusedVariables();
@@ -684,6 +690,32 @@ public class PreferencesDialog extends Dialog {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 preferences.setSpin1CaseSensitiveSymbols(((Button) e.widget).getSelection());
+            }
+
+        });
+
+        spin1FastByteConstants = new Button(group, SWT.CHECK);
+        spin1FastByteConstants.setText("Fast byte constants");
+        spin1FastByteConstants.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+        spin1FastByteConstants.setSelection(preferences.getSpin1FastByteConstants());
+        spin1FastByteConstants.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                preferences.setSpin1FastByteConstants(((Button) e.widget).getSelection());
+            }
+
+        });
+
+        spin1FoldConstants = new Button(group, SWT.CHECK);
+        spin1FoldConstants.setText("Fold constants");
+        spin1FoldConstants.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+        spin1FoldConstants.setSelection(preferences.getSpin1FoldConstants());
+        spin1FoldConstants.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                preferences.setSpin1FoldConstants(((Button) e.widget).getSelection());
             }
 
         });
@@ -1964,6 +1996,8 @@ public class PreferencesDialog extends Dialog {
 
         preferences.setSpin1RemoveUnusedMethods(oldSpin1RemoveUnusedMethods);
         preferences.setSpin1CaseSensitiveSymbols(oldSpin1CaseSensitive);
+        preferences.setSpin1FastByteConstants(oldSpin1FastByteConstants);
+        preferences.setSpin1FoldConstants(oldSpin1FoldConstants);
         preferences.setSpin1WarnUnusedMethods(oldSpin1WarnUnusedMethods);
         preferences.setSpin1WarnUnusedMethodVariables(oldSpin1WarnUnusedMethodVariables);
         preferences.setSpin1WarnUnusedVariables(oldSpin1WarnUnusedVariables);

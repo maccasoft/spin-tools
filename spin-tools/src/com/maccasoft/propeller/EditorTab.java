@@ -114,27 +114,22 @@ public class EditorTab implements FindReplaceTarget {
             switch (evt.getPropertyName()) {
                 case Preferences.PROP_SPIN1_CASE_SENSITIVE_SYMBOLS:
                     tokenMarker.setCaseSensitive((Boolean) evt.getNewValue());
-                case Preferences.PROP_SPIN1_REMOVE_UNUSED_METHODS:
-                case Preferences.PROP_SPIN1_LIBRARY_PATH:
-                case Preferences.PROP_SPIN1_WARN_UNUSED_METHODS:
-                case Preferences.PROP_SPIN1_WARN_UNUSED_METHOD_VARIABLES:
-                case Preferences.PROP_SPIN1_WARN_UNUSED_VARIABLES:
+                    // Fall-through
+                case Preferences.PROP_SPIN1_REBUILD:
                     if (!tabItemText.toLowerCase().endsWith(".spin2")) {
                         scheduleCompile();
                     }
                     break;
+
                 case Preferences.PROP_SPIN2_CASE_SENSITIVE_SYMBOLS:
                     tokenMarker.setCaseSensitive((Boolean) evt.getNewValue());
-                case Preferences.PROP_SPIN2_REMOVE_UNUSED_METHODS:
-                case Preferences.PROP_SPIN2_LIBRARY_PATH:
-                case Preferences.PROP_SPIN2_COMPRESS:
-                case Preferences.PROP_SPIN2_WARN_UNUSED_METHODS:
-                case Preferences.PROP_SPIN2_WARN_UNUSED_METHOD_VARIABLES:
-                case Preferences.PROP_SPIN2_WARN_UNUSED_VARIABLES:
+                    // Fall-through
+                case Preferences.PROP_SPIN2_REBUILD:
                     if (tabItemText.toLowerCase().endsWith(".spin2") || tabItemText.toLowerCase().endsWith(".c")) {
                         scheduleCompile();
                     }
                     break;
+
                 case Preferences.PROP_TOP_OBJECT: {
                     File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
                     tabItem.setFont(localFile.equals(evt.getNewValue()) ? boldFont : null);
@@ -526,7 +521,7 @@ public class EditorTab implements FindReplaceTarget {
 
                         Compiler compiler = null;
                         if (tabItemText.toLowerCase().endsWith(".spin")) {
-                            compiler = new Spin1Compiler(preferences.getSpin1CaseSensitiveSymbols(), true);
+                            compiler = new Spin1Compiler(preferences.getSpin1CaseSensitiveSymbols());
                             compiler.setSourceProvider(new EditorTabSourceProvider(preferences.getSpin1LibraryPath()));
 
                             for (Entry<String, String> entry : preferences.getSpin1Defines().entrySet()) {
@@ -538,6 +533,9 @@ public class EditorTab implements FindReplaceTarget {
                                 }
                                 compiler.addDefine(entry.getKey(), list);
                             }
+
+                            ((Spin1Compiler) compiler).setFastByteConstants(preferences.getSpin1FastByteConstants());
+                            ((Spin1Compiler) compiler).setFoldConstants(preferences.getSpin1FoldConstants());
 
                             removeUnusedMethods = preferences.getSpin1RemoveUnusedMethods();
                             warnUnusedMethods = preferences.getSpin1WarnUnusedMethods();

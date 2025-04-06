@@ -32,8 +32,9 @@ import com.maccasoft.propeller.model.TokenStream;
 
 public class Spin1Compiler extends Compiler {
 
-    boolean openspinCompatible;
+    boolean fastByteConstants;
     boolean foldConstants;
+    boolean optimizeStrings;
 
     protected List<ObjectInfo> childObjects = new ArrayList<>();
 
@@ -48,17 +49,12 @@ public class Spin1Compiler extends Compiler {
         super(caseSensitive);
     }
 
-    public Spin1Compiler(boolean caseSensitive, boolean foldConstants) {
-        super(caseSensitive);
-        this.foldConstants = foldConstants;
+    public boolean isFastByteConstants() {
+        return fastByteConstants;
     }
 
-    public boolean isOpenspinCompatible() {
-        return openspinCompatible;
-    }
-
-    public void setOpenspinCompatible(boolean openspinCompatible) {
-        this.openspinCompatible = openspinCompatible;
+    public void setFastByteConstants(boolean fastByteConstants) {
+        this.fastByteConstants = fastByteConstants;
     }
 
     public boolean isFoldConstants() {
@@ -67,6 +63,14 @@ public class Spin1Compiler extends Compiler {
 
     public void setFoldConstants(boolean foldConstants) {
         this.foldConstants = foldConstants;
+    }
+
+    public boolean isOptimizeStrings() {
+        return optimizeStrings;
+    }
+
+    public void setOptimizeStrings(boolean optimizeStrings) {
+        this.optimizeStrings = optimizeStrings;
     }
 
     @Override

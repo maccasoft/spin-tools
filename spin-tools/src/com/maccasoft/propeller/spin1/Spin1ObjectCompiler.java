@@ -412,13 +412,12 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
             for (Spin1MethodLine line : compileStatement(method.getScope(), method, null, node)) {
                 method.addSource(line);
             }
-            if (compiler.isOpenspinCompatible() || method.getLines().size() == 0 || !"RETURN".equals(method.getLines().get(method.getLines().size() - 1).getStatement())) {
-                Spin1MethodLine line = new Spin1MethodLine(method.getScope(), "RETURN");
-                line.addSource(new Bytecode(line.getScope(), 0b00110010, line.getStatement()));
-                method.addSource(line);
-            }
 
-            if (compiler.isOpenspinCompatible()) {
+            Spin1MethodLine line = new Spin1MethodLine(method.getScope(), "RETURN");
+            line.addSource(new Bytecode(line.getScope(), 0b00110010, line.getStatement()));
+            method.addSource(line);
+
+            if (!compiler.isOptimizeStrings()) {
                 List<Spin1Bytecode> data = getStringData();
                 if (data.size() != 0) {
                     Spin1MethodLine stringDataLine = new Spin1MethodLine(method.getScope());
@@ -643,7 +642,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
         }
 
         Spin1MethodLine stringDataLine = null;
-        if (!compiler.isOpenspinCompatible() && getStringData().size() != 0) {
+        if (compiler.isOptimizeStrings() && getStringData().size() != 0) {
             stringDataLine = new Spin1MethodLine(scope);
             stringDataLine.setText("(string data)");
             stringDataLine.addSource(getStringData());
@@ -1644,7 +1643,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                 if (pop != 0) {
                     try {
                         ByteArrayOutputStream os = new ByteArrayOutputStream();
-                        os.write(new Constant(line.getScope(), new NumberLiteral(pop), compiler.isOpenspinCompatible()).getBytes());
+                        os.write(new Constant(line.getScope(), new NumberLiteral(pop), compiler.isFastByteConstants()).getBytes());
                         os.write(0x14);
                         line.addSource(new Bytecode(line.getScope(), os.toByteArray(), String.format("POP %d", pop)));
                     } catch (Exception e) {

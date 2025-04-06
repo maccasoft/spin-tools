@@ -261,7 +261,7 @@ public abstract class Spin1CBytecodeCompiler extends Spin1PAsmCompiler {
                         if (!expression.isConstant()) {
                             throw new CompilerException("expression is not constant", node.getChild(0).getToken());
                         }
-                        source.add(new Constant(context, new Trunc(expression), false));
+                        source.add(new Constant(context, new Trunc(expression), compiler.isFastByteConstants()));
                     } catch (Exception e) {
                         throw new CompilerException("expression is not constant", node.getChild(0).getToken());
                     }
@@ -272,7 +272,7 @@ public abstract class Spin1CBytecodeCompiler extends Spin1PAsmCompiler {
                     }, "CHIPVER"));
                 }
                 else if ("clkfreq".equals(node.getText())) {
-                    source.add(new Constant(context, new NumberLiteral(0), false));
+                    source.add(new Constant(context, new NumberLiteral(0), compiler.isFastByteConstants()));
                     source.add(new MemoryOp(context, MemoryOp.Size.Long, false, MemoryOp.Base.Pop, MemoryOp.Op.Read, null));
                 }
                 else if ("clkmode".equals(node.getText())) {
@@ -305,12 +305,12 @@ public abstract class Spin1CBytecodeCompiler extends Spin1PAsmCompiler {
                                 return (methodNode.getChildCount() << 8) | ((Method) expression).getIndex() + 1;
                             }
 
-                        }, false));
+                        }, compiler.isFastByteConstants()));
                         source.addAll(compileBytecodeExpression(context, method, node.getChild(1), true));
                         source.add(new Bytecode(context, 0x15, "MARK_INTERPRETED"));
                     }
                     else {
-                        source.add(new Constant(context, new NumberLiteral(-1), false));
+                        source.add(new Constant(context, new NumberLiteral(-1), compiler.isFastByteConstants()));
                         source.addAll(compileBytecodeExpression(context, method, node.getChild(0), true));
                         source.addAll(compileBytecodeExpression(context, method, node.getChild(1), true));
                     }
@@ -332,7 +332,7 @@ public abstract class Spin1CBytecodeCompiler extends Spin1PAsmCompiler {
                     }
                     int code_range = code | 0b00000010;
 
-                    source.add(new Constant(context, new NumberLiteral(node.getText().toUpperCase().endsWith("z") ? 0 : 1), false));
+                    source.add(new Constant(context, new NumberLiteral(node.getText().toUpperCase().endsWith("z") ? 0 : 1), compiler.isFastByteConstants()));
 
                     Spin1Bytecode end = new Spin1Bytecode(context);
                     source.add(new Address(context, new ContextLiteral(end.getContext())));
@@ -349,7 +349,7 @@ public abstract class Spin1CBytecodeCompiler extends Spin1PAsmCompiler {
                         else if (arg.getType() == Token.STRING) {
                             String s = arg.getText().substring(1, arg.getText().length() - 1);
                             for (int x = 0; x < s.length(); x++) {
-                                source.add(new Constant(context, new CharacterLiteral(s.substring(x, x + 1)), false));
+                                source.add(new Constant(context, new CharacterLiteral(s.substring(x, x + 1)), compiler.isFastByteConstants()));
                                 source.add(new Bytecode(context, code, node.getText().toUpperCase()));
                             }
                         }
@@ -417,24 +417,24 @@ public abstract class Spin1CBytecodeCompiler extends Spin1PAsmCompiler {
                     }
 
                     if (pointer) {
-                        source.add(new Constant(context, new NumberLiteral(4), false));
+                        source.add(new Constant(context, new NumberLiteral(4), compiler.isFastByteConstants()));
                     }
                     else {
                         Expression expression = null;
                         if ("int".equals(typeText) || "long".equals(typeText) || "float".equals(typeText)) {
-                            source.add(new Constant(context, new NumberLiteral(4), false));
+                            source.add(new Constant(context, new NumberLiteral(4), compiler.isFastByteConstants()));
                         }
                         else if ("word".equals(typeText) || "short".equals(typeText)) {
-                            source.add(new Constant(context, new NumberLiteral(2), false));
+                            source.add(new Constant(context, new NumberLiteral(2), compiler.isFastByteConstants()));
                         }
                         else if ("byte".equals(typeText)) {
-                            source.add(new Constant(context, new NumberLiteral(1), false));
+                            source.add(new Constant(context, new NumberLiteral(1), compiler.isFastByteConstants()));
                         }
                         else {
                             expression = context.getLocalSymbol(typeText);
                             if (expression instanceof Variable) {
                                 Variable variable = (Variable) expression;
-                                source.add(new Constant(context, new NumberLiteral(variable.getTypeSize() * variable.getSize()), false));
+                                source.add(new Constant(context, new NumberLiteral(variable.getTypeSize() * variable.getSize()), compiler.isFastByteConstants()));
                             }
                             else {
                                 throw new CompilerException("invalid type", node.getChild(0).getTokens());
@@ -465,14 +465,14 @@ public abstract class Spin1CBytecodeCompiler extends Spin1PAsmCompiler {
             }
             else if (node.getType() == Token.NUMBER) {
                 Expression expression = new NumberLiteral(node.getText());
-                source.add(new Constant(context, expression, false));
+                source.add(new Constant(context, expression, compiler.isFastByteConstants()));
             }
             else if (node.getType() == Token.CHAR) {
                 String s = node.getText().substring(1, node.getText().length() - 1);
                 if (s.length() != 1) {
                     throw new CompilerException("invalid character constant", node.getToken());
                 }
-                source.add(new Constant(context, new CharacterLiteral(s), false));
+                source.add(new Constant(context, new CharacterLiteral(s), compiler.isFastByteConstants()));
             }
             else if (node.getType() == Token.STRING) {
                 String s = node.getText().substring(1, node.getText().length() - 1) + (char) 0x00;
@@ -481,8 +481,8 @@ public abstract class Spin1CBytecodeCompiler extends Spin1PAsmCompiler {
             }
             else if ("-".equals(node.getText()) && node.getChildCount() == 1) {
                 if (node.getChild(0).getToken().type == Token.NUMBER) {
-                    Spin1Bytecode bc1 = new Constant(context, new Negative(new NumberLiteral(node.getChild(0).getText())), false);
-                    Spin1Bytecode bc2 = new Constant(context, new Subtract(new NumberLiteral(node.getChild(0).getText()), new NumberLiteral(1)), false);
+                    Spin1Bytecode bc1 = new Constant(context, new Negative(new NumberLiteral(node.getChild(0).getText())), compiler.isFastByteConstants());
+                    Spin1Bytecode bc2 = new Constant(context, new Subtract(new NumberLiteral(node.getChild(0).getText()), new NumberLiteral(1)), compiler.isFastByteConstants());
                     if (bc1.getSize() <= (bc2.getSize() + 1)) {
                         source.add(bc1);
                     }
@@ -494,7 +494,7 @@ public abstract class Spin1CBytecodeCompiler extends Spin1PAsmCompiler {
                 else {
                     Expression expression = context.getLocalSymbol(node.getChild(0).getText());
                     if (expression != null && expression.isConstant() && push) {
-                        source.add(new Constant(context, new Negative(expression), false));
+                        source.add(new Constant(context, new Negative(expression), compiler.isFastByteConstants()));
                     }
                     else {
                         if (!push && (expression instanceof Variable)) {
@@ -552,7 +552,7 @@ public abstract class Spin1CBytecodeCompiler extends Spin1PAsmCompiler {
                 }
                 try {
                     Expression expression = buildConstantExpression(context, node);
-                    source.add(new Constant(context, expression, false));
+                    source.add(new Constant(context, expression, compiler.isFastByteConstants()));
                 } catch (Exception e) {
                     source.addAll(compileBytecodeExpression(context, method, node.getChild(0), true));
                     source.addAll(compileBytecodeExpression(context, method, node.getChild(1), true));
@@ -1118,7 +1118,7 @@ public abstract class Spin1CBytecodeCompiler extends Spin1PAsmCompiler {
                                 }
                             }
                             else {
-                                source.add(new Constant(context, new NumberLiteral(variable.getPointerSize()), false));
+                                source.add(new Constant(context, new NumberLiteral(variable.getPointerSize()), compiler.isFastByteConstants()));
                                 source.add(new VariableOp(context, VariableOp.Op.Assign, popIndex, variable));
                                 if ("++".equals(postEffectNode.getText())) {
                                     OperatorDescriptor desc = assignOperators.get("+=");
@@ -1277,7 +1277,7 @@ public abstract class Spin1CBytecodeCompiler extends Spin1PAsmCompiler {
                     if (node.getChildCount() != 0) {
                         throw new RuntimeException("syntax error");
                     }
-                    source.add(new Constant(context, expression, false));
+                    source.add(new Constant(context, expression, compiler.isFastByteConstants()));
                 }
                 else {
                     if (node.getChildCount() != 0) {
@@ -1308,7 +1308,7 @@ public abstract class Spin1CBytecodeCompiler extends Spin1PAsmCompiler {
             try {
                 Expression expression = buildConstantExpression(context, node);
                 if (expression.isConstant()) {
-                    return Collections.singletonList(new Constant(context, expression, false));
+                    return Collections.singletonList(new Constant(context, expression, compiler.isFastByteConstants()));
                 }
             } catch (Exception e) {
 
@@ -1687,7 +1687,7 @@ public abstract class Spin1CBytecodeCompiler extends Spin1PAsmCompiler {
         else {
             source.add(new VariableOp(context, VariableOp.Op.Read, variable));
             if (postEffectNode != null) {
-                source.add(new Constant(context, new NumberLiteral(variable.getPointerSize()), false));
+                source.add(new Constant(context, new NumberLiteral(variable.getPointerSize()), compiler.isFastByteConstants()));
                 source.add(new VariableOp(context, VariableOp.Op.Assign, variable));
                 if ("++".equals(postEffectNode.getText())) {
                     OperatorDescriptor desc = assignOperators.get("+=");

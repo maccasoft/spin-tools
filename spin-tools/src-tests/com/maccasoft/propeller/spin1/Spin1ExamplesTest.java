@@ -102,7 +102,6 @@ class Spin1ExamplesTest {
             new File(path),
             new File(libraryPath)
         }));
-        compiler.setOpenspinCompatible(true);
         Spin1Object obj = compiler.compile(source, root);
         for (CompilerException msg : compiler.getMessages()) {
             if (msg.type == CompilerException.ERROR) {

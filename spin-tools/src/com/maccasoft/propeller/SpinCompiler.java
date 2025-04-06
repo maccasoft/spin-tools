@@ -96,7 +96,10 @@ public class SpinCompiler {
             options.addOption(new Option(null, "no-warn-unused-variables", false, "disable unused variabless warning"));
 
             options.addOption(new Option("C", "x-case", false, "case-sensitive spin symbols"));
-            options.addOption(new Option(null, "x-openspin", false, "enable OpenSpin compatibility (P1)"));
+
+            options.addOption(new Option("O", true, "optimizations"));
+            options.addOption(new Option("Ob", false, "faster byte constants (P1)"));
+            options.addOption(new Option("Of", false, "fold constants (P1)"));
 
             options.addOption(Option.builder("p").desc("serial port").hasArg().argName("port").build());
             OptionGroup terminalOptions = new OptionGroup();
@@ -234,13 +237,16 @@ public class SpinCompiler {
             compiler.setDebugEnabled(cmd.hasOption('d'));
             compiler.setRemoveUnusedMethods(cmd.hasOption('u'));
 
+            if (compiler instanceof Spin1Compiler) {
+                String optimizations = cmd.hasOption("O") ? cmd.getOptionValue("O") : "";
+                ((Spin1Compiler) compiler).setFastByteConstants(cmd.hasOption("Ob") || optimizations.contains("b"));
+                ((Spin1Compiler) compiler).setFoldConstants(cmd.hasOption("Of") || optimizations.contains("f"));
+            }
+
             compiler.setWarnUnusedMethods(!cmd.hasOption("no-warn-unused-methods"));
             compiler.setWarnUnusedMethodVariables(!cmd.hasOption("no-warn-unused-method-variables"));
             compiler.setWarnUnusedVariables(!cmd.hasOption("no-warn-unused-variables"));
 
-            if (compiler instanceof Spin1Compiler) {
-                ((Spin1Compiler) compiler).setOpenspinCompatible(cmd.hasOption("x-openspin"));
-            }
             if (compiler instanceof Spin2Compiler) {
                 ((Spin2Compiler) compiler).setCompress(cmd.hasOption('z'));
             }

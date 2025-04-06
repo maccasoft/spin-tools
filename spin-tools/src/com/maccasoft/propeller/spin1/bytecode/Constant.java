@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -16,13 +16,13 @@ import com.maccasoft.propeller.spin1.Spin1Bytecode;
 
 public class Constant extends Spin1Bytecode {
 
-    public Expression expression;
-    boolean openspinCompatibility;
+    Expression expression;
+    boolean fastByteConstant;
 
-    public Constant(Context context, Expression expression, boolean openspinCompatibility) {
+    public Constant(Context context, Expression expression, boolean fastByteConstant) {
         super(context);
         this.expression = expression;
-        this.openspinCompatibility = openspinCompatibility;
+        this.fastByteConstant = fastByteConstant;
     }
 
     @Override
@@ -52,7 +52,7 @@ public class Constant extends Spin1Bytecode {
             };
         }
 
-        if (!openspinCompatibility) {
+        if (fastByteConstant) {
             if ((value & 0xFFFFFF00) == 0x00000000) {
                 return new byte[] {
                     0x37 + 1, (byte) value

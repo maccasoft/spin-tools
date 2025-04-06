@@ -58,19 +58,10 @@ public class Preferences {
     public static final String PROP_LRU = "lru";
     public static final String PROP_TOP_OBJECT = "topObject";
     public static final String PROP_PORT = "port";
-    public static final String PROP_SPIN1_LIBRARY_PATH = "spin1LibraryPath";
-    public static final String PROP_SPIN1_REMOVE_UNUSED_METHODS = "spin1RemoveUnusedMethods";
+    public static final String PROP_SPIN1_REBUILD = "spin1Rebuild";
     public static final String PROP_SPIN1_CASE_SENSITIVE_SYMBOLS = "spin1CaseSensitiveSymbols";
-    public static final String PROP_SPIN1_WARN_UNUSED_METHODS = "spin1WarnUnusedMethods";
-    public static final String PROP_SPIN1_WARN_UNUSED_METHOD_VARIABLES = "spin1WarnUnusedMethodVariabless";
-    public static final String PROP_SPIN1_WARN_UNUSED_VARIABLES = "spin1WarnUnusedVariabless";
-    public static final String PROP_SPIN2_LIBRARY_PATH = "spin2LibraryPath";
-    public static final String PROP_SPIN2_REMOVE_UNUSED_METHODS = "spin2RemoveUnusedMethods";
+    public static final String PROP_SPIN2_REBUILD = "spin2Rebuild";
     public static final String PROP_SPIN2_CASE_SENSITIVE_SYMBOLS = "spin2CaseSensitiveSymbols";
-    public static final String PROP_SPIN2_COMPRESS = "spin2Compress";
-    public static final String PROP_SPIN2_WARN_UNUSED_METHODS = "spin2WarnUnusedMethods";
-    public static final String PROP_SPIN2_WARN_UNUSED_METHOD_VARIABLES = "spin2WarnUnusedMethodVariabless";
-    public static final String PROP_SPIN2_WARN_UNUSED_VARIABLES = "spin2WarnUnusedVariabless";
     public static final String PROP_TERMINAL_FONT = "terminalFont";
     public static final String PROP_TERMINAL_LINE_INPUT = "terminalLineInput";
     public static final String PROP_TERMINAL_LOCAL_ECHO = "terminalLocalEcho";
@@ -174,6 +165,8 @@ public class Preferences {
             hyperlinkModifiers = 1;
 
             spin1RemovedUnusedMethods = true;
+            spin1FastByteConstants = true;
+            spin1FoldConstants = true;
             spin1WarnUnusedMethods = true;
             spin1WarnUnusedMethodVariables = true;
             spin1WarnUnusedVariables = true;
@@ -217,6 +210,8 @@ public class Preferences {
         public String[] spin1LibraryPath;
         public boolean spin1RemovedUnusedMethods;
         public boolean spin1CaseSensitiveSymbols;
+        public boolean spin1FastByteConstants;
+        public boolean spin1FoldConstants;
         public boolean spin1WarnUnusedMethods;
         public boolean spin1WarnUnusedMethodVariables;
         public boolean spin1WarnUnusedVariables;
@@ -883,11 +878,11 @@ public class Preferences {
         String[] newValue = l.toArray(new String[l.size()]);
         if (newValue.length == 0 || (newValue.length == 1 && newValue[0] == null)) {
             if (preferences.spin1LibraryPath != null) {
-                changeSupport.firePropertyChange(PROP_SPIN1_LIBRARY_PATH, preferences.spin1LibraryPath, preferences.spin1LibraryPath = null);
+                changeSupport.firePropertyChange(PROP_SPIN1_REBUILD, preferences.spin1LibraryPath, preferences.spin1LibraryPath = null);
             }
         }
         else if (!Arrays.equals(newValue, preferences.spin1LibraryPath)) {
-            changeSupport.firePropertyChange(PROP_SPIN1_LIBRARY_PATH, preferences.spin1LibraryPath, preferences.spin1LibraryPath = newValue);
+            changeSupport.firePropertyChange(PROP_SPIN1_REBUILD, preferences.spin1LibraryPath, preferences.spin1LibraryPath = newValue);
         }
     }
 
@@ -904,7 +899,7 @@ public class Preferences {
     }
 
     public void setSpin1RemoveUnusedMethods(boolean spin1RemovedUnusedMethods) {
-        changeSupport.firePropertyChange(PROP_SPIN1_REMOVE_UNUSED_METHODS, preferences.spin1RemovedUnusedMethods, preferences.spin1RemovedUnusedMethods = spin1RemovedUnusedMethods);
+        changeSupport.firePropertyChange(PROP_SPIN1_REBUILD, preferences.spin1RemovedUnusedMethods, preferences.spin1RemovedUnusedMethods = spin1RemovedUnusedMethods);
     }
 
     public boolean getSpin1CaseSensitiveSymbols() {
@@ -915,12 +910,28 @@ public class Preferences {
         changeSupport.firePropertyChange(PROP_SPIN1_CASE_SENSITIVE_SYMBOLS, preferences.spin1CaseSensitiveSymbols, preferences.spin1CaseSensitiveSymbols = spin1CaseSensitiveSymbols);
     }
 
+    public boolean getSpin1FastByteConstants() {
+        return preferences.spin1FastByteConstants;
+    }
+
+    public void setSpin1FastByteConstants(boolean spin1FastByteConstants) {
+        changeSupport.firePropertyChange(PROP_SPIN1_REBUILD, preferences.spin1FastByteConstants, preferences.spin1FastByteConstants = spin1FastByteConstants);
+    }
+
+    public boolean getSpin1FoldConstants() {
+        return preferences.spin1FoldConstants;
+    }
+
+    public void setSpin1FoldConstants(boolean spin1FoldConstants) {
+        changeSupport.firePropertyChange(PROP_SPIN1_REBUILD, preferences.spin1FoldConstants, preferences.spin1FoldConstants = spin1FoldConstants);
+    }
+
     public boolean getSpin1WarnUnusedMethods() {
         return preferences.spin1WarnUnusedMethods;
     }
 
     public void setSpin1WarnUnusedMethods(boolean spin1WarnUnusedMethods) {
-        changeSupport.firePropertyChange(PROP_SPIN1_WARN_UNUSED_METHODS, preferences.spin1WarnUnusedMethods, this.preferences.spin1WarnUnusedMethods = spin1WarnUnusedMethods);
+        changeSupport.firePropertyChange(PROP_SPIN1_REBUILD, preferences.spin1WarnUnusedMethods, this.preferences.spin1WarnUnusedMethods = spin1WarnUnusedMethods);
     }
 
     public boolean getSpin1WarnUnusedMethodVariables() {
@@ -928,7 +939,7 @@ public class Preferences {
     }
 
     public void setSpin1WarnUnusedMethodVariables(boolean spin1WarnUnusedMethodVariables) {
-        changeSupport.firePropertyChange(PROP_SPIN1_WARN_UNUSED_METHOD_VARIABLES, preferences.spin1WarnUnusedMethodVariables,
+        changeSupport.firePropertyChange(PROP_SPIN1_REBUILD, preferences.spin1WarnUnusedMethodVariables,
             this.preferences.spin1WarnUnusedMethodVariables = spin1WarnUnusedMethodVariables);
     }
 
@@ -937,7 +948,7 @@ public class Preferences {
     }
 
     public void setSpin1WarnUnusedVariables(boolean spin1WarnUnusedVariables) {
-        changeSupport.firePropertyChange(PROP_SPIN1_WARN_UNUSED_VARIABLES, preferences.spin1WarnUnusedVariables, this.preferences.spin1WarnUnusedVariables = spin1WarnUnusedVariables);
+        changeSupport.firePropertyChange(PROP_SPIN1_REBUILD, preferences.spin1WarnUnusedVariables, this.preferences.spin1WarnUnusedVariables = spin1WarnUnusedVariables);
     }
 
     public Map<String, String> getSpin1Defines() {
@@ -974,7 +985,7 @@ public class Preferences {
     }
 
     public void setSpin2RemoveUnusedMethods(boolean spin2RemovedUnusedMethods) {
-        changeSupport.firePropertyChange(PROP_SPIN2_REMOVE_UNUSED_METHODS, preferences.spin2RemovedUnusedMethods, preferences.spin2RemovedUnusedMethods = spin2RemovedUnusedMethods);
+        changeSupport.firePropertyChange(PROP_SPIN2_REBUILD, preferences.spin2RemovedUnusedMethods, preferences.spin2RemovedUnusedMethods = spin2RemovedUnusedMethods);
     }
 
     public boolean getSpin2CaseSensitiveSymbols() {
@@ -993,11 +1004,11 @@ public class Preferences {
         String[] newValue = l.toArray(new String[l.size()]);
         if (newValue.length == 0 || (newValue.length == 1 && newValue[0] == null)) {
             if (preferences.spin2LibraryPath != null) {
-                changeSupport.firePropertyChange(PROP_SPIN2_LIBRARY_PATH, preferences.spin2LibraryPath, preferences.spin2LibraryPath = null);
+                changeSupport.firePropertyChange(PROP_SPIN2_REBUILD, preferences.spin2LibraryPath, preferences.spin2LibraryPath = null);
             }
         }
         else if (!Arrays.equals(newValue, preferences.spin2LibraryPath)) {
-            changeSupport.firePropertyChange(PROP_SPIN2_LIBRARY_PATH, preferences.spin2LibraryPath, preferences.spin2LibraryPath = newValue);
+            changeSupport.firePropertyChange(PROP_SPIN2_REBUILD, preferences.spin2LibraryPath, preferences.spin2LibraryPath = newValue);
         }
     }
 
@@ -1038,7 +1049,7 @@ public class Preferences {
     }
 
     public void setSpin2Compress(boolean spin2Compress) {
-        changeSupport.firePropertyChange(PROP_SPIN2_COMPRESS, preferences.spin2Compress, preferences.spin2Compress = spin2Compress);
+        changeSupport.firePropertyChange(PROP_SPIN2_REBUILD, preferences.spin2Compress, preferences.spin2Compress = spin2Compress);
     }
 
     public boolean getSpin2WarnUnusedMethods() {
@@ -1046,7 +1057,7 @@ public class Preferences {
     }
 
     public void setSpin2WarnUnusedMethods(boolean spin2WarnUnusedMethods) {
-        changeSupport.firePropertyChange(PROP_SPIN2_WARN_UNUSED_METHODS, preferences.spin2WarnUnusedMethods, this.preferences.spin2WarnUnusedMethods = spin2WarnUnusedMethods);
+        changeSupport.firePropertyChange(PROP_SPIN2_REBUILD, preferences.spin2WarnUnusedMethods, this.preferences.spin2WarnUnusedMethods = spin2WarnUnusedMethods);
     }
 
     public boolean getSpin2WarnUnusedMethodVariables() {
@@ -1054,7 +1065,7 @@ public class Preferences {
     }
 
     public void setSpin2WarnUnusedMethodVariables(boolean spin2WarnUnusedMethodVariables) {
-        changeSupport.firePropertyChange(PROP_SPIN2_WARN_UNUSED_METHOD_VARIABLES, preferences.spin2WarnUnusedMethodVariables,
+        changeSupport.firePropertyChange(PROP_SPIN2_REBUILD, preferences.spin2WarnUnusedMethodVariables,
             this.preferences.spin2WarnUnusedMethodVariables = spin2WarnUnusedMethodVariables);
     }
 
@@ -1063,7 +1074,7 @@ public class Preferences {
     }
 
     public void setSpin2WarnUnusedVariables(boolean spin2WarnUnusedVariables) {
-        changeSupport.firePropertyChange(PROP_SPIN2_WARN_UNUSED_VARIABLES, preferences.spin2WarnUnusedVariables, this.preferences.spin2WarnUnusedVariables = spin2WarnUnusedVariables);
+        changeSupport.firePropertyChange(PROP_SPIN2_REBUILD, preferences.spin2WarnUnusedVariables, this.preferences.spin2WarnUnusedVariables = spin2WarnUnusedVariables);
     }
 
     public int[] getTabStops(Class<?> clazz) {
