@@ -114,7 +114,7 @@ public abstract class DebugWindow {
             case "PLOT":
                 return new DebugPlotWindow(transmitBuffer);
             case "TERM":
-                break;
+                return new DebugTermWindow(transmitBuffer);
             case "BITMAP":
                 return new DebugBitmapWindow(transmitBuffer);
             case "MIDI":
