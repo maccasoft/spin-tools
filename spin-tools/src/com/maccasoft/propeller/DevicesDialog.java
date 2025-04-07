@@ -406,12 +406,18 @@ public class DevicesDialog extends Dialog {
                 int rc = 0;
                 try {
                     rc = hwfind2(comPort);
+                    if (rc == 0) {
+                        rc = hwfind2(comPort);
+                    }
                 } catch (Exception e) {
                     // Do nothing
                 }
                 if (rc == 0) {
                     try {
                         rc = hwfind1(comPort);
+                        if (rc == 0) {
+                            rc = hwfind1(comPort);
+                        }
                     } catch (Exception e) {
                         // Do nothing
                     }
@@ -535,8 +541,8 @@ public class DevicesDialog extends Dialog {
                 return bit;
             }
 
-            static final String PROP_CHK = "> Prop_Chk 0 0 0 0\r";
-            static final String PROP_VER = "Prop_Ver ";
+            static final String PROP_CHK = "> Prop_Chk 0 0 0 0  ";
+            static final String PROP_VER = "\r\nProp_Ver ";
 
             protected int hwfind2(SerialComPort comPort) throws ComPortException {
                 String result = null;
@@ -544,31 +550,29 @@ public class DevicesDialog extends Dialog {
                 comPort.setParams(2000000, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
                 comPort.hwreset(p2ResetControl, ComPort.P2_RESET_DELAY);
 
-                for (int i = 0; i < 3; i++) {
+                for (int i = 0; i < 5; i++) {
                     comPort.writeString(PROP_CHK);
-                    if (readStringWithTimeout(comPort, 50) != null) {
-                        if ((result = readStringWithTimeout(comPort, 50)) != null) {
-                            if (result.startsWith(PROP_VER)) {
-                                return result.charAt(9);
-                            }
-                        }
-                        break;
+
+                    result = readResponseWithTimeout(comPort, 75);
+                    if (result.startsWith(PROP_VER)) {
+                        return result.charAt(PROP_VER.length());
                     }
                 }
 
                 return 0;
             }
 
-            private String readStringWithTimeout(ComPort comPort, int timeout) throws ComPortException {
+            private String readResponseWithTimeout(ComPort comPort, int timeout) throws ComPortException {
                 int b;
                 StringBuilder sb = new StringBuilder();
 
-                do {
+                while (sb.length() < 14) {
                     b = comPort.readByteWithTimeout(timeout);
-                    if (b > 0) {
-                        sb.append((char) b);
+                    if (b == -1) {
+                        break;
                     }
-                } while (b > 0 && b != '\n');
+                    sb.append((char) b);
+                }
 
                 return sb.toString();
             }

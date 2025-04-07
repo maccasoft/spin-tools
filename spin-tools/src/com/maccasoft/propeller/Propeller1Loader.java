@@ -123,6 +123,11 @@ public class Propeller1Loader extends PropellerLoader {
 
                         comPort.hwreset(getResetControl(), ComPort.P1_RESET_DELAY);
                         version = hwfind();
+
+                        if (version == 0) {
+                            comPort.hwreset(getResetControl(), ComPort.P1_RESET_DELAY);
+                            version = hwfind();
+                        }
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -217,6 +222,11 @@ public class Propeller1Loader extends PropellerLoader {
 
                 try {
                     comPort = serialComPort;
+                    comPort.hwreset(getResetControl(), ComPort.P1_RESET_DELAY);
+                    if (hwfind() != 0) {
+                        comPort = currentComPort;
+                        return serialComPort;
+                    }
                     comPort.hwreset(getResetControl(), ComPort.P1_RESET_DELAY);
                     if (hwfind() != 0) {
                         comPort = currentComPort;
