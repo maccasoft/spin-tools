@@ -27,6 +27,7 @@ import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
 import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.ObjectsNode;
+import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
@@ -352,10 +353,8 @@ public class Spin1TokenMarker extends SourceTokenMarker {
 
                     @Override
                     public void visitConstant(ConstantNode node) {
-                        if (!node.isExclude()) {
-                            if (node.getIdentifier() != null) {
-                                externals.put(qualifier + constantSeparator + node.getIdentifier().getText(), TokenId.CONSTANT);
-                            }
+                        if (node.getIdentifier() != null) {
+                            externals.put(qualifier + constantSeparator + node.getIdentifier().getText(), TokenId.CONSTANT);
                         }
                     }
 
@@ -470,7 +469,7 @@ public class Spin1TokenMarker extends SourceTokenMarker {
 
     };
 
-    void collectKeywords(Node root) {
+    void collectKeywords(RootNode root) {
         root.accept(collectKeywordsVisitor);
     }
 
@@ -480,12 +479,8 @@ public class Spin1TokenMarker extends SourceTokenMarker {
 
         @Override
         public void visitDirective(DirectiveNode node) {
-            if (!node.isExclude()) {
-                if (node.getTokenCount() > 2) {
-                    int start = node.getToken(2).start;
-                    int stop = node.getToken(node.getTokenCount() - 1).stop;
-                    tokens.add(new TokenMarker(start, stop, TokenId.DIRECTIVE));
-                }
+            if (!node.isExclude() && node.getTokenCount() != 0) {
+                tokens.add(new TokenMarker(node.getStartIndex(), node.getStopIndex(), TokenId.DIRECTIVE));
             }
         }
 
@@ -655,31 +650,8 @@ public class Spin1TokenMarker extends SourceTokenMarker {
 
     };
 
-    void updateReferences(Node root) {
+    void updateReferences(RootNode root) {
         root.accept(updateReferencesVisitor);
-    }
-
-    @Override
-    protected String getMethodInsert(MethodNode node) {
-        StringBuilder sb = new StringBuilder();
-
-        sb.append(node.name.getText());
-        if (node.getParametersCount() != 0) {
-            sb.append("(");
-
-            int i = 0;
-            while (i < node.getParametersCount()) {
-                if (i != 0) {
-                    sb.append(", ");
-                }
-                sb.append(node.getParameter(i).identifier.getText());
-                i++;
-            }
-
-            sb.append(")");
-        }
-
-        return sb.toString();
     }
 
     void markTokens(Node node, int i, String endMarker) {
@@ -701,6 +673,18 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                 tokens.add(new TokenMarker(token, TokenId.OPERATOR));
                 if (token.getText().equals(endMarker)) {
                     return i;
+                }
+                if (token.getText().equals("[")) {
+                    i = markTokens(list, i, "]");
+                    if (i < list.size()) {
+                        token = list.get(i);
+                    }
+                }
+                if (token.getText().equals("(")) {
+                    i = markTokens(list, i, ")");
+                    if (i < list.size()) {
+                        token = list.get(i);
+                    }
                 }
             }
             else if (token.type == Token.STRING) {
@@ -784,6 +768,29 @@ public class Spin1TokenMarker extends SourceTokenMarker {
         }
 
         return i;
+    }
+
+    @Override
+    protected String getMethodInsert(MethodNode node) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(node.name.getText());
+        if (node.getParametersCount() != 0) {
+            sb.append("(");
+
+            int i = 0;
+            while (i < node.getParametersCount()) {
+                if (i != 0) {
+                    sb.append(", ");
+                }
+                sb.append(node.getParameter(i).identifier.getText());
+                i++;
+            }
+
+            sb.append(")");
+        }
+
+        return sb.toString();
     }
 
 }

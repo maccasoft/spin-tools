@@ -868,10 +868,8 @@ public class Spin2TokenMarker extends SourceTokenMarker {
 
                     @Override
                     public void visitTypeDefinition(TypeDefinitionNode node) {
-                        if (!node.isExclude()) {
-                            if (node.getIdentifier() != null) {
-                                externals.put(qualifier + "." + node.getIdentifier().getText(), TokenId.TYPE);
-                            }
+                        if (node.getIdentifier() != null) {
+                            externals.put(qualifier + "." + node.getIdentifier().getText(), TokenId.TYPE);
                         }
                     }
 
@@ -1021,6 +1019,13 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         String lastLabel = "";
 
         @Override
+        public void visitDirective(DirectiveNode node) {
+            if (!node.isExclude() && node.getTokenCount() != 0) {
+                tokens.add(new TokenMarker(node.getStartIndex(), node.getStopIndex(), TokenId.DIRECTIVE));
+            }
+        }
+
+        @Override
         public void visitConstant(ConstantNode node) {
             if (!node.isExclude()) {
                 if (node.getStart() != null) {
@@ -1106,13 +1111,6 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         }
 
         @Override
-        public void visitDirective(DirectiveNode node) {
-            if (!node.isExclude() && node.getTokenCount() != 0) {
-                tokens.add(new TokenMarker(node.getStartIndex(), node.getStopIndex(), TokenId.DIRECTIVE));
-            }
-        }
-
-        @Override
         public void visitObject(ObjectNode node) {
             if (!node.isExclude()) {
                 if (node.count != null) {
@@ -1144,9 +1142,6 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                     if (!node.isExclude()) {
                         markTokens(node, 0, null);
                     }
-                    else {
-                        tokens.add(new TokenMarker(node.getStartIndex(), node.getStopIndex(), TokenId.COMMENT));
-                    }
                     return true;
                 }
 
@@ -1154,9 +1149,6 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 public void visitDataLine(DataLineNode node) {
                     if (!node.isExclude()) {
                         updateTokens(node, true);
-                    }
-                    else {
-                        tokens.add(new TokenMarker(node.getStartIndex(), node.getStopIndex(), TokenId.COMMENT));
                     }
                 }
 
@@ -1263,9 +1255,6 @@ public class Spin2TokenMarker extends SourceTokenMarker {
             if (!node.isExclude()) {
                 updateTokens(node, false);
             }
-            else {
-                tokens.add(new TokenMarker(node.getStartIndex(), node.getStopIndex(), TokenId.COMMENT));
-            }
         }
 
         void updateTokens(DataLineNode node, boolean inline) {
@@ -1356,9 +1345,6 @@ public class Spin2TokenMarker extends SourceTokenMarker {
 
         if (!node.isExclude()) {
             markTokens(list, i, endMarker, debug);
-        }
-        else {
-            tokens.add(new TokenMarker(node.getStartIndex(), node.getStopIndex(), TokenId.COMMENT));
         }
     }
 

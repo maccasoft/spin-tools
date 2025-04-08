@@ -319,7 +319,9 @@ public abstract class SourceTokenMarker {
 
             @Override
             public void visitDataLine(DataLineNode node) {
-                super.visitDataLine(node);
+                if (node.isExclude()) {
+                    addToExcluded(node);
+                }
             }
 
         });
