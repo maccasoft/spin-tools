@@ -108,7 +108,7 @@ public abstract class DebugWindow {
             case "SCOPE_XY":
                 return new DebugScopeXYWindow(transmitBuffer);
             case "FFT":
-                break;
+                return new DebugFFTWindow(transmitBuffer);
             case "SPECTRO":
                 break;
             case "PLOT":
@@ -134,7 +134,7 @@ public abstract class DebugWindow {
     }
 
     public File getBaseDirectory() {
-        return baseDirectory != null ? baseDirectory : new File("/home/marco/workspace/spin-tools-ide");
+        return baseDirectory != null ? baseDirectory : new File("");
     }
 
     public void setBaseDirectory(File baseDirectory) {
