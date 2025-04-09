@@ -102,11 +102,23 @@ public class DebugScopeWindow extends DebugWindow {
             this.legend = legend;
             this.color = color;
 
+            if (legend != 0 && !auto) {
+                double sy = (double) y_size / (double) (max - min);
+
+                legendMax = String.format("%c%d", max >= 0 ? '+' : '-', Math.abs(max));
+                legendMaxY = MARGIN_HEIGHT + charHeight + (imageSize.y - y_base) - (int) Math.round((max - min) * sy);
+
+                legendMin = String.format("%c%d", min >= 0 ? '+' : '-', Math.abs(min));
+                legendMinY = MARGIN_HEIGHT + charHeight + (imageSize.y - y_base) - (int) Math.round((min - min) * sy);
+            }
+
             this.sampleData = new int[samples];
             this.array = new int[sampleData.length * 2];
         }
 
         void update() {
+            double sx = (double) imageSize.x / (double) samples;
+            double sy = (double) y_size / (double) (max - min);
 
             if (auto) {
                 min = Integer.MAX_VALUE;
@@ -120,17 +132,14 @@ public class DebugScopeWindow extends DebugWindow {
                         max = d;
                     }
                 }
-            }
 
-            double sx = (double) imageSize.x / (double) samples;
-            double sy = (double) y_size / (double) (max - min);
+                if (legend != 0) {
+                    legendMax = String.format("%c%d", max >= 0 ? '+' : '-', Math.abs(max));
+                    legendMaxY = MARGIN_HEIGHT + charHeight + (imageSize.y - y_base) - (int) Math.round((max - min) * sy);
 
-            if (legend != 0) {
-                legendMax = String.format("%d", max);
-                legendMaxY = MARGIN_HEIGHT + charHeight + (imageSize.y - y_base) - (int) Math.round((max - min) * sy);
-
-                legendMin = String.format("%d", min);
-                legendMinY = MARGIN_HEIGHT + charHeight + (imageSize.y - y_base) - (int) Math.round((min - min) * sy);
+                    legendMin = String.format("%c%d", min >= 0 ? '+' : '-', Math.abs(min));
+                    legendMinY = MARGIN_HEIGHT + charHeight + (imageSize.y - y_base) - (int) Math.round((min - min) * sy);
+                }
             }
 
             double x = 0;
@@ -149,16 +158,22 @@ public class DebugScopeWindow extends DebugWindow {
                 gc.setForeground(gridColor);
                 gc.setBackground(backColor);
 
-                if (legendMax != null) {
-                    Point extent = gc.stringExtent(legendMax);
-                    gc.drawText(legendMax, MARGIN_WIDTH, legendMaxY - extent.y / 2, true);
-                    gc.drawLine(MARGIN_WIDTH + extent.x + 5, legendMaxY, imageSize.x, legendMaxY);
+                if ((legend & 0b0001) != 0) {
+                    gc.drawLine(MARGIN_WIDTH, legendMinY, imageSize.x, legendMinY);
+                }
+                if ((legend & 0b0001) != 0) {
+                    gc.drawLine(MARGIN_WIDTH, legendMaxY, imageSize.x, legendMaxY);
                 }
 
-                if (legendMin != null) {
+                if (legendMin != null && (legend & 0b0100) != 0) {
                     Point extent = gc.stringExtent(legendMin);
-                    gc.drawText(legendMin, MARGIN_WIDTH, legendMinY - extent.y / 2, true);
-                    gc.drawLine(MARGIN_WIDTH + extent.x + 5, legendMinY, imageSize.x, legendMinY);
+                    gc.fillRectangle(MARGIN_WIDTH + 1, legendMinY - extent.y / 2, 2 + extent.x + 2, extent.y);
+                    gc.drawText(legendMin, MARGIN_WIDTH + 2, legendMinY - extent.y / 2, true);
+                }
+                if (legendMax != null && (legend & 0b1000) != 0) {
+                    Point extent = gc.stringExtent(legendMax);
+                    gc.fillRectangle(MARGIN_WIDTH + 1, legendMaxY - extent.y / 2, 2 + extent.x + 2, extent.y);
+                    gc.drawText(legendMax, MARGIN_WIDTH + 2, legendMaxY - extent.y / 2, true);
                 }
             }
 
