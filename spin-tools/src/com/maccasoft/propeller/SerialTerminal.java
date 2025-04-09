@@ -1108,18 +1108,19 @@ public class SerialTerminal {
             @Override
             public void paintControl(PaintEvent e) {
                 int y0 = e.y / characterHeight;
-                int y1 = Math.min((e.y + e.height) / characterHeight, screenHeight - 1);
+                int y1 = Math.min((e.y + e.height + characterHeight - 1) / characterHeight, screenHeight - 1);
                 int x0 = e.x / characterWidth;
-                int x1 = Math.min((e.x + e.width) / characterWidth, screenWidth - 1);
+                int x1 = Math.min((e.x + e.width + characterWidth - 1) / characterWidth, screenWidth - 1);
 
                 e.gc.setFont(font);
 
-                for (int y = y1, cy = y * characterHeight; y >= y0; y--, cy -= characterHeight) {
-                    for (int x = x1, cx = x * characterWidth; x >= x0; x--, cx -= characterWidth) {
+                for (int y = y0, cy = y * characterHeight; y < y1; y++, cy += characterHeight) {
+                    for (int x = x0, cx = x * characterWidth; x < x1; x++, cx += characterWidth) {
                         Cell cell = screen[topRow + y][x];
                         e.gc.setForeground(cell.foreground);
                         e.gc.setBackground(cell.background);
-                        e.gc.drawString(String.valueOf(cell.character), cx, cy, false);
+                        e.gc.fillRectangle(cx, cy, characterWidth, characterHeight);
+                        e.gc.drawString(String.valueOf(cell.character), cx, cy, true);
                     }
                 }
 
@@ -1137,16 +1138,12 @@ public class SerialTerminal {
                 }
 
                 if (selectionRectangle != null && selectionRectangle.width != 0 && selectionRectangle.height != 0) {
-                    int x = selectionRectangle.x * characterWidth;
-                    int y = (selectionRectangle.y - topRow) * characterHeight;
-                    int width = selectionRectangle.width * characterWidth - 1;
-                    int height = selectionRectangle.height * characterHeight - 1;
                     e.gc.setAlpha(128);
                     e.gc.setBackground(e.gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
-                    e.gc.fillRectangle(x, y, width, height);
+                    e.gc.fillRectangle(selectionRectangle);
                     e.gc.setAlpha(255);
                     e.gc.setForeground(e.gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
-                    e.gc.drawRectangle(x, y, width, height);
+                    e.gc.drawRectangle(selectionRectangle);
                 }
             }
         });
@@ -1154,13 +1151,18 @@ public class SerialTerminal {
         canvas.addMouseListener(new MouseAdapter() {
 
             @Override
-            public void mouseUp(MouseEvent e) {
+            public void mouseUp(MouseEvent event) {
                 if (selectionRectangle != null && selectionRectangle.width != 0 && selectionRectangle.height != 0) {
+                    int y0 = selectionRectangle.y / characterHeight;
+                    int y1 = Math.min((selectionRectangle.y + selectionRectangle.height) / characterHeight, screenHeight - 1);
+                    int x0 = selectionRectangle.x / characterWidth;
+                    int x1 = Math.min((selectionRectangle.x + selectionRectangle.width) / characterWidth, screenWidth - 1);
+
                     StringBuilder text = new StringBuilder();
-                    for (int y = selectionRectangle.y; y < selectionRectangle.y + selectionRectangle.height; y++) {
+                    for (int y = y0; y < y1; y++) {
                         StringBuilder line = new StringBuilder();
-                        for (int x = selectionRectangle.x; x < selectionRectangle.x + selectionRectangle.width; x++) {
-                            line.append(screen[y][x].character);
+                        for (int x = x0; x < x1; x++) {
+                            line.append(screen[topRow + y][x].character);
                         }
                         if (text.length() != 0) {
                             text.append(System.lineSeparator());
@@ -1171,22 +1173,19 @@ public class SerialTerminal {
                         text.append(" ");
                     }
 
-                    ImageData imageData = new ImageData(selectionRectangle.width * characterWidth, selectionRectangle.height * characterHeight, 24, new PaletteData(0xff0000, 0x00ff00, 0x0000ff));
+                    ImageData imageData = new ImageData(selectionRectangle.width, selectionRectangle.height, 24, new PaletteData(0xff0000, 0x00ff00, 0x0000ff));
                     Image image = new Image(display, imageData);
                     GC gc = new GC(image);
                     try {
-                        int y0 = selectionRectangle.y;
-                        int y1 = selectionRectangle.y + selectionRectangle.height - 1;
-                        int x0 = selectionRectangle.x;
-                        int x1 = selectionRectangle.x + selectionRectangle.width - 1;
-
                         gc.setFont(font);
-                        for (int y = y1, cy = (y - y0) * characterHeight; y >= y0; y--, cy -= characterHeight) {
-                            for (int x = x1, cx = (x - x0) * characterWidth; x >= x0; x--, cx -= characterWidth) {
-                                Cell cell = screen[y][x];
+
+                        for (int y = y0, cy = 0; y < y1; y++, cy += characterHeight) {
+                            for (int x = x0, cx = 0; x < x1; x++, cx += characterWidth) {
+                                Cell cell = screen[topRow + y][x];
                                 gc.setForeground(cell.foreground);
                                 gc.setBackground(cell.background);
-                                gc.drawString(String.valueOf(cell.character), cx, cy, false);
+                                gc.fillRectangle(cx, cy, characterWidth, characterHeight);
+                                gc.drawString(String.valueOf(cell.character), cx, cy, true);
                             }
                         }
                     } finally {
@@ -1217,9 +1216,9 @@ public class SerialTerminal {
 
             @Override
             public void mouseDown(MouseEvent e) {
-                int cx = Math.min(e.x / characterWidth, screenWidth - 1);
-                int cy = Math.min(topRow + (e.y / characterHeight), screen.length - 1);
-                selectionRectangle = new Rectangle(cx, cy, 0, 0);
+                int x = Math.min(e.x / characterWidth, screenWidth - 1) * characterWidth;
+                int y = Math.min(e.y / characterHeight, screen.length - 1) * characterHeight;
+                selectionRectangle = new Rectangle(x, y, 0, 0);
                 canvas.redraw();
             }
 
@@ -1230,16 +1229,16 @@ public class SerialTerminal {
             @Override
             public void mouseMove(MouseEvent e) {
                 if (selectionRectangle != null) {
-                    int cx = Math.min(e.x / characterWidth, screenWidth - 1);
-                    if (cx < selectionRectangle.x) {
+                    int x = Math.min((e.x + characterWidth - 1) / characterWidth, screenWidth - 1) * characterWidth;
+                    if (x < selectionRectangle.x) {
                         return;
                     }
-                    int cy = Math.min(topRow + (e.y / characterHeight), screen.length - 1);
-                    if (cy < selectionRectangle.y) {
+                    int y = Math.min((e.y + characterHeight - 1) / characterHeight, screen.length - 1) * characterHeight;
+                    if (y < selectionRectangle.y) {
                         return;
                     }
-                    selectionRectangle.width = cx - selectionRectangle.x + 1;
-                    selectionRectangle.height = cy - selectionRectangle.y + 1;
+                    selectionRectangle.width = x - selectionRectangle.x;
+                    selectionRectangle.height = y - selectionRectangle.y;
                     canvas.redraw();
                 }
             }
@@ -1785,6 +1784,37 @@ public class SerialTerminal {
                 try {
                     SerialTerminal serialTerminal = new SerialTerminal(display, new Preferences());
                     serialTerminal.open();
+
+                    serialTerminal.setTerminalType(ANSI.KEY);
+
+                    new Thread() {
+
+                        @Override
+                        public void run() {
+                            serialTerminal.write("\033[J2\033[H");
+
+                            serialTerminal.write("\033[0;37;40mABCDEFGHIJ");
+                            serialTerminal.write("\033[0;37;41mABCDEFGHIJ");
+                            serialTerminal.write("\033[0;37;42mABCDEFGHIJ");
+                            serialTerminal.write("\033[0;30;43mABCDEFGHIJ");
+                            serialTerminal.write("\033[0;37;44mABCDEFGHIJ");
+                            serialTerminal.write("\033[0;37;45mABCDEFGHIJ");
+                            serialTerminal.write("\033[0;37;46mABCDEFGHIJ");
+                            serialTerminal.write("\033[0;30;47mABCDEFGHIJ");
+
+                            serialTerminal.write("\r\n");
+
+                            serialTerminal.write("\033[0;30;47mABCDEFGHIJ");
+                            serialTerminal.write("\033[0;37;46mABCDEFGHIJ");
+                            serialTerminal.write("\033[0;37;45mABCDEFGHIJ");
+                            serialTerminal.write("\033[0;37;44mABCDEFGHIJ");
+                            serialTerminal.write("\033[0;30;43mABCDEFGHIJ");
+                            serialTerminal.write("\033[0;37;42mABCDEFGHIJ");
+                            serialTerminal.write("\033[0;37;41mABCDEFGHIJ");
+                            serialTerminal.write("\033[0;37;40mABCDEFGHIJ");
+                        }
+
+                    }.start();
 
                     while (display.getShells().length != 0) {
                         if (!display.readAndDispatch()) {
