@@ -250,7 +250,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
         while (iter.hasNext()) {
             Entry<String, Expression> entry = iter.next();
             try {
-                Expression expression = entry.getValue().resolve();
+                Expression expression = entry.getValue();
                 if (!expression.isConstant()) {
                     logMessage(new CompilerException("expression is not constant", expression.getData()));
                 }

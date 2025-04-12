@@ -10,11 +10,15 @@
 
 package com.maccasoft.propeller.expressions;
 
-public class Identifier extends Passthrough {
+import com.maccasoft.propeller.CompilerException;
+
+public class Identifier extends Expression {
 
     String name;
     Context context;
     Expression defaultValue;
+
+    private boolean evaluating;
 
     public Identifier(String name, Context context) {
         this.name = name;
@@ -33,6 +37,71 @@ public class Identifier extends Passthrough {
 
     public Context getContext() {
         return context;
+    }
+
+    @Override
+    public boolean isConstant() {
+        if (evaluating) {
+            throw new CompilerException("illegal circular reference", getData());
+        }
+        try {
+            evaluating = true;
+            return resolve().isConstant();
+        } finally {
+            evaluating = false;
+        }
+    }
+
+    @Override
+    public boolean isNumber() {
+        if (evaluating) {
+            throw new CompilerException("illegal circular reference", getData());
+        }
+        try {
+            evaluating = true;
+            return resolve().isNumber();
+        } finally {
+            evaluating = false;
+        }
+    }
+
+    @Override
+    public Number getNumber() {
+        if (evaluating) {
+            throw new CompilerException("illegal circular reference", getData());
+        }
+        try {
+            evaluating = true;
+            return resolve().getNumber();
+        } finally {
+            evaluating = false;
+        }
+    }
+
+    @Override
+    public boolean isString() {
+        if (evaluating) {
+            throw new CompilerException("illegal circular reference", getData());
+        }
+        try {
+            evaluating = true;
+            return resolve().isString();
+        } finally {
+            evaluating = false;
+        }
+    }
+
+    @Override
+    public String getString() {
+        if (evaluating) {
+            throw new CompilerException("illegal circular reference", getData());
+        }
+        try {
+            evaluating = true;
+            return resolve().getString();
+        } finally {
+            evaluating = false;
+        }
     }
 
     @Override

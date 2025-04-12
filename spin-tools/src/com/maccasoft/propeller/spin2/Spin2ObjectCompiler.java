@@ -286,7 +286,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         continue;
                     }
                 }
-                if (!expression.resolve().isConstant()) {
+                if (!expression.isConstant()) {
                     logMessage(new CompilerException("expression is not constant", expression.getData()));
                 }
             } catch (CompilerException e) {
@@ -334,7 +334,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     }
                 }
                 try {
-                    Expression expression = member.getSize().resolve();
+                    Expression expression = member.getSize();
                     if (!expression.isConstant()) {
                         logMessage(new CompilerException("expression is not constant", expression.getData()));
                     }

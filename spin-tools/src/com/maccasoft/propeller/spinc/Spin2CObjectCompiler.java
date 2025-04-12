@@ -242,7 +242,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                     }
                 }
                 try {
-                    Expression expression = member.getSize().resolve();
+                    Expression expression = member.getSize();
                     if (!expression.isConstant()) {
                         logMessage(new CompilerException("expression is not constant", expression.getData()));
                     }
