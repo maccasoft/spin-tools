@@ -831,14 +831,6 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
         method.setComment(node.getText().replaceAll("[\n\r]+", " "));
         method.setData(node);
 
-        if (!"void".equals(type.getText())) {
-            if (!"int".equals(type.getText()) && !"float".equals(type.getText())) {
-                throw new CompilerException("unsupported return type", type);
-            }
-            LocalVariable var = new LocalVariable("float".equals(type.getText()) ? "FLOAT" : "LONG", "__default_return__", 1, method.getVarOffset());
-            method.addReturnVariable(var);
-        }
-
         token = iter.next();
         if (!"(".equals(token.getText())) {
             throw new CompilerException("expecting open bracket", token);
@@ -875,6 +867,14 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
             if (!",".equals(token.getText())) {
                 throw new CompilerException("expecting comma or closing bracket", token);
             }
+        }
+
+        if (!"void".equals(type.getText())) {
+            if (!"int".equals(type.getText()) && !"float".equals(type.getText())) {
+                throw new CompilerException("unsupported return type", type);
+            }
+            LocalVariable var = new LocalVariable("float".equals(type.getText()) ? "FLOAT" : "LONG", "__default_return__", 1, method.getVarOffset());
+            method.addReturnVariable(var);
         }
 
         Method exp = new Method(method.getLabel(), method.getParameterLongs(), method.getReturnLongs()) {
