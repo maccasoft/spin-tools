@@ -64,8 +64,8 @@ import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.FocusAdapter;
 import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.MenuAdapter;
 import org.eclipse.swt.events.MenuEvent;
-import org.eclipse.swt.events.MenuListener;
 import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -142,7 +142,6 @@ public class SpinTools {
     StatusLine statusLine;
 
     Process process;
-    MenuItem runMenuItem;
 
     MenuItem topObjectItem;
     MenuItem blockSelectionItem;
@@ -315,9 +314,6 @@ public class SpinTools {
                     break;
                 case Preferences.PROP_THEME:
                     applyTheme((String) evt.getNewValue());
-                    break;
-                case Preferences.PROP_EXTERNAL_TOOLS:
-                    populateRunMenu();
                     break;
             }
         }
@@ -928,20 +924,17 @@ public class SpinTools {
         });
 
         final Menu openFromMenu = new Menu(parent.getParent(), SWT.DROP_DOWN);
-        openFromMenu.addMenuListener(new MenuListener() {
+        openFromMenu.addMenuListener(new MenuAdapter() {
 
             @Override
             public void menuShown(MenuEvent e) {
-                MenuItem[] item = openFromMenu.getItems();
-                for (int i = 0; i < item.length; i++) {
-                    item[i].dispose();
+                MenuItem[] items = openFromMenu.getItems();
+                for (int i = 0; i < items.length; i++) {
+                    items[i].dispose();
                 }
                 populateOpenFromMenu(openFromMenu);
             }
 
-            @Override
-            public void menuHidden(MenuEvent e) {
-            }
         });
         item = new MenuItem(menu, SWT.CASCADE);
         item.setText("Open From...");
@@ -1007,20 +1000,22 @@ public class SpinTools {
         });
 
         final Menu saveToMenu = new Menu(parent.getParent(), SWT.DROP_DOWN);
-        saveToMenu.addMenuListener(new MenuListener() {
+        saveToMenu.addMenuListener(new MenuAdapter() {
 
             @Override
             public void menuShown(MenuEvent e) {
-                MenuItem[] item = saveToMenu.getItems();
-                for (int i = 0; i < item.length; i++) {
-                    item[i].dispose();
+                MenuItem[] items = saveToMenu.getItems();
+                for (int i = 0; i < items.length; i++) {
+                    items[i].dispose();
                 }
+
                 populateSaveToMenu(saveToMenu);
-            }
 
-            @Override
-            public void menuHidden(MenuEvent e) {
-
+                if (saveToMenu.getItemCount() == 0) {
+                    MenuItem item = new MenuItem(saveToMenu, SWT.PUSH);
+                    item.setText("None");
+                    item.setEnabled(false);
+                }
             }
 
         });
@@ -1094,7 +1089,7 @@ public class SpinTools {
             }
         });
 
-        menu.addMenuListener(new MenuListener() {
+        menu.addMenuListener(new MenuAdapter() {
 
             List<MenuItem> list = new ArrayList<MenuItem>();
 
@@ -1107,9 +1102,6 @@ public class SpinTools {
                 populateLruFiles(menu, lruIndex, list);
             }
 
-            @Override
-            public void menuHidden(MenuEvent e) {
-            }
         });
     }
 
@@ -2880,11 +2872,7 @@ public class SpinTools {
 
         new MenuItem(menu, SWT.SEPARATOR);
 
-        runMenuItem = new MenuItem(menu, SWT.CASCADE);
-        runMenuItem.setText("Run");
-        runMenuItem.setMenu(new Menu(parent.getParent(), SWT.DROP_DOWN));
-
-        populateRunMenu();
+        createRunMenu(menu);
 
         new MenuItem(menu, SWT.SEPARATOR);
 
@@ -2929,9 +2917,29 @@ public class SpinTools {
         return menu;
     }
 
-    void populateRunMenu() {
-        Menu menu = runMenuItem.getMenu();
+    void createRunMenu(Menu parent) {
+        final Menu menu = new Menu(parent.getParent(), SWT.DROP_DOWN);
+        menu.addMenuListener(new MenuAdapter() {
 
+            @Override
+            public void menuShown(MenuEvent e) {
+                populateRunMenu(menu);
+
+                if (menu.getItemCount() == 0) {
+                    MenuItem item = new MenuItem(menu, SWT.PUSH);
+                    item.setText("No configured external tools");
+                    item.setEnabled(false);
+                }
+            }
+
+        });
+
+        MenuItem item = new MenuItem(parent, SWT.CASCADE);
+        item.setText("Run");
+        item.setMenu(menu);
+    }
+
+    void populateRunMenu(Menu menu) {
         MenuItem[] items = menu.getItems();
         for (int i = 0; i < items.length; i++) {
             items[i].dispose();
@@ -2959,8 +2967,6 @@ public class SpinTools {
             });
             i++;
         }
-
-        runMenuItem.setEnabled(menu.getItemCount() != 0);
     }
 
     private void handleRunExternalTool(ExternalTool tool) {
@@ -3126,17 +3132,19 @@ public class SpinTools {
 
     void createPortMenu(Menu parent) {
         final Menu menu = new Menu(parent.getParent(), SWT.DROP_DOWN);
-        menu.addMenuListener(new MenuListener() {
+        menu.addMenuListener(new MenuAdapter() {
 
             @Override
             public void menuShown(MenuEvent e) {
                 comPortList.fillMenu(menu);
+
+                if (menu.getItemCount() == 0) {
+                    MenuItem item = new MenuItem(menu, SWT.PUSH);
+                    item.setText("No available ports");
+                    item.setEnabled(false);
+                }
             }
 
-            @Override
-            public void menuHidden(MenuEvent e) {
-
-            }
         });
 
         MenuItem item = new MenuItem(parent, SWT.CASCADE);
