@@ -98,7 +98,7 @@ public class SerialComPort extends ComPort {
             if (delay != 0) {
                 Thread.sleep(delay);
             }
-            serialPort.purgePort(SerialPort.PURGE_TXCLEAR | SerialPort.PURGE_RXCLEAR);
+            serialPort.purgePort(SerialPort.PURGE_RXCLEAR);
         } catch (Exception e) {
             // Do nothing
         }
