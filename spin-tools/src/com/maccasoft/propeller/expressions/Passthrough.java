@@ -37,9 +37,4 @@ public abstract class Passthrough extends Expression {
         return resolve().getString();
     }
 
-    @Override
-    public boolean isGroup() {
-        return resolve().isGroup();
-    }
-
 }
