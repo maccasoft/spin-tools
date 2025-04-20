@@ -3823,6 +3823,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
 
         List<Spin2StatementNode> indexNodes = new ArrayList<>();
         List<Integer> indexMultipliers = new ArrayList<>();
+        Spin2StatementNode bitfieldNode = null;
         Spin2StatementNode postEffectNode = null;
 
         List<Spin2Bytecode> source = new ArrayList<>();
@@ -3910,6 +3911,20 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             if (isPostEffect(varNode.getChild(n))) {
                 break;
             }
+            if (".".equals(varNode.getChild(n).getText())) {
+                if (node.getText().startsWith("@")) {
+                    throw new CompilerException("bitfield expression not allowed", varNode.getChild(n).getToken());
+                }
+                n++;
+                if (n >= varNode.getChildCount()) {
+                    throw new RuntimeException("expected bitfield expression");
+                }
+                if (!(varNode.getChild(n) instanceof Spin2StatementNode.Index)) {
+                    throw new RuntimeException("syntax error");
+                }
+                bitfieldNode = varNode.getChild(n++);
+                break;
+            }
 
             if (struct == null) {
                 break;
@@ -3937,9 +3952,11 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 source.addAll(compileConstantExpression(context, method, varNode.getChild(n++)));
             }
         }
-        else if (preEffectNode == null) {
-            if (n < varNode.getChildCount() && isPostEffect(varNode.getChild(n))) {
-                postEffectNode = varNode.getChild(n++);
+        else {
+            if (preEffectNode == null) {
+                if (n < varNode.getChildCount() && isPostEffect(varNode.getChild(n))) {
+                    postEffectNode = varNode.getChild(n++);
+                }
             }
         }
 
@@ -3951,8 +3968,17 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             throw new CompilerException("syntax error", varNode.getTokens());
         }
 
+        int bitfield = -1;
+        if (bitfieldNode != null) {
+            if (struct != null) {
+                throw new CompilerException("bitfield not allowed", bitfieldNode.getTokens());
+            }
+            bitfield = compileBitfield(context, method, bitfieldNode, source);
+        }
+
         if (varNode.toString().startsWith("[")) {
-            source.add(new VariableOp(context, postEffectNode != null ? VariableOp.Op.Setup : VariableOp.Op.Write, false, (Variable) expression, false, 0));
+            VariableOp.Op varOp = op == MemoryOp.Op.Read ? VariableOp.Op.Read : VariableOp.Op.Write;
+            source.add(new VariableOp(context, postEffectNode != null ? VariableOp.Op.Setup : varOp, false, (Variable) expression, false, 0));
             if (postEffectNode != null) {
                 int structSize = struct.getTypeSize();
 
@@ -4026,7 +4052,12 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 source.add(new VariableOp(context, VariableOp.Op.Read, false, (Variable) expression, false, 0));
             }
 
-            source.add(new StructOp(context, postEffectNode != null ? MemoryOp.Op.Setup : op, bb, ss, struct, expression, index + offset, indexMultipliers, push));
+            source.add(new StructOp(context, (bitfieldNode != null || postEffectNode != null) ? MemoryOp.Op.Setup : op, bb, ss, struct, expression, index + offset, indexMultipliers, push));
+
+            if (bitfieldNode != null) {
+                BitField.Op bfOp = op == MemoryOp.Op.Read ? BitField.Op.Read : BitField.Op.Write;
+                source.add(new BitField(context, postEffectNode == null ? bfOp : BitField.Op.Setup, bitfield));
+            }
 
             if (op == MemoryOp.Op.Address) {
                 node.setReturnLongs(1);
@@ -4048,14 +4079,22 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 else {
                     varOp = VariableOp.Op.Setup;
                 }
-                source.add(new VariableOp(context, postEffectNode != null ? VariableOp.Op.Setup : varOp, false, (Variable) expression, false, (index + offset) / 4));
+                source.add(new VariableOp(context, (bitfieldNode != null || postEffectNode != null) ? VariableOp.Op.Setup : varOp, false, (Variable) expression, false, (index + offset) / 4));
             }
             else {
-                source.add(new MemoryOp(context, ss, bb, postEffectNode != null ? MemoryOp.Op.Setup : op, expression, index + offset));
+                source.add(new MemoryOp(context, ss, bb, (bitfieldNode != null || postEffectNode != null) ? MemoryOp.Op.Setup : op, expression, index + offset));
+            }
+            if (bitfieldNode != null) {
+                BitField.Op bfOp = op == MemoryOp.Op.Read ? BitField.Op.Read : BitField.Op.Write;
+                source.add(new BitField(context, postEffectNode == null ? bfOp : BitField.Op.Setup, bitfield));
             }
         }
         else {
-            source.add(new MemoryOp(context, ss, bb, postEffectNode != null ? MemoryOp.Op.Setup : op, expression, index + offset));
+            source.add(new MemoryOp(context, ss, bb, (bitfieldNode != null || postEffectNode != null) ? MemoryOp.Op.Setup : op, expression, index + offset));
+            if (bitfieldNode != null) {
+                BitField.Op bfOp = op == MemoryOp.Op.Read ? BitField.Op.Read : BitField.Op.Write;
+                source.add(new BitField(context, postEffectNode == null ? bfOp : BitField.Op.Setup, bitfield));
+            }
         }
 
         if (varNode.isMethod()) {
