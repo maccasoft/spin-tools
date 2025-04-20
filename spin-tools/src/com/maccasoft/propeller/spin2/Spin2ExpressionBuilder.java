@@ -218,6 +218,8 @@ public class Spin2ExpressionBuilder {
         constants.put("PR5", new NumberLiteral(0x1DD, 16));
         constants.put("PR6", new NumberLiteral(0x1DE, 16));
         constants.put("PR7", new NumberLiteral(0x1DF, 16));
+
+        constants.put("TASKHLT", new NumberLiteral(0x1CC, 16));
     }
 
     Context context;

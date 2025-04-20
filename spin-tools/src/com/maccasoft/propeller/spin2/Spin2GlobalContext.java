@@ -60,6 +60,9 @@ public class Spin2GlobalContext extends Context {
         addBuiltinSymbol("#PR6", new NumberLiteral(0x1DE, 16));
         addBuiltinSymbol("#PR7", new NumberLiteral(0x1DF, 16));
 
+        addBuiltinSymbol("TASKHLT", new Register(0x1CC));
+        addBuiltinSymbol("#TASKHLT", new NumberLiteral(0x1CC, 16));
+
         // Smart-pin constants
 
         addBuiltinSymbol("P_TRUE_A", 0b0000_0000_000_0000000000000_00_00000_0);

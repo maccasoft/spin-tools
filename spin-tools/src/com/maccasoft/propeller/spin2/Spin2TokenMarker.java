@@ -629,6 +629,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         spinKeywords.put("PR5", TokenId.PASM_INSTRUCTION);
         spinKeywords.put("PR6", TokenId.PASM_INSTRUCTION);
         spinKeywords.put("PR7", TokenId.PASM_INSTRUCTION);
+        spinKeywords.put("TASKHLT", TokenId.PASM_INSTRUCTION);
         spinKeywords.put("@BYTE", TokenId.TYPE);
         spinKeywords.put("@WORD", TokenId.TYPE);
         spinKeywords.put("@LONG", TokenId.TYPE);
