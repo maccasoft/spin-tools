@@ -1218,7 +1218,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         if (token.getText().startsWith("^")) {
                             valid = Spin2Model.isType(token.getText().substring(1));
                             if (!valid) {
-                                valid = scope.hasStructureDefinition(type.getText().substring(1));
+                                valid = scope.hasStructureDefinition(token.getText().substring(1));
                             }
                         }
                     }

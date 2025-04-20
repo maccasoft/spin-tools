@@ -816,24 +816,32 @@ class Spin2TreeBuilderTest {
 
     @Test
     void testPointersPreEffect2() {
+        Context context = new Context();
+        context.addSymbol("a", new Variable("LONG", "a", 1));
+        context.addSymbol("b", new Variable("LONG", "b", 1));
+
         String text = "a := [++]b";
         Assertions.assertEquals(""
             + "[:=]\n"
             + " +-- [a]\n"
             + " +-- [++]\n"
             + "      +-- [b]\n"
-            + "", parse(text));
+            + "", parse(context, text));
     }
 
     @Test
     void testPointersPreEffect3() {
+        Context context = new Context();
+        context.addSymbol("a", new Variable("LONG", "a", 1));
+        context.addSymbol("b", new Variable("LONG", "b", 1));
+
         String text = "[++]a := b";
         Assertions.assertEquals(""
             + "[:=]\n"
             + " +-- [++]\n"
             + "      +-- [a]\n"
             + " +-- [b]\n"
-            + "", parse(text));
+            + "", parse(context, text));
     }
 
     void testSkipReturnValue() {

@@ -405,7 +405,7 @@ public class Spin2TreeBuilder {
                 if ("++".equals(token.getText()) || "--".equals(token.getText())) {
                     node.addChild(new Spin2StatementNode(next()));
                 }
-                else if (token.type == Token.KEYWORD) {
+                else if (token.type == Token.KEYWORD && scope.hasSymbol(token.getText())) {
                     node.addChild(parseAtom());
                 }
             }

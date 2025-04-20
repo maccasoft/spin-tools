@@ -3848,14 +3848,14 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             varType = ((DataVariable) expression).getType();
         }
 
+        struct = context.getStructureDefinition(varType);
+        if (struct == null && varType.startsWith("^")) {
+            struct = context.getStructureDefinition(varType.substring(1));
+        }
+        lastMemberSize = struct.getTypeSize();
+
         int n = 0;
         while (true) {
-            struct = context.getStructureDefinition(varType);
-            if (struct == null && varType.startsWith("^")) {
-                struct = context.getStructureDefinition(varType.substring(1));
-            }
-            lastMemberSize = struct.getTypeSize();
-
             String[] ar = varNode.getText().split("[\\.]");
             for (int i = 1; i < ar.length; i++) {
                 Spin2StructMember member = struct.getMember(ar[i]);
