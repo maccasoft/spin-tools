@@ -1226,6 +1226,14 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                     }
                     else if (id == null) {
                         id = externals.get(child.type.getText());
+                        if (id == null && child.type.getText().startsWith("^")) {
+                            id = externals.get(child.type.getText().substring(1));
+                            if (id != null) {
+                                int dot = child.type.getText().indexOf('.');
+                                tokens.add(new TokenMarker(child.type.start, child.type.start + dot - 1, TokenId.OBJECT));
+                                tokens.add(new TokenMarker(child.type.start + dot + 1, child.type.stop, id));
+                            }
+                        }
                         if (id != null) {
                             int dot = child.type.getText().indexOf('.');
                             tokens.add(new TokenMarker(child.type.start, child.type.start + dot - 1, TokenId.OBJECT));
