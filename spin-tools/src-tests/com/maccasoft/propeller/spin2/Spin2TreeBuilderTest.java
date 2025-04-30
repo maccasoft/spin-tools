@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -957,6 +957,52 @@ class Spin2TreeBuilderTest {
             + "           +-- [ptrb]\n"
             + "           +-- [ptrc]\n"
             + "", parse(context, text));
+    }
+
+    @Test
+    void testPointerSyntax() {
+        Context context = new Context();
+        context.addSymbol("ptr", new Variable("LONG", "ptr", 1));
+
+        Assertions.assertEquals(""
+            + "[++]\n"
+            + " +-- [ptr]\n"
+            + "", parse(context, "[++]ptr"));
+
+        Assertions.assertEquals(""
+            + "[ptr]\n"
+            + " +-- [++]\n"
+            + "", parse(context, "ptr[++]"));
+
+        Assertions.assertEquals(""
+            + "[++]\n"
+            + " +-- [ptr.x]\n"
+            + "", parse(context, "[++]ptr.x"));
+
+        Assertions.assertEquals(""
+            + "[ptr]\n"
+            + " +-- [++]\n"
+            + " +-- [.x]\n"
+            + "", parse(context, "ptr[++].x"));
+
+        Assertions.assertEquals(""
+            + "[++]\n"
+            + " +-- [--]\n"
+            + "      +-- [ptr.x]\n"
+            + "", parse(context, "++[--]ptr.x"));
+
+        Assertions.assertEquals(""
+            + "[++]\n"
+            + " +-- [ptr]\n"
+            + "      +-- [--]\n"
+            + "      +-- [.x]\n"
+            + "", parse(context, "++ptr[--].x"));
+
+        Assertions.assertEquals(""
+            + "[and]\n"
+            + " +-- [ptr]\n"
+            + " +-- [ptr.x]\n"
+            + "", parse(context, "[ptr] and ptr.x"));
     }
 
     String parse(String text) {

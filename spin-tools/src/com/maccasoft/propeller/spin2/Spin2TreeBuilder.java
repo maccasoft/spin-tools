@@ -402,11 +402,17 @@ public class Spin2TreeBuilder {
             node.lastToken = token;
 
             if ((token = peek()) != null) {
-                if ("++".equals(token.getText()) || "--".equals(token.getText())) {
-                    node.addChild(new Spin2StatementNode(next()));
+                if (postEffect.contains(token.getText())) {
+                    Token postToken = peek();
+                    if (!"?".equals(postToken.getText()) || postToken.start == (token.stop + 1)) {
+                        node.addChild(new Spin2StatementNode(next()));
+                    }
                 }
-                else if (token.type == Token.KEYWORD && scope.hasSymbol(token.getText())) {
-                    node.addChild(parseAtom());
+                else if (token.type == Token.KEYWORD) {
+                    String[] ar = token.getText().split("[\\.]");
+                    if (ar != null && scope.hasSymbol(ar[0])) {
+                        node.addChild(parseAtom());
+                    }
                 }
             }
 

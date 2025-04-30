@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -260,6 +260,10 @@ public class MemoryOp extends Spin2Bytecode {
                 offset = expression.getNumber().intValue();
             }
             sb.append(String.format("+$%05X", offset + index));
+        }
+
+        if (op == Op.WritePush) {
+            sb.append(" (push)");
         }
 
         return sb.toString();
