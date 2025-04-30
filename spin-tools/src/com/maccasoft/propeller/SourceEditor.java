@@ -1404,6 +1404,8 @@ public class SourceEditor {
             styleMap.put(TokenId.PASM_INSTRUCTION, new TextStyle(fontBold, new Color(0x80, 0x00, 0x00), null));
             styleMap.put(TokenId.PASM_MODIFIER, new TextStyle(fontBold, null, null));
         }
+
+        lineStylesCache.clear();
     }
 
     public void setTokenMarker(SourceTokenMarker tokenMarker) {
