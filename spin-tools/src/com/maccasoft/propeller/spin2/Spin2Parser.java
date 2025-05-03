@@ -28,6 +28,7 @@ import com.maccasoft.propeller.model.Parser;
 import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
+import com.maccasoft.propeller.model.TokenStream.Position;
 import com.maccasoft.propeller.model.TypeDefinitionNode;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
@@ -1132,6 +1133,22 @@ public class Spin2Parser extends Parser {
         if (token.type == Token.NL) {
             while (stream.peekNext().type == Token.NL) {
                 stream.nextToken();
+            }
+        }
+        else if ("[".equals(token.getText())) {
+            Position pos = new Position(stream);
+            Token nextToken = stream.nextToken();
+            if ("++".equals(nextToken.getText()) || "--".equals(nextToken.getText())) {
+                Token nextNextToken = stream.nextToken();
+                if ("]".equals(nextNextToken.getText())) {
+                    token = token.merge(nextToken).merge(nextNextToken);
+                }
+                else {
+                    pos.restore();
+                }
+            }
+            else {
+                pos.restore();
             }
         }
         else if ("@".equals(token.getText())) {

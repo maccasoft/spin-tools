@@ -799,7 +799,7 @@ class Spin2TreeBuilderTest {
             + "[:=]\n"
             + " +-- [a]\n"
             + " +-- [b]\n"
-            + "      +-- [++]\n"
+            + "      +-- [[++]]\n"
             + "", parse(text));
     }
 
@@ -824,7 +824,7 @@ class Spin2TreeBuilderTest {
         Assertions.assertEquals(""
             + "[:=]\n"
             + " +-- [a]\n"
-            + " +-- [++]\n"
+            + " +-- [[++]]\n"
             + "      +-- [b]\n"
             + "", parse(context, text));
     }
@@ -838,7 +838,7 @@ class Spin2TreeBuilderTest {
         String text = "[++]a := b";
         Assertions.assertEquals(""
             + "[:=]\n"
-            + " +-- [++]\n"
+            + " +-- [[++]]\n"
             + "      +-- [a]\n"
             + " +-- [b]\n"
             + "", parse(context, text));
@@ -965,36 +965,36 @@ class Spin2TreeBuilderTest {
         context.addSymbol("ptr", new Variable("LONG", "ptr", 1));
 
         Assertions.assertEquals(""
-            + "[++]\n"
+            + "[[++]]\n"
             + " +-- [ptr]\n"
             + "", parse(context, "[++]ptr"));
 
         Assertions.assertEquals(""
             + "[ptr]\n"
-            + " +-- [++]\n"
+            + " +-- [[++]]\n"
             + "", parse(context, "ptr[++]"));
 
         Assertions.assertEquals(""
-            + "[++]\n"
+            + "[[++]]\n"
             + " +-- [ptr.x]\n"
             + "", parse(context, "[++]ptr.x"));
 
         Assertions.assertEquals(""
             + "[ptr]\n"
-            + " +-- [++]\n"
+            + " +-- [[++]]\n"
             + " +-- [.x]\n"
             + "", parse(context, "ptr[++].x"));
 
         Assertions.assertEquals(""
             + "[++]\n"
-            + " +-- [--]\n"
+            + " +-- [[--]]\n"
             + "      +-- [ptr.x]\n"
             + "", parse(context, "++[--]ptr.x"));
 
         Assertions.assertEquals(""
             + "[++]\n"
             + " +-- [ptr]\n"
-            + "      +-- [--]\n"
+            + "      +-- [[--]]\n"
             + "      +-- [.x]\n"
             + "", parse(context, "++ptr[--].x"));
 
