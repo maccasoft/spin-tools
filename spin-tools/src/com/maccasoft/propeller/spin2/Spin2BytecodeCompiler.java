@@ -4545,18 +4545,14 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             if (data.length > 4) {
                 logMessage(new CompilerException("no more than 4 characters can be packed into a long", node.getToken()));
             }
-
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-            os.write(Spin2Bytecode.bc_con_rflong);
-            os.writeBytes(data);
-
-            int i = data.length;
-            while (i < 4) {
-                os.write(0x00);
-                i++;
+            long value = 0;
+            int i = data.length - 1;
+            while (i >= 0) {
+                value <<= 8;
+                value |= data[i] & 0xFF;
+                i--;
             }
-
-            source.add(new Bytecode(context, os.toByteArray(), "CONSTANT (" + node.getText() + ")"));
+            source.add(new Bytecode(context, Constant.wrAuto(value), "CONSTANT (" + node.getText() + ")"));
         }
         else {
             if (s.length() == 1) {

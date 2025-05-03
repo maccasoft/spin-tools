@@ -5339,27 +5339,35 @@ class Spin2ObjectCompilerTest {
     @Test
     void testStringConstant() throws Exception {
         String text = ""
-            + "PUB main() | a, b\n"
+            + "PUB main() | a\n"
             + "\n"
             + "    a := %\"ABCD\"\n"
             + "    a := %\"123\"\n"
+            + "    a := %\"12\"\n"
+            + "    a := %\"1\"\n"
             + "\n"
             + "";
 
         Assertions.assertEquals(""
             + "' Object header (var size 4)\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
-            + "00004 00004       16 00 00 00    End\n"
-            + "' PUB main() | a, b\n"
-            + "00008 00008       02             (stack size)\n"
+            + "00004 00004       1D 00 00 00    End\n"
+            + "' PUB main() | a\n"
+            + "00008 00008       01             (stack size)\n"
             + "'     a := %\"ABCD\"\n"
             + "00009 00009       46 41 42 43 44 CONSTANT (%\"ABCD\")\n"
             + "0000E 0000E       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
             + "'     a := %\"123\"\n"
             + "0000F 0000F       46 31 32 33 00 CONSTANT (%\"123\")\n"
             + "00014 00014       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
-            + "00015 00015       04             RETURN\n"
-            + "00016 00016       00 00          Padding\n"
+            + "'     a := %\"12\"\n"
+            + "00015 00015       44 31 32       CONSTANT (%\"12\")\n"
+            + "00018 00018       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     a := %\"1\"\n"
+            + "00019 00019       42 31          CONSTANT (%\"1\")\n"
+            + "0001B 0001B       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0001C 0001C       04             RETURN\n"
+            + "0001D 0001D       00 00 00       Padding\n"
             + "", compile(text));
     }
 
