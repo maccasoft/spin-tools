@@ -7768,6 +7768,40 @@ class Spin2ObjectCompilerTest {
             + "", compile(text, true));
     }
 
+    @Test
+    void testDebugBitMask() throws Exception {
+        String text = ""
+            + "DEBUG_MASK = %00000010\n"
+            + "\n"
+            + "PUB main() | a, b\n"
+            + "\n"
+            + "    debug[0](udec(a))\n"
+            + "    debug[1](udec(b))\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       0E 00 00 00    End\n"
+            + "' PUB main() | a, b\n"
+            + "00008 00008       02             (stack size)\n"
+            + "'     debug[0](udec(a))\n"
+            + "'     debug[1](udec(b))\n"
+            + "00009 00009       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "0000A 0000A       41 04 01       DEBUG #1\n"
+            + "0000D 0000D       04             RETURN\n"
+            + "0000E 0000E       00 00          Padding\n"
+            + "' Debug data\n"
+            + "00B74 00000       09 00         \n"
+            + "00B76 00002       04 00         \n"
+            + "' #1\n"
+            + "00B78 00004       04             COGN\n"
+            + "00B79 00005       41 62 00       UDEC(b)\n"
+            + "00B7C 00008       00             DONE\n"
+            + "", compile(text, true));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }

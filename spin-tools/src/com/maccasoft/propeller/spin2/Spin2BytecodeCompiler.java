@@ -909,27 +909,65 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 }
                 else if ("DEBUG".equalsIgnoreCase(node.getText())) {
                     int stack = 0;
-                    for (Spin2StatementNode child : node.getChilds()) {
+                    boolean debugLineEnabled = true;
+                    List<Spin2Bytecode> debugSource = new ArrayList<Spin2Bytecode>();
+
+                    int n = 0;
+                    if (n < node.getChildCount()) {
+                        if (node.getChild(n) instanceof Spin2StatementNode.Index) {
+                            Spin2StatementNode bitmaskNode = node.getChild(n++);
+
+                            Integer bit = null;
+                            try {
+                                Expression expression = buildConstantExpression(context, bitmaskNode);
+                                if (expression.isConstant()) {
+                                    bit = expression.getNumber().intValue();
+                                }
+                            } catch (Exception e) {
+                                // Do nothing
+                            }
+                            if (bit == null) {
+                                logMessage(new CompilerException("not a constant", bitmaskNode.getTokens()));
+                            }
+                            else {
+                                if (bit < 0 || bit > 31) {
+                                    logMessage(new CompilerException("debug mask bit number must be 0..31", bitmaskNode.getTokens()));
+                                }
+                                try {
+                                    Expression debugMask = context.getLocalSymbol("DEBUG_MASK");
+                                    if (debugMask != null) {
+                                        long mask = debugMask.getNumber().longValue();
+                                        debugLineEnabled = (mask & (1 << bit)) != 0;
+                                    }
+                                } catch (Exception e) {
+                                    // Do nothing
+                                }
+                            }
+                        }
+                    }
+
+                    while (n < node.getChildCount()) {
+                        Spin2StatementNode child = node.getChild(n++);
                         if (child.getType() == Token.STRING) {
                             for (Spin2StatementNode param : child.getChilds()) {
-                                source.addAll(compileBytecodeExpression(context, method, param, true));
+                                debugSource.addAll(compileBytecodeExpression(context, method, param, true));
                                 stack += param.getReturnLongs() * 4;
                             }
                         }
                         else if (Spin2Model.isDebugKeyword(child.getText())) {
                             for (Spin2StatementNode param : child.getChilds()) {
-                                source.addAll(compileBytecodeExpression(context, method, param, true));
+                                debugSource.addAll(compileBytecodeExpression(context, method, param, true));
                                 stack += param.getReturnLongs() * 4;
                             }
                         }
                         else if (child.getText().startsWith("`")) {
                             for (Spin2StatementNode param : child.getChilds()) {
-                                source.addAll(compileBytecodeExpression(context, method, param, true));
+                                debugSource.addAll(compileBytecodeExpression(context, method, param, true));
                                 stack += param.getReturnLongs() * 4;
                             }
                         }
                         else {
-                            source.addAll(compileBytecodeExpression(context, method, child, true));
+                            debugSource.addAll(compileBytecodeExpression(context, method, child, true));
                             stack += child.getReturnLongs() * 4;
                         }
                     }
@@ -939,12 +977,12 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         logMessage(new CompilerException("method doesn't return a value", node.getTokens()));
                     }
 
-                    if (isDebugEnabled()) {
+                    if (isDebugEnabled() && debugLineEnabled) {
                         method.debugNodes.add(node);
                         compiler.debugStatements.add(node);
 
                         int pop = stack;
-                        source.add(new Bytecode(context, Spin2Bytecode.bc_debug, "") {
+                        debugSource.add(new Bytecode(context, Spin2Bytecode.bc_debug, "") {
 
                             int index;
 
@@ -981,10 +1019,11 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                             }
 
                         });
+
+                        return debugSource;
                     }
-                    else {
-                        source.clear();
-                    }
+
+                    return Collections.emptyList();
                 }
                 else if ("BYTECODE".equalsIgnoreCase(node.getText())) {
                     String text = node.getText().toUpperCase();

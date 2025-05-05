@@ -61,8 +61,16 @@ public class Spin2Debug {
         StringBuilder sb = new StringBuilder();
         List<DataObject> list = new ArrayList<>();
 
-        if (root.getChildCount() != 0) {
-            Spin2StatementNode child0 = root.getChild(0);
+        int n = 0;
+
+        if (n < root.getChildCount()) {
+            if (root.getChild(n) instanceof Spin2StatementNode.Index) {
+                root.getChild(n++); // Skip bitmask
+            }
+        }
+
+        if (n < root.getChildCount()) {
+            Spin2StatementNode child0 = root.getChild(n);
             String cmd = child0.getText();
 
             if (child0.getType() == Token.STRING) {
@@ -85,7 +93,8 @@ public class Spin2Debug {
 
             first = true;
 
-            for (Spin2StatementNode node : root.getChilds()) {
+            while (n < root.getChildCount()) {
+                Spin2StatementNode node = root.getChild(n++);
                 try {
                     if (node.getType() == Token.STRING) {
                         String s = node.getText();
