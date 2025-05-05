@@ -913,24 +913,24 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         if (child.getType() == Token.STRING) {
                             for (Spin2StatementNode param : child.getChilds()) {
                                 source.addAll(compileBytecodeExpression(context, method, param, true));
-                                stack += 4;
+                                stack += param.getReturnLongs() * 4;
                             }
                         }
                         else if (Spin2Model.isDebugKeyword(child.getText())) {
                             for (Spin2StatementNode param : child.getChilds()) {
                                 source.addAll(compileBytecodeExpression(context, method, param, true));
-                                stack += 4;
+                                stack += param.getReturnLongs() * 4;
                             }
                         }
                         else if (child.getText().startsWith("`")) {
                             for (Spin2StatementNode param : child.getChilds()) {
                                 source.addAll(compileBytecodeExpression(context, method, param, true));
-                                stack += 4;
+                                stack += param.getReturnLongs() * 4;
                             }
                         }
                         else {
                             source.addAll(compileBytecodeExpression(context, method, child, true));
-                            stack += 4;
+                            stack += child.getReturnLongs() * 4;
                         }
                     }
                     debug.compileDebugStatement(node);

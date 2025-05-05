@@ -7736,6 +7736,38 @@ class Spin2ObjectCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testDebugStructure() throws Exception {
+        String text = ""
+            + "CON\n"
+            + "    struct point(word x, word y, byte c)\n"
+            + "\n"
+            + "PUB main() | point a\n"
+            + "\n"
+            + "    debug(udec(a))\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       10 00 00 00    End\n"
+            + "' PUB main() | point a\n"
+            + "00008 00008       02             (stack size)\n"
+            + "'     debug(udec(a))\n"
+            + "00009 00009       69 00 85       STRUCT_READ LONG DBASE+$00000 (indexed)\n"
+            + "0000C 0000C       41 08 01       DEBUG #1\n"
+            + "0000F 0000F       04             RETURN\n"
+            + "' Debug data\n"
+            + "00B74 00000       09 00         \n"
+            + "00B76 00002       04 00         \n"
+            + "' #1\n"
+            + "00B78 00004       04             COGN\n"
+            + "00B79 00005       41 61 00       UDEC(a)\n"
+            + "00B7C 00008       00             DONE\n"
+            + "", compile(text, true));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }
