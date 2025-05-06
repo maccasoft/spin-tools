@@ -142,6 +142,7 @@ public class SpinTools {
     StatusLine statusLine;
 
     Process process;
+    MenuItem runMenuItem;
 
     MenuItem topObjectItem;
     MenuItem blockSelectionItem;
@@ -314,6 +315,9 @@ public class SpinTools {
                     break;
                 case Preferences.PROP_THEME:
                     applyTheme((String) evt.getNewValue());
+                    break;
+                case Preferences.PROP_EXTERNAL_TOOLS:
+                    populateRunMenu();
                     break;
             }
         }
@@ -2872,7 +2876,11 @@ public class SpinTools {
 
         new MenuItem(menu, SWT.SEPARATOR);
 
-        createRunMenu(menu);
+        runMenuItem = new MenuItem(menu, SWT.CASCADE);
+        runMenuItem.setText("Run");
+        runMenuItem.setMenu(new Menu(parent.getParent(), SWT.DROP_DOWN));
+
+        populateRunMenu();
 
         new MenuItem(menu, SWT.SEPARATOR);
 
@@ -2917,26 +2925,42 @@ public class SpinTools {
         return menu;
     }
 
-    void createRunMenu(Menu parent) {
-        final Menu menu = new Menu(parent.getParent(), SWT.DROP_DOWN);
-        menu.addMenuListener(new MenuAdapter() {
+    void populateRunMenu() {
+        Menu menu = runMenuItem.getMenu();
 
-            @Override
-            public void menuShown(MenuEvent e) {
-                populateRunMenu(menu);
+        MenuItem[] items = menu.getItems();
+        for (int i = 0; i < items.length; i++) {
+            items[i].dispose();
+        }
 
-                if (menu.getItemCount() == 0) {
-                    MenuItem item = new MenuItem(menu, SWT.PUSH);
-                    item.setText("No configured external tools");
-                    item.setEnabled(false);
-                }
+        int i = 0;
+        for (ExternalTool tool : preferences.getExternalTools()) {
+            MenuItem item = new MenuItem(menu, SWT.PUSH);
+            if (i < 9) {
+                item.setText(tool.getName() + "\tAlt+" + (char) ('1' + i));
+                item.setAccelerator(SWT.MOD3 + '1' + i);
             }
+            else {
+                item.setText(tool.getName());
+            }
+            item.addListener(SWT.Selection, new Listener() {
 
-        });
+                @Override
+                public void handleEvent(Event event) {
+                    if (!handleRunningProcess()) {
+                        return;
+                    }
+                    handleRunExternalTool(tool);
+                }
+            });
+            i++;
+        }
 
-        MenuItem item = new MenuItem(parent, SWT.CASCADE);
-        item.setText("Run");
-        item.setMenu(menu);
+        if (i == 0) {
+            MenuItem item = new MenuItem(menu, SWT.PUSH);
+            item.setText("No configured external tools");
+            item.setEnabled(false);
+        }
     }
 
     void populateRunMenu(Menu menu) {
