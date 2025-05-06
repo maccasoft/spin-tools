@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -217,14 +217,21 @@ public abstract class Spin2InstructionObject {
         int result = 0b00;
 
         if (effect != null) {
+            effect = effect.toLowerCase();
             if ("wcz".equals(effect)) {
-                result |= 0b11;
+                result = 0b11;
+            }
+            else if ("andc".equals(effect) || "orc".equals(effect) || "xorc".equals(effect)) {
+                result = 0b10;
+            }
+            else if ("andz".equals(effect) || "orz".equals(effect) || "xorz".equals(effect)) {
+                result = 0b01;
             }
             else {
-                if (effect.contains("wc") || "andc".equals(effect) || "orc".equals(effect) || "xorc".equals(effect)) {
+                if (effect.contains("wc")) {
                     result |= 0b10;
                 }
-                if (effect.contains("wz") || "andz".equals(effect) || "orz".equals(effect) || "xorz".equals(effect)) {
+                if (effect.contains("wz")) {
                     result |= 0b01;
                 }
             }
