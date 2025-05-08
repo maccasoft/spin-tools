@@ -4138,6 +4138,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         source.add(new VariableOp(context, VariableOp.Op.Write, false, (Variable) expression, false, 0));
                     }
                     else {
+                        source.add(new VariableOp(context, VariableOp.Op.Setup, false, (Variable) expression, false, 0));
                         source.add(new Bytecode(context, push ? Spin2Bytecode.bc_var_swap : Spin2Bytecode.bc_write, push ? "SWAP" : "WRITE"));
                     }
                 }
@@ -4147,13 +4148,16 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         source.add(new VariableOp(context, VariableOp.Op.Write, false, (Variable) expression, false, 0));
                     }
                     else {
+                        source.add(new VariableOp(context, VariableOp.Op.Setup, false, (Variable) expression, false, 0));
                         source.add(new Bytecode(context, push ? Spin2Bytecode.bc_var_swap : Spin2Bytecode.bc_write, push ? "SWAP" : "WRITE"));
                     }
                 }
                 else if ("!!".equalsIgnoreCase(pointerPostEffectNode.getText())) {
+                    source.add(new VariableOp(context, VariableOp.Op.Setup, false, (Variable) expression, false, 0));
                     source.add(new Bytecode(context, push ? Spin2Bytecode.bc_var_lognot_push : Spin2Bytecode.bc_var_lognot, "POST_LOGICAL_NOT" + (push ? " (push)" : "")));
                 }
                 else if ("!".equalsIgnoreCase(pointerPostEffectNode.getText())) {
+                    source.add(new VariableOp(context, VariableOp.Op.Setup, false, (Variable) expression, false, 0));
                     source.add(new Bytecode(context, push ? Spin2Bytecode.bc_var_bitnot_push : Spin2Bytecode.bc_var_bitnot, "POST_NOT" + (push ? " (push)" : "")));
                 }
                 else {
@@ -4463,10 +4467,34 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
         else {
             if (postEffectNode != null) {
                 if (struct != null) {
-                    logMessage(new CompilerException("invalid expression", node.getTokens()));
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
+                    try {
+                        os.write(Spin2Bytecode.bc_drop);
+                        if ("~".equalsIgnoreCase(postEffectNode.getText())) {
+                            os.write(Spin2Bytecode.bc_con_n + 1);
+                        }
+                        else if ("~~".equalsIgnoreCase(postEffectNode.getText())) {
+                            os.write(Spin2Bytecode.bc_con_n);
+                        }
+                        else {
+                            logMessage(new CompilerException("invalid post effect '" + postEffectNode.getText() + "'", postEffectNode.getToken()));
+                        }
+                        os.write(Constant.wrAuto(structSize));
+                        os.write(Spin2Bytecode.bc_hub_bytecode);
+                        os.write(Spin2Bytecode.bc_bytefill);
+                        source.add(new Bytecode(context, os.toByteArray(), "BYTEFILL"));
+                    } catch (Exception e) {
+                        // Do nothing
+                    }
+                    node.setReturnLongs(0);
+                    if (push) {
+                        logMessage(new CompilerException("expression doesn't return any value", node.getTokens()));
+                    }
                 }
-                compilePostEffect(context, postEffectNode, source, push);
-                node.setReturnLongs(push ? 1 : 0);
+                else {
+                    compilePostEffect(context, postEffectNode, source, push);
+                    node.setReturnLongs(push ? 1 : 0);
+                }
             }
             else if (op == MemoryOp.Op.Read && !push && pointerPostEffectNode == null && pointerPostEffectNode == null) {
                 logMessage(new CompilerException("expected assignment", node.getTokens()));
