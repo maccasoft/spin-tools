@@ -36,19 +36,19 @@ class BranchTest {
         }), Spin2InstructionObject.decodeToString(compile("DAT\n  org $10\n    calld $1,#$23\n")));
 
         Assertions.assertEquals(Spin2InstructionObject.decodeToString(new byte[] {
-            (byte) 0x48, (byte) 0x04, (byte) 0x10, (byte) 0xFE
+            (byte) 0x12, (byte) 0x01, (byte) 0x10, (byte) 0xFE
         }), Spin2InstructionObject.decodeToString(compile("DAT\n  org $10\n    calld pa,#$123\n")));
 
         Assertions.assertEquals(Spin2InstructionObject.decodeToString(new byte[] {
-            (byte) 0x48, (byte) 0x04, (byte) 0x30, (byte) 0xFE
+            (byte) 0x12, (byte) 0x01, (byte) 0x30, (byte) 0xFE
         }), Spin2InstructionObject.decodeToString(compile("DAT\n  org $10\n    calld pb,#$123\n")));
 
         Assertions.assertEquals(Spin2InstructionObject.decodeToString(new byte[] {
-            (byte) 0x48, (byte) 0x04, (byte) 0x50, (byte) 0xFE
+            (byte) 0x12, (byte) 0x01, (byte) 0x50, (byte) 0xFE
         }), Spin2InstructionObject.decodeToString(compile("DAT\n  org $10\n    calld ptra,#$123\n")));
 
         Assertions.assertEquals(Spin2InstructionObject.decodeToString(new byte[] {
-            (byte) 0x48, (byte) 0x04, (byte) 0x70, (byte) 0xFE
+            (byte) 0x12, (byte) 0x01, (byte) 0x70, (byte) 0xFE
         }), Spin2InstructionObject.decodeToString(compile("DAT\n  org $10\n    calld ptrb,#$123\n")));
     }
 
