@@ -56,18 +56,7 @@ public class Jnpat extends Spin2PAsmInstructionFactory {
             value = cz.setValue(value, 0b01);
             value = i.setBoolean(value, src.isLiteral());
             value = d.setValue(value, 0b000011000);
-
-            int offset = src.getInteger();
-            if (src.isLiteral()) {
-                offset -= context.getInteger("$");
-                if (src.getInteger() >= 0x400) {
-                    offset /= 4;
-                }
-                offset--;
-            }
-            value = s.setValue(value, offset);
-
-            return src.isLongLiteral() ? getBytes(encodeAugs(condition, offset), value) : getBytes(value);
+            return encodeRelativeJump(value, condition, src);
         }
 
     }

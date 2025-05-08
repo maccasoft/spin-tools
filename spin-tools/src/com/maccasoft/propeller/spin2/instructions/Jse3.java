@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -56,18 +56,7 @@ public class Jse3 extends Spin2PAsmInstructionFactory {
             value = cz.setValue(value, 0b01);
             value = i.setBoolean(value, src.isLiteral());
             value = d.setValue(value, 0b000000110);
-
-            int offset = src.getInteger();
-            if (src.isLiteral()) {
-                offset -= context.getInteger("$");
-                if (src.getInteger() >= 0x400) {
-                    offset /= 4;
-                }
-                offset--;
-            }
-            value = s.setValue(value, offset);
-
-            return src.isLongLiteral() ? getBytes(encodeAugs(condition, offset), value) : getBytes(value);
+            return encodeRelativeJump(value, condition, src);
         }
 
     }
