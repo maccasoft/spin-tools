@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -36,8 +36,13 @@ public class AsmClk extends Spin2PAsmInstructionFactory {
     public List<Spin2PAsmLine> expand(Spin2PAsmLine line) {
         List<Spin2PAsmLine> list = new ArrayList<Spin2PAsmLine>();
 
+        String condition = line.getCondition();
+        if ("_ret_".equalsIgnoreCase(condition)) {
+            condition = null;
+        }
+
         list.add(new Spin2PAsmLine(
-            line.getScope(), line.getLabel(), line.getCondition(), "hubset",
+            line.getScope(), line.getLabel(), condition, "hubset",
             Collections.singletonList(new Spin2PAsmExpression("##",
                 new And(
                     new Identifier("clkmode_", line.getScope()),
@@ -46,7 +51,7 @@ public class AsmClk extends Spin2PAsmInstructionFactory {
             null));
 
         list.add(new Spin2PAsmLine(
-            new Context(line.getScope()), null, line.getCondition(), "waitx",
+            new Context(line.getScope()), null, condition, "waitx",
             Collections.singletonList(new Spin2PAsmExpression("##",
                 new Divide(
                     new NumberLiteral(20000000),
