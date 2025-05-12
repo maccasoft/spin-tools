@@ -424,35 +424,66 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                             Spin2StatementNode indexNode = null;
 
                             int n = 0;
-                            if (n < node.getChildCount() && (node.getChild(n) instanceof Spin2StatementNode.Index)) {
-                                indexNode = node.getChild(n++);
+                            if ((node.getText().startsWith("@[") || node.getText().startsWith("@@[")) && node.getText().endsWith("]")) {
+                                if (n < node.getChildCount()) {
+                                    throw new CompilerException("unexpected " + node.getChild(n).getText(), node.getChild(n).getToken());
+                                }
+                                VariableOp.Op op = VariableOp.Op.Address;
+                                if (node.getText().startsWith("@@")) {
+                                    op = VariableOp.Op.PBaseAddress;
+                                }
+                                source.add(new VariableOp(context, op, popIndex, (Variable) expression, hasIndex, index));
                             }
-                            if (n < node.getChildCount()) {
-                                throw new CompilerException("unexpected " + node.getChild(n).getText(), node.getChild(n).getToken());
-                            }
+                            else {
+                                if (n < node.getChildCount() && (node.getChild(n) instanceof Spin2StatementNode.Index)) {
+                                    indexNode = node.getChild(n++);
+                                }
+                                if (n < node.getChildCount()) {
+                                    throw new CompilerException("unexpected " + node.getChild(n).getText(), node.getChild(n).getToken());
+                                }
 
-                            if (indexNode != null) {
-                                popIndex = true;
-                                try {
-                                    Expression exp = buildConstantExpression(context, indexNode);
-                                    if (exp.isConstant()) {
-                                        index = exp.getNumber().intValue();
-                                        hasIndex = true;
-                                        popIndex = false;
+                                if (isPointer(expression)) {
+                                    Variable var = (Variable) expression;
+
+                                    MemoryOp.Size ss = MemoryOp.Size.Long;
+                                    if ("^BYTE".equalsIgnoreCase(var.getType())) {
+                                        ss = MemoryOp.Size.Byte;
                                     }
-                                } catch (Exception e) {
-                                    // Do nothing
-                                }
-                                if (popIndex) {
-                                    source.addAll(compileBytecodeExpression(context, method, indexNode, true));
-                                }
-                            }
+                                    else if ("^WORD".equalsIgnoreCase(var.getType())) {
+                                        ss = MemoryOp.Size.Word;
+                                    }
 
-                            VariableOp.Op op = VariableOp.Op.Address;
-                            if (node.getText().startsWith("@@")) {
-                                op = VariableOp.Op.PBaseAddress;
+                                    source.add(new VariableOp(context, VariableOp.Op.Read, false, var, false, 0));
+                                    if (indexNode != null) {
+                                        source.addAll(compileBytecodeExpression(context, method, indexNode, true));
+                                    }
+                                    source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, MemoryOp.Op.Address, indexNode != null));
+                                }
+                                else {
+                                    if (indexNode != null) {
+                                        popIndex = true;
+                                        try {
+                                            Expression exp = buildConstantExpression(context, indexNode);
+                                            if (exp.isConstant()) {
+                                                index = exp.getNumber().intValue();
+                                                hasIndex = true;
+                                                popIndex = false;
+                                            }
+                                        } catch (Exception e) {
+                                            // Do nothing
+                                        }
+                                        if (popIndex) {
+                                            source.addAll(compileBytecodeExpression(context, method, indexNode, true));
+                                        }
+                                    }
+
+                                    VariableOp.Op op = VariableOp.Op.Address;
+                                    if (node.getText().startsWith("@@")) {
+                                        op = VariableOp.Op.PBaseAddress;
+                                    }
+                                    source.add(new VariableOp(context, op, popIndex, (Variable) expression, hasIndex, index));
+                                }
                             }
-                            source.add(new VariableOp(context, op, popIndex, (Variable) expression, hasIndex, index));
 
                             if (!push) {
                                 logMessage(new CompilerException("expected assignment", node.getTokens()));
@@ -1514,7 +1545,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 }
 
                 Spin2StatementNode childNode = node.getChild(0);
-                if (childNode.toString().startsWith("[")) {
+                if (childNode.getText().startsWith("[")) {
                     logMessage(new CompilerException("syntax error", childNode.getTokens()));
                 }
                 String[] s = childNode.getText().split("[\\.]");
@@ -1676,7 +1707,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         source.addAll(compileVariableSetup(context, method, expression, expressionNode, pointerPreEffectNode));
                     }
 
-                    if (expressionNode.toString().startsWith("[") && !(expressionNode instanceof Spin2StatementNode.Index)) {
+                    if (expressionNode.getText().startsWith("[")) {
                         String varType;
                         if (expression instanceof Variable) {
                             varType = ((Variable) expression).getType();
@@ -2835,7 +2866,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
 
                 Variable var = (Variable) expression;
 
-                if (node.toString().startsWith("[")) {
+                if (node.getText().startsWith("[")) {
                     if (postEffectNode != null) {
                         source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, var, hasIndex, index));
                         compilePostEffect(context, postEffectNode, source, push);
@@ -3376,7 +3407,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
 
             Variable var = (Variable) expression;
 
-            if (node.toString().startsWith("[")) {
+            if (node.getText().startsWith("[")) {
                 source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, var, hasIndex, index));
                 if (pointerPostEffectNode != null) {
                     logMessage(new CompilerException("syntax error", pointerPostEffectNode.getTokens()));
@@ -3608,7 +3639,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 typeSize = 2;
             }
 
-            if (node.toString().startsWith("[") && !(node instanceof Spin2StatementNode.Index)) {
+            if (node.getText().startsWith("[") && node.getText().endsWith("]")) {
                 if (postEffectNode != null) {
                     if ("++".equalsIgnoreCase(postEffectNode.getText()) || "--".equalsIgnoreCase(postEffectNode.getText())) {
                         source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, var, hasIndex, index));
@@ -4097,7 +4128,23 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
         }
         int structSize = struct.getTypeSize();
 
-        if (node.toString().startsWith("[") && !(node instanceof Spin2StatementNode.Index)) {
+        if ((node.getText().startsWith("@[") || node.getText().startsWith("@@[")) && node.getText().endsWith("]")) {
+            int n = 0;
+            if (n < node.getChildCount()) {
+                logMessage(new CompilerException("syntax error", node.getChild(n).getTokens()));
+            }
+            VariableOp.Op varOp = VariableOp.Op.Address;
+            if (node.getText().startsWith("@@")) {
+                varOp = VariableOp.Op.PBaseAddress;
+            }
+            source.add(new VariableOp(context, varOp, false, (Variable) expression, false, 0));
+            node.setReturnLongs(1);
+            if (!push) {
+                logMessage(new CompilerException("expected assignment", node.getTokens()));
+            }
+            return source;
+        }
+        else if ((node.getText().startsWith("[") || node.getText().startsWith("@[")) && node.getText().endsWith("]")) {
             int n = 0;
             if (!node.getText().contains(".")) {
                 if (n < node.getChildCount() && isPostEffect(node.getChild(n))) {
@@ -4172,6 +4219,9 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 }
                 else if (op == MemoryOp.Op.Write) {
                     varOp = VariableOp.Op.Write;
+                }
+                else if (op == MemoryOp.Op.Address) {
+                    varOp = VariableOp.Op.Address;
                 }
                 else {
                     varOp = VariableOp.Op.Setup;
@@ -4399,9 +4449,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                             sOp = MemoryOp.Op.Setup;
                             break;
                         default:
-                            if (varType.startsWith("^")) {
-                                sOp = MemoryOp.Op.Setup;
-                            }
+                            sOp = MemoryOp.Op.Address;
                             break;
                     }
                 }

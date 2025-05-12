@@ -777,7 +777,7 @@ class Spin2TreeBuilderTest {
         Assertions.assertEquals(""
             + "[:=]\n"
             + " +-- [a]\n"
-            + " +-- [b]\n"
+            + " +-- [[b]]\n"
             + "", parse(text));
     }
 
@@ -787,7 +787,7 @@ class Spin2TreeBuilderTest {
         Assertions.assertEquals(""
             + "[:=]\n"
             + " +-- [a]\n"
-            + " +-- [b]\n"
+            + " +-- [[b]]\n"
             + "      +-- [++]\n"
             + "", parse(text));
     }
@@ -810,7 +810,7 @@ class Spin2TreeBuilderTest {
             + "[:=]\n"
             + " +-- [a]\n"
             + " +-- [++]\n"
-            + "      +-- [b]\n"
+            + "      +-- [[b]]\n"
             + "", parse(text));
     }
 
@@ -1000,7 +1000,7 @@ class Spin2TreeBuilderTest {
 
         Assertions.assertEquals(""
             + "[and]\n"
-            + " +-- [ptr]\n"
+            + " +-- [[ptr]]\n"
             + " +-- [ptr.x]\n"
             + "", parse(context, "[ptr] and ptr.x"));
     }

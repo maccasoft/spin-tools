@@ -118,6 +118,14 @@ public class Context {
     }
 
     public Expression getLocalSymbol(String name) {
+        Expression exp = internalGetLocalSymbol(name);
+        if (exp == null && name.startsWith("[") && name.endsWith("]")) {
+            exp = internalGetLocalSymbol(name.substring(1, name.length() - 1));
+        }
+        return exp;
+    }
+
+    private Expression internalGetLocalSymbol(String name) {
         Expression exp = parameters.get(name);
         if (exp == null) {
             exp = caseInsensitiveSymbols.get(name);

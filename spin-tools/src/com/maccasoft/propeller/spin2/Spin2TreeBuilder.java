@@ -388,12 +388,66 @@ public class Spin2TreeBuilder {
             Spin2StatementNode node = new Spin2StatementNode(next());
             if ((token = peek()) != null) {
                 if (token.type == Token.KEYWORD) {
-                    String[] ar = token.getText().split("[\\.]");
-                    if (ar != null && scope.hasSymbol(ar[0])) {
-                        node.addChild(parseAtom());
-                    }
+                    node.addChild(parseAtom());
                 }
             }
+            return node;
+        }
+
+        if ("@".equals(token.getText())) {
+            Token first = next();
+            if ((token = peek()) == null) {
+                throw new CompilerException("syntax error", tokens.get(tokens.size() - 1));
+            }
+            if (token.type == Token.STRING) {
+                token = first.merge(next());
+                token.type = Token.STRING;
+                return new Spin2StatementNode(token);
+            }
+            Spin2StatementNode node = parseAtom();
+            node.token = first.merge(node.token);
+            node.token.type = Token.KEYWORD;
+            return node;
+        }
+
+        if ("@@".equals(token.getText()) || "^@".equals(token.getText())) {
+            Token first = next();
+            if ((token = peek()) == null) {
+                throw new CompilerException("syntax error", tokens.get(tokens.size() - 1));
+            }
+            if ("[".equals(token.getText())) {
+                first = first.merge(next());
+
+                if ((token = next()) == null) {
+                    throw new CompilerException("syntax error", tokens.get(tokens.size() - 1));
+                }
+                if (token.type != Token.KEYWORD) {
+                    throw new CompilerException("expecting variable", token == null ? tokens.get(tokens.size() - 1) : token);
+                }
+                Token last = next();
+                if (last == null || !"]".equals(last.getText())) {
+                    throw new CompilerException("expecting ]", last == null ? tokens.get(tokens.size() - 1) : last);
+                }
+                token = first.merge(token).merge(last);
+                Spin2StatementNode node = new Spin2StatementNode(token);
+
+                if ((token = peek()) != null) {
+                    if (postEffect.contains(token.getText())) {
+                        Token postToken = peek();
+                        if (!"?".equals(postToken.getText()) || postToken.start == (token.stop + 1)) {
+                            node.addChild(new Spin2StatementNode(next()));
+                        }
+                    }
+                }
+
+                return node;
+            }
+            if (token.type != Token.KEYWORD) {
+                throw new CompilerException("syntax error", token);
+            }
+            Spin2StatementNode node = parseAtom();
+            node.token = first.merge(node.token);
+            node.token.type = Token.KEYWORD;
             return node;
         }
 
@@ -406,25 +460,18 @@ public class Spin2TreeBuilder {
             if (token.type != Token.KEYWORD) {
                 throw new CompilerException("expecting variable", token == null ? tokens.get(tokens.size() - 1) : token);
             }
-            Spin2StatementNode node = new Spin2StatementNode(token);
-            token = next();
-            if (token == null || !"]".equals(token.getText())) {
-                throw new CompilerException("expecting ]", token == null ? tokens.get(tokens.size() - 1) : token);
+            Token last = next();
+            if (last == null || !"]".equals(last.getText())) {
+                throw new CompilerException("expecting ]", last == null ? tokens.get(tokens.size() - 1) : last);
             }
-            node.firstToken = first;
-            node.lastToken = token;
+            token = first.merge(token).merge(last);
+            Spin2StatementNode node = new Spin2StatementNode(token);
 
             if ((token = peek()) != null) {
                 if (postEffect.contains(token.getText())) {
                     Token postToken = peek();
                     if (!"?".equals(postToken.getText()) || postToken.start == (token.stop + 1)) {
                         node.addChild(new Spin2StatementNode(next()));
-                    }
-                }
-                else if (token.type == Token.KEYWORD) {
-                    String[] ar = token.getText().split("[\\.]");
-                    if (ar != null && scope.hasSymbol(ar[0])) {
-                        node.addChild(parseAtom());
                     }
                 }
             }
