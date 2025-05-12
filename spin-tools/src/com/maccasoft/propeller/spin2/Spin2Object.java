@@ -177,8 +177,7 @@ public class Spin2Object extends SpinObject {
             os.write(interpreter.getCode());
         }
         if (clockSetter && interpreter == null && debugger == null) {
-            //writeClockSetter(os);
-            data.add(0, getClockSetter());
+            writeClockSetter(os);
         }
         super.generateBinary(os);
     }
@@ -338,39 +337,6 @@ public class Spin2Object extends SpinObject {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-            }
-        }
-    }
-
-    DataObject getClockSetter() throws IOException {
-        int clkMode = getClkMode();
-
-        InputStream is = getClass().getResourceAsStream("clock_setter.binary");
-        try {
-            byte[] code = new byte[is.available()];
-            is.read(code);
-
-            if (clkMode == 0b01) {
-                writeLong(code, 0x000, 0);
-                writeLong(code, 0x004, 0);
-                writeLong(code, 0x008, 0);
-            }
-            else {
-                writeLong(code, 0x028, 0);
-            }
-            writeLong(code, 0x034, clkMode & ~0b11);
-            writeLong(code, 0x038, clkMode);
-
-            int programSize = getSize();
-            writeLong(code, 0x03C, (programSize + 2048) >> (9 + 2));
-
-            return new DataObject(code, "Clock setter");
-
-        } finally {
-            try {
-                is.close();
-            } catch (Exception e) {
-                e.printStackTrace();
             }
         }
     }
