@@ -704,6 +704,30 @@ class Spin2ObjectCompilerTest {
     }
 
     @Test
+    void testRepeat0() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    repeat 0\n"
+            + "        a := 1\n"
+            + "    a := 2\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       0C 00 00 00    End\n"
+            + "' PUB main() | a\n"
+            + "00008 00008       01             (stack size)\n"
+            + "'     repeat 0\n"
+            + "'     a := 2\n"
+            + "00009 00009       A3             CONSTANT (2)\n"
+            + "0000A 0000A       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0000B 0000B       04             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testRepeatWith() throws Exception {
         String text = ""
             + "PUB main() | a, b\n"

@@ -2288,25 +2288,35 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                             line.addChild(nextLine);
                         }
                         else {
+                            boolean skip = false;
                             try {
                                 Expression expression = buildConstantExpression(line.getScope(), counter);
-                                line.addSource(new Constant(line.getScope(), expression));
+                                if (expression.getNumber().longValue() == 0) {
+                                    skip = true;
+                                }
+                                else {
+                                    line.addSource(new Constant(line.getScope(), expression));
+                                }
                             } catch (Exception e) {
                                 line.addSource(compileBytecodeExpression(line.getScope(), method, counter, true));
                                 line.addSource(new Tjz(line.getScope(), new ContextLiteral(quitLine.getScope())));
                             }
+                            if (skip) {
+                                compileStatement(new Context(context), method, line, node);
+                            }
+                            else {
+                                line.setData("pop", Integer.valueOf(0));
 
-                            line.setData("pop", Integer.valueOf(0));
+                                Spin2MethodLine nextLine = new Spin2MethodLine(context);
+                                line.setData("next", nextLine);
 
-                            Spin2MethodLine nextLine = new Spin2MethodLine(context);
-                            line.setData("next", nextLine);
+                                Spin2MethodLine loopLine = new Spin2MethodLine(context);
+                                line.addChild(loopLine);
+                                line.addChilds(compileStatement(new Context(context), method, line, node));
 
-                            Spin2MethodLine loopLine = new Spin2MethodLine(context);
-                            line.addChild(loopLine);
-                            line.addChilds(compileStatement(new Context(context), method, line, node));
-
-                            nextLine.addSource(new Djnz(nextLine.getScope(), new ContextLiteral(loopLine.getScope())));
-                            line.addChild(nextLine);
+                                nextLine.addSource(new Djnz(nextLine.getScope(), new ContextLiteral(loopLine.getScope())));
+                                line.addChild(nextLine);
+                            }
                         }
                     }
                 }
