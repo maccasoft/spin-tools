@@ -2922,6 +2922,9 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     else {
                         source.add(new VariableOp(context, push ? VariableOp.Op.Setup : VariableOp.Op.Write, popIndex, var, hasIndex, index));
                     }
+                    if (write) {
+                        source.add(new Bytecode(context, Spin2Bytecode.bc_write_push, "WRITE"));
+                    }
                     if (pointerPostEffectNode != null) {
                         throw new CompilerException("unexpected: " + pointerPostEffectNode.getText(), pointerPostEffectNode.getTokens());
                     }
@@ -2979,7 +2982,14 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                             }
                         }
                         else {
-                            source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, push ? MemoryOp.Op.WritePush : MemoryOp.Op.Write, indexNode != null));
+                            MemoryOp.Op op;
+                            if (push && !write) {
+                                op = MemoryOp.Op.Setup;
+                            }
+                            else {
+                                op = push ? MemoryOp.Op.WritePush : MemoryOp.Op.Write;
+                            }
+                            source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, op, indexNode != null));
                         }
                     }
                 }
