@@ -72,52 +72,68 @@ public class ImageRegistry {
         return map.get(name);
     }
 
-    private static final Map<String, String> fileMap = new HashMap<>();
+    static class FilePair {
+        String file;
+        String altFile;
+
+        public FilePair(String file, String altFile) {
+            this.file = file;
+            this.altFile = altFile;
+        }
+
+    }
+
+    static final Map<String, FilePair> fileMap = new HashMap<>();
     static {
-        fileMap.put(".asm", "document-text.png");
-        fileMap.put(".bat", "document-text.png");
-        fileMap.put(".bin", "document-binary.png");
-        fileMap.put(".binary", "document-binary.png");
-        fileMap.put(".bmp", "document-image.png");
-        fileMap.put(".c", "document-code.png");
-        fileMap.put(".cpp", "document-text.png");
-        fileMap.put(".dll", "document-binary.png");
-        fileMap.put(".exe", "document-binary.png");
-        fileMap.put(".gif", "document-image.png");
-        fileMap.put(".gz", "document-zipper.png");
-        fileMap.put(".h", "document-text.png");
-        fileMap.put(".img", "document-binary.png");
-        fileMap.put(".java", "document-text.png");
-        fileMap.put(".jpg", "document-image.png");
-        fileMap.put(".json", "document-text.png");
-        fileMap.put(".lib", "document-binary.png");
-        fileMap.put(".log", "document-text.png");
-        fileMap.put(".lst", "document-text.png");
-        fileMap.put(".o", "document-binary.png");
-        fileMap.put(".p2asm", "document-text.png");
-        fileMap.put(".pdf", "document-pdf.png");
-        fileMap.put(".png", "document-image.png");
-        fileMap.put(".rom", "document-binary.png");
-        fileMap.put(".s", "document-text.png");
-        fileMap.put(".sh", "document-text.png");
-        fileMap.put(".spin", "document-code.png");
-        fileMap.put(".spin2", "document-code.png");
-        fileMap.put(".tga", "document-image.png");
-        fileMap.put(".tar", "document-zipper.png");
-        fileMap.put(".txt", "document-text.png");
-        fileMap.put(".zip", "document-zipper.png");
+        fileMap.put(".asm", new FilePair("document-text.png", "blue-document-text.png"));
+        fileMap.put(".bat", new FilePair("document-text.png", "blue-document-text.png"));
+        fileMap.put(".bin", new FilePair("document-binary.png", "blue-document-binary.png"));
+        fileMap.put(".binary", new FilePair("document-binary.png", "blue-document-binary.png"));
+        fileMap.put(".bmp", new FilePair("document-image.png", "blue-document-image.png"));
+        fileMap.put(".c", new FilePair("document-code.png", "blue-document-code.png"));
+        fileMap.put(".cpp", new FilePair("document-text.png", "blue-document-text.png"));
+        fileMap.put(".dll", new FilePair("document-binary.png", "blue-document-binary.png"));
+        fileMap.put(".exe", new FilePair("document-binary.png", "blue-document-binary.png"));
+        fileMap.put(".gif", new FilePair("document-image.png", "blue-document-image.png"));
+        fileMap.put(".gz", new FilePair("document-zipper.png", "blue-document-zipper.png"));
+        fileMap.put(".h", new FilePair("document-text.png", "blue-document-text.png"));
+        fileMap.put(".img", new FilePair("document-binary.png", "blue-document-binary.png"));
+        fileMap.put(".java", new FilePair("document-text.png", "blue-document-text.png"));
+        fileMap.put(".jpg", new FilePair("document-image.png", "blue-document-image.png"));
+        fileMap.put(".json", new FilePair("document-text.png", "blue-document-text.png"));
+        fileMap.put(".lib", new FilePair("document-binary.png", "blue-document-binary.png"));
+        fileMap.put(".log", new FilePair("document-text.png", "blue-document-text.png"));
+        fileMap.put(".lst", new FilePair("document-text.png", "blue-document-text.png"));
+        fileMap.put(".o", new FilePair("document-binary.png", "blue-document-binary.png"));
+        fileMap.put(".obj", new FilePair("document-binary.png", "blue-document-binary.png"));
+        fileMap.put(".p2asm", new FilePair("document-text.png", "blue-document-text.png"));
+        fileMap.put(".pdf", new FilePair("document-pdf.png", "blue-document-pdf.png"));
+        fileMap.put(".png", new FilePair("document-image.png", "blue-document-image.png"));
+        fileMap.put(".rom", new FilePair("document-binary.png", "blue-document-binary.png"));
+        fileMap.put(".s", new FilePair("document-text.png", "blue-document-text.png"));
+        fileMap.put(".sh", new FilePair("document-text.png", "blue-document-text.png"));
+        fileMap.put(".spin", new FilePair("document-code.png", "blue-document-code.png"));
+        fileMap.put(".spin2", new FilePair("document-code.png", "blue-document-code.png"));
+        fileMap.put(".tga", new FilePair("document-image.png", "blue-document-image.png"));
+        fileMap.put(".tar", new FilePair("document-zipper.png", "blue-document-zipper.png"));
+        fileMap.put(".txt", new FilePair("document-text.png", "blue-document-text.png"));
+        fileMap.put(".zip", new FilePair("document-zipper.png", "blue-document-zipper.png"));
     }
 
     public static Image getImageForFile(File file) {
+        return getImageForFile(file, false);
+    }
+
+    public static Image getImageForFile(File file, boolean alt) {
         if (file.isDirectory()) {
             return getImageFromResources("folder.png");
         }
         int index = file.getName().lastIndexOf('.');
         if (index != -1) {
-            String ext = file.getName().substring(index);
-            String imageName = fileMap.get(ext.toLowerCase());
-            if (imageName != null) {
-                return getImageFromResources(imageName);
+            String ext = file.getName().substring(index).toLowerCase();
+            FilePair imageNamePair = fileMap.get(ext);
+            if (imageNamePair != null) {
+                return getImageFromResources(alt ? imageNamePair.altFile : imageNamePair.file);
             }
         }
         return getImageFromResources("document.png");

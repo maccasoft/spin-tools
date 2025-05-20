@@ -10,6 +10,8 @@
 
 package com.maccasoft.propeller;
 
+import java.io.File;
+
 import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -45,7 +47,9 @@ public class ObjectBrowser {
 
     Font fontBold;
     TextStyle topObjectStyle;
+
     boolean topObject;
+    String topObjectFolder;
 
     public ObjectBrowser(Composite parent) {
         display = parent.getDisplay();
@@ -75,7 +79,14 @@ public class ObjectBrowser {
                     });
                 }
 
-                cell.setImage(ImageRegistry.getImageForFile(element.getFile()));
+                boolean altImage = false;
+                if (topObjectFolder != null) {
+                    String elementPath = element.getFile().getAbsolutePath();
+                    if (!elementPath.startsWith(topObjectFolder)) {
+                        altImage = true;
+                    }
+                }
+                cell.setImage(ImageRegistry.getImageForFile(element.getFile(), altImage));
             }
 
         });
@@ -192,9 +203,11 @@ public class ObjectBrowser {
         try {
             this.topObject = topObject;
             if (input == null) {
+                topObjectFolder = null;
                 viewer.setInput(new ObjectTree[0]);
             }
             else {
+                topObjectFolder = input.getFile().getAbsoluteFile().getParent() + File.separator;
                 viewer.setInput(new ObjectTree[] {
                     input
                 });
