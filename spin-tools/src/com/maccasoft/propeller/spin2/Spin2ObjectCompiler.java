@@ -69,6 +69,7 @@ import com.maccasoft.propeller.spin2.bytecode.CaseRangeJmp;
 import com.maccasoft.propeller.spin2.bytecode.Constant;
 import com.maccasoft.propeller.spin2.bytecode.Djnz;
 import com.maccasoft.propeller.spin2.bytecode.InlinePAsm;
+import com.maccasoft.propeller.spin2.bytecode.InlinePAsmExec;
 import com.maccasoft.propeller.spin2.bytecode.Jmp;
 import com.maccasoft.propeller.spin2.bytecode.Jnz;
 import com.maccasoft.propeller.spin2.bytecode.Jz;
@@ -77,7 +78,6 @@ import com.maccasoft.propeller.spin2.instructions.Alignl;
 import com.maccasoft.propeller.spin2.instructions.Alignw;
 import com.maccasoft.propeller.spin2.instructions.DataType;
 import com.maccasoft.propeller.spin2.instructions.Debug;
-import com.maccasoft.propeller.spin2.instructions.Empty;
 import com.maccasoft.propeller.spin2.instructions.Fit;
 import com.maccasoft.propeller.spin2.instructions.Org;
 import com.maccasoft.propeller.spin2.instructions.Orgh;
@@ -2614,7 +2614,6 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
     void compileInlinePAsmStatements(Iterator<Node> linesIterator, Spin2MethodLine line) {
         int org = 0;
-        int count = 0;
         int code = Spin2Bytecode.bc_org;
         Context rootScope = new Context(line.getScope());
         Context lineScope = rootScope;
@@ -2663,41 +2662,10 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     }
                     code = Spin2Bytecode.bc_orgh;
                 }
-                else if (!(pasmLine.getInstructionFactory() instanceof Empty)) {
-                    count++;
-                    if (arguments.size() > 0) {
-                        if (arguments.get(0).isLongLiteral()) {
-                            count++;
-                        }
-                        if (arguments.size() > 1) {
-                            if (arguments.get(1).isLongLiteral()) {
-                                count++;
-                            }
-                        }
-                    }
-                }
             }
         }
 
-        if (code == Spin2Bytecode.bc_org) {
-            count--;
-            line.source.add(0, new Bytecode(line.getScope(), new byte[] {
-                (byte) org,
-                (byte) (org >> 8),
-                (byte) count,
-                (byte) (count >> 8),
-            }, String.format("ORG=$%03x, %d", org, count + 1)));
-        }
-        else {
-            line.source.add(0, new Bytecode(line.getScope(), new byte[] {
-                (byte) (org >> 8),
-                (byte) org,
-            }, String.format("ORGH=$%03x", org)));
-        }
-
-        line.source.add(0, new Bytecode(line.getScope(), new byte[] {
-            Spin2Bytecode.bc_hub_bytecode, (byte) code
-        }, "INLINE-EXEC"));
+        line.source.add(0, new InlinePAsmExec(line.getScope(), org, code == Spin2Bytecode.bc_orgh));
     }
 
     void compileCase(Spin2Method method, Spin2MethodLine line, Spin2StatementNode arg, Spin2MethodLine target) {

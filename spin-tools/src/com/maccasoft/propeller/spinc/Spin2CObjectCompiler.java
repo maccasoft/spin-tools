@@ -67,10 +67,10 @@ import com.maccasoft.propeller.spin2.bytecode.Bytecode;
 import com.maccasoft.propeller.spin2.bytecode.CaseJmp;
 import com.maccasoft.propeller.spin2.bytecode.CaseRangeJmp;
 import com.maccasoft.propeller.spin2.bytecode.InlinePAsm;
+import com.maccasoft.propeller.spin2.bytecode.InlinePAsmExec;
 import com.maccasoft.propeller.spin2.bytecode.Jmp;
 import com.maccasoft.propeller.spin2.bytecode.Jnz;
 import com.maccasoft.propeller.spin2.bytecode.Jz;
-import com.maccasoft.propeller.spin2.instructions.Empty;
 import com.maccasoft.propeller.spin2.instructions.Fit;
 import com.maccasoft.propeller.spin2.instructions.Org;
 import com.maccasoft.propeller.spin2.instructions.Orgh;
@@ -1508,7 +1508,6 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                 }
             }
 
-            int count = 0;
             for (Node child : node.getChilds()) {
                 DataLineNode lineNode = (DataLineNode) child;
                 if (lineNode.label != null && !lineNode.label.getText().startsWith(".")) {
@@ -1528,33 +1527,11 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                         code = Spin2Bytecode.bc_orgh;
                     }
                 }
-                else if (!(pasmLine.getInstructionFactory() instanceof Empty)) {
-                    count++;
-                    if (arguments.size() > 0) {
-                        if (arguments.get(0).isLongLiteral()) {
-                            count++;
-                        }
-                        if (arguments.size() > 1) {
-                            if (arguments.get(1).isLongLiteral()) {
-                                count++;
-                            }
-                        }
-                    }
-                }
 
                 line.addSource(new InlinePAsm(rootScope, pasmLine));
             }
 
-            count--;
-            line.addSource(0, new Bytecode(context, new byte[] {
-                (byte) org,
-                (byte) (org >> 8),
-                (byte) count,
-                (byte) (count >> 8),
-            }, String.format("%s=$%03x, %d", code == Spin2Bytecode.bc_orgh ? "ORGH" : "ORG", org, count + 1)));
-            line.addSource(0, new Bytecode(context, new byte[] {
-                Spin2Bytecode.bc_hub_bytecode, (byte) code
-            }, "INLINE-EXEC"));
+            line.addSource(0, new InlinePAsmExec(line.getScope(), org, code == Spin2Bytecode.bc_orgh));
         }
         else {
             Spin2CTreeBuilder builder = new Spin2CTreeBuilder(scope);

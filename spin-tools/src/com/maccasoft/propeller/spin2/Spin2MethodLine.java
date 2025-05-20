@@ -20,6 +20,7 @@ import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin2.bytecode.InlinePAsm;
+import com.maccasoft.propeller.spin2.bytecode.InlinePAsmExec;
 import com.maccasoft.propeller.spin2.instructions.Orgh;
 
 public class Spin2MethodLine {
@@ -97,7 +98,7 @@ public class Spin2MethodLine {
     }
 
     public int resolve(int address) {
-        int pasmAddress = 0;
+        int pasmAddress = 0, pasmCount = 0;
         boolean hubMode = false;
 
         addressChanged = startAddress != address;
@@ -116,10 +117,15 @@ public class Spin2MethodLine {
                 }
                 pasmAddress = inlinePAsm.resolve(pasmAddress, hubMode);
                 address += bc.getSize();
+                pasmCount += bc.getSize();
             }
             else {
                 address = bc.resolve(address);
             }
+        }
+        if (pasmCount != 0) {
+            InlinePAsmExec bc = (InlinePAsmExec) source.get(0);
+            bc.setSize(((pasmCount + 3) >> 2) - 1);
         }
 
         for (Spin2MethodLine line : childs) {
@@ -195,6 +201,7 @@ public class Spin2MethodLine {
     }
 
     public void writeTo(Spin2Object obj) {
+        int pasmAddress = 0, pasmCount = 0;
         CompilerException msgs = new CompilerException();
 
         if (text != null) {
@@ -205,8 +212,11 @@ public class Spin2MethodLine {
             if (bc instanceof InlinePAsm) {
                 Spin2PAsmLine line = ((InlinePAsm) bc).getLine();
                 try {
-                    int address = line.getScope().getAddress();
-                    obj.writeBytes(address, false, line.getInstructionObject().getBytes(), line.toString());
+                    pasmAddress = line.getScope().getAddress();
+                    byte[] code = line.getInstructionObject().getBytes();
+                    obj.writeBytes(pasmAddress, false, code, line.toString());
+                    pasmAddress += code.length;
+                    pasmCount += code.length;
                 } catch (CompilerException e) {
                     msgs.addMessage(e);
                 } catch (Exception e) {
@@ -216,6 +226,9 @@ public class Spin2MethodLine {
             else {
                 obj.writeBytes(bc.getBytes(), bc.toString());
             }
+        }
+        if (pasmCount > 0 && (pasmCount % 4) != 0) {
+            obj.writeBytes(pasmAddress, false, new byte[4 - (pasmCount % 4)], "PADDING");
         }
 
         if (msgs.hasChilds()) {
