@@ -2267,13 +2267,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
                             line.addSource(new Address(line.getScope(), new ContextLiteral(loopLine.getScope())));
 
-                            try {
-                                Expression expression = buildConstantExpression(line.getScope(), counter);
-                                line.addSource(new Constant(line.getScope(), expression));
-                            } catch (Exception e) {
-                                line.addSource(compileBytecodeExpression(line.getScope(), method, counter, true));
-                            }
-
+                            line.addSource(compileConstantExpression(line.getScope(), method, counter));
                             line.addSource(leftAssign(context, method, with, true, false));
                             line.addSource(new Bytecode(line.getScope(), Spin2Bytecode.bc_repeat_var_init_n, "REPEAT"));
 
