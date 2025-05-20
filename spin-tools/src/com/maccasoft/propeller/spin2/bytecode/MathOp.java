@@ -148,11 +148,17 @@ public class MathOp extends Spin2Bytecode {
         unary.put("!", new Descriptor(bc_bitnot, "BITNOT"));
         //unary.put("-", new Descriptor(bc_neg, "NEGATE"));
         unary.put("ABS", new Descriptor(bc_abs, "ABS"));
+        unary.put("FABS", new Descriptor(new byte[] {
+            bc_hub_bytecode, (byte) bc_fabs
+        }, "FABS"));
         unary.put("ENCOD", new Descriptor(bc_encod, "ENCOD"));
         unary.put("DECOD", new Descriptor(bc_decod, "DECOD"));
         unary.put("BMASK", new Descriptor(bc_bmask, "BMASK"));
         unary.put("ONES", new Descriptor(bc_ones, "ONES"));
         unary.put("SQRT", new Descriptor(bc_sqrt, "SQRT"));
+        unary.put("FSQRT", new Descriptor(new byte[] {
+            bc_hub_bytecode, (byte) bc_fsqrt
+        }, "FSQRT"));
         unary.put("QLOG", new Descriptor(bc_qlog, "QLOG"));
         unary.put("QEXP", new Descriptor(bc_qexp, "QEXP"));
         unary.put("LOG2", new Descriptor(new byte[] {

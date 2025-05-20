@@ -19,7 +19,7 @@ public class Scas extends BinaryOperator {
     @Override
     public Number getNumber() {
         long value = (term1.getNumber().longValue() * term2.getNumber().longValue());
-        return (value >> 30) & 0xFFFFFFFFL;
+        return (value >> 30);
     }
 
     @Override

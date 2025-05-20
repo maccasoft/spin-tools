@@ -21,7 +21,7 @@ public class Sqrt extends Function {
         if (term.getNumber() instanceof Double) {
             return Math.sqrt(term.getNumber().doubleValue());
         }
-        return Math.sqrt(term.getNumber().doubleValue());
+        return Double.valueOf(Math.sqrt(term.getNumber().longValue())).longValue();
     }
 
     @Override

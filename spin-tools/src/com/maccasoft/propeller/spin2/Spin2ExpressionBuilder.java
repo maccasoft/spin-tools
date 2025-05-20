@@ -24,6 +24,7 @@ import com.maccasoft.propeller.expressions.Addbits;
 import com.maccasoft.propeller.expressions.Addpins;
 import com.maccasoft.propeller.expressions.AddpinsRange;
 import com.maccasoft.propeller.expressions.And;
+import com.maccasoft.propeller.expressions.Bmask;
 import com.maccasoft.propeller.expressions.CharacterLiteral;
 import com.maccasoft.propeller.expressions.Compare;
 import com.maccasoft.propeller.expressions.Context;
@@ -64,6 +65,7 @@ import com.maccasoft.propeller.expressions.Negative;
 import com.maccasoft.propeller.expressions.Not;
 import com.maccasoft.propeller.expressions.NotEquals;
 import com.maccasoft.propeller.expressions.NumberLiteral;
+import com.maccasoft.propeller.expressions.Ones;
 import com.maccasoft.propeller.expressions.Or;
 import com.maccasoft.propeller.expressions.Pow;
 import com.maccasoft.propeller.expressions.Rev;
@@ -102,8 +104,6 @@ public class Spin2ExpressionBuilder {
         precedence.put("ZEROX", 14);
         precedence.put("SIGNX", 14);
 
-        precedence.put("POW", 15);
-
         precedence.put("&", 13);
         precedence.put("^", 12);
         precedence.put("|", 11);
@@ -122,6 +122,7 @@ public class Spin2ExpressionBuilder {
 
         precedence.put("+", 9);
         precedence.put("-", 9);
+        precedence.put("POW", 9);
 
         precedence.put("+.", 9);
         precedence.put("-.", 9);
@@ -351,10 +352,6 @@ public class Spin2ExpressionBuilder {
                     left = new Zerox(left, right);
                     break;
 
-                case "POW":
-                    left = new Pow(left, right);
-                    break;
-
                 case "&":
                     left = new And(left, right);
                     break;
@@ -402,6 +399,9 @@ public class Spin2ExpressionBuilder {
                 case "-":
                 case "-.":
                     left = new Subtract(left, right);
+                    break;
+                case "POW":
+                    left = new Pow(left, right);
                     break;
 
                 case "#>":
@@ -510,22 +510,31 @@ public class Spin2ExpressionBuilder {
                     return parseAtom();
                 case "-":
                     return new Negative(parseAtom());
+                case "ABS":
+                    return new Abs(parseAtom());
                 case "ENCOD":
                     return new Encod(parseAtom());
                 case "DECOD":
                     return new Decod(parseAtom());
-                case "LOG":
-                    return new Log(parseAtom());
+                case "BMASK":
+                    return new Bmask(parseAtom());
+                case "ONES":
+                    return new Ones(parseAtom());
+                case "SQRT":
+                case "FSQRT":
+                    return new Sqrt(parseAtom());
                 case "LOG2":
                     return new Log2(parseAtom());
                 case "LOG10":
                     return new Log10(parseAtom());
-                case "EXP":
-                    return new Exp(parseAtom());
+                case "LOG":
+                    return new Log(parseAtom());
                 case "EXP2":
                     return new Exp2(parseAtom());
                 case "EXP10":
                     return new Exp10(parseAtom());
+                case "EXP":
+                    return new Exp(parseAtom());
                 default:
                     throw new CompilerException("invalid unary operator " + token.getText(), token);
             }

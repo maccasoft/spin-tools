@@ -19,7 +19,7 @@ public class Trunc extends Function {
     @Override
     public Number getNumber() {
         if (term.getNumber() instanceof Double) {
-            return Double.valueOf(Math.floor(term.getNumber().doubleValue())).longValue();
+            return Math.floor(Math.floor(term.getNumber().doubleValue()));
         }
         return term.getNumber();
     }

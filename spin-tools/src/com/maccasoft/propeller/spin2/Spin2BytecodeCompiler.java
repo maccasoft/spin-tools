@@ -25,6 +25,7 @@ import com.maccasoft.propeller.expressions.Addbits;
 import com.maccasoft.propeller.expressions.Addpins;
 import com.maccasoft.propeller.expressions.AddpinsRange;
 import com.maccasoft.propeller.expressions.And;
+import com.maccasoft.propeller.expressions.Bmask;
 import com.maccasoft.propeller.expressions.CharacterLiteral;
 import com.maccasoft.propeller.expressions.Compare;
 import com.maccasoft.propeller.expressions.Context;
@@ -38,6 +39,7 @@ import com.maccasoft.propeller.expressions.Exp;
 import com.maccasoft.propeller.expressions.Exp10;
 import com.maccasoft.propeller.expressions.Exp2;
 import com.maccasoft.propeller.expressions.Expression;
+import com.maccasoft.propeller.expressions.Frac;
 import com.maccasoft.propeller.expressions.GreaterOrEquals;
 import com.maccasoft.propeller.expressions.GreaterOrEqualsUnsigned;
 import com.maccasoft.propeller.expressions.GreaterThan;
@@ -47,6 +49,8 @@ import com.maccasoft.propeller.expressions.LessOrEquals;
 import com.maccasoft.propeller.expressions.LessOrEqualsUnsigned;
 import com.maccasoft.propeller.expressions.LessThan;
 import com.maccasoft.propeller.expressions.LessThanUnsigned;
+import com.maccasoft.propeller.expressions.LimitMax;
+import com.maccasoft.propeller.expressions.LimitMin;
 import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.Log;
 import com.maccasoft.propeller.expressions.Log10;
@@ -65,8 +69,11 @@ import com.maccasoft.propeller.expressions.Not;
 import com.maccasoft.propeller.expressions.NotEquals;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.expressions.ObjectContextLiteral;
+import com.maccasoft.propeller.expressions.Ones;
 import com.maccasoft.propeller.expressions.Or;
 import com.maccasoft.propeller.expressions.Pow;
+import com.maccasoft.propeller.expressions.QExp;
+import com.maccasoft.propeller.expressions.QLog;
 import com.maccasoft.propeller.expressions.Register;
 import com.maccasoft.propeller.expressions.Rev;
 import com.maccasoft.propeller.expressions.Rol;
@@ -104,6 +111,8 @@ import com.maccasoft.propeller.spin2.bytecode.SubAddress;
 import com.maccasoft.propeller.spin2.bytecode.VariableOp;
 
 public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
+
+    boolean optimizeFloatConstant;
 
     public Spin2BytecodeCompiler(Context scope, Spin2Compiler compiler, File file) {
         super(scope, compiler, file);
@@ -2119,41 +2128,6 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             case "SIGNX":
                 return new Signx(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
 
-            case "POW":
-                return new Pow(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
-
-            case "LOG":
-                if (node.getChildCount() != 1) {
-                    throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
-                }
-                return new Log(buildConstantExpression(context, node.getChild(0), registerConstant));
-            case "LOG2":
-                if (node.getChildCount() != 1) {
-                    throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
-                }
-                return new Log2(buildConstantExpression(context, node.getChild(0), registerConstant));
-            case "LOG10":
-                if (node.getChildCount() != 1) {
-                    throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
-                }
-                return new Log10(buildConstantExpression(context, node.getChild(0), registerConstant));
-
-            case "EXP":
-                if (node.getChildCount() != 1) {
-                    throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
-                }
-                return new Exp(buildConstantExpression(context, node.getChild(0), registerConstant));
-            case "EXP2":
-                if (node.getChildCount() != 1) {
-                    throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
-                }
-                return new Exp2(buildConstantExpression(context, node.getChild(0), registerConstant));
-            case "EXP10":
-                if (node.getChildCount() != 1) {
-                    throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
-                }
-                return new Exp10(buildConstantExpression(context, node.getChild(0), registerConstant));
-
             case "&":
                 return new And(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case "^":
@@ -2182,6 +2156,8 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 return new Sca(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case "SCAS":
                 return new Scas(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
+            case "FRAC":
+                return new Frac(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
 
             case "+":
             case "+.":
@@ -2195,6 +2171,13 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     return new Negative(buildConstantExpression(context, node.getChild(0), registerConstant));
                 }
                 return new Subtract(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
+            case "POW":
+                return new Pow(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
+
+            case "#>":
+                return new LimitMin(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
+            case "<#":
+                return new LimitMax(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
 
             case "ADDBITS":
                 return new Addbits(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
@@ -2260,6 +2243,49 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             case ":":
                 return new IfElse(null, buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
 
+            case "LOG2":
+                if (node.getChildCount() != 1) {
+                    throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
+                }
+                return new Log2(buildConstantExpression(context, node.getChild(0), registerConstant));
+            case "LOG10":
+                if (node.getChildCount() != 1) {
+                    throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
+                }
+                return new Log10(buildConstantExpression(context, node.getChild(0), registerConstant));
+            case "LOG":
+                if (node.getChildCount() != 1) {
+                    throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
+                }
+                return new Log(buildConstantExpression(context, node.getChild(0), registerConstant));
+
+            case "EXP2":
+                if (node.getChildCount() != 1) {
+                    throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
+                }
+                return new Exp2(buildConstantExpression(context, node.getChild(0), registerConstant));
+            case "EXP10":
+                if (node.getChildCount() != 1) {
+                    throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
+                }
+                return new Exp10(buildConstantExpression(context, node.getChild(0), registerConstant));
+            case "EXP":
+                if (node.getChildCount() != 1) {
+                    throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
+                }
+                return new Exp(buildConstantExpression(context, node.getChild(0), registerConstant));
+
+            case "QLOG":
+                if (node.getChildCount() != 1) {
+                    throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
+                }
+                return new QLog(buildConstantExpression(context, node.getChild(0), registerConstant));
+            case "QEXP":
+                if (node.getChildCount() != 1) {
+                    throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
+                }
+                return new QExp(buildConstantExpression(context, node.getChild(0), registerConstant));
+
             case "ENCOD":
                 if (node.getChildCount() != 1) {
                     throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
@@ -2270,12 +2296,25 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
                 }
                 return new Decod(buildConstantExpression(context, node.getChild(0), registerConstant));
-
-            case "TRUNC":
+            case "BMASK":
                 if (node.getChildCount() != 1) {
                     throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
                 }
-                return new Trunc(buildConstantExpression(context, node.getChild(0), registerConstant));
+                return new Bmask(buildConstantExpression(context, node.getChild(0), registerConstant));
+            case "ONES":
+                if (node.getChildCount() != 1) {
+                    throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
+                }
+                return new Ones(buildConstantExpression(context, node.getChild(0), registerConstant));
+
+            case "TRUNC":
+                if (optimizeFloatConstant) {
+                    if (node.getChildCount() != 1) {
+                        throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
+                    }
+                    return new Trunc(buildConstantExpression(context, node.getChild(0), registerConstant));
+                }
+                break;
             case "FSQRT":
             case "SQRT":
                 if (node.getChildCount() != 1) {
@@ -2283,15 +2322,21 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 }
                 return new Sqrt(buildConstantExpression(context, node.getChild(0), registerConstant));
             case "ROUND":
-                if (node.getChildCount() != 1) {
-                    throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
+                if (optimizeFloatConstant) {
+                    if (node.getChildCount() != 1) {
+                        throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
+                    }
+                    return new Round(buildConstantExpression(context, node.getChild(0), registerConstant));
                 }
-                return new Round(buildConstantExpression(context, node.getChild(0), registerConstant));
+                break;
             case "FLOAT":
-                if (node.getChildCount() != 1) {
-                    throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
+                if (optimizeFloatConstant) {
+                    if (node.getChildCount() != 1) {
+                        throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
+                    }
+                    return new NumberLiteral(buildConstantExpression(context, node.getChild(0), registerConstant).getNumber().doubleValue());
                 }
-                return new NumberLiteral(buildConstantExpression(context, node.getChild(0), registerConstant).getNumber().doubleValue());
+                break;
             case "ABS":
             case "FABS":
                 if (node.getChildCount() != 1) {

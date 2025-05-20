@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -18,9 +18,9 @@ public class Ror extends BinaryOperator {
 
     @Override
     public Number getNumber() {
-        long value1 = term1.getNumber().longValue();
-        long value2 = term1.getNumber().longValue();
-        long result = (value1 >> value2) | (value1 << (32 - value2));
+        long value1 = term1.getNumber().longValue() & 0xFFFFFFFFL;
+        long value2 = term2.getNumber().longValue() & 0x1FL;
+        long result = ((value1 >> value2) & 0xFFFFFFFFL) | ((value1 << (32 - value2)) & 0xFFFFFFFFL);
         return result & 0xFFFFFFFFL;
     }
 

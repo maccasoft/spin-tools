@@ -10,23 +10,29 @@
 
 package com.maccasoft.propeller.expressions;
 
-public class Rol extends BinaryOperator {
+public class Ones extends UnaryOperator {
 
-    public Rol(Expression term1, Expression term2) {
-        super(term1, term2);
+    public Ones(Expression term) {
+        super(term);
     }
 
     @Override
     public Number getNumber() {
-        long value1 = term1.getNumber().longValue() & 0xFFFFFFFFL;
-        long value2 = term2.getNumber().longValue() & 0x1FL;
-        long result = ((value1 << value2) & 0xFFFFFFFFL) | ((value1 >> (32 - value2)) & 0xFFFFFFFFL);
-        return result & 0xFFFFFFFFL;
+        int count = 0;
+
+        long value = term.getNumber().longValue();
+        for (int i = 0, mask = 1; i < 32; i++, mask <<= 1) {
+            if ((value & mask) != 0) {
+                count++;
+            }
+        }
+
+        return count;
     }
 
     @Override
     public String getLexeme() {
-        return "rol";
+        return "ones";
     }
 
 }

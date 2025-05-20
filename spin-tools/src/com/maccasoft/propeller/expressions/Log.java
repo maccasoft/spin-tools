@@ -19,7 +19,7 @@ public class Log extends UnaryOperator {
     @Override
     public Number getNumber() {
         if ((term.getNumber() instanceof Long)) {
-            return (long) Math.log(term.getNumber().longValue());
+            return Double.valueOf(Math.log(term.getNumber().longValue())).longValue();
         }
         return Math.log(term.getNumber().doubleValue());
     }

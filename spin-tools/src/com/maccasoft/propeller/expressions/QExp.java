@@ -10,23 +10,21 @@
 
 package com.maccasoft.propeller.expressions;
 
-public class Rol extends BinaryOperator {
+public class QExp extends UnaryOperator {
 
-    public Rol(Expression term1, Expression term2) {
-        super(term1, term2);
+    public QExp(Expression term) {
+        super(term);
     }
 
     @Override
     public Number getNumber() {
-        long value1 = term1.getNumber().longValue() & 0xFFFFFFFFL;
-        long value2 = term2.getNumber().longValue() & 0x1FL;
-        long result = ((value1 << value2) & 0xFFFFFFFFL) | ((value1 >> (32 - value2)) & 0xFFFFFFFFL);
-        return result & 0xFFFFFFFFL;
+        long value = term.getNumber().longValue() & 0xFFFFFFFFL;
+        return Double.valueOf(Math.pow(2, value / Math.pow(2, 27))).longValue();
     }
 
     @Override
     public String getLexeme() {
-        return "rol";
+        return "QEXP ";
     }
 
 }

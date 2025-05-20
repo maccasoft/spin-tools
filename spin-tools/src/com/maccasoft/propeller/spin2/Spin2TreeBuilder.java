@@ -37,8 +37,6 @@ public class Spin2TreeBuilder {
         precedence.put("ZEROX", 17);
         precedence.put("SIGNX", 17);
 
-        precedence.put("POW", 16);
-
         precedence.put("&", 15);
         precedence.put("^", 14);
         precedence.put("|", 13);
@@ -57,6 +55,7 @@ public class Spin2TreeBuilder {
 
         precedence.put("+", 11);
         precedence.put("-", 11);
+        precedence.put("POW", 11);
 
         precedence.put("+.", 11);
         precedence.put("-.", 11);
@@ -174,6 +173,7 @@ public class Spin2TreeBuilder {
         unary.add("!=");
         unary.add("ABS");
         unary.add("ABS=");
+        unary.add("FABS");
         unary.add("ENCOD");
         unary.add("ENCOD=");
         unary.add("DECOD");
@@ -184,6 +184,7 @@ public class Spin2TreeBuilder {
         unary.add("ONES=");
         unary.add("SQRT");
         unary.add("SQRT=");
+        unary.add("FSQRT");
         unary.add("QLOG");
         unary.add("QLOG=");
         unary.add("QEXP");
