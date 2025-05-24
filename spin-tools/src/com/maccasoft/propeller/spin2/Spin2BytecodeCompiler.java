@@ -1102,19 +1102,17 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 return source;
             }
 
-            if ("CLKMODE".equalsIgnoreCase(node.getText()) || "CLKFREQ".equalsIgnoreCase(node.getText())) {
+            if ("CLKMODE".equalsIgnoreCase(node.getText()) || "^@CLKMODE".equalsIgnoreCase(node.getText()) || "CLKFREQ".equalsIgnoreCase(node.getText())) {
                 Spin2StatementNode indexNode = null;
                 Spin2StatementNode bitfieldNode = null;
                 Spin2StatementNode postEffectNode = null;
+                boolean field = node.getText().startsWith("^@");
 
                 int n = 0;
                 if (n < node.getChildCount() && (node.getChild(n) instanceof Spin2StatementNode.Index)) {
                     indexNode = node.getChild(n++);
                 }
                 if (n < node.getChildCount() && ".".equals(node.getChild(n).getText())) {
-                    if (node.getText().startsWith("@")) {
-                        throw new CompilerException("bitfield expression not allowed", node.getChild(n).getToken());
-                    }
                     n++;
                     if (n >= node.getChildCount()) {
                         throw new RuntimeException("expected bitfield expression");
@@ -1136,7 +1134,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     bitfield = compileBitfield(context, method, bitfieldNode, source);
                 }
 
-                if ("CLKMODE".equalsIgnoreCase(node.getText())) {
+                if ("CLKMODE".equalsIgnoreCase(node.getText()) || "^@CLKMODE".equalsIgnoreCase(node.getText())) {
                     source.add(new Constant(context, new NumberLiteral(0x40, 16)));
                 }
                 if ("CLKFREQ".equalsIgnoreCase(node.getText())) {
@@ -1148,11 +1146,11 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 }
 
                 MemoryOp.Size ss = MemoryOp.Size.Long;
-                MemoryOp.Op op = bitfieldNode == null && postEffectNode == null ? (push ? MemoryOp.Op.Read : MemoryOp.Op.Write) : MemoryOp.Op.Setup;
+                MemoryOp.Op op = bitfieldNode == null && postEffectNode == null ? (push ? (field ? MemoryOp.Op.Field : MemoryOp.Op.Read) : MemoryOp.Op.Write) : MemoryOp.Op.Setup;
                 source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, op, indexNode != null));
 
                 if (bitfieldNode != null) {
-                    source.add(new BitField(context, postEffectNode == null ? BitField.Op.Read : BitField.Op.Setup, bitfield));
+                    source.add(new BitField(context, postEffectNode == null ? (field ? BitField.Op.Field : BitField.Op.Read) : BitField.Op.Setup, bitfield));
                 }
 
                 if (postEffectNode != null) {

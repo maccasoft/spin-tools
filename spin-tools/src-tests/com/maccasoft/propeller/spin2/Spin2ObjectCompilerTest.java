@@ -10,16 +10,15 @@
 
 package com.maccasoft.propeller.spin2;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.PrintStream;
-
+import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.model.RootNode;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 
-import com.maccasoft.propeller.CompilerException;
-import com.maccasoft.propeller.model.RootNode;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.PrintStream;
 
 class Spin2ObjectCompilerTest {
 
@@ -6316,6 +6315,35 @@ class Spin2ObjectCompilerTest {
             + "00024 00024       04             RETURN\n"
             + "00025 00025       00 00 00       Padding\n"
             + "", compile(text));
+    }
+
+    @Test
+    void testClkModeField() throws Exception {
+        String text = """
+            \
+            PUB main() | p
+            
+                p := ^@CLKMODE
+                p := ^@CLKMODE.[5..0]
+            """;
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       17 00 00 00    End\n"
+            + "' PUB main() | p\n"
+            + "00008 00008       01             (stack size)\n"
+            + "'     p := ^@CLKMODE\n"
+            + "00009 00009       42 40          CONSTANT ($40)\n"
+            + "0000B 0000B       63 7E          MEM_BITFIELD_PTR LONG\n"
+            + "0000D 0000D       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     p := ^@CLKMODE.[5..0]\n"
+            + "0000E 0000E       42 40          CONSTANT ($40)\n"
+            + "00010 00010       63             MEM_SETUP LONG\n"
+            + "00011 00011       DF A0 01 7E    BITFIELD_PTR\n"
+            + "00015 00015       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00016 00016       04             RETURN\n"
+            + "00017 00017       00             Padding\n", compile(text));
     }
 
     @Test
