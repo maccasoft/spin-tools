@@ -8071,6 +8071,90 @@ class Spin2ObjectCompilerTest {
             + "", compile(text, false));
     }
 
+    @Test
+    void testCogspin() throws Exception {
+        String text = """
+            \
+            PUB main() | a, ptr
+            
+                cogspin(NEWCOG, cogFunction(), 0)
+                cogspin(NEWCOG, ptr(), 0)
+                coginit(NEWCOG, @start, 0)
+                coginit(NEWCOG, ptr, 0)
+            
+                a := cogspin(NEWCOG, cogFunction(), 0)
+                a := cogspin(NEWCOG, ptr(), 0)
+                a := coginit(NEWCOG, @start, 0)
+                a := coginit(NEWCOG, ptr, 0)
+            
+            PRI cogFunction()
+            
+            DAT org $000
+            start
+            """;
+
+        Assertions.assertEquals("""
+            \
+            ' Object header (var size 4)
+            00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)
+            00004 00004       4C 00 00 80    Method cogFunction @ $0004C (0 parameters, 0 returns)
+            00008 00008       4E 00 00 00    End
+            0000C 0000C   000                                    org     $000
+            0000C 0000C   000                start              \s
+            ' PUB main() | a, ptr
+            0000C 0000C       02             (stack size)
+            '     cogspin(NEWCOG, cogFunction(), 0)
+            0000D 0000D       42 10          CONSTANT (16)
+            0000F 0000F       11 01          SUB_ADDRESS (1)
+            00011 00011       A1             CONSTANT (0)
+            00012 00012       19 58 00 25    COGSPIN
+            '     cogspin(NEWCOG, ptr(), 0)
+            00016 00016       42 10          CONSTANT (16)
+            00018 00018       E1             VAR_READ LONG DBASE+$00001 (short)
+            00019 00019       A1             CONSTANT (0)
+            0001A 0001A       19 58 00 25    COGSPIN
+            '     coginit(NEWCOG, @start, 0)
+            0001E 0001E       42 10          CONSTANT (16)
+            00020 00020       5B 0C 7F       MEM_ADDRESS PBASE+$0000C
+            00023 00023       A1             CONSTANT (0)
+            00024 00024       25             COGINIT
+            '     coginit(NEWCOG, ptr, 0)
+            00025 00025       42 10          CONSTANT (16)
+            00027 00027       E1             VAR_READ LONG DBASE+$00001 (short)
+            00028 00028       A1             CONSTANT (0)
+            00029 00029       25             COGINIT
+            '     a := cogspin(NEWCOG, cogFunction(), 0)
+            0002A 0002A       42 10          CONSTANT (16)
+            0002C 0002C       11 01          SUB_ADDRESS (1)
+            0002E 0002E       A1             CONSTANT (0)
+            0002F 0002F       19 58 00 26    COGSPIN
+            00033 00033       F0             VAR_WRITE LONG DBASE+$00000 (short)
+            '     a := cogspin(NEWCOG, ptr(), 0)
+            00034 00034       42 10          CONSTANT (16)
+            00036 00036       E1             VAR_READ LONG DBASE+$00001 (short)
+            00037 00037       A1             CONSTANT (0)
+            00038 00038       19 58 00 26    COGSPIN
+            0003C 0003C       F0             VAR_WRITE LONG DBASE+$00000 (short)
+            '     a := coginit(NEWCOG, @start, 0)
+            0003D 0003D       42 10          CONSTANT (16)
+            0003F 0003F       5B 0C 7F       MEM_ADDRESS PBASE+$0000C
+            00042 00042       A1             CONSTANT (0)
+            00043 00043       26             COGINIT
+            00044 00044       F0             VAR_WRITE LONG DBASE+$00000 (short)
+            '     a := coginit(NEWCOG, ptr, 0)
+            00045 00045       42 10          CONSTANT (16)
+            00047 00047       E1             VAR_READ LONG DBASE+$00001 (short)
+            00048 00048       A1             CONSTANT (0)
+            00049 00049       26             COGINIT
+            0004A 0004A       F0             VAR_WRITE LONG DBASE+$00000 (short)
+            0004B 0004B       04             RETURN
+            ' PRI cogFunction()
+            0004C 0004C       00             (stack size)
+            0004D 0004D       04             RETURN
+            0004E 0004E       00 00          Padding
+            """, compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }
