@@ -948,6 +948,27 @@ class Spin2ParserTest {
             + "", tree(root));
     }
 
+    @Test
+    void testMultipleStructureDeclaration() throws Exception {
+        Spin2Parser subject = new Spin2Parser(""
+                + "CON\n"
+                + "    struct sPoint(x, y), struct sLine(sPoint a, sPoint b, BYTE color)\n"
+                + "");
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+                + "RootNode []\n"
+                + "+-- ConstantsNode [CON]\n"
+                + "    +-- TypeDefinitionNode type=struct identifier=sPoint [struct sPoint(x, y)]\n"
+                + "        +-- Definition identifier=x [x]\n"
+                + "        +-- Definition identifier=y [y]\n"
+                + "    +-- TypeDefinitionNode type=struct identifier=sLine [struct sLine(sPoint a, sPoint b, BYTE color)]\n"
+                + "        +-- Definition type=sPoint identifier=a [sPoint a]\n"
+                + "        +-- Definition type=sPoint identifier=b [sPoint b]\n"
+                + "        +-- Definition type=BYTE identifier=color [BYTE color]\n"
+                + "", tree(root));
+    }
+
     String tree(Node root) throws Exception {
         return tree(root, 0);
     }

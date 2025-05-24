@@ -213,17 +213,18 @@ public class Spin2Parser extends Parser {
                     }
                     if ("struct".equalsIgnoreCase(token.getText())) {
                         typeDefinitionNode = new TypeDefinitionNode(parent, token, null);
-                        if ((token = stream.peekNext()).type == Token.EOF || token.type == Token.NL) {
+                        token = stream.nextToken();
+                        if (token.type == Token.EOF || token.type == Token.NL) {
                             break;
                         }
-                        token = stream.nextToken();
                         typeDefinitionNode.identifier = token;
                         typeDefinitionNode.addToken(token);
-                        if ("(".equals(stream.peekNext().getText())) {
+                        token = stream.peekNext();
+                        if ("(".equals(token.getText()) || "=".equals(token.getText())) {
                             typeDefinitionNode.addToken(nextToken());
+                            state = "=".equals(token.getText()) ? 9 : 7;
                         }
                         node = null;
-                        state = 7;
                         break;
                     }
                     if ("#".equals(token.getText())) {
@@ -343,6 +344,15 @@ public class Spin2Parser extends Parser {
                         member.identifier = token;
                     }
                     member.addToken(token);
+                    break;
+                case 9:
+                    if (",".equals(token.getText())) {
+                        typeDefinitionNode = null;
+                        node = null;
+                        state = 1;
+                        break;
+                    }
+                    typeDefinitionNode.addToken(token);
                     break;
             }
         }
