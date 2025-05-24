@@ -86,7 +86,13 @@ public abstract class Expression {
     }
 
     public byte[] getLong() {
-        int value = getNumber().intValue();
+        int value;
+        if (getNumber() instanceof Double) {
+            value = java.lang.Float.floatToRawIntBits(getNumber().floatValue());
+        }
+        else {
+            value = getNumber().intValue();
+        }
         return new byte[] {
             (byte) (value & 0xFF),
             (byte) ((value >> 8) & 0xFF),

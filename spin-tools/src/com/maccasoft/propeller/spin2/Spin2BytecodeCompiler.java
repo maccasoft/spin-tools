@@ -4085,12 +4085,18 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         }
                     }
                     if ("BYTE".equalsIgnoreCase(overrideType)) {
+                        if (expression.getNumber() instanceof Double) {
+                            logMessage(new CompilerException(CompilerException.ERROR, "floating point not allowed in integer expression", child.getTokens()));
+                        }
                         if (expression.getNumber().intValue() < -0x80 || expression.getNumber().intValue() > 0xFF) {
                             logMessage(new CompilerException(CompilerException.WARNING, "byte value range from -$80 to $FF", child.getTokens()));
                         }
                         os.write(expression.getByte());
                     }
                     else if ("WORD".equalsIgnoreCase(overrideType)) {
+                        if (expression.getNumber() instanceof Double) {
+                            logMessage(new CompilerException(CompilerException.ERROR, "floating point not allowed in integer expression", child.getTokens()));
+                        }
                         if (expression.getNumber().intValue() < -0x8000 || expression.getNumber().intValue() > 0xFFFF) {
                             logMessage(new CompilerException(CompilerException.WARNING, "word value range from -$8000 to $FFFF", child.getTokens()));
                         }
