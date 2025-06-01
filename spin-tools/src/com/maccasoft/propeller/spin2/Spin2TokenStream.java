@@ -6,6 +6,7 @@
  * the terms of the Eclipse Public License v1.0 which accompanies this
  * distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
+ *
  */
 
 package com.maccasoft.propeller.spin2;
@@ -674,13 +675,16 @@ public class Spin2TokenStream extends TokenStream {
             else if (ch == '{') {
                 return parseBlockComment();
             }
+            else if (ch == '"') {
+                return parseString();
+            }
             else if (ch == '$') {
                 return parseHexNumber();
             }
             else if (ch == '%') {
                 return parseBinQuadNumber();
             }
-            else if ((ch >= '0' && ch <= '9')) {
+            else if (ch >= '0' && ch <= '9') {
                 return parseNumber();
             }
             else if ((ch >= 'A' && ch <= 'Z') || ch == '_') {
