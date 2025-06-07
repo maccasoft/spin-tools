@@ -1,9 +1,10 @@
 /*
  * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * All rights reserved.
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License v1.0 which accompanies this
+ * distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
 
@@ -71,8 +72,11 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Spinner;
 import org.eclipse.swt.widgets.Text;
 
+import com.maccasoft.propeller.Formatter.Align;
+import com.maccasoft.propeller.Formatter.Case;
 import com.maccasoft.propeller.Preferences.ExternalTool;
 import com.maccasoft.propeller.Preferences.RemoteDevice;
+import com.maccasoft.propeller.Preferences.SpinFormatPreferences;
 import com.maccasoft.propeller.devices.ComPort;
 import com.maccasoft.propeller.devices.DeviceDescriptor;
 import com.maccasoft.propeller.devices.NetworkUtils;
@@ -158,6 +162,13 @@ public class PreferencesDialog extends Dialog {
     Combo p2ResetControl;
     Button autoDiscoverDevice;
     CheckboxTableViewer blacklistedPortsViewer;
+
+    Combo sectionCase;
+    Combo builtInConstantsCase;
+    Combo pasmInstructionsCase;
+    Combo lineCommentsAlign;
+    Text lineCommentsColumn;
+    Button blockCommentsAlign;
 
     Preferences preferences;
     FontData defaultFont;
@@ -487,6 +498,7 @@ public class PreferencesDialog extends Dialog {
         createGeneralPage(stack);
         createConsolePage(stack);
         createEditorPage(stack);
+        createFormatPage(stack);
         createRemoteDevicesPage(stack);
         createSerialPage(stack);
         createSpin1CompilerPage(stack);
@@ -1188,6 +1200,92 @@ public class PreferencesDialog extends Dialog {
         label.setEnabled(selection);
         indentLinesSize.setEnabled(selection);
         preferences.setShowIndentLines(selection);
+    }
+
+    void createFormatPage(Composite parent) {
+        Composite composite = createPage(parent, "Format");
+
+        SpinFormatPreferences prefs = preferences.getSpinFormatPreferences();
+
+        Label label = new Label(composite, SWT.NONE);
+        label.setText("Block Identifiers");
+        sectionCase = new Combo(composite, SWT.DROP_DOWN | SWT.READ_ONLY);
+        sectionCase.setItems("No change", "Lowercase", "Uppercase");
+        switch (prefs.getSectionCase()) {
+            case Lower:
+                sectionCase.select(1);
+                break;
+            case Upper:
+                sectionCase.select(2);
+                break;
+            default:
+                sectionCase.select(0);
+                break;
+        }
+
+        label = new Label(composite, SWT.NONE);
+        label.setText("Built-in Constants");
+        builtInConstantsCase = new Combo(composite, SWT.DROP_DOWN | SWT.READ_ONLY);
+        builtInConstantsCase.setItems("No change", "Lowercase", "Uppercase");
+        switch (prefs.getBuiltInConstantsCase()) {
+            case Lower:
+                builtInConstantsCase.select(1);
+                break;
+            case Upper:
+                builtInConstantsCase.select(2);
+                break;
+            default:
+                builtInConstantsCase.select(0);
+                break;
+        }
+
+        label = new Label(composite, SWT.NONE);
+        label.setText("PAsm Instructions");
+        pasmInstructionsCase = new Combo(composite, SWT.DROP_DOWN | SWT.READ_ONLY);
+        pasmInstructionsCase.setItems("No change", "Lowercase", "Uppercase");
+        switch (prefs.getPasmInstructionsCase()) {
+            case Lower:
+                pasmInstructionsCase.select(1);
+                break;
+            case Upper:
+                pasmInstructionsCase.select(2);
+                break;
+            default:
+                pasmInstructionsCase.select(0);
+                break;
+        }
+
+        label = new Label(composite, SWT.NONE);
+        label.setText("Line Comments Align");
+
+        Composite group = new Composite(composite, SWT.NONE);
+        GridLayout layout = new GridLayout(2, false);
+        layout.marginHeight = layout.marginWidth = 0;
+        group.setLayout(layout);
+        group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+
+        lineCommentsAlign = new Combo(group, SWT.DROP_DOWN | SWT.READ_ONLY);
+        lineCommentsAlign.setItems("None", "Tab stop", "Fixed");
+        switch (prefs.getLineCommentAlign()) {
+            case TabStop:
+                lineCommentsAlign.select(1);
+                break;
+            case Fixed:
+                lineCommentsAlign.select(2);
+                break;
+            default:
+                lineCommentsAlign.select(0);
+                break;
+        }
+        lineCommentsColumn = new Text(group, SWT.BORDER);
+        lineCommentsColumn.setSize(convertWidthInCharsToPixels(5), SWT.DEFAULT);
+        lineCommentsColumn.setText(String.format("%d", prefs.getLineCommentColumn()));
+
+        label = new Label(composite, SWT.NONE);
+        label.setText("Block Comments");
+        blockCommentsAlign = new Button(composite, SWT.CHECK);
+        blockCommentsAlign.setText("Align to indentation");
+        blockCommentsAlign.setSelection(prefs.getBlockCommentIndentAlign());
     }
 
     void createTerminalPage(Composite parent) {
@@ -2097,6 +2195,54 @@ public class PreferencesDialog extends Dialog {
             set.add(o.toString());
         }
         preferences.setBlacklistedPorts(set);
+
+        SpinFormatPreferences prefs = preferences.getSpinFormatPreferences();
+        switch (sectionCase.getSelectionIndex()) {
+            case 1:
+                prefs.setSectionCase(Case.Lower);
+                break;
+            case 2:
+                prefs.setSectionCase(Case.Upper);
+                break;
+            default:
+                prefs.setSectionCase(Case.None);
+                break;
+        }
+        switch (builtInConstantsCase.getSelectionIndex()) {
+            case 1:
+                prefs.setBuiltInConstantsCase(Case.Lower);
+                break;
+            case 2:
+                prefs.setBuiltInConstantsCase(Case.Upper);
+                break;
+            default:
+                prefs.setBuiltInConstantsCase(Case.None);
+                break;
+        }
+        switch (pasmInstructionsCase.getSelectionIndex()) {
+            case 1:
+                prefs.setPasmInstructionsCase(Case.Lower);
+                break;
+            case 2:
+                prefs.setPasmInstructionsCase(Case.Upper);
+                break;
+            default:
+                prefs.setPasmInstructionsCase(Case.None);
+                break;
+        }
+        switch (lineCommentsAlign.getSelectionIndex()) {
+            case 1:
+                prefs.setLineCommentAlign(Align.TabStop);
+                break;
+            case 2:
+                prefs.setLineCommentAlign(Align.Fixed);
+                break;
+            default:
+                prefs.setLineCommentAlign(Align.None);
+                break;
+        }
+        prefs.setLineCommentColumn(Integer.parseInt(lineCommentsColumn.getText()));
+        prefs.setBlockCommentIndentAlign(blockCommentsAlign.getSelection());
 
         if (!Objects.equals(oldTheme, preferences.getTheme())) {
             MessageDialog.openWarning(getShell(), SpinTools.APP_TITLE, "Close and reopen the application for the theme changes to take full effect.");

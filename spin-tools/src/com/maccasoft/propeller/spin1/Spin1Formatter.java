@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -10,10 +10,43 @@
 
 package com.maccasoft.propeller.spin1;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 import com.maccasoft.propeller.Formatter;
 import com.maccasoft.propeller.model.Token;
 
 public class Spin1Formatter extends Formatter {
+
+    static Set<String> builtInConstants = new HashSet<>(Arrays.asList(
+        "_CLKMODE",
+        "_CLKFREQ",
+        "_XINFREQ",
+
+        "CLKMODE",
+        "CLKFREQ",
+
+        "TRUE",
+        "FALSE",
+        "POSX",
+        "NEGX",
+        "PI",
+
+        "RCFAST",
+        "RCSLOW",
+        "XINPUT",
+
+        "XTAL1",
+        "XTAL2",
+        "XTAL3",
+
+        "PLL1X",
+        "PLL2X",
+        "PLL4X",
+        "PLL8X",
+        "PLL16X"
+    ));
 
     public Spin1Formatter() {
 
@@ -45,6 +78,11 @@ public class Spin1Formatter extends Formatter {
     @Override
     protected boolean pasmModifier(Token token) {
         return Spin1Model.isPAsmModifier(token.getText());
+    }
+
+    @Override
+    protected boolean isBuiltInConstant(Token token) {
+        return builtInConstants.contains(token.getText().toUpperCase());
     }
 
     @Override

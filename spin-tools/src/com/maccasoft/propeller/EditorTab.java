@@ -46,6 +46,7 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
 
+import com.maccasoft.propeller.Preferences.SpinFormatPreferences;
 import com.maccasoft.propeller.SourceTokenMarker.TokenId;
 import com.maccasoft.propeller.SourceTokenMarker.TokenMarker;
 import com.maccasoft.propeller.model.ConstantsNode;
@@ -1205,16 +1206,21 @@ public class EditorTab implements FindReplaceTarget {
         }
 
         if (formatter != null) {
+            SpinFormatPreferences prefs = preferences.getSpinFormatPreferences();
             //formatter.setKeepBlankLines(true);
             formatter.setSectionTabStop("con", preferences.getTabStops(ConstantsNode.class));
             formatter.setSectionTabStop("var", preferences.getTabStops(VariablesNode.class));
             formatter.setSectionTabStop("obj", preferences.getTabStops(ObjectsNode.class));
             formatter.setSectionTabStop("pub", preferences.getTabStops(MethodNode.class));
             formatter.setSectionTabStop("dat", preferences.getTabStops(DataNode.class));
-            //formatter.setPAsmColumns(4, 16, 24, 44, 52);
-            //formatter.setInlinePAsmColumns(8, 16, 24, 44, 52);
             //formatter.setAdjustPAsmColumns(true);
             //formatter.setIsolateLargeLabels(true);
+            formatter.setSectionCase(prefs.getSectionCase());
+            formatter.setBuiltInConstantsCase(prefs.getBuiltInConstantsCase());
+            formatter.setPasmInstructionsCase(prefs.getPasmInstructionsCase());
+            formatter.setLineCommentAlign(prefs.getLineCommentAlign());
+            formatter.setLineCommentColumn(prefs.getLineCommentColumn());
+            formatter.setBlockCommentIndentAlign(prefs.getBlockCommentIndentAlign());
 
             editor.format(formatter);
         }

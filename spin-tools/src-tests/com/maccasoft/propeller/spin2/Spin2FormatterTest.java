@@ -596,4 +596,19 @@ class Spin2FormatterTest {
             + "", text);
     }
 
+    @Test
+    void testConditionalExpression() {
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
+            + "PUB start()\n"
+            + " if [a] := 1\n"
+            + " if [a] and b\n"
+            + "");
+        Assertions.assertEquals(""
+            + "PUB start()\n"
+            + "    if [a] := 1\n"
+            + "    if [a] and b\n"
+            + "", text);
+    }
+
 }

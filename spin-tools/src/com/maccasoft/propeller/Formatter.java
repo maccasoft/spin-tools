@@ -1,12 +1,11 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * All rights reserved.
  *
- * Contributors:
- *     Marco Maccaferri - initial API and implementation
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License v1.0 which accompanies this
+ * distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller;
@@ -22,25 +21,27 @@ import com.maccasoft.propeller.model.TokenStream;
 
 public abstract class Formatter {
 
-    private static final Set<String> sections = new HashSet<String>(Arrays.asList(new String[] {
+    private static final Set<String> sections = new HashSet<>(Arrays.asList(
         "CON", "VAR", "OBJ", "PUB", "PRI", "DAT"
-    }));
+    ));
 
-    private static final Set<String> preprocessor = new HashSet<>(Arrays.asList(new String[] {
+    private static final Set<String> preprocessor = new HashSet<>(Arrays.asList(
         "define", "ifdef", "elifdef", "elseifdef", "ifndef", "elifndef", "elseifndef", "else", "if", "elif", "elseif", "endif",
         "error", "warning"
-    }));
+    ));
 
     public static Set<String> types = new HashSet<String>(Arrays.asList(new String[] {
         "LONG", "WORD", "BYTE",
     }));
 
-    class FormatterStringBuilder {
+    static class FormatterStringBuilder {
         int column = 0;
         StringBuilder sb = new StringBuilder();
 
         int[] tabstops;
         int tabspaces = 4;
+
+        int previousLineIndent;
 
         public FormatterStringBuilder(int tabspaces, int[] tabstops) {
             this.tabspaces = tabspaces;
@@ -48,11 +49,22 @@ public abstract class Formatter {
         }
 
         public void append(String s) {
-            sb.append(s);
             if (s.equals(System.lineSeparator())) {
+                int idx = sb.length() - column;
+                previousLineIndent = 0;
+                while (idx > 0 && idx < sb.length()) {
+                    char c = sb.charAt(idx);
+                    if (c != ' ' && c != '\t') {
+                        break;
+                    }
+                    previousLineIndent++;
+                    idx++;
+                }
+                sb.append(s);
                 column = 0;
             }
             else {
+                sb.append(s);
                 column += s.length();
             }
         }
@@ -112,16 +124,66 @@ public abstract class Formatter {
 
     }
 
+    public static enum Case {
+        None, Upper, Lower
+    }
+
+    public static enum Align {
+        None, TabStop, Fixed
+    }
+
     protected TokenStream stream;
+
+    Case sectionCase;
+    Case builtInConstantsCase;
+    Case pasmInstructionsCase;
+
+    Align lineCommentAlign;
+    int lineCommentColumn;
+
+    boolean blockCommentIndentAlign;
 
     Map<String, int[]> sectionTabStops;
 
     public Formatter() {
+        this.sectionCase = Case.None;
+        this.builtInConstantsCase = Case.None;
+        this.pasmInstructionsCase = Case.None;
+
+        this.lineCommentAlign = Align.None;
+        this.lineCommentColumn = 64;
+
+        this.blockCommentIndentAlign = false;
+
         this.sectionTabStops = new HashMap<>();
     }
 
     public void setSectionTabStop(String section, int[] tabstops) {
         sectionTabStops.put(section, tabstops);
+    }
+
+    public void setSectionCase(Case sectionCase) {
+        this.sectionCase = sectionCase;
+    }
+
+    public void setBuiltInConstantsCase(Case builtInConstantsCase) {
+        this.builtInConstantsCase = builtInConstantsCase;
+    }
+
+    public void setPasmInstructionsCase(Case pasmInstructionsCase) {
+        this.pasmInstructionsCase = pasmInstructionsCase;
+    }
+
+    public void setLineCommentAlign(Align lineCommentAlign) {
+        this.lineCommentAlign = lineCommentAlign;
+    }
+
+    public void setLineCommentColumn(int lineCommentColumn) {
+        this.lineCommentColumn = lineCommentColumn;
+    }
+
+    public void setBlockCommentIndentAlign(boolean blockCommentIndentAlign) {
+        this.blockCommentIndentAlign = blockCommentIndentAlign;
     }
 
     public abstract String format(String text);
@@ -134,19 +196,12 @@ public abstract class Formatter {
         FormatterStringBuilder sb = new FormatterStringBuilder(4, sectionTabStops.get("con"));
 
         while ((token = stream.peekNext()).type != Token.EOF) {
-            if (token.type == Token.EOF) {
-                break;
-            }
             if (token.type == Token.NL) {
                 sb.append(System.lineSeparator());
                 stream.nextToken();
             }
             else if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-                sb.alignToColumn(token.column);
-                if (sb.column > 0 && sb.lastChar() != ' ') {
-                    sb.append(" ");
-                }
-                sb.append(stream.nextToken());
+                appendComment(sb, stream.nextToken());
             }
             else {
                 if ("VAR".equalsIgnoreCase(token.getText())) {
@@ -204,11 +259,7 @@ public abstract class Formatter {
                 break;
             }
             if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-                sb.alignToColumn(token.column);
-                if (sb.column > 0 && sb.lastChar() != ' ') {
-                    sb.append(" ");
-                }
-                sb.append(token);
+                appendComment(sb, token);
                 continue;
             }
             switch (state) {
@@ -233,10 +284,15 @@ public abstract class Formatter {
                     // Fall-through
                 case 1:
                     sb.alignToColumn(sb.tabspaces);
-                    if (token.type == Token.KEYWORD && sb.lastChar() != ' ') {
-                        sb.append(" ");
+                    if (token.type == Token.KEYWORD) {
+                        if (sb.lastChar() != ' ') {
+                            sb.append(" ");
+                        }
+                        sb.append(isBuiltInConstant(token) ? convertCase(token, builtInConstantsCase) : token);
                     }
-                    sb.append(token);
+                    else {
+                        sb.append(token);
+                    }
                     if ("#".equals(token.getText())) {
                         state = 2;
                         break;
@@ -256,10 +312,10 @@ public abstract class Formatter {
                     if (sb.lastChar() != ' ' && sb.lastChar() != '#') {
                         sb.append(" ");
                     }
-                    sb.append(token);
+                    sb.append(isBuiltInConstant(token) ? convertCase(token, builtInConstantsCase) : token);
                     break;
                 case 3:
-                    sb.append(token);
+                    sb.append(isBuiltInConstant(token) ? convertCase(token, builtInConstantsCase) : token);
                     if ("]".equals(token.getText())) {
                         state = 2;
                         break;
@@ -289,7 +345,7 @@ public abstract class Formatter {
                     if (sb.lastChar() != ' ' && sb.lastChar() != '(') {
                         sb.append(" ");
                     }
-                    sb.append(token);
+                    sb.append(isBuiltInConstant(token) ? convertCase(token, builtInConstantsCase) : token);
                     break;
                 case 5:
                     if (",".equals(token.getText())) {
@@ -358,11 +414,7 @@ public abstract class Formatter {
                 break;
             }
             if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-                sb.alignToColumn(token.column);
-                if (sb.column > 0 && sb.lastChar() != ' ') {
-                    sb.append(" ");
-                }
-                sb.append(token);
+                appendComment(sb, token);
                 continue;
             }
             switch (state) {
@@ -453,11 +505,7 @@ public abstract class Formatter {
                 break;
             }
             if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-                sb.alignToColumn(token.column);
-                if (sb.column > 0 && sb.lastChar() != ' ') {
-                    sb.append(" ");
-                }
-                sb.append(token);
+                appendComment(sb, token);
                 continue;
             }
             switch (state) {
@@ -507,22 +555,19 @@ public abstract class Formatter {
         int state = 1;
         FormatterStringBuilder sb = new FormatterStringBuilder(4, sectionTabStops.get("pub"));
 
-        sb.append(stream.nextToken().getText().toUpperCase());
+        sb.append(convertCase(stream.nextToken(), sectionCase));
 
         Token token;
         while ((token = nextToken()).type != Token.EOF) {
             if (token.type == Token.NL) {
                 if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                    sb.append(System.lineSeparator());
                     return sb;
                 }
                 break;
             }
             if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-                sb.alignToColumn(token.column);
-                if (sb.column > 0 && sb.lastChar() != ' ') {
-                    sb.append(" ");
-                }
-                sb.append(token);
+                appendComment(sb, token);
                 continue;
             }
             switch (state) {
@@ -677,11 +722,7 @@ public abstract class Formatter {
                 }
             }
             else if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-                sb.alignToColumn(token.column);
-                if (sb.column > 0 && sb.lastChar() != ' ') {
-                    sb.append(" ");
-                }
-                sb.append(stream.nextToken());
+                appendComment(sb, stream.nextToken());
             }
             else if ("#".equals(token.getText())) {
                 sb.append(stream.nextToken());
@@ -703,17 +744,19 @@ public abstract class Formatter {
 
                 sb.alignToColumn(indent);
                 sb.append(startToken);
+                if (isBlockStart(startToken)) {
+                    token = stream.peekNext();
+                    if (token.type != Token.EOF && token.type != Token.NL) {
+                        sb.append(" ");
+                    }
+                }
 
                 while ((token = nextToken()).type != Token.EOF) {
                     if (token.type == Token.NL) {
                         break;
                     }
                     if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-                        sb.alignToColumn(token.column);
-                        if (sb.column > 0 && sb.lastChar() != ' ') {
-                            sb.append(" ");
-                        }
-                        sb.append(token);
+                        appendComment(sb, token);
                         continue;
                     }
                     appendExpressionToken(sb, token);
@@ -760,11 +803,7 @@ public abstract class Formatter {
                 }
             }
             else if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-                sb.alignToColumn(token.column);
-                if (sb.column > 0 && sb.lastChar() != ' ') {
-                    sb.append(" ");
-                }
-                sb.append(token);
+                appendComment(sb, token);
             }
             else if ("#".equals(token.getText())) {
                 sb.append(stream.nextToken());
@@ -795,11 +834,7 @@ public abstract class Formatter {
                         break;
                     }
                     if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-                        sb.alignToColumn(token.column);
-                        if (sb.column > 0 && sb.lastChar() != ' ') {
-                            sb.append(" ");
-                        }
-                        sb.append(token);
+                        appendComment(sb, token);
                         continue;
                     }
                     if (":".equals(token.getText())) {
@@ -847,11 +882,7 @@ public abstract class Formatter {
                 }
             }
             else if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-                sb.alignToColumn(token.column);
-                if (sb.column > 0 && sb.lastChar() != ' ') {
-                    sb.append(" ");
-                }
-                sb.append(stream.nextToken());
+                appendComment(sb, stream.nextToken());
             }
             else if ("#".equals(token.getText())) {
                 sb.append(stream.nextToken());
@@ -931,30 +962,26 @@ public abstract class Formatter {
                 break;
             }
             if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-                sb.alignToColumn(token.column);
-                if (sb.column > 0 && sb.lastChar() != ' ') {
-                    sb.append(" ");
-                }
-                sb.append(token);
+                appendComment(sb, token);
                 continue;
             }
             switch (state) {
                 case 1:
                     if ("debug".equalsIgnoreCase(token.getText())) {
                         sb.alignToColumn(instructionColumn);
-                        sb.append(token);
+                        sb.append(convertCase(token, pasmInstructionsCase));
                         state = 9;
                         break;
                     }
                     if (pasmCondition(token)) {
                         sb.alignToColumn(conditionColumn);
-                        sb.append(token);
+                        sb.append(convertCase(token, pasmInstructionsCase));
                         state = 3;
                         break;
                     }
                     if (pasmInstruction(token)) {
                         sb.alignToColumn(instructionColumn);
-                        sb.append(token);
+                        sb.append(convertCase(token, pasmInstructionsCase));
                         state = 4;
                         break;
                     }
@@ -967,7 +994,7 @@ public abstract class Formatter {
                             sb.append(System.lineSeparator());
                         }
                         sb.alignToColumn(conditionColumn);
-                        sb.append(token);
+                        sb.append(convertCase(token, pasmInstructionsCase));
                         state = 3;
                         break;
                     }
@@ -980,7 +1007,7 @@ public abstract class Formatter {
                     if (sb.lastChar() != ' ') {
                         sb.append(" ");
                     }
-                    sb.append(token);
+                    sb.append(convertCase(token, pasmInstructionsCase));
                     state = "debug".equalsIgnoreCase(token.getText()) ? 9 : 4;
                     break;
                 case 4:
@@ -990,7 +1017,7 @@ public abstract class Formatter {
                             sb.append(" ");
                             sb.alignToTabStop();
                         }
-                        sb.append(token);
+                        sb.append(convertCase(token, pasmInstructionsCase));
                         state = 6;
                         break;
                     }
@@ -1014,7 +1041,7 @@ public abstract class Formatter {
                             sb.append(" ");
                             sb.alignToTabStop();
                         }
-                        sb.append(token);
+                        sb.append(convertCase(token, pasmInstructionsCase));
                         state = 6;
                         break;
                     }
@@ -1060,6 +1087,16 @@ public abstract class Formatter {
         sb.append(System.lineSeparator());
     }
 
+    String convertCase(Token token, Case to) {
+        if (to == Case.Upper) {
+            return token.getText().toUpperCase();
+        }
+        if (to == Case.Lower) {
+            return token.getText().toLowerCase();
+        }
+        return token.getText();
+    }
+
     protected boolean pasmCondition(Token token) {
         return false;
     }
@@ -1072,18 +1109,18 @@ public abstract class Formatter {
         return false;
     }
 
+    protected boolean isBuiltInConstant(Token token) {
+        return false;
+    }
+
     void appendSectionHeader(FormatterStringBuilder sb, Token token) {
-        sb.append(token.getText().toUpperCase());
+        sb.append(convertCase(token, sectionCase));
 
         while ((token = stream.peekNext()).type != Token.EOF) {
             if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT) {
                 break;
             }
-            sb.alignToColumn(token.column);
-            if (sb.column > 0 && sb.lastChar() != ' ') {
-                sb.append(" ");
-            }
-            sb.append(stream.nextToken());
+            appendComment(sb, stream.nextToken());
         }
         sb.append(System.lineSeparator());
     }
@@ -1139,14 +1176,85 @@ public abstract class Formatter {
             }
         }
         else {
-            if (lc != ' ' && lc != '(' && lc != '[' && lc != ']' && lc != '#' && lc != '.' && lc != '\\' && lc != '+' && lc != '-' && lc != '~' && lc != '!') {
+            if (lc == ']' && !token.getText().startsWith(".")) {
+                sb.append(" ");
+            }
+            else if (lc != ' ' && lc != '(' && lc != '[' && lc != ']' && lc != '#' && lc != '.' && lc != '\\' && lc != '+' && lc != '-' && lc != '~' && lc != '!') {
+                sb.append(" ");
+            }
+            sb.append(isBuiltInConstant(token) ? convertCase(token, builtInConstantsCase) : token);
+        }
+    }
+
+    void appendComment(FormatterStringBuilder sb, Token token) {
+        if (token.type == Token.COMMENT) {
+            if (lineCommentAlign == Align.None) {
+                sb.alignToColumn(token.column);
+            }
+            else if (lineCommentAlign == Align.TabStop) {
+                sb.alignToTabStop();
+            }
+            else {
+                sb.alignToColumn(lineCommentColumn);
+            }
+            if (sb.column > 0 && sb.lastChar() != ' ') {
                 sb.append(" ");
             }
             sb.append(token);
         }
+        else if (token.type == Token.BLOCK_COMMENT) {
+            if (blockCommentIndentAlign) {
+                sb.alignToColumn(sb.previousLineIndent);
+            }
+            else {
+                sb.alignToColumn(token.column);
+            }
+            if (sb.column > 0 && sb.lastChar() != ' ') {
+                sb.append(" ");
+            }
+            sb.append(alignBlockComment(token, sb.column));
+        }
     }
 
-    Token nextToken() {
+    String alignBlockComment(Token token, int column) {
+        StringBuilder sb = new StringBuilder();
+
+        int displ = column - token.column;
+        String[] lines = token.getText().split("\r\n|\n|\r");
+
+        int i = 0;
+        sb.append(lines[i]);
+        if (lines.length > 1) {
+            i++;
+            sb.append(System.lineSeparator());
+            while (i < lines.length - 1) {
+                sb.append(adjustIndent(lines[i], displ));
+                sb.append(System.lineSeparator());
+                i++;
+            }
+            sb.append(adjustIndent(lines[i], displ));
+        }
+
+        return sb.toString();
+    }
+
+    String adjustIndent(String text, int spaces) {
+        if (spaces >= 0) {
+            return " ".repeat(spaces) + text;
+        }
+        else {
+            int index = 0;
+            while (index < text.length() && text.charAt(index) == ' ') {
+                index++;
+                if (index >= -spaces) {
+                    break;
+                }
+            }
+            return text.substring(index);
+        }
+    }
+
+    protected Token nextToken() {
         Token token = stream.nextToken();
         if ("@".equals(token.getText()) || "@@".equals(token.getText())) {
             Token nextToken = stream.peekNext();
@@ -1173,6 +1281,8 @@ public abstract class Formatter {
         return token;
     }
 
-    protected abstract Token nextPAsmToken();
+    protected Token nextPAsmToken() {
+        return stream.nextToken();
+    }
 
 }
