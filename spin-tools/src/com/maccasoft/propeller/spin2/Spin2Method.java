@@ -105,7 +105,7 @@ public class Spin2Method {
         startAddress = address;
 
         scope.setAddress(address);
-        address++;
+        address += Constant.wrVar(getLocalVariableLongs()).length;
         for (Spin2MethodLine line : lines) {
             address = line.resolve(address);
             addressChanged |= line.isAddressChanged();

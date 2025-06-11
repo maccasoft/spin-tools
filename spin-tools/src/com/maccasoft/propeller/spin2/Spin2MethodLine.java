@@ -123,9 +123,15 @@ public class Spin2MethodLine {
                 address = bc.resolve(address);
             }
         }
+        int padding = 0;
+        if (pasmCount > 0 && (pasmCount % 4) != 0) {
+            padding = 4 - (pasmCount % 4);
+            address += padding;
+            pasmCount += padding;
+        }
         if (pasmCount != 0) {
             InlinePAsmExec bc = (InlinePAsmExec) source.get(0);
-            bc.setSize(((pasmCount + 3) >> 2) - 1);
+            bc.setSize((pasmCount >> 2) - 1);
         }
 
         for (Spin2MethodLine line : childs) {
