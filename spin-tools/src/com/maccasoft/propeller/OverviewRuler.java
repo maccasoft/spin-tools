@@ -1,12 +1,11 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * All rights reserved.
  *
- * Contributors:
- *     Marco Maccaferri - initial API and implementation
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License v1.0 which accompanies this
+ * distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller;
@@ -49,8 +48,8 @@ public class OverviewRuler {
     private Color errorBackground;
     private Color warningForeground;
     private Color warningBackground;
-    private Map<Integer, String> errorHighlight = new TreeMap<Integer, String>();
-    private Map<Integer, String> warningHighlight = new TreeMap<Integer, String>();
+    private Map<Integer, String> errorHighlight = new TreeMap<>();
+    private Map<Integer, String> warningHighlight = new TreeMap<>();
 
     Shell popupWindow;
 
@@ -156,7 +155,7 @@ public class OverviewRuler {
                 for (int line : errorHighlight.keySet()) {
                     int y = (int) (line * lineStep) + offset;
                     if (e.y >= y && e.y <= y + HEIGHT) {
-                        message = errorHighlight.get(line);
+                        message = "Line " + (line + 1) + ": " + errorHighlight.get(line);
                         break;
                     }
                 }
@@ -164,7 +163,7 @@ public class OverviewRuler {
                     for (int line : warningHighlight.keySet()) {
                         int y = (int) (line * lineStep) + offset;
                         if (e.y >= y && e.y <= y + HEIGHT) {
-                            message = warningHighlight.get(line);
+                            message = "Line " + (line + 1) + ": " + warningHighlight.get(line);
                             break;
                         }
                     }
@@ -173,7 +172,7 @@ public class OverviewRuler {
                 if (message == null) {
                     int line = (int) (e.y / lineStep) + 1;
                     if (line <= lineCount) {
-                        message = "Line: " + line;
+                        message = "Line " + line;
                     }
                 }
 
