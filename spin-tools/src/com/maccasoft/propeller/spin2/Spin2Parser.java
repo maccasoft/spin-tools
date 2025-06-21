@@ -1146,7 +1146,7 @@ public class Spin2Parser extends Parser {
             }
         }
         else if ("[".equals(token.getText())) {
-            Position pos = new Position(stream);
+            Position pos = stream.mark();
             Token nextToken = stream.nextToken();
             if ("++".equals(nextToken.getText()) || "--".equals(nextToken.getText())) {
                 Token nextNextToken = stream.nextToken();
@@ -1154,11 +1154,11 @@ public class Spin2Parser extends Parser {
                     token = token.merge(nextToken).merge(nextNextToken);
                 }
                 else {
-                    pos.restore();
+                    stream.restore(pos);
                 }
             }
             else {
-                pos.restore();
+                stream.restore(pos);
             }
         }
         else if ("@\\".equals(token.getText())) {

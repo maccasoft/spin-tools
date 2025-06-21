@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -10,11 +10,12 @@
 
 package com.maccasoft.propeller.spin2;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.model.Token;
+import com.maccasoft.propeller.model.TokenStream.Position;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class Spin2TokenStreamTest {
 
@@ -914,6 +915,36 @@ class Spin2TokenStreamTest {
         assertEquals(7, token.column);
         token = subject.nextToken();
         assertEquals("10", token.getText());
+    }
+
+    @Test
+    void testSaveAndRestoreBacktickState() {
+        Spin2TokenStream subject = new Spin2TokenStream("debug(`hello `(a))");
+
+        assertEquals("debug", subject.nextToken().getText());
+        assertEquals("(", subject.nextToken().getText());
+        assertEquals("`hello ", subject.nextToken().getText());
+        assertEquals("`", subject.nextToken().getText());
+        assertEquals("(", subject.nextToken().getText());
+
+        Position pos = subject.mark();
+        assertEquals(3, subject.backtickState);
+        assertEquals(1, subject.backtickNestedParens);
+
+        assertEquals("a", subject.nextToken().getText());
+        assertEquals(")", subject.nextToken().getText());
+        assertEquals(")", subject.nextToken().getText());
+
+        assertEquals(0, subject.backtickState);
+        assertEquals(0, subject.backtickNestedParens);
+
+        subject.restore(pos);
+        assertEquals(3, subject.backtickState);
+        assertEquals(1, subject.backtickNestedParens);
+
+        assertEquals("a", subject.nextToken().getText());
+        assertEquals(")", subject.nextToken().getText());
+        assertEquals(")", subject.nextToken().getText());
     }
 
 }

@@ -859,7 +859,7 @@ public class CParser extends Parser {
     }
 
     Token peekNextTokenSkipNL() {
-        Position pos = new Position(stream);
+        Position pos = stream.mark();
         try {
             Token token = stream.nextToken();
             while (true) {
@@ -886,7 +886,7 @@ public class CParser extends Parser {
             }
             return token;
         } finally {
-            pos.restore();
+            stream.restore(pos);
         }
     }
 

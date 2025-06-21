@@ -6,7 +6,6 @@
  * the terms of the Eclipse Public License v1.0 which accompanies this
  * distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *
  */
 
 package com.maccasoft.propeller.spin2;
@@ -17,8 +16,32 @@ import com.maccasoft.propeller.spin2.bytecode.MathOp;
 
 public class Spin2TokenStream extends TokenStream {
 
+    public static class Spin2TokenStreamPosition extends Position {
+
+        int backtickState;
+        int backtickNestedParens;
+
+        public Spin2TokenStreamPosition(TokenStream stream) {
+            super(stream);
+
+            backtickState = ((Spin2TokenStream) stream).backtickState;
+            backtickNestedParens = ((Spin2TokenStream) stream).backtickNestedParens;
+        }
+
+        public void restore(TokenStream stream) {
+            super.restore(stream);
+
+            if (stream instanceof Spin2TokenStream) {
+                ((Spin2TokenStream) stream).backtickState = backtickState;
+                ((Spin2TokenStream) stream).backtickNestedParens = backtickNestedParens;
+            }
+        }
+
+    }
+
     int backtickState;
     int backtickNestedParens;
+
     Token eofToken;
 
     public Spin2TokenStream(String text) {
@@ -707,6 +730,11 @@ public class Spin2TokenStream extends TokenStream {
         }
 
         return eofToken;
+    }
+
+    @Override
+    public Position mark() {
+        return new Spin2TokenStreamPosition(this);
     }
 
 }

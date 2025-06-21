@@ -14,19 +14,17 @@ public abstract class TokenStream {
 
     public static class Position {
 
-        final TokenStream stream;
         final int index;
         final int line;
         final int column;
 
         public Position(TokenStream stream) {
-            this.stream = stream;
             this.index = stream.index;
             this.line = stream.line;
             this.column = stream.column;
         }
 
-        public void restore() {
+        public void restore(TokenStream stream) {
             stream.index = this.index;
             stream.line = this.line;
             stream.column = this.column;
@@ -48,11 +46,11 @@ public abstract class TokenStream {
     }
 
     public Token peekNext() {
-        Position pos = new Position(this);
+        Position pos = mark();
         try {
             return nextToken();
         } finally {
-            pos.restore();
+            restore(pos);
         }
     }
 
@@ -64,6 +62,14 @@ public abstract class TokenStream {
 
     public void reset() {
         index = column = line = 0;
+    }
+
+    public Position mark() {
+        return new Position(this);
+    }
+
+    public void restore(Position position) {
+        position.restore(this);
     }
 
 }
