@@ -364,7 +364,7 @@ public class DebugBitmapWindow extends DebugWindow {
                 case "RED":
                 case "MAGENTA":
                 case "YELLOW":
-                case "GREY":
+                case "GRAY":
                     colorTune = RGBColor.valueOf(key).ordinal();
                     iter.next();
                     break;
@@ -399,7 +399,7 @@ public class DebugBitmapWindow extends DebugWindow {
                     case "RED":
                     case "MAGENTA":
                     case "YELLOW":
-                    case "GREY":
+                    case "GRAY":
                         h = RGBColor.valueOf(s).ordinal();
                         if (iter.hasNextNumber()) {
                             p = iter.nextNumber();

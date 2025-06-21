@@ -470,7 +470,7 @@ public class DebugFFTWindow extends DebugWindow {
                 case "RED":
                 case "MAGENTA":
                 case "YELLOW":
-                case "GREY":
+                case "GRAY":
                     h = RGBColor.valueOf(s).ordinal();
                     if (iter.hasNextNumber()) {
                         p = iter.nextNumber();
@@ -2685,16 +2685,16 @@ public class DebugFFTWindow extends DebugWindow {
                 /*int FFTExp = (int) (Math.log(2048) / Math.log(2));
                 int FFTfirst = 0;
                 int FFTlast = 127;
-                
+
                 FFT fft = new FFT(FFTExp, FFTfirst, FFTlast);
-                
+
                 int idx = 0;
                 for (int i = 2; i < data.length; i++) {
                     KeywordIterator iter = new KeywordIterator(data[i]);
                     fft.FFTsamp[idx++] = iter.nextNumber();
                 }
                 fft.perform();
-                
+
                 System.out.println();*/
 
                 try {

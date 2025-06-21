@@ -67,7 +67,7 @@ public abstract class DebugWindow {
         RED,
         MAGENTA,
         YELLOW,
-        GREY
+        GRAY,
     }
 
     public static final int MARGIN_WIDTH = 6;
