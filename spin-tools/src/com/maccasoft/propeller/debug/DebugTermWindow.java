@@ -209,7 +209,9 @@ public class DebugTermWindow extends DebugWindow {
 
     @Override
     public void update(KeywordIterator iter) {
+        int i;
         String cmd;
+        Color tempColor;
 
         GC gc = new GC(image);
         try {
@@ -225,7 +227,7 @@ public class DebugTermWindow extends DebugWindow {
 
                 if (isString(cmd)) {
                     String s = stringStrip(cmd);
-                    for (int i = 0; i < s.length(); i++) {
+                    for (i = 0; i < s.length(); i++) {
                         drawChar(gc, s.charAt(i));
                     }
                 }
@@ -235,6 +237,28 @@ public class DebugTermWindow extends DebugWindow {
                 }
                 else {
                     switch (cmd.toUpperCase()) {
+                        case "COLOR":
+                            i = 0;
+                            while (i < 4) {
+                                if ((tempColor = color(iter)) == null) {
+                                    break;
+                                }
+                                textForeground[i] = tempColor;
+                                if ((tempColor = color(iter)) == null) {
+                                    break;
+                                }
+                                textBackground[i] = tempColor;
+                                i++;
+                            }
+                            break;
+
+                        case "BACKCOLOR":
+                            tempColor = color(iter);
+                            if (tempColor != null) {
+                                backColor = tempColor;
+                            }
+                            break;
+
                         case "CLEAR":
                             gc.setBackground(backColor);
                             gc.fillRectangle(0, 0, imageSize.x, imageSize.y);
