@@ -56,6 +56,8 @@ public class DebugTermWindow extends DebugWindow {
 
     Image image;
 
+    int prevCh = 0;
+
     public DebugTermWindow(CircularBuffer transmitBuffer) {
         super(transmitBuffer);
 
@@ -222,89 +224,14 @@ public class DebugTermWindow extends DebugWindow {
                 cmd = iter.next();
 
                 if (isString(cmd)) {
-                    gc.drawText(stringStrip(cmd), x * fontWidth, y * fontHeight, false);
+                    String s = stringStrip(cmd);
+                    for (int i = 0; i < s.length(); i++) {
+                        drawChar(gc, s.charAt(i));
+                    }
                 }
                 else if (isNumber(cmd)) {
                     int c = stringToNumber(cmd);
-                    switch (c) {
-                        case 0:
-                            gc.setBackground(backColor);
-                            gc.fillRectangle(0, 0, imageSize.x, imageSize.y);
-                            gc.setBackground(textBackground[textColor]);
-                            x = y = 0;
-                            break;
-
-                        case 1:
-                            x = y = 0;
-                            break;
-
-                        case 2:
-                            if (iter.hasNextNumber()) {
-                                x = iter.nextNumber();
-                            }
-                            break;
-
-                        case 3:
-                            if (iter.hasNextNumber()) {
-                                y = iter.nextNumber();
-                            }
-                            break;
-
-                        case 4:
-                        case 5:
-                        case 6:
-                        case 7:
-                            textColor = c - 4;
-                            gc.setForeground(textForeground[textColor]);
-                            gc.setBackground(textBackground[textColor]);
-                            break;
-
-                        case 8:
-                            if (x > 0) {
-                                x -= fontWidth;
-                            }
-                            break;
-
-                        case 9:
-                            x = (x + 8) & ~3;
-                            if (x >= columns) {
-                                x = 0;
-                                y++;
-                                if (y >= rows) {
-                                    y = 0;
-                                }
-                            }
-                            break;
-
-                        case 10:
-                        case 13:
-                            x = 0;
-                            y++;
-                            if (y >= rows) {
-                                y = 0;
-                            }
-                            if (c == 13 && iter.hasNextNumber()) {
-                                if (iter.nextNumber() != 10) {
-                                    iter.back();
-                                }
-                            }
-                            break;
-
-                        default:
-                            if (c >= ' ' && c <= 255) {
-                                gc.drawText(String.valueOf((char) c), x * fontWidth, y * fontHeight, false);
-
-                                x++;
-                                if (x >= columns) {
-                                    x = 0;
-                                    y++;
-                                    if (y >= rows) {
-                                        y = 0;
-                                    }
-                                }
-                            }
-                            break;
-                    }
+                    drawChar(gc, c);
                 }
                 else {
                     switch (cmd.toUpperCase()) {
@@ -342,6 +269,92 @@ public class DebugTermWindow extends DebugWindow {
 
         if (autoUpdate) {
             update();
+        }
+    }
+
+    void drawChar(GC gc, int c) {
+        if (prevCh == 2) {
+            x = c;
+            prevCh = 0;
+            return;
+        }
+        if (prevCh == 3) {
+            y = c;
+            prevCh = 0;
+            return;
+        }
+        if (prevCh == 10 && c == 13) {
+            prevCh = 0;
+            return;
+        }
+
+        switch (c) {
+            case 0:
+                gc.setBackground(backColor);
+                gc.fillRectangle(0, 0, imageSize.x, imageSize.y);
+                gc.setBackground(textBackground[textColor]);
+                x = y = 0;
+                break;
+
+            case 1:
+                x = y = 0;
+                break;
+
+            case 2:
+            case 3:
+                prevCh = c;
+                break;
+
+            case 4:
+            case 5:
+            case 6:
+            case 7:
+                textColor = c - 4;
+                gc.setForeground(textForeground[textColor]);
+                gc.setBackground(textBackground[textColor]);
+                break;
+
+            case 8:
+                if (x > 0) {
+                    x--;
+                }
+                break;
+
+            case 9:
+                x = (x + 8) & ~3;
+                if (x >= columns) {
+                    x = 0;
+                    y++;
+                    if (y >= rows) {
+                        y = 0;
+                    }
+                }
+                break;
+
+            case 10:
+            case 13:
+                x = 0;
+                y++;
+                if (y >= rows) {
+                    y = 0;
+                }
+                prevCh = c;
+                break;
+
+            default:
+                if (c >= ' ' && c <= 255) {
+                    gc.drawText(String.valueOf((char) c), x * fontWidth, y * fontHeight, false);
+
+                    x++;
+                    if (x >= columns) {
+                        x = 0;
+                        y++;
+                        if (y >= rows) {
+                            y = 0;
+                        }
+                    }
+                }
+                break;
         }
     }
 
