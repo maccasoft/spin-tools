@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -605,6 +605,20 @@ class Spin1TreeBuilderTest {
             + " +-- [a]\n"
             + " +-- [byte]\n"
             + "      +-- [@@]\n"
+            + "           +-- [b]\n"
+            + "                +-- [c]\n"
+            + "      +-- [0]\n"
+            + "", parse(text));
+    }
+
+    @Test
+    void testAbsoluteHubAddress() {
+        String text = "a := byte[@@@b[c]][0]";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + " +-- [byte]\n"
+            + "      +-- [@@@]\n"
             + "           +-- [b]\n"
             + "                +-- [c]\n"
             + "      +-- [0]\n"

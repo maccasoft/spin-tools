@@ -23,6 +23,7 @@ import com.maccasoft.propeller.ObjectCompiler;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.DataVariable;
 import com.maccasoft.propeller.expressions.Expression;
+import com.maccasoft.propeller.expressions.MemoryContextLiteral;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.expressions.ObjectContextLiteral;
 import com.maccasoft.propeller.model.DataLineNode;
@@ -284,13 +285,13 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
 
                     labelScope.addSymbol(pasmLine.getLabel(), new DataVariable(pasmLine.getScope(), type));
                     labelScope.addSymbol("@" + pasmLine.getLabel(), new ObjectContextLiteral(pasmLine.getScope(), type));
-                    labelScope.addSymbol("@@" + pasmLine.getLabel(), new ObjectContextLiteral(pasmLine.getScope(), type));
+                    labelScope.addSymbol("@@@" + pasmLine.getLabel(), new MemoryContextLiteral(pasmLine.getScope(), type));
 
                     if (!pasmLine.isLocalLabel()) {
                         String qualifiedName = namespace + pasmLine.getLabel();
                         scope.addSymbol(qualifiedName, new DataVariable(pasmLine.getScope(), type));
                         scope.addSymbol("@" + qualifiedName, new ObjectContextLiteral(pasmLine.getScope(), type));
-                        scope.addSymbol("@@" + qualifiedName, new ObjectContextLiteral(pasmLine.getScope(), type));
+                        scope.addSymbol("@@@" + qualifiedName, new MemoryContextLiteral(pasmLine.getScope(), type));
                     }
 
                     processAliases(type, namespace);
@@ -324,13 +325,13 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
                 Context aliasScope = entry.getValue();
                 aliasScope.addSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
                 aliasScope.addSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
-                aliasScope.addSymbol("@@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
+                aliasScope.addSymbol("@@@" + line.getLabel(), new MemoryContextLiteral(line.getScope(), type));
 
                 if (!line.isLocalLabel()) {
                     String qualifiedName = namespace + line.getLabel();
                     scope.addSymbol(qualifiedName, new DataVariable(line.getScope(), type));
                     scope.addSymbol("@" + qualifiedName, new ObjectContextLiteral(line.getScope(), type));
-                    scope.addSymbol("@@" + qualifiedName, new ObjectContextLiteral(line.getScope(), type));
+                    scope.addSymbol("@@@" + qualifiedName, new MemoryContextLiteral(line.getScope(), type));
                 }
             } catch (RuntimeException e) {
                 logMessage(new CompilerException(e, node.label));

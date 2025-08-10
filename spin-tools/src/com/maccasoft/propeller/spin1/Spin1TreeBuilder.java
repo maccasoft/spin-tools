@@ -120,6 +120,7 @@ public class Spin1TreeBuilder {
         unary.add(">|");
         unary.add("^^");
         unary.add("@@");
+        unary.add("@@@");
     }
 
     static Set<String> postEffect = new HashSet<>();
@@ -186,7 +187,7 @@ public class Spin1TreeBuilder {
     }
 
     Spin1StatementNode parseLevel(Spin1StatementNode left, int level) {
-        for (;;) {
+        for (; ; ) {
             Token token = peek();
             if (token == null) {
                 return left;
@@ -208,7 +209,7 @@ public class Spin1TreeBuilder {
             token = next();
 
             Spin1StatementNode right = left == null ? parseLevel(parseAtom(), p.intValue() + 1) : parseAtom();
-            for (;;) {
+            for (; ; ) {
                 Token nextToken = peek();
                 if (nextToken == null) {
                     break;
@@ -331,7 +332,7 @@ public class Spin1TreeBuilder {
                         next();
                         return node;
                     }
-                    for (;;) {
+                    for (; ; ) {
                         Spin1StatementNode child = new Spin1StatementNode.Argument(parseLevel(parseAtom(), 0));
                         if (node.getChildCount() == 1 && ":".equals(node.getChild(0).getText())) {
                             node.getChild(0).addChild(child);

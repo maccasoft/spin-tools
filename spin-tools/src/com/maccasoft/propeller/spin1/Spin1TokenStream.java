@@ -298,73 +298,129 @@ public class Spin1TokenStream extends TokenStream {
         char ch2 = index + 2 < text.length() ? text.charAt(index + 2) : 0;
 
         if (ch0 == '*' && ch1 == '*') {
-            index += 2 + (ch2 == '=' ? 1 : 0);
-            column += 2 + (ch2 == '=' ? 1 : 0);
+            index += 2;
+            column += 2;
+            if (ch2 == '=') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '/' && ch1 == '/') {
-            index += 2 + (ch2 == '=' ? 1 : 0);
-            column += 2 + (ch2 == '=' ? 1 : 0);
+            index += 2;
+            column += 2;
+            if (ch2 == '=') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '#' && ch1 == '>') {
-            index += 2 + (ch2 == '=' ? 1 : 0);
-            column += 2 + (ch2 == '=' ? 1 : 0);
+            index += 2;
+            column += 2;
+            if (ch2 == '=') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '<' && ch1 == '#') {
-            index += 2 + (ch2 == '=' ? 1 : 0);
-            column += 2 + (ch2 == '=' ? 1 : 0);
+            index += 2;
+            column += 2;
+            if (ch2 == '=') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '~' && ch1 == '>') {
-            index += 2 + (ch2 == '=' ? 1 : 0);
-            column += 2 + (ch2 == '=' ? 1 : 0);
+            index += 2;
+            column += 2;
+            if (ch2 == '=') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '<' && ch1 == '<') {
-            index += 2 + (ch2 == '=' ? 1 : 0);
-            column += 2 + (ch2 == '=' ? 1 : 0);
+            index += 2;
+            column += 2;
+            if (ch2 == '=') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '>' && ch1 == '>') {
-            index += 2 + (ch2 == '=' ? 1 : 0);
-            column += 2 + (ch2 == '=' ? 1 : 0);
+            index += 2;
+            column += 2;
+            if (ch2 == '=') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '<' && ch1 == '-') {
-            index += 2 + (ch2 == '=' ? 1 : 0);
-            column += 2 + (ch2 == '=' ? 1 : 0);
+            index += 2;
+            column += 2;
+            if (ch2 == '=') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '-' && ch1 == '>') {
-            index += 2 + (ch2 == '=' ? 1 : 0);
-            column += 2 + (ch2 == '=' ? 1 : 0);
+            index += 2;
+            column += 2;
+            if (ch2 == '=') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '>' && ch1 == '<') {
-            index += 2 + (ch2 == '=' ? 1 : 0);
-            column += 2 + (ch2 == '=' ? 1 : 0);
+            index += 2;
+            column += 2;
+            if (ch2 == '=') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '=' && ch1 == '=') {
-            index += 2 + (ch2 == '=' ? 1 : 0);
-            column += 2 + (ch2 == '=' ? 1 : 0);
+            index += 2;
+            column += 2;
+            if (ch2 == '=') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '<' && ch1 == '>') {
-            index += 2 + (ch2 == '=' ? 1 : 0);
-            column += 2 + (ch2 == '=' ? 1 : 0);
+            index += 2;
+            column += 2;
+            if (ch2 == '=') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '=' && ch1 == '<') {
-            index += 2 + (ch2 == '=' ? 1 : 0);
-            column += 2 + (ch2 == '=' ? 1 : 0);
+            index += 2;
+            column += 2;
+            if (ch2 == '=') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '=' && ch1 == '>') {
-            index += 2 + (ch2 == '=' ? 1 : 0);
-            column += 2 + (ch2 == '=' ? 1 : 0);
+            index += 2;
+            column += 2;
+            if (ch2 == '=') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
 
@@ -406,6 +462,10 @@ public class Spin1TokenStream extends TokenStream {
         if (ch0 == '@' && ch1 == '@') {
             index += 2;
             column += 2;
+            if (ch2 == '@') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '%' && ch1 == '%') {
@@ -425,8 +485,12 @@ public class Spin1TokenStream extends TokenStream {
         }
 
         if (ch0 == '=' || ch0 == '+' || ch0 == '-' || ch0 == '*' || ch0 == '/' || ch0 == '&' || ch0 == '|' || ch0 == '^' || ch0 == '<' || ch0 == '>') {
-            index += 1 + (ch1 == '=' ? 1 : 0);
-            column += 1 + (ch1 == '=' ? 1 : 0);
+            index++;
+            column++;
+            if (ch1 == '=') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
 

@@ -923,7 +923,7 @@ public class Spin1Parser extends Parser {
                 stream.nextToken();
             }
         }
-        else if ("@".equals(token.getText()) || "@@".equals(token.getText())) {
+        else if ("@".equals(token.getText()) || "@@".equals(token.getText()) || "@@@".equals(token.getText())) {
             Token nextToken = stream.peekNext();
             if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
                 token = token.merge(stream.nextToken());
@@ -953,7 +953,7 @@ public class Spin1Parser extends Parser {
                 stream.nextToken();
             }
         }
-        else if ("@".equals(token.getText()) || "@@".equals(token.getText())) {
+        else if ("@".equals(token.getText()) || "@@".equals(token.getText()) || "@@@".equals(token.getText())) {
             Token nextToken = stream.peekNext();
             if (":".equals(nextToken.getText()) && token.isAdjacent(nextToken)) {
                 token = token.merge(stream.nextToken());
