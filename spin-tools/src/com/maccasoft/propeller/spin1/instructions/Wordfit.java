@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -67,20 +67,20 @@ public class Wordfit extends Word {
                         switch (((Type) exp.getExpression()).getType().toUpperCase()) {
                             case "BYTE":
                                 if (exp.getInteger() < -0x80 || exp.getInteger() > 0xFF) {
-                                    throw new CompilerException("Byte value must range from -$80 to $FF", exp.getExpression().getData());
+                                    msgs.addMessage(new CompilerException("Byte value must range from -$80 to $FF", exp.getExpression().getData()));
                                 }
                                 break;
                             case "LONG":
                                 break;
                             default:
                                 if (exp.getInteger() < -0x8000 || exp.getInteger() > 0xFFFF) {
-                                    throw new CompilerException("Word value must range from -$8000 to $FFFF", exp.getExpression().getData());
+                                    msgs.addMessage(new CompilerException("Word value must range from -$8000 to $FFFF", exp.getExpression().getData()));
                                 }
                                 break;
                         }
                     }
                     else if (exp.getInteger() < -0x8000 || exp.getInteger() > 0xFFFF) {
-                        throw new CompilerException("Word value must range from -$8000 to $FFFF", exp.getExpression().getData());
+                        msgs.addMessage(new CompilerException("Word value must range from -$8000 to $FFFF", exp.getExpression().getData()));
                     }
 
                     byte[] value = exp.getWord();
@@ -96,7 +96,7 @@ public class Wordfit extends Word {
                 } catch (CompilerException e) {
                     msgs.addMessage(e);
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    msgs.addMessage(new CompilerException(e.getMessage(), exp.getExpression().getData()));
                 }
 
             }

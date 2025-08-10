@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -76,7 +76,7 @@ public class Word extends Spin1PAsmInstructionFactory {
                 } catch (CompilerException e) {
                     msgs.addMessage(e);
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    msgs.addMessage(new CompilerException(e.getMessage(), exp.getExpression().getData()));
                 }
             }
 
