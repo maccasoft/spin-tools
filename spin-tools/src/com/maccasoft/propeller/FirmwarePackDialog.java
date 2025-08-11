@@ -79,6 +79,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Spinner;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.swt.widgets.Tree;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.exc.StreamWriteException;
@@ -1079,7 +1080,7 @@ public class FirmwarePackDialog {
     }
 
     void applyTheme(Control control) {
-        if ((control instanceof List) || (control instanceof Table)) {
+        if (control instanceof List || control instanceof Table || control instanceof Tree) {
             control.setForeground(listForeground);
             control.setBackground(listBackground);
             if (control instanceof Table) {

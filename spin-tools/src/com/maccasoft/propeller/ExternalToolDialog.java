@@ -1,9 +1,10 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * All rights reserved.
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License v1.0 which accompanies this
+ * distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
 
@@ -11,6 +12,7 @@ package com.maccasoft.propeller;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -35,10 +37,11 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.List;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Spinner;
+import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.swt.widgets.Tree;
 
 import com.maccasoft.propeller.Preferences.ExternalTool;
 import com.maccasoft.propeller.internal.ColorRegistry;
@@ -149,7 +152,7 @@ public class ExternalToolDialog extends Dialog {
     }
 
     void applyTheme(Control control) {
-        if (control instanceof List) {
+        if (control instanceof List || control instanceof Table || control instanceof Tree) {
             control.setForeground(listForeground);
             control.setBackground(listBackground);
         }

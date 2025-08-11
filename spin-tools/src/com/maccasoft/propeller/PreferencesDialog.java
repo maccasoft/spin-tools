@@ -70,7 +70,9 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.List;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Spinner;
+import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.swt.widgets.Tree;
 
 import com.maccasoft.propeller.Formatter.Align;
 import com.maccasoft.propeller.Formatter.Case;
@@ -2043,7 +2045,7 @@ public class PreferencesDialog extends Dialog {
     }
 
     void applyTheme(Control control) {
-        if (control instanceof List) {
+        if (control instanceof List || control instanceof Table || control instanceof Tree) {
             control.setForeground(listForeground);
             control.setBackground(listBackground);
         }

@@ -1,12 +1,11 @@
 /*
  * Copyright (c) 2021-25 Marco Maccaferri and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * All rights reserved.
  *
- * Contributors:
- *     Marco Maccaferri - initial API and implementation
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License v1.0 which accompanies this
+ * distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller;
@@ -43,6 +42,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Spinner;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.swt.widgets.Tree;
 
 import com.maccasoft.propeller.devices.ComPort;
 import com.maccasoft.propeller.devices.ComPortException;
@@ -171,7 +171,7 @@ public class DevicesDialog extends Dialog {
     }
 
     void applyTheme(Control control) {
-        if ((control instanceof List) || (control instanceof Table)) {
+        if (control instanceof List || control instanceof Table || control instanceof Tree) {
             control.setForeground(listForeground);
             control.setBackground(listBackground);
         }
