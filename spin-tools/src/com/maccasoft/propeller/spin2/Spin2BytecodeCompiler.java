@@ -59,7 +59,6 @@ import com.maccasoft.propeller.expressions.LogicalAnd;
 import com.maccasoft.propeller.expressions.LogicalNot;
 import com.maccasoft.propeller.expressions.LogicalOr;
 import com.maccasoft.propeller.expressions.LogicalXor;
-import com.maccasoft.propeller.expressions.MemoryContextLiteral;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.expressions.Modulo;
 import com.maccasoft.propeller.expressions.Multiply;
@@ -542,9 +541,6 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                             MemoryOp.Size ss = MemoryOp.Size.Long;
                             MemoryOp.Base bb = MemoryOp.Base.PBase;
 
-                            if ((expression instanceof MemoryContextLiteral) && node.getText().startsWith("@@")) {
-                                expression = context.getLocalSymbol(node.getText().substring(1));
-                            }
                             if (expression instanceof DataVariable) {
                                 switch (((DataVariable) expression).getType()) {
                                     case "BYTE":
@@ -2034,7 +2030,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
     }
 
     protected boolean isAbsoluteAddress(String text) {
-        return text.startsWith("@@");
+        return text.startsWith("@@") && !text.startsWith("@@@");
     }
 
     protected int getArgumentsCount(Context context, Spin2StatementNode childNode) {

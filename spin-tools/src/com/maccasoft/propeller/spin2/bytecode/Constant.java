@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -13,6 +13,7 @@ package com.maccasoft.propeller.spin2.bytecode;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Expression;
+import com.maccasoft.propeller.expressions.MemoryContextLiteral;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
 
 public class Constant extends Spin2Bytecode {
@@ -214,7 +215,7 @@ public class Constant extends Spin2Bytecode {
 
     @Override
     public String toString() {
-        if ((expression instanceof ContextLiteral)) {
+        if ((expression instanceof ContextLiteral) || (expression instanceof MemoryContextLiteral)) {
             return "CONSTANT (" + String.format("$%05X", expression.getNumber().intValue()) + ")";
         }
         return "CONSTANT (" + expression + ")";

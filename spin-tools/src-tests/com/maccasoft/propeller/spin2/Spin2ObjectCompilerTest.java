@@ -10,15 +10,16 @@
 
 package com.maccasoft.propeller.spin2;
 
-import com.maccasoft.propeller.CompilerException;
-import com.maccasoft.propeller.model.RootNode;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.PrintStream;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.PrintStream;
+import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.model.RootNode;
 
 class Spin2ObjectCompilerTest {
 
@@ -2563,35 +2564,63 @@ class Spin2ObjectCompilerTest {
     }
 
     @Test
-    void testDatAbsoluteAddress() throws Exception {
+    void testAddress() throws Exception {
         String text = ""
-            + "PUB main() | a\n"
+            + "VAR\n"
+            + "    long a\n"
             + "\n"
-            + "        a := @@b\n"
-            + "        a := @@b[a]\n"
+            + "PUB main() | ptr, b\n"
             + "\n"
-            + "DAT             org   $000\n"
-            + "b               byte  1\n"
+            + "    ptr := @a\n"
+            + "    ptr := @@a\n"
+            + "\n"
+            + "    ptr := @b\n"
+            + "    ptr := @@b\n"
+            + "\n"
+            + "    ptr := @table\n"
+            + "    ptr := @@table\n"
+            + "    ptr := @@table[a]\n"
+            + "\n"
+            + "DAT\n"
+            + "        orgh\n"
+            + "\n"
+            + "table   long    0\n"
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
-            + "00000 00000       09 00 00 80    Method main @ $00009 (0 parameters, 0 returns)\n"
-            + "00004 00004       13 00 00 00    End\n"
-            + "00008 00008   000                                    org     $000\n"
-            + "00008 00008   000 01             b                   byte    1\n"
-            + "' PUB main() | a\n"
-            + "00009 00009       01             (stack size)\n"
-            + "'         a := @@b\n"
-            + "0000A 0000A       A9             CONSTANT (8)\n"
-            + "0000B 0000B       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
-            + "'         a := @@b[a]\n"
-            + "0000C 0000C       E0             VAR_READ LONG DBASE+$00000 (short)\n"
-            + "0000D 0000D       52 08 80       MEM_READ BYTE INDEXED PBASE+$00008\n"
-            + "00010 00010       24             ADD_PBASE\n"
-            + "00011 00011       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
-            + "00012 00012       04             RETURN\n"
-            + "00013 00013       00             Padding\n"
+            + "' Object header (var size 8)\n"
+            + "00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
+            + "00004 00004       2B 00 00 00    End\n"
+            + "00008 00008 00400                                    orgh\n"
+            + "00008 00008 00400 00 00 00 00    table               long    0\n"
+            + "' PUB main() | ptr, b\n"
+            + "0000C 0000C       02             (stack size)\n"
+            + "'     ptr := @a\n"
+            + "0000D 0000D       C1 7F          VAR_ADDRESS VBASE+$00001 (short)\n"
+            + "0000F 0000F       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     ptr := @@a\n"
+            + "00010 00010       C1 80 24       VAR_ADDRESS PBASE+VBASE+$00001 (short)\n"
+            + "00013 00013       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     ptr := @b\n"
+            + "00014 00014       D1 7F          VAR_ADDRESS DBASE+$00001 (short)\n"
+            + "00016 00016       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     ptr := @@b\n"
+            + "00017 00017       E1 24          VAR_ADDRESS PBASE+DBASE+$00001 (short)\n"
+            + "00019 00019       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     ptr := @table\n"
+            + "0001A 0001A       5B 08 7F       MEM_ADDRESS PBASE+$00008\n"
+            + "0001D 0001D       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     ptr := @@table\n"
+            + "0001E 0001E       5B 08 80       MEM_READ LONG PBASE+$00008\n"
+            + "00021 00021       24             ADD_PBASE\n"
+            + "00022 00022       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     ptr := @@table[a]\n"
+            + "00023 00023       C1 80          VAR_READ LONG VBASE+$00001 (short)\n"
+            + "00025 00025       5E 08 80       MEM_READ LONG INDEXED PBASE+$00008\n"
+            + "00028 00028       24             ADD_PBASE\n"
+            + "00029 00029       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0002A 0002A       04             RETURN\n"
+            + "0002B 0002B       00             Padding\n"
             + "", compile(text, false));
     }
 

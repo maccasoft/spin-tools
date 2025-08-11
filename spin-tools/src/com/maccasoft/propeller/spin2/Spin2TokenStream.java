@@ -343,8 +343,12 @@ public class Spin2TokenStream extends TokenStream {
         char ch3 = index + 3 < text.length() ? text.charAt(index + 3) : 0;
 
         if (ch0 == '+' && ch1 == '/' && ch2 == '/') {
-            index += 3 + (ch3 == '=' ? 1 : 0);
-            column += 3 + (ch3 == '=' ? 1 : 0);
+            index += 3;
+            column += 3;
+            if (ch3 == '=') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '[' && ((ch1 == '+' && ch2 == '+') || (ch1 == '-' && ch2 == '-')) && ch3 == ']') {
@@ -388,8 +392,12 @@ public class Spin2TokenStream extends TokenStream {
         }
 
         if (ch0 == '!' && ch1 == '!') {
-            index += 2 + (ch2 == '=' ? 1 : 0);
-            column += 2 + (ch2 == '=' ? 1 : 0);
+            index += 2;
+            column += 2;
+            if (ch2 == '=') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '~' && ch1 == '~') {
@@ -403,7 +411,16 @@ public class Spin2TokenStream extends TokenStream {
             column += 2;
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
-        if (ch0 == '@' && (ch1 == '@' || ch1 == '\\')) {
+        if (ch0 == '@' && ch1 == '@') {
+            index += 2;
+            column += 2;
+            if (ch2 == '@') {
+                index++;
+                column++;
+            }
+            return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+        }
+        if (ch0 == '@' && ch1 == '\\') {
             index += 2;
             column += 2;
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
@@ -415,13 +432,21 @@ public class Spin2TokenStream extends TokenStream {
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '>' && ch1 == '>') {
-            index += 2 + (ch2 == '=' ? 1 : 0);
-            column += 2 + (ch2 == '=' ? 1 : 0);
+            index += 2;
+            column += 2;
+            if (ch2 == '=') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '<' && ch1 == '<') {
-            index += 2 + (ch2 == '=' ? 1 : 0);
-            column += 2 + (ch2 == '=' ? 1 : 0);
+            index += 2;
+            column += 2;
+            if (ch2 == '=') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '*' && ch1 == '.') {
@@ -435,13 +460,21 @@ public class Spin2TokenStream extends TokenStream {
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '+' && ch1 == '/') {
-            index += 2 + (ch2 == '=' ? 1 : 0);
-            column += 2 + (ch2 == '=' ? 1 : 0);
+            index += 2;
+            column += 2;
+            if (ch2 == '=') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '/' && ch1 == '/') {
-            index += 2 + (ch2 == '=' ? 1 : 0);
-            column += 2 + (ch2 == '=' ? 1 : 0);
+            index += 2;
+            column += 2;
+            if (ch2 == '=') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '+' && ch1 == '.') {
@@ -450,18 +483,30 @@ public class Spin2TokenStream extends TokenStream {
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '#' && ch1 == '>') {
-            index += 2 + (ch2 == '=' ? 1 : 0);
-            column += 2 + (ch2 == '=' ? 1 : 0);
+            index += 2;
+            column += 2;
+            if (ch2 == '=') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '<' && ch1 == '#') {
-            index += 2 + (ch2 == '=' ? 1 : 0);
-            column += 2 + (ch2 == '=' ? 1 : 0);
+            index += 2;
+            column += 2;
+            if (ch2 == '=') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '+' && ch1 == '<') {
-            index += 2 + (ch2 == '=' ? 1 : 0);
-            column += 2 + (ch2 == '=' ? 1 : 0);
+            index += 2;
+            column += 2;
+            if (ch2 == '=') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '<' && ch1 == '.') {
@@ -470,23 +515,39 @@ public class Spin2TokenStream extends TokenStream {
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '<' && ch1 == '=') {
-            index += 2 + (ch2 == '.' ? 1 : 0);
-            column += 2 + (ch2 == '.' ? 1 : 0);
+            index += 2;
+            column += 2;
+            if (ch2 == '.') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '=' && ch1 == '=') {
-            index += 2 + (ch2 == '.' ? 1 : 0);
-            column += 2 + (ch2 == '.' ? 1 : 0);
+            index += 2;
+            column += 2;
+            if (ch2 == '.') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '<' && ch1 == '>') {
-            index += 2 + (ch2 == '.' ? 1 : 0);
-            column += 2 + (ch2 == '.' ? 1 : 0);
+            index += 2;
+            column += 2;
+            if (ch2 == '.') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '>' && ch1 == '=') {
-            index += 2 + (ch2 == '.' ? 1 : 0);
-            column += 2 + (ch2 == '.' ? 1 : 0);
+            index += 2;
+            column += 2;
+            if (ch2 == '.') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '+' && ch1 == '>') {
@@ -500,18 +561,30 @@ public class Spin2TokenStream extends TokenStream {
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '&' && ch1 == '&') {
-            index += 2 + (ch2 == '=' ? 1 : 0);
-            column += 2 + (ch2 == '=' ? 1 : 0);
+            index += 2;
+            column += 2;
+            if (ch2 == '=') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '^' && ch1 == '^') {
-            index += 2 + (ch2 == '=' ? 1 : 0);
-            column += 2 + (ch2 == '=' ? 1 : 0);
+            index += 2;
+            column += 2;
+            if (ch2 == '=') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == '|' && ch1 == '|') {
-            index += 2 + (ch2 == '=' ? 1 : 0);
-            column += 2 + (ch2 == '=' ? 1 : 0);
+            index += 2;
+            column += 2;
+            if (ch2 == '=') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
         if (ch0 == ':' && ch1 == '=') {
@@ -531,8 +604,12 @@ public class Spin2TokenStream extends TokenStream {
         }
 
         if (ch0 == '!' || ch0 == '&' || ch0 == '^' || ch0 == '|' || ch0 == '*' || ch0 == '/' || ch0 == '+' || ch0 == '-') {
-            index += 1 + (ch1 == '=' ? 1 : 0);
-            column += 1 + (ch1 == '=' ? 1 : 0);
+            index++;
+            column++;
+            if (ch1 == '=') {
+                index++;
+                column++;
+            }
             return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
         }
 

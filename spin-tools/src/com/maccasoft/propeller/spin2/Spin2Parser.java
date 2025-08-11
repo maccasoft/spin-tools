@@ -1196,7 +1196,7 @@ public class Spin2Parser extends Parser {
                 stream.nextToken();
             }
         }
-        else if ("@".equals(token.getText()) || "@@".equals(token.getText())) {
+        else if ("@".equals(token.getText()) || "@@@".equals(token.getText())) {
             Token nextToken = stream.peekNext();
             if (".".equals(nextToken.getText()) && token.isAdjacent(nextToken)) {
                 token = token.merge(stream.nextToken());

@@ -275,7 +275,7 @@ public class Spin2TreeBuilder {
     }
 
     Spin2StatementNode parseLevel(Spin2StatementNode left, int level, boolean comma) {
-        for (;;) {
+        for (; ; ) {
             Token token = peek();
             if (token == null || token.type == Token.STRING) {
                 return left;
@@ -311,7 +311,7 @@ public class Spin2TreeBuilder {
                 }
             }
             else {
-                for (;;) {
+                for (; ; ) {
                     Token nextToken = peek();
                     if (nextToken == null) {
                         break;
@@ -404,6 +404,20 @@ public class Spin2TreeBuilder {
                 token = first.merge(next());
                 token.type = Token.STRING;
                 return new Spin2StatementNode(token);
+            }
+            Spin2StatementNode node = parseAtom();
+            node.token = first.merge(node.token);
+            node.token.type = Token.KEYWORD;
+            return node;
+        }
+
+        if ("@@@".equals(token.getText())) {
+            Token first = next();
+            if ((token = peek()) == null) {
+                throw new CompilerException("syntax error", tokens.get(tokens.size() - 1));
+            }
+            if (token.type != Token.KEYWORD) {
+                throw new CompilerException("expecting variable", token);
             }
             Spin2StatementNode node = parseAtom();
             node.token = first.merge(node.token);
@@ -610,7 +624,7 @@ public class Spin2TreeBuilder {
                         return node;
                     }
                     boolean isBacktickString = false;
-                    for (;;) {
+                    for (; ; ) {
                         Spin2StatementNode child = new Spin2StatementNode.Argument(parseLevel(parseAtom(), 0, false));
                         if (node.getChildCount() == 1 && ":".equals(node.getChild(0).getText())) {
                             node.getChild(0).addChild(child);
