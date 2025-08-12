@@ -80,6 +80,7 @@ import com.maccasoft.propeller.spin2.instructions.DataType;
 import com.maccasoft.propeller.spin2.instructions.Debug;
 import com.maccasoft.propeller.spin2.instructions.Fit;
 import com.maccasoft.propeller.spin2.instructions.Org;
+import com.maccasoft.propeller.spin2.instructions.Orgf;
 import com.maccasoft.propeller.spin2.instructions.Orgh;
 import com.maccasoft.propeller.spin2.instructions.Res;
 
@@ -695,11 +696,12 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
         for (Spin2PAsmLine line : source) {
             if (!hubMode && isInstruction(line.getMnemonic())) {
+                int displ = ((address + 3) & ~3) - address;
                 if (hubAddress != -1) {
-                    hubAddress = (hubAddress + 3) & ~3;
+                    hubAddress += displ;
                 }
-                objectAddress = (objectAddress + 3) & ~3;
-                address = (address + 3) & ~3;
+                objectAddress += displ;
+                address += displ;
             }
             line.getScope().setObjectAddress(objectAddress);
             line.getScope().setMemoryAddress(memoryOffset + objectAddress);
@@ -711,12 +713,16 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 }
                 address = spinMode ? hubAddress : objectAddress;
             }
-            if ((line.getInstructionFactory() instanceof Org) || (line.getInstructionFactory() instanceof Res)) {
-                hubMode = false;
-                if (hubAddress != -1) {
-                    hubAddress = (hubAddress + 3) & ~3;
+            if (hubMode) {
+                if (line.getInstructionFactory() instanceof Res) {
+                    logMessage(new CompilerException("res not allowed in orgh mode", line.getData()));
                 }
-                objectAddress = (objectAddress + 3) & ~3;
+                else if (line.getInstructionFactory() instanceof Orgf) {
+                    logMessage(new CompilerException("orgf not allowed in orgh mode", line.getData()));
+                }
+            }
+            if (line.getInstructionFactory() instanceof Org) {
+                hubMode = false;
             }
             if (line.getInstructionFactory() instanceof Fit) {
                 ((Fit) line.getInstructionFactory()).setDefaultLimit(hubMode ? 0x80000 : (cogCode ? 0x1F8 : 0x400));
