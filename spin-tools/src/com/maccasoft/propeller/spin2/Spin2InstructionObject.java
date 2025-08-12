@@ -300,17 +300,18 @@ public abstract class Spin2InstructionObject {
             if ((ours < 0x400 && addr >= 0x400) || (ours >= 0x400 && addr < 0x400)) {
                 throw new CompilerException("relative addresses cann't cross between cog and hub domains", src.getExpression().getData());
             }
-            if (addr >= 0x400 && (addr & 0x3) != 0) {
-                throw new CompilerException("addresses not aligned with instruction", src.getExpression().getData());
-            }
-            int offset = (addr < 0x400 ? (addr - ours) : (addr - ours) >> 2) - 1;
+            int offset = (addr < 0x400 ? (addr - ours) << 2 : (addr - ours)) - 4;
             if (src.isLongLiteral()) {
-                offset -= 1;
+                offset -= 4;
             }
+            if ((offset & 0x3) != 0) {
+                throw new CompilerException("relative address not aligned with instruction", src.getExpression().getData());
+            }
+            offset >>= 2;
             if (!src.isLongLiteral() && (offset < -256 || offset > 255)) {
                 throw new CompilerException("relative offset out of range", src.getExpression().getData());
             }
-            offset = addr >= 0x400 ? (offset & 0x3FFFF) : (offset & 0xFFFFF);
+            offset &= src.isLongLiteral() ? 0x3FFFF : 0xFFFFF;
             value = s.setValue(value, offset);
             if (src.isLongLiteral()) {
                 return getBytes(encodeAugs(condition, offset), value);

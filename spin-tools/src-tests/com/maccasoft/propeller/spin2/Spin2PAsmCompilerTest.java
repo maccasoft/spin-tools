@@ -1439,6 +1439,101 @@ class Spin2PAsmCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testRelativeJump() throws Exception {
+        String text = ""
+            + "DAT             org     $000\n"
+            + "\n"
+            + "start\n"
+            + "                add     b, #1\n"
+            + "                djnz    a, #start\n"
+            + "\n"
+            + "a               long    10\n"
+            + "b               long    0\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000   000                                    org     $000\n"
+            + "00000 00000   000                start               \n"
+            + "00000 00000   000 01 06 04 F1                        add     b, #1\n"
+            + "00004 00004   001 FE 05 6C FB                        djnz    a, #start\n"
+            + "00008 00008   002 0A 00 00 00    a                   long    10\n"
+            + "0000C 0000C   003 00 00 00 00    b                   long    0\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testRelativeJumpHub() throws Exception {
+        String text = ""
+            + "PUB main()\n"
+            + "\n"
+            + "DAT             org     $000\n"
+            + "\n"
+            + "a               long    10\n"
+            + "b               long    0\n"
+            + "\n"
+            + "DAT             orgh\n"
+            + "\n"
+            + "start\n"
+            + "                add     b, #1\n"
+            + "                djnz    a, #start\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       18 00 00 80    Method main @ $00018 (0 parameters, 0 returns)\n"
+            + "00004 00004       1A 00 00 00    End\n"
+            + "00008 00008   000                                    org     $000\n"
+            + "00008 00008   000 0A 00 00 00    a                   long    10\n"
+            + "0000C 0000C   001 00 00 00 00    b                   long    0\n"
+            + "00010 00010 00400                                    orgh\n"
+            + "00010 00010 00400                start               \n"
+            + "00010 00010 00400 01 02 04 F1                        add     b, #1\n"
+            + "00014 00014 00404 FE 01 6C FB                        djnz    a, #start\n"
+            + "' PUB main()\n"
+            + "00018 00018       00             (stack size)\n"
+            + "00019 00019       04             RETURN\n"
+            + "0001A 0001A       00 00          Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testRelativeJumpHubUnaligned() throws Exception {
+        String text = ""
+            + "PUB main()\n"
+            + "\n"
+            + "DAT             org     $000\n"
+            + "\n"
+            + "a               long    10\n"
+            + "b               long    0\n"
+            + "\n"
+            + "DAT             orgh\n"
+            + "\n"
+            + "                word    1\n"
+            + "start\n"
+            + "                add     b, #1\n"
+            + "                djnz    a, #start\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       1A 00 00 80    Method main @ $0001A (0 parameters, 0 returns)\n"
+            + "00004 00004       1C 00 00 00    End\n"
+            + "00008 00008   000                                    org     $000\n"
+            + "00008 00008   000 0A 00 00 00    a                   long    10\n"
+            + "0000C 0000C   001 00 00 00 00    b                   long    0\n"
+            + "00010 00010 00400                                    orgh\n"
+            + "00010 00010 00400 01 00                              word    1\n"
+            + "00012 00012 00402                start               \n"
+            + "00012 00012 00402 01 02 04 F1                        add     b, #1\n"
+            + "00016 00016 00406 FE 01 6C FB                        djnz    a, #start\n"
+            + "' PUB main()\n"
+            + "0001A 0001A       00             (stack size)\n"
+            + "0001B 0001B       04             RETURN\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }

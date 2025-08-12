@@ -694,7 +694,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
         boolean spinMode = methods.size() != 0;
 
         for (Spin2PAsmLine line : source) {
-            if (!hubMode && isInstruction(line.getMnemonic()) && !(line.getInstructionFactory() instanceof com.maccasoft.propeller.spin2.instructions.Long)) {
+            if (!hubMode && isInstruction(line.getMnemonic())) {
                 if (hubAddress != -1) {
                     hubAddress = (hubAddress + 3) & ~3;
                 }
