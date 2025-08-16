@@ -14,7 +14,10 @@ package com.maccasoft.propeller;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -38,6 +41,8 @@ import org.eclipse.swt.custom.CaretListener;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.events.FocusAdapter;
+import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.graphics.Font;
@@ -45,10 +50,12 @@ import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.MessageBox;
 
 import com.maccasoft.propeller.Preferences.SpinFormatPreferences;
 import com.maccasoft.propeller.SourceTokenMarker.TokenId;
 import com.maccasoft.propeller.SourceTokenMarker.TokenMarker;
+import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
@@ -94,6 +101,7 @@ public class EditorTab implements FindReplaceTarget {
 
     String tabItemText;
     boolean dirty;
+    long lastModified;
 
     AtomicBoolean threadRunning = new AtomicBoolean(false);
     AtomicBoolean pendingCompile = new AtomicBoolean(false);
@@ -698,6 +706,7 @@ public class EditorTab implements FindReplaceTarget {
         if (localFile.equals(preferences.getTopObject())) {
             tabItem.setFont(boldFont);
         }
+        lastModified = localFile.lastModified();
 
         if (tabItemText.toLowerCase().endsWith(".spin")) {
             tokenMarker = new Spin1TokenMarkerAdatper();
@@ -731,6 +740,14 @@ public class EditorTab implements FindReplaceTarget {
             @Override
             public void caretMoved(CaretEvent event) {
                 Display.getDefault().timerExec(250, outlineUpdateRunnable);
+            }
+
+        });
+        editor.getStyledText().addFocusListener(new FocusAdapter() {
+
+            @Override
+            public void focusGained(FocusEvent e) {
+                checkExternalContentUpdate();
             }
 
         });
@@ -833,6 +850,7 @@ public class EditorTab implements FindReplaceTarget {
             tabItem.setToolTipText(file.getAbsolutePath());
         }
         this.file = file;
+        this.lastModified = file.lastModified();
 
         if (tabItemText.toLowerCase().endsWith(".spin")) {
             tokenMarker = new Spin1TokenMarkerAdatper();
@@ -1282,6 +1300,32 @@ public class EditorTab implements FindReplaceTarget {
     public boolean isTopObject() {
         File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
         return localFile.equals(preferences.getTopObject());
+    }
+
+    public void save() throws IOException {
+        BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+        writer.write(getEditorText());
+        writer.close();
+
+        lastModified = file.lastModified();
+    }
+
+    public void checkExternalContentUpdate() {
+        File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
+        if (localFile.lastModified() > lastModified) {
+            int style = SWT.APPLICATION_MODAL | SWT.ICON_QUESTION | SWT.YES | SWT.NO;
+            MessageBox messageBox = new MessageBox(editor.getStyledText().getShell(), style);
+            messageBox.setText(SpinTools.APP_TITLE);
+            messageBox.setMessage("Content was modified outside editor.  Reload?");
+            if (messageBox.open() == SWT.YES) {
+                try {
+                    setEditorText(FileUtils.loadFromFile(file));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            lastModified = localFile.lastModified();
+        }
     }
 
 }

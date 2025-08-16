@@ -12,10 +12,8 @@ package com.maccasoft.propeller;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -2251,9 +2249,7 @@ public class SpinTools {
             }
         }
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(fileToSave));
-            writer.write(editorTab.getEditorText());
-            writer.close();
+            editorTab.save();
             editorTab.clearDirty();
         } catch (Exception e) {
             openInternalError(shell, "Unexpected error saving file", e);
@@ -2278,7 +2274,7 @@ public class SpinTools {
         dlg.setFileName(editorTab.getText());
         dlg.setOverwrite(true);
 
-        if (filterPath == null && preferences.getLru().size() != 0) {
+        if (filterPath == null && !preferences.getLru().isEmpty()) {
             filterPath = new File(preferences.getLru().get(0));
         }
         if (filterPath != null) {
@@ -2291,7 +2287,7 @@ public class SpinTools {
                     parentFile = null;
                 }
             }
-            if (parentFile == null && preferences.getLru().size() != 0) {
+            if (parentFile == null && !preferences.getLru().isEmpty()) {
                 parentFile = new File(preferences.getLru().get(0)).getParentFile();
                 if (parentFile != null) {
                     if (parentFile.equals(Preferences.defaultSpin1LibraryPath) || parentFile.equals(Preferences.defaultSpin2LibraryPath)) {
@@ -2313,12 +2309,9 @@ public class SpinTools {
             try {
                 editorTab.setFile(fileToSave);
                 editorTab.setText(fileToSave.getName());
-
-                BufferedWriter writer = new BufferedWriter(new FileWriter(fileToSave));
-                writer.write(editorTab.getEditorText());
-                writer.close();
-
+                editorTab.save();
                 editorTab.clearDirty();
+
                 preferences.addToLru(fileToSave);
 
                 fileBrowser.refresh(fileToSave.getParentFile());
@@ -3149,6 +3142,26 @@ public class SpinTools {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+
+                display.asyncExec(() -> {
+                    EditorTab editorTab = getTargetObjectEditorTab();
+                    if (editorTab != null) {
+                        File editorFile = editorTab.getFile();
+                        if (editorFile != null) {
+                            fileBrowser.refresh(editorFile);
+                        }
+                    }
+
+                    CTabItem tabItem = tabFolder.getSelection();
+                    if (tabItem != null) {
+                        EditorTab currentEditorTab = (EditorTab) tabItem.getData();
+                        File editorFile = editorTab.getFile();
+                        if (editorFile != null) {
+                            fileBrowser.refresh(editorFile);
+                            currentEditorTab.checkExternalContentUpdate();
+                        }
+                    }
+                });
             }
         };
         ioThread.start();
