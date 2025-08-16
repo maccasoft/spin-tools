@@ -279,6 +279,7 @@ public abstract class Spin2InstructionObject {
         }
         try {
             if (!src.isLongLiteral() && src.getInteger() > 0x1FF) {
+                System.out.println(src.getInteger());
                 msgs.addMessage(new CompilerException("source register/constant cannot exceed $1FF", src.getExpression().getData()));
             }
             value = s.setValue(value, src.getInteger());

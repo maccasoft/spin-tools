@@ -1,12 +1,11 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * All rights reserved.
  *
- * Contributors:
- *     Marco Maccaferri - initial API and implementation
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License v1.0 which accompanies this
+ * distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller;
@@ -16,23 +15,25 @@ import java.util.Set;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
+import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
-import org.eclipse.swt.graphics.FontMetrics;
 import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.ScrollBar;
 
+import com.maccasoft.propeller.internal.ImageRegistry;
+
 public class LineNumbersRuler {
 
     Canvas canvas;
     GridData layoutData;
-    FontMetrics fontMetrics;
 
     StyledText text;
 
@@ -43,7 +44,9 @@ public class LineNumbersRuler {
     private int lineCount;
 
     private Color highlightForeground;
-    private Set<Integer> highlight = new HashSet<Integer>();
+    private Set<Integer> highlight = new HashSet<>();
+
+    private Integer[] bookmarks = new Integer[9];
 
     final PaintListener paintListener = new PaintListener() {
 
@@ -73,13 +76,12 @@ public class LineNumbersRuler {
         canvas.setLayoutData(layoutData = new GridData(SWT.FILL, SWT.FILL, false, true));
         canvas.addPaintListener(paintListener);
 
+        leftMargin = 5;
+        rightMargin = 5;
+
         GC gc = new GC(canvas);
-        fontMetrics = gc.getFontMetrics();
+        layoutData.widthHint = leftMargin + gc.stringExtent("0000").x + rightMargin;
         gc.dispose();
-
-        leftMargin = rightMargin = 5;
-
-        layoutData.widthHint = (int) Math.round(leftMargin + fontMetrics.getAverageCharacterWidth() * 5 + rightMargin);
 
         scrollBarSelection = lineCount = -1;
 
@@ -89,6 +91,18 @@ public class LineNumbersRuler {
     public void setText(StyledText text) {
         this.text = text;
         this.text.addPaintListener(textPaintListener);
+    }
+
+    public void addMouseListener(MouseListener l) {
+        canvas.addMouseListener(l);
+    }
+
+    public void removeMouseListener(MouseListener l) {
+        canvas.removeMouseListener(l);
+    }
+
+    public int getLineNumber(int y) {
+        return text.getLineIndex(y);
     }
 
     void onPaintControl(GC gc) {
@@ -106,9 +120,19 @@ public class LineNumbersRuler {
             if (y >= rect.height) {
                 break;
             }
+
             String s = Integer.toString(lineNumber + 1);
             gc.setForeground(highlight.contains(lineNumber) ? highlightForeground : foreground);
             gc.drawString(s, rect.width - gc.stringExtent(s).x - rightMargin, y);
+
+            for (int num = 0; num < bookmarks.length; num++) {
+                if (bookmarks[num] != null && bookmarks[num] == lineNumber) {
+                    Image image = ImageRegistry.getImageFromResources(String.format("notification-counter-%02d.png", num + 1));
+                    gc.drawImage(image, 0, y);
+                    break;
+                }
+            }
+
             lineNumber++;
         }
     }
@@ -117,10 +141,8 @@ public class LineNumbersRuler {
         canvas.setFont(font);
 
         GC gc = new GC(canvas);
-        fontMetrics = gc.getFontMetrics();
+        layoutData.widthHint = leftMargin + gc.stringExtent("0000").x + rightMargin;
         gc.dispose();
-
-        layoutData.widthHint = (int) Math.round(leftMargin + fontMetrics.getAverageCharacterWidth() * 4 + rightMargin);
 
         canvas.redraw();
     }
@@ -155,6 +177,43 @@ public class LineNumbersRuler {
     public void setHighlightForeground(Color color) {
         highlightForeground = color;
         canvas.redraw();
+    }
+
+    public void setBookmarks(Integer[] lines) {
+        for (int i = 0; i < bookmarks.length; i++) {
+            bookmarks[i] = null;
+        }
+        if (lines != null) {
+            for (int i = 0; i < bookmarks.length && i < lines.length; i++) {
+                bookmarks[i] = lines[i];
+            }
+        }
+    }
+
+    public Integer[] getBookmarks() {
+        return bookmarks;
+    }
+
+    public Integer getBookmark(int num) {
+        return bookmarks[num];
+    }
+
+    public void toggleBookmarkAt(int line) {
+        for (int i = 0; i < bookmarks.length; i++) {
+            if (bookmarks[i] != null && bookmarks[i].equals(line)) {
+                bookmarks[i] = null;
+                canvas.redraw();
+                return;
+            }
+
+        }
+        for (int i = 0; i < bookmarks.length; i++) {
+            if (bookmarks[i] == null) {
+                bookmarks[i] = line;
+                canvas.redraw();
+                return;
+            }
+        }
     }
 
 }

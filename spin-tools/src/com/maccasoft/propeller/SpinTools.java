@@ -54,8 +54,6 @@ import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabFolder2Adapter;
 import org.eclipse.swt.custom.CTabFolderEvent;
 import org.eclipse.swt.custom.CTabItem;
-import org.eclipse.swt.custom.CaretEvent;
-import org.eclipse.swt.custom.CaretListener;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.DisposeEvent;
@@ -150,6 +148,8 @@ public class SpinTools {
     MenuItem consoleItem;
     ToolItem consoleToolItem;
 
+    Menu bookmarksMenu;
+
     SourcePool sourcePool;
     ComPortList comPortList;
 
@@ -171,15 +171,6 @@ public class SpinTools {
         "*.c",
         "*.spin",
         "*.spin2"
-    };
-
-    final CaretListener caretListener = new CaretListener() {
-
-        @Override
-        public void caretMoved(CaretEvent event) {
-            updateCaretPosition();
-        }
-
     };
 
     final IOpenListener openListener = new IOpenListener() {
@@ -240,47 +231,6 @@ public class SpinTools {
 
     };
 
-    final SourceListener sourceListener = new SourceListener() {
-
-        @Override
-        public void navigateTo(SourceElement element) {
-            SourceLocation sourceLocation = getCurrentSourceLocation();
-
-            String objectFileName = null;
-            if (element.object instanceof ObjectNode) {
-                objectFileName = ((ObjectNode) element.object).getFileName();
-            }
-            if (element.object instanceof DirectiveNode.IncludeNode) {
-                objectFileName = ((DirectiveNode.IncludeNode) element.object).getFileName();
-            }
-            if (element.object instanceof VariableNode) {
-                objectFileName = ((VariableNode) element.object).getType().getText();
-            }
-
-            EditorTab editorTab = objectFileName != null ? openOrSwitchToTab(objectFileName) : (EditorTab) tabFolder.getSelection().getData();
-            if (editorTab == null) {
-                return;
-            }
-            SourceEditor editor = editorTab.getEditor();
-            shell.getDisplay().asyncExec(new Runnable() {
-
-                @Override
-                public void run() {
-                    editor.goToLineColumn(element.line, element.column);
-                    updateEditorSelection();
-                    updateCaretPosition();
-                }
-
-            });
-
-            if (sourceLocation != null) {
-                backStack.push(sourceLocation);
-                forwardStack.clear();
-            }
-        }
-
-    };
-
     final PropertyChangeListener preferencesChangeListener = new PropertyChangeListener() {
 
         @Override
@@ -316,21 +266,6 @@ public class SpinTools {
                     break;
                 case Preferences.PROP_EXTERNAL_TOOLS:
                     populateRunMenu();
-                    break;
-            }
-        }
-    };
-
-    final PropertyChangeListener editorChangeListener = new PropertyChangeListener() {
-
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-            EditorTab topEditorTab = getTargetObjectEditorTab();
-            switch (evt.getPropertyName()) {
-                case EditorTab.OBJECT_TREE:
-                    if (evt.getSource() == topEditorTab) {
-                        objectBrowser.setInput((ObjectTree) evt.getNewValue(), topEditorTab.isTopObject());
-                    }
                     break;
             }
         }
@@ -650,17 +585,8 @@ public class SpinTools {
                             @Override
                             public void run() {
                                 EditorTab editorTab = new EditorTab(tabFolder, topObjectFile, sourcePool);
-
-                                OutlineView outlineView = outlineViewStack.createNew();
-                                outlineView.addOpenListener(openListener);
-                                editorTab.setOutlineView(outlineView);
-
+                                hookListeners(editorTab);
                                 editorTab.setEditorText(text);
-                                editorTab.addCaretListener(caretListener);
-                                editorTab.addPropertyChangeListener(editorChangeListener);
-                                editorTab.getEditor().addSourceListener(sourceListener);
-                                editorTab.getEditor().getStyledText().setMenu(createContextMenu());
-                                editorTab.getTabItem().addDisposeListener(tabItemDisposeListener);
                             }
 
                         });
@@ -693,17 +619,8 @@ public class SpinTools {
                                 @Override
                                 public void run() {
                                     EditorTab editorTab = new EditorTab(tabFolder, fileToOpen, sourcePool);
-
-                                    OutlineView outlineView = outlineViewStack.createNew();
-                                    outlineView.addOpenListener(openListener);
-                                    editorTab.setOutlineView(outlineView);
-
+                                    hookListeners(editorTab);
                                     editorTab.setEditorText(text);
-                                    editorTab.addCaretListener(caretListener);
-                                    editorTab.addPropertyChangeListener(editorChangeListener);
-                                    editorTab.getEditor().addSourceListener(sourceListener);
-                                    editorTab.getEditor().getStyledText().setMenu(createContextMenu());
-                                    editorTab.getTabItem().addDisposeListener(tabItemDisposeListener);
                                 }
 
                             });
@@ -1970,36 +1887,87 @@ public class SpinTools {
 
     EditorTab openNewTab(File fileToOpen) {
         EditorTab editorTab = new EditorTab(tabFolder, fileToOpen, sourcePool);
+        hookListeners(editorTab);
 
+        preferences.addToLru(fileToOpen);
+
+        tabFolder.getDisplay().asyncExec(() -> {
+            try {
+                tabFolder.setSelection(tabFolder.getItemCount() - 1);
+                editorTab.setEditorText(FileUtils.loadFromFile(fileToOpen));
+                updateEditorSelection();
+                updateCaretPosition();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+
+        return editorTab;
+    }
+
+    void hookListeners(EditorTab editorTab) {
         OutlineView outlineView = outlineViewStack.createNew();
         outlineView.addOpenListener(openListener);
         editorTab.setOutlineView(outlineView);
 
-        preferences.addToLru(fileToOpen);
+        editorTab.addCaretListener(event -> updateCaretPosition());
+        editorTab.addPropertyChangeListener(evt -> {
+            EditorTab topEditorTab = getTargetObjectEditorTab();
+            switch (evt.getPropertyName()) {
+                case EditorTab.OBJECT_TREE:
+                    if (evt.getSource() == topEditorTab) {
+                        objectBrowser.setInput((ObjectTree) evt.getNewValue(), topEditorTab.isTopObject());
+                    }
+                    break;
+            }
+        });
+        editorTab.getEditor().addSourceListener(element -> {
+            SourceLocation sourceLocation = getCurrentSourceLocation();
 
-        editorTab.addCaretListener(caretListener);
-        editorTab.addPropertyChangeListener(editorChangeListener);
-        editorTab.getEditor().addSourceListener(sourceListener);
-        editorTab.getEditor().getStyledText().setMenu(createContextMenu());
-        editorTab.getTabItem().addDisposeListener(tabItemDisposeListener);
+            String objectFileName = null;
+            if (element.object instanceof ObjectNode) {
+                objectFileName = ((ObjectNode) element.object).getFileName();
+            }
+            if (element.object instanceof DirectiveNode.IncludeNode) {
+                objectFileName = ((DirectiveNode.IncludeNode) element.object).getFileName();
+            }
+            if (element.object instanceof VariableNode) {
+                objectFileName = ((VariableNode) element.object).getType().getText();
+            }
 
-        tabFolder.getDisplay().asyncExec(new Runnable() {
+            EditorTab targetEditorTab = objectFileName != null ? openOrSwitchToTab(objectFileName) : (EditorTab) tabFolder.getSelection().getData();
+            if (targetEditorTab == null) {
+                return;
+            }
+            SourceEditor editor = targetEditorTab.getEditor();
+            shell.getDisplay().asyncExec(() -> {
+                editor.goToLineColumn(element.line, element.column);
+                updateEditorSelection();
+                updateCaretPosition();
+            });
+
+            if (sourceLocation != null) {
+                backStack.push(sourceLocation);
+                forwardStack.clear();
+            }
+        });
+        editorTab.getEditor().getRuler().addMouseListener(new MouseAdapter() {
 
             @Override
-            public void run() {
-                try {
-                    tabFolder.setSelection(tabFolder.getItemCount() - 1);
-                    editorTab.setEditorText(FileUtils.loadFromFile(fileToOpen));
-                    updateEditorSelection();
-                    updateCaretPosition();
-                } catch (Exception e) {
-                    e.printStackTrace();
+            public void mouseDown(MouseEvent e) {
+                LineNumbersRuler ruler = editorTab.getEditor().getRuler();
+                int lineNumber = ruler.getLineNumber(e.y);
+                ruler.toggleBookmarkAt(lineNumber);
+                updateBookmarksMenu(ruler.getBookmarks());
+                if (editorTab.getFile() != null) {
+                    preferences.setBookmarks(editorTab.getFile(), ruler.getBookmarks());
                 }
             }
 
         });
 
-        return editorTab;
+        editorTab.getEditor().getStyledText().setMenu(createContextMenu());
+        editorTab.getTabItem().addDisposeListener(tabItemDisposeListener);
     }
 
     Menu createContextMenu() {
@@ -2187,16 +2155,7 @@ public class SpinTools {
 
     EditorTab openNewTab(String name, String text) {
         EditorTab editorTab = new EditorTab(tabFolder, name, sourcePool);
-
-        OutlineView outlineView = outlineViewStack.createNew();
-        outlineView.addOpenListener(openListener);
-        editorTab.setOutlineView(outlineView);
-
-        editorTab.addCaretListener(caretListener);
-        editorTab.addPropertyChangeListener(editorChangeListener);
-        editorTab.getEditor().addSourceListener(sourceListener);
-        editorTab.getEditor().getStyledText().setMenu(createContextMenu());
-        editorTab.getTabItem().addDisposeListener(tabItemDisposeListener);
+        hookListeners(editorTab);
 
         blockSelectionItem.setSelection(editorTab.isBlockSelection());
         objectBrowser.setInput(null, false);
@@ -2313,6 +2272,7 @@ public class SpinTools {
                 editorTab.clearDirty();
 
                 preferences.addToLru(fileToSave);
+                preferences.setBookmarks(fileToSave, editorTab.getEditor().getRuler().getBookmarks());
 
                 fileBrowser.refresh(fileToSave.getParentFile());
             } catch (Exception e) {
@@ -2671,6 +2631,34 @@ public class SpinTools {
 
         new MenuItem(menu, SWT.SEPARATOR);
 
+        bookmarksMenu = new Menu(parent.getParent(), SWT.DROP_DOWN);
+
+        item = new MenuItem(menu, SWT.CASCADE);
+        item.setText("Go to Bookmark...");
+        item.setMenu(bookmarksMenu);
+
+        for (int i = 1; i <= 9; i++) {
+            final int bookmarkNumber = i - 1;
+            item = new MenuItem(bookmarksMenu, SWT.PUSH);
+            item.setText(String.valueOf(i) + "\tCtrl+" + String.valueOf(i));
+            item.setAccelerator(SWT.MOD1 + '0' + i);
+            item.addSelectionListener(new SelectionAdapter() {
+
+                @Override
+                public void widgetSelected(SelectionEvent e) {
+                    CTabItem tabItem = tabFolder.getSelection();
+                    if (tabItem == null) {
+                        return;
+                    }
+                    EditorTab editorTab = (EditorTab) tabItem.getData();
+                    editorTab.getEditor().navigateToBookmark(bookmarkNumber);
+                }
+
+            });
+        }
+
+        new MenuItem(menu, SWT.SEPARATOR);
+
         item = new MenuItem(menu, SWT.PUSH);
         item.setText("Format source\tShift+Ctrl+F");
         item.setAccelerator(SWT.MOD2 + SWT.MOD1 + 'F');
@@ -2953,36 +2941,6 @@ public class SpinTools {
             MenuItem item = new MenuItem(menu, SWT.PUSH);
             item.setText("No configured external tools");
             item.setEnabled(false);
-        }
-    }
-
-    void populateRunMenu(Menu menu) {
-        MenuItem[] items = menu.getItems();
-        for (int i = 0; i < items.length; i++) {
-            items[i].dispose();
-        }
-
-        int i = 0;
-        for (ExternalTool tool : preferences.getExternalTools()) {
-            MenuItem item = new MenuItem(menu, SWT.PUSH);
-            if (i < 9) {
-                item.setText(tool.getName() + "\tAlt+" + (char) ('1' + i));
-                item.setAccelerator(SWT.MOD3 + '1' + i);
-            }
-            else {
-                item.setText(tool.getName());
-            }
-            item.addListener(SWT.Selection, new Listener() {
-
-                @Override
-                public void handleEvent(Event event) {
-                    if (!handleRunningProcess()) {
-                        return;
-                    }
-                    handleRunExternalTool(tool);
-                }
-            });
-            i++;
         }
     }
 
@@ -3856,6 +3814,8 @@ public class SpinTools {
 
             tabFolder.forceFocus();
         }
+
+        updateBookmarksMenu();
         updateCaretPosition();
     }
 
@@ -3871,6 +3831,29 @@ public class SpinTools {
         int y = styledText.getLineAtOffset(offset);
         int x = offset - styledText.getOffsetAtLine(y);
         statusLine.setCaretPositionText(String.format("%d : %d : %d", y + 1, x + 1, offset));
+    }
+
+    void updateBookmarksMenu() {
+        CTabItem tabItem = tabFolder.getSelection();
+        if (tabItem != null) {
+            EditorTab editorTab = (EditorTab) tabItem.getData();
+            updateBookmarksMenu(editorTab.getEditor().getRuler().getBookmarks());
+        }
+    }
+
+    void updateBookmarksMenu(Integer[] bookmarks) {
+        MenuItem[] items = bookmarksMenu.getItems();
+        for (int i = 0; i < items.length; i++) {
+            items[i].setEnabled(false);
+        }
+
+        if (bookmarks != null) {
+            int i = 0;
+            while (i < items.length && i < bookmarks.length) {
+                items[i].setEnabled(bookmarks[i] != null);
+                i++;
+            }
+        }
     }
 
     SourceLocation getCurrentSourceLocation() {

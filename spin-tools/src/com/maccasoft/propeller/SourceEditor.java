@@ -1430,6 +1430,10 @@ public class SourceEditor {
         return container;
     }
 
+    public LineNumbersRuler getRuler() {
+        return ruler;
+    }
+
     public StyledText getStyledText() {
         return styledText;
     }
@@ -1487,6 +1491,14 @@ public class SourceEditor {
             }
         }
         return result;
+    }
+
+    public void setBookmarks(Integer[] lines) {
+        ruler.setBookmarks(lines);
+    }
+
+    public Integer[] getBookmarks() {
+        return ruler.getBookmarks();
     }
 
     public void undo() {
@@ -2413,6 +2425,10 @@ public class SourceEditor {
         int start;
         int stop;
 
+        public NavigationTarget(int line, int column) {
+            super(null, line, column);
+        }
+
         public NavigationTarget(Token token, Token target) {
             this(token, null, target);
         }
@@ -2867,6 +2883,14 @@ public class SourceEditor {
         clipboard.dispose();
 
         MessageDialog.openInformation(styledText.getShell(), SpinTools.APP_TITLE, "Skip pattern copied to clipboard:" + styledText.getLineDelimiter() + styledText.getLineDelimiter() + pattern);
+    }
+
+    public void navigateToBookmark(int num) {
+        Integer line = ruler.getBookmark(num);
+        if (line != null) {
+            NavigationTarget target = new NavigationTarget(line, 0);
+            fireNavigateToEvent(target);
+        }
     }
 
 }

@@ -1,12 +1,11 @@
 /*
  * Copyright (c) 2021-25 Marco Maccaferri and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * All rights reserved.
  *
- * Contributors:
- *     Marco Maccaferri - initial API and implementation
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License v1.0 which accompanies this
+ * distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller;
@@ -725,6 +724,8 @@ public class EditorTab implements FindReplaceTarget {
         }
         editor.setTokenMarker(tokenMarker);
 
+        editor.setBookmarks(preferences.getBookmarks(localFile));
+
         editor.addModifyListener(new ModifyListener() {
 
             @Override
@@ -761,11 +762,12 @@ public class EditorTab implements FindReplaceTarget {
             public void widgetDisposed(DisposeEvent e) {
                 Display.getDefault().timerExec(-1, outlineUpdateRunnable);
 
-                preferences.removePropertyChangeListener(preferencesChangeListener);
-                sourcePool.removePropertyChangeListener(sourcePoolChangeListener);
-
                 File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
                 sourcePool.removeSource(localFile);
+                preferences.setBookmarks(localFile, editor.getBookmarks());
+
+                preferences.removePropertyChangeListener(preferencesChangeListener);
+                sourcePool.removePropertyChangeListener(sourcePoolChangeListener);
 
                 editor.dispose();
 
@@ -844,7 +846,9 @@ public class EditorTab implements FindReplaceTarget {
 
     public void setFile(File file) {
         File localFile = this.file != null ? this.file : new File(tabItemText).getAbsoluteFile();
+
         sourcePool.removeSource(localFile);
+        preferences.removeBookmarks(localFile);
 
         if (file != null) {
             tabItem.setToolTipText(file.getAbsolutePath());

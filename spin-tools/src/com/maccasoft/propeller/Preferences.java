@@ -154,7 +154,9 @@ public class Preferences {
 
         public SerializedPreferences() {
             folderWeights = new HashMap<>();
+
             lru = new ArrayList<>();
+            lruBookmarks = new HashMap<>();
 
             showLineNumbers = true;
             showIndentLines = true;
@@ -235,6 +237,7 @@ public class Preferences {
         public boolean spin2Compress;
 
         public List<String> lru;
+        public Map<String, Integer[]> lruBookmarks;
 
         public boolean reloadOpenTabs;
         public Map<String, int[]> sectionTabStops;
@@ -982,9 +985,22 @@ public class Preferences {
         preferences.lru.remove(file.getAbsolutePath());
         preferences.lru.add(0, file.getAbsolutePath());
         while (preferences.lru.size() > 10) {
-            preferences.lru.remove(preferences.lru.size() - 1);
+            String removed = preferences.lru.remove(preferences.lru.size() - 1);
+            preferences.lruBookmarks.remove(removed);
         }
         changeSupport.firePropertyChange(PROP_LRU, null, preferences.lru);
+    }
+
+    public Integer[] getBookmarks(File file) {
+        return preferences.lruBookmarks.get(file.getAbsolutePath());
+    }
+
+    public void setBookmarks(File file, Integer[] bookmarks) {
+        preferences.lruBookmarks.put(file.getAbsolutePath(), bookmarks);
+    }
+
+    public void removeBookmarks(File file) {
+        preferences.lruBookmarks.remove(file.getAbsolutePath());
     }
 
     public File getLastPath() {
