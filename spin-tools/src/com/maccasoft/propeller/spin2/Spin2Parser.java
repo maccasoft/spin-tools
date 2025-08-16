@@ -1161,6 +1161,15 @@ public class Spin2Parser extends Parser {
                 stream.restore(pos);
             }
         }
+        else if ("@".equals(token.getText()) || "@@".equals(token.getText()) || "@@@".equals(token.getText())) {
+            Token nextToken = stream.peekNext();
+            if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                token = token.merge(stream.nextToken());
+                if (nextToken.type == Token.STRING) {
+                    token.type = Token.STRING;
+                }
+            }
+        }
         else if ("@\\".equals(token.getText())) {
             Token nextToken = stream.peekNext();
             if (token.isAdjacent(nextToken) && nextToken.type == Token.STRING) {
@@ -1196,7 +1205,7 @@ public class Spin2Parser extends Parser {
                 stream.nextToken();
             }
         }
-        else if ("@".equals(token.getText()) || "@@@".equals(token.getText())) {
+        else if ("@".equals(token.getText()) || "@@".equals(token.getText()) || "@@@".equals(token.getText())) {
             Token nextToken = stream.peekNext();
             if (".".equals(nextToken.getText()) && token.isAdjacent(nextToken)) {
                 token = token.merge(stream.nextToken());

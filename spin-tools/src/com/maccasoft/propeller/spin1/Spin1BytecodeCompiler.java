@@ -792,26 +792,12 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                     Spin1StatementNode postEffectNode = null;
                     boolean indexed = false;
 
-                    Expression expression = null;
-                    if (expression == null && isAbsoluteHubAddress(s[0])) {
-                        expression = context.getLocalSymbol(s[0].substring(3));
-                        if (expression instanceof DataVariable) {
-                            DataVariable var = (DataVariable) expression;
-                            expression = new ObjectContextLiteral(var.getContext(), var.getType());
-                        }
-                    }
+                    Expression expression = context.getLocalSymbol(s[0]);
                     if (expression == null && isAbsoluteAddress(s[0])) {
                         expression = context.getLocalSymbol(s[0].substring(2));
-                        if (expression instanceof DataVariable) {
-                            DataVariable var = (DataVariable) expression;
-                            expression = new ObjectContextLiteral(var.getContext(), var.getType());
-                        }
                     }
                     if (expression == null && isAddress(s[0])) {
                         expression = context.getLocalSymbol(s[0].substring(1));
-                    }
-                    if (expression == null) {
-                        expression = context.getLocalSymbol(s[0]);
                     }
                     if (expression == null) {
                         throw new CompilerException("undefined symbol " + node.getText(), node.getToken());
@@ -858,22 +844,15 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                     }
                 }
                 else {
-                    Expression expression = null;
+                    Expression expression = context.getLocalSymbol(node.getText());
+                    if (expression instanceof ObjectContextLiteral) {
+                        expression = context.getLocalSymbol(node.getText().substring(1));
+                    }
                     if (expression == null && isAbsoluteHubAddress(node.getText())) {
                         expression = context.getLocalSymbol(node.getText().substring(3));
-                        if (expression == null) {
-                            throw new CompilerException("undefined symbol " + node.getText().substring(3), node.getToken());
-                        }
-                        if (expression instanceof DataVariable) {
-                            DataVariable var = (DataVariable) expression;
-                            expression = new ObjectContextLiteral(var.getContext(), var.getType());
-                        }
                     }
                     if (expression == null && isAbsoluteAddress(node.getText())) {
                         expression = context.getLocalSymbol(node.getText().substring(2));
-                        if (expression == null) {
-                            throw new CompilerException("undefined symbol " + node.getText().substring(2), node.getToken());
-                        }
                         if (expression instanceof DataVariable) {
                             DataVariable var = (DataVariable) expression;
                             expression = new ObjectContextLiteral(var.getContext(), var.getType());
@@ -881,16 +860,15 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                     }
                     if (expression == null && isAddress(node.getText())) {
                         expression = context.getLocalSymbol(node.getText().substring(1));
-                        if (expression == null) {
-                            throw new CompilerException("undefined symbol " + node.getText().substring(1), node.getToken());
+                        if (expression instanceof DataVariable) {
+                            DataVariable var = (DataVariable) expression;
+                            expression = new ObjectContextLiteral(var.getContext(), var.getType());
                         }
                     }
                     if (expression == null) {
-                        expression = context.getLocalSymbol(node.getText());
-                        if (expression == null) {
-                            throw new CompilerException("undefined symbol " + node.getText(), node.getToken());
-                        }
+                        throw new CompilerException("undefined symbol " + node.getText(), node.getToken());
                     }
+
                     if (expression instanceof SpinObject) {
                         source.addAll(compileMethodCall(context, method, expression, node, push, false));
                     }
@@ -919,7 +897,11 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                                 source.add(compilePostEffect(context, postEffectNode, ((Variable) expression).getType(), push));
                             }
                             else {
-                                if (isAbsoluteAddress(node.getText())) {
+                                if (isAbsoluteHubAddress(node.getText())) {
+                                    source.add(new VariableOp(context, VariableOp.Op.Address, popIndex, (Variable) expression));
+                                    source.add(new MemoryOp(context, MemoryOp.Size.Byte, true, MemoryOp.Base.PBase, MemoryOp.Op.Address, new NumberLiteral(0)));
+                                }
+                                else if (isAbsoluteAddress(node.getText())) {
                                     source.add(new VariableOp(context, VariableOp.Op.Read, popIndex, (Variable) expression));
                                     source.add(new MemoryOp(context, MemoryOp.Size.Byte, true, MemoryOp.Base.PBase, MemoryOp.Op.Address, new NumberLiteral(0)));
                                 }
@@ -942,13 +924,8 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                                     ss = MemoryOp.Size.Word;
                                     break;
                             }
-                            if (isAbsoluteHubAddress(node.getText())) {
-                                source.add(new MemoryOp(context, ss, popIndex, MemoryOp.Base.PBase, MemoryOp.Op.Address, expression));
-                            }
-                            else {
-                                source.add(new MemoryOp(context, ss, popIndex, MemoryOp.Base.PBase, MemoryOp.Op.Read, expression));
-                                source.add(new MemoryOp(context, MemoryOp.Size.Byte, true, MemoryOp.Base.PBase, MemoryOp.Op.Address, new NumberLiteral(0)));
-                            }
+                            source.add(new MemoryOp(context, ss, popIndex, MemoryOp.Base.PBase, MemoryOp.Op.Read, expression));
+                            source.add(new MemoryOp(context, MemoryOp.Size.Byte, true, MemoryOp.Base.PBase, MemoryOp.Op.Address, new NumberLiteral(0)));
                             if (!push) {
                                 logMessage(new CompilerException("expected assignment", node.getTokens()));
                             }

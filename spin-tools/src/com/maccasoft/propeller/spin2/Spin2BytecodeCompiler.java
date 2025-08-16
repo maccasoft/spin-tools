@@ -376,17 +376,28 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             }
             else {
                 Expression expression = context.getLocalSymbol(node.getText());
+                if (expression instanceof ObjectContextLiteral) {
+                    expression = context.getLocalSymbol(node.getText().substring(1));
+                }
+                if (expression == null && isAbsoluteHubAddress(node.getText())) {
+                    expression = context.getLocalSymbol(node.getText().substring(3));
+                }
                 if (expression == null && isAbsoluteAddress(node.getText())) {
                     expression = context.getLocalSymbol(node.getText().substring(2));
+                    if (expression instanceof DataVariable) {
+                        DataVariable var = (DataVariable) expression;
+                        expression = new ObjectContextLiteral(var.getContext(), var.getType());
+                    }
                 }
                 if (expression == null && isAddress(node.getText())) {
                     expression = context.getLocalSymbol(node.getText().substring(1));
+                    if (expression instanceof DataVariable) {
+                        DataVariable var = (DataVariable) expression;
+                        expression = new ObjectContextLiteral(var.getContext(), var.getType());
+                    }
                 }
                 if (expression == null && node.getText().startsWith("^@")) {
                     expression = context.getLocalSymbol(node.getText().substring(2));
-                }
-                if (expression instanceof ObjectContextLiteral) {
-                    expression = context.getLocalSymbol(node.getText().substring(1));
                 }
 
                 if (expression != null && isStructure(context, expression)) {
@@ -436,11 +447,13 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                                 if (n < node.getChildCount()) {
                                     throw new CompilerException("unexpected " + node.getChild(n).getText(), node.getChild(n).getToken());
                                 }
-                                VariableOp.Op op = VariableOp.Op.Address;
                                 if (node.getText().startsWith("@@")) {
-                                    op = VariableOp.Op.PBaseAddress;
+                                    source.add(new VariableOp(context, VariableOp.Op.Read, popIndex, (Variable) expression, hasIndex, index));
+                                    source.add(new Bytecode(context, new byte[] { Spin2Bytecode.bc_add_pbase }, "ADD PBASE"));
                                 }
-                                source.add(new VariableOp(context, op, popIndex, (Variable) expression, hasIndex, index));
+                                else {
+                                    source.add(new VariableOp(context, VariableOp.Op.Address, popIndex, (Variable) expression, hasIndex, index));
+                                }
                             }
                             else {
                                 if (n < node.getChildCount() && (node.getChild(n) instanceof Spin2StatementNode.Index)) {
@@ -485,11 +498,17 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                                         }
                                     }
 
-                                    VariableOp.Op op = VariableOp.Op.Address;
-                                    if (node.getText().startsWith("@@")) {
-                                        op = VariableOp.Op.PBaseAddress;
+                                    if (node.getText().startsWith("@@@")) {
+                                        source.add(new VariableOp(context, VariableOp.Op.Address, popIndex, (Variable) expression, hasIndex, index));
+                                        source.add(new Bytecode(context, new byte[] { Spin2Bytecode.bc_add_pbase }, "ADD PBASE"));
                                     }
-                                    source.add(new VariableOp(context, op, popIndex, (Variable) expression, hasIndex, index));
+                                    else if (node.getText().startsWith("@@")) {
+                                        source.add(new VariableOp(context, VariableOp.Op.Read, popIndex, (Variable) expression, hasIndex, index));
+                                        source.add(new Bytecode(context, new byte[] { Spin2Bytecode.bc_add_pbase }, "ADD PBASE"));
+                                    }
+                                    else {
+                                        source.add(new VariableOp(context, VariableOp.Op.Address, popIndex, (Variable) expression, hasIndex, index));
+                                    }
                                 }
                             }
 
@@ -2031,6 +2050,10 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
 
     protected boolean isAbsoluteAddress(String text) {
         return text.startsWith("@@") && !text.startsWith("@@@");
+    }
+
+    protected boolean isAbsoluteHubAddress(String text) {
+        return text.startsWith("@@@");
     }
 
     protected int getArgumentsCount(Context context, Spin2StatementNode childNode) {
@@ -4191,11 +4214,13 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             if (n < node.getChildCount()) {
                 logMessage(new CompilerException("syntax error", node.getChild(n).getTokens()));
             }
-            VariableOp.Op varOp = VariableOp.Op.Address;
             if (node.getText().startsWith("@@")) {
-                varOp = VariableOp.Op.PBaseAddress;
+                source.add(new VariableOp(context, VariableOp.Op.Read, false, (Variable) expression, false, 0));
+                source.add(new Bytecode(context, new byte[] { Spin2Bytecode.bc_add_pbase }, "ADD PBASE"));
             }
-            source.add(new VariableOp(context, varOp, false, (Variable) expression, false, 0));
+            else {
+                source.add(new VariableOp(context, VariableOp.Op.Address, false, (Variable) expression, false, 0));
+            }
             node.setReturnLongs(1);
             if (!push) {
                 logMessage(new CompilerException("expected assignment", node.getTokens()));

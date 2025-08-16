@@ -812,8 +812,6 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 if (node.getIdentifier() != null) {
                     String identifier = node.getIdentifier().getText();
                     symbols.put(identifier, TokenId.VARIABLE);
-                    symbols.put("@" + identifier, TokenId.VARIABLE);
-                    symbols.put("@@" + identifier, TokenId.VARIABLE);
                     tokens.add(new TokenMarker(node.getIdentifier(), TokenId.VARIABLE));
                 }
             }
@@ -958,14 +956,10 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 String s = node.label.getText();
                 if (s.startsWith(".")) {
                     symbols.put(lastLabel + s, TokenId.PASM_LOCAL_LABEL);
-                    symbols.put(lastLabel + "@" + s, TokenId.PASM_LOCAL_LABEL);
-                    symbols.put(lastLabel + "@@" + s, TokenId.PASM_LOCAL_LABEL);
                     tokens.add(new TokenMarker(node.label, TokenId.PASM_LOCAL_LABEL));
                 }
                 else {
                     symbols.put(s, TokenId.PASM_LABEL);
-                    symbols.put("@" + s, TokenId.PASM_LABEL);
-                    symbols.put("@@" + s, TokenId.PASM_LABEL);
                     tokens.add(new TokenMarker(node.label, TokenId.PASM_LABEL));
                     lastLabel = s;
                 }
@@ -1181,8 +1175,6 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 }
                 if (child.identifier != null) {
                     locals.put(child.identifier.getText(), TokenId.METHOD_LOCAL);
-                    locals.put("@" + child.identifier.getText(), TokenId.METHOD_LOCAL);
-                    locals.put("@@" + child.identifier.getText(), TokenId.METHOD_LOCAL);
                 }
                 if (child.defaultValue != null) {
                     markTokens(child, 1, null);
@@ -1206,8 +1198,6 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 }
                 if (child.identifier != null) {
                     locals.put(child.identifier.getText(), TokenId.METHOD_RETURN);
-                    locals.put("@" + child.identifier.getText(), TokenId.METHOD_RETURN);
-                    locals.put("@@" + child.identifier.getText(), TokenId.METHOD_RETURN);
                 }
             }
 
@@ -1243,8 +1233,6 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 }
                 if (child.identifier != null) {
                     locals.put(child.identifier.getText(), TokenId.METHOD_LOCAL);
-                    locals.put("@" + child.identifier.getText(), TokenId.METHOD_LOCAL);
-                    locals.put("@@" + child.identifier.getText(), TokenId.METHOD_LOCAL);
                     tokens.add(new TokenMarker(child.identifier, TokenId.METHOD_LOCAL));
                 }
                 if (child.size != null) {
@@ -1389,22 +1377,12 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 int dot = token.getText().indexOf('.');
                 TokenId id = locals.get(token.getText());
                 if (id == null) {
-                    id = symbols.get(token.getText());
-                    if (id == null && token.getText().startsWith("@")) {
-                        id = symbols.get(token.getText().substring(1));
-                    }
-                }
-                if (id == null) {
                     id = externals.get(token.getText());
-                    if (id == null && token.getText().startsWith("@")) {
-                        id = externals.get(token.getText().substring(1));
-                    }
                 }
                 if (debug && id == null) {
-                    String s = token.getText().toUpperCase();
-                    id = debugKeywords.get(s);
-                    if (id == null && s.startsWith("`")) {
-                        id = debugKeywords.get(s.substring(1));
+                    id = debugKeywords.get(token.getText());
+                    if (id == null && token.getText().startsWith("`")) {
+                        id = debugKeywords.get(token.getText().substring(1));
                     }
                 }
                 if (id == null) {
@@ -1413,7 +1391,38 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                         id = spinKeywords.get(token.getText());
                     }
                 }
-                if (id == null && dot != -1) {
+                if (id == null && dot == -1) {
+                    int offset = 0;
+                    String s = null;
+                    if (token.getText().startsWith("@@@")) {
+                        s = token.getText().substring("@@@".length());
+                        tokens.add(new TokenMarker(token.start, token.start + 2, TokenId.OPERATOR));
+                        offset = 3;
+                    }
+                    else if (token.getText().startsWith("@@")) {
+                        s = token.getText().substring("@@".length());
+                        tokens.add(new TokenMarker(token.start, token.start + 1, TokenId.OPERATOR));
+                        offset = 2;
+                    }
+                    else if (token.getText().startsWith("@")) {
+                        s = token.getText().substring("@".length());
+                        tokens.add(new TokenMarker(token.start, token.start, TokenId.OPERATOR));
+                        offset = 1;
+                    }
+                    if (s != null) {
+                        id = locals.get(s);
+                        if (id == null) {
+                            id = symbols.get(s);
+                        }
+                        if (id == null) {
+                            id = externals.get(s);
+                        }
+                        if (id != null) {
+                            tokens.add(new TokenMarker(token.start + offset, token.stop, id));
+                        }
+                    }
+                }
+                else if (id == null && dot != -1) {
                     String left = token.getText().substring(0, dot);
                     TokenId leftId = locals.get(left);
                     if (leftId == null) {

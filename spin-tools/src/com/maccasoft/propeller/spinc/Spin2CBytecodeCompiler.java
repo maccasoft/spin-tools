@@ -309,7 +309,8 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
         //operators.put("SCA", new Descriptor(Spin2Bytecode.bc_sca, "SCA"));
         //operators.put("SCAS", new Descriptor(Spin2Bytecode.bc_scas, "SCAS"));
         //operators.put("FRAC", new Descriptor(Spin2Bytecode.bc_frac, "FRAC"));
-    };
+    }
+    ;
 
     static Map<String, Descriptor> floatOperators = new HashMap<String, Descriptor>();
     static {
@@ -1621,12 +1622,13 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                             }
                         }
 
-                        VariableOp.Op op = VariableOp.Op.Address;
                         if (node.getText().startsWith("@@")) {
-                            op = VariableOp.Op.PBaseAddress;
+                            source.add(new VariableOp(context, VariableOp.Op.Read, popIndex, (Variable) expression, hasIndex, index));
+                            source.add(new Bytecode(context, Spin2Bytecode.bc_add_pbase, "ADD_PBASE"));
                         }
-
-                        source.add(new VariableOp(context, op, popIndex, (Variable) expression, hasIndex, index));
+                        else {
+                            source.add(new VariableOp(context, VariableOp.Op.Address, popIndex, (Variable) expression, hasIndex, index));
+                        }
                     }
                     else {
                         if (node.isMethod()) {

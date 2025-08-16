@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -22,10 +22,12 @@ public class VariableOp extends Spin2Bytecode {
 
     public enum Size {
         Byte, Word, Long
-    };
+    }
+
+    ;
 
     public static enum Op {
-        Read, Write, Setup, Address, PBaseAddress, Field
+        Read, Write, Setup, Address, Field
     }
 
     public Size ss;
@@ -99,7 +101,7 @@ public class VariableOp extends Spin2Bytecode {
                 offset >>= 2;
 
                 if (variable instanceof LocalVariable) {
-                    if (op == Op.Read || op == Op.PBaseAddress) {
+                    if (op == Op.Read) {
                         os.write(bc_read_local_0_15 + offset);
                     }
                     else if (op == Op.Write) {
@@ -117,7 +119,7 @@ public class VariableOp extends Spin2Bytecode {
                 }
                 else {
                     os.write(bc_setup_var_0_15 + offset);
-                    if (op == Op.Read || op == Op.PBaseAddress) {
+                    if (op == Op.Read) {
                         os.write(bc_read);
                     }
                     else if (op == Op.Write) {
@@ -167,15 +169,12 @@ public class VariableOp extends Spin2Bytecode {
                 else if (op == Op.Address) {
                     os.write(bc_get_addr);
                 }
-                else if (op == Op.Read || op == Op.PBaseAddress) {
+                else if (op == Op.Read) {
                     os.write(bc_read);
                 }
                 else if (op == Op.Write) {
                     os.write(bc_write);
                 }
-            }
-            if (op == Op.PBaseAddress) {
-                os.write(bc_add_pbase);
             }
         } catch (IOException e) {
             // Do nothing
@@ -197,7 +196,7 @@ public class VariableOp extends Spin2Bytecode {
         else if (op == Op.Setup) {
             sb.append("SETUP");
         }
-        else if (op == Op.Address || op == Op.PBaseAddress) {
+        else if (op == Op.Address) {
             sb.append("ADDRESS");
         }
         else if (op == Op.Field) {
@@ -208,7 +207,7 @@ public class VariableOp extends Spin2Bytecode {
             sb.append("_INDEXED");
         }
 
-        if (op != Op.Address && op != Op.PBaseAddress) {
+        if (op != Op.Address) {
             sb.append(" ");
             if (variable.getType().startsWith("^")) {
                 sb.append("LONG");
@@ -219,10 +218,6 @@ public class VariableOp extends Spin2Bytecode {
             }
         }
         sb.append(" ");
-
-        if (op == Op.PBaseAddress) {
-            sb.append("PBASE+");
-        }
 
         if (variable instanceof LocalVariable) {
             sb.append("DBASE");

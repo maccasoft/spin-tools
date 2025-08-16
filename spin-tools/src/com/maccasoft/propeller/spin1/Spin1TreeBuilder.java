@@ -119,8 +119,6 @@ public class Spin1TreeBuilder {
         unary.add("|<");
         unary.add(">|");
         unary.add("^^");
-        unary.add("@@");
-        unary.add("@@@");
     }
 
     static Set<String> postEffect = new HashSet<>();
@@ -245,6 +243,20 @@ public class Spin1TreeBuilder {
         Token token = peek();
         if (token == null) {
             throw new CompilerException("expecting operand", tokens.get(tokens.size() - 1));
+        }
+
+        if ("@".equals(token.getText()) || "@@".equals(token.getText()) || "@@@".equals(token.getText())) {
+            Token first = next();
+            if ((token = peek()) == null) {
+                throw new CompilerException("syntax error", tokens.get(tokens.size() - 1));
+            }
+            if (token.type != Token.KEYWORD) {
+                throw new CompilerException("expecting variable", token);
+            }
+            Spin1StatementNode node = parseAtom();
+            node.token = first.merge(node.token);
+            node.token.type = Token.KEYWORD;
+            return node;
         }
 
         if (unary.contains(token.getText().toUpperCase())) {

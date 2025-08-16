@@ -604,9 +604,8 @@ class Spin1TreeBuilderTest {
             + "[:=]\n"
             + " +-- [a]\n"
             + " +-- [byte]\n"
-            + "      +-- [@@]\n"
-            + "           +-- [b]\n"
-            + "                +-- [c]\n"
+            + "      +-- [@@b]\n"
+            + "           +-- [c]\n"
             + "      +-- [0]\n"
             + "", parse(text));
     }
@@ -618,9 +617,8 @@ class Spin1TreeBuilderTest {
             + "[:=]\n"
             + " +-- [a]\n"
             + " +-- [byte]\n"
-            + "      +-- [@@@]\n"
-            + "           +-- [b]\n"
-            + "                +-- [c]\n"
+            + "      +-- [@@@b]\n"
+            + "           +-- [c]\n"
             + "      +-- [0]\n"
             + "", parse(text));
     }

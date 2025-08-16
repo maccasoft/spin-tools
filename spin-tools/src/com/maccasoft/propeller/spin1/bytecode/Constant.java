@@ -11,7 +11,9 @@
 package com.maccasoft.propeller.spin1.bytecode;
 
 import com.maccasoft.propeller.expressions.Context;
+import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Expression;
+import com.maccasoft.propeller.expressions.MemoryContextLiteral;
 import com.maccasoft.propeller.spin1.Spin1Bytecode;
 
 public class Constant extends Spin1Bytecode {
@@ -113,6 +115,9 @@ public class Constant extends Spin1Bytecode {
 
     @Override
     public String toString() {
+        if ((expression instanceof ContextLiteral) || (expression instanceof MemoryContextLiteral)) {
+            return "CONSTANT (" + String.format("$%04X", expression.getNumber().intValue()) + ")";
+        }
         return "CONSTANT (" + expression + ")";
     }
 
