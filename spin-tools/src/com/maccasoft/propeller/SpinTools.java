@@ -3063,6 +3063,17 @@ public class SpinTools {
     }
 
     protected void runCommand(List<String> cmd, File outDir, OutputStream stdout) throws IOException {
+        ComPort serialPort = comPortList.getSelection();
+
+        SerialTerminal serialTerminal = getSerialTerminal();
+        if (serialTerminal != null) {
+            serialTerminal.setSerialPort(null);
+        }
+
+        if (serialPort != null && serialPort.isOpened()) {
+            serialPort.closePort();
+        }
+
         ProcessBuilder builder = new ProcessBuilder(cmd);
         builder.redirectErrorStream(true);
         builder.directory(outDir);
@@ -3102,6 +3113,10 @@ public class SpinTools {
                 }
 
                 display.asyncExec(() -> {
+                    if (serialTerminal != null) {
+                        serialTerminal.setSerialPort(serialPort);
+                    }
+
                     EditorTab editorTab = getTargetObjectEditorTab();
                     if (editorTab != null) {
                         File editorFile = editorTab.getFile();
