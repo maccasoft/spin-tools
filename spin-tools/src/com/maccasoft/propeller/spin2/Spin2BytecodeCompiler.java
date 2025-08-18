@@ -59,6 +59,7 @@ import com.maccasoft.propeller.expressions.LogicalAnd;
 import com.maccasoft.propeller.expressions.LogicalNot;
 import com.maccasoft.propeller.expressions.LogicalOr;
 import com.maccasoft.propeller.expressions.LogicalXor;
+import com.maccasoft.propeller.expressions.MemoryContextLiteral;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.expressions.Modulo;
 import com.maccasoft.propeller.expressions.Multiply;
@@ -381,6 +382,9 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 }
                 if (expression == null && isAbsoluteHubAddress(node.getText())) {
                     expression = context.getLocalSymbol(node.getText().substring(3));
+                    if (!(expression instanceof MemoryContextLiteral)) {
+                        throw new CompilerException("expecting DAT symbol", node.getToken());
+                    }
                 }
                 if (expression == null && isAbsoluteAddress(node.getText())) {
                     expression = context.getLocalSymbol(node.getText().substring(2));
@@ -527,6 +531,16 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         }
                         ((Variable) expression).setCalledBy(method);
                     }
+                    else if (expression.isConstant()) {
+                        if (node.getChildCount() != 0) {
+                            throw new RuntimeException("syntax error");
+                        }
+                        source.add(new Constant(context, expression));
+                        if (!push) {
+                            logMessage(new CompilerException("expected assignment", node.getTokens()));
+                        }
+                        node.setReturnLongs(1);
+                    }
                     else {
                         if (isAddress(node.getText())) {
                             int index = 0;
@@ -588,16 +602,6 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                                 source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Address, popIndex, expression, index));
                             }
 
-                            if (!push) {
-                                logMessage(new CompilerException("expected assignment", node.getTokens()));
-                            }
-                            node.setReturnLongs(1);
-                        }
-                        else if (expression.isConstant()) {
-                            if (node.getChildCount() != 0) {
-                                throw new RuntimeException("syntax error");
-                            }
-                            source.add(new Constant(context, expression));
                             if (!push) {
                                 logMessage(new CompilerException("expected assignment", node.getTokens()));
                             }

@@ -40,6 +40,7 @@ import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.LogicalAnd;
 import com.maccasoft.propeller.expressions.LogicalNot;
 import com.maccasoft.propeller.expressions.LogicalOr;
+import com.maccasoft.propeller.expressions.MemoryContextLiteral;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.expressions.Modulo;
 import com.maccasoft.propeller.expressions.Multiply;
@@ -850,6 +851,9 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                     }
                     if (expression == null && isAbsoluteHubAddress(node.getText())) {
                         expression = context.getLocalSymbol(node.getText().substring(3));
+                        if (!(expression instanceof MemoryContextLiteral)) {
+                            throw new CompilerException("expecting DAT symbol", node.getToken());
+                        }
                     }
                     if (expression == null && isAbsoluteAddress(node.getText())) {
                         expression = context.getLocalSymbol(node.getText().substring(2));
