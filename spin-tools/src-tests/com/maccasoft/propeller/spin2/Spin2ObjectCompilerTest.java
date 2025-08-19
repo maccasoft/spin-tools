@@ -2669,9 +2669,9 @@ class Spin2ObjectCompilerTest {
             + "00017 00017       04             RETURN\n"
             + "' Debug data\n"
             + "00B74 00000       1F 00         \n"
-            + "00B76 00002       08 00         \n"
-            + "00B78 00004       0D 00         \n"
-            + "00B7A 00006       16 00         \n"
+            + "00B76 00002       08 00          #1@0008\n"
+            + "00B78 00004       0D 00          #2@000D\n"
+            + "00B7A 00006       16 00          #3@0016\n"
             + "' #1\n"
             + "00B7C 00008       04             COGN\n"
             + "00B7D 00009       41 61 00       UDEC(a)\n"
@@ -5130,6 +5130,72 @@ class Spin2ObjectCompilerTest {
             + "00026 00026       7D             REPEAT_LOOP\n"
             + "00027 00027       04             RETURN\n"
             + "", compile(text));
+    }
+
+    @Test
+    void testInlineAssemblyDebug() throws Exception {
+        String text = ""
+            + "PUB main(a)\n"
+            + "\n"
+            + "        org\n"
+            + "        mov     pr0, #0\n"
+            + "        debug(uhex_long(a, pr0)\n"
+            + "        end\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       08 00 00 81    Method main @ $00008 (1 parameters, 0 returns)\n"
+            + "00004 00004       1C 00 00 00    End\n"
+            + "' PUB main(a)\n"
+            + "00008 00008       00             (stack size)\n"
+            + "'         org\n"
+            + "00009 00009       19 5C 00 00 02 INLINE-EXEC ORG=$000, 3\n"
+            + "0000E 0000E       00\n"
+            + "0000F 0000F   000                                    org\n"
+            + "0000F 0000F   000 00 B0 07 F6                        mov     pr0, #0\n"
+            + "00013 00013   001 36 02 64 FD                        debug(uhex_long(a, pr0))\n"
+            + "00017 00017   002 2D 00 64 FD                        ret\n"
+            + "0001B 0001B       04             RETURN\n"
+            + "' Debug data\n"
+            + "00B74 00000       13 00         \n"
+            + "00B76 00002       04 00          #1@0004\n"
+            + "' #1\n"
+            + "00B78 00004       01             ASMMODE\n"
+            + "00B79 00005       04             COGN\n"
+            + "00B7A 00006       8D 61 00 81 E0 UHEX_LONG(a)\n"
+            + "00B7F 0000B       8C 70 72 30 00 UHEX_LONG(pr0)\n"
+            + "00B84 00010       81 D8\n"
+            + "00B86 00012       00             DONE\n"
+            + "", compile(text, true));
+    }
+
+    @Test
+    void testSkipInlineAssemblyDebug() throws Exception {
+        String text = ""
+            + "PUB main(a)\n"
+            + "\n"
+            + "        org\n"
+            + "        mov     pr0, #0\n"
+            + "        debug(uhex_long(a, pr0)\n"
+            + "        end\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       08 00 00 81    Method main @ $00008 (1 parameters, 0 returns)\n"
+            + "00004 00004       18 00 00 00    End\n"
+            + "' PUB main(a)\n"
+            + "00008 00008       00             (stack size)\n"
+            + "'         org\n"
+            + "00009 00009       19 5C 00 00 01 INLINE-EXEC ORG=$000, 2\n"
+            + "0000E 0000E       00\n"
+            + "0000F 0000F   000                                    org\n"
+            + "0000F 0000F   000 00 B0 07 F6                        mov     pr0, #0\n"
+            + "00013 00013   001                                    debug(uhex_long(a, pr0))\n"
+            + "00013 00013   001 2D 00 64 FD                        ret\n"
+            + "00017 00017       04             RETURN\n"
+            + "", compile(text, false));
     }
 
     @Test
@@ -7912,7 +7978,7 @@ class Spin2ObjectCompilerTest {
             + "0000F 0000F       04             RETURN\n"
             + "' Debug data\n"
             + "00B74 00000       09 00         \n"
-            + "00B76 00002       04 00         \n"
+            + "00B76 00002       04 00          #1@0004\n"
             + "' #1\n"
             + "00B78 00004       04             COGN\n"
             + "00B79 00005       41 61 00       UDEC(a)\n"
@@ -7946,7 +8012,7 @@ class Spin2ObjectCompilerTest {
             + "0000E 0000E       00 00          Padding\n"
             + "' Debug data\n"
             + "00B74 00000       09 00         \n"
-            + "00B76 00002       04 00         \n"
+            + "00B76 00002       04 00          #1@0004\n"
             + "' #1\n"
             + "00B78 00004       04             COGN\n"
             + "00B79 00005       41 62 00       UDEC(b)\n"

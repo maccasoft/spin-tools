@@ -59,6 +59,7 @@ import com.maccasoft.propeller.model.TokenIterator;
 import com.maccasoft.propeller.model.TypeDefinitionNode;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
+import com.maccasoft.propeller.spin2.Spin2Debug.DebugDataObject;
 import com.maccasoft.propeller.spin2.Spin2Object.Spin2LinkDataObject;
 import com.maccasoft.propeller.spin2.Spin2Struct.Spin2StructMember;
 import com.maccasoft.propeller.spin2.bytecode.Address;
@@ -123,6 +124,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
     @Override
     public Spin2Object compileObject(RootNode root) {
         compileStep1(root);
+        compileStep2(true);
         return generateObject(0);
     }
 
@@ -589,7 +591,6 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     if (!method.isReferenced()) {
                         method.remove();
                         methodsIterator.remove();
-                        compiler.debugStatements.removeAll(method.debugNodes);
                         loop = true;
                     }
                 }
@@ -792,6 +793,18 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
             }
         }
 
+        for (Spin2PAsmDebugLine debugLine : pasmDebugLines) {
+            try {
+                DebugDataObject debugData = debug.compilePAsmDebugStatement(debugLine);
+                debugLine.setDebugData(debugData);
+                compiler.addDebugStatement(debugData);
+            } catch (CompilerException e) {
+                logMessage(e);
+            } catch (Exception e) {
+                logMessage(new CompilerException(e, debugLine.getData()));
+            }
+        }
+
         hubMode = true;
         for (Spin2PAsmLine line : source) {
             objectAddress = line.getScope().getObjectAddress();
@@ -810,11 +823,6 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     code = new byte[0];
                 }
                 object.writeBytes(line.getScope().getAddress(), hubMode, code, line.toString());
-
-                Spin2PAsmDebugLine debugLine = (Spin2PAsmDebugLine) line.getData("debug");
-                if (debugLine != null) {
-                    debug.compilePAsmDebugStatement(debugLine);
-                }
             } catch (CompilerException e) {
                 logMessage(e);
             } catch (Exception e) {
@@ -822,7 +830,16 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
             }
         }
 
-        if (methods.size() != 0) {
+        for (Spin2Method method : methods) {
+            for (Spin2StatementNode node : method.debugNodes) {
+                DebugDataObject debugData = node.getDebugData();
+                if (debugData != null) {
+                    compiler.addDebugStatement(debugData);
+                }
+            }
+        }
+
+        if (!methods.isEmpty()) {
             boolean hasErrors = false;
             boolean loop;
             do {
@@ -831,7 +848,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 for (Spin2Method method : methods) {
                     hasErrors = true;
                     try {
-                        address = method.resolve(address);
+                        address = method.resolve(address, isDebugEnabled());
                         loop |= method.isAddressChanged();
                         hasErrors = false;
                     } catch (CompilerException e) {
@@ -855,7 +872,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     methodData.get(index).setText(
                         String.format("Method %s @ $%05X (%d parameters, %d returns)", method.getLabel(), object.getSize(), method.getParameterLongs(), method.getReturnLongs()));
                     try {
-                        method.writeTo(object);
+                        method.writeTo(object, isDebugEnabled());
                     } catch (CompilerException e) {
                         logMessage(e);
                     } catch (Exception e) {

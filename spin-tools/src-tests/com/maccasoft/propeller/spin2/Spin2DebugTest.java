@@ -25,6 +25,7 @@ import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.Token;
+import com.maccasoft.propeller.spin2.Spin2Debug.DebugDataObject;
 
 class Spin2DebugTest {
 
@@ -52,7 +53,7 @@ class Spin2DebugTest {
             + "00011 00011       00 00 00       Padding\n"
             + "' Debug data\n"
             + "00B74 00000       0F 00         \n"
-            + "00B76 00002       04 00         \n"
+            + "00B76 00002       04 00          #1@0004\n"
             + "' #1\n"
             + "00B78 00004       06 60 69 6E 64 STRING (`index=)\n"
             + "00B7D 00009       65 78 3D 00\n"
@@ -89,7 +90,7 @@ class Spin2DebugTest {
             + "00012 00012       00 00          Padding\n"
             + "' Debug data\n"
             + "00B74 00000       09 00         \n"
-            + "00B76 00002       04 00         \n"
+            + "00B76 00002       04 00          #1@0004\n"
             + "' #1\n"
             + "00B78 00004       04             COGN\n"
             + "00B79 00005       41 61 00       UDEC(a)\n"
@@ -775,7 +776,7 @@ class Spin2DebugTest {
             + "0000D 0000D       00 00 00       Padding\n"
             + "' Debug data\n"
             + "00B74 00000       05 00         \n"
-            + "00B76 00002       04 00         \n"
+            + "00B76 00002       04 00          #1@0004\n"
             + "' #1\n"
             + "00B78 00004       00             DONE\n"
             + "", compile(text));
@@ -827,7 +828,7 @@ class Spin2DebugTest {
             + "0000E 0000E       00 00          Padding\n"
             + "' Debug data\n"
             + "00B74 00000       05 00         \n"
-            + "00B76 00002       04 00         \n"
+            + "00B76 00002       04 00          #1@0004\n"
             + "' #1\n"
             + "00B78 00004       00             DONE\n"
             + "", compile(text));
@@ -982,7 +983,7 @@ class Spin2DebugTest {
             + "00011 00011       00 00 00       Padding\n"
             + "' Debug data\n"
             + "00B74 00000       0C 00         \n"
-            + "00B76 00002       04 00         \n"
+            + "00B76 00002       04 00          #1@0004\n"
             + "' #1\n"
             + "00B78 00004       04             COGN\n"
             + "00B79 00005       05             CHAR\n"
@@ -1023,8 +1024,8 @@ class Spin2DebugTest {
             + "00016 00016       00 00          Padding\n"
             + "' Debug data\n"
             + "00B74 00000       32 00         \n"
-            + "00B76 00002       06 00         \n"
-            + "00B78 00004       20 00         \n"
+            + "00B76 00002       06 00          #1@0006\n"
+            + "00B78 00004       20 00          #2@0020\n"
             + "' #1\n"
             + "00B7A 00006       06 60 74 65 73 STRING (`test a=)\n"
             + "00B7F 0000B       74 20 61 3D 00\n"
@@ -1148,11 +1149,10 @@ class Spin2DebugTest {
         return builder.getRoot();
     }
 
-    String dumpDebugData(List<DataObject> l) {
+    String dumpDebugData(DebugDataObject data) {
         Spin2Object object = new Spin2Object();
-
-        for (DataObject obj : l) {
-            object.write(obj);
+        for (DataObject d : data.getDataObjects()) {
+            object.write(d);
         }
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();

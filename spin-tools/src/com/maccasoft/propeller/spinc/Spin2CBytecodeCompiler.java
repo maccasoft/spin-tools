@@ -73,6 +73,7 @@ import com.maccasoft.propeller.expressions.Xor;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
+import com.maccasoft.propeller.spin2.Spin2Debug.DebugDataObject;
 import com.maccasoft.propeller.spin2.Spin2Method;
 import com.maccasoft.propeller.spin2.Spin2Model;
 import com.maccasoft.propeller.spin2.Spin2PasmCompiler;
@@ -310,7 +311,6 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
         //operators.put("SCAS", new Descriptor(Spin2Bytecode.bc_scas, "SCAS"));
         //operators.put("FRAC", new Descriptor(Spin2Bytecode.bc_frac, "FRAC"));
     }
-    ;
 
     static Map<String, Descriptor> floatOperators = new HashMap<String, Descriptor>();
     static {
@@ -675,11 +675,12 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                             stack += 4;
                         }
                     }
-                    debug.compileDebugStatement(node);
+
+                    DebugDataObject debugData = debug.compileDebugStatement(node);
+                    node.setDebugData(debugData);
 
                     if (isDebugEnabled()) {
                         method.debugNodes.add(node);
-                        compiler.debugStatements.add(node);
 
                         int pop = stack;
                         source.add(new Bytecode(context, Spin2Bytecode.bc_debug, "") {
@@ -688,7 +689,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
 
                             @Override
                             public int resolve(int address) {
-                                index = compiler.debugStatements.indexOf(node) + 1;
+                                index = compiler.getDebugStatementIndex(debugData);
                                 if (index >= 255) {
                                     throw new CompilerException("too much debug statements", node);
                                 }

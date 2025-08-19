@@ -30,12 +30,13 @@ import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenStream;
+import com.maccasoft.propeller.spin2.Spin2Debug.DebugDataObject;
 import com.maccasoft.propeller.spinc.Spin2CObjectCompiler;
 
 public class Spin2Compiler extends Compiler {
 
     protected boolean debugEnabled;
-    public List<Object> debugStatements = new ArrayList<Object>();
+    protected List<DebugDataObject> debugStatements = new ArrayList<>();
     protected Spin2Debug debug = new Spin2Debug();
 
     protected Spin2Interpreter interpreter;
@@ -201,38 +202,38 @@ public class Spin2Compiler extends Compiler {
         return debugEnabled;
     }
 
+    public void addDebugStatement(DebugDataObject statement) {
+        if (!debugStatements.contains(statement)) {
+            debugStatements.add(statement);
+        }
+    }
+
+    public int getDebugStatementIndex(DebugDataObject statement) {
+        return debugStatements.indexOf(statement) + 1;
+    }
+
     public Spin2Object generateDebugData() {
         Spin2Object object = new Spin2Object();
         object.writeComment("Debug data");
+
         WordDataObject sizeWord = object.writeWord(2);
 
         int index = 1;
         int pos = (debugStatements.size() + 1) * 2;
-        List<DataObject> l = new ArrayList<DataObject>();
-        for (Object node : debugStatements) {
-            try {
-                List<DataObject> list = null;
-                if (node instanceof Spin2StatementNode) {
-                    list = debug.compileDebugStatement((Spin2StatementNode) node);
-                }
-                else if (node instanceof Spin2PAsmDebugLine) {
-                    list = debug.compilePAsmDebugStatement((Spin2PAsmDebugLine) node);
-                }
-                if (list != null) {
-                    l.add(new CommentDataObject(String.format("#%d", index++)));
-                    object.writeWord(pos);
-                    for (DataObject o : list) {
-                        l.add(o);
-                        pos += o.size();
-                    }
-                }
-            } catch (Exception e) {
-                // Do nothing, exception are catched at the object compiler level
+
+        for (DebugDataObject data : debugStatements) {
+            object.writeWord(pos, String.format("#%d@%04X", index++, pos));
+            pos += data.getSize();
+        }
+
+        index = 1;
+        for (DebugDataObject data : debugStatements) {
+            object.write(new CommentDataObject(String.format("#%d", index++)));
+            for (DataObject d : data.getDataObjects()) {
+                object.write(d);
             }
         }
-        for (DataObject data : l) {
-            object.write(data);
-        }
+
         sizeWord.setValue(object.getSize());
 
         if (object.getSize() > 16384) {
@@ -272,13 +273,6 @@ public class Spin2Compiler extends Compiler {
         childObjects.add(info);
         objectCompiler.compileStep1(objectRoot);
 
-        if (index != -1) {
-            debugStatements.removeAll(((Spin2ObjectCompiler) objectCompiler).debugSource);
-            for (Spin2Method method : ((Spin2ObjectCompiler) objectCompiler).methods) {
-                debugStatements.removeAll(method.debugNodes);
-            }
-        }
-
         return info;
     }
 
@@ -300,10 +294,6 @@ public class Spin2Compiler extends Compiler {
                     return childObjects.get(index);
                 }
                 objectCompiler.compileStep1(objectRoot);
-                debugStatements.removeAll(((Spin2ObjectCompiler) objectCompiler).debugSource);
-                for (Spin2Method method : ((Spin2ObjectCompiler) objectCompiler).methods) {
-                    debugStatements.removeAll(method.debugNodes);
-                }
                 return info;
             }
         }

@@ -50,6 +50,7 @@ import com.maccasoft.propeller.model.TypeDefinitionNode;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
+import com.maccasoft.propeller.spin2.Spin2Debug.DebugDataObject;
 import com.maccasoft.propeller.spin2.Spin2ExpressionBuilder;
 import com.maccasoft.propeller.spin2.Spin2GlobalContext;
 import com.maccasoft.propeller.spin2.Spin2Method;
@@ -57,6 +58,7 @@ import com.maccasoft.propeller.spin2.Spin2MethodLine;
 import com.maccasoft.propeller.spin2.Spin2Model;
 import com.maccasoft.propeller.spin2.Spin2Object;
 import com.maccasoft.propeller.spin2.Spin2Object.Spin2LinkDataObject;
+import com.maccasoft.propeller.spin2.Spin2PAsmDebugLine;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
 import com.maccasoft.propeller.spin2.Spin2PAsmLine;
 import com.maccasoft.propeller.spin2.Spin2StatementNode;
@@ -71,6 +73,7 @@ import com.maccasoft.propeller.spin2.bytecode.InlinePAsmExec;
 import com.maccasoft.propeller.spin2.bytecode.Jmp;
 import com.maccasoft.propeller.spin2.bytecode.Jnz;
 import com.maccasoft.propeller.spin2.bytecode.Jz;
+import com.maccasoft.propeller.spin2.instructions.Debug;
 import com.maccasoft.propeller.spin2.instructions.Fit;
 import com.maccasoft.propeller.spin2.instructions.Org;
 import com.maccasoft.propeller.spin2.instructions.Orgh;
@@ -112,6 +115,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
     @Override
     public Spin2Object compileObject(RootNode root) {
         compileStep1(root);
+        compileStep2(true);
         return generateObject(0);
     }
 
@@ -1577,6 +1581,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
 
     @Override
     public void compileStep2(boolean keepFirst) {
+        List<Object> debugStatements = new ArrayList<Object>();
 
         for (Variable var : variables) {
             if (!var.isReferenced() && var.getData() != null) {
@@ -1630,6 +1635,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                         logMessage(new CompilerException(CompilerException.WARNING, "local variable \"" + var.getName() + "\" is not used", var.getData()));
                     }
                 }
+                debugStatements.addAll(method.debugNodes);
             }
 
             while (methodsIterator.hasNext()) {
@@ -1730,7 +1736,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
         int fitAddress = 0x1F8 << 2;
         boolean hubMode = true;
         boolean cogCode = false;
-        boolean spinMode = methods.size() != 0;
+        boolean spinMode = !methods.isEmpty();
 
         for (Spin2PAsmLine line : source) {
             if (!hubMode && !(line.getInstructionFactory() instanceof com.maccasoft.propeller.spin2.instructions.Byte) && !(line.getInstructionFactory() instanceof Word)) {
@@ -1788,6 +1794,18 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
             }
         }
 
+        for (Spin2PAsmDebugLine debugLine : pasmDebugLines) {
+            try {
+                DebugDataObject debugData = debug.compilePAsmDebugStatement(debugLine);
+                debugLine.setDebugData(debugData);
+                compiler.addDebugStatement(debugData);
+            } catch (CompilerException e) {
+                logMessage(e);
+            } catch (Exception e) {
+                logMessage(new CompilerException(e, debugLine.getData()));
+            }
+        }
+
         hubMode = true;
         for (Spin2PAsmLine line : source) {
             objectAddress = line.getScope().getObjectAddress();
@@ -1801,7 +1819,11 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                 if ((line.getInstructionFactory() instanceof Org) || (line.getInstructionFactory() instanceof Res)) {
                     hubMode = false;
                 }
-                object.writeBytes(line.getScope().getAddress(), hubMode, line.getInstructionObject().getBytes(), line.toString());
+                byte[] code = line.getInstructionObject().getBytes();
+                if (!isDebugEnabled() && (line.getInstructionFactory() instanceof Debug)) {
+                    code = new byte[0];
+                }
+                object.writeBytes(line.getScope().getAddress(), hubMode, code, line.toString());
             } catch (CompilerException e) {
                 logMessage(e);
             } catch (Exception e) {
@@ -1809,13 +1831,22 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
             }
         }
 
-        if (methods.size() != 0) {
+        for (Spin2Method method : methods) {
+            for (Spin2StatementNode node : method.debugNodes) {
+                DebugDataObject debugData = node.getDebugData();
+                if (debugData != null) {
+                    compiler.addDebugStatement(debugData);
+                }
+            }
+        }
+
+        if (!methods.isEmpty()) {
             boolean loop;
             do {
                 loop = false;
                 address = object.getSize();
                 for (Spin2Method method : methods) {
-                    address = method.resolve(address);
+                    address = method.resolve(address, isDebugEnabled());
                     loop |= method.isAddressChanged();
                 }
             } while (loop);
@@ -1832,7 +1863,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                 methodData.get(index).setText(
                     String.format("Method %s @ $%05X (%d parameters, %d returns)", method.getLabel(), object.getSize(), method.getParameterLongs(), method.getReturnLongs()));
                 try {
-                    method.writeTo(object);
+                    method.writeTo(object, isDebugEnabled());
                 } catch (CompilerException e) {
                     logMessage(e);
                 } catch (Exception e) {

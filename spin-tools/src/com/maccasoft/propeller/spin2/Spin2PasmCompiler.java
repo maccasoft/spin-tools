@@ -44,7 +44,7 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
     private Map<Spin2PAsmLine, Context> pendingAlias = new HashMap<Spin2PAsmLine, Context>();
 
     protected List<Spin2PAsmLine> source = new ArrayList<>();
-    protected List<Spin2PAsmDebugLine> debugSource = new ArrayList<>();
+    protected List<Spin2PAsmDebugLine> pasmDebugLines = new ArrayList<>();
 
     public Spin2PasmCompiler(Context scope, Spin2Compiler compiler, File file) {
         this(scope, compiler, null, file);
@@ -274,15 +274,14 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
 
                 Spin2PAsmDebugLine debugLine = Spin2PAsmDebugLine.buildFrom(pasmLine.getScope(), tokens);
                 if (debugLine != null) {
-                    debugSource.add(debugLine);
-                    compiler.debugStatements.add(debugLine);
-                    pasmLine.setData("debug", debugLine);
+                    pasmDebugLines.add(debugLine);
+                    pasmLine.setDebugLine(debugLine);
 
                     parameters.add(new Spin2PAsmExpression("#", new NumberLiteral(0) {
 
                         @Override
                         public Number getNumber() {
-                            int index = compiler.debugStatements.indexOf(debugLine) + 1;
+                            int index = compiler.getDebugStatementIndex(debugLine.getDebugData());
                             if (index >= 255) {
                                 throw new CompilerException("too much debug statements", node);
                             }

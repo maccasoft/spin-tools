@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -12,18 +12,13 @@ package com.maccasoft.propeller.spinc;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.ObjectCompiler;
 import com.maccasoft.propeller.SpinObject;
-import com.maccasoft.propeller.SpinObject.CommentDataObject;
-import com.maccasoft.propeller.SpinObject.DataObject;
 import com.maccasoft.propeller.SpinObject.LinkDataObject;
-import com.maccasoft.propeller.SpinObject.WordDataObject;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.model.RootNode;
@@ -32,8 +27,6 @@ import com.maccasoft.propeller.spin2.Spin2Debugger;
 import com.maccasoft.propeller.spin2.Spin2Interpreter;
 import com.maccasoft.propeller.spin2.Spin2Object;
 import com.maccasoft.propeller.spin2.Spin2ObjectCompiler;
-import com.maccasoft.propeller.spin2.Spin2PAsmDebugLine;
-import com.maccasoft.propeller.spin2.Spin2StatementNode;
 
 public class Spin2CCompiler extends Spin2Compiler {
 
@@ -144,50 +137,6 @@ public class Spin2CCompiler extends Spin2Compiler {
 
         return object;
 
-    }
-
-    @Override
-    public Spin2Object generateDebugData() {
-        Spin2Object object = new Spin2Object();
-        object.writeComment("Debug data");
-        WordDataObject sizeWord = object.writeWord(2);
-
-        int index = 1;
-        int pos = (debugStatements.size() + 1) * 2;
-        List<DataObject> l = new ArrayList<DataObject>();
-        for (Object node : debugStatements) {
-            try {
-                List<DataObject> list = null;
-                if (node instanceof Spin2StatementNode) {
-                    list = debug.compileDebugStatement((Spin2StatementNode) node);
-                }
-                else if (node instanceof Spin2PAsmDebugLine) {
-                    list = debug.compilePAsmDebugStatement((Spin2PAsmDebugLine) node);
-                }
-                if (list != null) {
-                    l.add(new CommentDataObject(String.format("#%d", index++)));
-                    object.writeWord(pos);
-                    for (DataObject o : list) {
-                        l.add(o);
-                        pos += o.size();
-                    }
-                }
-            } catch (CompilerException e) {
-                logMessage(e);
-            } catch (Exception e) {
-                logMessage(new CompilerException(e, node));
-            }
-        }
-        for (DataObject data : l) {
-            object.write(data);
-        }
-        sizeWord.setValue(object.getSize());
-
-        if (object.getSize() > 16384) {
-            throw new CompilerException("debug data is too long", null);
-        }
-
-        return object;
     }
 
     @Override

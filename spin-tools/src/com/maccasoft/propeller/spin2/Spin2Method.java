@@ -100,14 +100,14 @@ public class Spin2Method {
         }
     }
 
-    public int resolve(int address) {
+    public int resolve(int address, boolean debug) {
         addressChanged = startAddress != address;
         startAddress = address;
 
         scope.setAddress(address);
         address += Constant.wrVar(getLocalVariableLongs()).length;
         for (Spin2MethodLine line : lines) {
-            address = line.resolve(address);
+            address = line.resolve(address, debug);
             addressChanged |= line.isAddressChanged();
         }
 
@@ -206,7 +206,7 @@ public class Spin2Method {
         this.comment = comment;
     }
 
-    public void writeTo(Spin2Object obj) {
+    public void writeTo(Spin2Object obj, boolean debug) {
         if (comment != null) {
             obj.writeComment(comment);
         }
@@ -214,7 +214,7 @@ public class Spin2Method {
         obj.writeBytes(Constant.wrVar(getLocalVariableLongs()), "(stack size)");
 
         for (Spin2MethodLine line : lines) {
-            line.writeTo(obj);
+            line.writeTo(obj, debug);
         }
     }
 

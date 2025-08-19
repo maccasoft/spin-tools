@@ -17,6 +17,7 @@ import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.model.Token;
+import com.maccasoft.propeller.spin2.Spin2Debug.DebugDataObject;
 
 public class Spin2PAsmDebugLine {
 
@@ -110,7 +111,10 @@ public class Spin2PAsmDebugLine {
     }
 
     final Context context;
-    final List<Spin2DebugCommand> statements = new ArrayList<Spin2DebugCommand>();
+    final List<Spin2DebugCommand> statements = new ArrayList<>();
+
+    DebugDataObject debugData;
+    Object data;
 
     public static Spin2PAsmDebugLine buildFrom(Context context, List<Token> tokens) {
         int index = 0;
@@ -129,6 +133,7 @@ public class Spin2PAsmDebugLine {
         }
 
         Spin2PAsmDebugLine root = new Spin2PAsmDebugLine(context);
+        root.data = tokens;
 
         token = tokens.get(index++);
         if (!"(".equals(token.getText())) {
@@ -175,7 +180,7 @@ public class Spin2PAsmDebugLine {
                     break;
                 case 2:
                     if (",".equals(token.getText()) || ")".equals(token.getText())) {
-                        if (list.size() == 0) {
+                        if (list.isEmpty()) {
                             throw new CompilerException("expecting argument", token);
                         }
 
@@ -203,7 +208,7 @@ public class Spin2PAsmDebugLine {
                     }
                     throw new CompilerException("unexpected '" + token.getText() + "'", token);
                 case 4:
-                    if (list.size() == 0 && Spin2Model.isDebugKeyword(token.getText())) {
+                    if (list.isEmpty() && Spin2Model.isDebugKeyword(token.getText())) {
                         root.addStatement(child = new Spin2DebugCommand(token));
                         state = 1;
                         break;
@@ -225,7 +230,7 @@ public class Spin2PAsmDebugLine {
             }
         }
 
-        if (list != null && list.size() != 0) {
+        if (list != null && !list.isEmpty()) {
             String prefix = null;
             if ("#".equals(list.get(0).getText())) {
                 prefix = list.get(0).getText();
@@ -264,6 +269,18 @@ public class Spin2PAsmDebugLine {
 
     public List<Spin2DebugCommand> getStatements() {
         return statements;
+    }
+
+    public DebugDataObject getDebugData() {
+        return debugData;
+    }
+
+    public void setDebugData(DebugDataObject debugData) {
+        this.debugData = debugData;
+    }
+
+    public Object getData() {
+        return data;
     }
 
     @Override

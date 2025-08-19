@@ -96,6 +96,7 @@ import com.maccasoft.propeller.expressions.Xor;
 import com.maccasoft.propeller.expressions.Zerox;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.spin2.Spin2Bytecode.Descriptor;
+import com.maccasoft.propeller.spin2.Spin2Debug.DebugDataObject;
 import com.maccasoft.propeller.spin2.Spin2Struct.Spin2StructMember;
 import com.maccasoft.propeller.spin2.bytecode.Address;
 import com.maccasoft.propeller.spin2.bytecode.BitField;
@@ -1033,7 +1034,9 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                             stack += child.getReturnLongs() * 4;
                         }
                     }
-                    debug.compileDebugStatement(node);
+
+                    DebugDataObject debugData = debug.compileDebugStatement(node);
+                    node.setDebugData(debugData);
 
                     if (push) {
                         logMessage(new CompilerException("method doesn't return a value", node.getTokens()));
@@ -1041,7 +1044,6 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
 
                     if (isDebugEnabled() && debugLineEnabled) {
                         method.debugNodes.add(node);
-                        compiler.debugStatements.add(node);
 
                         int pop = stack;
                         debugSource.add(new Bytecode(context, Spin2Bytecode.bc_debug, "") {
@@ -1050,7 +1052,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
 
                             @Override
                             public int resolve(int address) {
-                                index = compiler.debugStatements.indexOf(node) + 1;
+                                index = compiler.getDebugStatementIndex(debugData);
                                 if (index >= 255) {
                                     throw new CompilerException("too much debug statements", node);
                                 }
@@ -1059,14 +1061,11 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
 
                             @Override
                             public int getSize() {
-                                return index == -1 ? 0 : 3;
+                                return 3;
                             }
 
                             @Override
                             public byte[] getBytes() {
-                                if (index == -1) {
-                                    return new byte[0];
-                                }
                                 return new byte[] {
                                     Spin2Bytecode.bc_debug, (byte) pop, (byte) index
                                 };
@@ -1074,9 +1073,6 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
 
                             @Override
                             public String toString() {
-                                if (index == -1) {
-                                    return "";
-                                }
                                 return node.getText().toUpperCase() + " #" + index;
                             }
 

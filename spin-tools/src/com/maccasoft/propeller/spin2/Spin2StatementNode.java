@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.maccasoft.propeller.model.Token;
+import com.maccasoft.propeller.spin2.Spin2Debug.DebugDataObject;
 
 public class Spin2StatementNode {
 
@@ -28,6 +29,8 @@ public class Spin2StatementNode {
 
     protected String comment;
     protected Spin2StatementNode parent;
+
+    DebugDataObject debugData;
 
     public static class Index extends Spin2StatementNode {
 
@@ -210,6 +213,14 @@ public class Spin2StatementNode {
         }
 
         return result;
+    }
+
+    public DebugDataObject getDebugData() {
+        return debugData;
+    }
+
+    public void setDebugData(DebugDataObject debugData) {
+        this.debugData = debugData;
     }
 
 }

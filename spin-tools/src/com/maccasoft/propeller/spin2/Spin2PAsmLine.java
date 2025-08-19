@@ -32,6 +32,7 @@ public class Spin2PAsmLine {
 
     Spin2PAsmInstructionFactory instructionFactory;
     Spin2InstructionObject instructionObject;
+    Spin2PAsmDebugLine debugLine;
 
     protected Object data;
     protected Map<String, Object> keyedData = new HashMap<String, Object>();
@@ -138,6 +139,14 @@ public class Spin2PAsmLine {
         this.keyedData.put(key, data);
     }
 
+    public Spin2PAsmDebugLine getDebugLine() {
+        return debugLine;
+    }
+
+    public void setDebugLine(Spin2PAsmDebugLine debugLine) {
+        this.debugLine = debugLine;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -156,7 +165,6 @@ public class Spin2PAsmLine {
             sb.append(" ");
         }
         if ("DEBUG".equalsIgnoreCase(mnemonic)) {
-            Spin2PAsmDebugLine debugLine = (Spin2PAsmDebugLine) getData("debug");
             if (debugLine != null) {
                 sb.append(debugLine.toString());
             }
