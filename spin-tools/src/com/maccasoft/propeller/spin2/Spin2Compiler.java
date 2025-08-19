@@ -132,14 +132,15 @@ public class Spin2Compiler extends Compiler {
         }
 
         Spin2Object object = objectCompiler.generateObject(memoryOffset);
+        object.getObject(0).setText("Object \"" + rootFile.getName() + "\" header (var size " + object.getVarSize() + ")");
         memoryOffset += object.getSize();
 
         for (ObjectInfo info : childObjects) {
             info.offset = object.getSize();
             SpinObject linkedObject = info.compiler.generateObject(memoryOffset);
-            memoryOffset += linkedObject.getSize();
             linkedObject.getObject(0).setText("Object \"" + info.file.getName() + "\" header (var size " + linkedObject.getVarSize() + ")");
             object.writeObject(linkedObject);
+            memoryOffset += linkedObject.getSize();
         }
 
         for (ObjectInfo info : childObjects) {

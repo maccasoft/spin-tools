@@ -663,7 +663,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
             object.setDebugCogs(exp.getNumber().intValue());
         }
 
-        object.writeComment("Object header (var size " + objectVarSize + ")");
+        object.writeComment("Object \"" + getFile().getName() + "\" header (var size " + objectVarSize + ")");
 
         int linkedVarOffset = objectVarSize;
         for (LinkDataObject linkData : objectLinks) {

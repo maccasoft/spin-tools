@@ -36,7 +36,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000                start               \n"
             + "00000 00000   000 01 04 60 FD                        cogid   a\n"
@@ -62,7 +62,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000                start               \n"
             + "00000 00000   000 01 0C 04 F6                        mov     a, #1\n"
@@ -94,7 +94,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000                start               \n"
             + "00000 00000   000 01 0C 04 F6                        mov     a, #1\n"
@@ -134,7 +134,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000                start               \n"
             + "00000 00000   000 01 18 04 F6                        mov     a, #1\n"
@@ -167,7 +167,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000 00 00 00 00                        long    0\n"
             + "00004 00004   001 01 00 00 00                        long    1\n"
@@ -191,7 +191,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000 01 00 00 00    label0              long    1\n"
             + "00004 00004   001 02 00 00 00                        long    2\n"
@@ -226,7 +226,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000 00 00 00 00                        long    0\n"
             + "00004 00004   001                                    res\n"
@@ -244,7 +244,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000 00 00 00 00                        long    0[$10]\n"
             + "00004 00004   001 00 00 00 00   \n"
@@ -346,7 +346,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000 01                                 byte    1\n"
             + "00001 00001   000 02                                 byte    2\n"
@@ -366,7 +366,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000 01 00                              word    1\n"
             + "00002 00002   000 02 00                              word    2\n"
@@ -387,7 +387,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000 01 00 00 00                        long    1\n"
             + "00004 00004   001 02 00 00 00                        long    2\n"
@@ -409,7 +409,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000 00000 01 00 00 00                        long    1, byte 2, 3, word 4, 5\n"
             + "00004 00004 00004 02 03 00 00   \n"
             + "00008 00008 00008 00 04 00 05   \n"
@@ -436,7 +436,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000 00                                 bytefit $00\n"
             + "00001 00001   000 01                                 bytefit $01\n"
@@ -481,7 +481,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000 00 00                              wordfit $0000\n"
             + "00002 00002   000 01 00                              wordfit $0001\n"
@@ -523,7 +523,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000 00 00 00 FF                        mov     1, ##0\n"
             + "00004 00004   001 00 02 04 F6\n"
@@ -545,7 +545,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000 01 0C 04 F6                        mov     a, #1\n"
             + "00004 00004   001 36 02 64 FD                        debug(udec(a))\n"
@@ -576,7 +576,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000 01 04 04 F6                        mov     a, #1\n"
             + "00004 00004   001                                    debug(udec(a))\n"
@@ -612,7 +612,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000 01 06 04 F6                        mov     a, #label\n"
             + "00004 00004   001                label               debug(udec(a))\n"
@@ -655,7 +655,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000       2C 00 00 80    Method start @ $0002C (0 parameters, 0 returns)\n"
             + "00004 00004       45 00 00 00    End\n"
             + "00008 00008   000                                    org     $000\n"
@@ -737,7 +737,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000 00000 00 01 64 FC                        wrlong  0, ptra\n"
             + "00004 00004 00004 61 01 64 FC                        wrlong  0, ptra++\n"
             + "00008 00008 00008 41 01 64 FC                        wrlong  0, ++ptra\n"
@@ -761,7 +761,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000 59 73 07 FF                        mov     a, ##_CLKFREQ\n"
             + "00004 00004   001 80 04 04 F6\n"
@@ -791,7 +791,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000 00 15 04 FB                        rdlong  a, ptra\n"
             + "00004 00004   001 80 15 04 FB                        rdlong  a, ptrb\n"
@@ -829,7 +829,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000 01 15 04 FB                        rdlong  a, ptra[1]\n"
             + "00004 00004   001 BF 15 04 FB                        rdlong  a, ptrb[-1]\n"
@@ -882,7 +882,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000 00 40 00 FF                        rdlong  a, ptra[##0]\n"
             + "00004 00004   001 00 58 04 FB\n"
@@ -946,7 +946,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000 AA 11                              byte    $FFAA, $BB995511\n"
             + "00002 00002   000 AA FF 11 55                        byte    word $FFAA, long $BB995511\n"
@@ -977,7 +977,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000 00000 01 02 03                           byte    1, 2, 3\n"
             + "00003 00003 00003 04 00 00 00                        long    4\n"
             + "00007 00007 00007 05 06                              byte    5, 6\n"
@@ -1005,7 +1005,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000 01 02 03                           byte    1, 2, 3\n"
             + "00003 00003   000 04 00 00 00                        long    4\n"
@@ -1027,7 +1027,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000 63 63                              byte    99, fvar 99\n"
             + "00002 00002   000 9D 9D 7F                           byte    -99, fvars -99\n"
@@ -1050,7 +1050,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000 31 32 33 B4                        byte    \"1234\" | $80\n"
             + "00004 00004   001 31 00 32 00                        word    \"1234\" | $80\n"
@@ -1095,7 +1095,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000       28 00 00 80    Method main @ $00028 (0 parameters, 0 returns)\n"
             + "00004 00004       2A 00 00 00    End\n"
             + "00008 00008   000                                    org     $000\n"
@@ -1127,7 +1127,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000 2D 00 64 FD                        ret\n"
             + "00004 00004   001                a                   res     1\n"
@@ -1148,7 +1148,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000 02 04 04 F6                        mov     a, #2\n"
             + "00004 00004   001 2D 00 64 FD                        ret\n"
@@ -1172,7 +1172,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000 2D 00 64 FD                        ret\n"
             + "00004 00004   001                a                   res     1\n"
@@ -1190,7 +1190,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000 00000 00 00 00 00    pt                  sPoint  0\n"
             + "", compile(text));
     }
@@ -1208,7 +1208,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000 00000                pt                  sPoint\n"
             + "00000 00000 00000 01 00                              word    1\n"
             + "00002 00002 00002 02 00                              word    2\n"
@@ -1237,7 +1237,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000       08 00 00 80    Method start @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       28 00 00 00    End\n"
             + "00008 00008 00000                pt                  sPoint\n"
@@ -1276,7 +1276,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000   000                entry               org     $000\n"
             + "00000 00000   000 01 02 04 F6    label               mov     a, #1\n"
             + "00004 00004   001                a                   res     1\n"
@@ -1355,7 +1355,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000 0C 02 EC FC                        coginit #1, #@entry\n"
             + "00004 00004   001 24 04 EC FC                        coginit #2, #@progb.entry\n"
@@ -1413,7 +1413,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000 00000                                    DITTO   8\n"
             + "00000 00000 00000 08 00 24 FC                        wypin   pin_nco + $$, #pin_base + $$\n"
             + "00004 00004 00004 09 02 24 FC                        wypin   pin_nco + $$, #pin_base + $$\n"
@@ -1441,7 +1441,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000                start               \n"
             + "00000 00000   000 01 06 04 F1                        add     b, #1\n"
@@ -1469,7 +1469,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000       18 00 00 80    Method main @ $00018 (0 parameters, 0 returns)\n"
             + "00004 00004       1A 00 00 00    End\n"
             + "00008 00008   000                                    org     $000\n"
@@ -1505,7 +1505,7 @@ class Spin2PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000       1A 00 00 80    Method main @ $0001A (0 parameters, 0 returns)\n"
             + "00004 00004       1C 00 00 00    End\n"
             + "00008 00008   000                                    org     $000\n"

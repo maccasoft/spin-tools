@@ -36,7 +36,7 @@ class Spin1PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 0)\n"
+            + "' Object \"test.spin\" header (var size 0)\n"
             + "00010 00000       0C 00          Object size\n"
             + "00012 00002       01             Method count + 1\n"
             + "00013 00003       00             Object count\n"
@@ -65,7 +65,7 @@ class Spin1PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 0)\n"
+            + "' Object \"test.spin\" header (var size 0)\n"
             + "00010 00000       1C 00          Object size\n"
             + "00012 00002       01             Method count + 1\n"
             + "00013 00003       00             Object count\n"
@@ -100,7 +100,7 @@ class Spin1PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 0)\n"
+            + "' Object \"test.spin\" header (var size 0)\n"
             + "00010 00000       1C 00          Object size\n"
             + "00012 00002       01             Method count + 1\n"
             + "00013 00003       00             Object count\n"
@@ -143,7 +143,7 @@ class Spin1PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 0)\n"
+            + "' Object \"test.spin\" header (var size 0)\n"
             + "00010 00000       34 00          Object size\n"
             + "00012 00002       01             Method count + 1\n"
             + "00013 00003       00             Object count\n"
@@ -179,7 +179,7 @@ class Spin1PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 0)\n"
+            + "' Object \"test.spin\" header (var size 0)\n"
             + "00010 00000       18 00          Object size\n"
             + "00012 00002       01             Method count + 1\n"
             + "00013 00003       00             Object count\n"
@@ -204,7 +204,7 @@ class Spin1PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 0)\n"
+            + "' Object \"test.spin\" header (var size 0)\n"
             + "00010 00000       08 00          Object size\n"
             + "00012 00002       01             Method count + 1\n"
             + "00013 00003       00             Object count\n"
@@ -225,7 +225,7 @@ class Spin1PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 0)\n"
+            + "' Object \"test.spin\" header (var size 0)\n"
             + "00010 00000       44 00          Object size\n"
             + "00012 00002       01             Method count + 1\n"
             + "00013 00003       00             Object count\n"
@@ -278,7 +278,7 @@ class Spin1PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 0)\n"
+            + "' Object \"test.spin\" header (var size 0)\n"
             + "00010 00000       0C 00          Object size\n"
             + "00012 00002       01             Method count + 1\n"
             + "00013 00003       00             Object count\n"
@@ -301,7 +301,7 @@ class Spin1PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 0)\n"
+            + "' Object \"test.spin\" header (var size 0)\n"
             + "00010 00000       14 00          Object size\n"
             + "00012 00002       01             Method count + 1\n"
             + "00013 00003       00             Object count\n"
@@ -327,7 +327,7 @@ class Spin1PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 0)\n"
+            + "' Object \"test.spin\" header (var size 0)\n"
             + "00010 00000       0C 00          Object size\n"
             + "00012 00002       01             Method count + 1\n"
             + "00013 00003       00             Object count\n"
@@ -375,7 +375,7 @@ class Spin1PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 0)\n"
+            + "' Object \"test.spin\" header (var size 0)\n"
             + "00010 00000       10 00          Object size\n"
             + "00012 00002       01             Method count + 1\n"
             + "00013 00003       00             Object count\n"
@@ -421,7 +421,7 @@ class Spin1PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 0)\n"
+            + "' Object \"test.spin\" header (var size 0)\n"
             + "00010 00000       20 00          Object size\n"
             + "00012 00002       01             Method count + 1\n"
             + "00013 00003       00             Object count\n"
@@ -446,7 +446,7 @@ class Spin1PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 0)\n"
+            + "' Object \"test.spin\" header (var size 0)\n"
             + "00010 00000       28 00          Object size\n"
             + "00012 00002       01             Method count + 1\n"
             + "00013 00003       00             Object count\n"
@@ -481,7 +481,7 @@ class Spin1PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 0)\n"
+            + "' Object \"test.spin\" header (var size 0)\n"
             + "00010 00000       2C 00          Object size\n"
             + "00012 00002       02             Method count + 1\n"
             + "00013 00003       00             Object count\n"
@@ -515,7 +515,7 @@ class Spin1PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 0)\n"
+            + "' Object \"test.spin\" header (var size 0)\n"
             + "00010 00000       20 00          Object size\n"
             + "00012 00002       01             Method count + 1\n"
             + "00013 00003       00             Object count\n"
@@ -551,7 +551,7 @@ class Spin1PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 0)\n"
+            + "' Object \"test.spin\" header (var size 0)\n"
             + "00010 00000       1C 00          Object size\n"
             + "00012 00002       02             Method count + 1\n"
             + "00013 00003       00             Object count\n"
@@ -587,7 +587,7 @@ class Spin1PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 0)\n"
+            + "' Object \"test.spin\" header (var size 0)\n"
             + "00010 00000       44 00          Object size\n"
             + "00012 00002       02             Method count + 1\n"
             + "00013 00003       00             Object count\n"
@@ -624,7 +624,7 @@ class Spin1PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 0)\n"
+            + "' Object \"test.spin\" header (var size 0)\n"
             + "00010 00000       08 00          Object size\n"
             + "00012 00002       01             Method count + 1\n"
             + "00013 00003       00             Object count\n"
@@ -648,7 +648,7 @@ class Spin1PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 0)\n"
+            + "' Object \"test.spin\" header (var size 0)\n"
             + "00010 00000       0C 00          Object size\n"
             + "00012 00002       01             Method count + 1\n"
             + "00013 00003       00             Object count\n"
@@ -675,7 +675,7 @@ class Spin1PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 0)\n"
+            + "' Object \"test.spin\" header (var size 0)\n"
             + "00010 00000       08 00          Object size\n"
             + "00012 00002       01             Method count + 1\n"
             + "00013 00003       00             Object count\n"
@@ -694,7 +694,7 @@ class Spin1PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 0)\n"
+            + "' Object \"test.spin\" header (var size 0)\n"
             + "00010 00000       08 00          Object size\n"
             + "00012 00002       01             Method count + 1\n"
             + "00013 00003       00             Object count\n"
@@ -768,7 +768,7 @@ class Spin1PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 0)\n"
+            + "' Object \"test.spin\" header (var size 0)\n"
             + "00010 00000       58 00          Object size\n"
             + "00012 00002       02             Method count + 1\n"
             + "00013 00003       00             Object count\n"
@@ -847,7 +847,7 @@ class Spin1PAsmCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 0)\n"
+            + "' Object \"test.spin\" header (var size 0)\n"
             + "00010 00000       24 00          Object size\n"
             + "00012 00002       01             Method count + 1\n"
             + "00013 00003       00             Object count\n"

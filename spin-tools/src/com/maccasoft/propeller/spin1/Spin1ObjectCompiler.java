@@ -559,7 +559,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
         object.setClkFreq(clkFreq);
         object.setClkMode(clkMode);
 
-        object.writeComment("Object header (var size " + objectVarSize + ")");
+        object.writeComment("Object \"" + getFile().getName() + "\" header (var size " + objectVarSize + ")");
 
         WordDataObject objectSize = object.writeWord(0, "Object size");
         object.writeByte(methods.size() + 1, "Method count + 1");

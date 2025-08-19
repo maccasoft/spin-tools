@@ -39,7 +39,7 @@ class Spin2DebugTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       11 00 00 00    End\n"
             + "' PUB main() | a\n"
@@ -73,7 +73,7 @@ class Spin2DebugTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       12 00 00 00    End\n"
             + "' PUB main() | a\n"
@@ -765,7 +765,7 @@ class Spin2DebugTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       0D 00 00 00    End\n"
             + "' PUB main()\n"
@@ -792,7 +792,7 @@ class Spin2DebugTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       0D 00 00 00    End\n"
             + "' PUB main()\n"
@@ -818,7 +818,7 @@ class Spin2DebugTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
             + "00004 00004       0E 00 00 00    End\n"
             + "00008 00008 00000 36 02 64 FD                        debug()\n"
@@ -846,7 +846,7 @@ class Spin2DebugTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
             + "00004 00004       0E 00 00 00    End\n"
             + "00008 00008 00000 36 00 64 FD                        debug\n"
@@ -968,7 +968,7 @@ class Spin2DebugTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       11 00 00 00    End\n"
             + "' PUB main() | a, b, c\n"
@@ -1005,7 +1005,7 @@ class Spin2DebugTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       16 00 00 00    End\n"
             + "' PUB main() | a, b, c\n"
