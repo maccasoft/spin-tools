@@ -205,11 +205,8 @@ public class Constant extends Spin2Bytecode {
     public byte[] getBytes() {
         if (expression.getNumber() instanceof Double) {
             int value = Float.floatToIntBits(expression.getNumber().floatValue());
-            return new byte[] {
-                Spin2Bytecode.bc_con_rflong, (byte) value, (byte) (value >> 8), (byte) (value >> 16), (byte) (value >> 24)
-            };
+            return wrAuto(value & 0xFFFFFFFFL);
         }
-
         return wrAuto(expression.getNumber().longValue());
     }
 
