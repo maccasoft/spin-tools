@@ -5040,7 +5040,7 @@ class Spin2ObjectCompilerTest {
             + "00017 00017   002 FE C1 6F FB                        djnz    a, #l1\n"
             + "0001B 0001B   003 2D 00 64 FD                        ret\n"
             + "'         orgh\n"
-            + "0001F 0001F       19 5E 04 00    INLINE-EXEC ORGH=$400\n"
+            + "0001F 0001F       19 5E 04 00    INLINE-EXEC ORGH 4\n"
             + "00023 00023   000                                    orgh\n"
             + "00023 00023   000 00 B0 07 F6                        mov     pr0, #0\n"
             + "00027 00027   004 E0 B1 03 F1    l1                  add     pr0, a\n"

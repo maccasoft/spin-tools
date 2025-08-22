@@ -40,25 +40,25 @@ public class InlinePAsmExec extends Spin2Bytecode {
         if (orgh) {
             return new byte[] {
                 Spin2Bytecode.bc_hub_bytecode, (byte) Spin2Bytecode.bc_orgh,
-                (byte) (org >> 8),
-                (byte) org
+                (byte) size,
+                (byte) (size >> 8),
             };
         }
         return new byte[] {
             Spin2Bytecode.bc_hub_bytecode, (byte) Spin2Bytecode.bc_org,
             (byte) org,
             (byte) (org >> 8),
-            (byte) size,
-            (byte) (size >> 8),
+            (byte) (size - 1),
+            (byte) ((size - 1) >> 8),
         };
     }
 
     @Override
     public String toString() {
         if (orgh) {
-            return String.format("INLINE-EXEC ORGH=$%03x", org);
+            return String.format("INLINE-EXEC ORGH %d", size);
         }
-        return String.format("INLINE-EXEC ORG=$%03x, %d", org, size + 1);
+        return String.format("INLINE-EXEC ORG=$%03x, %d", org, size);
     }
 
 }

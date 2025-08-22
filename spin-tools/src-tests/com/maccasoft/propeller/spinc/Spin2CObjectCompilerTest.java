@@ -917,7 +917,7 @@ class Spin2CObjectCompilerTest {
             + "00021 00021   001 2D 00 64 FD                        ret\n"
             + "'     }\n"
             + "'     asm {\n"
-            + "00025 00025       19 5E 00 00    INLINE-EXEC ORGH=$000\n"
+            + "00025 00025       19 5E 02 00    INLINE-EXEC ORGH 2\n"
             + "00029 00029   000                                    orgh\n"
             + "00029 00029   000 00 00 00 00                        nop\n"
             + "0002D 0002D   004 2D 00 64 FD                        ret\n"

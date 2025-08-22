@@ -137,7 +137,7 @@ public class Spin2MethodLine {
         }
         if (pasmCount != 0) {
             InlinePAsmExec bc = (InlinePAsmExec) source.get(0);
-            bc.setSize((pasmCount >> 2) - 1);
+            bc.setSize(pasmCount >> 2);
         }
 
         for (Spin2MethodLine line : childs) {
