@@ -104,7 +104,7 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
                                 if (endLineNode == null) {
                                     logMessage(new CompilerException("missing DITTO END line", beginLineNode));
                                 }
-                                processDittoBlock(scope, datScope, localScope, beginLineNode, list, endLineNode);
+                                source.addAll(processDittoBlock(scope, datScope, localScope, beginLineNode, list, endLineNode));
                             }
                             else {
                                 if (lineNode.instruction != null && "NAMESP".equalsIgnoreCase(lineNode.instruction.getText())) {
@@ -489,8 +489,9 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
         return compiler.getBinaryFile(fileName);
     }
 
-    void processDittoBlock(Context scope, Context datScope, Context localScope, DataLineNode beginLineNode, List<DataLineNode> list, DataLineNode endLineNode) {
+    List<Spin2PAsmLine> processDittoBlock(Context scope, Context datScope, Context localScope, DataLineNode beginLineNode, List<DataLineNode> list, DataLineNode endLineNode) {
         int count = 0;
+        List<Spin2PAsmLine> source = new ArrayList<>();
 
         Spin2PAsmLine beginPasmLine = compileDataLine(scope, datScope, localScope, beginLineNode, "");
         if (beginLineNode.condition != null) {
@@ -507,7 +508,7 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
             Expression expression = expressionBuilder.getExpression();
             if (!expression.isConstant()) {
                 logMessage(new CompilerException("expecting constant expression", param));
-                return;
+                return source;
             }
             count = expression.getNumber().intValue();
         } catch (CompilerException e) {
@@ -546,6 +547,8 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
         }
         Spin2PAsmLine endPasmLine = compileDataLine(scope, datScope, localScope, endLineNode, "");
         source.addAll(endPasmLine.expand());
+
+        return source;
     }
 
     @Override

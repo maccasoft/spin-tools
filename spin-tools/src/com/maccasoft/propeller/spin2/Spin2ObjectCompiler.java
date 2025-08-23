@@ -2651,10 +2651,38 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 if (lineNode.label != null && !lineNode.label.getText().startsWith(".")) {
                     lineScope = rootScope;
                 }
-                Spin2PAsmLine pasmLine = compileDataLine(rootScope, lineScope, (DataLineNode) node);
-                line.addSource(new InlinePAsm(rootScope, pasmLine));
-                if (lineNode.label != null && !lineNode.label.getText().startsWith(".")) {
-                    lineScope = pasmLine.getScope();
+                if (lineNode.instruction != null && "DITTO".equalsIgnoreCase(lineNode.instruction.getText())) {
+                    DataLineNode beginLineNode = lineNode;
+                    DataLineNode endLineNode = null;
+
+                    List<DataLineNode> list = new ArrayList<>();
+                    while (linesIterator.hasNext()) {
+                        Node n2 = linesIterator.next();
+                        if (!n2.isExclude() && (n2 instanceof DataLineNode)) {
+                            lineNode = (DataLineNode) n2;
+                            if ("DITTO".equalsIgnoreCase(lineNode.instruction.getText())) {
+                                if (!lineNode.parameters.isEmpty() && "END".equalsIgnoreCase(lineNode.parameters.get(0).getText())) {
+                                    endLineNode = lineNode;
+                                    break;
+                                }
+                            }
+                            list.add(lineNode);
+                        }
+                    }
+                    if (endLineNode == null) {
+                        logMessage(new CompilerException("missing DITTO END line", beginLineNode));
+                    }
+                    List<Spin2PAsmLine> source = processDittoBlock(null, rootScope, lineScope, beginLineNode, list, endLineNode);
+                    for (Spin2PAsmLine pasmLine : source) {
+                        line.addSource(new InlinePAsm(rootScope, pasmLine));
+                    }
+                }
+                else {
+                    Spin2PAsmLine pasmLine = compileDataLine(rootScope, lineScope, (DataLineNode) node);
+                    line.addSource(new InlinePAsm(rootScope, pasmLine));
+                    if (lineNode.label != null && !lineNode.label.getText().startsWith(".")) {
+                        lineScope = pasmLine.getScope();
+                    }
                 }
             }
             else if (node instanceof StatementNode) {

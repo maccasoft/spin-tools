@@ -1522,6 +1522,67 @@ class Spin2PAsmCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testDittoInline() throws Exception {
+        String text = ""
+            + "CON\n"
+            + "    pin_nco = 0\n"
+            + "    pin_base = 8\n"
+            + "\n"
+            + "PUB main()\n"
+            + "\n"
+            + "        org\n"
+            + "                DITTO   8\n"
+            + "                wypin   pin_nco+$$, #pin_base+$$\n"
+            + "                DITTO   END\n"
+            + "        end\n"
+            + "\n"
+            + "        orgh\n"
+            + "                DITTO   8\n"
+            + "                wypin   pin_nco+$$, #pin_base+$$\n"
+            + "                DITTO   END\n"
+            + "        end\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object \"test.spin2\" header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       5C 00 00 00    End\n"
+            + "' PUB main()\n"
+            + "00008 00008       00             (stack size)\n"
+            + "'         org\n"
+            + "00009 00009       19 5C 00 00 08 INLINE-EXEC ORG=$000, 9\n"
+            + "0000E 0000E       00\n"
+            + "0000F 0000F   000                                    org\n"
+            + "0000F 0000F   000                                    DITTO   8\n"
+            + "0000F 0000F   000 08 00 24 FC                        wypin   pin_nco + $$, #pin_base + $$\n"
+            + "00013 00013   001 09 02 24 FC                        wypin   pin_nco + $$, #pin_base + $$\n"
+            + "00017 00017   002 0A 04 24 FC                        wypin   pin_nco + $$, #pin_base + $$\n"
+            + "0001B 0001B   003 0B 06 24 FC                        wypin   pin_nco + $$, #pin_base + $$\n"
+            + "0001F 0001F   004 0C 08 24 FC                        wypin   pin_nco + $$, #pin_base + $$\n"
+            + "00023 00023   005 0D 0A 24 FC                        wypin   pin_nco + $$, #pin_base + $$\n"
+            + "00027 00027   006 0E 0C 24 FC                        wypin   pin_nco + $$, #pin_base + $$\n"
+            + "0002B 0002B   007 0F 0E 24 FC                        wypin   pin_nco + $$, #pin_base + $$\n"
+            + "0002F 0002F   008                                    DITTO   END\n"
+            + "0002F 0002F   008 2D 00 64 FD                        ret\n"
+            + "'         orgh\n"
+            + "00033 00033       19 5E 09 00    INLINE-EXEC ORGH 9\n"
+            + "00037 00037   000                                    orgh\n"
+            + "00037 00037   000                                    DITTO   8\n"
+            + "00037 00037   000 08 00 24 FC                        wypin   pin_nco + $$, #pin_base + $$\n"
+            + "0003B 0003B   004 09 02 24 FC                        wypin   pin_nco + $$, #pin_base + $$\n"
+            + "0003F 0003F   008 0A 04 24 FC                        wypin   pin_nco + $$, #pin_base + $$\n"
+            + "00043 00043   00C 0B 06 24 FC                        wypin   pin_nco + $$, #pin_base + $$\n"
+            + "00047 00047   010 0C 08 24 FC                        wypin   pin_nco + $$, #pin_base + $$\n"
+            + "0004B 0004B   014 0D 0A 24 FC                        wypin   pin_nco + $$, #pin_base + $$\n"
+            + "0004F 0004F   018 0E 0C 24 FC                        wypin   pin_nco + $$, #pin_base + $$\n"
+            + "00053 00053   01C 0F 0E 24 FC                        wypin   pin_nco + $$, #pin_base + $$\n"
+            + "00057 00057   020                                    DITTO   END\n"
+            + "00057 00057   020 2D 00 64 FD                        ret\n"
+            + "0005B 0005B       04             RETURN\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }
