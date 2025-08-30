@@ -18,10 +18,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.resource.StringConverter;
@@ -76,7 +76,7 @@ public class ConsoleView {
     File logFile;
     PrintStream os;
 
-    Map<String, DebugWindow> map = new HashMap<>();
+    Map<String, DebugWindow> map = new CaseInsensitiveMap<>();
     DebugPAsmWindow[] debugger = new DebugPAsmWindow[8];
 
     final PropertyChangeListener preferencesChangeListener = new PropertyChangeListener() {
