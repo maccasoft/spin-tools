@@ -48,6 +48,7 @@ public class DebugScopeWindow extends DebugWindow {
     int samples;
     int channelIndex;
     Channel[] channelData;
+    int defaultColorIndex;
 
     int sampleCount;
 
@@ -206,6 +207,7 @@ public class DebugScopeWindow extends DebugWindow {
         samples = 256;
         channelIndex = 0;
         channelData = new Channel[0];
+        defaultColorIndex = 0;
 
         sampleCount = 0;
 
@@ -463,18 +465,22 @@ public class DebugScopeWindow extends DebugWindow {
     void channel(String name, KeywordIterator iter) {
         int min = 0, max = 0;
         boolean auto = false;
-        Color color = new Color(0, 250, 0);
+
+        Color color = defaultColors[defaultColorIndex++];
+        if (defaultColorIndex >= defaultColors.length) {
+            defaultColorIndex = 0;
+        }
 
         if (iter.hasNext() && "AUTO".equalsIgnoreCase(iter.peekNext())) {
             auto = true;
             iter.next();
         }
         else {
-            min = iter.hasNextNumber() ? iter.nextNumber() : 0;
-            max = iter.hasNextNumber() ? iter.nextNumber() : 0;
+            min = iter.hasNextNumber() ? iter.nextNumber() : Integer.MIN_VALUE;
+            max = iter.hasNextNumber() ? iter.nextNumber() : Integer.MAX_VALUE;
         }
         int y_size = iter.hasNextNumber() ? iter.nextNumber() : imageSize.y;
-        int y_base = iter.hasNextNumber() ? iter.nextNumber() : (imageSize.y / 2);
+        int y_base = iter.hasNextNumber() ? iter.nextNumber() : 0;
         int legend = iter.hasNextNumber() ? iter.nextNumber() : 0;
 
         if (iter.hasNext()) {
