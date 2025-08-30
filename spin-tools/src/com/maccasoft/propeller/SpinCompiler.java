@@ -187,7 +187,7 @@ public class SpinCompiler {
             String suffix = name.substring(name.lastIndexOf('.')).toLowerCase();
 
             Compiler compiler = null;
-            if (".spin2".equals(suffix)) {
+            if (".spin2".equals(suffix) || ".p2asm".equals(suffix)) {
                 compiler = new Spin2Compiler();
             }
             else if (".c".equals(suffix)) {

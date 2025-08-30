@@ -119,12 +119,14 @@ public class EditorTab implements FindReplaceTarget {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
+            String suffix = tabItemText.substring(tabItemText.lastIndexOf('.')).toLowerCase();
+
             switch (evt.getPropertyName()) {
                 case Preferences.PROP_SPIN1_CASE_SENSITIVE_SYMBOLS:
                     tokenMarker.setCaseSensitive((Boolean) evt.getNewValue());
                     // Fall-through
                 case Preferences.PROP_SPIN1_REBUILD:
-                    if (!tabItemText.toLowerCase().endsWith(".spin2")) {
+                    if (".spin".equals(suffix) || ".pasm".equals(suffix) || ".c".equals(suffix)) {
                         scheduleCompile();
                     }
                     break;
@@ -133,7 +135,7 @@ public class EditorTab implements FindReplaceTarget {
                     tokenMarker.setCaseSensitive((Boolean) evt.getNewValue());
                     // Fall-through
                 case Preferences.PROP_SPIN2_REBUILD:
-                    if (tabItemText.toLowerCase().endsWith(".spin2") || tabItemText.toLowerCase().endsWith(".c")) {
+                    if (".spin2".equals(suffix) || ".p2asm".equals(suffix) || ".c".equals(suffix)) {
                         scheduleCompile();
                     }
                     break;
@@ -522,13 +524,14 @@ public class EditorTab implements FindReplaceTarget {
                         boolean warnUnusedMethodVariables = true;
                         boolean warnUnusedVariables = true;
 
+                        String suffix = tabItemText.substring(tabItemText.lastIndexOf('.')).toLowerCase();
                         File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
                         RootNode root = tokenMarker.getRoot();
 
                         dependencies.clear();
 
                         Compiler compiler = null;
-                        if (tabItemText.toLowerCase().endsWith(".spin")) {
+                        if (".spin".equals(suffix) || ".pasm".equals(suffix)) {
                             compiler = new Spin1Compiler(preferences.getSpin1CaseSensitiveSymbols());
                             compiler.setSourceProvider(new EditorTabSourceProvider(preferences.getSpin1LibraryPath()));
 
@@ -550,7 +553,7 @@ public class EditorTab implements FindReplaceTarget {
                             warnUnusedMethodVariables = preferences.getSpin1WarnUnusedMethodVariables();
                             warnUnusedVariables = preferences.getSpin1WarnUnusedVariables();
                         }
-                        else if (tabItemText.toLowerCase().endsWith(".spin2")) {
+                        else if (".spin2".equals(suffix) || ".p2asm".equals(suffix)) {
                             compiler = new Spin2Compiler(preferences.getSpin2CaseSensitiveSymbols());
                             compiler.setSourceProvider(new EditorTabSourceProvider(preferences.getSpin2LibraryPath()));
 
@@ -569,7 +572,7 @@ public class EditorTab implements FindReplaceTarget {
                             warnUnusedMethodVariables = preferences.getSpin2WarnUnusedMethodVariables();
                             warnUnusedVariables = preferences.getSpin2WarnUnusedVariables();
                         }
-                        else if (tabItemText.toLowerCase().endsWith(".c")) {
+                        else if (".c".equals(suffix)) {
                             for (Node node : root.getChilds()) {
                                 if (node instanceof DirectiveNode) {
                                     int index = 1;
@@ -707,17 +710,18 @@ public class EditorTab implements FindReplaceTarget {
         }
         lastModified = localFile.lastModified();
 
-        if (tabItemText.toLowerCase().endsWith(".spin")) {
+        String suffix = tabItemText.substring(tabItemText.lastIndexOf('.')).toLowerCase();
+        if (".spin".equals(suffix) || ".pasm".equals(suffix)) {
             tokenMarker = new Spin1TokenMarkerAdatper();
             tokenMarker.setCaseSensitive(preferences.getSpin1CaseSensitiveSymbols());
             editor.setHelpProvider(new EditorHelp("Spin1Instructions.xml", localFile.getParentFile(), ".spin"));
         }
-        else if (tabItemText.toLowerCase().endsWith(".spin2")) {
+        else if (".spin2".equals(suffix) || ".p2asm".equals(suffix)) {
             tokenMarker = new Spin2TokenMarkerAdatper();
             tokenMarker.setCaseSensitive(preferences.getSpin2CaseSensitiveSymbols());
             editor.setHelpProvider(new EditorHelp("Spin2Instructions.xml", localFile.getParentFile(), ".spin2"));
         }
-        else if (tabItemText.toLowerCase().endsWith(".c")) {
+        else if (".c".equals(suffix)) {
             tokenMarker = new CTokenMarkerAdatper();
             tokenMarker.setCaseSensitive(true);
             editor.setHelpProvider(new EditorHelp("Spin2CInstructions.xml", localFile.getParentFile(), ".spin2"));
@@ -856,17 +860,18 @@ public class EditorTab implements FindReplaceTarget {
         this.file = file;
         this.lastModified = file.lastModified();
 
-        if (tabItemText.toLowerCase().endsWith(".spin")) {
+        String suffix = tabItemText.substring(tabItemText.lastIndexOf('.')).toLowerCase();
+        if (".spin".equals(suffix) || ".pasm".equals(suffix)) {
             tokenMarker = new Spin1TokenMarkerAdatper();
             tokenMarker.setCaseSensitive(preferences.getSpin1CaseSensitiveSymbols());
             editor.setHelpProvider(new EditorHelp("Spin1Instructions.xml", localFile.getParentFile(), ".spin"));
         }
-        else if (tabItemText.toLowerCase().endsWith(".spin2")) {
+        else if (".spin2".equals(suffix) || ".p2asm".equals(suffix)) {
             tokenMarker = new Spin2TokenMarkerAdatper();
             tokenMarker.setCaseSensitive(preferences.getSpin2CaseSensitiveSymbols());
             editor.setHelpProvider(new EditorHelp("Spin2Instructions.xml", localFile.getParentFile(), ".spin2"));
         }
-        else if (tabItemText.toLowerCase().endsWith(".c")) {
+        else if (".c".equals(suffix)) {
             tokenMarker = new CTokenMarkerAdatper();
             tokenMarker.setCaseSensitive(true);
             editor.setHelpProvider(new EditorHelp("Spin2CInstructions.xml", localFile.getParentFile(), ".spin2"));
@@ -1220,10 +1225,11 @@ public class EditorTab implements FindReplaceTarget {
     public void formatSource() {
         Formatter formatter = null;
 
-        if (tabItemText.toLowerCase().endsWith(".spin")) {
+        String suffix = tabItemText.substring(tabItemText.lastIndexOf('.')).toLowerCase();
+        if (".spin".equals(suffix) || ".pasm".equals(suffix)) {
             formatter = new Spin1Formatter();
         }
-        else if (tabItemText.toLowerCase().endsWith(".spin2")) {
+        else if (".spin2".equals(suffix) || ".p2asm".equals(suffix)) {
             formatter = new Spin2Formatter();
         }
 

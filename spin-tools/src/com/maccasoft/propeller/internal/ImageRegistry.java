@@ -1,12 +1,11 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * All rights reserved.
  *
- * Contributors:
- *     Marco Maccaferri - initial API and implementation
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License v1.0 which accompanies this
+ * distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.internal;
@@ -106,7 +105,8 @@ public class ImageRegistry {
         fileMap.put(".lst", new FilePair("document-text.png", "blue-document-text.png"));
         fileMap.put(".o", new FilePair("document-binary.png", "blue-document-binary.png"));
         fileMap.put(".obj", new FilePair("document-binary.png", "blue-document-binary.png"));
-        fileMap.put(".p2asm", new FilePair("document-text.png", "blue-document-text.png"));
+        fileMap.put(".pasm", new FilePair("document-code.png", "blue-document-code.png"));
+        fileMap.put(".p2asm", new FilePair("document-code.png", "blue-document-code.png"));
         fileMap.put(".pdf", new FilePair("document-pdf.png", "blue-document-pdf.png"));
         fileMap.put(".png", new FilePair("document-image.png", "blue-document-image.png"));
         fileMap.put(".rom", new FilePair("document-binary.png", "blue-document-binary.png"));

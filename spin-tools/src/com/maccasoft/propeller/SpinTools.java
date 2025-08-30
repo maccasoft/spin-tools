@@ -167,10 +167,10 @@ public class SpinTools {
         "Spin2 Files"
     };
     public static final String[] filterExtensions = new String[] {
-        "*.spin;*.spin2;*.c",
+        "*.spin;*.spin2;*.c;*.pasm;*.p2asm",
         "*.c",
-        "*.spin",
-        "*.spin2"
+        "*.spin;*.pasm",
+        "*.spin2;*.p2asm"
     };
 
     final IOpenListener openListener = new IOpenListener() {
@@ -185,7 +185,7 @@ public class SpinTools {
                     return;
                 }
                 String name = fileToOpen.getName().toLowerCase();
-                if (name.endsWith(".spin") || name.endsWith(".spin2") || name.endsWith(".c")) {
+                if (name.endsWith(".spin") || name.endsWith(".pasm") || name.endsWith(".spin2") || name.endsWith(".p2asm") || name.endsWith(".c")) {
                     EditorTab editorTab = findFileEditorTab(fileToOpen);
                     if (editorTab == null) {
                         openNewTab(fileToOpen);
