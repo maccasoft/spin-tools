@@ -15,7 +15,11 @@ import java.util.Set;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
-import org.eclipse.swt.events.MouseListener;
+import org.eclipse.swt.custom.TextChangeListener;
+import org.eclipse.swt.custom.TextChangedEvent;
+import org.eclipse.swt.custom.TextChangingEvent;
+import org.eclipse.swt.events.MouseAdapter;
+import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.Color;
@@ -47,6 +51,12 @@ public class LineNumbersRuler {
     private Set<Integer> highlight = new HashSet<>();
 
     private Integer[] bookmarks = new Integer[9];
+    private BookmarksListener bookmarksListener;
+
+    public static interface BookmarksListener {
+
+        public void bookmarksChanged(Integer[] bookmarks);
+    }
 
     final PaintListener paintListener = new PaintListener() {
 
@@ -71,10 +81,69 @@ public class LineNumbersRuler {
         }
     };
 
+    final TextChangeListener textChangeListener = new TextChangeListener() {
+
+        @Override
+        public void textSet(TextChangedEvent event) {
+
+        }
+
+        @Override
+        public void textChanging(TextChangingEvent event) {
+            if (event.newLineCount != 0 || event.replaceLineCount != 0) {
+                int startLine = text.getLineAtOffset(event.start);
+
+                Set<Integer> newHighlight = new HashSet<>();
+                for (int lineNumber : highlight) {
+                    int offset = text.getOffsetAtLine(lineNumber);
+                    if (event.start <= offset) {
+                        if ((startLine + event.replaceLineCount) <= lineNumber) {
+                            newHighlight.add(lineNumber + (event.newLineCount - event.replaceLineCount));
+                        }
+                    }
+                }
+                highlight.clear();
+                highlight.addAll(newHighlight);
+
+                for (int i = 0; i < bookmarks.length; i++) {
+                    if (bookmarks[i] != null) {
+                        int offset = text.getOffsetAtLine(bookmarks[i]);
+                        if (event.start <= offset) {
+                            if ((startLine + event.replaceLineCount) > bookmarks[i]) {
+                                bookmarks[i] = null;
+                            }
+                            else {
+                                bookmarks[i] += event.newLineCount - event.replaceLineCount;
+                            }
+                        }
+                    }
+                }
+                fireBookmarksChanged(bookmarks);
+                canvas.redraw();
+            }
+        }
+
+        @Override
+        public void textChanged(TextChangedEvent event) {
+
+        }
+    };
+
     public LineNumbersRuler(Composite parent) {
         canvas = new Canvas(parent, SWT.DOUBLE_BUFFERED | SWT.NO_FOCUS);
         canvas.setLayoutData(layoutData = new GridData(SWT.FILL, SWT.FILL, false, true));
         canvas.addPaintListener(paintListener);
+        canvas.addMouseListener(new MouseAdapter() {
+
+            @Override
+            public void mouseDown(MouseEvent e) {
+                int lineNumber = text.getLineIndex(e.y);
+                toggleBookmarkAt(lineNumber);
+                fireBookmarksChanged(bookmarks);
+                canvas.redraw();
+            }
+
+        });
 
         leftMargin = 5;
         rightMargin = 5;
@@ -91,18 +160,26 @@ public class LineNumbersRuler {
     public void setText(StyledText text) {
         this.text = text;
         this.text.addPaintListener(textPaintListener);
+        this.text.getContent().addTextChangeListener(textChangeListener);
     }
 
-    public void addMouseListener(MouseListener l) {
-        canvas.addMouseListener(l);
+    public void addListener(BookmarksListener l) {
+        this.bookmarksListener = l;
     }
 
-    public void removeMouseListener(MouseListener l) {
-        canvas.removeMouseListener(l);
+    public void removeListener() {
+        this.bookmarksListener = null;
     }
 
-    public int getLineNumber(int y) {
-        return text.getLineIndex(y);
+    void fireBookmarksChanged(Integer[] bookmarks) {
+        try {
+            if (bookmarksListener != null) {
+                bookmarksListener.bookmarksChanged(bookmarks);
+            }
+        } catch (Exception e) {
+            // Do nothing
+            e.printStackTrace();
+        }
     }
 
     void onPaintControl(GC gc) {
@@ -188,6 +265,7 @@ public class LineNumbersRuler {
                 bookmarks[i] = lines[i];
             }
         }
+        canvas.redraw();
     }
 
     public Integer[] getBookmarks() {

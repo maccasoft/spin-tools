@@ -1951,17 +1951,11 @@ public class SpinTools {
                 forwardStack.clear();
             }
         });
-        editorTab.getEditor().getRuler().addMouseListener(new MouseAdapter() {
+        editorTab.getEditor().getRuler().addListener(bookmarks -> {
 
-            @Override
-            public void mouseDown(MouseEvent e) {
-                LineNumbersRuler ruler = editorTab.getEditor().getRuler();
-                int lineNumber = ruler.getLineNumber(e.y);
-                ruler.toggleBookmarkAt(lineNumber);
-                updateBookmarksMenu(ruler.getBookmarks());
-                if (editorTab.getFile() != null) {
-                    preferences.setBookmarks(editorTab.getFile(), ruler.getBookmarks());
-                }
+            updateBookmarksMenu(bookmarks);
+            if (editorTab.getFile() != null) {
+                preferences.setBookmarks(editorTab.getFile(), bookmarks);
             }
 
         });
