@@ -1365,18 +1365,18 @@ public class SourceEditor {
         else if ("light".equals(id)) {
             currentLineBackground = new Color(display, 0xE8, 0xF2, 0xFE);
 
-            styleMap.put(TokenId.CON, new TextStyle(null, null, ColorRegistry.getColor(255, 248, 192, 0)));
-            styleMap.put(TokenId.CON_ALT, new TextStyle(null, null, ColorRegistry.getColor(255, 248, 192, -6)));
-            styleMap.put(TokenId.VAR, new TextStyle(null, null, ColorRegistry.getColor(255, 223, 191, 0)));
-            styleMap.put(TokenId.VAR_ALT, new TextStyle(null, null, ColorRegistry.getColor(255, 223, 191, -6)));
-            styleMap.put(TokenId.OBJ, new TextStyle(null, null, ColorRegistry.getColor(255, 191, 191, 0)));
-            styleMap.put(TokenId.OBJ_ALT, new TextStyle(null, null, ColorRegistry.getColor(255, 191, 191, -6)));
-            styleMap.put(TokenId.PUB, new TextStyle(null, null, ColorRegistry.getColor(191, 223, 255, 0)));
-            styleMap.put(TokenId.PUB_ALT, new TextStyle(null, null, ColorRegistry.getColor(191, 223, 255, -6)));
-            styleMap.put(TokenId.PRI, new TextStyle(null, null, ColorRegistry.getColor(191, 248, 255, 0)));
-            styleMap.put(TokenId.PRI_ALT, new TextStyle(null, null, ColorRegistry.getColor(191, 248, 255, -6)));
-            styleMap.put(TokenId.DAT, new TextStyle(null, null, ColorRegistry.getColor(191, 255, 200, 0)));
-            styleMap.put(TokenId.DAT_ALT, new TextStyle(null, null, ColorRegistry.getColor(191, 255, 200, -6)));
+            styleMap.put(TokenId.CON, new TextStyle(null, null, ColorRegistry.getColor(0xFF, 0xF8, 0xC0)));
+            styleMap.put(TokenId.CON_ALT, new TextStyle(null, null, ColorRegistry.getColor(0xFD, 0xF3, 0xA8)));
+            styleMap.put(TokenId.VAR, new TextStyle(null, null, ColorRegistry.getColor(0xFF, 0xDF, 0xBF)));
+            styleMap.put(TokenId.VAR_ALT, new TextStyle(null, null, ColorRegistry.getColor(0xFD, 0xD2, 0xA7)));
+            styleMap.put(TokenId.OBJ, new TextStyle(null, null, ColorRegistry.getColor(0xFF, 0xBF, 0xBF)));
+            styleMap.put(TokenId.OBJ_ALT, new TextStyle(null, null, ColorRegistry.getColor(0xFD, 0xA7, 0xA7)));
+            styleMap.put(TokenId.PUB, new TextStyle(null, null, ColorRegistry.getColor(0xBF, 0xDF, 0xFF)));
+            styleMap.put(TokenId.PUB_ALT, new TextStyle(null, null, ColorRegistry.getColor(0xA7, 0xD2, 0xFD)));
+            styleMap.put(TokenId.PRI, new TextStyle(null, null, ColorRegistry.getColor(0xBF, 0xF8, 0xFF)));
+            styleMap.put(TokenId.PRI_ALT, new TextStyle(null, null, ColorRegistry.getColor(0xA7, 0xF3, 0xFD)));
+            styleMap.put(TokenId.DAT, new TextStyle(null, null, ColorRegistry.getColor(0xBF, 0xFF, 0xC8)));
+            styleMap.put(TokenId.DAT_ALT, new TextStyle(null, null, ColorRegistry.getColor(0xA7, 0xFD, 0xB3)));
 
             styleMap.put(TokenId.COMMENT, new TextStyle(font, new Color(0x7E, 0x7E, 0x7E), null));
             styleMap.put(TokenId.SECTION, new TextStyle(fontBold, new Color(0x00, 0x00, 0xA0), null));

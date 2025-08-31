@@ -1955,10 +1955,8 @@ public abstract class SourceTokenMarker {
         }
         else {
             result = blockToggle[0] ? TokenId.CON_ALT : TokenId.CON;
-            if (node != null && node.getTokenCount() != 0) {
-                blockToggle[0] = !blockToggle[0];
-                blockToggle[1] = blockToggle[2] = blockToggle[3] = blockToggle[4] = blockToggle[5] = false;
-            }
+            blockToggle[0] = !blockToggle[0];
+            blockToggle[1] = blockToggle[2] = blockToggle[3] = blockToggle[4] = blockToggle[5] = false;
         }
 
         return result;

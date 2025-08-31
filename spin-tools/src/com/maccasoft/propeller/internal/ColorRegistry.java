@@ -1,12 +1,11 @@
 /*
  * Copyright (c) 2021-25 Marco Maccaferri and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * All rights reserved.
  *
- * Contributors:
- *     Marco Maccaferri - initial API and implementation
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License v1.0 which accompanies this
+ * distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.internal;
@@ -49,9 +48,27 @@ public class ColorRegistry {
     }
 
     public static Color getColor(int r, int g, int b, int percent) {
-        r += (int) (r / 100.0 * percent);
-        g += (int) (g / 100.0 * percent);
-        b += (int) (b / 100.0 * percent);
+        r += r * percent / 100;
+        if (r < 0) {
+            r = 0;
+        }
+        if (r > 255) {
+            r = 255;
+        }
+        g += g * percent / 100;
+        if (g < 0) {
+            g = 0;
+        }
+        if (g > 255) {
+            g = 255;
+        }
+        b += b * percent / 100;
+        if (b < 0) {
+            b = 0;
+        }
+        if (b > 255) {
+            b = 255;
+        }
         return getColor(new RGB(r, g, b));
     }
 
@@ -65,28 +82,7 @@ public class ColorRegistry {
     }
 
     public static Color getDimColor(Color color, int percent) {
-        int r = color.getRed() + (int) (color.getRed() / 100.0 * percent);
-        if (r < 0) {
-            r = 0;
-        }
-        if (r > 255) {
-            r = 255;
-        }
-        int g = color.getGreen() + (int) (color.getGreen() / 100.0 * percent);
-        if (g < 0) {
-            g = 0;
-        }
-        if (g > 255) {
-            g = 255;
-        }
-        int b = color.getBlue() + (int) (color.getBlue() / 100.0 * percent);
-        if (b < 0) {
-            b = 0;
-        }
-        if (b > 255) {
-            b = 255;
-        }
-        return getColor(r, g, b);
+        return getColor(color.getRed(), color.getGreen(), color.getBlue(), percent);
     }
 
 }
