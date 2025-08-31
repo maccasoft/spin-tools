@@ -18,15 +18,19 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.ITreeViewerListener;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
@@ -49,7 +53,6 @@ import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.MessageBox;
 
 import com.maccasoft.propeller.Preferences.SpinFormatPreferences;
 import com.maccasoft.propeller.SourceTokenMarker.TokenId;
@@ -105,7 +108,7 @@ public class EditorTab implements FindReplaceTarget {
     AtomicBoolean threadRunning = new AtomicBoolean(false);
     AtomicBoolean pendingCompile = new AtomicBoolean(false);
 
-    Set<File> dependencies = new HashSet<>();
+    Map<File, Long> dependencies = new HashMap<>();
 
     boolean errors;
     List<CompilerException> messages = new ArrayList<CompilerException>();
@@ -160,7 +163,11 @@ public class EditorTab implements FindReplaceTarget {
                 }
                 return;
             }
-            if (dependencies.contains(new File(evt.getPropertyName()))) {
+            File dependFile = new File(evt.getPropertyName());
+            if (dependencies.containsKey(dependFile)) {
+                if (dependFile.exists()) {
+                    dependencies.put(dependFile, file.lastModified());
+                }
                 scheduleCompile();
                 return;
             }
@@ -347,6 +354,25 @@ public class EditorTab implements FindReplaceTarget {
 
     };
 
+    private FocusAdapter focusListener = new FocusAdapter() {
+
+        @Override
+        public void focusGained(FocusEvent e) {
+            e.display.asyncExec(new Runnable() {
+
+                @Override
+                public void run() {
+                    if (!e.widget.isDisposed()) {
+                        checkExternalContentUpdate();
+                        scheduleExternalUpdateCompile();
+                    }
+                }
+
+            });
+        }
+
+    };
+
     class EditorTabSourceProvider extends SourceProvider {
 
         File[] searchPaths;
@@ -374,7 +400,7 @@ public class EditorTab implements FindReplaceTarget {
                 if (!collectedSearchPaths.contains(parent)) {
                     collectedSearchPaths.add(parent);
                 }
-                dependencies.add(localFile);
+                dependencies.put(localFile, localFile.lastModified());
                 return localFile;
             }
 
@@ -385,7 +411,7 @@ public class EditorTab implements FindReplaceTarget {
                     if (!collectedSearchPaths.contains(parent)) {
                         collectedSearchPaths.add(parent);
                     }
-                    dependencies.add(localFile);
+                    dependencies.put(localFile, localFile.lastModified());
                     return localFile;
                 }
             }
@@ -393,10 +419,13 @@ public class EditorTab implements FindReplaceTarget {
             for (int i = 0; i < searchPaths.length; i++) {
                 localFile = new File(searchPaths[i], name);
                 if (localFile.exists()) {
-                    dependencies.add(localFile);
+                    dependencies.put(localFile, localFile.lastModified());
                     return localFile;
                 }
             }
+
+            localFile = file != null ? new File(file.getParentFile(), name) : new File(name);
+            dependencies.put(localFile, null);
 
             return null;
         }
@@ -748,14 +777,7 @@ public class EditorTab implements FindReplaceTarget {
             }
 
         });
-        editor.getStyledText().addFocusListener(new FocusAdapter() {
-
-            @Override
-            public void focusGained(FocusEvent e) {
-                checkExternalContentUpdate();
-            }
-
-        });
+        editor.getStyledText().addFocusListener(focusListener);
 
         sourcePool.addPropertyChangeListener(sourcePoolChangeListener);
         preferences.addPropertyChangeListener(preferencesChangeListener);
@@ -1255,7 +1277,7 @@ public class EditorTab implements FindReplaceTarget {
     }
 
     public Set<File> getDependencies() {
-        return dependencies;
+        return new HashSet<>(dependencies.keySet());
     }
 
     public ObjectTree getObjectTree() {
@@ -1321,20 +1343,51 @@ public class EditorTab implements FindReplaceTarget {
     }
 
     public void checkExternalContentUpdate() {
-        File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
-        if (localFile.lastModified() > lastModified) {
-            int style = SWT.APPLICATION_MODAL | SWT.ICON_QUESTION | SWT.YES | SWT.NO;
-            MessageBox messageBox = new MessageBox(editor.getStyledText().getShell(), style);
-            messageBox.setText(SpinTools.APP_TITLE);
-            messageBox.setMessage("Content was modified outside editor.  Reload?");
-            if (messageBox.open() == SWT.YES) {
-                try {
-                    setEditorText(FileUtils.loadFromFile(file));
-                } catch (Exception e) {
-                    e.printStackTrace();
+        editor.getStyledText().removeFocusListener(focusListener);
+        try {
+            File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
+            if (localFile.lastModified() != lastModified) {
+                MessageDialog dlg =
+                    new MessageDialog(editor.getStyledText().getShell(),
+                        SpinTools.APP_TITLE, null,
+                        "Content was modified outside editor.  Reload?",
+                        MessageDialog.INFORMATION,
+                        0, IDialogConstants.YES_LABEL, IDialogConstants.NO_LABEL);
+                if (dlg.open() == MessageDialog.OK) {
+                    try {
+                        setEditorText(FileUtils.loadFromFile(file));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                lastModified = localFile.lastModified();
+            }
+        } finally {
+            editor.getStyledText().addFocusListener(focusListener);
+        }
+    }
+
+    void scheduleExternalUpdateCompile() {
+        boolean wasUpdated = false;
+
+        for (Entry<File, Long> entry : new HashMap<>(dependencies).entrySet()) {
+            File file = entry.getKey();
+            if (!sourcePool.containsSource(file)) {
+                if (!file.exists()) {
+                    wasUpdated = true;
+                }
+                else {
+                    Long lastModified = entry.getValue();
+                    if (lastModified == null || file.lastModified() != lastModified) {
+                        wasUpdated = true;
+                        dependencies.put(file, file.lastModified());
+                    }
                 }
             }
-            lastModified = localFile.lastModified();
+        }
+
+        if (wasUpdated) {
+            scheduleCompile();
         }
     }
 

@@ -48,4 +48,8 @@ public class SourcePool {
         changeSupport.firePropertyChange(key.getAbsolutePath(), oldText, null);
     }
 
+    public boolean containsSource(File key) {
+        return sources.containsKey(key);
+    }
+
 }
