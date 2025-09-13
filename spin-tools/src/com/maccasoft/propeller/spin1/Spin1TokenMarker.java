@@ -695,33 +695,31 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                 }
                 if (id == null && dot == -1) {
                     int offset = 0;
-                    String s = null;
-                    if (token.getText().startsWith("@@@")) {
-                        s = token.getText().substring("@@@".length());
+                    String s = token.getText();
+                    if (s.startsWith("@@@")) {
+                        s = s.substring("@@@".length());
                         tokens.add(new TokenMarker(token.start, token.start + 2, TokenId.OPERATOR));
                         offset = 3;
                     }
-                    else if (token.getText().startsWith("@@")) {
-                        s = token.getText().substring("@@".length());
+                    else if (s.startsWith("@@")) {
+                        s = s.substring("@@".length());
                         tokens.add(new TokenMarker(token.start, token.start + 1, TokenId.OPERATOR));
                         offset = 2;
                     }
-                    else if (token.getText().startsWith("@")) {
-                        s = token.getText().substring("@".length());
+                    else if (s.startsWith("@")) {
+                        s = s.substring("@".length());
                         tokens.add(new TokenMarker(token.start, token.start, TokenId.OPERATOR));
                         offset = 1;
                     }
-                    if (s != null) {
-                        id = locals.get(s);
-                        if (id == null) {
-                            id = symbols.get(s);
-                        }
-                        if (id == null) {
-                            id = externals.get(s);
-                        }
-                        if (id != null) {
-                            tokens.add(new TokenMarker(token.start + offset, token.stop, id));
-                        }
+                    id = locals.get(s);
+                    if (id == null) {
+                        id = symbols.get(s);
+                    }
+                    if (id == null) {
+                        id = externals.get(s);
+                    }
+                    if (id != null) {
+                        tokens.add(new TokenMarker(token.start + offset, token.stop, id));
                     }
                 }
                 else if (id == null && dot != -1) {
