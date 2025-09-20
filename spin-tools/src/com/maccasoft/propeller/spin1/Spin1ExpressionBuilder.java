@@ -26,6 +26,7 @@ import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.Decod;
 import com.maccasoft.propeller.expressions.Defined;
 import com.maccasoft.propeller.expressions.Divide;
+import com.maccasoft.propeller.expressions.Encod;
 import com.maccasoft.propeller.expressions.Equals;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.GreaterOrEquals;
@@ -118,6 +119,7 @@ public class Spin1ExpressionBuilder {
         unary.add("||");
         unary.add("~~");
         unary.add("|<");
+        unary.add(">|");
         unary.add("^^");
     }
 
@@ -228,7 +230,7 @@ public class Spin1ExpressionBuilder {
     }
 
     Expression parseLevel(Expression left, int level) {
-        for (;;) {
+        for (; ; ) {
             Token token = peek();
             if (token == null) {
                 return left;
@@ -241,7 +243,7 @@ public class Spin1ExpressionBuilder {
             token = next();
 
             Expression right = parseAtom();
-            for (;;) {
+            for (; ; ) {
                 Token nextToken = peek();
                 if (nextToken == null) {
                     break;
@@ -368,7 +370,9 @@ public class Spin1ExpressionBuilder {
                 case "!":
                     return new Not(parseAtom());
                 case "|<":
-                    return new Decod(parseAtom());
+                    return new Decod(parseAtom(), false);
+                case ">|":
+                    return new Encod(parseAtom(), false);
                 case "||":
                     return new Abs(parseAtom());
                 case "^^":

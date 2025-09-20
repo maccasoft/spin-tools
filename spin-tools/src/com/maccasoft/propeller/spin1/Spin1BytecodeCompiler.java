@@ -27,6 +27,7 @@ import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.DataVariable;
 import com.maccasoft.propeller.expressions.Decod;
 import com.maccasoft.propeller.expressions.Divide;
+import com.maccasoft.propeller.expressions.Encod;
 import com.maccasoft.propeller.expressions.Equals;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.GreaterOrEquals;
@@ -1240,7 +1241,15 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 }
                 throw new RuntimeException("unary operator with " + node.getChildCount() + " arguments");
             case "|<":
-                return new Decod(buildConstantExpression(context, node.getChild(0), force));
+                if (node.getChildCount() == 1) {
+                    return new Decod(buildConstantExpression(context, node.getChild(0), force), false);
+                }
+                throw new RuntimeException("unary operator with " + node.getChildCount() + " arguments");
+            case ">|":
+                if (node.getChildCount() == 1) {
+                    return new Encod(buildConstantExpression(context, node.getChild(0), force), false);
+                }
+                throw new RuntimeException("unary operator with " + node.getChildCount() + " arguments");
 
             case "#>":
                 return new LimitMin(buildConstantExpression(context, node.getChild(0), force), buildConstantExpression(context, node.getChild(1), force));

@@ -301,7 +301,7 @@ public class Spin2ExpressionBuilder {
     }
 
     Expression parseLevel(Expression left, int level) {
-        for (;;) {
+        for (; ; ) {
             Token token = peek();
             if (token == null) {
                 return left;
@@ -314,7 +314,7 @@ public class Spin2ExpressionBuilder {
             token = next();
 
             Expression right = parseAtom();
-            for (;;) {
+            for (; ; ) {
                 Token nextToken = peek();
                 if (nextToken == null) {
                     break;
@@ -513,9 +513,9 @@ public class Spin2ExpressionBuilder {
                 case "ABS":
                     return new Abs(parseAtom());
                 case "ENCOD":
-                    return new Encod(parseAtom());
+                    return new Encod(parseAtom(), true);
                 case "DECOD":
-                    return new Decod(parseAtom());
+                    return new Decod(parseAtom(), true);
                 case "BMASK":
                     return new Bmask(parseAtom());
                 case "ONES":

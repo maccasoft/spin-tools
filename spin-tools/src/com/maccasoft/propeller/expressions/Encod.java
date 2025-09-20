@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -12,8 +12,11 @@ package com.maccasoft.propeller.expressions;
 
 public class Encod extends UnaryOperator {
 
-    public Encod(Expression term) {
+    boolean p2 = false;
+
+    public Encod(Expression term, boolean p2) {
         super(term);
+        this.p2 = p2;
     }
 
     @Override
@@ -29,7 +32,7 @@ public class Encod extends UnaryOperator {
 
     @Override
     public String getLexeme() {
-        return "encod";
+        return p2 ? "encod " : ">|";
     }
 
 }

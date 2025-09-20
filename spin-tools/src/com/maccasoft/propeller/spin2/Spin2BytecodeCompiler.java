@@ -2310,12 +2310,12 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 if (node.getChildCount() != 1) {
                     throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
                 }
-                return new Encod(buildConstantExpression(context, node.getChild(0), registerConstant));
+                return new Encod(buildConstantExpression(context, node.getChild(0), registerConstant), true);
             case "DECOD":
                 if (node.getChildCount() != 1) {
                     throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
                 }
-                return new Decod(buildConstantExpression(context, node.getChild(0), registerConstant));
+                return new Decod(buildConstantExpression(context, node.getChild(0), registerConstant), true);
             case "BMASK":
                 if (node.getChildCount() != 1) {
                     throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");

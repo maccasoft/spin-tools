@@ -2293,6 +2293,44 @@ class Spin1ObjectCompilerTest {
     }
 
     @Test
+    void testConstantUnaryExpressions() throws Exception {
+        String text = ""
+            + "CON\n"
+            + "    VAL = 1\n"
+            + "\n"
+            + "    DEFA = -VAL\n"
+            + "    DEFB = |< VAL\n"
+            + "    DEFC = >| VAL\n"
+            + "\n"
+            + "PUB main | a\n"
+            + "\n"
+            + "    a := DEFA\n"
+            + "    a := DEFB\n"
+            + "    a := DEFC\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object \"test.spin\" header (var size 0)\n"
+            + "00000 00000       10 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
+            + "' PUB main | a\n"
+            + "'     a := DEFA\n"
+            + "00008 00008       34             CONSTANT (-VAL)\n"
+            + "00009 00009       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     a := DEFB\n"
+            + "0000A 0000A       37 00          CONSTANT (|<VAL)\n"
+            + "0000C 0000C       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     a := DEFC\n"
+            + "0000D 0000D       35             CONSTANT (>|VAL)\n"
+            + "0000E 0000E       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "0000F 0000F       32             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testUnaryExpressions() throws Exception {
         String text = ""
             + "PUB main | a, b\n"
@@ -2300,14 +2338,18 @@ class Spin1ObjectCompilerTest {
             + "    a := -b\n"
             + "    a := ?b\n"
             + "    a := b?\n"
+            + "    a := |< b\n"
+            + "    a := >| b\n"
             + "    a++\n"
             + "    --a\n"
+            + "    |<a\n"
+            + "    >|a\n"
             + "\n"
             + "";
 
         Assertions.assertEquals(""
             + "' Object \"test.spin\" header (var size 0)\n"
-            + "00000 00000       18 00          Object size\n"
+            + "00000 00000       20 00          Object size\n"
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004       08 00 08 00    Function main @ $0008 (local size 8)\n"
@@ -2324,14 +2366,27 @@ class Spin1ObjectCompilerTest {
             + "0000E 0000E       6A             VAR_MODIFY LONG DBASE+$0008 (short)\n"
             + "0000F 0000F       8C             RANDOM_REVERSE\n"
             + "00010 00010       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     a := |< b\n"
+            + "00011 00011       68             VAR_READ LONG DBASE+$0008 (short)\n"
+            + "00012 00012       F3             DECODE\n"
+            + "00013 00013       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     a := >| b\n"
+            + "00014 00014       68             VAR_READ LONG DBASE+$0008 (short)\n"
+            + "00015 00015       F1             ENCODE\n"
+            + "00016 00016       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
             + "'     a++\n"
-            + "00011 00011       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
-            + "00012 00012       2E             POST_INC\n"
+            + "00017 00017       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
+            + "00018 00018       2E             POST_INC\n"
             + "'     --a\n"
-            + "00013 00013       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
-            + "00014 00014       36             PRE_DEC\n"
-            + "00015 00015       32             RETURN\n"
-            + "00016 00016       00 00          Padding\n"
+            + "00019 00019       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
+            + "0001A 0001A       36             PRE_DEC\n"
+            + "'     |<a\n"
+            + "0001B 0001B       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
+            + "0001C 0001C       53             DECODE\n"
+            + "'     >|a\n"
+            + "0001D 0001D       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
+            + "0001E 0001E       51             ENCODE\n"
+            + "0001F 0001F       32             RETURN\n"
             + "", compile(text));
     }
 

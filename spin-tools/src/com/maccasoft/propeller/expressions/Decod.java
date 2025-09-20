@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -12,8 +12,11 @@ package com.maccasoft.propeller.expressions;
 
 public class Decod extends UnaryOperator {
 
-    public Decod(Expression term) {
+    boolean p2 = false;
+
+    public Decod(Expression term, boolean p2) {
         super(term);
+        this.p2 = p2;
     }
 
     @Override
@@ -28,7 +31,7 @@ public class Decod extends UnaryOperator {
 
     @Override
     public String getLexeme() {
-        return "|<";
+        return p2 ? "decod " : "|<";
     }
 
 }
