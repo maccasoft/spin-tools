@@ -173,7 +173,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                             os.write(getString(child.getToken()).getBytes());
                             isByte = true;
                         }
-                        else {
+                        else if (child.getChildCount() == 0) {
                             try {
                                 Expression expression = buildConstantExpression(context, child);
                                 if (expression.isConstant()) {
