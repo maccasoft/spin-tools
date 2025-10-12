@@ -1173,45 +1173,33 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
             if (!iter.hasNext()) {
                 logMessage(new CompilerException("expecting return variable name after '" + token.getText() + "'", token));
             }
-            while (iter.hasNext()) {
-                Token identifier = iter.next();
-                if (Spin1Model.isType(identifier.getText())) {
-                    logMessage(new CompilerException("type not allowed", identifier));
-                }
-                else if (identifier.type == Token.KEYWORD) {
-                    if (!"RESULT".equalsIgnoreCase(identifier.getText())) {
-                        Expression expression = localScope.getLocalSymbol(identifier.getText());
-                        if (expression instanceof LocalVariable) {
-                            logMessage(new CompilerException("symbol '" + identifier.getText() + "' already defined", identifier));
-                        }
-                        else {
-                            if (expression != null) {
-                                logMessage(new CompilerException(CompilerException.WARNING, "return variable '" + identifier.getText() + "' hides global variable", identifier));
-                            }
-                            LocalVariable var = method.addReturnVariable(identifier.getText());
-                            var.setData(identifier);
-                        }
-                    }
-                }
-                else {
-                    logMessage(new CompilerException("invalid identifier", identifier));
-                }
-
-                if (iter.hasNext()) {
-                    if ("|".equals(iter.peekNext().getText())) {
-                        break;
-                    }
-                    token = iter.next();
-                    if (",".equals(token.getText())) {
-                        if (!iter.hasNext()) {
-                            logMessage(new CompilerException("expecting identifier after ','", token));
-                            return method;
-                        }
+            Token identifier = iter.next();
+            if (Spin1Model.isType(identifier.getText())) {
+                logMessage(new CompilerException("type not allowed", identifier));
+            }
+            else if (identifier.type == Token.KEYWORD) {
+                if (!"RESULT".equalsIgnoreCase(identifier.getText())) {
+                    Expression expression = localScope.getLocalSymbol(identifier.getText());
+                    if (expression instanceof LocalVariable) {
+                        logMessage(new CompilerException("symbol '" + identifier.getText() + "' already defined", identifier));
                     }
                     else {
-                        logMessage(new CompilerException("expecting ',' or ':'", token));
-                        return method;
+                        if (expression != null) {
+                            logMessage(new CompilerException(CompilerException.WARNING, "return variable '" + identifier.getText() + "' hides global variable", identifier));
+                        }
+                        LocalVariable var = method.addReturnVariable(identifier.getText());
+                        var.setData(identifier);
                     }
+                }
+            }
+            else {
+                logMessage(new CompilerException("invalid identifier", identifier));
+            }
+
+            if (iter.hasNext()) {
+                if (!"|".equals(iter.peekNext().getText())) {
+                    logMessage(new CompilerException("expecting '|' or end of line", iter.peekNext()));
+                    return method;
                 }
             }
         }
