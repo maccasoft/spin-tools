@@ -1366,6 +1366,58 @@ class Spin1CompilerTest {
             + "", compile("main.spin", sources));
     }
 
+    @Test
+    void testCognewInterpreter() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin", ""
+            + "OBJ\n"
+            + "\n"
+            + "    o : \"text2\"\n"
+            + "\n"
+            + "PUB main | a\n"
+            + "\n"
+            + "    cognew(o.thread(1,2), @a)\n"
+            + "\n"
+            + "");
+        sources.put("text2.spin", ""
+            + "PUB thread(p1,p2)\n"
+            + "\n"
+            + "    p1 := 1\n"
+            + "\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object \"main.spin\" header (var size 0)\n"
+            + "00010 00000       18 00          Object size\n"
+            + "00012 00002       02             Method count + 1\n"
+            + "00013 00003       01             Object count\n"
+            + "00014 00004       0C 00 04 00    Function main @ $000C (local size 4)\n"
+            + "00018 00008       18 00 00 00    Object \"text2.spin\" @ $0018 (variables @ $0000)\n"
+            + "' PUB main | a\n"
+            + "'     cognew(o.thread(1,2), @a)\n"
+            + "0001C 0000C       34             CONSTANT (-1)\n"
+            + "0001D 0000D       00             ANCHOR\n"
+            + "0001E 0000E       36             CONSTANT (1)\n"
+            + "0001F 0000F       37 00          CONSTANT (2)\n"
+            + "00021 00011       06 02 01       CALL_OBJ_SUB (2.0)\n"
+            + "00024 00014       67             VAR_ADDRESS DBASE+$0004 (short)\n"
+            + "00025 00015       2C             COGNEW\n"
+            + "00026 00016       32             RETURN\n"
+            + "00027 00017       00             Padding\n"
+            + "' Object \"text2.spin\" header (var size 0)\n"
+            + "00028 00000       0C 00          Object size\n"
+            + "0002A 00002       02             Method count + 1\n"
+            + "0002B 00003       00             Object count\n"
+            + "0002C 00004       08 00 00 00    Function thread @ $0008 (local size 0)\n"
+            + "' PUB thread(p1,p2)\n"
+            + "'     p1 := 1\n"
+            + "00030 00008       36             CONSTANT (1)\n"
+            + "00031 00009       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "00032 0000A       32             RETURN\n"
+            + "00033 0000B       00             Padding\n"
+            + "", compile("main.spin", sources));
+    }
+
     String compile(String rootFile, Map<String, String> sources) throws Exception {
         return compile(rootFile, sources, false);
     }
