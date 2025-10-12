@@ -279,6 +279,9 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                     throw new RuntimeException("expected " + 2 + " argument(s), found " + node.getChildCount());
                 }
                 Expression expression = context.getLocalSymbol(node.getChild(0).getText());
+                if (expression == null) {
+                    throw new CompilerException("invalid argument " + node.getChild(0).getText(), node.getChild(0).getToken());
+                }
                 if (expression instanceof Method) {
                     Spin1StatementNode methodNode = node.getChild(0);
                     Spin1Method calledMethod = (Spin1Method) expression.getData(Spin1Method.class.getName());

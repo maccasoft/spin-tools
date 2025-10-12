@@ -307,7 +307,6 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
                         try {
                             scope.addSymbol(method.getLabel(), exp);
-                            scope.addSymbol("@" + method.getLabel(), exp);
                             publicSymbols.put(method.getLabel(), exp);
                         } catch (Exception e) {
                             logMessage(new CompilerException(e.getMessage(), node));
@@ -342,7 +341,6 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
                         try {
                             scope.addSymbol(method.getLabel(), exp);
-                            scope.addSymbol("@" + method.getLabel(), exp);
                         } catch (Exception e) {
                             logMessage(new CompilerException(e.getMessage(), node));
                         }
