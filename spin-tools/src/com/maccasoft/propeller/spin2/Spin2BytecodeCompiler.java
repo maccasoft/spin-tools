@@ -686,17 +686,6 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     source.add(new Bytecode(context, push ? Spin2Bytecode.bc_coginit_push : Spin2Bytecode.bc_coginit, node.getText().toUpperCase()));
                     node.setReturnLongs(push ? 1 : 0);
                 }
-                else if ("COGNEW".equalsIgnoreCase(node.getText())) {
-                    if (node.getChildCount() != 2) {
-                        throw new RuntimeException("expected " + 2 + " argument(s), found " + node.getChildCount());
-                    }
-                    source.add(new Constant(context, new NumberLiteral(16)));
-                    for (int i = 0; i < node.getChildCount(); i++) {
-                        source.addAll(compileBytecodeExpression(context, method, node.getChild(i), true));
-                    }
-                    source.add(new Bytecode(context, push ? Spin2Bytecode.bc_coginit_push : Spin2Bytecode.bc_coginit, node.getText().toUpperCase()));
-                    node.setReturnLongs(push ? 1 : 0);
-                }
                 else if ("COGSPIN".equalsIgnoreCase(node.getText())) {
                     if (node.getChildCount() != 3) {
                         throw new RuntimeException("expected " + 3 + " argument(s), found " + node.getChildCount());
