@@ -422,6 +422,10 @@ public class Spin2Bytecode {
     public static final int bc_taskid = 0xE0;
     public static final int bc_task_return = 0xE2;
 
+    public static final int bc_movbyts = 0xE4;
+    public static final int bc_endianl = 0xE6;
+    public static final int bc_endianw = 0xE8;
+
     public static class Descriptor {
         public byte[] code;
         public int parameters;
@@ -546,6 +550,10 @@ public class Spin2Bytecode {
         descriptors.put("TASKCONT", new Descriptor(bc_hub_bytecode, bc_taskcont, 1, 0));
         descriptors.put("TASKCHK", new Descriptor(bc_hub_bytecode, bc_taskchk, 1, 1));
         descriptors.put("TASKID", new Descriptor(bc_hub_bytecode, bc_taskid, 0, 1));
+
+        descriptors.put("MOVBYTS", new Descriptor(bc_hub_bytecode, bc_movbyts, 2, 1));
+        descriptors.put("ENDIANL", new Descriptor(bc_hub_bytecode, bc_endianl, 1, 1));
+        descriptors.put("ENDIANW", new Descriptor(bc_hub_bytecode, bc_endianw, 1, 1));
     }
 
     public static Descriptor getDescriptor(String s) {

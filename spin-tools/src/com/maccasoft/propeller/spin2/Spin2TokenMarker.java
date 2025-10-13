@@ -146,6 +146,10 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         keywords.put("TASKCHK", TokenId.FUNCTION);
         keywords.put("TASKID", TokenId.FUNCTION);
 
+        keywords.put("MOVBYTS", TokenId.FUNCTION);
+        keywords.put("ENDIANL", TokenId.FUNCTION);
+        keywords.put("ENDIANW", TokenId.FUNCTION);
+
         keywords.put("BYTECODE", TokenId.FUNCTION);
 
         keywords.put("NOT", TokenId.KEYWORD);

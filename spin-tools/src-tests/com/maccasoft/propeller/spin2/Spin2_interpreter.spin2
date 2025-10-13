@@ -1,7 +1,7 @@
 'TESTT add registers stack_start (on launch) and stack_max (on call or return) to track stack size for allocation need
 
 '******************************************
-'*  Spin2 Interpreter - v51 - 2025.04.02  *
+'*  Spin2 Interpreter - v52 - 2025.09.28  *
 '******************************************
 '
 CON     bc_setup_reg_1D8_1F8    = $B0
@@ -137,6 +137,10 @@ bc_taskcont     word    @taskctrl_      'TASKCONT(task)                         
 bc_taskchk      word    @taskctrl_      'TASKCHK(task)                          $DE
 bc_taskid       word    @taskid_        'TASKID()                       (push)  $E0
 bc_task_return  word    @task_return_   'task return, stops task or cog         $E2
+
+bc_movbyts      word    @movbyts_       'MOVBYTS(long,pattern)          (push)  $E4     miscellaneous routines
+bc_endianl      word    @endianl_       'ENDIANL(long)                  (push)  $E6
+bc_endianw      word    @endianw_       'ENDIANW(word)                  (push)  $E8
 
                 alignl                  'long-align for rest of interpreter
 '
@@ -2458,9 +2462,33 @@ pinclear_       fltl    x                       'float pin to put smart pin in r
         _ret_   popa    x                       'get top of stack
 '
 '
+' MOVBYTS(long,pattern)
+'
+movbyts_        mov     w,x                     'get pattern into w
+                popa    x                       'pop long into top of stack
+        _ret_   movbyts x,w                     'do MOVBYTS
+'
+'
+' ENDIANL(long)
+' ENDIANW(word)
+'
+endianw_        shl     x,#16                   'for ENDIANW, shift word up and clear lower word
+endianl_ _ret_  movbyts x,#%%0123               'get reverse-endian word/long
+'
+'
 '************************************************
 '*  Interpreter - floating-point hub bytecodes  *
 '************************************************
+'
+' Things to add:
+'
+'       FROUND / FTRUNC
+'       #>. / <#.
+'       SIN / ASIN
+'       COS / ACOS
+'       TAN / ATAN
+'
+
 '
 '
 ' FLOAT(integer)        integer ma --> float ma

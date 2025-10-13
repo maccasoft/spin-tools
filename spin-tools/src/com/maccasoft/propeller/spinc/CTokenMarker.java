@@ -567,6 +567,10 @@ public class CTokenMarker extends SourceTokenMarker {
         spin2Functions.put("taskchk", TokenId.FUNCTION);
         spin2Functions.put("taskid", TokenId.FUNCTION);
 
+        spin2Functions.put("movbyts", TokenId.FUNCTION);
+        spin2Functions.put("endianl", TokenId.FUNCTION);
+        spin2Functions.put("endianw", TokenId.FUNCTION);
+
         spin2Functions.put("abs", TokenId.FUNCTION);
         spin2Functions.put("sqrt", TokenId.FUNCTION);
         spin2Functions.put("qlog", TokenId.FUNCTION);
