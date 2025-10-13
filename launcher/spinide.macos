@@ -4,7 +4,7 @@ EXEDIR="$(dirname -- "$(readlink -f -- "${0}")" )"
 
 if [ -x "$EXEDIR/Spin Tools IDE.app" ]; then
     for LIB in \
-        "$EXEDIR/Spin Tools IDE.app"/Contents/MacOS/lib/*.jar \
+        "$EXEDIR/Spin Tools IDE.app"/Contents/Resources/*.jar \
         ;
     do
         CLASSPATH="${CLASSPATH}:${LIB}"
@@ -13,7 +13,7 @@ if [ -x "$EXEDIR/Spin Tools IDE.app" ]; then
     APPDIR=EXEDIR
 else
     for LIB in \
-        "$EXEDIR"/lib/*.jar \
+        "$(dirname -- "$EXEDIR")"/Resources/*.jar \
         ;
     do
         CLASSPATH="${CLASSPATH}:${LIB}"

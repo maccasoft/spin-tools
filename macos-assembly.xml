@@ -8,7 +8,7 @@
     <baseDirectory>spin-tools</baseDirectory>
     <dependencySets>
         <dependencySet>
-            <outputDirectory>Spin Tools IDE.app/Contents/MacOS/lib</outputDirectory>
+            <outputDirectory>Spin Tools IDE.app/Contents/Resources</outputDirectory>
         </dependencySet>
     </dependencySets>
     <files>

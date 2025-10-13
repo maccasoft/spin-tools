@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Marco Maccaferri and others.
+ * Copyright (c) 2021-2025 Marco Maccaferri and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -31,7 +31,6 @@ static const char * classpath_separator = ";";
 #else
 static const char * classpath_separator = ":";
 #endif
-static const char * lib_folder = "lib";
 
 static char exe_path[PATH_MAX];
 static char app_root[PATH_MAX];
@@ -59,65 +58,69 @@ int main(int argc, char * argv[])
 #if defined(__MINGW64__) ||  defined(__MINGW32__)
     char * cwd_path = getcwd(NULL, 0);
     if (cwd_path == NULL) {
-        printf("%s\n", strerror(errno));
+        fprintf(stderr, "%s\n", strerror(errno));
         exit(1);
     }
 
     ptr = _fullpath(app_root, argv[0], sizeof(app_root) - 1);
     strcpy(exe_path, ptr);
+
     ptr = strrchr(app_root, '\\');
     if (ptr != NULL) {
-        *(ptr + 1) = '\0';
+        *ptr = '\0';
     }
-#else
+
+    strcpy(jvm_path, app_root);
+    strcat(jvm_path, "/java/bin");
+    chdir(jvm_path);
+    strcat(jvm_path, "/server/jvm.dll");
+
+    strcpy(lib_path, app_root);
+    strcat(lib_path, "/lib");
+#elif defined(__APPLE__)
     ptr = realpath(argv[0], app_root);
     if (ptr == NULL) {
-        printf("%s\n", strerror(errno));
+        fprintf(stderr, "%s\n", strerror(errno));
         exit(1);
     }
     strcpy(exe_path, ptr);
-#endif
+
     ptr = strrchr(app_root, '/');
     if (ptr != NULL) {
-        *(ptr + 1) = '\0';
+        *ptr = '\0';
     }
-    //printf("app_root = %s\n", app_root);
+    ptr = strstr(app_root, "/Spin Tools IDE.app");
+    if (ptr != NULL) {
+        *ptr = '\0';
+    }
 
     strcpy(jvm_path, app_root);
-#if defined(__MINGW64__) ||  defined(__MINGW32__)
-    strcat(jvm_path, "java/bin");
-    chdir(jvm_path);
-    strcat(jvm_path, "/server/jvm.dll");
-#elif defined(__APPLE__)
-    ptr = strstr(jvm_path, "/MacOS");
-    if (ptr != NULL) {
-        *(ptr + 1) = '\0';
-    }
-    else {
-        strcat(jvm_path, "Spin Tools IDE.app/Contents/");
-    }
-    strcat(jvm_path, "Java/lib/libjli.dylib");
+    strcat(jvm_path, "/Spin Tools IDE.app/Contents/Java/lib/libjli.dylib");
+
+    strcpy(lib_path, jvm_path);
+    strcat(lib_path, "/Spin Tools IDE.app/Contents/Resources");
 #else
-    strcat(jvm_path, "java/lib/server/libjvm.so");
-#endif
-    //printf("jvm_path = %s\n", jvm_path);
+    ptr = realpath(argv[0], app_root);
+    if (ptr == NULL) {
+        fprintf(stderr, "%s\n", strerror(errno));
+        exit(1);
+    }
+    strcpy(exe_path, ptr);
+
+    ptr = strrchr(app_root, '/');
+    if (ptr != NULL) {
+        *ptr = '\0';
+    }
+
+    strcpy(jvm_path, app_root);
+    strcat(jvm_path, "/java/lib/server/libjvm.so");
 
     strcpy(lib_path, app_root);
-    strcat(lib_path, lib_folder);
-    //printf("lib_path = %s\n", lib_path);
+    strcat(lib_path, "/lib");
+#endif
 
     char * d_java_class_path = build_classpath();
 
-#if defined(__APPLE__)
-    ptr = strstr(app_root, ".app");
-    if (ptr != NULL) {
-        *ptr = '\0';
-        ptr = strrchr(app_root, '/');
-        if (ptr != NULL) {
-            *ptr = '\0';
-        }
-    }
-#endif
     int size = strlen("-DAPP_DIR=") + strlen(app_root) + 1;
     char * d_app_dir = (char *) malloc(size);
     if (d_app_dir == NULL) {
@@ -200,7 +203,7 @@ char * build_classpath()
     if ((dir = opendir(lib_path)) != NULL) {
         if ((ent = readdir(dir)) != NULL) {
             do {
-                if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) {
+                if (strstr(ent->d_name, ".jar") == NULL) {
                     continue;
                 }
                 size += strlen(classpath_separator) + strlen(lib_path) + strlen(path_separator) + strlen(ent->d_name);
@@ -219,9 +222,10 @@ char * build_classpath()
     if ((dir = opendir(lib_path)) != NULL) {
         if ((ent = readdir(dir)) != NULL) {
             do {
-                if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) {
+                if (strstr(ent->d_name, ".jar") == NULL) {
                     continue;
                 }
+                //printf("  %s\n", ent->d_name);
                 strcat(result, classpath_separator);
                 strcat(result, lib_path);
                 strcat(result, path_separator);

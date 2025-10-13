@@ -3,7 +3,7 @@
 EXEDIR="$(dirname -- "$(readlink -f -- "${0}")" )"
 
 for LIB in \
-    "$EXEDIR/Spin Tools IDE.app"/Contents/MacOS/lib/*.jar \
+    "$EXEDIR/Spin Tools IDE.app"/Contents/Resources/*.jar \
     ;
 do
     CLASSPATH="${CLASSPATH}:${LIB}"
