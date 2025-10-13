@@ -1,12 +1,11 @@
 /*
  * Copyright (c) 2021-25 Marco Maccaferri and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * All rights reserved.
  *
- * Contributors:
- *     Marco Maccaferri - initial API and implementation
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License v1.0 which accompanies this
+ * distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller;
@@ -90,14 +89,13 @@ public class Propeller2Loader extends PropellerLoader {
                 if ((comPort instanceof NetworkComPort) || !discoverDevice) {
                     throw new ComPortException("No propeller chip on port " + (comPort != null ? comPort.getPortName() : "unknown"));
                 }
-                SerialComPort discoveredComPort = discover();
-                if (discoveredComPort == null) {
-                    throw new ComPortException("No propeller chip found");
-                }
                 if (comPort != null) {
                     comPort.closePort();
                 }
-                comPort = discoveredComPort;
+                comPort = discover();
+                if (comPort == null) {
+                    throw new ComPortException("No propeller chip found");
+                }
             }
 
             bufferUpload(type, binaryImage, "binary image");
@@ -155,14 +153,47 @@ public class Propeller2Loader extends PropellerLoader {
     protected SerialComPort discover() {
         String[] portNames = SerialPortList.getPortNames();
 
-        for (int i = 0; i < portNames.length; i++) {
-            if (comPort != null && portNames[i].equals(comPort.getPortName())) {
+        if (comPort != null) {
+            String currentPortName = comPort.getPortName();
+            for (String portName : portNames) {
+                if (portName.equals(currentPortName)) {
+                    SerialComPort serialComPort = new SerialComPort(portName);
+                    try {
+                        serialComPort.openPort();
+                        try {
+                            serialComPort.setParams(
+                                2000000,
+                                SerialPort.DATABITS_8,
+                                SerialPort.STOPBITS_1,
+                                SerialPort.PARITY_NONE);
+
+                            if (hwfind(serialComPort) != 0) {
+                                return serialComPort;
+                            }
+                            if (hwfind(serialComPort) != 0) {
+                                return serialComPort;
+                            }
+
+                        } catch (Exception e) {
+                            // Do nothing
+                        }
+                        serialComPort.closePort();
+                    } catch (Exception e) {
+                        // Do nothing
+                    }
+                    break;
+                }
+            }
+        }
+
+        for (String portName : portNames) {
+            if (comPort != null && portName.equals(comPort.getPortName())) {
                 continue;
             }
-            if (isBlacklisted(portNames[i])) {
+            if (isBlacklisted(portName)) {
                 continue;
             }
-            SerialComPort serialComPort = new SerialComPort(portNames[i]);
+            SerialComPort serialComPort = new SerialComPort(portName);
             try {
                 serialComPort.openPort();
                 try {
@@ -183,7 +214,6 @@ public class Propeller2Loader extends PropellerLoader {
                     // Do nothing
                 }
                 serialComPort.closePort();
-
             } catch (Exception e) {
                 // Do nothing
             }
@@ -353,6 +383,7 @@ public class Propeller2Loader extends PropellerLoader {
         }
         notifyProgress(sent, binaryImage.length);
 
+        comPort.readBytes();
         comPort.writeString(" ?");
     }
 

@@ -1,15 +1,11 @@
 /*
  * Copyright (c) 2021-25 Marco Maccaferri and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
+ * All rights reserved.
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License v1.0 which accompanies this
+ * distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *
- * Based on the PLoadLib.c code written by John Steven Denson
- * with modifications by David Michael Betz
- *
- * Contributors:
- *     Marco Maccaferri - initial API and implementation
  */
 
 package com.maccasoft.propeller;
@@ -110,8 +106,8 @@ public class Propeller1Loader extends PropellerLoader {
                 bufferUpload((NetworkComPort) comPort, type, binaryImage, "binary image");
             }
             else {
-                try {
-                    if (comPort != null) {
+                if (comPort != null) {
+                    try {
                         if (!comPort.isOpened()) {
                             comPort.openPort();
                         }
@@ -122,29 +118,49 @@ public class Propeller1Loader extends PropellerLoader {
                             SerialPort.PARITY_NONE);
 
                         comPort.hwreset(getResetControl(), ComPort.P1_RESET_DELAY);
-                        version = hwfind();
+                        version = hwfind(comPort);
 
                         if (version == 0) {
                             comPort.hwreset(getResetControl(), ComPort.P1_RESET_DELAY);
-                            version = hwfind();
+                            version = hwfind(comPort);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        try {
+                            comPort.closePort();
+
+                            comPort = new SerialComPort(comPort.getPortName());
+                            comPort.openPort();
+                            comPort.setParams(
+                                SerialPort.BAUDRATE_115200,
+                                SerialPort.DATABITS_8,
+                                SerialPort.STOPBITS_1,
+                                SerialPort.PARITY_NONE);
+
+                            comPort.hwreset(getResetControl(), ComPort.P1_RESET_DELAY);
+                            version = hwfind(comPort);
+
+                            if (version == 0) {
+                                comPort.hwreset(getResetControl(), ComPort.P1_RESET_DELAY);
+                                version = hwfind(comPort);
+                            }
+                        } catch (Exception e1) {
+                            e.printStackTrace();
                         }
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
                 }
 
                 if (version == 0) {
                     if (!discoverDevice) {
                         throw new ComPortException("No propeller chip on port " + (comPort != null ? comPort.getPortName() : "unknown"));
                     }
-                    SerialComPort discoveredComPort = discover();
-                    if (discoveredComPort == null) {
-                        throw new ComPortException("No propeller chip found");
-                    }
                     if (comPort != null) {
                         comPort.closePort();
                     }
-                    comPort = discoveredComPort;
+                    comPort = discover();
+                    if (comPort == null) {
+                        throw new ComPortException("No propeller chip found");
+                    }
                 }
                 bufferUpload(type, binaryImage, "binary image");
             }
@@ -201,17 +217,47 @@ public class Propeller1Loader extends PropellerLoader {
     }
 
     protected SerialComPort discover() {
-        ComPort currentComPort = comPort;
         String[] portNames = SerialPortList.getPortNames();
 
-        for (int i = 0; i < portNames.length; i++) {
-            if (comPort != null && portNames[i].equals(comPort.getPortName())) {
+        if (comPort != null) {
+            String currentPortName = comPort.getPortName();
+            for (String portName : portNames) {
+                if (portName.equals(currentPortName)) {
+                    SerialComPort serialComPort = new SerialComPort(portName);
+                    try {
+                        serialComPort.openPort();
+                        serialComPort.setParams(
+                            SerialPort.BAUDRATE_115200,
+                            SerialPort.DATABITS_8,
+                            SerialPort.STOPBITS_1,
+                            SerialPort.PARITY_NONE);
+
+                        try {
+                            serialComPort.hwreset(getResetControl(), ComPort.P1_RESET_DELAY);
+                            if (hwfind(serialComPort) != 0) {
+                                return serialComPort;
+                            }
+                            serialComPort.hwreset(getResetControl(), ComPort.P1_RESET_DELAY);
+                            if (hwfind(serialComPort) != 0) {
+                                return serialComPort;
+                            }
+                        } catch (Exception e) {
+                            // Do nothing
+                        }
+                        serialComPort.closePort();
+                    } catch (Exception e) {
+                        // Do nothing
+                    }
+                    break;
+                }
+            }
+        }
+
+        for (String portName : portNames) {
+            if (isBlacklisted(portName)) {
                 continue;
             }
-            if (isBlacklisted(portNames[i])) {
-                continue;
-            }
-            SerialComPort serialComPort = new SerialComPort(portNames[i]);
+            SerialComPort serialComPort = new SerialComPort(portName);
             try {
                 serialComPort.openPort();
                 serialComPort.setParams(
@@ -221,28 +267,22 @@ public class Propeller1Loader extends PropellerLoader {
                     SerialPort.PARITY_NONE);
 
                 try {
-                    comPort = serialComPort;
-                    comPort.hwreset(getResetControl(), ComPort.P1_RESET_DELAY);
-                    if (hwfind() != 0) {
-                        comPort = currentComPort;
+                    serialComPort.hwreset(getResetControl(), ComPort.P1_RESET_DELAY);
+                    if (hwfind(serialComPort) != 0) {
                         return serialComPort;
                     }
-                    comPort.hwreset(getResetControl(), ComPort.P1_RESET_DELAY);
-                    if (hwfind() != 0) {
-                        comPort = currentComPort;
+                    serialComPort.hwreset(getResetControl(), ComPort.P1_RESET_DELAY);
+                    if (hwfind(serialComPort) != 0) {
                         return serialComPort;
                     }
                 } catch (Exception e) {
                     // Do nothing
                 }
                 serialComPort.closePort();
-
             } catch (Exception e) {
                 // Do nothing
             }
         }
-
-        comPort = currentComPort;
 
         return null;
     }
@@ -255,7 +295,7 @@ public class Propeller1Loader extends PropellerLoader {
         }
     }
 
-    protected int hwfind() throws ComPortException {
+    protected int hwfind(ComPort comPort) throws ComPortException {
         int n, ii, jj;
         byte[] buffer;
 
@@ -281,7 +321,7 @@ public class Propeller1Loader extends PropellerLoader {
         // Wait at least 100ms for the first response. Allow some margin.
         // Some chips may respond < 50ms, but there's no guarantee all will.
         // If we don't get it, we can assume the propeller is not there.
-        if ((ii = getBit(110)) == -1) {
+        if ((ii = getBit(comPort, 110)) == -1) {
             return 0;
         }
 
@@ -300,7 +340,7 @@ public class Propeller1Loader extends PropellerLoader {
 
             int to = 0;
             do {
-                if ((ii = getBit(110)) != -1) {
+                if ((ii = getBit(comPort, 110)) != -1) {
                     break;
                 }
             } while (to++ < 100);
@@ -313,7 +353,7 @@ public class Propeller1Loader extends PropellerLoader {
         int rc = 0;
         for (n = 0; n < 8; n++) {
             rc >>= 1;
-            if ((ii = getBit(110)) != -1) {
+            if ((ii = getBit(comPort, 110)) != -1) {
                 rc += (ii != 0) ? 0x80 : 0;
             }
         }
@@ -327,7 +367,7 @@ public class Propeller1Loader extends PropellerLoader {
         return bit;
     }
 
-    private int getBit(int timeout) throws ComPortException {
+    private int getBit(ComPort comPort, int timeout) throws ComPortException {
         int rx = comPort.readByteWithTimeout(timeout);
         if (rx != -1) {
             return rx & 1;
@@ -394,10 +434,11 @@ public class Propeller1Loader extends PropellerLoader {
         if (listener != null) {
             listener.verifyRam();
         }
+        comPort.readBytes();
 
         for (n = 0; n < 100; n++) {
             comPort.writeInt(0xF9);
-            if ((rc = getBit(110)) != -1) {
+            if ((rc = getBit(comPort, 110)) != -1) {
                 break;
             }
         }
@@ -418,12 +459,13 @@ public class Propeller1Loader extends PropellerLoader {
         if (listener != null) {
             listener.eepromWrite();
         }
+        comPort.readBytes();
 
         // Check for EEPROM program finished
         for (n = 0; n < 500; n++) {
             msleep(20);
             comPort.writeInt(0xF9);
-            if ((rc = getBit(110)) != -1) {
+            if ((rc = getBit(comPort, 110)) != -1) {
                 if (rc != 0) {
                     throw new ComPortException("EEPROM programming failed");
                 }
@@ -446,7 +488,7 @@ public class Propeller1Loader extends PropellerLoader {
         for (n = 0; n < 500; n++) {
             msleep(20);
             comPort.writeInt(0xF9);
-            if ((rc = getBit(110)) != -1) {
+            if ((rc = getBit(comPort, 110)) != -1) {
                 if (rc != 0) {
                     throw new ComPortException("EEPROM verify failed");
                 }

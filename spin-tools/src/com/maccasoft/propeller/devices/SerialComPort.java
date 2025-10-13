@@ -1,12 +1,11 @@
 /*
  * Copyright (c) 2021-25 Marco Maccaferri and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * All rights reserved.
  *
- * Contributors:
- *     Marco Maccaferri - initial API and implementation
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License v1.0 which accompanies this
+ * distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.devices;
@@ -98,7 +97,7 @@ public class SerialComPort extends ComPort {
             if (delay != 0) {
                 Thread.sleep(delay);
             }
-            serialPort.purgePort(SerialPort.PURGE_RXCLEAR);
+            serialPort.readBytes();
         } catch (Exception e) {
             // Do nothing
         }
@@ -121,7 +120,11 @@ public class SerialComPort extends ComPort {
     @Override
     public boolean writeInt(int singleInt) throws ComPortException {
         try {
-            return serialPort.writeInt(singleInt);
+            boolean rc = serialPort.writeInt(singleInt);
+            if (!rc) {
+                throw new ComPortException("Port name - " + serialPort.getPortName() + "; Method name - writeInt; Exception type - Can't write.");
+            }
+            return rc;
         } catch (SerialPortException e) {
             throw new ComPortException(e.getExceptionType(), e);
         }
@@ -130,7 +133,11 @@ public class SerialComPort extends ComPort {
     @Override
     public boolean writeByte(byte singleByte) throws ComPortException {
         try {
-            return serialPort.writeByte(singleByte);
+            boolean rc = serialPort.writeByte(singleByte);
+            if (!rc) {
+                throw new ComPortException("Port name - " + serialPort.getPortName() + "; Method name - writeInt; Exception type - Can't write.");
+            }
+            return rc;
         } catch (SerialPortException e) {
             throw new ComPortException(e.getExceptionType(), e);
         }
@@ -139,7 +146,11 @@ public class SerialComPort extends ComPort {
     @Override
     public boolean writeBytes(byte[] buffer) throws ComPortException {
         try {
-            return serialPort.writeBytes(buffer);
+            boolean rc = serialPort.writeBytes(buffer);
+            if (!rc) {
+                throw new ComPortException("Port name - " + serialPort.getPortName() + "; Method name - writeInt; Exception type - Can't write.");
+            }
+            return rc;
         } catch (SerialPortException e) {
             throw new ComPortException(e.getExceptionType(), e);
         }
