@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -255,7 +255,7 @@ public class P1MemoryDialog extends Dialog {
         createButton(parent, IDialogConstants.CLIENT_ID + 1, "Save Binary", false);
         createButton(parent, IDialogConstants.CLIENT_ID + 2, "Save Listing", false);
         createButton(parent, IDialogConstants.CLIENT_ID + 4, "Save Package", false);
-        super.createButtonsForButtonBar(parent);
+        createButton(parent, IDialogConstants.OK_ID, IDialogConstants.CLOSE_LABEL, true);
     }
 
     @Override
