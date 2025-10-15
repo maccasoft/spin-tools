@@ -2388,23 +2388,45 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 line.addChild(quitLine);
             }
             else if ("QUIT".equals(text) || "NEXT".equals(text)) {
+                int level = 1;
                 int pop = 0;
                 String key = text.toLowerCase();
 
                 line = new Spin2MethodLine(context, parent, text, node);
 
-                while (parent != null && parent.getData(key) == null) {
+                if (iter.hasNext()) {
+                    Spin2TreeBuilder builder = new Spin2TreeBuilder(context);
+                    while (iter.hasNext()) {
+                        builder.addToken(iter.next());
+                    }
+                    try {
+                        Expression expression = buildConstantExpression(line.getScope(), builder.getRoot());
+                        level = Math.abs(expression.getNumber().intValue());
+                        if (level < 1 || level > 16) {
+                            logMessage(new CompilerException("next/quit level count must be from 1 to 16", builder.getTokens()));
+                        }
+                    } catch (Exception e) {
+                        logMessage(new CompilerException("expecting constant expression", builder.getTokens()));
+                    }
+                }
+
+                while (parent != null) {
+                    if (parent.getStatement().startsWith("REPEAT")) {
+                        if (--level == 0) {
+                            break;
+                        }
+                    }
                     if (parent.getData("pop") != null) {
-                        pop += ((Integer) parent.getData("pop")).intValue();
+                        pop += (Integer) parent.getData("pop");
                     }
                     parent = parent.getParent();
                 }
-                if (parent == null || parent.getData(key) == null) {
+                if (parent == null) {
                     throw new CompilerException("misplaced " + text, node);
                 }
 
                 if ("QUIT".equals(text) && parent.getData("pop") != null) {
-                    pop += ((Integer) parent.getData("pop")).intValue();
+                    pop += (Integer) parent.getData("pop");
                 }
 
                 if (pop != 0) {
@@ -2428,7 +2450,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     line.addSource(new Jmp(line.getScope(), new ContextLiteral(nextLine.getScope())));
                 }
                 else {
-                    if (parent.getData("pop") != null && ((Integer) parent.getData("pop")).intValue() == 0) {
+                    if (parent.getData("pop") != null && (Integer) parent.getData("pop") == 0) {
                         line.addSource(new Jnz(line.getScope(), new ContextLiteral(nextLine.getScope())));
                     }
                     else {
