@@ -106,8 +106,11 @@ public class Identifier extends Expression {
 
     @Override
     public Expression resolve() {
-        if (defaultValue != null && !context.hasSymbol(name)) {
-            return defaultValue;
+        if (!context.hasSymbol(name)) {
+            if (defaultValue != null) {
+                return defaultValue;
+            }
+            throw new CompilerException("symbol not found", getData());
         }
         return context.getSymbol(name);
     }

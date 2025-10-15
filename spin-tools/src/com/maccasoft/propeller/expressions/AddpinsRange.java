@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -17,9 +17,9 @@ public class AddpinsRange extends BinaryOperator {
     }
 
     @Override
-    public Number getNumber() {
-        long t1 = term1.getNumber().longValue() & 0x3F;
-        long t2 = term2.getNumber().longValue() & 0x3F;
+    protected Number internalGetNumber(Number term1, Number term2) {
+        long t1 = term1.longValue() & 0x3F;
+        long t2 = term2.longValue() & 0x3F;
         return t2 | (((t1 - t2) & 0x1F) << 6);
     }
 

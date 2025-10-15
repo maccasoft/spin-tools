@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -17,20 +17,20 @@ public class LimitMin extends BinaryOperator {
     }
 
     @Override
-    public Number getNumber() {
-        if ((term1.getNumber() instanceof Long) && (term2.getNumber() instanceof Long)) {
-            if (term1.getNumber().longValue() > term2.getNumber().longValue()) {
-                return term1.getNumber();
+    protected Number internalGetNumber(Number term1, Number term2) {
+        if ((term1 instanceof Long) && (term2 instanceof Long)) {
+            if (term1.longValue() > term2.longValue()) {
+                return term1;
             }
             else {
-                return term2.getNumber();
+                return term2;
             }
         }
-        if (term1.getNumber().doubleValue() > term2.getNumber().doubleValue()) {
-            return term1.getNumber();
+        if (term1.doubleValue() > term2.doubleValue()) {
+            return term1;
         }
         else {
-            return term2.getNumber();
+            return term2;
         }
     }
 

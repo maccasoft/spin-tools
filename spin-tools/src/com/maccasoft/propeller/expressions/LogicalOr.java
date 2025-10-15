@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -17,9 +17,9 @@ public class LogicalOr extends BinaryOperator {
     }
 
     @Override
-    public Number getNumber() {
-        long value1 = term1.getNumber().longValue();
-        long value2 = term2.getNumber().longValue();
+    protected Number internalGetNumber(Number term1, Number term2) {
+        long value1 = term1.longValue();
+        long value2 = term2.longValue();
         return (value1 != 0 || value2 != 0) ? -1 : 0;
     }
 

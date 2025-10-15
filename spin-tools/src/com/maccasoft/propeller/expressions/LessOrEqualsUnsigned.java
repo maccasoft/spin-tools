@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -17,8 +17,8 @@ public class LessOrEqualsUnsigned extends BinaryOperator {
     }
 
     @Override
-    public Number getNumber() {
-        return (term1.getNumber().longValue() & 0xFFFFFFFFL) <= (term2.getNumber().longValue() & 0xFFFFFFFFL) ? -1 : 0;
+    protected Number internalGetNumber(Number term1, Number term2) {
+        return (term1.longValue() & 0xFFFFFFFFL) <= (term2.longValue() & 0xFFFFFFFFL) ? -1 : 0;
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -9,6 +9,8 @@
  */
 
 package com.maccasoft.propeller.expressions;
+
+import com.maccasoft.propeller.CompilerException;
 
 public class UnsignedDivide extends BinaryOperator {
 
@@ -25,11 +27,11 @@ public class UnsignedDivide extends BinaryOperator {
     }
 
     @Override
-    public Number getNumber() {
-        long dividend = term1.getNumber().longValue() & 0xFFFFFFFFL;
-        long divisor = term2.getNumber().longValue() & 0xFFFFFFFFL;
+    protected Number internalGetNumber(Number term1, Number term2) {
+        long dividend = term1.longValue() & 0xFFFFFFFFL;
+        long divisor = term2.longValue() & 0xFFFFFFFFL;
         if (divisor == 0) {
-            throw new EvaluationException("Division by zero.");
+            throw new CompilerException("division by zero.", getDivisor().getData());
         }
         return dividend / divisor;
     }

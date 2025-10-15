@@ -17,9 +17,9 @@ public class Ror extends BinaryOperator {
     }
 
     @Override
-    public Number getNumber() {
-        long value1 = term1.getNumber().longValue() & 0xFFFFFFFFL;
-        long value2 = term2.getNumber().longValue() & 0x1FL;
+    protected Number internalGetNumber(Number term1, Number term2) {
+        long value1 = term1.longValue() & 0xFFFFFFFFL;
+        long value2 = term2.longValue() & 0x1FL;
         long result = ((value1 >> value2) & 0xFFFFFFFFL) | ((value1 << (32 - value2)) & 0xFFFFFFFFL);
         return result & 0xFFFFFFFFL;
     }

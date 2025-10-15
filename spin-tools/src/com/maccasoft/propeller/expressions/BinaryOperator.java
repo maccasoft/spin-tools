@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -9,6 +9,8 @@
  */
 
 package com.maccasoft.propeller.expressions;
+
+import com.maccasoft.propeller.CompilerException;
 
 public abstract class BinaryOperator extends Expression {
 
@@ -32,8 +34,56 @@ public abstract class BinaryOperator extends Expression {
 
     @Override
     public boolean isConstant() {
-        return term1.isConstant() && term2.isConstant();
+        boolean t1 = false, t2 = false;
+        CompilerException errors = new CompilerException();
+
+        try {
+            t1 = term1.isConstant();
+        } catch (CompilerException e) {
+            errors.addMessage(e);
+        } catch (Exception e) {
+            errors.addMessage((new CompilerException(e, term1.getData())));
+        }
+        try {
+            t2 = term2.isConstant();
+        } catch (CompilerException e) {
+            errors.addMessage(e);
+        } catch (Exception e) {
+            errors.addMessage((new CompilerException(e, term1.getData())));
+        }
+        if (errors.hasChilds()) {
+            throw errors;
+        }
+        return t1 && t2;
     }
+
+    @Override
+    public final Number getNumber() {
+        Number t1 = null, t2 = null;
+        CompilerException errors = new CompilerException();
+
+        try {
+            t1 = term1.getNumber();
+        } catch (CompilerException e) {
+            errors.addMessage(e);
+        } catch (Exception e) {
+            errors.addMessage((new CompilerException(e, term1.getData())));
+        }
+        try {
+            t2 = term2.getNumber();
+        } catch (CompilerException e) {
+            errors.addMessage(e);
+        } catch (Exception e) {
+            errors.addMessage((new CompilerException(e, term1.getData())));
+        }
+        if (errors.hasChilds()) {
+            throw errors;
+        }
+
+        return internalGetNumber(t1, t2);
+    }
+
+    protected abstract Number internalGetNumber(Number term1, Number term2);
 
     @Override
     public boolean isNumber() {
@@ -58,7 +108,7 @@ public abstract class BinaryOperator extends Expression {
 
     @Override
     public String toString() {
-        return "" + term1 + " " + getLexeme() + " " + term2;
+        return term1 + " " + getLexeme() + " " + term2;
     }
 
 }

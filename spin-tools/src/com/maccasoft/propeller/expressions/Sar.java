@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -17,9 +17,9 @@ public class Sar extends BinaryOperator {
     }
 
     @Override
-    public Number getNumber() {
-        long value = term1.getNumber().longValue();
-        return value >> (term2.getNumber().longValue() & 0xFF);
+    protected Number internalGetNumber(Number term1, Number term2) {
+        long value = term1.longValue();
+        return value >> (term2.longValue() & 0xFF);
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -17,9 +17,9 @@ public class Signx extends BinaryOperator {
     }
 
     @Override
-    public Number getNumber() {
-        long cl = ~term2.getNumber().longValue() & 0x3F;
-        long value = term1.getNumber().longValue();
+    protected Number internalGetNumber(Number term1, Number term2) {
+        long cl = ~term2.longValue() & 0x3F;
+        long value = term1.longValue();
         value = value << cl;
         return value >> cl;
     }

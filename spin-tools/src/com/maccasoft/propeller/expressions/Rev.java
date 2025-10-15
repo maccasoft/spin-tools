@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -17,11 +17,11 @@ public class Rev extends BinaryOperator {
     }
 
     @Override
-    public Number getNumber() {
+    protected Number internalGetNumber(Number term1, Number term2) {
         long result = 0;
-        long value1 = term1.getNumber().longValue();
+        long value1 = term1.longValue();
 
-        for (int i = 0; i <= term2.getNumber().longValue(); i++) {
+        for (int i = 0; i <= term2.longValue(); i++) {
             result <<= 1;
             result |= (value1 & 0x01);
             value1 >>= 1;

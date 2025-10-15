@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -17,8 +17,8 @@ public class Sca extends BinaryOperator {
     }
 
     @Override
-    public Number getNumber() {
-        long value = (term1.getNumber().longValue() * term2.getNumber().longValue());
+    protected Number internalGetNumber(Number term1, Number term2) {
+        long value = (term1.longValue() * term2.longValue());
         return (value >> 32) & 0xFFFFFFFFL;
     }
 

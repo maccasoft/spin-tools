@@ -25,11 +25,11 @@ public class Pow extends BinaryOperator {
     }
 
     @Override
-    public Number getNumber() {
-        if ((term1.getNumber() instanceof Long) && (term2.getNumber() instanceof Long)) {
-            return (long) Math.pow(term1.getNumber().longValue(), term2.getNumber().longValue());
+    protected Number internalGetNumber(Number term1, Number term2) {
+        if ((term1 instanceof Long) && (term2 instanceof Long)) {
+            return (long) Math.pow(term1.longValue(), term2.longValue());
         }
-        return Math.pow(term1.getNumber().doubleValue(), term2.getNumber().doubleValue());
+        return Math.pow(term1.doubleValue(), term2.doubleValue());
     }
 
     @Override

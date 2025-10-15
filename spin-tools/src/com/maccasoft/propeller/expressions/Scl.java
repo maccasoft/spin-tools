@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -17,9 +17,9 @@ public class Scl extends BinaryOperator {
     }
 
     @Override
-    public Number getNumber() {
-        long value1 = term1.getNumber().longValue();
-        long value2 = term1.getNumber().longValue();
+    protected Number internalGetNumber(Number term1, Number term2) {
+        long value1 = term1.longValue();
+        long value2 = term1.longValue();
         long a = (value1 >> 16) & 0xFFFF;
         long b = value1 & 0xFFFF;
         long c = (value2 >> 16) & 0xFFFF;

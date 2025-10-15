@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -9,6 +9,8 @@
  */
 
 package com.maccasoft.propeller.expressions;
+
+import com.maccasoft.propeller.CompilerException;
 
 public class Divide extends BinaryOperator {
 
@@ -25,18 +27,17 @@ public class Divide extends BinaryOperator {
     }
 
     @Override
-    public Number getNumber() {
-        Number divisor = term2.getNumber();
-        if ((term1.getNumber() instanceof Long) && (divisor instanceof Long)) {
-            if (divisor.longValue() == 0) {
-                throw new EvaluationException("Division by zero.");
+    protected Number internalGetNumber(Number term1, Number term2) {
+        if ((term1 instanceof Long) && (term2 instanceof Long)) {
+            if (term2.longValue() == 0) {
+                throw new CompilerException("division by zero.", getDivisor().getData());
             }
-            return term1.getNumber().longValue() / divisor.longValue();
+            return term1.longValue() / term2.longValue();
         }
-        if (divisor.doubleValue() == 0) {
-            throw new EvaluationException("Division by zero.");
+        if (term2.doubleValue() == 0) {
+            throw new CompilerException("division by zero.", getDivisor().getData());
         }
-        return term1.getNumber().doubleValue() / divisor.doubleValue();
+        return term1.doubleValue() / term2.doubleValue();
     }
 
     @Override

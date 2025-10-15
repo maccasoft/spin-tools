@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -12,6 +12,8 @@ package com.maccasoft.propeller.expressions;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import com.maccasoft.propeller.CompilerException;
 
 public class Add extends BinaryOperator {
 
@@ -28,11 +30,11 @@ public class Add extends BinaryOperator {
     }
 
     @Override
-    public Number getNumber() {
-        if ((term1.getNumber() instanceof Long) && (term2.getNumber() instanceof Long)) {
-            return term1.getNumber().longValue() + term2.getNumber().longValue();
+    protected Number internalGetNumber(Number term1, Number term2) {
+        if ((term1 instanceof Long) && (term2 instanceof Long)) {
+            return term1.longValue() + term2.longValue();
         }
-        return term1.getNumber().doubleValue() + term2.getNumber().doubleValue();
+        return term1.doubleValue() + term2.doubleValue();
     }
 
     @Override
@@ -40,34 +42,51 @@ public class Add extends BinaryOperator {
         int i;
         int value = 0;
         List<Integer> list = new ArrayList<>();
+        CompilerException errors = new CompilerException();
 
-        if (term1.isString()) {
-            int[] b = term1.getStringValues();
-            i = 0;
-            while (i < b.length - 1) {
-                list.add(Integer.valueOf(b[i++]));
+        try {
+            if (term1.isString()) {
+                int[] b = term1.getStringValues();
+                i = 0;
+                while (i < b.length - 1) {
+                    list.add(Integer.valueOf(b[i++]));
+                }
+                if (i < b.length) {
+                    value = b[i++];
+                }
             }
-            if (i < b.length) {
-                value = b[i++];
+            else {
+                value = term1.getNumber().intValue();
             }
-        }
-        else {
-            value = term1.getNumber().intValue();
+        } catch (CompilerException e) {
+            errors.addMessage(e);
+        } catch (Exception e) {
+            errors.addMessage((new CompilerException(e, term1.getData())));
         }
 
-        if (term2.isString()) {
-            int[] b = term2.getStringValues();
+        try {
+            if (term2.isString()) {
+                int[] b = term2.getStringValues();
 
-            i = 0;
-            if (i < b.length) {
-                list.add(Integer.valueOf(value + (b[i++])));
+                i = 0;
+                if (i < b.length) {
+                    list.add(Integer.valueOf(value + (b[i++])));
+                }
+                while (i < b.length) {
+                    list.add(Integer.valueOf(b[i++]));
+                }
             }
-            while (i < b.length) {
-                list.add(Integer.valueOf(b[i++]));
+            else {
+                list.add(Integer.valueOf(value + term2.getNumber().intValue()));
             }
+        } catch (CompilerException e) {
+            errors.addMessage(e);
+        } catch (Exception e) {
+            errors.addMessage((new CompilerException(e, term1.getData())));
         }
-        else {
-            list.add(Integer.valueOf(value + term2.getNumber().intValue()));
+
+        if (errors.hasChilds()) {
+            throw errors;
         }
 
         int[] r = new int[list.size()];

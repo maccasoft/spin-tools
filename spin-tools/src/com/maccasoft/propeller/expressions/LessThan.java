@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -17,11 +17,11 @@ public class LessThan extends BinaryOperator {
     }
 
     @Override
-    public Number getNumber() {
-        if (term1.getNumber() instanceof Long && term2.getNumber() instanceof Long) {
-            return term1.getNumber().longValue() < term2.getNumber().longValue() ? -1 : 0;
+    protected Number internalGetNumber(Number term1, Number term2) {
+        if (term1 instanceof Long && term2 instanceof Long) {
+            return term1.longValue() < term2.longValue() ? -1 : 0;
         }
-        return term1.getNumber().doubleValue() < term2.getNumber().doubleValue() ? -1 : 0;
+        return term1.doubleValue() < term2.doubleValue() ? -1 : 0;
     }
 
     @Override
