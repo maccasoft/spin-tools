@@ -659,7 +659,7 @@ public class DebugPlotWindow extends DebugWindow {
                             int id = iter.nextNumber() - 1;
                             if (iter.hasNextString()) {
                                 String fileName = iter.nextString();
-                                File file = new File(getBaseDirectory(), fileName);
+                                File file = new File(getCurrentDirectory(), fileName);
                                 if (file.exists() && id >= 0 && id < layer.length) {
                                     try {
                                         ImageData[] imageData = new ImageLoader().load(file.getAbsolutePath());

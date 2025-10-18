@@ -12,11 +12,12 @@ package com.maccasoft.propeller;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -74,8 +75,8 @@ public class ConsoleView {
     boolean consoleThreadRun;
 
     StringBuilder pendingText;
-    File logFile;
-    PrintStream os;
+    File topObjectFile;
+    OutputStream os;
 
     Map<String, DebugWindow> map = new CaseInsensitiveMap<>();
     DebugPAsmWindow[] debugger = new DebugPAsmWindow[8];
@@ -106,19 +107,6 @@ public class ConsoleView {
                     break;
                 case Preferences.PROP_CONSOLE_WRITE_LOG_FILE:
                     writeLogFile = ((Boolean) evt.getNewValue()).booleanValue();
-                    if (!writeLogFile && os != null) {
-                        if (os != null) {
-                            os.close();
-                        }
-                        os = null;
-                    }
-                    else if (writeLogFile && os == null) {
-                        try {
-                            os = new PrintStream(logFile);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
                     break;
             }
         }
@@ -132,9 +120,6 @@ public class ConsoleView {
                 try {
                     byte[] rx = serialPort.readBytes();
                     if (rx != null) {
-                        if (os != null) {
-                            os.write(rx, 0, rx.length);
-                        }
                         synchronized (receiveBuffer) {
                             receiveBuffer.write(rx);
                             receiveBuffer.notify();
@@ -152,9 +137,6 @@ public class ConsoleView {
 
         @Override
         public void write(int b) throws IOException {
-            if (os != null) {
-                os.write(b);
-            }
             synchronized (receiveBuffer) {
                 receiveBuffer.write(b);
                 receiveBuffer.notify();
@@ -163,9 +145,6 @@ public class ConsoleView {
 
         @Override
         public void write(byte[] b) throws IOException {
-            if (os != null) {
-                os.write(b, 0, b.length);
-            }
             synchronized (receiveBuffer) {
                 receiveBuffer.write(b);
                 receiveBuffer.notify();
@@ -174,9 +153,6 @@ public class ConsoleView {
 
         @Override
         public void write(byte[] b, int off, int len) throws IOException {
-            if (os != null) {
-                os.write(b, off, len);
-            }
             synchronized (receiveBuffer) {
                 receiveBuffer.write(b, off, len);
                 receiveBuffer.notify();
@@ -188,9 +164,10 @@ public class ConsoleView {
     Runnable receiveThread = new Runnable() {
 
         int utf_buf_index = 0, utf_ch_count = 0;
-        byte[] utf_buf = new byte[4];
+        int backtickIndex = -1;
 
-        StringBuilder lineBuilder = new StringBuilder(128);
+        final byte[] utf_buf = new byte[4];
+        final StringBuilder lineBuilder = new StringBuilder(128);
 
         @Override
         public void run() {
@@ -298,32 +275,45 @@ public class ConsoleView {
         }
 
         void writeByte(byte b) {
+            if (!writeLogFile && os != null) {
+                closeLogFile();
+            }
+
             if (utf_buf_index == 0) {
                 if ((b & 0b111_00000) == 0b110_00000) {
                     utf_buf[utf_buf_index++] = b;
                     utf_ch_count = 2;
+                    if (writeLogFile) {
+                        writeToLog(b);
+                    }
                 }
                 else if ((b & 0b1111_0000) == 0b1110_0000) {
                     utf_buf[utf_buf_index++] = b;
                     utf_ch_count = 3;
+                    if (writeLogFile) {
+                        writeToLog(b);
+                    }
                 }
                 else if ((b & 0b11111_000) == 0b11110_000) {
                     utf_buf[utf_buf_index++] = b;
                     utf_ch_count = 4;
+                    if (writeLogFile) {
+                        writeToLog(b);
+                    }
                 }
-                else if (b == '\n' || b == '\r') {
-                    if (lineBuilder.length() != 0) {
+                else if (b == '\n') {
+                    if (!lineBuilder.isEmpty()) {
                         boolean doDisplay = true;
                         String text = lineBuilder.toString();
 
-                        int backtickIndex = text.indexOf('`');
                         if (backtickIndex != -1) {
                             handleDebugWindowCommand(text.substring(backtickIndex));
                             doDisplay = !preferences.getConsoleHideBacktickCommands();
+                            backtickIndex = -1;
                         }
 
                         if (doDisplay) {
-                            if (pendingText.length() == 0) {
+                            if (pendingText.isEmpty()) {
                                 display.asyncExec(textUpdateRunnable);
                             }
                             pendingText.append(text);
@@ -332,9 +322,20 @@ public class ConsoleView {
 
                         lineBuilder.setLength(0);
                     }
+                    if (writeLogFile) {
+                        writeToLog(b);
+                    }
                 }
                 else {
-                    lineBuilder.append((char) b);
+                    if (writeLogFile) {
+                        writeToLog(b);
+                    }
+                    if (b == '`' && backtickIndex == -1) {
+                        backtickIndex = lineBuilder.length();
+                    }
+                    if (b >= ' ') {
+                        lineBuilder.append((char) b);
+                    }
                 }
             }
             else {
@@ -343,6 +344,25 @@ public class ConsoleView {
                     lineBuilder.append(new String(utf_buf, 0, utf_ch_count));
                     utf_buf_index = 0;
                 }
+                if (writeLogFile) {
+                    writeToLog(b);
+                }
+            }
+        }
+
+        void writeToLog(byte b) {
+            try {
+                if (os == null) {
+                    String name = topObjectFile.getName();
+                    if (name.lastIndexOf('.') != -1) {
+                        name = name.substring(0, name.lastIndexOf('.'));
+                    }
+                    File logFile = new File(topObjectFile.getParentFile(), name + ".log");
+                    os = new BufferedOutputStream(new FileOutputStream(logFile));
+                }
+                os.write(b);
+            } catch (Exception e) {
+                // Do nothing
             }
         }
 
@@ -438,7 +458,6 @@ public class ConsoleView {
         });
 
         maxLines = preferences.getConsoleMaxLines();
-        writeLogFile = preferences.getConsoleWriteLogFile();
 
         preferences.addPropertyChangeListener(preferencesChangeListener);
 
@@ -467,7 +486,12 @@ public class ConsoleView {
                 preferences.removePropertyChangeListener(preferencesChangeListener);
 
                 if (os != null) {
-                    os.close();
+                    try {
+                        os.close();
+                    } catch (Exception e) {
+                        // Do nothing
+                    }
+                    os = null;
                 }
 
                 if (serialPort != null) {
@@ -512,10 +536,13 @@ public class ConsoleView {
     }
 
     public void setVisible(boolean visible) {
-        if (enabled && console.getVisible() && !visible && preferences.getConsoleResetDeviceOnClose()) {
-            if (serialPort != null && serialPort.isOpened()) {
-                serialPort.hwreset(preferences.getP2ResetControl(), 0);
+        if (enabled && console.getVisible() && !visible) {
+            if (preferences.getConsoleResetDeviceOnClose()) {
+                if (serialPort != null && serialPort.isOpened()) {
+                    serialPort.hwreset(preferences.getP2ResetControl(), 0);
+                }
             }
+            closeLogFile();
         }
         console.setVisible(visible);
     }
@@ -581,36 +608,26 @@ public class ConsoleView {
         }
 
         this.serialPort = serialPort;
+        this.writeLogFile = preferences.getConsoleWriteLogFile();
     }
 
     public void setSerialBaudRate(int serialBaudRate) {
         this.serialBaudRate = serialBaudRate;
     }
 
-    public void setLogFile(File location, String fileName) {
-        try {
-            if (os != null) {
-                os.close();
-                os = null;
-            }
-            logFile = new File(location, fileName);
-            if (writeLogFile) {
-                os = new PrintStream(logFile);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public void setTopObjectFile(File topObjectFile) {
+        this.topObjectFile = topObjectFile;
     }
 
     public void closeLogFile() {
-        try {
-            if (os != null) {
+        if (os != null) {
+            try {
                 os.close();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-            os = null;
-        } catch (Exception e) {
-            e.printStackTrace();
         }
+        os = null;
     }
 
     public OutputStream getOutputStream() {
@@ -646,7 +663,7 @@ public class ConsoleView {
                 if (iter.hasNext()) {
                     String id = iter.next();
 
-                    window.setBaseDirectory(logFile.getParentFile());
+                    window.setCurrentDirectory(topObjectFile.getParentFile());
                     window.create();
                     window.setText(id);
                     window.addDisposeListener(new DisposeListener() {

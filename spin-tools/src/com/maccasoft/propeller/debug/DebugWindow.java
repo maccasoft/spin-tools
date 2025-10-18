@@ -85,7 +85,7 @@ public abstract class DebugWindow {
     int xDirection;
     int yDirection;
 
-    File baseDirectory;
+    File currentDirectory;
 
     int keyPress;
     int mousePack;
@@ -132,12 +132,12 @@ public abstract class DebugWindow {
         yDirection = 0;
     }
 
-    public File getBaseDirectory() {
-        return baseDirectory != null ? baseDirectory : new File("");
+    public File getCurrentDirectory() {
+        return currentDirectory != null ? currentDirectory : new File("");
     }
 
-    public void setBaseDirectory(File baseDirectory) {
-        this.baseDirectory = baseDirectory;
+    public void setCurrentDirectory(File currentDirectory) {
+        this.currentDirectory = currentDirectory;
     }
 
     public void open() {

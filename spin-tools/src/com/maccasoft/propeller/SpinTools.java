@@ -20,11 +20,9 @@ import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
@@ -3302,11 +3300,8 @@ public class SpinTools {
         ComPort uploadPort = doUpload(obj, writeToFlash, serialPort, serialPortShared);
 
         if (isDebug) {
-            File debugFolder = editorTab.getFile() != null ? editorTab.getFile().getParentFile() : new File("").getAbsoluteFile();
-            String fileName = editorTab.getText();
-            Date date = Calendar.getInstance().getTime();
-            DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd.HHmmss");
-            consoleView.setLogFile(debugFolder, String.format("%s.%s.log", fileName, dateFormat.format(date)));
+            File topObjectFile = editorTab.getFile() != null ? editorTab.getFile() : new File(editorTab.getText()).getAbsoluteFile();
+            consoleView.setTopObjectFile(topObjectFile);
             consoleView.setSerialPort(uploadPort != null ? uploadPort : serialPort);
             consoleView.setEnabled(true);
         }
