@@ -199,7 +199,7 @@ public class Spin2Model extends SpinModel {
         "PC_KEY",
         "PC_MOUSE",
 
-        "SIZEOF"
+        "SIZEOF",
     }));
 
     public static boolean isPAsmInstruction(String token) {

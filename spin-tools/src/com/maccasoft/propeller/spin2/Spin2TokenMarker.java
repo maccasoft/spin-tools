@@ -977,29 +977,6 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 }
                 else if ("debug".equalsIgnoreCase(node.instruction.getText())) {
                     tokens.add(new TokenMarker(node.instruction, TokenId.KEYWORD));
-                    for (int i = 1; i < node.getTokens().size(); i++) {
-                        Token token = node.getToken(i);
-                        if (token.type == Token.NUMBER) {
-                            tokens.add(new TokenMarker(token, TokenId.NUMBER));
-                        }
-                        else if (token.type == Token.OPERATOR) {
-                            tokens.add(new TokenMarker(token, TokenId.OPERATOR));
-                        }
-                        else if (token.type == Token.STRING) {
-                            tokens.add(new TokenMarker(token, TokenId.STRING));
-                        }
-                        else {
-                            TokenId id;
-                            String s = token.getText().toUpperCase();
-                            id = debugKeywords.get(s);
-                            if (id == null && s.startsWith("`")) {
-                                id = debugKeywords.get(s.substring(1));
-                            }
-                            if (id != null) {
-                                tokens.add(new TokenMarker(token, id));
-                            }
-                        }
-                    }
                 }
             }
             if (node.modifier != null) {
@@ -1270,6 +1247,10 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 TokenId id = symbols.get(node.instruction.getText());
                 if (id != null && id == TokenId.TYPE) {
                     tokens.add(new TokenMarker(node.instruction, id));
+                }
+                if ("debug".equalsIgnoreCase(node.instruction.getText())) {
+                    markTokens(node, 0, "");
+                    return;
                 }
             }
 

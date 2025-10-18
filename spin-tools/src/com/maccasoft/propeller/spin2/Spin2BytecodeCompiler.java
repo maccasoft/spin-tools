@@ -1003,13 +1003,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
 
                     while (n < node.getChildCount()) {
                         Spin2StatementNode child = node.getChild(n++);
-                        if (child.getType() == Token.STRING) {
-                            for (Spin2StatementNode param : child.getChilds()) {
-                                debugSource.addAll(compileConstantExpression(context, method, param));
-                                stack += param.getReturnLongs() * 4;
-                            }
-                        }
-                        else if (Spin2Model.isDebugKeyword(child.getText())) {
+                        if (Spin2Model.isDebugKeyword(child.getText())) {
                             for (Spin2StatementNode param : child.getChilds()) {
                                 debugSource.addAll(compileConstantExpression(context, method, param));
                                 stack += param.getReturnLongs() * 4;
@@ -1021,13 +1015,27 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                                 stack += param.getReturnLongs() * 4;
                             }
                         }
-                        else {
+                        else if (child.getType() != Token.STRING) {
+                            try {
+                                Expression expression = buildConstantExpression(context, child);
+                                if (expression.isConstant()) {
+                                    if (child.getChildCount() != 0) {
+                                        logMessage(new CompilerException("expressions not allowed", child.getTokens()));
+                                    }
+                                    int value = expression.getNumber().intValue();
+                                    if (value >= 0 && value <= 255) {
+                                        continue;
+                                    }
+                                }
+                            } catch (Exception e) {
+                                // Do nothing
+                            }
                             debugSource.addAll(compileConstantExpression(context, method, child));
                             stack += child.getReturnLongs() * 4;
                         }
                     }
 
-                    DebugDataObject debugData = debug.compileDebugStatement(node);
+                    DebugDataObject debugData = debug.compileDebugStatement(context, node);
                     node.setDebugData(debugData);
 
                     if (push) {

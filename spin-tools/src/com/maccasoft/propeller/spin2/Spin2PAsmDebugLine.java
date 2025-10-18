@@ -154,15 +154,8 @@ public class Spin2PAsmDebugLine {
                         }
                         break;
                     }
-                    if (token.type != Token.KEYWORD) {
+                    if (token.type == Token.OPERATOR) {
                         throw new CompilerException("unexpected operator '" + token.getText() + "'", token);
-                    }
-                    if (!isBacktickExpression && !Spin2Model.isDebugKeyword(token.getText())) {
-                        root.addStatement(child = new Spin2DebugCommand(new Token(0, "#")));
-                        list = new ArrayList<Token>();
-                        list.add(token);
-                        state = 4;
-                        break;
                     }
                     root.addStatement(child = new Spin2DebugCommand(token));
                     state = 1;
@@ -207,26 +200,6 @@ public class Spin2PAsmDebugLine {
                         break;
                     }
                     throw new CompilerException("unexpected '" + token.getText() + "'", token);
-                case 4:
-                    if (list.isEmpty() && Spin2Model.isDebugKeyword(token.getText())) {
-                        root.addStatement(child = new Spin2DebugCommand(token));
-                        state = 1;
-                        break;
-                    }
-                    if (",".equals(token.getText())) {
-                        String prefix = null;
-                        if ("#".equals(list.get(0).getText())) {
-                            prefix = list.get(0).getText();
-                            list = list.subList(1, list.size());
-                        }
-                        Spin2ExpressionBuilder expressionBuilder = new Spin2ExpressionBuilder(context, list);
-                        child.addArgument(new Spin2DebugExpression(prefix, expressionBuilder.getExpression()));
-
-                        list = new ArrayList<Token>();
-                        break;
-                    }
-                    list.add(token);
-                    break;
             }
         }
 
@@ -253,6 +226,10 @@ public class Spin2PAsmDebugLine {
 
     public Spin2PAsmDebugLine(Context context) {
         this.context = context;
+    }
+
+    public Context getContext() {
+        return context;
     }
 
     public void addStatement(Spin2DebugCommand statement) {
