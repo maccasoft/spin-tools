@@ -156,6 +156,21 @@ public class SerialComPort extends ComPort {
         }
     }
 
+    public boolean writeBytes(byte[] buffer, int offs, int count) throws ComPortException {
+        try {
+            while (count > 0) {
+                boolean rc = serialPort.writeByte(buffer[offs++]);
+                if (!rc) {
+                    throw new ComPortException("Port name - " + serialPort.getPortName() + "; Method name - writeInt; Exception type - Can't write.");
+                }
+                --count;
+            }
+        } catch (SerialPortException e) {
+            throw new ComPortException(e.getExceptionType(), e);
+        }
+        return true;
+    }
+
     @Override
     public byte[] readBytes() throws ComPortException {
         try {

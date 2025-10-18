@@ -11,7 +11,6 @@
 package com.maccasoft.propeller.debug;
 
 import java.io.File;
-import java.io.IOException;
 
 import org.apache.commons.lang3.BitField;
 import org.eclipse.swt.SWT;
@@ -80,7 +79,7 @@ public abstract class DebugWindow {
 
     protected Point imageSize;
 
-    protected CircularBuffer transmitBuffer;
+    protected final CircularBuffer transmitBuffer;
 
     Point origin;
     int xDirection;
@@ -276,20 +275,18 @@ public abstract class DebugWindow {
     }
 
     protected void sendKeyPress() {
-        try {
-            transmitBuffer.writeLong(keyPress);
-        } catch (IOException e) {
-            // Do nothing
+        transmitBuffer.writeLong(keyPress);
+        synchronized (transmitBuffer) {
+            transmitBuffer.notify();
         }
         keyPress = 0;
     }
 
     protected void sendMouse() {
-        try {
-            transmitBuffer.writeLong(mousePack);
-            transmitBuffer.writeLong(mousePixel);
-        } catch (IOException e) {
-            // Do nothing
+        transmitBuffer.writeLong(mousePack);
+        transmitBuffer.writeLong(mousePixel);
+        synchronized (transmitBuffer) {
+            transmitBuffer.notify();
         }
         mousePack = mouseWheel.setValue(mousePack, 0);
     }

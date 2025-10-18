@@ -1353,6 +1353,10 @@ public class DebugPAsmWindow {
             stallBrk = STALL_CMD;
         }
 
+        synchronized (transmitter) {
+            transmitter.notify();
+        }
+
         //  ----------------------------
         //   Receive final data from P2
         //  ----------------------------

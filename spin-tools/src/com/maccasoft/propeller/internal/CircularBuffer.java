@@ -1,12 +1,11 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * All rights reserved.
  *
- * Contributors:
- *     Marco Maccaferri - initial API and implementation
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License v1.0 which accompanies this
+ * distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.internal;
@@ -31,11 +30,11 @@ public class CircularBuffer {
         head = tail = 0;
     }
 
-    public int read(byte b[]) throws IOException {
+    public int read(byte[] b) throws IOException {
         return read(b, 0, b.length);
     }
 
-    public int read(byte b[], int off, int len) throws IOException {
+    public int read(byte[] b, int off, int len) throws IOException {
         Objects.checkFromIndexSize(off, len, b.length);
 
         int i = off;
@@ -50,7 +49,7 @@ public class CircularBuffer {
         return i - off;
     }
 
-    public int available() throws IOException {
+    public int available() {
         int rc = head - tail;
         if (rc < 0) {
             rc += buffer.length;
@@ -58,7 +57,7 @@ public class CircularBuffer {
         return rc;
     }
 
-    public void write(int b) throws IOException {
+    public void write(int b) {
         buffer[head++] = (byte) b;
         if (head >= buffer.length) {
             head = 0;
@@ -69,8 +68,7 @@ public class CircularBuffer {
         write(b, 0, b.length);
     }
 
-    public void write(byte[] b, int off, int len) throws IOException {
-        Objects.checkFromIndexSize(off, len, b.length);
+    public void write(byte[] b, int off, int len) {
         while (len > 0) {
             buffer[head++] = b[off++];
             if (head >= buffer.length) {
@@ -80,12 +78,12 @@ public class CircularBuffer {
         }
     }
 
-    public void writeWord(int b) throws IOException {
+    public void writeWord(int b) {
         write(b & 0xFF);
         write((b >> 8) & 0xFF);
     }
 
-    public void writeLong(int b) throws IOException {
+    public void writeLong(int b) {
         write(b & 0xFF);
         write((b >> 8) & 0xFF);
         write((b >> 16) & 0xFF);

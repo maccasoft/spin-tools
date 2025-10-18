@@ -69,8 +69,9 @@ public class ConsoleView {
     boolean writeLogFile;
     boolean enabled;
 
-    CircularBuffer receiveBuffer;
-    CircularBuffer transmitBuffer;
+    final CircularBuffer receiveBuffer;
+    final CircularBuffer transmitBuffer;
+    boolean consoleThreadRun;
 
     StringBuilder pendingText;
     File logFile;
@@ -134,7 +135,10 @@ public class ConsoleView {
                         if (os != null) {
                             os.write(rx, 0, rx.length);
                         }
-                        receiveBuffer.write(rx);
+                        synchronized (receiveBuffer) {
+                            receiveBuffer.write(rx);
+                            receiveBuffer.notify();
+                        }
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -151,7 +155,10 @@ public class ConsoleView {
             if (os != null) {
                 os.write(b);
             }
-            receiveBuffer.write(b);
+            synchronized (receiveBuffer) {
+                receiveBuffer.write(b);
+                receiveBuffer.notify();
+            }
         }
 
         @Override
@@ -159,7 +166,10 @@ public class ConsoleView {
             if (os != null) {
                 os.write(b, 0, b.length);
             }
-            receiveBuffer.write(b);
+            synchronized (receiveBuffer) {
+                receiveBuffer.write(b);
+                receiveBuffer.notify();
+            }
         }
 
         @Override
@@ -167,22 +177,13 @@ public class ConsoleView {
             if (os != null) {
                 os.write(b, off, len);
             }
-            receiveBuffer.write(b, off, len);
-        }
-
-        @Override
-        public void flush() throws IOException {
-
-        }
-
-        @Override
-        public void close() throws IOException {
-
+            synchronized (receiveBuffer) {
+                receiveBuffer.write(b, off, len);
+                receiveBuffer.notify();
+            }
         }
 
     };
-
-    boolean consoleThreadRun;
 
     Runnable receiveThread = new Runnable() {
 
@@ -201,7 +202,15 @@ public class ConsoleView {
                 try {
                     cogn = -1;
 
-                    count = receiveBuffer.available();
+                    while ((count = receiveBuffer.available()) == 0) {
+                        synchronized (receiveBuffer) {
+                            receiveBuffer.wait();
+                            if (!consoleThreadRun) {
+                                break;
+                            }
+                        }
+                    }
+
                     while (count > 0) {
                         b = receiveBuffer.read();
                         count--;
@@ -281,10 +290,7 @@ public class ConsoleView {
 
                             });
                         }
-                        cogn = -1;
                     }
-
-                    Thread.sleep(1);
                 } catch (Exception e) {
                     // Do nothing
                 }
@@ -346,21 +352,21 @@ public class ConsoleView {
 
         @Override
         public void run() {
-            int count, b;
+            int count;
+            byte[] b = new byte[1024];
 
             while (consoleThreadRun) {
                 try {
-                    count = transmitBuffer.available();
-                    while (count > 0 && consoleThreadRun) {
-                        b = transmitBuffer.read();
-                        if (serialPort.isOpened()) {
-                            while (!serialPort.writeInt(b) && consoleThreadRun) {
-                                Thread.sleep(1);
+                    while (transmitBuffer.available() != 0) {
+                        if ((count = transmitBuffer.read(b)) > 0) {
+                            if (serialPort != null && serialPort.isOpened()) {
+                                serialPort.writeBytes(b, 0, count);
                             }
                         }
-                        count--;
                     }
-                    Thread.sleep(1);
+                    synchronized (transmitBuffer) {
+                        transmitBuffer.wait();
+                    }
                 } catch (InterruptedException e) {
                     // Do nothing
                 } catch (Exception e) {
@@ -450,6 +456,13 @@ public class ConsoleView {
             @Override
             public void widgetDisposed(DisposeEvent event) {
                 consoleThreadRun = false;
+
+                synchronized (receiveBuffer) {
+                    receiveBuffer.notify();
+                }
+                synchronized (transmitBuffer) {
+                    transmitBuffer.notify();
+                }
 
                 preferences.removePropertyChangeListener(preferencesChangeListener);
 
