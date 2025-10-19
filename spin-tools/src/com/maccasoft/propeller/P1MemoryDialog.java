@@ -169,7 +169,11 @@ public class P1MemoryDialog extends Dialog {
     protected Control createButtonBar(Composite parent) {
         parent.setBackground(widgetBackground);
         parent.setBackgroundMode(SWT.INHERIT_DEFAULT);
-        return super.createButtonBar(parent);
+
+        Control control = super.createButtonBar(parent);
+        control.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL | GridData.VERTICAL_ALIGN_CENTER));
+
+        return control;
     }
 
     @Override
@@ -255,6 +259,12 @@ public class P1MemoryDialog extends Dialog {
         createButton(parent, IDialogConstants.CLIENT_ID + 1, "Save Binary", false);
         createButton(parent, IDialogConstants.CLIENT_ID + 2, "Save Listing", false);
         createButton(parent, IDialogConstants.CLIENT_ID + 4, "Save Package", false);
+
+        Label label = new Label(parent, SWT.NONE);
+        label.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+        ((GridLayout) parent.getLayout()).numColumns++;
+        ((GridLayout) parent.getLayout()).makeColumnsEqualWidth = false;
+
         createButton(parent, IDialogConstants.OK_ID, IDialogConstants.CLOSE_LABEL, true);
     }
 
