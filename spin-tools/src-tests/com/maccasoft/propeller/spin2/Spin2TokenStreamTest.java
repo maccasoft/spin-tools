@@ -947,4 +947,31 @@ class Spin2TokenStreamTest {
         assertEquals(")", subject.nextToken().getText());
     }
 
+    @Test
+    void testBacktickUnbalanced() {
+        Spin2TokenStream subject = new Spin2TokenStream(""
+            + "    debug(`t '`zstr_(fstr1(string(\"NOT %s\"), modrm16(mod))\n"
+            + "    repeat\n"
+            + "");
+
+        assertEquals("debug", subject.nextToken().getText());
+        assertEquals("(", subject.nextToken().getText());
+        assertEquals("`t '", subject.nextToken().getText());
+        assertEquals("`zstr_", subject.nextToken().getText());
+        assertEquals("(", subject.nextToken().getText());
+        assertEquals("fstr1", subject.nextToken().getText());
+        assertEquals("(", subject.nextToken().getText());
+        assertEquals("string", subject.nextToken().getText());
+        assertEquals("(", subject.nextToken().getText());
+        assertEquals("\"NOT %s\"", subject.nextToken().getText());
+        assertEquals(")", subject.nextToken().getText());
+        assertEquals(",", subject.nextToken().getText());
+        assertEquals("modrm16", subject.nextToken().getText());
+        assertEquals("(", subject.nextToken().getText());
+        assertEquals("mod", subject.nextToken().getText());
+        assertEquals(")", subject.nextToken().getText());
+        assertEquals(")", subject.nextToken().getText());
+        assertEquals(Token.NL, subject.nextToken().type);
+    }
+
 }

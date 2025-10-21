@@ -761,6 +761,35 @@ public class Spin2TokenStream extends TokenStream {
 
         while (index < text.length()) {
             ch = Character.toUpperCase(text.charAt(index));
+            if (ch == '\r') {
+                int startIndex = index++;
+                int startColumn = column;
+                int startLine = line;
+
+                if (index < text.length() && text.charAt(index) == '\n') {
+                    index++;
+                }
+                column = 0;
+                line++;
+
+                backtickState = 0;
+                backtickNestedParens = 0;
+
+                return new Token(this, startIndex, startLine, startColumn, Token.NL);
+            }
+            if (ch == '\n') {
+                int startIndex = index++;
+                int startColumn = column;
+                int startLine = line;
+
+                column = 0;
+                line++;
+
+                backtickState = 0;
+                backtickNestedParens = 0;
+
+                return new Token(this, startIndex, startLine, startColumn, Token.NL);
+            }
             if (ch == ' ') {
                 index++;
                 column++;
@@ -768,9 +797,6 @@ public class Spin2TokenStream extends TokenStream {
             else if (ch == '\t') {
                 index++;
                 column = ((column + 7) & 7) - 1;
-            }
-            else if (ch == '\r' || ch == '\n') {
-                break;
             }
             else if (ch == '{') {
                 return parseBlockComment();
