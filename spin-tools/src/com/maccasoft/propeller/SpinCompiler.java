@@ -479,11 +479,14 @@ public class SpinCompiler {
 
                 if (!error.get() && (cmd.hasOption('t') || cmd.hasOption('T'))) {
                     boolean pst = cmd.hasOption('T');
+                    AtomicBoolean endSession = new AtomicBoolean();
 
                     String baud = pst ? cmd.getOptionValue('T') : cmd.getOptionValue('t');
                     if (baud != null) {
                         serialPort.setParams(Integer.valueOf(baud), 8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
                     }
+
+                    boolean debugEnabled = compiler.isDebugEnabled();
 
                     println(String.format("Entering%s terminal mode. CTRL-C to exit.", pst ? " PST" : ""));
 
@@ -491,6 +494,7 @@ public class SpinCompiler {
 
                         int state = 0;
                         int cmd, p0;
+                        boolean pendingEndSession = false;
 
                         @Override
                         public void serialEvent(ComPortEvent event) {
@@ -500,11 +504,13 @@ public class SpinCompiler {
                                     if (rx != null) {
                                         if (pst) {
                                             for (int i = 0; i < rx.length; i++) {
-                                                write(rx[i]);
+                                                pstWrite(rx[i]);
                                             }
                                         }
                                         else {
-                                            System.out.write(rx);
+                                            for (int i = 0; i < rx.length; i++) {
+                                                conWrite(rx[i]);
+                                            }
                                         }
                                     }
                                 } catch (Exception e) {
@@ -513,7 +519,20 @@ public class SpinCompiler {
                             }
                         }
 
-                        void write(byte c) {
+                        void conWrite(byte c) {
+                            if (debugEnabled) {
+                                if (c == 0x1B) {
+                                    pendingEndSession = true;
+                                    return;
+                                }
+                                if (c == 0x0A && pendingEndSession) {
+                                    endSession.set(true);
+                                }
+                            }
+                            System.out.write(c);
+                        }
+
+                        void pstWrite(byte c) {
 
                             if (cmd == 2) { // PC: Position Cursor in x,y
                                 if (state == 0) {
@@ -574,6 +593,9 @@ public class SpinCompiler {
                                     break;
 
                                 case 10: // LF: Line Feed
+                                    if (pendingEndSession) {
+                                        endSession.set(true);
+                                    }
                                 case 13: // NL: New Line
                                     System.out.write(13);
                                     System.out.write(10);
@@ -583,6 +605,12 @@ public class SpinCompiler {
                                     System.out.print("\033[H\033[2J");
                                     break;
 
+                                case 0x1B:
+                                    if (debugEnabled) {
+                                        pendingEndSession = true;
+                                    }
+                                    break;
+
                                 default:
                                     System.out.write(c);
                                     break;
@@ -590,12 +618,14 @@ public class SpinCompiler {
                         }
 
                     });
-                    while (true) {
-                        int ch = System.in.read();
-                        if (ch == -1) {
-                            break;
+                    while (!endSession.get()) {
+                        if (System.in.available() != 0) {
+                            byte[] b = System.in.readAllBytes();
+                            serialPort.writeBytes(b);
                         }
-                        serialPort.writeInt(ch);
+                        synchronized (serialPort) {
+                            serialPort.wait(100);
+                        }
                     }
                 }
 

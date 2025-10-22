@@ -73,6 +73,7 @@ public class ConsoleView {
     final CircularBuffer receiveBuffer;
     final CircularBuffer transmitBuffer;
     boolean consoleThreadRun;
+    boolean pendingEndSession;
 
     StringBuilder pendingText;
     File topObjectFile;
@@ -325,6 +326,14 @@ public class ConsoleView {
                     if (writeLogFile) {
                         writeToLog(b);
                     }
+                    if (pendingEndSession) {
+                        endSession();
+                    }
+                }
+                else if (b == 0x1B) {
+                    if (serialPort != null) {
+                        pendingEndSession = true;
+                    }
                 }
                 else {
                     if (writeLogFile) {
@@ -474,8 +483,9 @@ public class ConsoleView {
 
             @Override
             public void widgetDisposed(DisposeEvent event) {
-                consoleThreadRun = false;
+                endSession();
 
+                consoleThreadRun = false;
                 synchronized (receiveBuffer) {
                     receiveBuffer.notify();
                 }
@@ -484,37 +494,6 @@ public class ConsoleView {
                 }
 
                 preferences.removePropertyChangeListener(preferencesChangeListener);
-
-                if (os != null) {
-                    try {
-                        os.close();
-                    } catch (Exception e) {
-                        // Do nothing
-                    }
-                    os = null;
-                }
-
-                if (serialPort != null) {
-                    try {
-                        serialPort.removeEventListener();
-                        if (serialPort.isOpened()) {
-                            serialPort.closePort();
-                        }
-                    } catch (Exception e) {
-
-                    }
-                }
-
-                for (int i = 0; i < debugger.length; i++) {
-                    if (debugger[i] != null) {
-                        debugger[i].dispose();
-                    }
-                }
-
-                for (DebugWindow window : new ArrayList<>(map.values())) {
-                    window.dispose();
-                }
-                map.clear();
 
                 font.dispose();
             }
@@ -537,12 +516,12 @@ public class ConsoleView {
 
     public void setVisible(boolean visible) {
         if (enabled && console.getVisible() && !visible) {
-            if (preferences.getConsoleResetDeviceOnClose()) {
-                if (serialPort != null && serialPort.isOpened()) {
+            if (serialPort != null && serialPort.isOpened()) {
+                if (preferences.getConsoleResetDeviceOnClose()) {
                     serialPort.hwreset(preferences.getP2ResetControl(), 0);
                 }
             }
-            closeLogFile();
+            endSession();
         }
         console.setVisible(visible);
     }
@@ -563,16 +542,8 @@ public class ConsoleView {
         receiveBuffer.flush();
         pendingText = new StringBuilder();
 
-        for (int i = 0; i < debugger.length; i++) {
-            if (debugger[i] != null) {
-                debugger[i].dispose();
-                debugger[i] = null;
-            }
-        }
-        for (DebugWindow window : new ArrayList<>(map.values())) {
-            window.dispose();
-        }
-        map.clear();
+        closeLogFile();
+        closeAllWindows();
 
         console.setText("");
     }
@@ -609,6 +580,7 @@ public class ConsoleView {
 
         this.serialPort = serialPort;
         this.writeLogFile = preferences.getConsoleWriteLogFile();
+        this.pendingEndSession = false;
     }
 
     public void setSerialBaudRate(int serialBaudRate) {
@@ -653,27 +625,18 @@ public class ConsoleView {
     }
 
     void handleDebugWindowCommand(String text) {
-        DebugWindow window = null;
-
         KeywordIterator iter = new KeywordIterator(text);
         if (iter.hasNext()) {
-            String key = iter.next();
-            window = DebugWindow.createType(key, transmitBuffer);
+            DebugWindow window = DebugWindow.createType(iter.peekNext(), transmitBuffer);
             if (window != null) {
+                iter.next();
                 if (iter.hasNext()) {
                     String id = iter.next();
 
                     window.setCurrentDirectory(topObjectFile.getParentFile());
                     window.create();
                     window.setText(id);
-                    window.addDisposeListener(new DisposeListener() {
-
-                        @Override
-                        public void widgetDisposed(DisposeEvent e) {
-                            map.remove(id);
-                        }
-
-                    });
+                    window.addDisposeListener(e -> map.remove(id));
                     window.setup(iter);
                     window.open();
 
@@ -682,25 +645,48 @@ public class ConsoleView {
             }
             else {
                 List<DebugWindow> list = new ArrayList<>();
-                window = map.get(key);
-                if (window != null) {
+                while (iter.hasNext()) {
+                    if ((window = map.get(iter.peekNext())) == null) {
+                        break;
+                    }
                     list.add(window);
-                    while (iter.hasNext()) {
-                        window = map.get(iter.peekNext());
-                        if (window == null) {
-                            break;
-                        }
-                        list.add(window);
-                        iter.next();
-                    }
-                    int index = iter.getIndex();
-                    for (DebugWindow w : list) {
-                        w.update(iter);
-                        iter.setIndex(index);
-                    }
+                    iter.next();
+                }
+
+                int index = iter.getIndex();
+                for (DebugWindow w : list) {
+                    w.update(iter);
+                    iter.setIndex(index);
                 }
             }
         }
+    }
+
+    void endSession() {
+        writeLogFile = false;
+        try {
+            if (serialPort != null && serialPort.isOpened()) {
+                serialPort.closePort();
+            }
+            closeAllWindows();
+            closeLogFile();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        pendingEndSession = false;
+    }
+
+    public void closeAllWindows() {
+        for (int i = 0; i < debugger.length; i++) {
+            if (debugger[i] != null) {
+                debugger[i].dispose();
+                debugger[i] = null;
+            }
+        }
+        for (DebugWindow window : new ArrayList<>(map.values())) {
+            window.dispose();
+        }
+        map.clear();
     }
 
 }

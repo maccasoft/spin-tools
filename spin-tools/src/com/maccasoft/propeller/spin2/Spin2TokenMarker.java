@@ -490,6 +490,8 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         keywords.put("END", TokenId.PASM_INSTRUCTION);
 
         keywords.put("defined", TokenId.DIRECTIVE);
+
+        keywords.put("DEBUG_END_SESSION", TokenId.CONSTANT);
     }
 
     static Map<String, TokenId> debugKeywords = new CaseInsensitiveMap<>();

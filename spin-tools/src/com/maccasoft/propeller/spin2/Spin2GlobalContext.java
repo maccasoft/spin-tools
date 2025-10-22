@@ -319,6 +319,8 @@ public class Spin2GlobalContext extends Context {
         addBuiltinSymbol("NEGX", Integer.MIN_VALUE);
         addBuiltinSymbol("POSX", Integer.MAX_VALUE);
         addBuiltinSymbol("PI", Math.PI);
+
+        addBuiltinSymbol("DEBUG_END_SESSION", 27);
     }
 
     private void addBuiltinSymbol(String name, long value) {
