@@ -342,6 +342,63 @@ public class DebugTermWindow extends DebugWindow {
                             }
                             break;
 
+                        case "SCROLL": {
+                            int x1 = 0, y1 = 0, x2 = columns - 1, y2 = rows - 1, direction = 0;
+                            int units = 1;
+                            Color color = backColor;
+
+                            if (iter.hasNextNumber()) {
+                                x1 = iter.nextNumber();
+                            }
+                            if (iter.hasNextNumber()) {
+                                y1 = iter.nextNumber();
+                            }
+                            if (iter.hasNextNumber()) {
+                                x2 = iter.nextNumber();
+                            }
+                            if (iter.hasNextNumber()) {
+                                y2 = iter.nextNumber();
+                            }
+                            if (iter.hasNext()) {
+                                String s = iter.next();
+                                if (isNumber(s)) {
+                                    direction = stringToNumber(s);
+                                }
+                                else {
+                                    switch (s.toUpperCase()) {
+                                        case "UP":
+                                            break;
+                                        case "DOWN":
+                                            direction = 1;
+                                            break;
+                                        case "LEFT":
+                                            direction = 2;
+                                            break;
+                                        case "RIGHT":
+                                            direction = 3;
+                                        default:
+                                            iter.back();
+                                            break;
+                                    }
+                                }
+                            }
+                            if (iter.hasNextNumber()) {
+                                units = iter.nextNumber();
+                            }
+                            if ((tempColor = color(iter)) != null) {
+                                color = tempColor;
+                            }
+
+                            try {
+                                for (i = 0; i < units; i++) {
+                                    scroll(gc, x1, y1, (x2 - x1) + 1, (y2 - y1) + 1, direction, color);
+                                }
+                            } catch (Exception e) {
+                                // Do nothing
+                            }
+                            break;
+                        }
+
                         case "CLEAR":
                             gc.setBackground(backColor);
                             gc.fillRectangle(0, 0, imageSize.x, imageSize.y);
@@ -433,6 +490,44 @@ public class DebugTermWindow extends DebugWindow {
 
     void update() {
         canvas.redraw();
+    }
+
+    void scroll(GC gc, int x, int y, int width, int height, int direction, Color backColor) {
+        Image img = null;
+
+        gc.setBackground(backColor);
+        try {
+            switch (direction) {
+                case 0: // Up
+                    img = new Image(display, width * fontWidth, (height - 1) * fontHeight);
+                    gc.copyArea(img, x * fontWidth, (y + 1) * fontHeight);
+                    gc.drawImage(img, x * fontWidth, y * fontHeight);
+                    gc.fillRectangle(x * fontWidth, (y + height - 1) * fontHeight, width * fontWidth, 1 * fontHeight);
+                    break;
+                case 1: // Down
+                    img = new Image(display, width * fontWidth, (height - 1) * fontHeight);
+                    gc.copyArea(img, x * fontWidth, y * fontHeight);
+                    gc.drawImage(img, x * fontWidth, (y + 1) * fontHeight);
+                    gc.fillRectangle(x * fontWidth, y * fontHeight, width * fontWidth, 1 * fontHeight);
+                    break;
+                case 2: // Left
+                    img = new Image(display, (width - 1) * fontWidth, height * fontHeight);
+                    gc.copyArea(img, (x + 1) * fontWidth, y * fontHeight);
+                    gc.drawImage(img, x * fontWidth, y * fontHeight);
+                    gc.fillRectangle((x + width - 1) * fontWidth, y * fontHeight, 1 * fontWidth, height * fontHeight);
+                    break;
+                case 3: // Right
+                    img = new Image(display, (width - 1) * fontWidth, height * fontHeight);
+                    gc.copyArea(img, x * fontWidth, y * fontHeight);
+                    gc.drawImage(img, (x + 1) * fontWidth, y * fontHeight);
+                    gc.fillRectangle(x * fontWidth, y * fontHeight, 1 * fontWidth, height * fontHeight);
+                    break;
+            }
+        } finally {
+            if (img != null) {
+                img.dispose();
+            }
+        }
     }
 
     static String[] data = new String[] {
