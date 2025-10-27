@@ -474,7 +474,20 @@ class Spin2DebugTest {
     }
 
     @Test
-    void testLString() {
+    void testSpinLSTR() {
+        String text = "debug(lstr(ptr,#12))";
+
+        Spin2Debug subject = new Spin2Debug();
+        String actual = dumpDebugData(subject.compileDebugStatement(new Context(), parse(text)));
+        Assertions.assertEquals(""
+            + "00000 00000       04             COGN\n"
+            + "00001 00001       35 70 74 72 00 LSTR(ptr)\n"
+            + "00006 00006       00             DONE\n"
+            + "", actual);
+    }
+
+    @Test
+    void testPAsmLSTR() {
         Context context = new Context();
         context.addSymbol("ptr", new NumberLiteral(10));
 

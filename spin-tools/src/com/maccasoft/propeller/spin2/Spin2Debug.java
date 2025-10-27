@@ -362,7 +362,7 @@ public class Spin2Debug {
                             object.writeAll(compileSpinStatement(node, DBC_TYPE_STR | flags, cmd));
                             break;
                         case "LSTR":
-                            object.writeAll(compileSpinStatement(node, DBC_TYPE_STR | DBC_FLAG_ARRAY | flags, cmd));
+                            object.writeAll(compileSpinArrayStatement(node, DBC_TYPE_STR | DBC_FLAG_ARRAY | flags, cmd));
                             break;
 
                         case "C_Z":
