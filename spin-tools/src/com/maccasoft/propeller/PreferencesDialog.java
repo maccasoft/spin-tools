@@ -120,6 +120,7 @@ public class PreferencesDialog extends Dialog {
     TabStops datTabStops;
     Button showSectionsBackground;
     Button showEditorOutlineSectionsBackground;
+    Button expandOutlineSelection;
     Button[] hoverDocModifiers;
     Button[] hyperlinkModifiers;
 
@@ -1100,6 +1101,17 @@ public class PreferencesDialog extends Dialog {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 preferences.setShowEditorOutlineSectionsBackground(showEditorOutlineSectionsBackground.getSelection());
+            }
+        });
+
+        expandOutlineSelection = new Button(rightGroup, SWT.CHECK);
+        expandOutlineSelection.setText("Expand outline selection");
+        expandOutlineSelection.setSelection(preferences.getExpandOutlineSelection());
+        expandOutlineSelection.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                preferences.setExpandOutlineSelection(expandOutlineSelection.getSelection());
             }
         });
 

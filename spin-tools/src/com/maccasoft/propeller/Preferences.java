@@ -163,6 +163,7 @@ public class Preferences {
             showIndentLines = true;
             showEditorOutline = true;
             highlightCurrentLine = true;
+            expandOutlineSelection = true;
             reloadOpenTabs = true;
 
             hoverDocModifiers = 0;
@@ -207,6 +208,7 @@ public class Preferences {
         public int indentLinesSize;
         public boolean showEditorOutline;
         public boolean showEditorOutlineSectionsBackground;
+        public boolean expandOutlineSelection;
         public boolean highlightCurrentLine;
         public int hoverDocModifiers;
         public int hyperlinkModifiers;
@@ -962,6 +964,14 @@ public class Preferences {
     public void setShowEditorOutlineSectionsBackground(boolean showEditorOutlineSectionsBackground) {
         changeSupport.firePropertyChange(PROP_SHOW_EDITOR_OUTLINE_SECTIONS_BACKGROUND, preferences.showEditorOutlineSectionsBackground,
             preferences.showEditorOutlineSectionsBackground = showEditorOutlineSectionsBackground);
+    }
+
+    public boolean getExpandOutlineSelection() {
+        return preferences.expandOutlineSelection;
+    }
+
+    public void setExpandOutlineSelection(boolean expandOutlineSelection) {
+        preferences.expandOutlineSelection = expandOutlineSelection;
     }
 
     public boolean getHighlightCurrentLine() {

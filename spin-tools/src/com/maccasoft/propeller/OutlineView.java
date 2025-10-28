@@ -19,9 +19,9 @@ import java.util.Map;
 import org.eclipse.jface.viewers.IElementComparer;
 import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
-import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.OwnerDrawLabelProvider;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.StyledCellLabelProvider;
 import org.eclipse.jface.viewers.TreePath;
 import org.eclipse.jface.viewers.TreeViewer;
@@ -409,8 +409,31 @@ public class OutlineView {
         }
     }
 
-    public void setSelection(IStructuredSelection selection) {
-        viewer.setSelection(selection, true);
+    public void setSelection(Node node) {
+        Node topNode = node;
+        while (topNode.getParent() != null) {
+            if (topNode instanceof ConstantsNode) {
+                if ("CON".equalsIgnoreCase(topNode.getStartToken().getText())) {
+                    break;
+                }
+            }
+            if (topNode instanceof VariablesNode) {
+                if ("VAR".equalsIgnoreCase(topNode.getStartToken().getText())) {
+                    break;
+                }
+            }
+            if (topNode instanceof ObjectsNode || topNode instanceof MethodNode || topNode instanceof DataNode || topNode instanceof FunctionNode) {
+                break;
+            }
+            topNode = topNode.getParent();
+        }
+        if (Preferences.getInstance().getExpandOutlineSelection()) {
+            viewer.setExpandedState(topNode, true);
+        }
+        else if (!viewer.getExpandedState(topNode)) {
+            node = topNode;
+        }
+        viewer.setSelection(new StructuredSelection(node), true);
     }
 
     public Control getControl() {

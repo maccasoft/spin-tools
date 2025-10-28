@@ -34,7 +34,6 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.ITreeViewerListener;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
-import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TreeExpansionEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
@@ -245,7 +244,7 @@ public class EditorTab implements FindReplaceTarget {
                     outlineView.removeSelectionChangedListener(outlineSelectionChangeListener);
                     outlineView.getViewer().removeTreeListener(outlineTreeListener);
                     try {
-                        outlineView.setSelection(new StructuredSelection(selection));
+                        outlineView.setSelection(selection);
                     } finally {
                         outlineView.addSelectionChangedListener(outlineSelectionChangeListener);
                         outlineView.getViewer().addTreeListener(outlineTreeListener);
