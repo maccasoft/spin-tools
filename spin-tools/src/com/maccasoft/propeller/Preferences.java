@@ -54,6 +54,7 @@ public class Preferences {
     public static final String PROP_SHOW_SECTIONS_BACKGROUND = "showSectionsBackground";
     public static final String PROP_HIGHLIGHT_CURRENT_LINE = "highlightCurrentLine";
     public static final String PROP_SHOW_EDITOR_OUTLINE = "showEditorOutline";
+    public static final String PROP_SHOW_EDITOR_OUTLINE_SECTIONS_BACKGROUND = "showEditorOutlineSectionsBackground";
     public static final String PROP_HOVERDOC_MOD = "hoverDocModifiers";
     public static final String PROP_HYPERLINK_MOD = "hyperlinkModifiers";
     public static final String PROP_LRU = "lru";
@@ -205,6 +206,7 @@ public class Preferences {
         public Boolean showSectionsBackground;
         public int indentLinesSize;
         public boolean showEditorOutline;
+        public boolean showEditorOutlineSectionsBackground;
         public boolean highlightCurrentLine;
         public int hoverDocModifiers;
         public int hyperlinkModifiers;
@@ -951,6 +953,15 @@ public class Preferences {
 
     public void setShowEditorOutline(boolean showEditorOutline) {
         changeSupport.firePropertyChange(PROP_SHOW_EDITOR_OUTLINE, preferences.showEditorOutline, preferences.showEditorOutline = showEditorOutline);
+    }
+
+    public boolean getShowEditorOutlineSectionsBackground() {
+        return preferences.showEditorOutlineSectionsBackground;
+    }
+
+    public void setShowEditorOutlineSectionsBackground(boolean showEditorOutlineSectionsBackground) {
+        changeSupport.firePropertyChange(PROP_SHOW_EDITOR_OUTLINE_SECTIONS_BACKGROUND, preferences.showEditorOutlineSectionsBackground,
+            preferences.showEditorOutlineSectionsBackground = showEditorOutlineSectionsBackground);
     }
 
     public boolean getHighlightCurrentLine() {

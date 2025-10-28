@@ -1,19 +1,20 @@
 /*
  * Copyright (c) 2021-25 Marco Maccaferri and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * All rights reserved.
  *
- * Contributors:
- *     Marco Maccaferri - initial API and implementation
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License v1.0 which accompanies this
+ * distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.jface.viewers.IElementComparer;
 import org.eclipse.jface.viewers.IOpenListener;
@@ -31,9 +32,13 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.TextStyle;
+import org.eclipse.swt.internal.Platform;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 
+import com.maccasoft.propeller.SourceTokenMarker.TokenId;
+import com.maccasoft.propeller.internal.ColorRegistry;
 import com.maccasoft.propeller.internal.StyledStringBuilder;
 import com.maccasoft.propeller.model.ConstantNode;
 import com.maccasoft.propeller.model.ConstantsNode;
@@ -272,6 +277,8 @@ public class OutlineView {
                         cell.setStyleRanges(sb.getTextStyles());
                     }
                 }
+
+                cell.setBackground(showSectionsBackground ? getLineBackground(getInput(), element.getStartIndex()) : null);
             } catch (Exception e) {
                 // Do nothing
             }
@@ -309,6 +316,8 @@ public class OutlineView {
     TextStyle stringStyle;
     Font fontBold;
 
+    boolean showSectionsBackground;
+
     public OutlineView(Composite parent) {
         viewer = new TreeViewer(parent, SWT.FULL_SELECTION | SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
         viewer.setContentProvider(contentProvider);
@@ -319,12 +328,46 @@ public class OutlineView {
         fd[0].setStyle(SWT.BOLD);
         fontBold = new Font(viewer.getControl().getDisplay(), fd[0]);
 
+        applyTheme(Preferences.getInstance().getTheme());
+    }
+
+    public void applyTheme(String id) {
+        styleMap.clear();
+
         commentStyle = new TextStyle(null, new Color(0x7E, 0x7E, 0x7E), null);
         blockStyle = new TextStyle(fontBold, null, null);
         methodLocalStyle = new TextStyle(null, new Color(0x80, 0x80, 0x00), null);
         methodReturnStyle = new TextStyle(null, new Color(0x90, 0x00, 0x00), null);
         typeStyle = new TextStyle(fontBold, null, null);
         stringStyle = new TextStyle(null, new Color(0x7E, 0x00, 0x7E), null);
+
+        if ("win32".equals(Platform.PLATFORM) && id == null) {
+            if (Display.isSystemDarkTheme()) {
+                id = "dark";
+            }
+        }
+
+        if (id == null) {
+            id = Display.isSystemDarkTheme() ? "dark" : "light";
+        }
+
+        if ("dark".equals(id)) {
+            // Do nothing
+        }
+        else if ("light".equals(id)) {
+            styleMap.put(TokenId.CON, new TextStyle(null, null, ColorRegistry.getColor(0xFF, 0xF8, 0xC0)));
+            styleMap.put(TokenId.CON_ALT, new TextStyle(null, null, ColorRegistry.getColor(0xFD, 0xF3, 0xA8)));
+            styleMap.put(TokenId.VAR, new TextStyle(null, null, ColorRegistry.getColor(0xFF, 0xDF, 0xBF)));
+            styleMap.put(TokenId.VAR_ALT, new TextStyle(null, null, ColorRegistry.getColor(0xFD, 0xD2, 0xA7)));
+            styleMap.put(TokenId.OBJ, new TextStyle(null, null, ColorRegistry.getColor(0xFF, 0xBF, 0xBF)));
+            styleMap.put(TokenId.OBJ_ALT, new TextStyle(null, null, ColorRegistry.getColor(0xFD, 0xA7, 0xA7)));
+            styleMap.put(TokenId.PUB, new TextStyle(null, null, ColorRegistry.getColor(0xBF, 0xDF, 0xFF)));
+            styleMap.put(TokenId.PUB_ALT, new TextStyle(null, null, ColorRegistry.getColor(0xA7, 0xD2, 0xFD)));
+            styleMap.put(TokenId.PRI, new TextStyle(null, null, ColorRegistry.getColor(0xBF, 0xF8, 0xFF)));
+            styleMap.put(TokenId.PRI_ALT, new TextStyle(null, null, ColorRegistry.getColor(0xA7, 0xF3, 0xFD)));
+            styleMap.put(TokenId.DAT, new TextStyle(null, null, ColorRegistry.getColor(0xBF, 0xFF, 0xC8)));
+            styleMap.put(TokenId.DAT_ALT, new TextStyle(null, null, ColorRegistry.getColor(0xA7, 0xFD, 0xB3)));
+        }
     }
 
     public void setLayoutData(Object layoutData) {
@@ -386,49 +429,6 @@ public class OutlineView {
         return ((Node) element).getPath();
     }
 
-    String getPathText(Object element) {
-        Node node = (Node) element;
-
-        if (node instanceof DirectiveNode.IncludeNode) {
-            DirectiveNode.IncludeNode directive = (DirectiveNode.IncludeNode) node;
-            if (directive.getFile() != null) {
-                return directive.getFile().getText().toUpperCase();
-            }
-        }
-        if (node instanceof DirectiveNode.DefineNode) {
-            DirectiveNode.DefineNode directive = (DirectiveNode.DefineNode) node;
-            if (directive.getIdentifier() != null) {
-                return directive.getIdentifier().getText().toUpperCase();
-            }
-        }
-
-        if (node instanceof TypeDefinitionNode) {
-            if (((TypeDefinitionNode) node).getIdentifier() != null) {
-                return ((TypeDefinitionNode) node).getIdentifier().getText().toUpperCase();
-            }
-        }
-
-        String text = node.getTokenCount() != 0 ? node.getStartToken().getText().toUpperCase() : "";
-
-        if (node instanceof VariableNode) {
-            if (((VariableNode) node).identifier != null) {
-                text = ((VariableNode) node).identifier.getText().toUpperCase();
-            }
-        }
-        else if (node instanceof FunctionNode) {
-            if (((FunctionNode) node).identifier != null) {
-                text += " " + ((FunctionNode) node).identifier.getText().toUpperCase();
-            }
-        }
-        else if (node instanceof MethodNode) {
-            if (((MethodNode) node).name != null) {
-                text += " " + ((MethodNode) node).name.getText().toUpperCase();
-            }
-        }
-
-        return text;
-    }
-
     public void setVisible(boolean visible) {
         viewer.getControl().setVisible(visible);
     }
@@ -442,7 +442,7 @@ public class OutlineView {
     }
 
     public void refresh() {
-        viewer.refresh();
+        viewer.refresh(true);
     }
 
     public void setBackground(Color color) {
@@ -629,6 +629,81 @@ public class OutlineView {
         }
 
         return sb;
+    }
+
+    boolean[] blockToggle = new boolean[6];
+    Map<TokenId, TextStyle> styleMap = new HashMap<TokenId, TextStyle>();
+
+    public Color getLineBackground(Node root, int lineOffset) {
+        TokenId id = getSectionBackgroundId(null);
+
+        if (root != null) {
+            for (Node child : root.getChilds()) {
+                if (lineOffset < child.getStartIndex()) {
+                    break;
+                }
+                id = getSectionBackgroundId(child);
+            }
+        }
+
+        if (id != null) {
+            TextStyle style = styleMap.get(id);
+            if (style != null) {
+                return style.background;
+            }
+        }
+
+        return null;
+    }
+
+    TokenId getSectionBackgroundId(Node node) {
+        TokenId result = null;
+
+        if (node == null) {
+            blockToggle[0] = blockToggle[1] = blockToggle[2] = blockToggle[3] = blockToggle[4] = blockToggle[5] = false;
+        }
+
+        if (node instanceof VariablesNode) {
+            result = blockToggle[1] ? TokenId.VAR_ALT : TokenId.VAR;
+            blockToggle[1] = !blockToggle[1];
+            blockToggle[0] = blockToggle[2] = blockToggle[3] = blockToggle[4] = blockToggle[5] = false;
+        }
+        else if (node instanceof ObjectsNode) {
+            result = blockToggle[2] ? TokenId.OBJ_ALT : TokenId.OBJ;
+            blockToggle[2] = !blockToggle[2];
+            blockToggle[0] = blockToggle[1] = blockToggle[3] = blockToggle[4] = blockToggle[5] = false;
+        }
+        else if (node instanceof MethodNode) {
+            if (((MethodNode) node).isPublic()) {
+                result = blockToggle[3] ? TokenId.PUB_ALT : TokenId.PUB;
+                blockToggle[3] = !blockToggle[3];
+                blockToggle[0] = blockToggle[1] = blockToggle[2] = blockToggle[4] = blockToggle[5] = false;
+            }
+            else {
+                result = blockToggle[4] ? TokenId.PRI_ALT : TokenId.PRI;
+                blockToggle[4] = !blockToggle[4];
+                blockToggle[0] = blockToggle[1] = blockToggle[2] = blockToggle[3] = blockToggle[5] = false;
+            }
+        }
+        else if (node instanceof DataNode) {
+            result = blockToggle[5] ? TokenId.DAT_ALT : TokenId.DAT;
+            blockToggle[5] = !blockToggle[5];
+            blockToggle[0] = blockToggle[1] = blockToggle[2] = blockToggle[3] = blockToggle[4] = false;
+        }
+        else {
+            result = blockToggle[0] ? TokenId.CON_ALT : TokenId.CON;
+            blockToggle[0] = !blockToggle[0];
+            blockToggle[1] = blockToggle[2] = blockToggle[3] = blockToggle[4] = blockToggle[5] = false;
+        }
+
+        return result;
+    }
+
+    public void setShowSectionsBackground(boolean showSectionsBackground) {
+        this.showSectionsBackground = showSectionsBackground;
+        if (viewer != null && !viewer.getControl().isDisposed()) {
+            viewer.refresh(true);
+        }
     }
 
 }

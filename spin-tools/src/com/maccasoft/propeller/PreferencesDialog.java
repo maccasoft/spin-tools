@@ -119,6 +119,7 @@ public class PreferencesDialog extends Dialog {
     TabStops pubTabStops;
     TabStops datTabStops;
     Button showSectionsBackground;
+    Button showEditorOutlineSectionsBackground;
     Button[] hoverDocModifiers;
     Button[] hyperlinkModifiers;
 
@@ -192,6 +193,7 @@ public class PreferencesDialog extends Dialog {
     int oldIndentLinesSize;
     boolean oldShowSectionsBackground;
     boolean oldShowEditorOutline;
+    boolean oldShowEditorOutlineSectionsBackground;
     boolean oldHighlightCurrentLine;
     boolean oldSpin1CaseSensitive;
     boolean oldSpin1FastByteConstants;
@@ -530,6 +532,7 @@ public class PreferencesDialog extends Dialog {
         oldShowIndentLines = preferences.getShowIndentLines();
         oldIndentLinesSize = preferences.getIndentLinesSize();
         oldShowEditorOutline = preferences.getShowEditorOutline();
+        oldShowEditorOutlineSectionsBackground = preferences.getShowEditorOutlineSectionsBackground();
         oldHighlightCurrentLine = preferences.getHighlightCurrentLine();
         oldShowSectionsBackground = preferences.getShowSectionsBackground();
         oldSpin1RemoveUnusedMethods = preferences.getSpin1RemoveUnusedMethods();
@@ -1026,12 +1029,18 @@ public class PreferencesDialog extends Dialog {
         new Label(composite, SWT.NONE);
 
         Composite group = new Composite(composite, SWT.NONE);
-        layout = new GridLayout(1, false);
+        layout = new GridLayout(2, false);
         layout.marginHeight = layout.marginWidth = 0;
         group.setLayout(layout);
-        group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+        group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-        showLineNumbers = new Button(group, SWT.CHECK);
+        Composite leftGroup = new Composite(group, SWT.NONE);
+        layout = new GridLayout(1, false);
+        layout.marginHeight = layout.marginWidth = 0;
+        leftGroup.setLayout(layout);
+        leftGroup.setLayoutData(new GridData(SWT.LEFT, SWT.TOP, false, false));
+
+        showLineNumbers = new Button(leftGroup, SWT.CHECK);
         showLineNumbers.setText("Show line numbers");
         showLineNumbers.setSelection(preferences.getShowLineNumbers());
         showLineNumbers.addSelectionListener(new SelectionAdapter() {
@@ -1042,31 +1051,9 @@ public class PreferencesDialog extends Dialog {
             }
         });
 
-        createIndentLinesGroup(group);
+        createIndentLinesGroup(leftGroup);
 
-        showEditorOutline = new Button(group, SWT.CHECK);
-        showEditorOutline.setText("Show outline");
-        showEditorOutline.setSelection(preferences.getShowEditorOutline());
-        showEditorOutline.addSelectionListener(new SelectionAdapter() {
-
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                preferences.setShowEditorOutline(showEditorOutline.getSelection());
-            }
-        });
-
-        showSectionsBackground = new Button(group, SWT.CHECK);
-        showSectionsBackground.setText("Show sections background");
-        showSectionsBackground.setSelection(preferences.getShowSectionsBackground());
-        showSectionsBackground.addSelectionListener(new SelectionAdapter() {
-
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                preferences.setShowSectionsBackground(showSectionsBackground.getSelection());
-            }
-        });
-
-        highlightCurrentLine = new Button(group, SWT.CHECK);
+        highlightCurrentLine = new Button(leftGroup, SWT.CHECK);
         highlightCurrentLine.setText("Highlight current line");
         highlightCurrentLine.setSelection(preferences.getHighlightCurrentLine());
         highlightCurrentLine.addSelectionListener(new SelectionAdapter() {
@@ -1077,13 +1064,52 @@ public class PreferencesDialog extends Dialog {
             }
         });
 
+        showSectionsBackground = new Button(leftGroup, SWT.CHECK);
+        showSectionsBackground.setText("Show sections background");
+        showSectionsBackground.setSelection(preferences.getShowSectionsBackground());
+        showSectionsBackground.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                preferences.setShowSectionsBackground(showSectionsBackground.getSelection());
+            }
+        });
+
+        Composite rightGroup = new Composite(group, SWT.NONE);
+        layout = new GridLayout(1, false);
+        layout.marginHeight = layout.marginWidth = 0;
+        rightGroup.setLayout(layout);
+        rightGroup.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+
+        showEditorOutline = new Button(rightGroup, SWT.CHECK);
+        showEditorOutline.setText("Show outline");
+        showEditorOutline.setSelection(preferences.getShowEditorOutline());
+        showEditorOutline.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                preferences.setShowEditorOutline(showEditorOutline.getSelection());
+            }
+        });
+
+        showEditorOutlineSectionsBackground = new Button(rightGroup, SWT.CHECK);
+        showEditorOutlineSectionsBackground.setText("Show outline sections background");
+        showEditorOutlineSectionsBackground.setSelection(preferences.getShowEditorOutlineSectionsBackground());
+        showEditorOutlineSectionsBackground.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                preferences.setShowEditorOutlineSectionsBackground(showEditorOutlineSectionsBackground.getSelection());
+            }
+        });
+
         boolean IS_MAC = "cocoa".equals(Platform.PLATFORM);
 
         group = new Composite(composite, SWT.NONE);
         layout = new GridLayout(IS_MAC ? 5 : 4, false);
         layout.marginHeight = layout.marginWidth = 0;
         group.setLayout(layout);
-        group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false, 2, 1));
+        group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 2, 1));
 
         label = new Label(group, SWT.NONE);
         label.setText("Code Navigation Modifiers");
@@ -2092,6 +2118,7 @@ public class PreferencesDialog extends Dialog {
         preferences.setIndentLinesSize(oldIndentLinesSize);
         preferences.setShowEditorOutline(oldShowEditorOutline);
         preferences.setShowSectionsBackground(oldShowSectionsBackground);
+        preferences.setShowEditorOutlineSectionsBackground(oldShowEditorOutlineSectionsBackground);
         preferences.setHighlightCurrentLine(oldHighlightCurrentLine);
 
         preferences.setSpin1RemoveUnusedMethods(oldSpin1RemoveUnusedMethods);

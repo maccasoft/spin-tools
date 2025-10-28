@@ -148,6 +148,20 @@ public class EditorTab implements FindReplaceTarget {
                     tabItem.setFont(localFile.equals(evt.getNewValue()) ? boldFont : null);
                     break;
                 }
+
+                case Preferences.PROP_SHOW_EDITOR_OUTLINE_SECTIONS_BACKGROUND:
+                    if (outlineView != null) {
+                        boolean show = (Boolean) evt.getNewValue();
+                        outlineView.setShowSectionsBackground(show && !(tokenMarker instanceof CTokenMarker));
+                    }
+                    break;
+
+                case Preferences.PROP_THEME:
+                    if (outlineView != null) {
+                        outlineView.applyTheme((String) evt.getNewValue());
+                        outlineView.refresh();
+                    }
+                    break;
             }
         }
     };
@@ -848,7 +862,10 @@ public class EditorTab implements FindReplaceTarget {
             this.outlineView.removeSelectionChangedListener(outlineSelectionChangeListener);
             this.outlineView.getViewer().removeTreeListener(outlineTreeListener);
         }
+
         this.outlineView = outlineView;
+        this.outlineView.setShowSectionsBackground(preferences.getShowEditorOutlineSectionsBackground() && !(tokenMarker instanceof CTokenMarker));
+
         if (this.outlineView != null) {
             this.outlineView.addSelectionChangedListener(outlineSelectionChangeListener);
             this.outlineView.getViewer().addTreeListener(outlineTreeListener);

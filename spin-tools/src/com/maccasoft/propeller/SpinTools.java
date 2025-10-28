@@ -1906,6 +1906,7 @@ public class SpinTools {
     void hookListeners(EditorTab editorTab) {
         OutlineView outlineView = outlineViewStack.createNew();
         outlineView.addOpenListener(openListener);
+
         editorTab.setOutlineView(outlineView);
 
         editorTab.addCaretListener(event -> updateCaretPosition());
