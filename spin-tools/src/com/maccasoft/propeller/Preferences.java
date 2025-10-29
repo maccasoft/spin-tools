@@ -1015,8 +1015,7 @@ public class Preferences {
     public List<File> getLru() {
         List<File> list = new ArrayList<>();
         for (String file : preferences.lru) {
-            String[] split = file.split(":");
-            list.add(new File(split[0]));
+            list.add(new File(file));
         }
         return list;
     }
