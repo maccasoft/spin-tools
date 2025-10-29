@@ -68,8 +68,6 @@ import com.maccasoft.propeller.spin1.bytecode.Jnz;
 import com.maccasoft.propeller.spin1.bytecode.Jz;
 import com.maccasoft.propeller.spin1.bytecode.RepeatLoop;
 import com.maccasoft.propeller.spin1.bytecode.Tjz;
-import com.maccasoft.propeller.spin1.instructions.Org;
-import com.maccasoft.propeller.spin1.instructions.Res;
 
 public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
@@ -364,9 +362,8 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
                 LinkDataObject linkData = new Spin1LinkDataObject(info.compiler, info.compiler.getVarSize());
                 for (Entry<String, Expression> objEntry : info.compiler.getPublicSymbols().entrySet()) {
-                    if (objEntry.getValue() instanceof Method) {
+                    if (objEntry.getValue() instanceof Method objectMethod) {
                         String qualifiedName = name + "." + objEntry.getKey();
-                        Method objectMethod = (Method) objEntry.getValue();
                         Method method = new Method(objectMethod.getName(), objectMethod.getMinArgumentsCount(), objectMethod.getArgumentsCount(), objectMethod.getReturnLongs()) {
 
                             @Override
@@ -417,7 +414,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
             if (!compiler.isOptimizeStrings()) {
                 List<Spin1Bytecode> data = getStringData();
-                if (data.size() != 0) {
+                if (!data.isEmpty()) {
                     Spin1MethodLine stringDataLine = new Spin1MethodLine(method.getScope());
                     stringDataLine.setText("(string data)");
                     stringDataLine.addSource(data);
@@ -426,6 +423,8 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                 }
             }
         }
+
+        generateDatObject();
     }
 
     @Override
@@ -551,7 +550,6 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
     @Override
     public Spin1Object generateObject(int memoryOffset) {
-        int address = 0, hubAddress = 0;
         Spin1Object object = new Spin1Object();
 
         object.setClkFreq(clkFreq);
@@ -574,10 +572,8 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
         object.writeByte(count, "Object count");
 
         List<LongDataObject> methodData = new ArrayList<>();
-        if (methods.size() != 0) {
-            Iterator<Spin1Method> methodsIterator = methods.iterator();
-            while (methodsIterator.hasNext()) {
-                Spin1Method method = methodsIterator.next();
+        if (!methods.isEmpty()) {
+            for (Spin1Method method : methods) {
                 LongDataObject dataObject = new LongDataObject(0, "Function " + method.getLabel());
                 object.write(dataObject);
                 methodData.add(dataObject);
@@ -593,64 +589,20 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
         }
         object.setVarSize(linkedVarOffset);
 
-        hubAddress = object.getSize();
-
-        for (Spin1PAsmLine line : source) {
-            if ((line.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Word)
-                || (line.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Wordfit)) {
-                hubAddress = (hubAddress + 1) & ~1;
-                address = (address + 1) & ~1;
-            }
-            else if (line.getMnemonic() != null && !(line.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Byte)
-                && !(line.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Bytefit)
-                && !"FILE".equalsIgnoreCase(line.getMnemonic())) {
-                hubAddress = (hubAddress + 3) & ~3;
-                address = (address + 3) & ~3;
-            }
-            line.getScope().setObjectAddress(hubAddress);
-            if ((line.getInstructionFactory() instanceof Org) || (line.getInstructionFactory() instanceof Res)) {
-                hubAddress = (hubAddress + 3) & ~3;
-                address = (address + 3) & ~3;
-            }
-            try {
-                address = line.resolve(address, memoryOffset + hubAddress);
-                hubAddress += line.getInstructionObject().getSize();
-                for (CompilerException msg : line.getAnnotations()) {
-                    logMessage(msg);
-                }
-            } catch (CompilerException e) {
-                logMessage(e);
-            } catch (Exception e) {
-                logMessage(new CompilerException(e, line.getData()));
-            }
-        }
-
-        for (Spin1PAsmLine line : source) {
-            hubAddress = line.getScope().getObjectAddress();
-            if (object.getSize() < hubAddress) {
-                object.writeBytes(new byte[hubAddress - object.getSize()], "(filler)");
-            }
-            try {
-                object.writeBytes(line.getScope().getAddress(), line.getInstructionObject().getBytes(), line.toString());
-            } catch (CompilerException e) {
-                logMessage(e);
-            } catch (Exception e) {
-                logMessage(new CompilerException(e, line.getData()));
-            }
-        }
+        writeDatBinary(memoryOffset, object);
 
         Spin1MethodLine stringDataLine = null;
-        if (compiler.isOptimizeStrings() && getStringData().size() != 0) {
+        if (compiler.isOptimizeStrings() && !getStringData().isEmpty()) {
             stringDataLine = new Spin1MethodLine(scope);
             stringDataLine.setText("(string data)");
             stringDataLine.addSource(getStringData());
         }
 
-        if (methods.size() != 0) {
+        if (!methods.isEmpty()) {
             boolean loop;
             do {
                 loop = false;
-                address = object.getSize();
+                int address = object.getSize();
                 for (Spin1Method method : methods) {
                     address = method.resolve(address);
                     loop |= method.isAddressChanged();

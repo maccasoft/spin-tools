@@ -75,15 +75,8 @@ import com.maccasoft.propeller.spin2.bytecode.Jmp;
 import com.maccasoft.propeller.spin2.bytecode.Jnz;
 import com.maccasoft.propeller.spin2.bytecode.Jz;
 import com.maccasoft.propeller.spin2.bytecode.Tjz;
-import com.maccasoft.propeller.spin2.instructions.Alignl;
-import com.maccasoft.propeller.spin2.instructions.Alignw;
-import com.maccasoft.propeller.spin2.instructions.DataType;
-import com.maccasoft.propeller.spin2.instructions.Debug;
-import com.maccasoft.propeller.spin2.instructions.Fit;
 import com.maccasoft.propeller.spin2.instructions.Org;
-import com.maccasoft.propeller.spin2.instructions.Orgf;
 import com.maccasoft.propeller.spin2.instructions.Orgh;
-import com.maccasoft.propeller.spin2.instructions.Res;
 
 public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
@@ -372,9 +365,8 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
                 LinkDataObject linkData = new Spin2LinkDataObject(info.compiler, info.compiler.getVarSize());
                 for (Entry<String, Expression> objEntry : info.compiler.getPublicSymbols().entrySet()) {
-                    if (objEntry.getValue() instanceof Method) {
+                    if (objEntry.getValue() instanceof Method objectMethod) {
                         String qualifiedName = name + "." + objEntry.getKey();
-                        Method objectMethod = (Method) objEntry.getValue();
                         Method method = new Method(objectMethod.getName(), objectMethod.getMinArgumentsCount(), objectMethod.getArgumentsCount(), objectMethod.getReturnLongs()) {
 
                             @Override
@@ -482,8 +474,12 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
             }
         }
 
-        scope.addBuiltinSymbol("@CLKMODE", new NumberLiteral(0x40));
-        scope.addBuiltinSymbol("@CLKFREQ", new NumberLiteral(0x44));
+        if (!methods.isEmpty()) {
+            scope.addBuiltinSymbol("@CLKMODE", new NumberLiteral(0x40));
+            scope.addBuiltinSymbol("@CLKFREQ", new NumberLiteral(0x44));
+        }
+
+        generateDatObject();
 
         for (Spin2Method method : methods) {
             Node node = (Node) method.getData();
@@ -493,6 +489,15 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
             Spin2MethodLine line = new Spin2MethodLine(method.getScope(), "RETURN");
             line.addSource(new Bytecode(line.getScope(), Spin2Bytecode.bc_return_results, line.getStatement()));
             method.addSource(line);
+        }
+
+        for (Spin2Method method : methods) {
+            for (Spin2StatementNode node : method.debugNodes) {
+                DebugDataObject debugData = node.getDebugData();
+                if (debugData != null) {
+                    compiler.addDebugStatement(debugData);
+                }
+            }
         }
     }
 
@@ -674,10 +679,8 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
         object.setVarSize(linkedVarOffset);
 
         List<LongDataObject> methodData = new ArrayList<>();
-        if (methods.size() != 0) {
-            Iterator<Spin2Method> methodsIterator = methods.iterator();
-            while (methodsIterator.hasNext()) {
-                Spin2Method method = methodsIterator.next();
+        if (!methods.isEmpty()) {
+            for (Spin2Method method : methods) {
                 LongDataObject dataObject = new LongDataObject(0, "Method " + method.getLabel());
                 object.write(dataObject);
                 methodData.add(dataObject);
@@ -687,164 +690,14 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
             methodData.add(dataObject);
         }
 
-        int address = 0;
-        int hubAddress = -1;
-        int objectAddress = object.getSize();
-        int fitAddress = 0x1F8 << 2;
-        boolean hubMode = true;
-        boolean cogCode = false;
-        boolean spinMode = methods.size() != 0;
-
-        for (Spin2PAsmLine line : source) {
-            if (!hubMode && isInstruction(line.getMnemonic())) {
-                int displ = ((address + 3) & ~3) - address;
-                if (hubAddress != -1) {
-                    hubAddress += displ;
-                }
-                objectAddress += displ;
-                address += displ;
-            }
-            line.getScope().setObjectAddress(objectAddress);
-            line.getScope().setMemoryAddress(memoryOffset + objectAddress);
-            if (line.getInstructionFactory() instanceof Orgh) {
-                hubMode = true;
-                cogCode = false;
-                if (hubAddress == -1) {
-                    hubAddress = 0x400;
-                }
-                address = spinMode ? hubAddress : objectAddress;
-            }
-            if (hubMode) {
-                if (line.getInstructionFactory() instanceof Res) {
-                    logMessage(new CompilerException("res not allowed in orgh mode", line.getData()));
-                }
-                else if (line.getInstructionFactory() instanceof Orgf) {
-                    logMessage(new CompilerException("orgf not allowed in orgh mode", line.getData()));
-                }
-            }
-            if (line.getInstructionFactory() instanceof Org) {
-                hubMode = false;
-            }
-            if (line.getInstructionFactory() instanceof Fit) {
-                ((Fit) line.getInstructionFactory()).setDefaultLimit(hubMode ? 0x80000 : (cogCode ? 0x1F8 : 0x400));
-            }
-
-            if (line.getInstructionFactory() instanceof DataType) {
-                if (!hubMode) {
-                    logMessage(new CompilerException("structures can only be declared in ORGH mode", ((DataLineNode) line.getData()).instruction));
-                }
-            }
-
-            try {
-                if (!hubMode && line.getLabel() != null) {
-                    if ((address & 0x03) != 0) {
-                        throw new CompilerException("cog symbols must be long-aligned", line.getData());
-                    }
-                }
-                if (isDebugEnabled() || !(line.getInstructionFactory() instanceof Debug)) {
-                    address = line.resolve(address, hubMode);
-                    if (line.getInstructionFactory() instanceof Alignl) {
-                        if (hubAddress != -1) {
-                            hubAddress = (hubAddress + 3) & ~3;
-                        }
-                        objectAddress = (objectAddress + 3) & ~3;
-                    }
-                    else if (line.getInstructionFactory() instanceof Alignw) {
-                        if (hubAddress != -1) {
-                            hubAddress = (hubAddress + 1) & ~1;
-                        }
-                        objectAddress = (objectAddress + 1) & ~1;
-                    }
-                    else {
-                        objectAddress += line.getInstructionObject().getSize();
-                        if (hubAddress != -1) {
-                            hubAddress += line.getInstructionObject().getSize();
-                        }
-                    }
-                    if ((line.getInstructionFactory() instanceof Org)) {
-                        cogCode = address < 0x200 * 4;
-                        fitAddress = cogCode ? 0x1F8 * 4 : 0x400 * 4;
-                        if (line.getArguments().size() > 1) {
-                            fitAddress = line.getArguments().get(1).getInteger() * 4;
-                        }
-                    }
-                }
-                else {
-                    line.resolve(address, hubMode);
-                }
-            } catch (CompilerException e) {
-                logMessage(e);
-            } catch (Exception e) {
-                logMessage(new CompilerException(e, line.getData()));
-            }
-
-            if (hubMode) {
-                if (!spinMode && address > objectAddress) {
-                    objectAddress = address;
-                }
-            }
-            else if (address > fitAddress) {
-                if (cogCode) {
-                    logMessage(new CompilerException("cog code limit exceeded by " + ((address - fitAddress + 3) >> 2) + " long(s)", line.getData()));
-                }
-                else {
-                    logMessage(new CompilerException("lut code limit exceeded by " + ((address - fitAddress + 3) >> 2) + " long(s)", line.getData()));
-                }
-            }
-        }
-
-        for (Spin2PAsmDebugLine debugLine : pasmDebugLines) {
-            try {
-                DebugDataObject debugData = debug.compilePAsmDebugStatement(debugLine);
-                debugLine.setDebugData(debugData);
-                compiler.addDebugStatement(debugData);
-            } catch (CompilerException e) {
-                logMessage(e);
-            } catch (Exception e) {
-                logMessage(new CompilerException(e, debugLine.getData()));
-            }
-        }
-
-        hubMode = true;
-        for (Spin2PAsmLine line : source) {
-            objectAddress = line.getScope().getObjectAddress();
-            if (object.getSize() < objectAddress) {
-                object.writeBytes(new byte[objectAddress - object.getSize()], "(filler)");
-            }
-            try {
-                if (line.getInstructionFactory() instanceof Orgh) {
-                    hubMode = true;
-                }
-                if ((line.getInstructionFactory() instanceof Org) || (line.getInstructionFactory() instanceof Res)) {
-                    hubMode = false;
-                }
-                byte[] code = line.getInstructionObject().getBytes();
-                if (!isDebugEnabled() && (line.getInstructionFactory() instanceof Debug)) {
-                    code = new byte[0];
-                }
-                object.writeBytes(line.getScope().getAddress(), hubMode, code, line.toString());
-            } catch (CompilerException e) {
-                logMessage(e);
-            } catch (Exception e) {
-                logMessage(new CompilerException(e, line.getData()));
-            }
-        }
-
-        for (Spin2Method method : methods) {
-            for (Spin2StatementNode node : method.debugNodes) {
-                DebugDataObject debugData = node.getDebugData();
-                if (debugData != null) {
-                    compiler.addDebugStatement(debugData);
-                }
-            }
-        }
+        writeDatBinary(memoryOffset, object, !methods.isEmpty());
 
         if (!methods.isEmpty()) {
             boolean hasErrors = false;
             boolean loop;
             do {
                 loop = false;
-                address = object.getSize();
+                int address = object.getSize();
                 for (Spin2Method method : methods) {
                     hasErrors = true;
                     try {
@@ -889,19 +742,6 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
         object.alignToLong();
 
         return object;
-    }
-
-    boolean isInstruction(String mnemonic) {
-        if (mnemonic == null) {
-            return false;
-        }
-        if ("long".equalsIgnoreCase(mnemonic) || "word".equalsIgnoreCase(mnemonic) || "byte".equalsIgnoreCase(mnemonic)) {
-            return false;
-        }
-        if ("longfit".equalsIgnoreCase(mnemonic) || "wordfit".equalsIgnoreCase(mnemonic) || "bytefit".equalsIgnoreCase(mnemonic)) {
-            return false;
-        }
-        return true;
     }
 
     Expression enumValue = new NumberLiteral(0);
@@ -1348,6 +1188,9 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 memberType = member.getType().getText();
 
                 boolean valid = Spin2Model.isType(memberType);
+                if (!valid && memberType.startsWith("^")) {
+                    valid = Spin2Model.isType(memberType.substring(1));
+                }
                 if (!valid) {
                     valid = (memberStruct = member.getStructureDefinition()) != null;
                 }
@@ -2710,7 +2553,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
             else if (node instanceof StatementNode) {
                 if ("END".equalsIgnoreCase(node.getStartToken().getText())) {
                     processAliases();
-                    Spin2PAsmLine pasmLine = new Spin2PAsmLine(line.getScope(), null, null, "ret", Collections.emptyList(), null);
+                    Spin2PAsmLine pasmLine = new Spin2PAsmLine(line.getScope(), null, null, "ret", Spin2PAsmInstructionFactory.get("ret"), Collections.emptyList(), null);
                     pasmLine.setData(node);
                     line.addSource(new InlinePAsm(rootScope, pasmLine));
                     break;
@@ -2724,13 +2567,13 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 List<Spin2PAsmExpression> arguments = pasmLine.getArguments();
                 if (pasmLine.getInstructionFactory() instanceof Org) {
                     org = 0x00;
-                    if (arguments.size() > 0) {
+                    if (!arguments.isEmpty()) {
                         org = arguments.get(0).getInteger();
                     }
                 }
                 else if (pasmLine.getInstructionFactory() instanceof Orgh) {
                     org = 0x400;
-                    if (arguments.size() > 0) {
+                    if (!arguments.isEmpty()) {
                         logMessage(new CompilerException("argument(s) not allowed", arguments.get(0).getExpression().getData()));
                     }
                     code = Spin2Bytecode.bc_orgh;

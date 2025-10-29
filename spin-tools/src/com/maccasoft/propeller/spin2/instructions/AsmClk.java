@@ -42,7 +42,7 @@ public class AsmClk extends Spin2PAsmInstructionFactory {
         }
 
         list.add(new Spin2PAsmLine(
-            line.getScope(), line.getLabel(), condition, "hubset",
+            line.getScope(), line.getLabel(), condition, "hubset", Spin2PAsmInstructionFactory.get("hubset"),
             Collections.singletonList(new Spin2PAsmExpression("##",
                 new And(
                     new Identifier("clkmode_", line.getScope()),
@@ -51,7 +51,7 @@ public class AsmClk extends Spin2PAsmInstructionFactory {
             null));
 
         list.add(new Spin2PAsmLine(
-            new Context(line.getScope()), null, condition, "waitx",
+            new Context(line.getScope()), null, condition, "waitx", Spin2PAsmInstructionFactory.get("waitx"),
             Collections.singletonList(new Spin2PAsmExpression("##",
                 new Divide(
                     new NumberLiteral(20000000),
@@ -60,7 +60,7 @@ public class AsmClk extends Spin2PAsmInstructionFactory {
             null));
 
         list.add(new Spin2PAsmLine(
-            new Context(line.getScope()), null, line.getCondition(), "hubset",
+            new Context(line.getScope()), null, line.getCondition(), "hubset", Spin2PAsmInstructionFactory.get("hubset"),
             Collections.singletonList(new Spin2PAsmExpression("##", new Identifier("clkmode_", line.getScope()), null)),
             null));
 

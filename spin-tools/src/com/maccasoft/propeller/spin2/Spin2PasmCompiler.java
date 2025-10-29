@@ -33,8 +33,19 @@ import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenIterator;
+import com.maccasoft.propeller.spin2.Spin2Debug.DebugDataObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression.PtrExpression;
+import com.maccasoft.propeller.spin2.instructions.Alignl;
+import com.maccasoft.propeller.spin2.instructions.Alignw;
+import com.maccasoft.propeller.spin2.instructions.DataType;
+import com.maccasoft.propeller.spin2.instructions.Debug;
+import com.maccasoft.propeller.spin2.instructions.Empty;
 import com.maccasoft.propeller.spin2.instructions.FileInc;
+import com.maccasoft.propeller.spin2.instructions.Fit;
+import com.maccasoft.propeller.spin2.instructions.Org;
+import com.maccasoft.propeller.spin2.instructions.Orgf;
+import com.maccasoft.propeller.spin2.instructions.Orgh;
+import com.maccasoft.propeller.spin2.instructions.Res;
 
 public abstract class Spin2PasmCompiler extends ObjectCompiler {
 
@@ -171,10 +182,6 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
         }
     }
 
-    protected Spin2PAsmLine compileDataLine(Context datScope, Context lineScope, DataLineNode node) {
-        return compileDataLine(null, datScope, lineScope, node, "");
-    }
-
     protected Spin2PAsmLine compileDataLine(Context scope, Context datScope, Context localScope, DataLineNode node, String namespace) {
         String label = node.label != null ? node.label.getText() : null;
         String condition = node.condition != null ? node.condition.getText() : null;
@@ -184,6 +191,22 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
 
         if (node.label == null && node.instruction == null) {
             throw new CompilerException("syntax error", node);
+        }
+
+        Spin2PAsmInstructionFactory instructionFactory = null;
+        if (mnemonic != null) {
+            instructionFactory = Spin2PAsmInstructionFactory.get(mnemonic);
+            if (instructionFactory == null) {
+                if (scope.getStructureDefinition(mnemonic) != null) {
+                    instructionFactory = new DataType(mnemonic);
+                }
+            }
+            if (instructionFactory == null) {
+                logMessage(new CompilerException("invalid instruction", node.instruction));
+            }
+        }
+        if (instructionFactory == null) {
+            instructionFactory = new Empty();
         }
 
         Context lineScope = new Context(localScope);
@@ -247,7 +270,7 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
             }
         }
 
-        Spin2PAsmLine pasmLine = new Spin2PAsmLine(lineScope, label, condition, mnemonic, parameters, modifier);
+        Spin2PAsmLine pasmLine = new Spin2PAsmLine(lineScope, label, condition, mnemonic, instructionFactory, parameters, modifier);
         pasmLine.setData(node);
 
         try {
@@ -576,6 +599,175 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
         }
 
         return builder.getExpression();
+    }
+
+    public Spin2Object generateDatObject() {
+        Spin2Object object = new Spin2Object();
+
+        writeDatBinary(0, object, false);
+
+        return object;
+    }
+
+    protected void writeDatBinary(int memoryOffset, Spin2Object object, boolean spinMode) {
+        int address = 0;
+        int objectAddress = object.getSize();
+        int hubAddress = -1;
+        int fitAddress = 0x1F8 << 2;
+        boolean hubMode = true;
+        boolean cogCode = false;
+
+        for (Spin2PAsmLine line : source) {
+            if (!hubMode && isInstruction(line.getMnemonic())) {
+                int displ = ((address + 3) & ~3) - address;
+                if (hubAddress != -1) {
+                    hubAddress += displ;
+                }
+                objectAddress += displ;
+                address += displ;
+            }
+            line.getScope().setObjectAddress(objectAddress);
+            line.getScope().setMemoryAddress(memoryOffset + objectAddress);
+            if (line.getInstructionFactory() instanceof Orgh) {
+                hubMode = true;
+                cogCode = false;
+                if (hubAddress == -1) {
+                    hubAddress = 0x400;
+                }
+                address = spinMode ? hubAddress : objectAddress;
+            }
+            if (hubMode) {
+                if (line.getInstructionFactory() instanceof Res) {
+                    logMessage(new CompilerException("res not allowed in orgh mode", line.getData()));
+                }
+                else if (line.getInstructionFactory() instanceof Orgf) {
+                    logMessage(new CompilerException("orgf not allowed in orgh mode", line.getData()));
+                }
+            }
+            if (line.getInstructionFactory() instanceof Org) {
+                hubMode = false;
+            }
+            if (line.getInstructionFactory() instanceof Fit) {
+                ((Fit) line.getInstructionFactory()).setDefaultLimit(hubMode ? 0x80000 : (cogCode ? 0x1F8 : 0x400));
+            }
+
+            if (line.getInstructionFactory() instanceof DataType) {
+                if (!hubMode) {
+                    logMessage(new CompilerException("structures can only be declared in ORGH mode", ((DataLineNode) line.getData()).instruction));
+                }
+            }
+
+            try {
+                if (!hubMode && line.getLabel() != null) {
+                    if ((address & 0x03) != 0) {
+                        throw new CompilerException("cog symbols must be long-aligned", line.getData());
+                    }
+                }
+                if (isDebugEnabled() || !(line.getInstructionFactory() instanceof Debug)) {
+                    address = line.resolve(address, hubMode);
+                    if (line.getInstructionFactory() instanceof Alignl) {
+                        if (hubAddress != -1) {
+                            hubAddress = (hubAddress + 3) & ~3;
+                        }
+                        objectAddress = (objectAddress + 3) & ~3;
+                    }
+                    else if (line.getInstructionFactory() instanceof Alignw) {
+                        if (hubAddress != -1) {
+                            hubAddress = (hubAddress + 1) & ~1;
+                        }
+                        objectAddress = (objectAddress + 1) & ~1;
+                    }
+                    else {
+                        objectAddress += line.getInstructionObject().getSize();
+                        if (hubAddress != -1) {
+                            hubAddress += line.getInstructionObject().getSize();
+                        }
+                    }
+                    if ((line.getInstructionFactory() instanceof Org)) {
+                        cogCode = address < 0x200 * 4;
+                        fitAddress = cogCode ? 0x1F8 * 4 : 0x400 * 4;
+                        if (line.getArguments().size() > 1) {
+                            fitAddress = line.getArguments().get(1).getInteger() * 4;
+                        }
+                    }
+                }
+                else {
+                    line.resolve(address, hubMode);
+                }
+            } catch (CompilerException e) {
+                logMessage(e);
+            } catch (Exception e) {
+                logMessage(new CompilerException(e, line.getData()));
+            }
+
+            if (hubMode) {
+                if (!spinMode && address > objectAddress) {
+                    objectAddress = address;
+                }
+            }
+            else if (address > fitAddress) {
+                if (cogCode) {
+                    logMessage(new CompilerException("cog code limit exceeded by " + ((address - fitAddress + 3) >> 2) + " long(s)", line.getData()));
+                }
+                else {
+                    logMessage(new CompilerException("lut code limit exceeded by " + ((address - fitAddress + 3) >> 2) + " long(s)", line.getData()));
+                }
+            }
+        }
+
+        for (Spin2PAsmDebugLine debugLine : pasmDebugLines) {
+            try {
+                DebugDataObject debugData = debug.compilePAsmDebugStatement(debugLine);
+                debugLine.setDebugData(debugData);
+                compiler.addDebugStatement(debugData);
+            } catch (CompilerException e) {
+                logMessage(e);
+            } catch (Exception e) {
+                logMessage(new CompilerException(e, debugLine.getData()));
+            }
+        }
+
+        hubMode = true;
+        for (Spin2PAsmLine line : source) {
+            objectAddress = line.getScope().getObjectAddress();
+            if (object.getSize() < objectAddress) {
+                object.writeBytes(new byte[objectAddress - object.getSize()], "(filler)");
+            }
+            try {
+                if (line.getInstructionFactory() instanceof Orgh) {
+                    hubMode = true;
+                }
+                if ((line.getInstructionFactory() instanceof Org) || (line.getInstructionFactory() instanceof Res)) {
+                    hubMode = false;
+                }
+                byte[] code = line.getInstructionObject().getBytes();
+                if (!isDebugEnabled() && (line.getInstructionFactory() instanceof Debug)) {
+                    code = new byte[0];
+                }
+                object.writeBytes(line.getScope().getAddress(), hubMode, code, line.toString());
+            } catch (CompilerException e) {
+                logMessage(e);
+            } catch (Exception e) {
+                logMessage(new CompilerException(e, line.getData()));
+            }
+        }
+    }
+
+    protected Spin2PAsmLine compileDataLine(Context datScope, Context lineScope, DataLineNode node) {
+        return compileDataLine(null, datScope, lineScope, node, "");
+    }
+
+    boolean isInstruction(String mnemonic) {
+        if (mnemonic == null) {
+            return false;
+        }
+        if ("long".equalsIgnoreCase(mnemonic) || "word".equalsIgnoreCase(mnemonic) || "byte".equalsIgnoreCase(mnemonic)) {
+            return false;
+        }
+        if ("longfit".equalsIgnoreCase(mnemonic) || "wordfit".equalsIgnoreCase(mnemonic) || "bytefit".equalsIgnoreCase(mnemonic)) {
+            return false;
+        }
+        return true;
     }
 
 }

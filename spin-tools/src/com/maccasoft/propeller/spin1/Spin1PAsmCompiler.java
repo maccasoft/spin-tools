@@ -32,7 +32,10 @@ import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenIterator;
+import com.maccasoft.propeller.spin1.instructions.Empty;
 import com.maccasoft.propeller.spin1.instructions.FileInc;
+import com.maccasoft.propeller.spin1.instructions.Org;
+import com.maccasoft.propeller.spin1.instructions.Res;
 
 public abstract class Spin1PAsmCompiler extends ObjectCompiler {
 
@@ -178,6 +181,17 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
             throw new CompilerException("syntax error", node);
         }
 
+        Spin1PAsmInstructionFactory instructionFactory = null;
+        if (mnemonic != null) {
+            instructionFactory = Spin1PAsmInstructionFactory.get(mnemonic);
+            if (instructionFactory == null) {
+                logMessage(new CompilerException("invalid instruction", node.instruction));
+            }
+        }
+        if (instructionFactory == null) {
+            instructionFactory = new Empty();
+        }
+
         Context localScope = new Context(lineScope);
 
         for (DataLineNode.ParameterNode param : node.parameters) {
@@ -221,7 +235,7 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
             parameters.add(new Spin1PAsmExpression(prefix, expression, count));
         }
 
-        Spin1PAsmLine pasmLine = new Spin1PAsmLine(localScope, label, condition, mnemonic, parameters, modifier);
+        Spin1PAsmLine pasmLine = new Spin1PAsmLine(localScope, label, condition, mnemonic, instructionFactory, parameters, modifier);
         pasmLine.setData(node);
 
         try {
@@ -430,6 +444,63 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
         }
 
         return builder.getExpression();
+    }
+
+    public Spin1Object generateDatObject() {
+        Spin1Object object = new Spin1Object();
+
+        writeDatBinary(0, object);
+
+        return object;
+    }
+
+    protected void writeDatBinary(int memoryOffset, Spin1Object object) {
+        int address = 0;
+        int hubAddress = object.getSize();
+
+        for (Spin1PAsmLine line : source) {
+            if ((line.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Word)
+                || (line.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Wordfit)) {
+                hubAddress = (hubAddress + 1) & ~1;
+                address = (address + 1) & ~1;
+            }
+            else if (line.getMnemonic() != null && !(line.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Byte)
+                && !(line.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Bytefit)
+                && !"FILE".equalsIgnoreCase(line.getMnemonic())) {
+                hubAddress = (hubAddress + 3) & ~3;
+                address = (address + 3) & ~3;
+            }
+            line.getScope().setObjectAddress(hubAddress);
+            if ((line.getInstructionFactory() instanceof Org) || (line.getInstructionFactory() instanceof Res)) {
+                hubAddress = (hubAddress + 3) & ~3;
+                address = (address + 3) & ~3;
+            }
+            try {
+                address = line.resolve(address, memoryOffset + hubAddress);
+                hubAddress += line.getInstructionObject().getSize();
+                for (CompilerException msg : line.getAnnotations()) {
+                    logMessage(msg);
+                }
+            } catch (CompilerException e) {
+                logMessage(e);
+            } catch (Exception e) {
+                logMessage(new CompilerException(e, line.getData()));
+            }
+        }
+
+        for (Spin1PAsmLine line : source) {
+            hubAddress = line.getScope().getObjectAddress();
+            if (object.getSize() < hubAddress) {
+                object.writeBytes(new byte[hubAddress - object.getSize()], "(filler)");
+            }
+            try {
+                object.writeBytes(line.getScope().getAddress(), line.getInstructionObject().getBytes(), line.toString());
+            } catch (CompilerException e) {
+                logMessage(e);
+            } catch (Exception e) {
+                logMessage(new CompilerException(e, line.getData()));
+            }
+        }
     }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -18,7 +18,6 @@ import java.util.List;
 
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.Context;
-import com.maccasoft.propeller.spin1.instructions.Empty;
 
 public class Spin1PAsmLine {
 
@@ -35,23 +34,14 @@ public class Spin1PAsmLine {
     List<CompilerException> annotations = new ArrayList<CompilerException>();
     Object data;
 
-    public Spin1PAsmLine(Context scope, String label, String condition, String mnemonic, List<Spin1PAsmExpression> arguments, String effect) {
+    public Spin1PAsmLine(Context scope, String label, String condition, String mnemonic, Spin1PAsmInstructionFactory instructionFactory, List<Spin1PAsmExpression> arguments, String effect) {
         this.scope = scope;
         this.label = label;
         this.condition = condition;
         this.mnemonic = mnemonic;
+        this.instructionFactory = instructionFactory;
         this.arguments = arguments;
         this.effect = effect;
-
-        if (mnemonic != null) {
-            this.instructionFactory = Spin1PAsmInstructionFactory.get(mnemonic);
-            if (this.instructionFactory == null) {
-                throw new RuntimeException("invalid instruction " + mnemonic);
-            }
-        }
-        if (this.instructionFactory == null) {
-            this.instructionFactory = new Empty();
-        }
     }
 
     public Context getScope() {

@@ -18,8 +18,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.maccasoft.propeller.expressions.Context;
-import com.maccasoft.propeller.spin2.instructions.DataType;
-import com.maccasoft.propeller.spin2.instructions.Empty;
 
 public class Spin2PAsmLine {
 
@@ -37,28 +35,14 @@ public class Spin2PAsmLine {
     protected Object data;
     protected Map<String, Object> keyedData = new HashMap<String, Object>();
 
-    public Spin2PAsmLine(Context scope, String label, String condition, String mnemonic, List<Spin2PAsmExpression> arguments, String effect) {
+    public Spin2PAsmLine(Context scope, String label, String condition, String mnemonic, Spin2PAsmInstructionFactory instructionFactory, List<Spin2PAsmExpression> arguments, String effect) {
         this.scope = scope;
         this.label = label;
         this.condition = condition;
         this.mnemonic = mnemonic;
+        this.instructionFactory = instructionFactory;
         this.arguments = arguments;
         this.effect = effect;
-
-        if (mnemonic != null) {
-            this.instructionFactory = Spin2PAsmInstructionFactory.get(mnemonic);
-            if (this.instructionFactory == null) {
-                if (scope.getStructureDefinition(mnemonic) != null) {
-                    this.instructionFactory = new DataType(mnemonic);
-                }
-            }
-            if (this.instructionFactory == null) {
-                throw new RuntimeException("invalid instruction " + mnemonic);
-            }
-        }
-        if (this.instructionFactory == null) {
-            this.instructionFactory = new Empty();
-        }
     }
 
     public Context getScope() {
