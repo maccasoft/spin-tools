@@ -574,114 +574,6 @@ public class SpinTools {
                 }
             }
         });
-
-        BusyIndicator.showWhile(tabFolder.getDisplay(), new Runnable() {
-
-            @Override
-            public void run() {
-                File topObjectFile = preferences.getTopObject();
-                if (topObjectFile != null) {
-                    try {
-                        String text = FileUtils.loadFromFile(topObjectFile);
-                        Display.getDefault().syncExec(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                EditorTab editorTab = new EditorTab(tabFolder, topObjectFile, sourcePool);
-                                hookListeners(editorTab);
-                                editorTab.setEditorText(text);
-
-                                LruData lruData = preferences.getLruData(topObjectFile);
-                                if (lruData != null) {
-                                    StyledText styledText = editorTab.getEditor().getStyledText();
-                                    styledText.setCaretOffset(lruData.caretPosition);
-                                    if (lruData.topIndex != 0) {
-                                        styledText.setTopIndex(lruData.topIndex);
-                                    }
-                                }
-                            }
-
-                        });
-                    } catch (Exception e) {
-                        Display.getDefault().syncExec(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                MessageDialog.openError(shell, APP_TITLE, "Can't reopen top object " + topObjectFile.getAbsolutePath());
-                                preferences.setTopObject(null);
-                            }
-                        });
-                    }
-                }
-
-                final String[] openTabs = preferences.getOpenTabs();
-                if (openTabs != null && preferences.getReloadOpenTabs()) {
-                    for (int i = 0; i < openTabs.length; i++) {
-                        File fileToOpen = new File(openTabs[i]);
-                        if (!fileToOpen.exists() || fileToOpen.isDirectory()) {
-                            continue;
-                        }
-                        if (topObjectFile != null && topObjectFile.equals(fileToOpen)) {
-                            continue;
-                        }
-                        try {
-                            String text = FileUtils.loadFromFile(fileToOpen);
-                            Display.getDefault().syncExec(new Runnable() {
-
-                                @Override
-                                public void run() {
-                                    EditorTab editorTab = new EditorTab(tabFolder, fileToOpen, sourcePool);
-                                    hookListeners(editorTab);
-
-                                    editorTab.setEditorText(text);
-
-                                    LruData lruData = preferences.getLruData(fileToOpen);
-                                    if (lruData != null) {
-                                        StyledText styledText = editorTab.getEditor().getStyledText();
-                                        styledText.setCaretOffset(lruData.caretPosition);
-                                        if (lruData.topIndex != 0) {
-                                            styledText.setTopIndex(lruData.topIndex);
-                                        }
-                                    }
-                                }
-
-                            });
-                        } catch (Exception e) {
-                            Display.getDefault().syncExec(new Runnable() {
-
-                                @Override
-                                public void run() {
-                                    MessageDialog.openError(shell, APP_TITLE, "Can't reopen " + fileToOpen.getAbsolutePath());
-                                    preferences.setTopObject(null);
-                                }
-                            });
-                        }
-                    }
-                }
-
-                Display.getDefault().asyncExec(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        if (tabFolder.isDisposed()) {
-                            return;
-                        }
-                        fileBrowser.setVisiblePaths(preferences.getRoots());
-                        fileBrowser.setExpandedPaths(preferences.getExpandedPaths());
-                        if (tabFolder.getItemCount() != 0) {
-                            tabFolder.setSelection(0);
-                            updateEditorSelection();
-                            updateCaretPosition();
-                        }
-                        File lastPath = preferences.getLastPath();
-                        if (lastPath != null) {
-                            fileBrowser.setSelection(lastPath);
-                        }
-                    }
-
-                });
-            }
-        }, true);
     }
 
     void applyTheme(String id) {
@@ -3666,6 +3558,86 @@ public class SpinTools {
         tabFolder.setTopRight(tabFolderToolBar);
     }
 
+    public void runStartup(String[] args) {
+        int tabIndex = 0;
+        List<File> list = new ArrayList<>();
+
+        if (preferences.getReloadOpenTabs()) {
+            String[] openTabs = preferences.getOpenTabs();
+            for (int i = 0; i < openTabs.length; i++) {
+                File file = new File(openTabs[i]);
+                if (!list.contains(file)) {
+                    list.add(file);
+                }
+            }
+
+            File topObjectFile = preferences.getTopObject();
+            if (topObjectFile != null) {
+                list.remove(topObjectFile);
+                list.add(0, topObjectFile);
+            }
+        }
+
+        for (int i = 0; i < args.length; i++) {
+            File file = new File(args[i]).getAbsoluteFile();
+            if (FileUtils.isEditable(file) && !list.contains(file)) {
+                list.add(file);
+            }
+            if (i == 0) {
+                tabIndex = list.indexOf(file);
+            }
+        }
+
+        for (File fileToOpen : list) {
+            try {
+                String text = FileUtils.loadFromFile(fileToOpen);
+
+                Display.getDefault().syncExec(() -> {
+                    EditorTab editorTab = new EditorTab(tabFolder, fileToOpen, sourcePool);
+                    hookListeners(editorTab);
+
+                    editorTab.setEditorText(text);
+
+                    LruData lruData = preferences.getLruData(fileToOpen);
+                    if (lruData != null) {
+                        StyledText styledText = editorTab.getEditor().getStyledText();
+                        styledText.setCaretOffset(lruData.caretPosition);
+                        if (lruData.topIndex != 0) {
+                            styledText.setTopIndex(lruData.topIndex);
+                        }
+                    }
+                });
+            } catch (Exception e) {
+                Display.getDefault().syncExec(() -> {
+                    MessageDialog.openError(shell, APP_TITLE, "Can't reopen top object " + fileToOpen.getAbsolutePath());
+                    preferences.setTopObject(null);
+                });
+            }
+        }
+
+        final File selection = !list.isEmpty() ? list.get(tabIndex) : null;
+
+        Display.getDefault().asyncExec(() -> {
+            if (tabFolder.isDisposed()) {
+                return;
+            }
+            fileBrowser.setVisiblePaths(preferences.getRoots());
+            fileBrowser.setExpandedPaths(preferences.getExpandedPaths());
+            if (selection != null) {
+                EditorTab editorTab = findFileEditorTab(selection);
+                if (editorTab != null) {
+                    tabFolder.setSelection(editorTab.getTabItem());
+                    updateEditorSelection();
+                    updateCaretPosition();
+                }
+            }
+            File lastPath = preferences.getLastPath();
+            if (lastPath != null) {
+                fileBrowser.setSelection(lastPath);
+            }
+        });
+    }
+
     private void handleNextTab() {
         if (tabFolder.getItemCount() <= 1) {
             return;
@@ -3978,7 +3950,8 @@ public class SpinTools {
                     layout.marginWidth = layout.marginHeight = 4;
                     shell.setLayout(layout);
 
-                    new SpinTools(shell);
+                    SpinTools app = new SpinTools(shell);
+                    BusyIndicator.showWhile(display, () -> app.runStartup(args), true);
 
                     shell.open();
 
