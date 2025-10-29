@@ -803,7 +803,13 @@ public class EditorTab implements FindReplaceTarget {
 
                 File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
                 sourcePool.removeSource(localFile);
-                preferences.setBookmarks(localFile, editor.getBookmarks());
+
+                if (file != null) {
+                    StyledText styledText = editor.getStyledText();
+                    preferences.setLruData(file, styledText.getTopIndex(), styledText.getCaretOffset());
+
+                    preferences.setBookmarks(file, editor.getBookmarks());
+                }
 
                 preferences.removePropertyChangeListener(preferencesChangeListener);
                 sourcePool.removePropertyChangeListener(sourcePoolChangeListener);

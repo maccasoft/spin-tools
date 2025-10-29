@@ -89,6 +89,7 @@ import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 
 import com.maccasoft.propeller.Preferences.ExternalTool;
+import com.maccasoft.propeller.Preferences.LruData;
 import com.maccasoft.propeller.Preferences.PackageFile;
 import com.maccasoft.propeller.Preferences.SearchPreferences;
 import com.maccasoft.propeller.devices.ComPort;
@@ -549,9 +550,13 @@ public class SpinTools {
 
                     List<String> openTabs = new ArrayList<String>();
                     for (int i = 0; i < tabFolder.getItemCount(); i++) {
-                        EditorTab tab = (EditorTab) tabFolder.getItem(i).getData();
-                        if (tab.getFile() != null) {
-                            openTabs.add(tab.getFile().getAbsolutePath());
+                        EditorTab editorTab = (EditorTab) tabFolder.getItem(i).getData();
+                        File file = editorTab.getFile();
+                        if (file != null) {
+                            StyledText styledText = editorTab.getEditor().getStyledText();
+                            preferences.setLruData(file, styledText.getTopIndex(), styledText.getCaretOffset());
+
+                            openTabs.add(file.getAbsolutePath());
                         }
                     }
                     preferences.setOpenTabs(openTabs.toArray(new String[openTabs.size()]));
@@ -585,6 +590,15 @@ public class SpinTools {
                                 EditorTab editorTab = new EditorTab(tabFolder, topObjectFile, sourcePool);
                                 hookListeners(editorTab);
                                 editorTab.setEditorText(text);
+
+                                LruData lruData = preferences.getLruData(topObjectFile);
+                                if (lruData != null) {
+                                    StyledText styledText = editorTab.getEditor().getStyledText();
+                                    styledText.setCaretOffset(lruData.caretPosition);
+                                    if (lruData.topIndex != 0) {
+                                        styledText.setTopIndex(lruData.topIndex);
+                                    }
+                                }
                             }
 
                         });
@@ -618,7 +632,17 @@ public class SpinTools {
                                 public void run() {
                                     EditorTab editorTab = new EditorTab(tabFolder, fileToOpen, sourcePool);
                                     hookListeners(editorTab);
+
                                     editorTab.setEditorText(text);
+
+                                    LruData lruData = preferences.getLruData(fileToOpen);
+                                    if (lruData != null) {
+                                        StyledText styledText = editorTab.getEditor().getStyledText();
+                                        styledText.setCaretOffset(lruData.caretPosition);
+                                        if (lruData.topIndex != 0) {
+                                            styledText.setTopIndex(lruData.topIndex);
+                                        }
+                                    }
                                 }
 
                             });
@@ -1098,10 +1122,10 @@ public class SpinTools {
 
         addSeparator = true;
 
-        List<String> lru = new ArrayList<String>(preferences.getLru());
-        Collections.sort(lru, (o1, o2) -> o1.compareToIgnoreCase(o2));
-        for (String file : lru) {
-            String folder = new File(file).getParent();
+        List<File> lru = new ArrayList<>(preferences.getLru());
+        lru.sort((o1, o2) -> o1.getAbsolutePath().compareToIgnoreCase(o2.getAbsolutePath()));
+        for (File file : lru) {
+            String folder = file.getParent();
             if (!list.contains(folder) && !defaultList.contains(folder)) {
                 if (addSeparator) {
                     new MenuItem(menu, SWT.SEPARATOR);
@@ -1186,10 +1210,10 @@ public class SpinTools {
 
         addSeparator = true;
 
-        List<String> lru = new ArrayList<String>(preferences.getLru());
-        Collections.sort(lru, (o1, o2) -> o1.compareToIgnoreCase(o2));
-        for (String file : lru) {
-            String folder = new File(file).getParent();
+        List<File> lru = new ArrayList<>(preferences.getLru());
+        lru.sort((o1, o2) -> o1.getAbsolutePath().compareToIgnoreCase(o2.getAbsolutePath()));
+        for (File file : lru) {
+            String folder = file.getParent();
             if (!list.contains(folder) && !defaultList.contains(folder)) {
                 if (addSeparator) {
                     new MenuItem(menu, SWT.SEPARATOR);
@@ -1221,9 +1245,9 @@ public class SpinTools {
     void populateLruFiles(Menu menu, int itemIndex, List<MenuItem> list) {
         int index = 0;
 
-        Iterator<String> iter = preferences.getLru().iterator();
+        Iterator<File> iter = preferences.getLru().iterator();
         while (iter.hasNext()) {
-            final File fileToOpen = new File(iter.next());
+            File fileToOpen = iter.next();
 
             if (index == 0) {
                 list.add(new MenuItem(menu, SWT.SEPARATOR, itemIndex++));
@@ -1764,8 +1788,8 @@ public class SpinTools {
             EditorTab editorTab = (EditorTab) tabItem.getData();
             filterPath = editorTab.getFile();
         }
-        if (filterPath == null && preferences.getLru().size() != 0) {
-            filterPath = new File(preferences.getLru().get(0));
+        if (filterPath == null && !preferences.getLru().isEmpty()) {
+            filterPath = preferences.getLru().get(0);
         }
 
         if (filterPath != null) {
@@ -1887,12 +1911,21 @@ public class SpinTools {
         EditorTab editorTab = new EditorTab(tabFolder, fileToOpen, sourcePool);
         hookListeners(editorTab);
 
-        preferences.addToLru(fileToOpen);
-
         tabFolder.getDisplay().asyncExec(() -> {
             try {
                 tabFolder.setSelection(tabFolder.getItemCount() - 1);
                 editorTab.setEditorText(FileUtils.loadFromFile(fileToOpen));
+
+                LruData lruData = preferences.getLruData(fileToOpen);
+                if (lruData != null) {
+                    StyledText styledText = editorTab.getEditor().getStyledText();
+                    styledText.setCaretOffset(lruData.caretPosition);
+                    if (lruData.topIndex != 0) {
+                        styledText.setTopIndex(lruData.topIndex);
+                    }
+                }
+                preferences.addToLru(fileToOpen);
+
                 updateEditorSelection();
                 updateCaretPosition();
             } catch (Exception e) {
@@ -2227,7 +2260,7 @@ public class SpinTools {
         dlg.setOverwrite(true);
 
         if (filterPath == null && !preferences.getLru().isEmpty()) {
-            filterPath = new File(preferences.getLru().get(0));
+            filterPath = preferences.getLru().get(0);
         }
         if (filterPath != null) {
             File parentFile = filterPath.getParentFile();
@@ -2240,7 +2273,7 @@ public class SpinTools {
                 }
             }
             if (parentFile == null && !preferences.getLru().isEmpty()) {
-                parentFile = new File(preferences.getLru().get(0)).getParentFile();
+                parentFile = preferences.getLru().get(0).getParentFile();
                 if (parentFile != null) {
                     if (parentFile.equals(Preferences.defaultSpin1LibraryPath) || parentFile.equals(Preferences.defaultSpin2LibraryPath)) {
                         parentFile = null;
@@ -2335,8 +2368,8 @@ public class SpinTools {
         dlg.setOverwrite(true);
 
         File filterPath = editorTab.getFile();
-        if (filterPath == null && preferences.getLru().size() != 0) {
-            filterPath = new File(preferences.getLru().get(0));
+        if (filterPath == null && !preferences.getLru().isEmpty()) {
+            filterPath = preferences.getLru().get(0);
         }
         if (filterPath != null) {
             dlg.setFilterPath(filterPath.getParent());

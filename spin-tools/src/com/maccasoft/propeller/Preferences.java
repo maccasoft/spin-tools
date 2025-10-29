@@ -150,6 +150,18 @@ public class Preferences {
 
     }
 
+    public static class LruData {
+
+        public final int topIndex;
+        public final int caretPosition;
+
+        LruData(int topIndex, int caretPosition) {
+            this.topIndex = topIndex;
+            this.caretPosition = caretPosition;
+        }
+
+    }
+
     @JsonInclude(Include.NON_DEFAULT)
     public static class SerializedPreferences {
 
@@ -158,6 +170,7 @@ public class Preferences {
 
             lru = new ArrayList<>();
             lruBookmarks = new HashMap<>();
+            lruPositions = new HashMap<>();
 
             showLineNumbers = true;
             showIndentLines = true;
@@ -241,6 +254,7 @@ public class Preferences {
         public boolean spin2Compress;
 
         public List<String> lru;
+        public Map<String, Integer[]> lruPositions;
         public Map<String, Integer[]> lruBookmarks;
 
         public boolean reloadOpenTabs;
@@ -998,18 +1012,44 @@ public class Preferences {
         changeSupport.firePropertyChange(PROP_HYPERLINK_MOD, preferences.hyperlinkModifiers, preferences.hyperlinkModifiers = hyperlinkModifiers);
     }
 
-    public List<String> getLru() {
-        return preferences.lru;
+    public List<File> getLru() {
+        List<File> list = new ArrayList<>();
+        for (String file : preferences.lru) {
+            String[] split = file.split(":");
+            list.add(new File(split[0]));
+        }
+        return list;
     }
 
     public void addToLru(File file) {
-        preferences.lru.remove(file.getAbsolutePath());
-        preferences.lru.add(0, file.getAbsolutePath());
+        String absolutePath = file.getAbsolutePath();
+
+        preferences.lru.remove(absolutePath);
+        preferences.lru.add(0, absolutePath);
+
         while (preferences.lru.size() > 10) {
             String removed = preferences.lru.remove(preferences.lru.size() - 1);
             preferences.lruBookmarks.remove(removed);
+            preferences.lruPositions.remove(removed);
         }
+
         changeSupport.firePropertyChange(PROP_LRU, null, preferences.lru);
+    }
+
+    public LruData getLruData(File file) {
+        String absolutePath = file.getAbsolutePath();
+
+        Integer[] ar = preferences.lruPositions.get(absolutePath);
+        if (ar != null && ar.length >= 2) {
+            return new LruData(ar[0], ar[1]);
+        }
+
+        return null;
+    }
+
+    public void setLruData(File file, int topIndex, int caretPosition) {
+        String absolutePath = file.getAbsolutePath();
+        preferences.lruPositions.put(absolutePath, new Integer[] { topIndex, caretPosition });
     }
 
     public Integer[] getBookmarks(File file) {

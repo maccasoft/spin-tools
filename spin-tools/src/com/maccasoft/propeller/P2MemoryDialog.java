@@ -908,11 +908,11 @@ public class P2MemoryDialog extends Dialog {
         int i = name.lastIndexOf('.');
         dlg.setFileName(name.substring(0, i) + defaultExtension);
 
-        List<String> lru = Preferences.getInstance().getLru();
+        List<File> lru = Preferences.getInstance().getLru();
 
         File filterPath = tree.getFile();
-        if (filterPath == null && lru.size() != 0) {
-            filterPath = new File(lru.get(0));
+        if (filterPath == null && !lru.isEmpty()) {
+            filterPath = lru.get(0);
         }
         if (filterPath != null) {
             dlg.setFilterPath(filterPath.getParent());
