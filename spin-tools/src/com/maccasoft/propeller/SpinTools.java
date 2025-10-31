@@ -120,7 +120,7 @@ public class SpinTools {
 
     Display display;
     Shell shell;
-    ToolBar toolBar;
+    Composite toolBarContainer;
 
     SashForm sashForm;
     SashForm browserSashForm;
@@ -236,9 +236,9 @@ public class SpinTools {
         public void propertyChange(PropertyChangeEvent evt) {
             switch (evt.getPropertyName()) {
                 case Preferences.PROP_SHOW_TOOLBAR:
-                    toolBar.setVisible((Boolean) evt.getNewValue());
-                    ((GridData) toolBar.getLayoutData()).exclude = !((Boolean) evt.getNewValue()).booleanValue();
-                    toolBar.getParent().layout(true, true);
+                    toolBarContainer.setVisible((Boolean) evt.getNewValue());
+                    ((GridData) toolBarContainer.getLayoutData()).exclude = !((Boolean) evt.getNewValue()).booleanValue();
+                    toolBarContainer.getParent().layout(true, true);
                     break;
                 case Preferences.PROP_SHOW_OBJECT_BROWSER:
                     objectBrowser.setVisible((Boolean) evt.getNewValue());
@@ -274,7 +274,7 @@ public class SpinTools {
 
         @Override
         public void widgetDisposed(DisposeEvent e) {
-            if (shell.isDisposed() || toolBar.isDisposed() || objectBrowser.isDisposed()) {
+            if (shell.isDisposed() || toolBarContainer.isDisposed() || objectBrowser.isDisposed()) {
                 return;
             }
             EditorTab editorTab = (EditorTab) e.widget.getData();
@@ -335,15 +335,26 @@ public class SpinTools {
         layout.marginWidth = layout.marginHeight = 0;
         container.setLayout(layout);
 
-        toolBar = createToolbar(container);
-        toolBar.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-        toolBar.setVisible(preferences.getShowToolbar());
-        ((GridData) toolBar.getLayoutData()).exclude = !preferences.getShowToolbar();
+        toolBarContainer = new Composite(container, SWT.NONE);
+        layout = new GridLayout(2, false);
+        layout.horizontalSpacing = layout.verticalSpacing = 0;
+        layout.marginWidth = layout.marginHeight = 0;
+        toolBarContainer.setLayout(layout);
+        toolBarContainer.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        toolBarContainer.setVisible(preferences.getShowToolbar());
+        ((GridData) toolBarContainer.getLayoutData()).exclude = !preferences.getShowToolbar();
+
+        ToolBar mainToolBar = createToolbar(toolBarContainer);
+        mainToolBar.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
+        ToolBar sideToolBar = createSideToolbar(toolBarContainer);
+        sideToolBar.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 
         sashForm = new SashForm(container, SWT.HORIZONTAL);
         sashForm.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
         browserSashForm = new SashForm(sashForm, SWT.VERTICAL);
+        browserSashForm.setVisible(preferences.getShowObjectBrowser() || preferences.getShowBrowser());
 
         centralSashForm = new SashForm(sashForm, SWT.VERTICAL);
 
@@ -618,8 +629,9 @@ public class SpinTools {
 
         shell.setBackground(widgetBackground);
 
-        toolBar.setBackground(widgetBackground);
-        ToolItem[] items = toolBar.getItems();
+        toolBarContainer.setBackground(widgetBackground);
+        Control[] toolBars = toolBarContainer.getChildren();
+        Control[] items = ((ToolBar) toolBars[0]).getChildren();
         for (int i = 0; i < items.length; i++) {
             items[i].setBackground(widgetBackground);
         }
@@ -641,9 +653,9 @@ public class SpinTools {
         tabFolder.setSelectionBackground(listBackground);
 
         tabFolderToolBar.setBackground(tabfolderBackground);
-        items = tabFolderToolBar.getItems();
-        for (int i = 0; i < items.length; i++) {
-            items[i].setBackground(tabfolderBackground);
+        ToolItem[] toolItems = tabFolderToolBar.getItems();
+        for (int i = 0; i < toolItems.length; i++) {
+            toolItems[i].setBackground(tabfolderBackground);
         }
 
         outlineViewStack.setBackground(listBackground);
@@ -1180,9 +1192,10 @@ public class SpinTools {
     }
 
     ToolBar createToolbar(Composite parent) {
+        ToolItem toolItem;
         ToolBar toolBar = new ToolBar(parent, SWT.FLAT);
 
-        ToolItem toolItem = new ToolItem(toolBar, SWT.PUSH);
+        toolItem = new ToolItem(toolBar, SWT.PUSH);
         toolItem.setImage(ImageRegistry.getImageFromResources("blue-document-number-1.png"));
         toolItem.setToolTipText("New from P1/Spin template");
         toolItem.addSelectionListener(new SelectionAdapter() {
@@ -1611,6 +1624,26 @@ public class SpinTools {
                 consoleView.setVisible(consoleToolItem.getSelection());
                 consoleItem.setSelection(consoleToolItem.getSelection());
                 centralSashForm.layout();
+            }
+        });
+
+        return toolBar;
+    }
+
+    ToolBar createSideToolbar(Composite parent) {
+        ToolItem toolItem;
+        ToolBar toolBar = new ToolBar(parent, SWT.FLAT);
+
+        toolItem = new ToolItem(toolBar, SWT.PUSH);
+        toolItem.setImage(ImageRegistry.getImageFromResources("layout-select-sidebar-right.png"));
+        toolItem.setToolTipText("Toggle Outline View");
+        toolItem.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                outlineViewStack.setVisible(!outlineViewStack.getVisible());
+                editorSashForm.layout();
+                tabFolder.forceFocus();
             }
         });
 
