@@ -2225,20 +2225,13 @@ public class SourceEditor {
         Rectangle rect = styledText.getClientArea();
         int topLine = styledText.getLineIndex(0);
         int bottomLine = styledText.getLineIndex(rect.height);
-        int pageSize = bottomLine - topLine - 1;
-        if (pageSize > 0) {
-            while (line < topLine) {
-                topLine -= pageSize;
-                bottomLine -= pageSize;
-            }
-            while (line > bottomLine) {
-                topLine += pageSize;
-                bottomLine += pageSize;
-            }
+        int halfPageSize = (bottomLine - topLine - 1) / 2;
+
+        if (line < topLine || line > bottomLine) {
+            styledText.setTopIndex((line - halfPageSize) >= 0 ? line - halfPageSize : 0);
         }
 
         styledText.setCaretOffset(styledText.getOffsetAtLine(line) + column);
-        styledText.setTopIndex(topLine);
     }
 
     String getFilterText(Node context, String contents, int position) {
