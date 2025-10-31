@@ -174,15 +174,23 @@ public class EditorTab implements FindReplaceTarget {
                 if (evt.getNewValue() != null) {
                     scheduleCompile();
                 }
-                return;
             }
-            File dependFile = new File(evt.getPropertyName());
-            if (dependencies.containsKey(dependFile)) {
-                if (dependFile.exists()) {
-                    dependencies.put(dependFile, file.lastModified());
+            else {
+                File dependFile = new File(evt.getPropertyName());
+                if (dependencies.containsKey(dependFile)) {
+                    if (evt.getOldValue() == null && evt.getNewValue() != null) {
+                        dependencies.put(dependFile, System.currentTimeMillis());
+                    }
+                    else {
+                        if (evt.getOldValue() != null && evt.getNewValue() == null) {
+                            dependencies.put(dependFile, dependFile.lastModified());
+                        }
+                        else {
+                            dependencies.put(dependFile, System.currentTimeMillis());
+                        }
+                        scheduleCompile();
+                    }
                 }
-                scheduleCompile();
-                return;
             }
         }
 
@@ -389,11 +397,9 @@ public class EditorTab implements FindReplaceTarget {
     class EditorTabSourceProvider extends SourceProvider {
 
         File[] searchPaths;
-        List<File> collectedSearchPaths;
 
         public EditorTabSourceProvider(File[] searchPaths) {
             this.searchPaths = searchPaths;
-            this.collectedSearchPaths = new ArrayList<>();
         }
 
         @Override
@@ -407,38 +413,22 @@ public class EditorTab implements FindReplaceTarget {
 
         @Override
         public File getFile(String name) {
-            File localFile = file != null ? new File(file.getParentFile(), name) : new File(name);
+            File localFile = file != null ? new File(file.getParentFile(), name) : new File(name).getAbsoluteFile();
+
             if (localFile.exists()) {
-                File parent = localFile.getParentFile();
-                if (!collectedSearchPaths.contains(parent)) {
-                    collectedSearchPaths.add(parent);
-                }
                 dependencies.put(localFile, localFile.lastModified());
                 return localFile;
             }
 
-            for (File file : collectedSearchPaths) {
-                localFile = new File(file, name);
-                if (localFile.exists()) {
-                    File parent = localFile.getParentFile();
-                    if (!collectedSearchPaths.contains(parent)) {
-                        collectedSearchPaths.add(parent);
-                    }
-                    dependencies.put(localFile, localFile.lastModified());
-                    return localFile;
+            for (File searchPath : searchPaths) {
+                File searchPathFile = new File(searchPath, name);
+                if (searchPathFile.exists()) {
+                    dependencies.put(searchPathFile.getAbsoluteFile(), searchPathFile.lastModified());
+                    return searchPathFile;
                 }
             }
 
-            for (int i = 0; i < searchPaths.length; i++) {
-                localFile = new File(searchPaths[i], name);
-                if (localFile.exists()) {
-                    dependencies.put(localFile, localFile.lastModified());
-                    return localFile;
-                }
-            }
-
-            localFile = file != null ? new File(file.getParentFile(), name) : new File(name);
-            dependencies.put(localFile, null);
+            dependencies.put(localFile, 0L);
 
             return null;
         }
@@ -1368,7 +1358,7 @@ public class EditorTab implements FindReplaceTarget {
         editor.getStyledText().removeFocusListener(focusListener);
         try {
             File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
-            if (localFile.lastModified() != lastModified) {
+            if (localFile.lastModified() > lastModified) {
                 MessageDialog dlg =
                     new MessageDialog(editor.getStyledText().getShell(),
                         SpinTools.APP_TITLE, null,
@@ -1395,15 +1385,10 @@ public class EditorTab implements FindReplaceTarget {
         for (Entry<File, Long> entry : new HashMap<>(dependencies).entrySet()) {
             File file = entry.getKey();
             if (!sourcePool.containsSource(file)) {
-                if (!file.exists()) {
+                Long lastModified = entry.getValue();
+                if (file.lastModified() > lastModified) {
                     wasUpdated = true;
-                }
-                else {
-                    Long lastModified = entry.getValue();
-                    if (lastModified == null || file.lastModified() != lastModified) {
-                        wasUpdated = true;
-                        dependencies.put(file, file.lastModified());
-                    }
+                    dependencies.put(file, file.lastModified());
                 }
             }
         }
