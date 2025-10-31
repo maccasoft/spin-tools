@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -9,6 +9,8 @@
  */
 
 package com.maccasoft.propeller.expressions;
+
+import com.maccasoft.propeller.CompilerException;
 
 public class IfElse extends Passthrough {
 
@@ -40,6 +42,9 @@ public class IfElse extends Passthrough {
 
     @Override
     public Expression resolve() {
+        if (condition == null || trueTerm == null || falseTerm == null) {
+            throw new CompilerException("Invalid ternary expression", getData());
+        }
         return isTrue() ? trueTerm : falseTerm;
     }
 
