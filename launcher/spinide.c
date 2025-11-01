@@ -14,114 +14,64 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-#include <dirent.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
 #include <dlfcn.h>
 #include <jni.h>
 
+#include "common.h"
+
 #ifndef PATH_MAX
 #define PATH_MAX    4096
 #endif
 
-static const char * path_separator = "/";
+static const char * jar_files[] = {
+    "org.eclipse.core.commands-3.12.300.jar",
+    "org.eclipse.core.databinding-1.13.300.jar",
+    "org.eclipse.core.databinding.observable-1.13.300.jar",
+    "org.eclipse.core.databinding.property-1.10.300.jar",
+    "org.eclipse.equinox.common-3.20.0.jar",
+    "org.eclipse.jface-3.36.0.jar",
+    "org.eclipse.jface.databinding-1.15.300.jar",
+    "org.eclipse.osgi-3.23.0.jar",
+    "org.eclipse.swt-3.129.0.jar",
 #if defined(__MINGW64__) ||  defined(__MINGW32__)
-static const char * classpath_separator = ";";
+    "org.eclipse.swt.win32.win32.x86_64-3.129.0.jar",
+#elif defined(__APPLE__)
+  #if defined(__aarch64__) || defined(_M_ARM64)
+    "org.eclipse.swt.cocoa.macosx.aarch64-3.129.0.jar",
+  #elif defined(__x86_64__) || defined(_M_X64)
+    "org.eclipse.swt.cocoa.macosx.x86_64-3.129.0.jar",
+  #else
+    #error "Unknown architecture"
+  #endif
 #else
-static const char * classpath_separator = ":";
+  #if defined(__aarch64__) || defined(_M_ARM64)
+    "org.eclipse.swt.gtk.linux.aarch64-3.129.0.jar",
+  #elif defined(__x86_64__) || defined(_M_X64)
+    "org.eclipse.swt.gtk.linux.x86_64-3.129.0.jar",
+  #else
+    #error "Unknown architecture"
+  #endif
 #endif
-
-#ifdef __linux__
-static char exe_path[PATH_MAX];
-#endif
-static char app_root[PATH_MAX];
-static char jvm_path[PATH_MAX];
-static char lib_path[PATH_MAX];
-
-jint JNICALL (*_DL_JNI_CreateJavaVM)(JavaVM ** pvm, void ** penv, void * args);
-
-char * build_classpath();
+    NULL
+};
 
 #ifdef __linux__
 void install_desktop_launcher();
 void uninstall_desktop_launcher();
 #endif
 
-int main(int argc, char * argv[])
+int main(int argc, const char * argv[])
 {
-    void * jni_handle;
-    JavaVM * jvm;
-    JNIEnv * env;
-    JavaVMInitArgs vm_args;
-    char * error, * ptr;
-
-#if defined(__MINGW64__) ||  defined(__MINGW32__)
-    char * cwd_path = getcwd(NULL, 0);
-    if (cwd_path == NULL) {
-        fprintf(stderr, "%s\n", strerror(errno));
-        exit(1);
-    }
-
-    ptr = _fullpath(app_root, argv[0], sizeof(app_root) - 1);
-
-    ptr = strrchr(app_root, '\\');
-    if (ptr != NULL) {
-        *ptr = '\0';
-    }
-
-    strcpy(jvm_path, app_root);
-    strcat(jvm_path, "/java/bin");
-    chdir(jvm_path);
-    strcat(jvm_path, "/server/jvm.dll");
-
-    strcpy(lib_path, app_root);
-    strcat(lib_path, "/lib");
-#elif defined(__APPLE__)
-    ptr = realpath(argv[0], app_root);
-    if (ptr == NULL) {
-        fprintf(stderr, "%s\n", strerror(errno));
-        exit(1);
-    }
-
-    ptr = strrchr(app_root, '/');
-    if (ptr != NULL) {
-        *ptr = '\0';
-    }
-    ptr = strstr(app_root, "/Spin Tools IDE.app");
-    if (ptr != NULL) {
-        *ptr = '\0';
-    }
-
-    strcpy(jvm_path, app_root);
-    strcat(jvm_path, "/Spin Tools IDE.app/Contents/Java/lib/libjli.dylib");
-
-    strcpy(lib_path, jvm_path);
-    strcat(lib_path, "/Spin Tools IDE.app/Contents/Resources");
-#else
-    ptr = realpath(argv[0], app_root);
-    if (ptr == NULL) {
-        fprintf(stderr, "%s\n", strerror(errno));
-        exit(1);
-    }
-    strcpy(exe_path, ptr);
-
-    ptr = strrchr(app_root, '/');
-    if (ptr != NULL) {
-        *ptr = '\0';
-    }
-
-    strcpy(jvm_path, app_root);
-    strcat(jvm_path, "/java/lib/server/libjvm.so");
-
-    strcpy(lib_path, app_root);
-    strcat(lib_path, "/lib");
-#endif
+    int alloc_size;
+    char * app_root = get_app_root(argv[0]);
 
 #ifdef __linux__
     if (argc > 1) {
         if (!strcmp(argv[1], "--install")) {
-            install_desktop_launcher();
+            install_desktop_launcher(app_root, argv[0]);
             exit(0);
         }
         if (!strcmp(argv[1], "--uninstall")) {
@@ -131,124 +81,60 @@ int main(int argc, char * argv[])
     }
 #endif
 
-    char * d_java_class_path = build_classpath();
+    alloc_size = strlen(app_root) + PATH_MAX;
+    char * jvm_path = (char *) malloc(alloc_size);
+    if (jvm_path == NULL) {
+        fprintf(stderr, "can't allocate %d bytes for jvm_path\n", alloc_size);
+        exit(1);
+    }
+    char * jar_path = (char *) malloc(alloc_size);
+    if (jar_path == NULL) {
+        fprintf(stderr, "can't allocate %d bytes for jar_path\n", alloc_size);
+        exit(1);
+    }
 
-    int size = strlen("-DAPP_DIR=") + strlen(app_root) + 1;
-    char * d_app_dir = (char *) malloc(size);
+    strcpy(jvm_path, app_root);
+    strcpy(jar_path, app_root);
+
+#if defined(__MINGW64__) ||  defined(__MINGW32__)
+    strcat(jvm_path, "/java/bin/server/jvm.dll");
+    strcat(jar_path, "/lib");
+#elif defined(__APPLE__)
+    strcat(jvm_path, "/Spin Tools IDE.app/Contents/Java/lib/libjli.dylib");
+    strcat(jar_path, "/Spin Tools IDE.app/Contents/Resources");
+#else
+    strcat(jvm_path, "/java/lib/server/libjvm.so");
+    strcat(jar_path, "/lib");
+#endif
+
+    //printf("app_root = %s\n", app_root);
+    //printf("jvm_path = %s\n", jvm_path);
+    //printf("jar_path = %s\n", jar_path);
+
+    char * d_java_class_path = build_classpath(jar_path, jar_files);
+
+    alloc_size = strlen("-DAPP_DIR=") + strlen(app_root) + 1;
+    char * d_app_dir = (char *) malloc(alloc_size);
     if (d_app_dir == NULL) {
-        fprintf(stderr, "can't allocate %d bytes for APP_DIR\n", size);
+        fprintf(stderr, "can't allocate %d bytes for APP_DIR\n", alloc_size);
         exit(1);
     }
     strcpy(d_app_dir, "-DAPP_DIR=");
     strcat(d_app_dir, app_root);
 
-    jni_handle = dlopen(jvm_path, RTLD_LAZY);
-    if (jni_handle == NULL) {
-        fprintf(stderr, "%s\n", dlerror());
-        exit(1);
-    }
-    dlerror();
-
-    _DL_JNI_CreateJavaVM = dlsym(jni_handle, "JNI_CreateJavaVM");
-
-#if defined(__MINGW64__) ||  defined(__MINGW32__)
-    chdir(cwd_path);
-#endif
-
-    if ((error = dlerror()) == NULL) {
-        vm_args.version = JNI_VERSION_10;
-        vm_args.nOptions = 0;
-        vm_args.ignoreUnrecognized = 0;
-
-        size = sizeof(JavaVMOption) * 2;
-        vm_args.options = (JavaVMOption *) malloc(size);
-        if (vm_args.options == NULL) {
-            fprintf(stderr, "can't allocate %d bytes for JavaVMOption\n", size);
-            exit(1);
-        }
-        vm_args.options[vm_args.nOptions].optionString = (char *) d_java_class_path;
-        vm_args.options[vm_args.nOptions].extraInfo = NULL;
-        vm_args.nOptions++;
-
-        vm_args.options[vm_args.nOptions].optionString = (char *) d_app_dir;
-        vm_args.options[vm_args.nOptions].extraInfo = NULL;
-        vm_args.nOptions++;
-
-        _DL_JNI_CreateJavaVM(&jvm, (void **) &env, &vm_args);
-
-        jclass cls = (*env)->FindClass(env, "com/maccasoft/propeller/SpinTools");
-        if ((*env)->ExceptionOccurred(env) == NULL) {
-            jmethodID mid = (*env)->GetStaticMethodID(env, cls, "main", "([Ljava/lang/String;)V");
-            if ((*env)->ExceptionOccurred(env) == NULL) {
-                jobjectArray args = (*env)->NewObjectArray(env, argc - 1, (*env)->FindClass(env, "java/lang/String"), 0);
-                for (int i = 1, idx = 0; i < argc; i++, idx++) {
-                    jstring str = (*env)->NewStringUTF(env, argv[i]);
-                    (*env)->SetObjectArrayElement(env, args, idx, str);
-                }
-                (*env)->CallStaticVoidMethod(env, cls, mid, args);
-            }
-        }
-        if ((*env)->ExceptionOccurred(env) != NULL) {
-            (*env)->ExceptionDescribe(env);
-        }
-
-        (*jvm)->DestroyJavaVM(jvm);
-
-        free(vm_args.options);
-    }
-
-    dlclose(jni_handle);
+    const char * jvm_argv[] = {
+        d_java_class_path, d_app_dir
+    };
+    run_vm(jvm_path, 2, jvm_argv, "com/maccasoft/propeller/SpinTools", argc, argv);
 
     free(d_app_dir);
     free(d_java_class_path);
 
+    free(jar_path);
+    free(jvm_path);
+    free(app_root);
+
     return 0;
-}
-
-char * build_classpath()
-{
-    DIR * dir;
-    struct dirent * ent;
-    static const char * prefix = "-Djava.class.path=";
-
-    int size = strlen(prefix) + 1;
-    if ((dir = opendir(lib_path)) != NULL) {
-        if ((ent = readdir(dir)) != NULL) {
-            do {
-                if (strstr(ent->d_name, ".jar") == NULL) {
-                    continue;
-                }
-                size += strlen(classpath_separator) + strlen(lib_path) + strlen(path_separator) + strlen(ent->d_name);
-            } while ((ent = readdir(dir)) != NULL);
-        }
-        closedir(dir);
-    }
-
-    char * result = (char *)malloc(size);
-    if (result == NULL) {
-        fprintf(stderr, "can't allocate %d bytes for classpath\n", size);
-        exit(1);
-    }
-
-    strcpy(result, prefix);
-    if ((dir = opendir(lib_path)) != NULL) {
-        if ((ent = readdir(dir)) != NULL) {
-            do {
-                if (strstr(ent->d_name, ".jar") == NULL) {
-                    continue;
-                }
-                //printf("  %s\n", ent->d_name);
-                strcat(result, classpath_separator);
-                strcat(result, lib_path);
-                strcat(result, path_separator);
-                strcat(result, ent->d_name);
-            } while ((ent = readdir(dir)) != NULL);
-        }
-        closedir(dir);
-    }
-    //printf("d_java_class_path = (%d / %zu) %s\n", size, strlen(result), result);
-
-    return result;
 }
 
 #ifdef __linux__
@@ -270,7 +156,7 @@ static const char * xdg_icon_resource = "/usr/bin/xdg-icon-resource";
 
 static const char * base_name = "maccasoft-spintoolside";
 
-void install_desktop_launcher()
+void install_desktop_launcher(const char * app_root, const char * exe_file)
 {
     FILE * fp;
     int rc;
@@ -359,7 +245,7 @@ void install_desktop_launcher()
     fprintf(fp, "GenericName=Spin Tools IDE\n");
     fprintf(fp, "Comment=Integrated development environment for Parallax Propeller microcontrollers.\n");
     fprintf(fp, "Path=%s\n", app_root);
-    fprintf(fp, "Exec=%s %%f\n", exe_path);
+    fprintf(fp, "Exec=%s %%f\n", exe_file);
     fprintf(fp, "Icon=%s\n", base_name);
     fprintf(fp, "Terminal=false\n");
     fprintf(fp, "Categories=Development;IDE;Electronics;\n");

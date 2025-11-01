@@ -1,6 +1,6 @@
 
-SPINIDE_OBJS = spinide.o
-SPINC_OBJS = spinc.o
+SPINIDE_OBJS = spinide.o common.o
+SPINC_OBJS = spinc.o common.o
 
 CXX = gcc
 XXD = xxd

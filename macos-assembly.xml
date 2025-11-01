@@ -13,8 +13,8 @@
     </dependencySets>
     <files>
         <file><source>launcher/spinc.macos</source><destName>spinc</destName><fileMode>755</fileMode></file>
-        <file><source>launcher/spinide.macos</source><destName>spinide</destName><fileMode>755</fileMode></file>
-        <file><source>launcher/spinide.macos</source><destName>spinide</destName><fileMode>755</fileMode><outputDirectory>Spin Tools IDE.app/Contents/MacOS</outputDirectory></file>
+        <file><source>launcher/spinide.macos</source><destName>spinide</destName><fileMode>755</fileMode><filtered>true</filtered></file>
+        <file><source>launcher/spinide.macos</source><destName>spinide</destName><fileMode>755</fileMode><filtered>true</filtered><outputDirectory>Spin Tools IDE.app/Contents/MacOS</outputDirectory></file>
         <file><source>launcher/spinide.icns</source><outputDirectory>Spin Tools IDE.app/Contents/Resources</outputDirectory></file>
         <file><source>launcher/Info.plist</source><outputDirectory>Spin Tools IDE.app/Contents</outputDirectory></file>
         <file><source>LICENSE</source></file>
