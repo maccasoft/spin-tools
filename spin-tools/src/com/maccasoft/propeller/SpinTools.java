@@ -3926,7 +3926,7 @@ public class SpinTools {
     }
 
     static {
-        Display.setAppName(APP_TITLE);
+        Display.setAppName("maccasoft-spintoolside");
         Display.setAppVersion(APP_VERSION);
     }
 

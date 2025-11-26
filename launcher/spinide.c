@@ -250,6 +250,8 @@ void install_desktop_launcher(const char * app_root, const char * exe_file)
     fprintf(fp, "Terminal=false\n");
     fprintf(fp, "Categories=Development;IDE;Electronics;\n");
     fprintf(fp, "Keywords=embedded electronics;electronics;propeller;microcontroller;\n");
+    fprintf(fp, "StartupWMClass=maccasoft-spintoolside\n");
+    fprintf(fp, "StartupNotify=true\n");
     fclose(fp);
     snprintf(cmd, sizeof(cmd), "%s install --novendor %s", xdg_desktop_menu, filename);
     rc = system(cmd);
