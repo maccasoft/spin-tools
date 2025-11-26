@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -10,6 +10,8 @@
 
 package com.maccasoft.propeller;
 
+import java.io.File;
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -19,13 +21,14 @@ import com.maccasoft.propeller.model.Token;
 
 public class CompilerException extends RuntimeException {
 
+    @Serial
     private static final long serialVersionUID = -5865769905704184825L;
 
     public static final int NONE = 0;
     public static final int WARNING = 1;
     public static final int ERROR = 2;
 
-    public String fileName;
+    public File file;
 
     public int type;
     public int line;
@@ -44,42 +47,51 @@ public class CompilerException extends RuntimeException {
         this.childs.addAll(childs);
     }
 
-    public CompilerException(String message, Object data) {
-        this(ERROR, null, message, data);
-    }
-
-    public CompilerException(String fileName, String message, Object data) {
-        this(ERROR, fileName, message, data);
-    }
-
     public CompilerException(int type, String message, Object data) {
-        this(type, null, message, data);
+        this(type, null, message, null, data);
     }
 
-    public CompilerException(int type, String fileName, String message, Object data) {
-        super(message);
-        this.fileName = fileName;
+    public CompilerException(int type, File file, String message, Object data) {
+        this(type, file, message, null, data);
+    }
+
+    public CompilerException(String message, Object data) {
+        this(ERROR, null, message, null, data);
+    }
+
+    public CompilerException(File file, String message, Object data) {
+        this(ERROR, file, message, null, data);
+    }
+
+    public CompilerException(Exception cause, Object data) {
+        this(ERROR, null, cause.getMessage(), cause, data);
+    }
+
+    public CompilerException(File file, Exception cause, Object data) {
+        this(ERROR, file, cause.getMessage(), cause, data);
+    }
+
+    public CompilerException(int type, File file, String message, Exception cause, Object data) {
+        super(message, cause);
+
+        this.file = file;
         this.type = type;
-        if (data == null) {
-            this.line = 1;
-        }
-        else if (data instanceof Node) {
-            Node node = (Node) data;
+        this.line = 1;
+
+        if (data instanceof Node node) {
             this.line = node.getStartToken().line + 1;
             this.column = node.getStartToken().column;
             this.startToken = node.getStartToken();
             this.stopToken = node.getStopToken();
         }
-        else if (data instanceof Token) {
-            Token token = (Token) data;
+        else if (data instanceof Token token) {
             this.line = token.line + 1;
             this.column = token.column;
             this.startToken = token;
             this.stopToken = token;
         }
-        else if (data instanceof List) {
-            List<?> c = (List<?>) data;
-            if (c.size() != 0) {
+        else if (data instanceof List<?> c) {
+            if (!c.isEmpty()) {
                 Object first = c.get(0);
                 Object last = c.get(c.size() - 1);
                 if ((first instanceof Token) && (last instanceof Token)) {
@@ -92,51 +104,8 @@ public class CompilerException extends RuntimeException {
         }
     }
 
-    public CompilerException(String message, List<Token> list) {
-        this(ERROR, null, message, list);
-    }
-
-    public CompilerException(int type, String fileName, String message, List<Token> list) {
-        super(message);
-        this.fileName = fileName;
-        this.type = type;
-
-        this.line = list.get(0).line + 1;
-        this.column = list.get(0).column;
-        this.startToken = list.get(0);
-        this.stopToken = list.get(list.size() - 1);
-    }
-
-    public CompilerException(Exception cause, Object data) {
-        this(ERROR, null, cause, data);
-    }
-
-    public CompilerException(String fileName, Exception cause, Object data) {
-        this(ERROR, fileName, cause, data);
-    }
-
-    public CompilerException(int type, String fileName, Exception cause, Object data) {
-        super(cause.getMessage(), cause);
-        this.fileName = fileName;
-        this.type = type;
-        if (data instanceof Node) {
-            Node node = (Node) data;
-            this.line = node.getStartToken().line + 1;
-            this.column = node.getStartToken().column;
-            this.startToken = node.getStartToken();
-            this.stopToken = node.getStopToken();
-        }
-        else if (data instanceof Token) {
-            Token token = (Token) data;
-            this.line = token.line + 1;
-            this.column = token.column;
-            this.startToken = token;
-            this.stopToken = token;
-        }
-    }
-
-    public String getFileName() {
-        return fileName;
+    public File getFile() {
+        return file;
     }
 
     public int getType() {
@@ -167,7 +136,7 @@ public class CompilerException extends RuntimeException {
     }
 
     public boolean hasChilds() {
-        return childs.size() != 0;
+        return !childs.isEmpty();
     }
 
     public CompilerException[] getChilds() {
@@ -176,7 +145,7 @@ public class CompilerException extends RuntimeException {
 
     @Override
     public int hashCode() {
-        return Objects.hash(childs, column, fileName, line, type);
+        return Objects.hash(childs, column, file, line, type);
     }
 
     @Override
@@ -191,36 +160,7 @@ public class CompilerException extends RuntimeException {
             return false;
         }
         CompilerException other = (CompilerException) obj;
-        return Objects.equals(childs, other.childs) && column == other.column && Objects.equals(fileName, other.fileName) && line == other.line && type == other.type;
-    }
-
-    public String getText() {
-        StringBuilder sb = new StringBuilder();
-
-        String msg = getMessage();
-        if (msg != null) {
-            if (fileName != null) {
-                sb.append(fileName);
-                sb.append(": ");
-                sb.append(line);
-                sb.append(":");
-                sb.append(column);
-                sb.append(" : ");
-            }
-            if (type == WARNING) {
-                sb.append("warning");
-            }
-            else if (type == ERROR) {
-                sb.append("error");
-            }
-            else {
-                sb.append("note");
-            }
-            sb.append(" : ");
-            sb.append(msg);
-        }
-
-        return sb.toString();
+        return Objects.equals(childs, other.childs) && column == other.column && Objects.equals(file, other.file) && line == other.line && type == other.type;
     }
 
     @Override
@@ -229,8 +169,8 @@ public class CompilerException extends RuntimeException {
 
         String msg = getMessage();
         if (msg != null) {
-            if (fileName != null) {
-                sb.append(fileName);
+            if (file != null) {
+                sb.append(file.getName());
                 sb.append(": ");
                 sb.append(line);
                 sb.append(":");
@@ -250,9 +190,9 @@ public class CompilerException extends RuntimeException {
             sb.append(msg);
         }
 
-        if (childs.size() != 0) {
+        if (!childs.isEmpty()) {
             for (CompilerException e : childs) {
-                if (sb.length() != 0) {
+                if (!sb.isEmpty()) {
                     sb.append(System.lineSeparator());
                 }
                 sb.append(e.toString());

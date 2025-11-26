@@ -590,7 +590,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                     }
                     if (info.hasErrors()) {
                         for (CompilerException msg : compiler.getMessages()) {
-                            if (file.getName().equals(msg.getFileName()) && "illegal circular reference".equals(msg.getMessage())) {
+                            if (file.equals(msg.getFile()) && "illegal circular reference".equals(msg.getMessage())) {
                                 logMessage(new CompilerException(msg.getMessage(), token));
                                 return;
                             }

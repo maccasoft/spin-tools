@@ -662,13 +662,7 @@ public class SpinCompiler {
 
     static void println(CompilerException obj) {
         if (!quiet) {
-            String msg = obj.getText();
-            if (!msg.isEmpty()) {
-                System.out.println(msg);
-            }
-            for (CompilerException e : obj.getChilds()) {
-                println(e);
-            }
+            System.out.print(obj);
             System.out.flush();
         }
     }

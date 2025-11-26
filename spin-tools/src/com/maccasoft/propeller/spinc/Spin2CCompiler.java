@@ -127,7 +127,7 @@ public class Spin2CCompiler extends Spin2Compiler {
 
         errors = objectCompiler.hasErrors();
         if (stackFree < 0) {
-            logMessage(new CompilerException(rootFile.getName(), "program exceeds runtime memory limit by " + Math.abs(stackFree) + " longs.", null));
+            logMessage(new CompilerException(rootFile, "program exceeds runtime memory limit by " + Math.abs(stackFree) + " longs.", null));
         }
 
         messages.addAll(objectCompiler.getMessages());

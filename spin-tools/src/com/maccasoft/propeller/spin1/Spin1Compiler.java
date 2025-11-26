@@ -39,7 +39,7 @@ public class Spin1Compiler extends Compiler {
     protected List<ObjectInfo> childObjects = new ArrayList<>();
 
     protected boolean errors;
-    protected List<CompilerException> messages = new ArrayList<CompilerException>();
+    protected List<CompilerException> messages = new ArrayList<>();
 
     public Spin1Compiler() {
 
@@ -130,7 +130,7 @@ public class Spin1Compiler extends Compiler {
         dbase.setValue(object.getSize() + offset);
 
         if (!(obj.getObject(4) instanceof LongDataObject)) {
-            logMessage(new CompilerException(CompilerException.ERROR, rootFile.getName(), "No PUB routines found", (Object) null));
+            logMessage(new CompilerException(CompilerException.ERROR, rootFile, "No PUB routines found", (Object) null));
             return null;
         }
         pcurr.setValue((int) (pbase.getValue() + (((LongDataObject) obj.getObject(4)).getValue() & 0xFFFF)));
@@ -212,12 +212,12 @@ public class Spin1Compiler extends Compiler {
         }
 
         if (stackRequired > 0x2000) {
-            logMessage(new CompilerException(rootFile.getName(), "_STACK and _FREE must sum to under 8k longs.", null));
+            logMessage(new CompilerException(rootFile, "_STACK and _FREE must sum to under 8k longs.", null));
         }
         else {
             int requiredSize = object.getSize() + object.getVarSize() + (stackRequired << 2);
             if (requiredSize >= 0x8000) {
-                logMessage(new CompilerException(rootFile.getName(), "program exceeds runtime memory limit by " + ((requiredSize - 0x8000) >> 2) + " longs.", null));
+                logMessage(new CompilerException(rootFile, "program exceeds runtime memory limit by " + ((requiredSize - 0x8000) >> 2) + " longs.", null));
             }
         }
 

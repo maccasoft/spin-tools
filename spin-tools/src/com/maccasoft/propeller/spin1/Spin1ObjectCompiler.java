@@ -836,7 +836,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                                     try {
                                         Expression expression = builder.getExpression();
                                         if (!expression.isConstant()) {
-                                            throw new Exception("not a constant expression");
+                                            throw new CompilerException("not a constant expression", expression.getData());
                                         }
                                         varSize = expression.getNumber().intValue();
                                     } catch (CompilerException e) {
@@ -982,7 +982,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
             if (info.hasErrors()) {
                 for (CompilerException msg : compiler.getMessages()) {
-                    if (file.getName().equals(msg.getFileName()) && "illegal circular reference".equals(msg.getMessage())) {
+                    if (file.equals(msg.getFile()) && "illegal circular reference".equals(msg.getMessage())) {
                         logMessage(new CompilerException(msg.getMessage(), fileToken));
                         return;
                     }

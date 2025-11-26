@@ -664,7 +664,7 @@ public class EditorTab implements FindReplaceTarget {
 
                                 List<CompilerException> list = new ArrayList<CompilerException>();
                                 for (CompilerException msg : messages) {
-                                    if (tabItemText.equals(msg.fileName)) {
+                                    if (localFile.equals(msg.getFile())) {
                                         list.add(msg);
                                     }
                                 }
