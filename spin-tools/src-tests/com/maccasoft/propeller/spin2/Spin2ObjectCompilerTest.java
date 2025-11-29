@@ -8615,6 +8615,48 @@ class Spin2ObjectCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testStructureVariableAligment() throws Exception {
+        String text = ""
+            + "CON\n"
+            + "    sTest(word a, long c)\n"
+            + "\n"
+            + "VAR\n"
+            + "    sTest v1\n"
+            + "    sTest v2\n"
+            + "\n"
+            + "PUB start() | a\n"
+            + "\n"
+            + "    v1.c := 1\n"
+            + "    v2.c := 2\n"
+            + "\n"
+            + "    a := v1.c\n"
+            + "    a := v2.c\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object \"test.spin2\" header (var size 16)\n"
+            + "00000 00000       08 00 00 80    Method start @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       1A 00 00 00    End\n"
+            + "' PUB start() | a\n"
+            + "00008 00008       01             (stack size)\n"
+            + "'     v1.c := 1\n"
+            + "00009 00009       A2             CONSTANT (1)\n"
+            + "0000A 0000A       5C 06 81       MEM_WRITE LONG VBASE+$00006\n"
+            + "'     v2.c := 2\n"
+            + "0000D 0000D       A3             CONSTANT (2)\n"
+            + "0000E 0000E       5C 0C 81       MEM_WRITE LONG VBASE+$0000C\n"
+            + "'     a := v1.c\n"
+            + "00011 00011       5C 06 80       MEM_READ LONG VBASE+$00006\n"
+            + "00014 00014       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     a := v2.c\n"
+            + "00015 00015       5C 0C 80       MEM_READ LONG VBASE+$0000C\n"
+            + "00018 00018       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00019 00019       04             RETURN\n"
+            + "0001A 0001A       00 00          Padding\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }
