@@ -10,7 +10,7 @@
 
 package com.maccasoft.propeller.devices;
 
-import org.eclipse.swt.internal.Platform;
+import org.eclipse.swt.SWT;
 
 import jssc.SerialPort;
 import jssc.SerialPortEvent;
@@ -62,7 +62,7 @@ public class SerialComPort extends ComPort {
     @Override
     public boolean setParams(int baudRate, int dataBits, int stopBits, int parity) throws ComPortException {
         try {
-            boolean lineState = "win32".equals(Platform.PLATFORM) ? false : true;
+            boolean lineState = "win32".equals(SWT.getPlatform()) ? false : true;
             return serialPort.setParams(baudRate, dataBits, stopBits, parity, lineState, lineState);
         } catch (SerialPortException e) {
             throw new ComPortException(e.getExceptionType(), e);

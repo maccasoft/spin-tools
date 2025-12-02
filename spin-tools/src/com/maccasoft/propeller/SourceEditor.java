@@ -75,7 +75,6 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.graphics.TextStyle;
-import org.eclipse.swt.internal.Platform;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -1295,7 +1294,7 @@ public class SourceEditor {
 
         styleMap.clear();
 
-        if ("win32".equals(Platform.PLATFORM) && id == null) {
+        if ("win32".equals(SWT.getPlatform()) && id == null) {
             if (Display.isSystemDarkTheme()) {
                 id = "dark";
             }
@@ -1317,7 +1316,7 @@ public class SourceEditor {
         else if ("light".equals(id)) {
             textBackground = new Color(0xFE, 0xFE, 0xFE);
             textForeground = new Color(0x00, 0x00, 0x00);
-            if ("win32".equals(Platform.PLATFORM)) {
+            if ("win32".equals(SWT.getPlatform())) {
                 rulersBackground = new Color(0xF0, 0xF0, 0xF0);
             }
             else {

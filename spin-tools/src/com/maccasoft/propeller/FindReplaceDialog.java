@@ -27,7 +27,6 @@ import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
-import org.eclipse.swt.internal.Platform;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -132,7 +131,7 @@ public class FindReplaceDialog extends Dialog {
         initFindStringFromSelection();
         fNeedsInitialFindBeforeReplace = true;
 
-        if ("win32".equals(Platform.PLATFORM) || theme != null) {
+        if ("win32".equals(SWT.getPlatform()) || theme != null) {
             applyTheme(parent);
         }
 
@@ -666,7 +665,7 @@ public class FindReplaceDialog extends Dialog {
         labelForeground = null;
         buttonBackground = null;
 
-        if ("win32".equals(Platform.PLATFORM) && id == null) {
+        if ("win32".equals(SWT.getPlatform()) && id == null) {
             if (Display.isSystemDarkTheme()) {
                 id = "dark";
             }
@@ -688,7 +687,7 @@ public class FindReplaceDialog extends Dialog {
         }
         else if ("light".equals(id)) {
             widgetForeground = new Color(0x00, 0x00, 0x00);
-            if ("win32".equals(Platform.PLATFORM)) {
+            if ("win32".equals(SWT.getPlatform())) {
                 widgetBackground = new Color(0xF0, 0xF0, 0xF0);
             }
             else {

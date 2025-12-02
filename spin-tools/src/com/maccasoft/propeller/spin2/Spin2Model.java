@@ -14,9 +14,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.maccasoft.propeller.model.Node;
-
-public class Spin2Model extends SpinModel {
+public class Spin2Model {
 
     public static Set<String> instructions = new HashSet<String>(Arrays.asList(new String[] {
         "ORG", "ORGH", "ORGF", "FIT", "NAMESP", "DITTO",
@@ -224,10 +222,6 @@ public class Spin2Model extends SpinModel {
 
     public static boolean isDebugKeyword(String token) {
         return debugKeywords.contains(token.toUpperCase());
-    }
-
-    public Spin2Model(Node root) {
-        super(root);
     }
 
 }

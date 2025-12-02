@@ -13,8 +13,6 @@ package com.maccasoft.propeller;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -25,7 +23,7 @@ import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.eclipse.jface.fieldassist.ContentProposal;
 import org.eclipse.jface.fieldassist.IContentProposal;
 
@@ -726,7 +724,7 @@ public abstract class SourceTokenMarker {
                 for (MethodNode.ParameterNode child : node.getParameters()) {
                     String text = child.getIdentifier().getText();
                     if (dot == -1) {
-                        if (StringUtils.containsIgnoreCase(text, filterText)) {
+                        if (Strings.CI.contains(text, filterText)) {
                             proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                         }
                     }
@@ -740,7 +738,7 @@ public abstract class SourceTokenMarker {
                 for (MethodNode.LocalVariableNode child : node.getLocalVariables()) {
                     String text = child.getIdentifier().getText();
                     if (dot == -1) {
-                        if (StringUtils.containsIgnoreCase(text, filterText)) {
+                        if (Strings.CI.contains(text, filterText)) {
                             proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                         }
                     }
@@ -754,7 +752,7 @@ public abstract class SourceTokenMarker {
                 for (MethodNode.ReturnNode child : node.getReturnVariables()) {
                     String text = child.getIdentifier().getText();
                     if (dot == -1) {
-                        if (StringUtils.containsIgnoreCase(text, filterText)) {
+                        if (Strings.CI.contains(text, filterText)) {
                             proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                         }
                     }
@@ -777,7 +775,7 @@ public abstract class SourceTokenMarker {
                         }
                         TypeDefinitionNode.Definition member = (TypeDefinitionNode.Definition) n;
                         String text = member.getIdentifier().getText();
-                        if (StringUtils.containsIgnoreCase(text, refName)) {
+                        if (Strings.CI.contains(text, refName)) {
                             proposals.add(new ContentProposal(text, text, "<b>" + typeNode.getText() + "</b>"));
                         }
                     }
@@ -793,7 +791,7 @@ public abstract class SourceTokenMarker {
                 if (node.getIdentifier() != null && !contextMethodName.equals(node.getIdentifier().getText())) {
                     String text = node.getIdentifier().getText();
                     if (dot == -1) {
-                        if (StringUtils.containsIgnoreCase(text, filterText)) {
+                        if (Strings.CI.contains(text, filterText)) {
                             proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                         }
                     }
@@ -814,7 +812,7 @@ public abstract class SourceTokenMarker {
                         }
                         TypeDefinitionNode.Definition member = (TypeDefinitionNode.Definition) n;
                         String text = member.getIdentifier().getText();
-                        if (StringUtils.containsIgnoreCase(text, refName)) {
+                        if (Strings.CI.contains(text, refName)) {
                             proposals.add(new ContentProposal(text, text, "<b>" + typeNode.getText() + "</b>"));
                         }
                     }
@@ -829,7 +827,7 @@ public abstract class SourceTokenMarker {
             public boolean visitMethod(MethodNode node) {
                 if (node.getName() != null && !contextMethodName.equals(node.getName().getText())) {
                     String text = node.getName().getText();
-                    if (StringUtils.containsIgnoreCase(text, filterText)) {
+                    if (Strings.CI.contains(text, filterText)) {
                         String content = getMethodInsert(node);
                         int cursorPosition = content.endsWith("()") ? content.length() : (content.indexOf('(') + 1);
                         proposals.add(new ContentProposal(content, text, getMethodDocument(node), cursorPosition));
@@ -842,7 +840,7 @@ public abstract class SourceTokenMarker {
             public boolean visitFunction(FunctionNode node) {
                 if (node.getIdentifier() != null && !contextMethodName.equals(node.getIdentifier().getText())) {
                     String text = node.getIdentifier().getText();
-                    if (StringUtils.containsIgnoreCase(text, filterText)) {
+                    if (Strings.CI.contains(text, filterText)) {
                         String content = getMethodInsert(node);
                         int cursorPosition = content.endsWith("()") ? content.length() : (content.indexOf('(') + 1);
                         proposals.add(new ContentProposal(content, text, "", cursorPosition));
@@ -867,7 +865,7 @@ public abstract class SourceTokenMarker {
                         if (iter.hasNext()) {
                             Token file = iter.next();
                             String name = file.getText().substring(1, file.getText().length() - 1);
-                            if (StringUtils.containsIgnoreCase(name, filterText)) {
+                            if (Strings.CI.contains(name, filterText)) {
                                 proposals.add(new ContentProposal(name, name, ""));
                             }
                         }
@@ -881,7 +879,7 @@ public abstract class SourceTokenMarker {
                     return;
                 }
                 String text = node.name.getText();
-                if (StringUtils.containsIgnoreCase(text, filterText)) {
+                if (Strings.CI.contains(text, filterText)) {
                     proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                 }
             }
@@ -911,10 +909,10 @@ public abstract class SourceTokenMarker {
                             public boolean visitFunction(FunctionNode node) {
                                 if (node.getIdentifier() != null) {
                                     String text = node.getIdentifier().getText();
-                                    if (StringUtils.startsWithIgnoreCase(text, refName)) {
+                                    if (Strings.CI.startsWith(text, refName)) {
                                         proposals.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
                                     }
-                                    else if (StringUtils.containsIgnoreCase(text, refName)) {
+                                    else if (Strings.CI.contains(text, refName)) {
                                         secondary.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
                                     }
                                 }
@@ -928,10 +926,10 @@ public abstract class SourceTokenMarker {
                                 }
                                 if ("PUB".equalsIgnoreCase(node.getType().getText())) {
                                     String text = node.getName().getText();
-                                    if (StringUtils.startsWithIgnoreCase(text, refName)) {
+                                    if (Strings.CI.startsWith(text, refName)) {
                                         proposals.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
                                     }
-                                    else if (StringUtils.containsIgnoreCase(text, refName)) {
+                                    else if (Strings.CI.contains(text, refName)) {
                                         secondary.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
                                     }
                                 }
@@ -961,10 +959,10 @@ public abstract class SourceTokenMarker {
                         public boolean visitFunction(FunctionNode node) {
                             if (node.getIdentifier() != null) {
                                 String text = node.getIdentifier().getText();
-                                if (StringUtils.startsWithIgnoreCase(text, refName)) {
+                                if (Strings.CI.startsWith(text, refName)) {
                                     proposals.add(new ContentProposal(getMethodInsert(node), text, ""));
                                 }
-                                else if (StringUtils.containsIgnoreCase(text, refName)) {
+                                else if (Strings.CI.contains(text, refName)) {
                                     secondary.add(new ContentProposal(getMethodInsert(node), text, ""));
                                 }
                             }
@@ -978,10 +976,10 @@ public abstract class SourceTokenMarker {
                             }
                             if ("PUB".equalsIgnoreCase(node.getType().getText())) {
                                 String text = node.getName().getText();
-                                if (StringUtils.startsWithIgnoreCase(text, refName)) {
+                                if (Strings.CI.startsWith(text, refName)) {
                                     proposals.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
                                 }
-                                else if (StringUtils.containsIgnoreCase(text, refName)) {
+                                else if (Strings.CI.contains(text, refName)) {
                                     secondary.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
                                 }
                             }
@@ -1012,21 +1010,21 @@ public abstract class SourceTokenMarker {
             if (node instanceof MethodNode.ParameterNode) {
                 MethodNode.ParameterNode child = (MethodNode.ParameterNode) node;
                 String text = child.getIdentifier().getText();
-                if (StringUtils.containsIgnoreCase(text, filterText)) {
+                if (Strings.CI.contains(text, filterText)) {
                     proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                 }
             }
             else if (node instanceof MethodNode.LocalVariableNode) {
                 MethodNode.LocalVariableNode child = (MethodNode.LocalVariableNode) node;
                 String text = child.getIdentifier().getText();
-                if (StringUtils.containsIgnoreCase(text, filterText)) {
+                if (Strings.CI.contains(text, filterText)) {
                     proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                 }
             }
             else if (node instanceof MethodNode.ReturnNode) {
                 MethodNode.ReturnNode child = (MethodNode.ReturnNode) node;
                 String text = child.getIdentifier().getText();
-                if (StringUtils.containsIgnoreCase(text, filterText)) {
+                if (Strings.CI.contains(text, filterText)) {
                     proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                 }
             }
@@ -1067,10 +1065,10 @@ public abstract class SourceTokenMarker {
             if (lineNode == context) {
                 String s1 = lastLabel + localLabelPrefix;
                 for (String s : pasmLabels) {
-                    if (StringUtils.startsWithIgnoreCase(s, s1)) {
-                        if (StringUtils.containsIgnoreCase(s.substring(s1.length() - 1), filterText)) {
+                    if (Strings.CI.startsWith(s, s1)) {
+                        if (Strings.CI.contains(s.substring(s1.length() - 1), filterText)) {
                             String text = s.substring(s1.length() - 1);
-                            if (StringUtils.containsIgnoreCase(text, filterText)) {
+                            if (Strings.CI.contains(text, filterText)) {
                                 proposals.add(new ContentProposal(text, text, null));
                             }
                         }
@@ -1087,7 +1085,7 @@ public abstract class SourceTokenMarker {
             DataLineNode lineNode = (DataLineNode) child;
             if (lineNode.label != null) {
                 String text = lineNode.label.getText();
-                if (!text.startsWith(localLabelPrefix) && StringUtils.containsIgnoreCase(text, filterText)) {
+                if (!text.startsWith(localLabelPrefix) && Strings.CI.contains(text, filterText)) {
                     proposals.add(new ContentProposal(text, text, null));
                 }
             }
@@ -1125,7 +1123,7 @@ public abstract class SourceTokenMarker {
                 Node objectRoot = getObjectTree(node.getType().getText());
                 if (objectRoot != null) {
                     String name = node.getIdentifier().getText();
-                    if (StringUtils.containsIgnoreCase(name, filterText)) {
+                    if (Strings.CI.contains(name, filterText)) {
                         proposals.add(new ContentProposal(name, name, ""));
                     }
                     if (dot != -1) {
@@ -1135,7 +1133,7 @@ public abstract class SourceTokenMarker {
                             public boolean visitFunction(FunctionNode node) {
                                 if (node.getIdentifier() != null) {
                                     String text = name + "." + node.getIdentifier().getText();
-                                    if (StringUtils.containsIgnoreCase(text, filterText)) {
+                                    if (Strings.CI.contains(text, filterText)) {
                                         proposals.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
                                     }
                                 }
@@ -1149,7 +1147,7 @@ public abstract class SourceTokenMarker {
                                 }
                                 if ("PUB".equalsIgnoreCase(node.getType().getText())) {
                                     String text = name + "." + node.getName().getText();
-                                    if (StringUtils.containsIgnoreCase(text, filterText)) {
+                                    if (Strings.CI.contains(text, filterText)) {
                                         proposals.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
                                     }
                                 }
@@ -1167,7 +1165,7 @@ public abstract class SourceTokenMarker {
                     return;
                 }
                 String name = objectNode.name.getText();
-                if (StringUtils.containsIgnoreCase(name, filterText)) {
+                if (Strings.CI.contains(name, filterText)) {
                     proposals.add(new ContentProposal(name, name, ""));
                 }
                 if (dot != -1) {
@@ -1182,7 +1180,7 @@ public abstract class SourceTokenMarker {
                         public boolean visitFunction(FunctionNode node) {
                             if (node.getIdentifier() != null) {
                                 String text = name + "." + node.getIdentifier().getText();
-                                if (StringUtils.containsIgnoreCase(text, filterText)) {
+                                if (Strings.CI.contains(text, filterText)) {
                                     proposals.add(new ContentProposal(getMethodInsert(node), text, ""));
                                 }
                             }
@@ -1196,7 +1194,7 @@ public abstract class SourceTokenMarker {
                             }
                             if ("PUB".equalsIgnoreCase(node.getType().getText())) {
                                 String text = name + "." + node.getName().getText();
-                                if (StringUtils.containsIgnoreCase(text, filterText)) {
+                                if (Strings.CI.contains(text, filterText)) {
                                     proposals.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
                                 }
                             }
@@ -1253,33 +1251,41 @@ public abstract class SourceTokenMarker {
     }
 
     public List<IContentProposal> getTypeProposals(Node context, String filterText) {
-        List<IContentProposal> proposals = new ArrayList<IContentProposal>();
+        String text;
+        List<IContentProposal> proposals = new ArrayList<>();
+
+        text = "LONG";
+        if (Strings.CI.contains(text, filterText)) {
+            proposals.add(new ContentProposal(text, text, "<b>" + text + "</b>"));
+        }
+        text = "WORD";
+        if (Strings.CI.contains(text, filterText)) {
+            proposals.add(new ContentProposal(text, text, "<b>" + text + "</b>"));
+        }
+        text = "BYTE";
+        if (Strings.CI.contains(text, filterText)) {
+            proposals.add(new ContentProposal(text, text, "<b>" + text + "</b>"));
+        }
+
         if (root == null) {
             return proposals;
         }
 
-        List<IContentProposal> localProposals = new ArrayList<IContentProposal>();
+        List<IContentProposal> localProposals = new ArrayList<>();
         root.accept(new NodeVisitor() {
 
             @Override
             public void visitTypeDefinition(TypeDefinitionNode node) {
                 if (node.getIdentifier() != null) {
                     String text = node.getIdentifier().getText();
-                    if (StringUtils.containsIgnoreCase(text, filterText)) {
+                    if (Strings.CI.contains(text, filterText)) {
                         localProposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                     }
                 }
             }
 
         });
-        Collections.sort(localProposals, new Comparator<IContentProposal>() {
-
-            @Override
-            public int compare(IContentProposal o1, IContentProposal o2) {
-                return o1.getLabel().compareToIgnoreCase(o2.getLabel());
-            }
-
-        });
+        localProposals.sort((o1, o2) -> o1.getLabel().compareToIgnoreCase(o2.getLabel()));
         proposals.addAll(localProposals);
 
         List<IContentProposal> objectProposals = new ArrayList<IContentProposal>();
@@ -1301,7 +1307,7 @@ public abstract class SourceTokenMarker {
                     public void visitTypeDefinition(TypeDefinitionNode node) {
                         if (node.getIdentifier() != null) {
                             String text = objectNode.name.getText() + "." + node.getIdentifier().getText();
-                            if (StringUtils.containsIgnoreCase(text, filterText)) {
+                            if (Strings.CI.contains(text, filterText)) {
                                 objectProposals.add(new ContentProposal(node.getIdentifier().getText(), text, "<b>" + node.getText() + "</b>"));
                             }
                         }
@@ -1311,14 +1317,7 @@ public abstract class SourceTokenMarker {
             }
 
         });
-        Collections.sort(objectProposals, new Comparator<IContentProposal>() {
-
-            @Override
-            public int compare(IContentProposal o1, IContentProposal o2) {
-                return o1.getLabel().compareToIgnoreCase(o2.getLabel());
-            }
-
-        });
+        objectProposals.sort((o1, o2) -> o1.getLabel().compareToIgnoreCase(o2.getLabel()));
         proposals.addAll(objectProposals);
 
         return proposals;
@@ -1340,7 +1339,7 @@ public abstract class SourceTokenMarker {
                     DirectiveNode.DefineNode define = (DirectiveNode.DefineNode) node;
                     if (define.getIdentifier() != null) {
                         String text = define.getIdentifier().getText();
-                        if (StringUtils.containsIgnoreCase(text, filterText)) {
+                        if (Strings.CI.contains(text, filterText)) {
                             proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                         }
                     }
@@ -1351,7 +1350,7 @@ public abstract class SourceTokenMarker {
             public void visitConstant(ConstantNode node) {
                 if (node.identifier != null) {
                     String text = node.identifier.getText();
-                    if (StringUtils.containsIgnoreCase(text, filterText)) {
+                    if (Strings.CI.contains(text, filterText)) {
                         proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                     }
                 }
@@ -1384,7 +1383,7 @@ public abstract class SourceTokenMarker {
                                         DirectiveNode.DefineNode define = (DirectiveNode.DefineNode) node;
                                         if (define.getIdentifier() != null) {
                                             String text = define.getIdentifier().getText();
-                                            if (StringUtils.containsIgnoreCase(text, filterText)) {
+                                            if (Strings.CI.contains(text, filterText)) {
                                                 proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                                             }
                                         }
@@ -1395,7 +1394,7 @@ public abstract class SourceTokenMarker {
                                 public void visitConstant(ConstantNode node) {
                                     if (node.identifier != null) {
                                         String text = node.identifier.getText();
-                                        if (StringUtils.containsIgnoreCase(text, filterText)) {
+                                        if (Strings.CI.contains(text, filterText)) {
                                             proposals.add(new ContentProposal(node.identifier.getText(), text, "<b>" + node.getText() + "</b>"));
                                         }
                                     }
@@ -1425,10 +1424,10 @@ public abstract class SourceTokenMarker {
                         public void visitConstant(ConstantNode node) {
                             if (node.identifier != null) {
                                 String text = node.identifier.getText();
-                                if (StringUtils.startsWithIgnoreCase(text, refName)) {
+                                if (Strings.CI.startsWith(text, refName)) {
                                     proposals.add(new ContentProposal(node.identifier.getText(), text, "<b>" + node.getText() + "</b>"));
                                 }
-                                else if (StringUtils.containsIgnoreCase(text, refName)) {
+                                else if (Strings.CI.contains(text, refName)) {
                                     secondary.add(new ContentProposal(node.identifier.getText(), text, "<b>" + node.getText() + "</b>"));
                                 }
                             }
@@ -1595,7 +1594,7 @@ public abstract class SourceTokenMarker {
                     if (!lineNode.label.getText().startsWith(localLabelPrefix)) {
                         break;
                     }
-                    if (StringUtils.containsIgnoreCase(lineNode.label.getText(), filterText)) {
+                    if (Strings.CI.contains(lineNode.label.getText(), filterText)) {
                         list.add(0, new ContentProposal(lineNode.label.getText(), lineNode.label.getText(), null));
                     }
                 }
@@ -1613,7 +1612,7 @@ public abstract class SourceTokenMarker {
                     if (!lineNode.label.getText().startsWith(localLabelPrefix)) {
                         break;
                     }
-                    if (StringUtils.containsIgnoreCase(lineNode.label.getText(), filterText)) {
+                    if (Strings.CI.contains(lineNode.label.getText(), filterText)) {
                         list.add(new ContentProposal(lineNode.label.getText(), lineNode.label.getText(), null));
                     }
                 }
@@ -1656,7 +1655,7 @@ public abstract class SourceTokenMarker {
                 }
                 if (lineNode.label != null && !lineNode.label.getText().startsWith(localLabelPrefix)) {
                     if (namespace.isBlank() || namespace.equalsIgnoreCase(refNamespace)) {
-                        if (StringUtils.containsIgnoreCase(lineNode.label.getText(), filterText)) {
+                        if (Strings.CI.contains(lineNode.label.getText(), filterText)) {
                             proposals.add(new ContentProposal(lineNode.label.getText(), lineNode.label.getText(), null));
                         }
                     }
@@ -1674,7 +1673,7 @@ public abstract class SourceTokenMarker {
                         namespace = lineNode.parameters.get(0).getText() + ".";
                         if (!namespace.equalsIgnoreCase(refNamespace) && ns.add(namespace.toLowerCase())) {
                             String text = lineNode.parameters.get(0).getText();
-                            if (StringUtils.containsIgnoreCase(text, filterText)) {
+                            if (Strings.CI.contains(text, filterText)) {
                                 proposals.add(new ContentProposal(text, text, null));
                             }
                         }
@@ -1696,7 +1695,7 @@ public abstract class SourceTokenMarker {
                 }
                 if (lineNode.label != null && !lineNode.label.getText().startsWith(localLabelPrefix)) {
                     String text = namespace + lineNode.label.getText();
-                    if (StringUtils.containsIgnoreCase(text, filterText)) {
+                    if (Strings.CI.contains(text, filterText)) {
                         proposals.add(new ContentProposal(lineNode.label.getText(), lineNode.label.getText(), null));
                     }
                 }
@@ -1709,7 +1708,7 @@ public abstract class SourceTokenMarker {
             public void visitConstant(ConstantNode node) {
                 if (node.identifier != null) {
                     String text = node.identifier.getText();
-                    if (StringUtils.containsIgnoreCase(text, filterText)) {
+                    if (Strings.CI.contains(text, filterText)) {
                         proposals.add(new ContentProposal(text, text, null));
                     }
                 }
@@ -1737,7 +1736,7 @@ public abstract class SourceTokenMarker {
                                     DirectiveNode.DefineNode define = (DirectiveNode.DefineNode) node;
                                     if (define.getIdentifier() != null) {
                                         String text = define.getIdentifier().getText();
-                                        if (StringUtils.containsIgnoreCase(text, filterText)) {
+                                        if (Strings.CI.contains(text, filterText)) {
                                             proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                                         }
                                     }
@@ -1748,7 +1747,7 @@ public abstract class SourceTokenMarker {
                             public void visitConstant(ConstantNode node) {
                                 if (node.identifier != null) {
                                     String text = node.identifier.getText();
-                                    if (StringUtils.containsIgnoreCase(text, filterText)) {
+                                    if (Strings.CI.contains(text, filterText)) {
                                         proposals.add(new ContentProposal(node.identifier.getText(), text, "<b>" + node.getText() + "</b>"));
                                     }
                                 }
@@ -1765,7 +1764,7 @@ public abstract class SourceTokenMarker {
                     return;
                 }
                 String name = node.name.getText();
-                if (StringUtils.containsIgnoreCase(name, filterText)) {
+                if (Strings.CI.contains(name, filterText)) {
                     proposals.add(new ContentProposal(name, name, ""));
                 }
                 if (dot != -1) {
@@ -1780,7 +1779,7 @@ public abstract class SourceTokenMarker {
                         public void visitConstant(ConstantNode node) {
                             if (node.identifier != null) {
                                 String text = name + constantSeparator + node.identifier.getText();
-                                if (StringUtils.containsIgnoreCase(text, filterText)) {
+                                if (Strings.CI.contains(text, filterText)) {
                                     proposals.add(new ContentProposal(node.identifier.getText(), text, "<b>" + node.getText() + "</b>"));
                                 }
                             }
@@ -1826,7 +1825,7 @@ public abstract class SourceTokenMarker {
                     if (lineNode.instruction != null && "NAMESP".equalsIgnoreCase(lineNode.instruction.getText())) {
                         if (lineNode.parameters.size() == 1) {
                             String text = lineNode.parameters.get(0).getText();
-                            if (StringUtils.containsIgnoreCase(text, filterText)) {
+                            if (Strings.CI.contains(text, filterText)) {
                                 proposals.add(new ContentProposal(text, text, ""));
                             }
                         }
@@ -1835,7 +1834,7 @@ public abstract class SourceTokenMarker {
                     if (lineNode.label != null && !lineNode.label.getText().startsWith(localLabelPrefix)) {
                         if (dot != -1 || namespace.isBlank()) {
                             String text = namespace + lineNode.label.getText();
-                            if (StringUtils.containsIgnoreCase(text, filterText)) {
+                            if (Strings.CI.contains(text, filterText)) {
                                 String content = dot == -1 ? text : lineNode.label.getText();
                                 String description = "";
                                 if (lineNode.instruction != null) {
@@ -1857,7 +1856,7 @@ public abstract class SourceTokenMarker {
                                     }
                                     TypeDefinitionNode.Definition member = (TypeDefinitionNode.Definition) n;
                                     String text = identifier + "." + member.getIdentifier().getText();
-                                    if (StringUtils.containsIgnoreCase(text, filterText)) {
+                                    if (Strings.CI.contains(text, filterText)) {
                                         proposals.add(new ContentProposal(member.getIdentifier().getText(), member.getIdentifier().getText(), "<b>" + typeNode.getText() + "</b>"));
                                     }
                                 }

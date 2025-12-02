@@ -1,12 +1,11 @@
 /*
  * Copyright (c) 2021-25 Marco Maccaferri and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * All rights reserved.
  *
- * Contributors:
- *     Marco Maccaferri - initial API and implementation
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License v1.0 which accompanies this
+ * distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller;
@@ -21,7 +20,6 @@ import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.internal.Platform;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.program.Program;
@@ -61,7 +59,7 @@ public class AboutDialog extends Dialog {
             listBackground = new Color(0x2B, 0x2B, 0x2B);
         }
         else if ("light".equals(id)) {
-            if ("win32".equals(Platform.PLATFORM)) {
+            if ("win32".equals(SWT.getPlatform())) {
                 widgetBackground = new Color(0xF0, 0xF0, 0xF0);
             }
             else {

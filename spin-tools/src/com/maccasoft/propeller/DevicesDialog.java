@@ -29,7 +29,6 @@ import org.eclipse.jface.viewers.ViewerCell;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.internal.Platform;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -109,7 +108,7 @@ public class DevicesDialog extends Dialog {
         getButton(IDialogConstants.CLIENT_ID).setEnabled(false);
 
         Preferences preferences = Preferences.getInstance();
-        if ("win32".equals(Platform.PLATFORM) || preferences.getTheme() != null) {
+        if ("win32".equals(SWT.getPlatform()) || preferences.getTheme() != null) {
             applyTheme(parent, preferences.getTheme());
         }
 
@@ -133,7 +132,7 @@ public class DevicesDialog extends Dialog {
         labelForeground = null;
         buttonBackground = null;
 
-        if ("win32".equals(Platform.PLATFORM) && id == null) {
+        if ("win32".equals(SWT.getPlatform()) && id == null) {
             if (Display.isSystemDarkTheme()) {
                 id = "dark";
             }
@@ -155,7 +154,7 @@ public class DevicesDialog extends Dialog {
         }
         else if ("light".equals(id)) {
             widgetForeground = new Color(0x00, 0x00, 0x00);
-            if ("win32".equals(Platform.PLATFORM)) {
+            if ("win32".equals(SWT.getPlatform())) {
                 widgetBackground = new Color(0xF0, 0xF0, 0xF0);
             }
             else {

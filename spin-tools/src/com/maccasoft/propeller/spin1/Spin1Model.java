@@ -14,10 +14,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.maccasoft.propeller.model.Node;
-import com.maccasoft.propeller.spin2.SpinModel;
-
-public class Spin1Model extends SpinModel {
+public class Spin1Model {
 
     static Set<String> pasmInstructions = new HashSet<>(Arrays.asList(new String[] {
         "ORG", "FIT", "RES", "FILE", "INCLUDE", "NAMESP", "DITTO",
@@ -67,10 +64,6 @@ public class Spin1Model extends SpinModel {
 
     public static boolean isBlockStart(String token) {
         return blockStart.contains(token.toUpperCase());
-    }
-
-    public Spin1Model(Node root) {
-        super(root);
     }
 
 }

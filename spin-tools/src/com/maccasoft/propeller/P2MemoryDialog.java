@@ -39,7 +39,6 @@ import org.eclipse.swt.graphics.FontMetrics;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
-import org.eclipse.swt.internal.Platform;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -105,7 +104,7 @@ public class P2MemoryDialog extends Dialog {
     public void setTheme(String id) {
         Display display = Display.getDefault();
 
-        if ("win32".equals(Platform.PLATFORM) && id == null) {
+        if ("win32".equals(SWT.getPlatform()) && id == null) {
             if (Display.isSystemDarkTheme()) {
                 id = "dark";
             }
@@ -143,7 +142,7 @@ public class P2MemoryDialog extends Dialog {
         }
         else if ("light".equals(id)) {
             widgetForeground = ColorRegistry.getColor(0x00, 0x00, 0x00);
-            if ("win32".equals(Platform.PLATFORM)) {
+            if ("win32".equals(SWT.getPlatform())) {
                 widgetBackground = ColorRegistry.getColor(0xF0, 0xF0, 0xF0);
             }
             else {

@@ -70,7 +70,6 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
-import org.eclipse.swt.internal.Platform;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -302,13 +301,13 @@ public class SpinTools {
         preferences = Preferences.getInstance();
 
         boolean dark = "dark".equals(preferences.getTheme());
-        if ("win32".contentEquals(Platform.PLATFORM) && Display.isSystemDarkTheme() && preferences.getTheme() == null) {
+        if ("win32".contentEquals(SWT.getPlatform()) && Display.isSystemDarkTheme() && preferences.getTheme() == null) {
             dark = true;
         }
         if (dark) {
             try {
                 @SuppressWarnings("rawtypes")
-                Class clazz = Class.forName("org.eclipse.swt.internal." + Platform.PLATFORM + ".OS");
+                Class clazz = Class.forName("org.eclipse.swt.internal." + SWT.getPlatform() + ".OS");
                 @SuppressWarnings("unchecked")
                 Method method = clazz.getMethod("setTheme", boolean.class);
                 method.invoke(null, true);
@@ -383,7 +382,7 @@ public class SpinTools {
         layoutData.heightHint = 24;
         statusLine.setLayoutData(layoutData);
 
-        if ("win32".equals(Platform.PLATFORM) || preferences.getTheme() != null) {
+        if ("win32".equals(SWT.getPlatform()) || preferences.getTheme() != null) {
             applyTheme(preferences.getTheme());
         }
 
@@ -594,7 +593,7 @@ public class SpinTools {
         Color listBackground = null;
         Color tabfolderBackground = null;
 
-        if ("win32".equals(Platform.PLATFORM) && id == null) {
+        if ("win32".equals(SWT.getPlatform()) && id == null) {
             if (Display.isSystemDarkTheme()) {
                 id = "dark";
             }
@@ -616,7 +615,7 @@ public class SpinTools {
         }
         else if ("light".equals(id)) {
             widgetForeground = new Color(0x00, 0x00, 0x00);
-            if ("win32".equals(Platform.PLATFORM)) {
+            if ("win32".equals(SWT.getPlatform())) {
                 widgetBackground = new Color(0xF0, 0xF0, 0xF0);
             }
             else {

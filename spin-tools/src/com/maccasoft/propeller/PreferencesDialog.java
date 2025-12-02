@@ -54,7 +54,6 @@ import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.internal.Platform;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -455,7 +454,7 @@ public class PreferencesDialog extends Dialog {
     @Override
     protected Control createContents(Composite parent) {
         Control contents = super.createContents(parent);
-        if ("win32".equals(Platform.PLATFORM) || preferences.getTheme() != null) {
+        if ("win32".equals(SWT.getPlatform()) || preferences.getTheme() != null) {
             applyTheme(parent, preferences.getTheme());
         }
         return contents;
@@ -1115,7 +1114,7 @@ public class PreferencesDialog extends Dialog {
             }
         });
 
-        boolean IS_MAC = "cocoa".equals(Platform.PLATFORM);
+        boolean IS_MAC = "cocoa".equals(SWT.getPlatform());
 
         group = new Composite(composite, SWT.NONE);
         layout = new GridLayout(IS_MAC ? 5 : 4, false);
@@ -2045,7 +2044,7 @@ public class PreferencesDialog extends Dialog {
         labelForeground = null;
         buttonBackground = null;
 
-        if ("win32".equals(Platform.PLATFORM) && id == null) {
+        if ("win32".equals(SWT.getPlatform()) && id == null) {
             if (Display.isSystemDarkTheme()) {
                 id = "dark";
             }
@@ -2067,7 +2066,7 @@ public class PreferencesDialog extends Dialog {
         }
         else if ("light".equals(id)) {
             widgetForeground = new Color(0x00, 0x00, 0x00);
-            if ("win32".equals(Platform.PLATFORM)) {
+            if ("win32".equals(SWT.getPlatform())) {
                 widgetBackground = new Color(0xF0, 0xF0, 0xF0);
             }
             else {

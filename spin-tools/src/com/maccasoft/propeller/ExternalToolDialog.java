@@ -27,7 +27,6 @@ import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.internal.Platform;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -93,7 +92,7 @@ public class ExternalToolDialog extends Dialog {
     protected Control createContents(Composite parent) {
         Control contents = super.createContents(parent);
         Preferences preferences = Preferences.getInstance();
-        if ("win32".equals(Platform.PLATFORM) || preferences.getTheme() != null) {
+        if ("win32".equals(SWT.getPlatform()) || preferences.getTheme() != null) {
             applyTheme(parent, preferences.getTheme());
         }
         return contents;
@@ -114,7 +113,7 @@ public class ExternalToolDialog extends Dialog {
         labelForeground = null;
         buttonBackground = null;
 
-        if ("win32".equals(Platform.PLATFORM) && id == null) {
+        if ("win32".equals(SWT.getPlatform()) && id == null) {
             if (Display.isSystemDarkTheme()) {
                 id = "dark";
             }
@@ -136,7 +135,7 @@ public class ExternalToolDialog extends Dialog {
         }
         else if ("light".equals(id)) {
             widgetForeground = new Color(0x00, 0x00, 0x00);
-            if ("win32".equals(Platform.PLATFORM)) {
+            if ("win32".equals(SWT.getPlatform())) {
                 widgetBackground = new Color(0xF0, 0xF0, 0xF0);
             }
             else {

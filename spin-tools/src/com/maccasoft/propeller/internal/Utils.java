@@ -1,12 +1,11 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * All rights reserved.
  *
- * Contributors:
- *     Marco Maccaferri - initial API and implementation
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License v1.0 which accompanies this
+ * distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.internal;
@@ -14,7 +13,7 @@ package com.maccasoft.propeller.internal;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.swt.internal.Platform;
+import org.eclipse.swt.SWT;
 
 public class Utils {
 
@@ -68,7 +67,7 @@ public class Utils {
     }
 
     public static String[] splitArguments(String args) {
-        return splitArguments(args, !"win32".equals(Platform.PLATFORM));
+        return splitArguments(args, !"win32".equals(SWT.getPlatform()));
     }
 
     public static String[] splitArguments(String args, boolean stripQuotes) {

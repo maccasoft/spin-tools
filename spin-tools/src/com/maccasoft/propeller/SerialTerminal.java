@@ -1,12 +1,11 @@
 /*
  * Copyright (c) 2021-25 Marco Maccaferri and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * All rights reserved.
  *
- * Contributors:
- *     Marco Maccaferri - initial API and implementation
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License v1.0 which accompanies this
+ * distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller;
@@ -57,7 +56,6 @@ import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
-import org.eclipse.swt.internal.Platform;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -1711,7 +1709,7 @@ public class SerialTerminal {
         Color listForeground = null;
         Color listBackground = null;
 
-        if ("win32".equals(Platform.PLATFORM) && id == null) {
+        if ("win32".equals(SWT.getPlatform()) && id == null) {
             if (Display.isSystemDarkTheme()) {
                 id = "dark";
             }
@@ -1731,7 +1729,7 @@ public class SerialTerminal {
         }
         else if ("light".equals(id)) {
             widgetForeground = new Color(0x00, 0x00, 0x00);
-            if ("win32".equals(Platform.PLATFORM)) {
+            if ("win32".equals(SWT.getPlatform())) {
                 widgetBackground = new Color(0xF0, 0xF0, 0xF0);
             }
             else {

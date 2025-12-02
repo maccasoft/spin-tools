@@ -32,7 +32,6 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.TextStyle;
-import org.eclipse.swt.internal.Platform;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
@@ -341,7 +340,7 @@ public class OutlineView {
         typeStyle = new TextStyle(fontBold, null, null);
         stringStyle = new TextStyle(null, new Color(0x7E, 0x00, 0x7E), null);
 
-        if ("win32".equals(Platform.PLATFORM) && id == null) {
+        if ("win32".equals(SWT.getPlatform()) && id == null) {
             if (Display.isSystemDarkTheme()) {
                 id = "dark";
             }
