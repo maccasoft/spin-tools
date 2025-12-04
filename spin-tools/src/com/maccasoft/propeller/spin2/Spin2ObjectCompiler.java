@@ -1094,7 +1094,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         token = iter.next();
                     }
 
-                    String typeText = type != null ? type.getText().toUpperCase() : "LONG";
+                    String typeText = type != null ? type.getText() : "LONG";
 
                     if (token.type != Token.KEYWORD) {
                         logMessage(new CompilerException("expecting identifier", token));
@@ -1139,7 +1139,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     }
 
                     try {
-                        Variable var = new Variable(typeText.toUpperCase(), identifier.getText(), varSize, objectVarSize);
+                        Variable var = new Variable(typeText, identifier.getText(), varSize, objectVarSize);
                         if (type != null) {
                             Spin2Struct memberStruct = scope.getStructureDefinition(type.getText());
                             if (memberStruct != null) {
@@ -1212,7 +1212,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 }
             }
 
-            Variable var = target.addMember(memberType.toUpperCase(), member.getIdentifier().getText(), memberSize);
+            Variable var = target.addMember(memberType, member.getIdentifier().getText(), memberSize);
             if (memberStruct != null) {
                 compileStructureVariable(var, memberStruct);
             }
@@ -1548,7 +1548,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 }
 
                 if (method.getParameterLongs() <= 127) {
-                    String typeText = type != null ? type.getText().toUpperCase() : "LONG";
+                    String typeText = type != null ? type.getText() : "LONG";
                     LocalVariable var = new LocalVariable(typeText, identifier.getText(), value, 1, method.getVarOffset());
 
                     Spin2Struct struct = scope.getStructureDefinition(typeText);
@@ -1638,7 +1638,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         }
 
                         if (method.getReturnLongs() <= 15) {
-                            String typeText = type != null ? type.getText().toUpperCase() : "LONG";
+                            String typeText = type != null ? type.getText() : "LONG";
                             LocalVariable var = new LocalVariable(typeText, identifier.getText(), 1, method.getVarOffset());
 
                             Spin2Struct struct = scope.getStructureDefinition(typeText);
@@ -1778,7 +1778,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         }
 
                         if (method.getLocalVariableLongs() <= 16383) {
-                            String typeText = type != null ? type.getText().toUpperCase() : "LONG";
+                            String typeText = type != null ? type.getText() : "LONG";
                             LocalVariable var = new LocalVariable(typeText, identifier.getText(), size, method.getVarOffset());
 
                             Spin2Struct struct = scope.getStructureDefinition(typeText);

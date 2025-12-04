@@ -808,7 +808,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                     token = iter.next();
                 }
 
-                String typeText = type != null ? type.getText().toUpperCase() : "LONG";
+                String typeText = type != null ? type.getText() : "LONG";
 
                 do {
                     int varSize = 1;
@@ -855,7 +855,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                     }
 
                     try {
-                        Variable var = new Variable(typeText.toUpperCase(), identifier.getText(), varSize);
+                        Variable var = new Variable(typeText, identifier.getText(), varSize);
                         var.setData(identifier);
                         scope.addSymbol(identifier.getText(), var);
                         variables.add(var);
@@ -1166,7 +1166,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
                 String type = "LONG";
                 if (Spin1Model.isType(identifier.getText())) {
-                    type = identifier.getText().toUpperCase();
+                    type = identifier.getText();
                     if (!iter.hasNext()) {
                         logMessage(new CompilerException("expecting local variable name after '" + identifier.getText() + "'", identifier));
                     }
