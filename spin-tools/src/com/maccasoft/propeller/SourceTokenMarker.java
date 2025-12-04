@@ -27,25 +27,7 @@ import org.apache.commons.lang3.Strings;
 import org.eclipse.jface.fieldassist.ContentProposal;
 import org.eclipse.jface.fieldassist.IContentProposal;
 
-import com.maccasoft.propeller.model.ConstantNode;
-import com.maccasoft.propeller.model.ConstantsNode;
-import com.maccasoft.propeller.model.DataLineNode;
-import com.maccasoft.propeller.model.DataNode;
-import com.maccasoft.propeller.model.DirectiveNode;
-import com.maccasoft.propeller.model.FunctionNode;
-import com.maccasoft.propeller.model.MethodNode;
-import com.maccasoft.propeller.model.Node;
-import com.maccasoft.propeller.model.NodeVisitor;
-import com.maccasoft.propeller.model.ObjectNode;
-import com.maccasoft.propeller.model.ObjectsNode;
-import com.maccasoft.propeller.model.RootNode;
-import com.maccasoft.propeller.model.SourceProvider;
-import com.maccasoft.propeller.model.StatementNode;
-import com.maccasoft.propeller.model.Token;
-import com.maccasoft.propeller.model.TokenStream;
-import com.maccasoft.propeller.model.TypeDefinitionNode;
-import com.maccasoft.propeller.model.VariableNode;
-import com.maccasoft.propeller.model.VariablesNode;
+import com.maccasoft.propeller.model.*;
 
 public abstract class SourceTokenMarker {
 
@@ -712,6 +694,7 @@ public abstract class SourceTokenMarker {
             public void visitTypeDefinition(TypeDefinitionNode node) {
                 if (!node.isExclude() && node.identifier != null) {
                     structs.put(node.identifier.getText(), node);
+                    structs.put("^" + node.identifier.getText(), node);
                 }
             }
 
@@ -730,7 +713,10 @@ public abstract class SourceTokenMarker {
                     }
                     else if (child.getType() != null) {
                         if (refObject.equalsIgnoreCase(child.getIdentifier().getText())) {
-                            visitStructureMembers(child.getIdentifier().getText(), child.getType().getText());
+                            TypeDefinitionNode typeNode = structs.get(child.getType().getText());
+                            if (typeNode != null) {
+                                proposals.addAll(getMembersProposals(structs, typeNode, refName));
+                            }
                         }
                     }
                 }
@@ -744,7 +730,10 @@ public abstract class SourceTokenMarker {
                     }
                     else if (child.getType() != null) {
                         if (refObject.equalsIgnoreCase(child.getIdentifier().getText())) {
-                            visitStructureMembers(child.getIdentifier().getText(), child.getType().getText());
+                            TypeDefinitionNode typeNode = structs.get(child.getType().getText());
+                            if (typeNode != null) {
+                                proposals.addAll(getMembersProposals(structs, typeNode, refName));
+                            }
                         }
                     }
                 }
@@ -758,28 +747,15 @@ public abstract class SourceTokenMarker {
                     }
                     else if (child.getType() != null) {
                         if (refObject.equalsIgnoreCase(child.getIdentifier().getText())) {
-                            visitStructureMembers(child.getIdentifier().getText(), child.getType().getText());
+                            TypeDefinitionNode typeNode = structs.get(child.getType().getText());
+                            if (typeNode != null) {
+                                proposals.addAll(getMembersProposals(structs, typeNode, refName));
+                            }
                         }
                     }
                 }
 
                 return false;
-            }
-
-            void visitStructureMembers(String identifier, String type) {
-                TypeDefinitionNode typeNode = structs.get(type);
-                if (typeNode != null) {
-                    for (Node n : typeNode.getChilds()) {
-                        if (!(n instanceof TypeDefinitionNode.Definition)) {
-                            continue;
-                        }
-                        TypeDefinitionNode.Definition member = (TypeDefinitionNode.Definition) n;
-                        String text = member.getIdentifier().getText();
-                        if (Strings.CI.contains(text, refName)) {
-                            proposals.add(new ContentProposal(text, text, "<b>" + typeNode.getText() + "</b>"));
-                        }
-                    }
-                }
             }
 
         });
@@ -797,23 +773,10 @@ public abstract class SourceTokenMarker {
                     }
                     else if (node.getType() != null) {
                         if (refObject.equalsIgnoreCase(node.getIdentifier().getText())) {
-                            visitStructureMembers(node.getIdentifier().getText(), node.getType().getText());
-                        }
-                    }
-                }
-            }
-
-            void visitStructureMembers(String identifier, String type) {
-                TypeDefinitionNode typeNode = structs.get(type);
-                if (typeNode != null) {
-                    for (Node n : typeNode.getChilds()) {
-                        if (!(n instanceof TypeDefinitionNode.Definition)) {
-                            continue;
-                        }
-                        TypeDefinitionNode.Definition member = (TypeDefinitionNode.Definition) n;
-                        String text = member.getIdentifier().getText();
-                        if (Strings.CI.contains(text, refName)) {
-                            proposals.add(new ContentProposal(text, text, "<b>" + typeNode.getText() + "</b>"));
+                            TypeDefinitionNode typeNode = structs.get(node.getType().getText());
+                            if (typeNode != null) {
+                                proposals.addAll(getMembersProposals(structs, typeNode, refName));
+                            }
                         }
                     }
                 }
@@ -991,6 +954,38 @@ public abstract class SourceTokenMarker {
             });
 
             proposals.addAll(secondary);
+        }
+
+        return proposals;
+    }
+
+    List<IContentProposal> getMembersProposals(Map<String, TypeDefinitionNode> structs, TypeDefinitionNode typeNode, String refName) {
+        List<IContentProposal> proposals = new ArrayList<>();
+
+        if (refName.contains(".")) {
+            String[] ar = refName.split("[.]");
+            for (Node n : typeNode.getChilds()) {
+                if (!(n instanceof TypeDefinitionNode.Definition member)) {
+                    continue;
+                }
+                if (ar[0].equalsIgnoreCase(member.getIdentifier().getText())) {
+                    if (member.getType() != null) {
+                        typeNode = structs.get(member.getType().getText());
+                        if (typeNode != null) {
+                            return getMembersProposals(structs, typeNode, refName.substring(refName.indexOf(".") + 1));
+                        }
+                    }
+                }
+            }
+        }
+        for (Node n : typeNode.getChilds()) {
+            if (!(n instanceof TypeDefinitionNode.Definition member)) {
+                continue;
+            }
+            String text = member.getIdentifier().getText();
+            if (Strings.CI.contains(text, refName)) {
+                proposals.add(new ContentProposal(text, text, "<b>" + typeNode.getText() + "</b>"));
+            }
         }
 
         return proposals;
