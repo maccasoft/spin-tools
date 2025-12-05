@@ -2315,7 +2315,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
         }
         else if (context.hasStructureDefinition(identifier)) {
             Spin2Struct struct = context.getStructureDefinition(identifier);
-            return new NumberLiteral(getStructureSize(context, struct));
+            return new NumberLiteral(struct.getTypeSize());
         }
         else if ("BYTE".equalsIgnoreCase(identifier)) {
             return new NumberLiteral(1);
@@ -2464,7 +2464,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 int pop;
                 Spin2Struct struct = context.getStructureDefinition(node.getChild(0).getText());
                 if (struct != null) {
-                    pop = getStructureSize(context, struct);
+                    pop = struct.getTypeSize();
                     pop = (pop + 3) & ~3;
                 }
                 else {
@@ -2571,7 +2571,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     if (struct == null) {
                         throw new CompilerException("syntax error", node.getTokens());
                     }
-                    typeSize = getStructureSize(context, struct);
+                    typeSize = struct.getTypeSize();
                 }
                 if (s.length >= 2) {
                     if ("BYTE".equalsIgnoreCase(s[1])) {
@@ -2957,7 +2957,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         if (struct == null) {
                             throw new CompilerException("syntax error", node.getTokens());
                         }
-                        typeSize = getStructureSize(context, struct);
+                        typeSize = struct.getTypeSize();
                     }
                     if (typeOverrideNode != null) {
                         if (".BYTE".equalsIgnoreCase(typeOverrideNode.getText())) {
@@ -3517,7 +3517,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     if (struct == null) {
                         throw new CompilerException("syntax error", node.getTokens());
                     }
-                    typeSize = getStructureSize(context, struct);
+                    typeSize = struct.getTypeSize();
                 }
                 if (pointerPreEffectNode != null) {
                     ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -4217,39 +4217,6 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
         }
 
         return os.toByteArray();
-    }
-
-    int getStructureSize(Context context, Spin2Struct struct) {
-        int size = 0;
-
-        for (Spin2StructMember member : struct.getMembers()) {
-            int memberSize = 1;
-            if (member.getSize() != null) {
-                memberSize = member.getSize().getNumber().intValue();
-            }
-
-            String memberType = "LONG";
-            if (member.getType() != null) {
-                memberType = member.getType().getText();
-            }
-            if ("LONG".equalsIgnoreCase(memberType)) {
-                size += 4 * memberSize;
-            }
-            else if ("WORD".equalsIgnoreCase(memberType)) {
-                size += 2 * memberSize;
-            }
-            else if ("BYTE".equalsIgnoreCase(memberType)) {
-                size += 1 * memberSize;
-            }
-            else {
-                Spin2Struct memberStruct = context.getStructureDefinition(memberType);
-                if (memberStruct != null) {
-                    size += getStructureSize(context, memberStruct) * memberSize;
-                }
-            }
-        }
-
-        return size;
     }
 
     List<Spin2Bytecode> compileStructure(Context context, Spin2Method method, Spin2StatementNode node, Expression expression, Spin2StatementNode pointerPreEffectNode, MemoryOp.Op op, Boolean push) {

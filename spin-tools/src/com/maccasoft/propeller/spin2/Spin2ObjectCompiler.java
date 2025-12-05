@@ -15,10 +15,12 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TreeMap;
 
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
@@ -89,6 +91,8 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
     Map<String, Expression> publicSymbols = new HashMap<>();
     List<LinkDataObject> objectLinks = new ArrayList<>();
     List<Spin2Struct> objectStructures = new ArrayList<>();
+
+    Set<Spin2Struct> structureStack = new HashSet<>();
 
     public Spin2ObjectCompiler(Spin2Compiler compiler, File file) {
         this(compiler, null, file, Collections.emptyMap());
@@ -295,54 +299,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
         }
 
         for (Spin2Struct struct : objectStructures) {
-            int offset = 0;
-
-            for (Spin2StructMember member : struct.getMembers()) {
-                Token type = member.getType();
-                String typeText = type != null ? type.getText() : "LONG";
-
-                member.setOffset(offset);
-
-                int typeSize = 0;
-                switch (typeText.toUpperCase()) {
-                    case "LONG":
-                        typeSize = 4;
-                        break;
-                    case "WORD":
-                        typeSize = 2;
-                        break;
-                    case "BYTE":
-                        typeSize = 1;
-                        break;
-                    case "^LONG":
-                    case "^WORD":
-                    case "^BYTE":
-                        typeSize = 4;
-                        break;
-                    default: {
-                        Spin2Struct memberStruct = scope.getStructureDefinition(typeText);
-                        if (memberStruct == null) {
-                            logMessage(new CompilerException("undefined type " + typeText, type));
-                            break;
-                        }
-                        typeSize = memberStruct.getTypeSize();
-                        break;
-                    }
-                }
-                try {
-                    Expression expression = member.getSize();
-                    if (!expression.isConstant()) {
-                        logMessage(new CompilerException("expression is not constant", expression.getData()));
-                    }
-                    offset += typeSize * member.getSize().getNumber().intValue();
-                } catch (CompilerException e) {
-                    logMessage(e);
-                } catch (Exception e) {
-                    logMessage(new CompilerException(e, member.getSize().getData()));
-                }
-            }
-
-            struct.setTypeSize(offset);
+            updateStructureMemberOffsets(struct);
         }
 
         objectVarSize = 4;
@@ -499,6 +456,71 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 }
             }
         }
+    }
+
+    void updateStructureMemberOffsets(Spin2Struct struct) {
+        int offset = 0;
+
+        structureStack.add(struct);
+
+        for (Spin2StructMember member : struct.getMembers()) {
+            Token type = member.getType();
+            String typeText = type != null ? type.getText() : "LONG";
+
+            member.setOffset(offset);
+
+            int typeSize = 0;
+            switch (typeText.toUpperCase()) {
+                case "LONG":
+                    typeSize = 4;
+                    break;
+                case "WORD":
+                    typeSize = 2;
+                    break;
+                case "BYTE":
+                    typeSize = 1;
+                    break;
+                case "^LONG":
+                case "^WORD":
+                case "^BYTE":
+                    typeSize = 4;
+                    break;
+                default: {
+                    Spin2Struct memberStruct = scope.getStructureDefinition(typeText.startsWith("^") ? typeText.substring(1) : typeText);
+                    if (memberStruct == null) {
+                        logMessage(new CompilerException("undefined type " + typeText, type));
+                        break;
+                    }
+                    if (structureStack.contains(memberStruct)) {
+                        logMessage(new CompilerException("illegal circular structure reference " + typeText, type));
+                        break;
+                    }
+                    if (typeText.startsWith("^")) {
+                        typeSize = 4;
+                    }
+                    else {
+                        updateStructureMemberOffsets(memberStruct);
+                        typeSize = memberStruct.getTypeSize();
+                    }
+                    break;
+                }
+            }
+            try {
+                Expression expression = member.getSize();
+                if (!expression.isConstant()) {
+                    logMessage(new CompilerException("expression is not constant", expression.getData()));
+                }
+                offset += typeSize * member.getSize().getNumber().intValue();
+            } catch (CompilerException e) {
+                logMessage(e);
+            } catch (Exception e) {
+                logMessage(new CompilerException(e, member.getSize().getData()));
+            }
+        }
+
+        struct.setTypeSize(offset);
+
+        structureStack.remove(struct);
     }
 
     @Override

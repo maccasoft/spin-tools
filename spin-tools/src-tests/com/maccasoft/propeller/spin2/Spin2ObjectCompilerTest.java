@@ -8657,6 +8657,35 @@ class Spin2ObjectCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testStructureCircularDependency1() throws Exception {
+        String text = ""
+            + "CON\n"
+            + "    sStruct(byte a, word b, sStruct c)\n"
+            + "\n"
+            + "PUB start()\n"
+            + "";
+
+        Assertions.assertThrows(CompilerException.class, () -> {
+            compile(text);
+        });
+    }
+
+    @Test
+    void testStructureCircularDependency2() throws Exception {
+        String text = ""
+            + "CON\n"
+            + "    sStruct1(byte a, word b, sStruct2 c)\n"
+            + "    sStruct2(byte a, word b, sStruct1 c)\n"
+            + "\n"
+            + "PUB start()\n"
+            + "";
+
+        Assertions.assertThrows(CompilerException.class, () -> {
+            compile(text);
+        });
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }
