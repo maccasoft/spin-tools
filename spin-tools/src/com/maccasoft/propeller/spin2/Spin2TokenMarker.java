@@ -53,7 +53,6 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         keywords.put("LONG", TokenId.TYPE);
         keywords.put("BYTEFIT", TokenId.TYPE);
         keywords.put("WORDFIT", TokenId.TYPE);
-        keywords.put("STRUCT", TokenId.TYPE);
 
         keywords.put("^BYTE", TokenId.TYPE);
         keywords.put("^WORD", TokenId.TYPE);
@@ -1045,12 +1044,9 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 }
                 else {
                     TokenId id = keywords.get(token.getText());
-                    if (id == null || id != TokenId.TYPE) {
+                    if (id != TokenId.TYPE) {
                         id = symbols.get(token.getText());
-                        if (id != null && id == TokenId.TYPE) {
-                            id = TokenId.CONSTANT;
-                        }
-                        else if (id == null || id != TokenId.TYPE) {
+                        if (id != TokenId.TYPE) {
                             id = TokenId.VARIABLE;
                         }
                     }
@@ -1378,61 +1374,79 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                         id = spinKeywords.get(token.getText());
                     }
                 }
-                if (id == null && dot == -1) {
-                    int offset = 0;
-                    String s = token.getText();
-                    if (s.startsWith("@@@")) {
-                        s = s.substring("@@@".length());
-                        tokens.add(new TokenMarker(token.start, token.start + 2, TokenId.OPERATOR));
-                        offset = 3;
-                    }
-                    else if (s.startsWith("@@")) {
-                        s = s.substring("@@".length());
-                        tokens.add(new TokenMarker(token.start, token.start + 1, TokenId.OPERATOR));
-                        offset = 2;
-                    }
-                    else if (s.startsWith("@")) {
-                        s = s.substring("@".length());
-                        tokens.add(new TokenMarker(token.start, token.start, TokenId.OPERATOR));
-                        offset = 1;
-                    }
-                    id = locals.get(s);
-                    if (id == null) {
-                        id = symbols.get(s);
-                    }
-                    if (id == null) {
-                        id = externals.get(s);
-                    }
-                    if (id != null) {
-                        tokens.add(new TokenMarker(token.start + offset, token.stop, id));
-                    }
-                }
-                else if (id == null && dot != -1) {
-                    String left = token.getText().substring(0, dot);
-                    TokenId leftId = locals.get(left);
-                    if (leftId == null) {
-                        leftId = symbols.get(left);
-                        if (leftId == null && left.startsWith("@")) {
-                            leftId = symbols.get(left.substring(1));
+                if (id == null) {
+                    if (dot == -1) {
+                        int offset = 0;
+                        String s = token.getText();
+                        if (s.startsWith("@@@")) {
+                            s = s.substring("@@@".length());
+                            tokens.add(new TokenMarker(token.start, token.start + 2, TokenId.OPERATOR));
+                            offset = 3;
+                        }
+                        else if (s.startsWith("@@")) {
+                            s = s.substring("@@".length());
+                            tokens.add(new TokenMarker(token.start, token.start + 1, TokenId.OPERATOR));
+                            offset = 2;
+                        }
+                        else if (s.startsWith("@")) {
+                            s = s.substring("@".length());
+                            tokens.add(new TokenMarker(token.start, token.start, TokenId.OPERATOR));
+                            offset = 1;
+                        }
+                        id = locals.get(s);
+                        if (id == null) {
+                            id = symbols.get(s);
+                        }
+                        if (id == null) {
+                            id = externals.get(s);
+                        }
+                        if (id != null) {
+                            tokens.add(new TokenMarker(token.start + offset, token.stop, id));
                         }
                     }
-                    if (leftId == null) {
-                        TokenId specialId = keywords.get(left);
-                        if (specialId == TokenId.CONSTANT) {
-                            leftId = specialId;
+                    else {
+                        int offset = 0;
+                        String left = token.getText().substring(0, dot);
+                        if (left.startsWith("@@@")) {
+                            left = left.substring("@@@".length());
+                            tokens.add(new TokenMarker(token.start, token.start + 2, TokenId.OPERATOR));
+                            offset = 3;
                         }
-                    }
-                    if (leftId != null) {
-                        tokens.add(new TokenMarker(token.start, token.start + dot, leftId));
-                    }
+                        else if (left.startsWith("@@")) {
+                            left = left.substring("@@".length());
+                            tokens.add(new TokenMarker(token.start, token.start + 1, TokenId.OPERATOR));
+                            offset = 2;
+                        }
+                        else if (left.startsWith("@")) {
+                            left = left.substring("@".length());
+                            tokens.add(new TokenMarker(token.start, token.start, TokenId.OPERATOR));
+                            offset = 1;
+                        }
+                        TokenId leftId = locals.get(left);
+                        if (leftId == null) {
+                            leftId = symbols.get(left);
+                        }
+                        if (leftId == null) {
+                            leftId = externals.get(left);
+                        }
+                        if (leftId == null) {
+                            TokenId specialId = keywords.get(left);
+                            if (specialId == TokenId.CONSTANT) {
+                                leftId = specialId;
+                            }
+                        }
+                        if (leftId != null) {
+                            tokens.add(new TokenMarker(token.start + offset, token.start + dot, leftId));
+                        }
 
-                    dot = token.getText().lastIndexOf('.');
-                    switch (token.getText().substring(dot + 1).toUpperCase()) {
-                        case "LONG":
-                        case "WORD":
-                        case "BYTE":
-                            tokens.add(new TokenMarker(token.start + dot + 1, token.stop, TokenId.TYPE));
-                            break;
+                        dot = token.getText().lastIndexOf('.');
+                        switch (token.getText().substring(dot + 1).toUpperCase()) {
+                            case "LONG":
+                            case "WORD":
+                            case "BYTE":
+                                tokens.add(new TokenMarker(token.start + dot + 1, token.stop, TokenId.TYPE));
+                                break;
+                        }
                     }
                 }
                 if (id != null) {
