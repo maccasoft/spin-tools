@@ -8,8 +8,8 @@ CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "spinide.manifest"
 
 // Executable version information.
 VS_VERSION_INFO    VERSIONINFO
-FILEVERSION        0,50,0,0
-PRODUCTVERSION     0,50,0,0
+FILEVERSION        0,51,0,0
+PRODUCTVERSION     0,51,0,0
 FILEFLAGSMASK      VS_FFI_FILEFLAGSMASK
 #ifdef _DEBUG
   FILEFLAGS        VS_FF_DEBUG | VS_FF_PRERELEASE
@@ -26,12 +26,12 @@ BEGIN
     BEGIN
       VALUE "CompanyName", "MaccaSoft"
       VALUE "FileDescription", "Integrated development environment for Parallax Propeller microcontrollers."
-      VALUE "FileVersion", "0,50,0.0"
+      VALUE "FileVersion", "0,51,0.0"
       VALUE "InternalName", "Spin Tools IDE"
       VALUE "LegalCopyright", "(c) 2021-25 Marco Maccaferri"
       VALUE "OriginalFilename", "spinide.exe"
       VALUE "ProductName", "Spin Tools IDE"
-      VALUE "ProductVersion", "0,50,0.0"
+      VALUE "ProductVersion", "0,51,0.0"
     END
   END
   BLOCK "VarFileInfo"
