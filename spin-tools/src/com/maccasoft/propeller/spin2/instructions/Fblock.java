@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -47,26 +47,22 @@ public class Fblock extends Spin2PAsmInstructionFactory {
 
         @Override
         public int getSize() {
-            if (dst.isLongLiteral() && src.isLongLiteral()) {
-                return 12;
+            int size = 4;
+            if (dst.isLongLiteral()) {
+                size += 4;
             }
-            if (dst.isLongLiteral() || src.isLongLiteral()) {
-                return 8;
+            if (src.isLongLiteral()) {
+                size += 4;
             }
-            return 4;
+            return size;
         }
 
         // EEEE 1100100 1LI DDDDDDDDD SSSSSSSSS
 
         @Override
         public byte[] getBytes() {
-            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
-            value = o.setValue(value, 0b1100100);
+            int value = o.setValue(encodeInstructionParameters(condition, dst, src), 0b1100100);
             value = c.setValue(value, 1);
-            value = l.setBoolean(value, dst.isLiteral());
-            value = i.setBoolean(value, src.isLiteral());
-            value = d.setValue(value, dst.getInteger());
-            value = s.setValue(value, src.getInteger());
             if (dst.isLongLiteral() && src.isLongLiteral()) {
                 return getBytes(encodeAugd(condition, dst.getInteger()), encodeAugs(condition, src.getInteger()), value);
             }

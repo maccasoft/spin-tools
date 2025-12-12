@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -12,7 +12,6 @@ package com.maccasoft.propeller.spin2.instructions;
 
 import java.util.List;
 
-import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
@@ -48,35 +47,22 @@ public class Wrpin extends Spin2PAsmInstructionFactory {
 
         @Override
         public int getSize() {
-            if (dst.isLongLiteral() && src.isLongLiteral()) {
-                return 12;
+            int size = 4;
+            if (dst.isLongLiteral()) {
+                size += 4;
             }
-            if (dst.isLongLiteral() || src.isLongLiteral()) {
-                return 8;
+            if (src.isLongLiteral()) {
+                size += 4;
             }
-            return 4;
+            return size;
         }
 
         // EEEE 1100000 0LI DDDDDDDDD SSSSSSSSS
 
         @Override
         public byte[] getBytes() {
-            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
-            value = o.setValue(value, 0b1100000);
+            int value = o.setValue(encodeInstructionParameters(condition, dst, src), 0b1100000);
             value = c.setValue(value, 0);
-            value = l.setBoolean(value, dst.isLiteral());
-            value = i.setBoolean(value, src.isLiteral());
-
-            if (!dst.isLongLiteral() && dst.getInteger() > 0x1FF) {
-                throw new CompilerException("Destination register/constant cannot exceed $1FF", dst.getExpression().getData());
-            }
-            value = d.setValue(value, dst.getInteger());
-
-            if (!src.isLongLiteral() && src.getInteger() > 0x1FF) {
-                throw new CompilerException("Source register/constant cannot exceed $1FF", src.getExpression().getData());
-            }
-            value = s.setValue(value, src.getInteger());
-
             if (!dst.isLongLiteral() && dst.getInteger() > 0x1FF) {
                 return getBytes(encodeAugd(condition, dst.getInteger()), encodeAugs(condition, src.getInteger()), value);
             }

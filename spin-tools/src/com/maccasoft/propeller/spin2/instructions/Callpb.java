@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -51,13 +51,14 @@ public class Callpb extends Spin2PAsmInstructionFactory {
 
         @Override
         public int getSize() {
-            if (dst.isLongLiteral() && src.isLongLiteral()) {
-                return 12;
+            int size = 4;
+            if (dst.isLongLiteral()) {
+                size += 4;
             }
-            if (dst.isLongLiteral() || src.isLongLiteral()) {
-                return 8;
+            if (src.isLongLiteral()) {
+                size += 4;
             }
-            return 4;
+            return size;
         }
 
         // EEEE 1011010 1LI DDDDDDDDD SSSSSSSSS

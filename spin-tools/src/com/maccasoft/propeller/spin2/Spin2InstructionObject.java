@@ -268,7 +268,9 @@ public abstract class Spin2InstructionObject {
 
         int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
         value = cz.setValue(value, encodeEffect(effect));
-        value = i.setBoolean(value, src.isLiteral());
+        if (dst.isLiteral()) {
+            msgs.addMessage(new CompilerException("immediate destination not allowed", dst.getExpression().getData()));
+        }
         try {
             if (dst.getInteger() > 0x1FF) {
                 msgs.addMessage(new CompilerException("destination register cannot exceed $1FF", dst.getExpression().getData()));
@@ -278,8 +280,38 @@ public abstract class Spin2InstructionObject {
             msgs.addMessage(new CompilerException(e.getMessage(), dst.getExpression().getData()));
         }
         try {
+            value = i.setBoolean(value, src.isLiteral());
             if (!src.isLongLiteral() && src.getInteger() > 0x1FF) {
-                System.out.println(src.getInteger());
+                msgs.addMessage(new CompilerException("source register/constant cannot exceed $1FF", src.getExpression().getData()));
+            }
+            value = s.setValue(value, src.getInteger());
+        } catch (Exception e) {
+            msgs.addMessage(new CompilerException(e.getMessage(), src.getExpression().getData()));
+        }
+
+        if (msgs.hasChilds()) {
+            throw msgs;
+        }
+
+        return value;
+    }
+
+    protected int encodeInstructionParameters(String condition, Spin2PAsmExpression dst, Spin2PAsmExpression src) {
+        CompilerException msgs = new CompilerException();
+
+        int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
+        try {
+            value = l.setBoolean(value, dst.isLiteral());
+            if (!dst.isLongLiteral() && dst.getInteger() > 0x1FF) {
+                msgs.addMessage(new CompilerException("destination register cannot exceed $1FF", dst.getExpression().getData()));
+            }
+            value = d.setValue(value, dst.getInteger());
+        } catch (Exception e) {
+            msgs.addMessage(new CompilerException(e.getMessage(), dst.getExpression().getData()));
+        }
+        try {
+            value = i.setBoolean(value, src.isLiteral());
+            if (!src.isLongLiteral() && src.getInteger() > 0x1FF) {
                 msgs.addMessage(new CompilerException("source register/constant cannot exceed $1FF", src.getExpression().getData()));
             }
             value = s.setValue(value, src.getInteger());
