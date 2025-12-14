@@ -41,6 +41,8 @@ import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
+import org.eclipse.jface.resource.JFaceResources;
+import org.eclipse.jface.resource.StringConverter;
 import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -66,6 +68,8 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
@@ -263,6 +267,17 @@ public class SpinTools {
                     break;
                 case Preferences.PROP_EXTERNAL_TOOLS:
                     populateRunMenu();
+                    break;
+                case Preferences.PROP_WINDOW_FONT:
+                    Font textFont = JFaceResources.getDefaultFont();
+                    FontData fontData = textFont.getFontData()[0];
+                    if (evt.getNewValue() != null) {
+                        fontData = StringConverter.asFontData(evt.getNewValue().toString());
+                    }
+                    fontData.setStyle(SWT.NONE);
+                    objectBrowser.updateFontsFrom(fontData);
+                    fileBrowser.updateFontsFrom(fontData);
+                    outlineViewStack.updateFontsFrom(fontData);
                     break;
             }
         }

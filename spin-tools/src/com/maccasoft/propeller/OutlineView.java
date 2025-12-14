@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.jface.resource.StringConverter;
 import org.eclipse.jface.viewers.IElementComparer;
 import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
@@ -307,13 +308,15 @@ public class OutlineView {
 
     };
 
+    Font font;
+    Font fontBold;
+
     TextStyle commentStyle;
     TextStyle blockStyle;
     TextStyle methodLocalStyle;
     TextStyle methodReturnStyle;
     TextStyle typeStyle;
     TextStyle stringStyle;
-    Font fontBold;
 
     boolean showSectionsBackground;
 
@@ -323,11 +326,27 @@ public class OutlineView {
         viewer.setLabelProvider(labelProvider);
         viewer.setComparer(elementComparer);
 
-        FontData[] fd = viewer.getControl().getFont().getFontData();
-        fd[0].setStyle(SWT.BOLD);
-        fontBold = new Font(viewer.getControl().getDisplay(), fd[0]);
+        Preferences preferences = Preferences.getInstance();
+        if (preferences.getWindowFont() != null) {
+            FontData fontData = StringConverter.asFontData(preferences.getWindowFont());
+            fontData.setStyle(SWT.NONE);
+            updateFontsFrom(fontData);
+        }
+        else {
+            FontData[] fd = viewer.getControl().getFont().getFontData();
+            fd[0].setStyle(SWT.BOLD);
+            fontBold = new Font(viewer.getControl().getDisplay(), fd[0]);
+            applyTheme(preferences.getTheme());
+        }
 
-        applyTheme(Preferences.getInstance().getTheme());
+        viewer.getControl().addDisposeListener((e) -> {
+            if (font != null) {
+                font.dispose();
+            }
+            if (fontBold != null) {
+                fontBold.dispose();
+            }
+        });
     }
 
     public void applyTheme(String id) {
@@ -366,6 +385,25 @@ public class OutlineView {
             styleMap.put(TokenId.PRI_ALT, new TextStyle(null, null, ColorRegistry.getColor(0xA7, 0xF3, 0xFD)));
             styleMap.put(TokenId.DAT, new TextStyle(null, null, ColorRegistry.getColor(0xBF, 0xFF, 0xC8)));
             styleMap.put(TokenId.DAT_ALT, new TextStyle(null, null, ColorRegistry.getColor(0xA7, 0xFD, 0xB3)));
+        }
+    }
+
+    public void updateFontsFrom(FontData fontData) {
+        Font oldFont = font;
+        Font oldFontBold = fontBold;
+
+        Display display = viewer.getControl().getDisplay();
+        font = new Font(display, fontData.getName(), fontData.getHeight(), SWT.NONE);
+        fontBold = new Font(display, fontData.getName(), fontData.getHeight(), SWT.BOLD);
+
+        applyTheme(Preferences.getInstance().getTheme());
+
+        viewer.getControl().setFont(font);
+        viewer.refresh(true);
+
+        if (oldFont != null) {
+            oldFont.dispose();
+            oldFontBold.dispose();
         }
     }
 

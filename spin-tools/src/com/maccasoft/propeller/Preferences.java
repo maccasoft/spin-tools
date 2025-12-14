@@ -72,6 +72,7 @@ public class Preferences {
     public static final String PROP_CONSOLE_WRITE_LOG_FILE = "consoleWriteLogFile";
     public static final String PROP_THEME = "theme";
     public static final String PROP_EXTERNAL_TOOLS = "externalTools";
+    public static final String PROP_WINDOW_FONT = "windowFont";
 
     public static final String PREFERENCES_NAME = ".spin-tools";
 
@@ -205,6 +206,7 @@ public class Preferences {
         }
 
         public Bounds window;
+        public String windowFont;
         public Map<String, int[]> folderWeights;
 
         public Boolean showToolbar;
@@ -841,6 +843,16 @@ public class Preferences {
         preferences.window = new Bounds(rect.x, rect.y, rect.width, rect.height);
     }
 
+    public String getWindowFont() {
+        return preferences.windowFont;
+    }
+
+    public void setWindowFont(String font) {
+        if (!Objects.equals(preferences.windowFont, font)) {
+            changeSupport.firePropertyChange(PROP_WINDOW_FONT, preferences.windowFont, preferences.windowFont = font);
+        }
+    }
+
     public int[] getWeights(String key) {
         return preferences.folderWeights.get(key);
     }
@@ -1410,7 +1422,7 @@ public class Preferences {
     }
 
     public void setTerminalFont(String terminalFont) {
-        if (preferences.terminal.font != terminalFont) {
+        if (!Objects.equals(preferences.terminal.font, terminalFont)) {
             changeSupport.firePropertyChange(PROP_TERMINAL_FONT, preferences.terminal.font, preferences.terminal.font = terminalFont);
         }
     }
@@ -1436,7 +1448,7 @@ public class Preferences {
     }
 
     public void setConsoleFont(String terminalFont) {
-        if (preferences.console.font != terminalFont) {
+        if (!Objects.equals(preferences.console.font, terminalFont)) {
             changeSupport.firePropertyChange(PROP_CONSOLE_FONT, preferences.console.font, preferences.console.font = terminalFont);
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -12,6 +12,7 @@ package com.maccasoft.propeller;
 
 import java.io.File;
 
+import org.eclipse.jface.resource.StringConverter;
 import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -45,6 +46,7 @@ public class ObjectBrowser {
     Display display;
     TreeViewer viewer;
 
+    Font font;
     Font fontBold;
     TextStyle topObjectStyle;
 
@@ -168,6 +170,22 @@ public class ObjectBrowser {
                 fontBold.dispose();
             }
         });
+
+        Preferences preferences = Preferences.getInstance();
+        if (preferences.getWindowFont() != null) {
+            FontData fontData = StringConverter.asFontData(preferences.getWindowFont());
+            fontData.setStyle(SWT.NONE);
+            updateFontsFrom(fontData);
+        }
+
+        viewer.getControl().addDisposeListener((e) -> {
+            if (font != null) {
+                font.dispose();
+            }
+            if (fontBold != null) {
+                fontBold.dispose();
+            }
+        });
     }
 
     public void setLayoutData(Object data) {
@@ -244,6 +262,22 @@ public class ObjectBrowser {
 
     public void setForeground(Color color) {
         viewer.getControl().setForeground(color);
+    }
+
+    public void updateFontsFrom(FontData fontData) {
+        Font oldFont = font;
+        Font oldFontBold = fontBold;
+
+        Display display = viewer.getControl().getDisplay();
+        font = new Font(display, fontData.getName(), fontData.getHeight(), SWT.NONE);
+        fontBold = new Font(display, fontData.getName(), fontData.getHeight(), SWT.BOLD);
+
+        viewer.getControl().setFont(font);
+
+        if (oldFont != null) {
+            oldFont.dispose();
+            oldFontBold.dispose();
+        }
     }
 
 }

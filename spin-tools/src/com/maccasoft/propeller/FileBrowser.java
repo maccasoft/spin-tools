@@ -1,12 +1,11 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * All rights reserved.
  *
- * Contributors:
- *     Marco Maccaferri - initial API and implementation
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License v1.0 which accompanies this
+ * distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller;
@@ -18,6 +17,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.eclipse.jface.resource.StringConverter;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.IOpenListener;
@@ -34,6 +34,8 @@ import org.eclipse.jface.viewers.ViewerCell;
 import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 
@@ -48,6 +50,8 @@ public class FileBrowser {
     Set<File> visibleParents;
     Set<String> visibleExtensions;
     Set<String> hiddenExtensions;
+
+    Font font;
 
     public static class Model {
 
@@ -273,6 +277,19 @@ public class FileBrowser {
             }
 
         });
+
+        Preferences preferences = Preferences.getInstance();
+        if (preferences.getWindowFont() != null) {
+            FontData fontData = StringConverter.asFontData(preferences.getWindowFont());
+            fontData.setStyle(SWT.NONE);
+            updateFontsFrom(fontData);
+        }
+
+        viewer.getControl().addDisposeListener((e) -> {
+            if (font != null) {
+                font.dispose();
+            }
+        });
     }
 
     public void setVisiblePaths(File[] paths) {
@@ -391,6 +408,17 @@ public class FileBrowser {
 
     public void setForeground(Color color) {
         viewer.getControl().setForeground(color);
+    }
+
+    public void updateFontsFrom(FontData fontData) {
+        Font oldFont = font;
+
+        font = new Font(display, fontData.getName(), fontData.getHeight(), SWT.NONE);
+        viewer.getControl().setFont(font);
+
+        if (oldFont != null) {
+            oldFont.dispose();
+        }
     }
 
 }

@@ -99,6 +99,9 @@ public class PreferencesDialog extends Dialog {
     StackLayout stackLayout;
 
     Combo theme;
+    Text windowFont;
+    Spinner windowFontSize;
+    Button windowFontBrowse;
     Button showBrowser;
     PathList roots;
     Button showToolbar;
@@ -175,6 +178,7 @@ public class PreferencesDialog extends Dialog {
 
     Preferences preferences;
     FontData defaultFont;
+    FontData defaultTextFont;
     Font fontBold;
 
     Color widgetForeground;
@@ -184,6 +188,7 @@ public class PreferencesDialog extends Dialog {
     Color labelForeground;
 
     String oldTheme;
+    String oldWindowFont;
     boolean oldShowToolbar;
     boolean oldShowObjectBrowser;
     boolean oldShowBrowser;
@@ -473,9 +478,10 @@ public class PreferencesDialog extends Dialog {
         composite.setBackgroundMode(SWT.INHERIT_DEFAULT);
         applyDialogFont(composite);
 
-        Font textFont = JFaceResources.getTextFont();
-        defaultFont = textFont.getFontData()[0];
+        defaultFont = JFaceResources.getDefaultFont().getFontData()[0];
         defaultFont.setStyle(SWT.NONE);
+        defaultTextFont = JFaceResources.getTextFont().getFontData()[0];
+        defaultTextFont.setStyle(SWT.NONE);
 
         FontData[] fontData = composite.getFont().getFontData();
         fontBold = new Font(composite.getDisplay(), fontData[0].getName(), fontData[0].getHeight(), SWT.BOLD);
@@ -524,6 +530,7 @@ public class PreferencesDialog extends Dialog {
         });
 
         oldTheme = preferences.getTheme();
+        oldWindowFont = preferences.getWindowFont();
         oldShowToolbar = preferences.getShowToolbar();
         oldShowObjectBrowser = preferences.getShowObjectBrowser();
         oldShowBrowser = preferences.getShowBrowser();
@@ -594,9 +601,77 @@ public class PreferencesDialog extends Dialog {
         });
 
         label = new Label(composite, SWT.NONE);
+        label.setText("Font");
+
+        Composite container = new Composite(composite, SWT.NONE);
+        GridLayout layout = new GridLayout(3, false);
+        layout.marginWidth = layout.marginHeight = 0;
+        container.setLayout(layout);
+        container.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        windowFont = new Text(container, SWT.BORDER);
+        windowFont.setLayoutData(GridDataFactory.swtDefaults() //
+            .align(SWT.FILL, SWT.CENTER) //
+            .grab(true, false) //
+            .hint(convertWidthInCharsToPixels(35), SWT.DEFAULT) //
+            .create());
+        windowFontSize = new Spinner(container, SWT.NONE);
+        windowFontSize.setValues(1, 1, 72, 0, 1, 1);
+        windowFontSize.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                String s = StringConverter.asString(new FontData(windowFont.getText(), windowFontSize.getSelection(), SWT.NONE));
+                if (s.equals(StringConverter.asString(defaultFont))) {
+                    s = null;
+                }
+                preferences.setWindowFont(s);
+            }
+        });
+
+        windowFontBrowse = new Button(container, SWT.PUSH);
+        GridData data = new GridData(GridData.HORIZONTAL_ALIGN_FILL);
+        int widthHint = convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH);
+        Point minSize = windowFontBrowse.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
+        data.widthHint = Math.max(widthHint, minSize.x);
+        windowFontBrowse.setLayoutData(data);
+
+        windowFontBrowse.setText("Select");
+        windowFontBrowse.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                FontDialog dlg = new FontDialog(getShell());
+                dlg.setText("Window font");
+                dlg.setFontList(new FontData[] {
+                    new FontData(windowFont.getText(), windowFontSize.getSelection(), SWT.NONE)
+                });
+                FontData result = dlg.open();
+                if (result != null) {
+                    result.setStyle(SWT.NONE);
+
+                    windowFont.setText(result.getName());
+                    windowFontSize.setSelection(result.getHeight());
+
+                    String s = StringConverter.asString(result);
+                    if (s.equals(StringConverter.asString(defaultFont))) {
+                        s = null;
+                    }
+                    preferences.setWindowFont(s);
+                }
+            }
+        });
+        FontData fontData = defaultFont;
+        String s = preferences.getWindowFont();
+        if (s != null) {
+            fontData = StringConverter.asFontData(s);
+        }
+        windowFont.setText(fontData.getName());
+        windowFontSize.setSelection(fontData.getHeight());
+
+        new Label(composite, SWT.NONE);
 
         Composite group = new Composite(composite, SWT.NONE);
-        GridLayout layout = new GridLayout(1, false);
+        layout = new GridLayout(1, false);
         layout.marginHeight = layout.marginWidth = 0;
         group.setLayout(layout);
         group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
@@ -979,7 +1054,7 @@ public class PreferencesDialog extends Dialog {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 String s = StringConverter.asString(new FontData(editorFont.getText(), editorFontSize.getSelection(), SWT.NONE));
-                if (s.equals(StringConverter.asString(defaultFont))) {
+                if (s.equals(StringConverter.asString(defaultTextFont))) {
                     s = null;
                 }
                 preferences.setEditorFont(s);
@@ -1011,14 +1086,14 @@ public class PreferencesDialog extends Dialog {
                     editorFontSize.setSelection(result.getHeight());
 
                     String s = StringConverter.asString(result);
-                    if (s.equals(StringConverter.asString(defaultFont))) {
+                    if (s.equals(StringConverter.asString(defaultTextFont))) {
                         s = null;
                     }
                     preferences.setEditorFont(s);
                 }
             }
         });
-        FontData fontData = defaultFont;
+        FontData fontData = defaultTextFont;
         String s = preferences.getEditorFont();
         if (s != null) {
             fontData = StringConverter.asFontData(s);
@@ -1351,7 +1426,7 @@ public class PreferencesDialog extends Dialog {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 String s = StringConverter.asString(new FontData(terminalFont.getText(), terminalFontSize.getSelection(), SWT.NONE));
-                if (s.equals(StringConverter.asString(defaultFont))) {
+                if (s.equals(StringConverter.asString(defaultTextFont))) {
                     s = null;
                 }
                 preferences.setTerminalFont(s);
@@ -1383,14 +1458,14 @@ public class PreferencesDialog extends Dialog {
                     terminalFontSize.setSelection(result.getHeight());
 
                     String s = StringConverter.asString(result);
-                    if (s.equals(StringConverter.asString(defaultFont))) {
+                    if (s.equals(StringConverter.asString(defaultTextFont))) {
                         s = null;
                     }
                     preferences.setTerminalFont(s);
                 }
             }
         });
-        FontData fontData = defaultFont;
+        FontData fontData = defaultTextFont;
         String s = preferences.getTerminalFont();
         if (s != null) {
             fontData = StringConverter.asFontData(s);
@@ -1453,7 +1528,7 @@ public class PreferencesDialog extends Dialog {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 String s = StringConverter.asString(new FontData(consoleFont.getText(), consoleFontSize.getSelection(), SWT.NONE));
-                if (s.equals(StringConverter.asString(defaultFont))) {
+                if (s.equals(StringConverter.asString(defaultTextFont))) {
                     s = null;
                 }
                 preferences.setConsoleFont(s);
@@ -1485,14 +1560,14 @@ public class PreferencesDialog extends Dialog {
                     consoleFontSize.setSelection(result.getHeight());
 
                     String s = StringConverter.asString(result);
-                    if (s.equals(StringConverter.asString(defaultFont))) {
+                    if (s.equals(StringConverter.asString(defaultTextFont))) {
                         s = null;
                     }
                     preferences.setConsoleFont(s);
                 }
             }
         });
-        FontData fontData = defaultFont;
+        FontData fontData = defaultTextFont;
         String s = preferences.getConsoleFont();
         if (s != null) {
             fontData = StringConverter.asFontData(s);
@@ -2119,6 +2194,7 @@ public class PreferencesDialog extends Dialog {
     @Override
     protected void cancelPressed() {
         preferences.setTheme(oldTheme);
+        preferences.setWindowFont(oldWindowFont);
         preferences.setShowToolbar(oldShowToolbar);
         preferences.setShowObjectBrowser(oldShowObjectBrowser);
         preferences.setShowBrowser(oldShowBrowser);
