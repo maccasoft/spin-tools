@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-2025 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller;
@@ -110,13 +109,17 @@ public class AboutDialog extends Dialog {
         final String ccLink = "https://creativecommons.org/licenses/by/3.0/";
         final String our = "Marco Maccaferri";
         final String ourLink = "https://www.maccasoft.com/";
+        final String forum = "Parallax Forums";
+        final String forumLink = "https://forums.parallax.com/discussion/174436/spin-tools-ide";
         final String message = title + "\r\n" + "Copyright (c) 2021-25 " + our + " and others. All rights reserved.\r\n"
             + "\r\n"
             + "Spin2 Interpreter: v52 - 2025.10.08\r\n"
             + "\r\n"
             + "This program and the accompanying materials, unless otherwise specified,\r\n"
             + "are made available under the terms of the " + epl + ".\r\n"
-            + "\r\nIcons by " + fugue + " are licensed under the " + cc + " license.";
+            + "\r\nIcons by " + fugue + " are licensed under the " + cc + " license."
+            + "\r\n"
+            + "\r\nSupport for this program is provided through the " + forum + ".";
 
         final StyledText text = new StyledText(content, SWT.READ_ONLY);
         text.setLayoutData(new GridData(SWT.TOP, SWT.RIGHT, true, false));
@@ -166,6 +169,14 @@ public class AboutDialog extends Dialog {
         text.setStyleRange(style);
         linkRanges.add(style);
 
+        style = new StyleRange();
+        style.start = message.indexOf(forum);
+        style.length = forum.length();
+        style.underline = true;
+        style.underlineStyle = SWT.UNDERLINE_LINK;
+        text.setStyleRange(style);
+        linkRanges.add(style);
+
         text.addListener(SWT.MouseDown, new Listener() {
 
             @Override
@@ -178,14 +189,17 @@ public class AboutDialog extends Dialog {
                             if (link.equals(our)) {
                                 link = ourLink;
                             }
-                            if (link.equals(epl)) {
+                            else if (link.equals(epl)) {
                                 link = eplLink;
                             }
-                            if (link.equals(fugue)) {
+                            else if (link.equals(fugue)) {
                                 link = fugueLink;
                             }
-                            if (link.equals(cc)) {
+                            else if (link.equals(cc)) {
                                 link = ccLink;
+                            }
+                            else if (link.equals(forum)) {
+                                link = forumLink;
                             }
                             Program.launch(link);
                             break;

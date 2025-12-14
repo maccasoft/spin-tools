@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-2025 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller;
@@ -3459,21 +3458,62 @@ public class SpinTools {
     }
 
     void createHelpMenu(Menu parent) {
+        MenuItem item;
         Menu menu = new Menu(parent.getParent(), SWT.DROP_DOWN);
 
-        MenuItem item = getSystemMenuItem(SWT.ID_ABOUT);
+        final Menu propeller1Menu = new Menu(parent.getParent(), SWT.DROP_DOWN);
+        item = new MenuItem(menu, SWT.CASCADE);
+        item.setText("Propeller 1...");
+        item.setMenu(propeller1Menu);
+
+        item = new MenuItem(propeller1Menu, SWT.PUSH);
+        item.setText("Documentation...");
+        item.addListener(SWT.Selection, e -> Program.launch("https://www.parallax.com/download/propeller-1-documentation/"));
+
+        item = new MenuItem(propeller1Menu, SWT.PUSH);
+        item.setText("Forum...");
+        item.addListener(SWT.Selection, e -> Program.launch("https://forums.parallax.com/categories/propeller-1-multicore-microcontroller"));
+
+        final Menu propeller2Menu = new Menu(parent.getParent(), SWT.DROP_DOWN);
+        item = new MenuItem(menu, SWT.CASCADE);
+        item.setText("Propeller 2...");
+        item.setMenu(propeller2Menu);
+
+        item = new MenuItem(propeller2Menu, SWT.PUSH);
+        item.setText("Documentation...");
+        item.addListener(SWT.Selection, e -> Program.launch("https://www.parallax.com/propeller-2/documentation/"));
+
+        item = new MenuItem(propeller2Menu, SWT.PUSH);
+        item.setText("Forum...");
+        item.addListener(SWT.Selection, e -> Program.launch("https://forums.parallax.com/categories/propeller-2-multicore-microcontroller"));
+
+        new MenuItem(propeller2Menu, SWT.SEPARATOR);
+
+        item = new MenuItem(propeller2Menu, SWT.PUSH);
+        item.setText("IRQsoft Propeller 2 Docs...");
+        item.addListener(SWT.Selection, e -> Program.launch("https://p2docs.github.io/"));
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("OBEX Object Exchange...");
+        item.addListener(SWT.Selection, e -> Program.launch("https://obex.parallax.com/obex/"));
+
+        new MenuItem(menu, SWT.SEPARATOR);
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Parallax Website...");
+        item.addListener(SWT.Selection, e -> Program.launch("https://parallax.com"));
+
+        item = getSystemMenuItem(SWT.ID_ABOUT);
         if (item == null) {
+            new MenuItem(menu, SWT.SEPARATOR);
+
             item = new MenuItem(menu, SWT.PUSH);
             item.setText("About " + APP_TITLE);
         }
-        item.addListener(SWT.Selection, new Listener() {
-
-            @Override
-            public void handleEvent(Event e) {
-                AboutDialog dlg = new AboutDialog(shell);
-                dlg.setTheme(preferences.getTheme());
-                dlg.open();
-            }
+        item.addListener(SWT.Selection, e -> {
+            AboutDialog dlg = new AboutDialog(shell);
+            dlg.setTheme(preferences.getTheme());
+            dlg.open();
         });
 
         if (menu.getItemCount() != 0) {
