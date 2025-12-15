@@ -196,7 +196,7 @@ public class Spin2TokenStream extends TokenStream {
 
         while (index < text.length()) {
             char ch = text.charAt(index);
-            if (ch == '\n' || ch == '\n') {
+            if (ch == '\n' || ch == '\r') {
                 break;
             }
             index++;
