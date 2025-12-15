@@ -334,6 +334,9 @@ public class ConsoleView {
                     if (serialPort != null) {
                         pendingEndSession = true;
                     }
+                    else {
+                        lineBuilder.append((char) b);
+                    }
                 }
                 else {
                     if (writeLogFile) {
