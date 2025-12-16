@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-2025 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller;
@@ -792,23 +791,23 @@ public class SourceEditor {
                         int lineOffset = styledText.getOffsetAtLine(line);
                         String lineText = styledText.getLine(line);
                         int endIndex = token.start - lineOffset - 1;
-                        if (lineText.charAt(endIndex) == ']') {
-                            int depth = -1;
-                            while (endIndex >= 0) {
-                                if (lineText.charAt(endIndex) == ']') {
-                                    depth++;
-                                }
-                                else if (lineText.charAt(endIndex) == '[') {
-                                    if (depth == 0) {
-                                        break;
+                        if (endIndex >= 0) {
+                            if (lineText.charAt(endIndex) == ']') {
+                                int depth = -1;
+                                while (endIndex >= 0) {
+                                    if (lineText.charAt(endIndex) == ']') {
+                                        depth++;
                                     }
-                                    depth--;
+                                    else if (lineText.charAt(endIndex) == '[') {
+                                        if (depth == 0) {
+                                            break;
+                                        }
+                                        depth--;
+                                    }
+                                    endIndex--;
                                 }
                                 endIndex--;
                             }
-                            endIndex--;
-                        }
-                        if (endIndex >= 0) {
                             Token objectToken = tokenMarker.getTokenAt(endIndex + lineOffset);
                             if (objectToken != null) {
                                 String qualifiedName = objectToken.getText() + token.getText();
