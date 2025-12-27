@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-2025 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.internal;
@@ -118,6 +117,9 @@ public class ImageRegistry {
         fileMap.put(".tar", new FilePair("document-zipper.png", "blue-document-zipper.png"));
         fileMap.put(".txt", new FilePair("document-text.png", "blue-document-text.png"));
         fileMap.put(".zip", new FilePair("document-zipper.png", "blue-document-zipper.png"));
+
+        fileMap.put(".spin-object", new FilePair("document-code-local.png", "document-code-library.png"));
+        fileMap.put(".spin2-object", new FilePair("document-code-local.png", "document-code-library.png"));
     }
 
     public static Image getImageForFile(File file) {
@@ -131,6 +133,18 @@ public class ImageRegistry {
         int index = file.getName().lastIndexOf('.');
         if (index != -1) {
             String ext = file.getName().substring(index).toLowerCase();
+            FilePair imageNamePair = fileMap.get(ext);
+            if (imageNamePair != null) {
+                return getImageFromResources(alt ? imageNamePair.altFile : imageNamePair.file);
+            }
+        }
+        return getImageFromResources("document.png");
+    }
+
+    public static Image getImageForFile(String name, boolean alt) {
+        int index = name.lastIndexOf('.');
+        if (index != -1) {
+            String ext = name.substring(index).toLowerCase();
             FilePair imageNamePair = fileMap.get(ext);
             if (imageNamePair != null) {
                 return getImageFromResources(alt ? imageNamePair.altFile : imageNamePair.file);
