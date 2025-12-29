@@ -652,6 +652,21 @@ public class SpinTools {
                 }
             }
         });
+
+        display.addListener(SWT.OpenDocument, event -> {
+            File fileToOpen = new File(event.text);
+            String name = fileToOpen.getName().toLowerCase();
+            if (name.endsWith(".spin") || name.endsWith(".p1asm") || name.endsWith(".spin2") || name.endsWith(".p2asm")) {
+                if (fileToOpen.exists()) {
+                    EditorTab editorTab = findFileEditorTab(fileToOpen);
+                    if (editorTab == null) {
+                        editorTab = openNewTab(fileToOpen);
+                    }
+                    tabFolder.setSelection(editorTab.getTabItem());
+                    shell.setActive();
+                }
+            }
+        });
     }
 
     void applyTheme(String id) {

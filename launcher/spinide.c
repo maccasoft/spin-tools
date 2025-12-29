@@ -36,7 +36,7 @@ static const char * jar_files[] = {
     "org.eclipse.jface.databinding-1.15.400.jar",
     "org.eclipse.osgi-3.23.200.jar",
     "org.eclipse.swt-3.132.0.jar",
-#if defined(__MINGW64__) ||  defined(__MINGW32__)
+#if defined(__MINGW64__) || defined(__MINGW32__)
     "org.eclipse.swt.win32.win32.x86_64-3.132.0.jar",
 #elif defined(__APPLE__)
   #if defined(__aarch64__) || defined(_M_ARM64)
@@ -58,9 +58,13 @@ static const char * jar_files[] = {
     NULL
 };
 
+#if defined(__MINGW64__) || defined(__MINGW32__)
+int  open_document(int argc, const char * argv[]);
+#endif
 #ifdef __linux__
 void install_desktop_launcher();
 void uninstall_desktop_launcher();
+int  open_document(int argc, const char * argv[]);
 #endif
 
 int main(int argc, const char * argv[])
@@ -68,7 +72,7 @@ int main(int argc, const char * argv[])
     int alloc_size;
     char * app_root = get_app_root(argv[0]);
 
-#ifdef __linux__
+#if defined(__linux__)
     if (argc > 1) {
         if (!strcmp(argv[1], "--install")) {
             install_desktop_launcher(app_root, argv[0]);
@@ -78,6 +82,12 @@ int main(int argc, const char * argv[])
             uninstall_desktop_launcher();
             exit(0);
         }
+    }
+#endif
+
+#if defined(__linux__) || defined(__MINGW64__) || defined(__MINGW32__)
+    if (open_document(argc, argv)) {
+        exit(0);
     }
 #endif
 
@@ -136,168 +146,3 @@ int main(int argc, const char * argv[])
 
     return 0;
 }
-
-#ifdef __linux__
-extern unsigned char spinide16_png[];
-extern unsigned int spinide16_png_len;
-
-extern unsigned char spinide32_png[];
-extern unsigned int spinide32_png_len;
-
-extern unsigned char spinide48_png[];
-extern unsigned int spinide48_png_len;
-
-extern unsigned char spinide64_png[];
-extern unsigned int spinide64_png_len;
-
-static const char * xdg_desktop_menu = "/usr/bin/xdg-desktop-menu";
-static const char * xdg_desktop_icon = "/usr/bin/xdg-desktop-icon";
-static const char * xdg_icon_resource = "/usr/bin/xdg-icon-resource";
-
-static const char * base_name = "maccasoft-spintoolside";
-
-void install_desktop_launcher(const char * app_root, const char * exe_file)
-{
-    FILE * fp;
-    int rc;
-    char tempdir[100], filename[200], cmd[300];
-
-    printf("Adding desktop shortcut and menu item...");
-
-    char * ptr = getenv("TMPDIR");
-    if (ptr == NULL) {
-        ptr = "/tmp";
-    }
-    snprintf(tempdir, sizeof(tempdir), "%s/maccasoft-spintoolside-XXXXXX", ptr);
-    if (mkdtemp(tempdir) == NULL) {
-        fprintf(stderr, " %s\n", strerror(errno));
-        exit(1);
-    }
-
-    snprintf(filename, sizeof(filename), "%s/%s.png", tempdir, base_name);
-    if ((fp = fopen(filename, "w")) == NULL) {
-        fprintf(stderr, " error writing %s\n", filename);
-        exit(1);
-    }
-    fwrite(spinide16_png, spinide16_png_len, 1, fp);
-    fclose(fp);
-    snprintf(cmd, sizeof(cmd), "%s install --context apps --size 16 --novendor %s", xdg_icon_resource, filename);
-    rc = system(cmd);
-    unlink(filename);
-    if (rc != 0) {
-        fprintf(stderr, " error running %s\n", cmd);
-        exit(1);
-    }
-
-    snprintf(filename, sizeof(filename), "%s/%s.png", tempdir, base_name);
-    if ((fp = fopen(filename, "w")) == NULL) {
-        fprintf(stderr, " error writing %s\n", filename);
-        exit(1);
-    }
-    fwrite(spinide32_png, spinide32_png_len, 1, fp);
-    fclose(fp);
-    snprintf(cmd, sizeof(cmd), "%s install --context apps --size 32 --novendor %s", xdg_icon_resource, filename);
-    rc = system(cmd);
-    unlink(filename);
-    if (rc != 0) {
-        fprintf(stderr, " error running %s\n", cmd);
-        exit(1);
-    }
-
-    snprintf(filename, sizeof(filename), "%s/%s.png", tempdir, base_name);
-    if ((fp = fopen(filename, "w")) == NULL) {
-        fprintf(stderr, " error writing %s\n", filename);
-        exit(1);
-    }
-    fwrite(spinide48_png, spinide48_png_len, 1, fp);
-    fclose(fp);
-    snprintf(cmd, sizeof(cmd), "%s install --context apps --size 48 --novendor %s", xdg_icon_resource, filename);
-    rc = system(cmd);
-    unlink(filename);
-    if (rc != 0) {
-        fprintf(stderr, " error running %s\n", cmd);
-        exit(1);
-    }
-
-    snprintf(filename, sizeof(filename), "%s/%s.png", tempdir, base_name);
-    if ((fp = fopen(filename, "w")) == NULL) {
-        fprintf(stderr, " error writing %s\n", filename);
-        exit(1);
-    }
-    fwrite(spinide64_png, spinide64_png_len, 1, fp);
-    fclose(fp);
-    snprintf(cmd, sizeof(cmd), "%s install --context apps --size 64 --novendor %s", xdg_icon_resource, filename);
-    rc = system(cmd);
-    unlink(filename);
-    if (rc != 0) {
-        fprintf(stderr, " error running %s\n", cmd);
-        exit(1);
-    }
-
-    snprintf(filename, sizeof(filename), "%s/%s.desktop", tempdir, base_name);
-    if ((fp = fopen(filename, "w")) == NULL) {
-        fprintf(stderr, " error writing %s\n", filename);
-        exit(1);
-    }
-    fprintf(fp, "[Desktop Entry]\n");
-    fprintf(fp, "Type=Application\n");
-    fprintf(fp, "Name=Spin Tools IDE\n");
-    fprintf(fp, "GenericName=Spin Tools IDE\n");
-    fprintf(fp, "Comment=Integrated development environment for Parallax Propeller microcontrollers.\n");
-    fprintf(fp, "Path=%s\n", app_root);
-    fprintf(fp, "Exec=%s %%f\n", exe_file);
-    fprintf(fp, "Icon=%s\n", base_name);
-    fprintf(fp, "Terminal=false\n");
-    fprintf(fp, "Categories=Development;IDE;Electronics;\n");
-    fprintf(fp, "Keywords=embedded electronics;electronics;propeller;microcontroller;\n");
-    fprintf(fp, "StartupWMClass=maccasoft-spintoolside\n");
-    fprintf(fp, "StartupNotify=true\n");
-    fprintf(fp, "MimeType=text/x-spin;text/x-spin2\n");
-    fclose(fp);
-    snprintf(cmd, sizeof(cmd), "%s install --novendor %s", xdg_desktop_menu, filename);
-    rc = system(cmd);
-    unlink(filename);
-    if (rc != 0) {
-        fprintf(stderr, " error running '%s'\n", cmd);
-        exit(1);
-    }
-
-    rmdir(tempdir);
-
-    strcpy(cmd, "xdg-mime install mime-info.xml");
-    rc = system(cmd);
-    if (rc != 0) {
-        fprintf(stderr, " error running '%s'\n", cmd);
-        exit(1);
-    }
-
-    printf(" done\n");
-}
-
-void uninstall_desktop_launcher()
-{
-    int rc;
-    char cmd[100];
-
-    printf("Removing desktop shortcut and menu item...");
-
-    sprintf(cmd, "%s uninstall %s.desktop", xdg_desktop_menu, base_name);
-    rc = system(cmd);
-    sprintf(cmd, "%s uninstall %s.desktop", xdg_desktop_icon, base_name);
-    rc = system(cmd);
-    sprintf(cmd, "%s uninstall --context apps --size 16 %s.png", xdg_icon_resource, base_name);
-    rc = system(cmd);
-    sprintf(cmd, "%s uninstall --context apps --size 32 %s.png", xdg_icon_resource, base_name);
-    rc = system(cmd);
-    sprintf(cmd, "%s uninstall --context apps --size 48 %s.png", xdg_icon_resource, base_name);
-    rc = system(cmd);
-    sprintf(cmd, "%s uninstall --context apps --size 64 %s.png", xdg_icon_resource, base_name);
-    rc = system(cmd);
-
-    if (rc != 0) {
-        // Do nothing
-    }
-
-    printf(" done\n");
-}
-#endif
