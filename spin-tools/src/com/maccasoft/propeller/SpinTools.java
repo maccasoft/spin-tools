@@ -55,6 +55,11 @@ import org.eclipse.swt.custom.CTabFolderEvent;
 import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.StyledText;
+import org.eclipse.swt.dnd.DND;
+import org.eclipse.swt.dnd.DropTarget;
+import org.eclipse.swt.dnd.DropTargetAdapter;
+import org.eclipse.swt.dnd.DropTargetEvent;
+import org.eclipse.swt.dnd.FileTransfer;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.FocusAdapter;
@@ -490,6 +495,55 @@ public class SpinTools {
                 CTabItem tabItem = tabFolder.getItem(new Point(e.x, e.y));
                 if (tabItem != null && e.button == 2) {
                     closeEditor(tabItem);
+                }
+            }
+
+        });
+
+        DropTarget dropTarget = new DropTarget(tabFolder, DND.DROP_COPY | DND.DROP_MOVE);
+        dropTarget.setTransfer(FileTransfer.getInstance());
+        dropTarget.addDropListener(new DropTargetAdapter() {
+
+            @Override
+            public void dragEnter(DropTargetEvent e) {
+                if (e.detail == DND.DROP_NONE) {
+                    e.detail = DND.DROP_LINK;
+                }
+            }
+
+            @Override
+            public void dragOperationChanged(DropTargetEvent e) {
+                if (e.detail == DND.DROP_NONE) {
+                    e.detail = DND.DROP_LINK;
+                }
+            }
+
+            @Override
+            public void drop(DropTargetEvent event) {
+                CTabItem selection = null;
+
+                if (event.data instanceof String[] dataArray) {
+                    for (String s : dataArray) {
+                        File fileToOpen = new File(s);
+                        String name = fileToOpen.getName().toLowerCase();
+                        if (name.endsWith(".spin") || name.endsWith(".p1asm") || name.endsWith(".spin2") || name.endsWith(".p2asm")) {
+                            if (fileToOpen.exists()) {
+                                EditorTab editorTab = findFileEditorTab(fileToOpen);
+                                if (editorTab == null) {
+                                    editorTab = openNewTab(fileToOpen);
+                                }
+                                if (selection == null) {
+                                    selection = editorTab.getTabItem();
+                                }
+                            }
+                        }
+                    }
+                    if (selection != null) {
+                        tabFolder.setSelection(selection);
+                    }
+                }
+                else {
+                    event.detail = DND.DROP_NONE;
                 }
             }
 
