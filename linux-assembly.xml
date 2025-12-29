@@ -15,6 +15,7 @@
         <file><source>launcher/spinc</source><fileMode>755</fileMode></file>
         <file><source>launcher/spinide</source><fileMode>755</fileMode></file>
         <file><source>launcher/spinide48.png</source><destName>spinide.png</destName></file>
+        <file><source>launcher/mime-info.xml</source></file>
         <file><source>LICENSE</source></file>
     </files>
     <fileSets>

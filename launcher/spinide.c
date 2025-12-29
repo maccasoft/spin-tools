@@ -252,16 +252,24 @@ void install_desktop_launcher(const char * app_root, const char * exe_file)
     fprintf(fp, "Keywords=embedded electronics;electronics;propeller;microcontroller;\n");
     fprintf(fp, "StartupWMClass=maccasoft-spintoolside\n");
     fprintf(fp, "StartupNotify=true\n");
+    fprintf(fp, "MimeType=text/x-spin;text/x-spin2\n");
     fclose(fp);
     snprintf(cmd, sizeof(cmd), "%s install --novendor %s", xdg_desktop_menu, filename);
     rc = system(cmd);
     unlink(filename);
     if (rc != 0) {
-        fprintf(stderr, " error running %s\n", cmd);
+        fprintf(stderr, " error running '%s'\n", cmd);
         exit(1);
     }
 
     rmdir(tempdir);
+
+    strcpy(cmd, "xdg-mime install mime-info.xml");
+    rc = system(cmd);
+    if (rc != 0) {
+        fprintf(stderr, " error running '%s'\n", cmd);
+        exit(1);
+    }
 
     printf(" done\n");
 }

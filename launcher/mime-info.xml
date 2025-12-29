@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<mime-info xmlns='http://www.freedesktop.org/standards/shared-mime-info'>
+    <mime-type type="text/x-spin">
+        <comment>Spin Source</comment>
+        <glob pattern="*.spin"/>
+    </mime-type>
+    <mime-type type="text/x-spin2">
+        <comment>Spin2 Source</comment>
+        <glob pattern="*.spin2"/>
+    </mime-type>
+</mime-info>

@@ -30,5 +30,36 @@
         <string>English</string>
         <key>CFBundleDisplayName</key>
         <string>Spin Tools IDE</string>
+        <key>CFBundleDocumentTypes</key>
+        <array>
+            <dict>
+                <key>CFBundleTypeExtensions</key>
+                <array>
+                    <string>spin</string>
+                </array>
+                <key>CFBundleTypeName</key>
+                <string>Spin Source</string>
+                <key>CFBundleTypeMIMETypes</key>
+                <array>
+                    <string>text/x-spin</string>
+                </array>
+                <key>CFBundleTypeRole</key>
+                <string>Viewer</string>
+            </dict>
+            <dict>
+                <key>CFBundleTypeExtensions</key>
+                <array>
+                    <string>spin2</string>
+                </array>
+                <key>CFBundleTypeName</key>
+                <string>Spin2 Source</string>
+                <key>CFBundleTypeMIMETypes</key>
+                <array>
+                    <string>text/x-spin2</string>
+                </array>
+                <key>CFBundleTypeRole</key>
+                <string>Viewer</string>
+            </dict>
+        </array>
     </dict>
 </plist>
