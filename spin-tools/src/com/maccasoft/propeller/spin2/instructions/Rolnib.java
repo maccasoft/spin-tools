@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -12,6 +12,7 @@ package com.maccasoft.propeller.spin2.instructions;
 
 import java.util.List;
 
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
@@ -58,12 +59,39 @@ public class Rolnib extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
+            CompilerException msgs = new CompilerException();
+
             int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b1000100);
-            value = nnn.setValue(value, n.getInteger());
-            value = i.setBoolean(value, src.isLiteral());
-            value = d.setValue(value, dst.getInteger());
-            value = s.setValue(value, src.getInteger());
+            try {
+                if (dst.getInteger() > 0x1FF) {
+                    msgs.addMessage(new CompilerException("destination register cannot exceed $1FF", dst.getExpression().getData()));
+                }
+                value = d.setValue(value, dst.getInteger());
+            } catch (Exception e) {
+                msgs.addMessage(new CompilerException(e.getMessage(), dst.getExpression().getData()));
+            }
+            try {
+                value = i.setBoolean(value, src.isLiteral());
+                if (!src.isLongLiteral() && src.getInteger() > 0x1FF) {
+                    msgs.addMessage(new CompilerException("source register/constant cannot exceed $1FF", src.getExpression().getData()));
+                }
+                value = s.setValue(value, src.getInteger());
+            } catch (Exception e) {
+                msgs.addMessage(new CompilerException(e.getMessage(), src.getExpression().getData()));
+            }
+            try {
+                if (n.getInteger() < 0 || n.getInteger() > 7) {
+                    msgs.addMessage(new CompilerException("selector must be 0 to 7", n.getExpression().getData()));
+                }
+                value = nnn.setValue(value, n.getInteger());
+            } catch (Exception e) {
+                msgs.addMessage(new CompilerException(e.getMessage(), n.getExpression().getData()));
+            }
+            if (msgs.hasChilds()) {
+                throw msgs;
+            }
+
             return src.isLongLiteral() ? getBytes(encodeAugs(condition, src.getInteger()), value) : getBytes(value);
         }
 
@@ -89,7 +117,14 @@ public class Rolnib extends Spin2PAsmInstructionFactory {
         public byte[] getBytes() {
             int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b1000100);
-            value = d.setValue(value, dst.getInteger());
+            try {
+                if (dst.getInteger() > 0x1FF) {
+                    throw new Exception("destination register cannot exceed $1FF");
+                }
+                value = d.setValue(value, dst.getInteger());
+            } catch (Exception e) {
+                throw new CompilerException(e.getMessage(), dst.getExpression().getData());
+            }
             value = s.setValue(value, 0b000000000);
             return getBytes(value);
         }

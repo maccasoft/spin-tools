@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -59,22 +59,40 @@ public class Setword extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
+            CompilerException msgs = new CompilerException();
+
             int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b1001001);
             value = c.setValue(value, 0);
-            value = z.setValue(value, n.getInteger());
-            value = i.setBoolean(value, src.isLiteral());
-            if (dst.getInteger() > 0x1FF) {
-                throw new CompilerException("Destination register cannot exceed $1FF", dst.getExpression().getData());
+            try {
+                if (dst.getInteger() > 0x1FF) {
+                    msgs.addMessage(new CompilerException("destination register cannot exceed $1FF", dst.getExpression().getData()));
+                }
+                value = d.setValue(value, dst.getInteger());
+            } catch (Exception e) {
+                msgs.addMessage(new CompilerException(e.getMessage(), dst.getExpression().getData()));
             }
-            value = d.setValue(value, dst.getInteger());
-            if (!src.isLongLiteral() && src.getInteger() > 0x1FF) {
-                throw new CompilerException("Source register cannot exceed $1FF", src.getExpression().getData());
+            try {
+                value = i.setBoolean(value, src.isLiteral());
+                if (!src.isLongLiteral() && src.getInteger() > 0x1FF) {
+                    msgs.addMessage(new CompilerException("source register/constant cannot exceed $1FF", src.getExpression().getData()));
+                }
+                value = s.setValue(value, src.getInteger());
+            } catch (Exception e) {
+                msgs.addMessage(new CompilerException(e.getMessage(), src.getExpression().getData()));
             }
-            value = s.setValue(value, src.getInteger());
-            if (n.getInteger() < 0 || n.getInteger() > 1) {
-                throw new CompilerException("Word number can be 0 or 1", n.getExpression().getData());
+            try {
+                if (n.getInteger() < 0 || n.getInteger() > 1) {
+                    msgs.addMessage(new CompilerException("selector be 0 to 1", n.getExpression().getData()));
+                }
+                value = z.setValue(value, n.getInteger());
+            } catch (Exception e) {
+                msgs.addMessage(new CompilerException(e.getMessage(), n.getExpression().getData()));
             }
+            if (msgs.hasChilds()) {
+                throw msgs;
+            }
+
             return src.isLongLiteral() ? getBytes(encodeAugs(condition, src.getInteger()), value) : getBytes(value);
         }
 
@@ -101,9 +119,16 @@ public class Setword extends Spin2PAsmInstructionFactory {
             int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b1001001);
             value = cz.setValue(value, 0b00);
-            value = i.setBoolean(value, src.isLiteral());
             value = d.setValue(value, 0);
-            value = s.setValue(value, src.getInteger());
+            try {
+                value = i.setBoolean(value, src.isLiteral());
+                if (src.getInteger() > 0x1FF) {
+                    throw new CompilerException("source register/constant cannot exceed $1FF", src.getExpression().getData());
+                }
+                value = s.setValue(value, src.getInteger());
+            } catch (Exception e) {
+                throw new CompilerException(e.getMessage(), src.getExpression().getData());
+            }
             return getBytes(value);
         }
 

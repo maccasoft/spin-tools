@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -12,6 +12,7 @@ package com.maccasoft.propeller.spin2.instructions;
 
 import java.util.List;
 
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
@@ -49,7 +50,14 @@ public class Mergeb extends Spin2PAsmInstructionFactory {
             int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b1101011);
             value = czi.setValue(value, 0b000);
-            value = d.setValue(value, dst.getInteger());
+            try {
+                if (dst.getInteger() > 0x1FF) {
+                    throw new Exception("destination register cannot exceed $1FF");
+                }
+                value = d.setValue(value, dst.getInteger());
+            } catch (Exception e) {
+                throw new CompilerException(e.getMessage(), dst.getExpression().getData());
+            }
             value = s.setValue(value, 0b001100001);
             return getBytes(value);
         }

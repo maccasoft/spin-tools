@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -50,12 +50,16 @@ public class Akpin extends Spin2PAsmInstructionFactory {
             int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b1100000);
             value = cz.setValue(value, 0b01);
-            value = i.setBoolean(value, src.isLiteral());
             value = d.setValue(value, 0b000000001);
-            if (src.getInteger() > 0x1FF) {
-                throw new CompilerException("Source register/constant cannot exceed $1FF", src.getExpression().getData());
+            try {
+                value = i.setBoolean(value, src.isLiteral());
+                if (src.getInteger() > 0x1FF) {
+                    throw new CompilerException("source register/constant cannot exceed $1FF", src.getExpression().getData());
+                }
+                value = s.setValue(value, src.getInteger());
+            } catch (Exception e) {
+                throw new CompilerException(e.getMessage(), src.getExpression().getData());
             }
-            value = s.setValue(value, src.getInteger());
             return getBytes(value);
         }
 

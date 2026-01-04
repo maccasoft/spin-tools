@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -77,7 +77,7 @@ public class Rdlong extends Spin2PAsmInstructionFactory {
                 }
                 else {
                     if ((src.isLiteral() && !src.isLongLiteral()) && src.getInteger() > 0xFF) {
-                        throw new CompilerException("Source constant cannot exceed $FF", src.getExpression().getData());
+                        throw new CompilerException("source constant cannot exceed $FF", src.getExpression().getData());
                     }
                     value = i.setBoolean(value, src.isLiteral());
                 }

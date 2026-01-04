@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -59,7 +59,7 @@ public class Fltnot extends Spin2PAsmInstructionFactory {
             value = cz.setValue(value, encodeEffect(effect));
             value = i.setBoolean(value, dst.isLiteral());
             if (dst.getInteger() > 0x1FF) {
-                throw new CompilerException("Destination register/constant cannot exceed $1FF", dst.getExpression().getData());
+                throw new CompilerException("destination register/constant cannot exceed $1FF", dst.getExpression().getData());
             }
             value = d.setValue(value, dst.getInteger());
             value = s.setValue(value, 0b001010111);

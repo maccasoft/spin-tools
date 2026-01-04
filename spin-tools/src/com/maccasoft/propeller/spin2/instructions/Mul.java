@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -12,7 +12,6 @@ package com.maccasoft.propeller.spin2.instructions;
 
 import java.util.List;
 
-import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
@@ -56,19 +55,9 @@ public class Mul extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
-            value = o.setValue(value, 0b1010000);
+            int value = o.setValue(encodeInstructionParameters(condition, dst, src, null), 0b1010000);
             value = c.setValue(value, 0);
             value = z.setBoolean(value, "wz".equalsIgnoreCase(effect));
-            value = i.setBoolean(value, src.isLiteral());
-            if (dst.getInteger() > 0x1FF) {
-                throw new CompilerException("Destination register cannot exceed $1FF", dst.getExpression().getData());
-            }
-            value = d.setValue(value, dst.getInteger());
-            if (!src.isLongLiteral() && src.getInteger() > 0x1FF) {
-                throw new CompilerException("Source register/constant cannot exceed $1FF", src.getExpression().getData());
-            }
-            value = s.setValue(value, src.getInteger());
             return src.isLongLiteral() ? getBytes(encodeAugs(condition, src.getInteger()), value) : getBytes(value);
         }
 

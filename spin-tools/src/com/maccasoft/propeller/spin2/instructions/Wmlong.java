@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -61,7 +61,7 @@ public class Wmlong extends Spin2PAsmInstructionFactory {
             value = cz.setValue(value, 0b11);
 
             if (!dst.isLongLiteral() && dst.getInteger() > 0x1FF) {
-                throw new CompilerException("Destination register/constant cannot exceed $1FF", dst.getExpression().getData());
+                throw new CompilerException("destination register/constant cannot exceed $1FF", dst.getExpression().getData());
             }
             value = d.setValue(value, dst.getInteger());
 
@@ -70,7 +70,7 @@ public class Wmlong extends Spin2PAsmInstructionFactory {
             }
             else {
                 if ((src.isLiteral() && !src.isLongLiteral()) && src.getInteger() > 0xFF) {
-                    throw new CompilerException("Source constant cannot exceed $FF", src.getExpression().getData());
+                    throw new CompilerException("source constant cannot exceed $FF", src.getExpression().getData());
                 }
                 value = i.setBoolean(value, src.isLiteral());
             }

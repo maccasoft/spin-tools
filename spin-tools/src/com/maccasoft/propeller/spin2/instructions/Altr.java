@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -86,10 +86,14 @@ public class Altr extends Spin2PAsmInstructionFactory {
             value = o.setValue(value, 0b1001100);
             value = cz.setValue(value, 0b00);
             value = i.setBoolean(value, true);
-            if (dst.getInteger() > 0x1FF) {
-                throw new CompilerException("Destination register cannot exceed $1FF", dst.getExpression().getData());
+            try {
+                if (dst.getInteger() > 0x1FF) {
+                    throw new Exception("destination register cannot exceed $1FF");
+                }
+                value = d.setValue(value, dst.getInteger());
+            } catch (Exception e) {
+                throw new CompilerException(e.getMessage(), dst.getExpression().getData());
             }
-            value = d.setValue(value, dst.getInteger());
             value = s.setValue(value, 0);
             return getBytes(value);
         }

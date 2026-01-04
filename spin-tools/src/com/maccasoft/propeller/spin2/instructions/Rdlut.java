@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -56,31 +56,43 @@ public class Rdlut extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            CompilerException errors = new CompilerException();
+            CompilerException msgs = new CompilerException();
 
             int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b1010101);
             value = cz.setValue(value, encodeEffect(effect));
 
-            if (dst.getInteger() > 0x1FF) {
-                errors.addMessage(new CompilerException("destination register/constant cannot exceed $1FF", dst.getExpression().getData()));
+            if (dst.isLiteral()) {
+                msgs.addMessage(new CompilerException("immediate destination not allowed", dst.getExpression().getData()));
             }
-            value = d.setValue(value, dst.getInteger());
+            try {
+                if (dst.getInteger() > 0x1FF) {
+                    msgs.addMessage(new CompilerException("destination register cannot exceed $1FF", dst.getExpression().getData()));
+                }
+                value = d.setValue(value, dst.getInteger());
+            } catch (Exception e) {
+                msgs.addMessage(new CompilerException(e.getMessage(), dst.getExpression().getData()));
+            }
 
             if (src.isPtr()) {
                 value = i.setBoolean(value, true);
             }
             else {
-                if ((src.isLiteral() && !src.isLongLiteral()) && src.getInteger() > 0xFF) {
-                    throw new CompilerException("Source constant cannot exceed $FF", src.getExpression().getData());
+                try {
+                    value = i.setBoolean(value, src.isLiteral());
+                    if (!src.isLongLiteral() && src.getInteger() > 0x1FF) {
+                        msgs.addMessage(new CompilerException("source register/constant cannot exceed $1FF", src.getExpression().getData()));
+                    }
+                    value = s.setValue(value, src.getInteger());
+                } catch (Exception e) {
+                    msgs.addMessage(new CompilerException(e.getMessage(), src.getExpression().getData()));
                 }
-                value = i.setBoolean(value, src.isLiteral());
             }
-            value = s.setValue(value, src.getInteger());
 
-            if (errors.hasChilds()) {
-                throw errors;
+            if (msgs.hasChilds()) {
+                throw msgs;
             }
+
             return src.isLongLiteral() ? getBytes(encodeAugs(condition, src.getInteger()), value) : getBytes(value);
         }
 

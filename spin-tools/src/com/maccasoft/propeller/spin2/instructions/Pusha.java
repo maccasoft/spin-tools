@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -56,11 +56,15 @@ public class Pusha extends Spin2PAsmInstructionFactory {
             value = o.setValue(value, 0b1100011);
             value = c.setValue(value, 0);
             value = l.setBoolean(value, dst.isLiteral());
-            value = i.setValue(value, 1);
-            if (dst.getInteger() > 0x1FF && !dst.isLongLiteral()) {
-                throw new CompilerException("destination register/constant cannot exceed $1FF", dst.getExpression().getData());
+            try {
+                value = i.setValue(value, 1);
+                if (dst.getInteger() > 0x1FF && !dst.isLongLiteral()) {
+                    throw new Exception("destination register/constant cannot exceed $1FF");
+                }
+                value = d.setValue(value, dst.getInteger());
+            } catch (Exception e) {
+                throw new CompilerException(e.getMessage(), dst.getExpression().getData());
             }
-            value = d.setValue(value, dst.getInteger());
             value = s.setValue(value, 0b101100001);
             return dst.isLongLiteral() ? getBytes(encodeAugd(condition, dst.getInteger()), value) : getBytes(value);
         }

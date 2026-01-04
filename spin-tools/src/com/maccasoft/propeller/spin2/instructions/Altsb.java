@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -12,6 +12,7 @@ package com.maccasoft.propeller.spin2.instructions;
 
 import java.util.List;
 
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
@@ -56,12 +57,8 @@ public class Altsb extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
-            value = o.setValue(value, 0b1001011);
+            int value = o.setValue(encodeInstructionParameters(condition, dst, src, null), 0b1001011);
             value = cz.setValue(value, 0b00);
-            value = i.setBoolean(value, src.isLiteral());
-            value = d.setValue(value, dst.getInteger());
-            value = s.setValue(value, src.getInteger());
             return src.isLongLiteral() ? getBytes(encodeAugs(condition, src.getInteger()), value) : getBytes(value);
         }
 
@@ -89,7 +86,14 @@ public class Altsb extends Spin2PAsmInstructionFactory {
             value = o.setValue(value, 0b1001011);
             value = cz.setValue(value, 0b00);
             value = i.setBoolean(value, true);
-            value = d.setValue(value, dst.getInteger());
+            try {
+                if (dst.getInteger() > 0x1FF) {
+                    throw new Exception("destination register cannot exceed $1FF");
+                }
+                value = d.setValue(value, dst.getInteger());
+            } catch (Exception e) {
+                throw new CompilerException(e.getMessage(), dst.getExpression().getData());
+            }
             value = s.setValue(value, 0);
             return getBytes(value);
         }
