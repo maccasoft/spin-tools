@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -109,7 +109,7 @@ public abstract class DebugWindow {
             case "FFT":
                 return new DebugFFTWindow(transmitBuffer);
             case "SPECTRO":
-                break;
+                return new DebugSpectroWindow(transmitBuffer);
             case "PLOT":
                 return new DebugPlotWindow(transmitBuffer);
             case "TERM":

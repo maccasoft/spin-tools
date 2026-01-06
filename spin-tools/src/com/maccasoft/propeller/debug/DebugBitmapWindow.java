@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -90,8 +90,7 @@ public class DebugBitmapWindow extends DebugWindow {
 
                 case "DOTSIZE":
                     if (iter.hasNextNumber()) {
-                        dotSize.x = iter.nextNumber();
-                        dotSize.y = dotSize.x;
+                        dotSize.x = dotSize.y = iter.nextNumber();
                         if (iter.hasNextNumber()) {
                             dotSize.y = iter.nextNumber();
                         }
@@ -576,11 +575,12 @@ public class DebugBitmapWindow extends DebugWindow {
                     }
                 }
                 break;
+            case 7:
             case 7 | 8:
                 if (y < 0) {
                     y = imageData.height - 1;
                     if ((traceMode & 8) != 0) {
-                        scrollRight();
+                        scrollLeft();
                     }
                     else if (--x < 0) {
                         x = imageData.width - 1;

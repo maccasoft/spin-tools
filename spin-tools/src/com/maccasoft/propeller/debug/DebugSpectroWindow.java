@@ -14,182 +14,85 @@ import java.util.function.Consumer;
 
 import org.eclipse.core.databinding.observable.Realm;
 import org.eclipse.jface.databinding.swt.DisplayRealm;
-import org.eclipse.jface.resource.JFaceResources;
-import org.eclipse.jface.resource.StringConverter;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
-import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.graphics.Font;
-import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.ImageData;
+import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Display;
 
-import com.maccasoft.propeller.Preferences;
 import com.maccasoft.propeller.internal.CircularBuffer;
 
-public class DebugFFTWindow extends DebugWindow {
+public class DebugSpectroWindow extends DebugWindow {
 
-    static final int FFT_MAX = 1 << 11;
+    ImageData imageData;
+    Image image;
+
+    int x;
+    int y;
+    int traceMode;
+
+    Point dotSize;
+
+    ColorMode colorMode;
+    int colorTune;
+
+    PackMode packMode;
+
+    int samples;
+    int sampleCount;
+
+    int range;
+    boolean logScale;
+
+    int FFTexp;
+    int FFTfirst;
+    int FFTlast;
+    int FFTMag;
+
+    int rate;
+    int rateCount;
+
+    FFT fft;
+
+    int[] FFTsamp;
+    int[] FFTpower;
 
     static double log2(int value) {
         return Math.log(value) / Math.log(2.0);
     }
 
-    int FFTexp;
-    int FFTfirst;
-    int FFTlast;
-
-    Color backColor;
-    Color gridColor;
-
-    ColorMode colorMode;
-    int colorTune;
-    Color[] lutColors;
-
-    int dotSize;
-    int lineSize;
-    int textSize;
-    boolean logScale;
-
-    PackMode packMode;
-
-    int samples;
-    int channelIndex;
-    Channel[] channelData;
-
-    int sampleCount;
-
-    int rate;
-    int rateCount;
-
-    Font font;
-    int charHeight;
-
-    FFT fft;
-
-    class Channel {
-        String name;
-
-        int mag;
-        int high;
-        int tall;
-        int base;
-        int legend;
-        Color color;
-
-        int[] FFTsamp;
-        int[] FFTpower;
-
-        String legendMax;
-        int legendMaxY;
-        String legendMin;
-        int legendMinY;
-
-        int[] array;
-
-        Channel(String name, int mag, int high, int tall, int base, int legend, Color color) {
-            this.name = name;
-
-            this.mag = mag;
-            this.high = high;
-            this.tall = tall;
-            this.base = base;
-            this.legend = legend;
-            this.color = color;
-
-            this.FFTsamp = new int[FFT_MAX];
-            this.FFTpower = new int[FFT_MAX / 2];
-            this.array = new int[(FFTlast - FFTfirst + 1) * 2];
-
-            legendMin = String.format("+%d", 0);
-            legendMinY = MARGIN_HEIGHT + charHeight + imageSize.y - base - 1;
-
-            legendMax = String.format("+%d", high);
-            legendMaxY = MARGIN_HEIGHT + charHeight + imageSize.y - base - tall - 1;
-        }
-
-        void update() {
-            double sx = (double) imageSize.x / (double) (FFTlast - FFTfirst);
-            double sy = (double) (tall - 1) / (double) high;
-
-            double x = 0;
-            for (int i = FFTfirst, idx = 0; i <= FFTlast; i++) {
-                int v = FFTpower[i];
-
-                if (logScale) {
-                    v = (int) Math.round(log2(v + 1) / log2((high + 1)) * high);
-                }
-
-                array[idx++] = MARGIN_WIDTH + (int) Math.round(x);
-                array[idx++] = MARGIN_HEIGHT + charHeight + (imageSize.y - base - 1) - (int) Math.round(v * sy);
-
-                x += sx;
-            }
-        }
-
-        void plot(GC gc) {
-            if (legend != 0) {
-                gc.setLineWidth(0);
-                gc.setLineStyle(SWT.LINE_DOT);
-                gc.setForeground(gridColor);
-                gc.setBackground(backColor);
-
-                if ((legend & 0b0001) != 0) {
-                    gc.drawLine(MARGIN_WIDTH, legendMinY, imageSize.x, legendMinY);
-                }
-                if ((legend & 0b0001) != 0) {
-                    gc.drawLine(MARGIN_WIDTH, legendMaxY, imageSize.x, legendMaxY);
-                }
-
-                if (legendMin != null && (legend & 0b0100) != 0) {
-                    Point extent = gc.stringExtent(legendMin);
-                    gc.fillRectangle(MARGIN_WIDTH + 1, legendMinY - extent.y / 2, 2 + extent.x + 2, extent.y);
-                    gc.drawText(legendMin, MARGIN_WIDTH + 2, legendMinY - extent.y / 2, true);
-                }
-                if (legendMax != null && (legend & 0b1000) != 0) {
-                    Point extent = gc.stringExtent(legendMax);
-                    gc.fillRectangle(MARGIN_WIDTH + 1, legendMaxY - extent.y / 2, 2 + extent.x + 2, extent.y);
-                    gc.drawText(legendMax, MARGIN_WIDTH + 2, legendMaxY - extent.y / 2, true);
-                }
-            }
-            gc.setForeground(color);
-            gc.setLineWidth(lineSize);
-            gc.drawPolyline(array);
-        }
-
-    }
-
-    public DebugFFTWindow(CircularBuffer transmitBuffer) {
+    public DebugSpectroWindow(CircularBuffer transmitBuffer) {
         super(transmitBuffer);
 
-        backColor = new Color(0, 0, 0);
-        gridColor = new Color(64, 64, 64);
+        x = y = 0;
+        traceMode = 0x0F;
 
-        colorMode = ColorMode.RGB24;
+        dotSize = new Point(1, 1);
+
+        colorMode = ColorMode.LUMA8X;
         colorTune = 0;
-        lutColors = new Color[256];
-
-        dotSize = 0;
-        lineSize = 1;
-        textSize = 0;
 
         packMode = PackMode.NONE();
 
-        samples = 512;
+        samples = FFT.DEFAULT;
+        sampleCount = 0;
+
+        range = 0x7FFFFFFF;
+        logScale = false;
 
         FFTexp = (int) log2(samples);
         FFTfirst = 0;
         FFTlast = (samples / 2) - 1;
+        FFTMag = 0;
 
-        channelIndex = 0;
-        channelData = new Channel[0];
-
-        sampleCount = 0;
-
-        rate = 1;
+        rate = -1;
         rateCount = 0;
     }
 
@@ -198,8 +101,7 @@ public class DebugFFTWindow extends DebugWindow {
         String cmd;
 
         while (iter.hasNext()) {
-            cmd = iter.next();
-
+            cmd = iter.next().toUpperCase();
             switch (cmd) {
                 case "TITLE":
                     title(iter);
@@ -209,8 +111,10 @@ public class DebugFFTWindow extends DebugWindow {
                     pos(iter);
                     break;
 
-                case "SIZE":
-                    size(iter);
+                case "DEPTH":
+                    if (iter.hasNextNumber()) {
+                        imageSize.x = iter.nextNumber();
+                    }
                     break;
 
                 case "SAMPLES":
@@ -219,8 +123,8 @@ public class DebugFFTWindow extends DebugWindow {
                         if (val < 4) {
                             val = 4;
                         }
-                        if (val > FFT_MAX) {
-                            val = FFT_MAX;
+                        if (val > FFT.FFT_MAX) {
+                            val = FFT.FFT_MAX;
                         }
                         FFTexp = (int) log2(val);
                         samples = 1 << FFTexp;
@@ -241,39 +145,51 @@ public class DebugFFTWindow extends DebugWindow {
                     }
                     break;
 
-                case "RATE":
-                    rate(iter);
+                case "MAG":
+                    if (iter.hasNextNumber()) {
+                        FFTMag = iter.nextNumber();
+                    }
+                    break;
+
+                case "RANGE":
+                    if (iter.hasNextNumber()) {
+                        range = iter.nextNumber();
+                    }
                     break;
 
                 case "DOTSIZE":
                     if (iter.hasNextNumber()) {
-                        dotSize = iter.nextNumber();
-                    }
-                    break;
-
-                case "LINESIZE":
-                    if (iter.hasNextNumber()) {
-                        lineSize = iter.nextNumber() / 2;
-                    }
-                    break;
-
-                case "TEXTSIZE":
-                    if (iter.hasNextNumber()) {
-                        textSize = iter.nextNumber();
-                    }
-                    break;
-
-                case "COLOR":
-                    if (iter.hasNextNumber()) {
-                        iter.nextNumber();
+                        dotSize.x = dotSize.y = iter.nextNumber();
                         if (iter.hasNextNumber()) {
-                            iter.nextNumber();
+                            dotSize.y = iter.nextNumber();
                         }
                     }
                     break;
 
+                case "LUMA8":
+                case "LUMA8W":
+                case "LUMA8X":
+                case "HSV8":
+                case "HSV8W":
+                case "HSV8X":
+                case "HSV16":
+                case "HSV16W":
+                case "HSV16X":
+                    colorMode(cmd, iter);
+                    break;
+
                 case "LOGSCALE":
                     logScale = true;
+                    break;
+
+                case "TRACE":
+                    if (iter.hasNextNumber()) {
+                        traceMode = iter.nextNumber() & 0x0F;
+                    }
+                    break;
+
+                case "RATE":
+                    rate(iter);
                     break;
 
                 case "LONGS_1BIT":
@@ -291,34 +207,51 @@ public class DebugFFTWindow extends DebugWindow {
                     packMode = packedMode(cmd, iter);
                     break;
 
-                case "HIDEXY":
+                case "HIDEXY": // TODO
                     break;
             }
         }
 
         fft = new FFT(FFTexp);
+        FFTsamp = new int[FFT.FFT_MAX];
+        FFTpower = new int[FFT.FFT_MAX / 2];
 
-        Font textFont = JFaceResources.getTextFont();
-        FontData fontData = textFont.getFontData()[0];
-        if (Preferences.getInstance().getEditorFont() != null) {
-            fontData = StringConverter.asFontData(Preferences.getInstance().getEditorFont());
+        imageSize.y = FFTlast - FFTfirst + 1;
+        if ((traceMode & 4) == 0) {
+            int i = imageSize.x;
+            imageSize.x = imageSize.y;
+            imageSize.y = i;
         }
 
-        font = new Font(display, fontData.getName(), textSize != 0 ? textSize : fontData.getHeight(), SWT.BOLD);
-
-        GC gc = new GC(canvas);
-        try {
-            gc.setFont(font);
-            charHeight = gc.stringExtent("X").y;
-            for (Channel ch : channelData) {
-                Point extent = gc.stringExtent(ch.name);
-                if (extent.y > charHeight) {
-                    charHeight = extent.y;
-                }
-            }
-        } finally {
-            gc.dispose();
+        switch (traceMode & 7) {
+            case 0:
+            case 2:
+            case 4:
+            case 5:
+                x = 0;
+                break;
+            default:
+                x = imageSize.x - 1;
+                break;
         }
+        switch (traceMode & 7) {
+            case 0:
+            case 1:
+            case 4:
+            case 6:
+                y = 0;
+                break;
+            default:
+                y = imageSize.y - 1;
+                break;
+        }
+
+        if (rate == -1) {
+            rate = samples / 8;
+        }
+
+        imageData = new ImageData(imageSize.x, imageSize.y, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF));
+        image = new Image(display, imageData);
 
         canvas.addPaintListener(new PaintListener() {
 
@@ -329,12 +262,18 @@ public class DebugFFTWindow extends DebugWindow {
 
         });
 
-        GridData gridData = (GridData) canvas.getLayoutData();
-        gridData.widthHint = MARGIN_WIDTH + imageSize.x + MARGIN_WIDTH;
-        gridData.heightHint = MARGIN_HEIGHT + charHeight + imageSize.y + MARGIN_WIDTH;
+        canvas.addDisposeListener(new DisposeListener() {
 
-        shell.pack();
-        shell.redraw();
+            @Override
+            public void widgetDisposed(DisposeEvent e) {
+                image.dispose();
+            }
+
+        });
+
+        GridData gridData = (GridData) canvas.getLayoutData();
+        gridData.widthHint = imageSize.x * dotSize.x;
+        gridData.heightHint = imageSize.y * dotSize.y;
     }
 
     void rate(KeywordIterator iter) {
@@ -347,53 +286,26 @@ public class DebugFFTWindow extends DebugWindow {
 
     @Override
     protected void paint(GC gc) {
+        Point canvasSize = canvas.getSize();
+
         gc.setAdvanced(true);
-        gc.setAntialias(SWT.OFF);
-        gc.setTextAntialias(SWT.ON);
-        gc.setInterpolation(SWT.NONE);
-        gc.setLineCap(SWT.CAP_SQUARE);
-        gc.setFont(font);
-
-        gc.setLineWidth(0);
-
-        gc.setBackground(backColor);
-        gc.fillRectangle(canvas.getClientArea());
-
-        gc.setLineStyle(SWT.LINE_SOLID);
-        gc.setForeground(gridColor);
-
-        gc.drawRectangle(MARGIN_WIDTH, MARGIN_HEIGHT + charHeight, imageSize.x, imageSize.y);
-        if (logScale) {
-            String text = "logscale";
-            Point extent = gc.stringExtent(text);
-            gc.drawString("logscale", MARGIN_WIDTH + imageSize.x - extent.x, MARGIN_HEIGHT + charHeight - extent.y - 1, true);
-        }
-
-        int x = MARGIN_WIDTH;
-        int spacing = gc.stringExtent("A").x;
-        for (int i = 0; i < channelData.length; i++) {
-            Point extent = gc.stringExtent(channelData[i].name);
-
-            gc.setForeground(channelData[i].color);
-            gc.drawString(channelData[i].name, x, MARGIN_HEIGHT + charHeight - extent.y - 1, true);
-
-            gc.setLineWidth(0);
-            channelData[i].plot(gc);
-
-            x += extent.x + spacing;
-        }
+        gc.setAntialias(SWT.ON);
+        gc.setInterpolation(SWT.OFF);
+        gc.drawImage(image, 0, 0, imageSize.x, imageSize.y, 0, 0, canvasSize.x, canvasSize.y);
     }
 
     @Override
     public void update(KeywordIterator iter) {
+        int pixel, color;
         String cmd;
 
-        if (iter.hasNext()) {
+        while (iter.hasNext()) {
             cmd = iter.next();
 
             if (isNumber(cmd)) {
                 try {
-                    packMode.newPack(stringToNumber(cmd));
+                    pixel = stringToNumber(cmd);
+                    packMode.newPack(pixel);
                     for (int i = 0; i < packMode.size; i++) {
                         processSample(packMode.unpack());
                     }
@@ -401,12 +313,16 @@ public class DebugFFTWindow extends DebugWindow {
                     // Do nothing
                 }
             }
-            else if (isString(cmd)) {
-                channel(stringStrip(cmd), iter);
-            }
             else {
                 switch (cmd.toUpperCase()) {
                     case "CLEAR":
+                        color = colorMode.translateColor(0, colorTune);
+                        for (int y = 0; y < imageSize.y; y++) {
+                            for (int x = 0; x < imageSize.x; x++) {
+                                imageData.setPixel(x, y, color);
+                            }
+                        }
+                        update();
                         break;
 
                     case "SAVE":
@@ -429,27 +345,48 @@ public class DebugFFTWindow extends DebugWindow {
         }
     }
 
-    void channel(String name, KeywordIterator iter) {
-        Color color = new Color(0, 250, 0);
+    void processSample(int sample) {
+        System.arraycopy(FFTsamp, 1, FFTsamp, 0, samples - 1);
+        FFTsamp[samples - 1] = sample;
 
-        int mag = iter.hasNextNumber() ? iter.nextNumber() : 0;
-        int high = iter.hasNextNumber() ? iter.nextNumber() : 0x7FFFFFFF;
-        int tall = iter.hasNextNumber() ? iter.nextNumber() : imageSize.y;
-        int base = iter.hasNextNumber() ? iter.nextNumber() : 0;
-        int grid = iter.hasNextNumber() ? iter.nextNumber() : 0;
+        if (sampleCount < samples) {
+            sampleCount++;
+        }
+        if (rateCount < rate) {
+            rateCount++;
+        }
 
+        if (sampleCount >= samples && rateCount >= rate) {
+            fft.performFFT(FFTMag, FFTsamp, FFTpower);
+
+            double scale = (double) 255 / (double) range;
+
+            for (int i = FFTfirst, idx = 0; i <= FFTlast; i++) {
+                int v = FFTpower[i];
+
+                if (logScale) {
+                    v = (int) Math.round(log2(v + 1) / log2((range + 1)) * range);
+                }
+                int p = Math.min((int) (v * scale), 255);
+                stepTrace(colorMode.translateColor(p, colorTune));
+            }
+
+            update();
+            rateCount = 0;
+        }
+    }
+
+    void update() {
+        image.dispose();
+        image = new Image(canvas.getDisplay(), imageData);
+        canvas.redraw();
+    }
+
+    void colorMode(String cmd, KeywordIterator iter) {
+        colorMode = ColorMode.valueOf(cmd.toUpperCase());
         if (iter.hasNext()) {
-            int h = 0;
-            int p = 8;
-
-            String s = iter.next().toUpperCase();
-            switch (s) {
-                case "BLACK":
-                    color = new Color(0, 0, 0);
-                    break;
-                case "WHITE":
-                    color = new Color(255, 255, 255);
-                    break;
+            String key = iter.peekNext().toUpperCase();
+            switch (key) {
                 case "ORANGE":
                 case "BLUE":
                 case "GREEN":
@@ -458,80 +395,160 @@ public class DebugFFTWindow extends DebugWindow {
                 case "MAGENTA":
                 case "YELLOW":
                 case "GRAY":
-                    h = RGBColor.valueOf(s).ordinal();
-                    if (iter.hasNextNumber()) {
-                        p = iter.nextNumber();
+                    colorTune = RGBColor.valueOf(key).ordinal();
+                    iter.next();
+                    break;
+            }
+        }
+    }
+
+    void stepTrace(int color) {
+        switch (traceMode) {
+            case 0:
+            case 0 | 8:
+                if (x >= imageData.width) {
+                    x = 0;
+                    if ((traceMode & 8) != 0) {
+                        scrollDown();
                     }
-                    color = translateColor((h << 5) | (p << 1), ColorMode.RGBI8X);
-                    break;
-                default:
-                    iter.back();
-                    break;
-            }
-        }
-
-        int i = 0;
-        Channel[] newArray = new Channel[channelData.length + 1];
-        while (i < channelData.length) {
-            newArray[i] = channelData[i++];
-        }
-        newArray[i++] = new Channel(name, mag, high, tall, base, grid, color);
-        channelData = newArray;
-    }
-
-    Color translateColor(int p, ColorMode mode) {
-        int color;
-
-        switch (mode) {
-            case LUT1:
-                return lutColors[p & 0b1];
-            case LUT2:
-                return lutColors[p & 0b11];
-            case LUT4:
-                return lutColors[p & 0b1111];
-            case LUT8:
-                return lutColors[p & 0b11111111];
-            default:
-                color = mode.translateColor(p, colorTune);
-                return new Color(display, (color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF);
-        }
-    }
-
-    void processSample(int sample) {
-        System.arraycopy(channelData[channelIndex].FFTsamp, 1, channelData[channelIndex].FFTsamp, 0, samples - 1);
-        channelData[channelIndex].FFTsamp[samples - 1] = sample;
-
-        channelIndex++;
-        if (channelIndex >= channelData.length) {
-            if (sampleCount < samples) {
-                sampleCount++;
-            }
-            if (rateCount < rate) {
-                rateCount++;
-            }
-
-            if (sampleCount >= samples && rateCount >= rate) {
-                for (int i = 0; i < channelData.length; i++) {
-                    fft.performFFT(channelData[i].mag, channelData[i].FFTsamp, channelData[i].FFTpower);
+                    else if (++y >= imageData.height) {
+                        y = 0;
+                    }
                 }
-                update();
-                rateCount = 0;
-            }
-
-            channelIndex = 0;
+                imageData.setPixel(x++, y, color);
+                break;
+            case 1:
+            case 1 | 8:
+                if (x < 0) {
+                    x = imageData.width - 1;
+                    if ((traceMode & 8) != 0) {
+                        scrollDown();
+                    }
+                    else if (++y >= imageData.height) {
+                        y = 0;
+                    }
+                }
+                imageData.setPixel(x--, y, color);
+                break;
+            case 2:
+            case 2 | 8:
+                if (x >= imageData.width) {
+                    x = 0;
+                    if ((traceMode & 8) != 0) {
+                        scrollUp();
+                    }
+                    else if (--y < 0) {
+                        y = imageData.height - 1;
+                    }
+                }
+                imageData.setPixel(x++, y, color);
+                break;
+            case 3:
+            case 3 | 8:
+                if (x < 0) {
+                    x = imageData.width - 1;
+                    if ((traceMode & 8) != 0) {
+                        scrollUp();
+                    }
+                    else if (--y < 0) {
+                        y = imageData.height - 1;
+                    }
+                }
+                imageData.setPixel(x--, y, color);
+                break;
+            case 4:
+            case 4 | 8:
+                if (y >= imageData.height) {
+                    y = 0;
+                    if ((traceMode & 8) != 0) {
+                        scrollRight();
+                    }
+                    else if (++x >= imageData.width) {
+                        x = 0;
+                    }
+                }
+                imageData.setPixel(x, y++, color);
+                break;
+            case 5:
+            case 5 | 8:
+                if (y < 0) {
+                    y = imageData.height - 1;
+                    if ((traceMode & 8) != 0) {
+                        scrollRight();
+                    }
+                    else if (++x >= imageData.width) {
+                        x = 0;
+                    }
+                }
+                imageData.setPixel(x, y--, color);
+                break;
+            case 6:
+            case 6 | 8:
+                if (y >= imageData.height) {
+                    y = 0;
+                    if ((traceMode & 8) != 0) {
+                        scrollLeft();
+                    }
+                    else if (--x < 0) {
+                        x = imageData.width - 1;
+                    }
+                }
+                imageData.setPixel(x, y++, color);
+                break;
+            case 7:
+            case 7 | 8:
+                if (y < 0) {
+                    y = imageData.height - 1;
+                    if ((traceMode & 8) != 0) {
+                        scrollLeft();
+                    }
+                    else if (--x < 0) {
+                        x = imageData.width - 1;
+                    }
+                }
+                imageData.setPixel(x, y--, color);
+                break;
         }
     }
 
-    void update() {
-        for (int i = 0; i < channelData.length; i++) {
-            channelData[i].update();
+    void scrollLeft() {
+        for (int x = 1; x < imageData.width; x++) {
+            for (int y = 0; y < imageData.height; y++) {
+                int pixel = imageData.getPixel(x, y);
+                imageData.setPixel(x - 1, y, pixel);
+            }
         }
-        canvas.redraw();
+    }
+
+    void scrollRight() {
+        for (int x = imageData.width - 1; x >= 1; x--) {
+            for (int y = 0; y < imageData.height; y++) {
+                int pixel = imageData.getPixel(x - 1, y);
+                imageData.setPixel(x, y, pixel);
+            }
+        }
+    }
+
+    void scrollDown() {
+        for (int y = imageData.height - 1; y >= 1; y--) {
+            for (int x = 0; x < imageData.width; x++) {
+                int pixel = imageData.getPixel(x, y - 1);
+                imageData.setPixel(x, y, pixel);
+            }
+        }
+    }
+
+    void scrollUp() {
+        for (int y = 1; y < imageData.height; y++) {
+            for (int x = 0; x < imageData.width; x++) {
+                int pixel = imageData.getPixel(x, y);
+                imageData.setPixel(x, y - 1, pixel);
+            }
+        }
     }
 
     static String[] data = new String[] {
-        "SIZE 250 200 SAMPLES 2048 0 127 RATE 256 LOGSCALE COLOR YELLOW 4 YELLOW 5",
-        "'FFT' 0 1000 180 10 15 YELLOW 12",
+        "SIZE 250 200 SAMPLES 2048 0 236 RATE 256 RANGE 1000 LUMA8X GREEN",
         "194",
         "380",
         "552",
@@ -2606,23 +2623,8 @@ public class DebugFFTWindow extends DebugWindow {
 
             @Override
             public void run() {
-                /*int FFTExp = (int) (Math.log(2048) / Math.log(2));
-                int FFTfirst = 0;
-                int FFTlast = 127;
-
-                FFT fft = new FFT(FFTExp, FFTfirst, FFTlast);
-
-                int idx = 0;
-                for (int i = 2; i < data.length; i++) {
-                    KeywordIterator iter = new KeywordIterator(data[i]);
-                    fft.FFTsamp[idx++] = iter.nextNumber();
-                }
-                fft.perform();
-
-                System.out.println();*/
-
                 try {
-                    DebugWindow window = new DebugFFTWindow(new CircularBuffer(128));
+                    DebugWindow window = new DebugSpectroWindow(new CircularBuffer(128));
                     window.create();
                     window.setup(new KeywordIterator(data[0]));
                     window.open();
