@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -2135,7 +2135,13 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                             }
                             line.addSource(compileConstantExpression(line.getScope(), method, from));
 
-                            line.addSource(leftAssign(context, method, counter, true, false));
+                            try {
+                                line.addSource(leftAssign(context, method, counter, true, false));
+                            } catch (CompilerException e) {
+                                logMessage(e);
+                            } catch (Exception e) {
+                                logMessage(new CompilerException(e, counter.getTokens()));
+                            }
                             line.addSource(new Bytecode(line.getScope(), step != null ? Spin2Bytecode.bc_repeat_var_init : Spin2Bytecode.bc_repeat_var_init_1, "REPEAT"));
 
                             Spin2MethodLine nextLine = new Spin2MethodLine(context);
@@ -2144,7 +2150,13 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                             line.addChild(loopLine);
                             line.addChilds(compileStatement(new Context(context), method, line, node));
 
-                            nextLine.addSource(leftAssign(context, method, counter, true, false));
+                            try {
+                                nextLine.addSource(leftAssign(context, method, counter, true, false));
+                            } catch (CompilerException e) {
+                                logMessage(e);
+                            } catch (Exception e) {
+                                logMessage(new CompilerException(e, counter.getTokens()));
+                            }
                             nextLine.addSource(new Bytecode(line.getScope(), Spin2Bytecode.bc_repeat_var_loop, "REPEAT_LOOP"));
                             line.addChild(nextLine);
                         }
@@ -2156,7 +2168,13 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                             line.addSource(new Address(line.getScope(), new ContextLiteral(loopLine.getScope())));
 
                             line.addSource(compileConstantExpression(line.getScope(), method, counter));
-                            line.addSource(leftAssign(context, method, with, true, false));
+                            try {
+                                line.addSource(leftAssign(context, method, with, true, false));
+                            } catch (CompilerException e) {
+                                logMessage(e);
+                            } catch (Exception e) {
+                                logMessage(new CompilerException(e, counter.getTokens()));
+                            }
                             line.addSource(new Bytecode(line.getScope(), Spin2Bytecode.bc_repeat_var_init_n, "REPEAT"));
 
                             Spin2MethodLine nextLine = new Spin2MethodLine(context);
@@ -2165,7 +2183,13 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                             line.addChild(loopLine);
                             line.addChilds(compileStatement(new Context(context), method, line, node));
 
-                            nextLine.addSource(leftAssign(context, method, with, true, false));
+                            try {
+                                nextLine.addSource(leftAssign(context, method, with, true, false));
+                            } catch (CompilerException e) {
+                                logMessage(e);
+                            } catch (Exception e) {
+                                logMessage(new CompilerException(e, counter.getTokens()));
+                            }
                             nextLine.addSource(new Bytecode(line.getScope(), Spin2Bytecode.bc_repeat_var_loop, "REPEAT_LOOP"));
                             line.addChild(nextLine);
                         }
