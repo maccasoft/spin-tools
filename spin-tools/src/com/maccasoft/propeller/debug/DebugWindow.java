@@ -117,7 +117,7 @@ public abstract class DebugWindow {
             case "BITMAP":
                 return new DebugBitmapWindow(transmitBuffer);
             case "MIDI":
-                break;
+                return new DebugMIDIWindow(transmitBuffer);
         }
         return null;
     }
