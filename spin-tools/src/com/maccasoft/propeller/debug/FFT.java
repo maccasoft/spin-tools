@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 26 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
