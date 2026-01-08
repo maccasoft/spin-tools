@@ -27,6 +27,7 @@
 #endif
 
 static const char * jar_files[] = {
+    "jsvg-2.0.0.jar",
     "org.eclipse.core.commands-3.12.400.jar",
     "org.eclipse.core.databinding-1.13.700.jar",
     "org.eclipse.core.databinding.observable-1.13.500.jar",
@@ -36,6 +37,7 @@ static const char * jar_files[] = {
     "org.eclipse.jface.databinding-1.15.400.jar",
     "org.eclipse.osgi-3.23.200.jar",
     "org.eclipse.swt-3.132.0.jar",
+    "org.eclipse.swt.svg-3.131.0.jar",
 #if defined(__MINGW64__) || defined(__MINGW32__)
     "org.eclipse.swt.win32.win32.x86_64-3.132.0.jar",
 #elif defined(__APPLE__)

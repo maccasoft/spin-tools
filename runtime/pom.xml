@@ -25,6 +25,7 @@
                             <addModules>
                                 <addModule>java.base</addModule>
                                 <addModule>java.desktop</addModule>
+                                <addModule>java.logging</addModule>
                                 <addModule>java.net.http</addModule>
                             </addModules>
                             <noHeaderFiles>true</noHeaderFiles>
@@ -33,7 +34,7 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>            
+            </plugin>
         </plugins>
     </build>
 </project>

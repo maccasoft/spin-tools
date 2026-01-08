@@ -249,7 +249,7 @@ public class AboutDialog extends Dialog {
 
     void createKoFiLabel(Composite parent) {
         LinkImage link = new LinkImage(parent);
-        link.setImage(ImageRegistry.getImageFromResources("support_me_on_kofi.png"));
+        link.setImage(ImageRegistry.getImageFromResources("support_me_on_kofi.svg"));
         link.setUrl("https://ko-fi.com/maccasoft");
     }
 
