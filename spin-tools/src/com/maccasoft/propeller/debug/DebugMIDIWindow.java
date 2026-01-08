@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 26 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -187,6 +187,8 @@ public class DebugMIDIWindow extends DebugWindow {
         imageSize.x = border + keySize * whiteKeys + border;
         imageSize.y = border + keySize * 6 + border;
         image = new Image(display, new ImageData(imageSize.x, imageSize.y, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF)));
+
+        draw();
 
         canvas.addPaintListener(e -> paint(e.gc));
 
