@@ -4050,7 +4050,7 @@ public class SpinTools {
     }
 
     static {
-        Display.setAppName("maccasoft-spintoolside");
+        Display.setAppName("cocoa".equals(SWT.getPlatform()) ? APP_TITLE : "maccasoft-spintoolside");
         Display.setAppVersion(APP_VERSION);
     }
 
