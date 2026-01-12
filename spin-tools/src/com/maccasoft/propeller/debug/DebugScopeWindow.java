@@ -88,8 +88,7 @@ public class DebugScopeWindow extends DebugWindow {
         int legendMaxY;
         String legendMin;
         int legendMinY;
-        int[] array;
-        int arrayIdx;
+        int[] linePoints;
 
         Channel(String name, int min, int max, boolean auto, int y_size, int y_base, int legend, Color color) {
             this.name = name;
@@ -111,11 +110,11 @@ public class DebugScopeWindow extends DebugWindow {
                 legendMaxY = MARGIN_HEIGHT + charHeight + (imageSize.y - y_base) - (int) Math.round((max - min) * sy);
 
                 legendMin = String.format("%c%d", min >= 0 ? '+' : '-', Math.abs(min));
-                legendMinY = MARGIN_HEIGHT + charHeight + (imageSize.y - y_base) - (int) Math.round((min - min) * sy);
+                legendMinY = MARGIN_HEIGHT + charHeight + (imageSize.y - y_base);
             }
 
             this.sampleData = new int[samples];
-            this.array = new int[sampleData.length * 2];
+            this.linePoints = new int[0];
         }
 
         void update() {
@@ -141,15 +140,19 @@ public class DebugScopeWindow extends DebugWindow {
                     legendMaxY = MARGIN_HEIGHT + charHeight + (imageSize.y - y_base) - (int) Math.round((max - min) * sy);
 
                     legendMin = String.format("%c%d", min >= 0 ? '+' : '-', Math.abs(min));
-                    legendMinY = MARGIN_HEIGHT + charHeight + (imageSize.y - y_base) - (int) Math.round((min - min) * sy);
+                    legendMinY = MARGIN_HEIGHT + charHeight + (imageSize.y - y_base);
                 }
             }
 
+            int arraySize = (sampleData.length - firstSample) * 2;
+            if (linePoints.length != arraySize) {
+                linePoints = new int[arraySize];
+            }
+
             double x = firstSample * sx;
-            arrayIdx = 0;
-            for (int i = firstSample; i < sampleData.length; i++) {
-                array[arrayIdx++] = MARGIN_WIDTH + (int) Math.round(x);
-                array[arrayIdx++] = MARGIN_HEIGHT + charHeight + (imageSize.y - y_base) - (int) Math.round((sampleData[i] - min) * sy);
+            for (int i = firstSample, idx = 0; i < sampleData.length; i++) {
+                linePoints[idx++] = MARGIN_WIDTH + (int) Math.round(x);
+                linePoints[idx++] = MARGIN_HEIGHT + charHeight + (imageSize.y - y_base) - (int) Math.round((sampleData[i] - min) * sy);
                 x += sx;
             }
         }
@@ -181,17 +184,10 @@ public class DebugScopeWindow extends DebugWindow {
                 }
             }
 
-            gc.setLineWidth(dotSize);
-            gc.setLineStyle(SWT.LINE_SOLID);
-
-            gc.setForeground(color);
             gc.setLineWidth(lineSize);
-
-            int i = 2;
-            while (i < arrayIdx) {
-                gc.drawLine(array[i - 2], array[i - 1], array[i], array[i + 1]);
-                i += 2;
-            }
+            gc.setLineStyle(SWT.LINE_SOLID);
+            gc.setForeground(color);
+            gc.drawPolyline(linePoints);
         }
 
     }
