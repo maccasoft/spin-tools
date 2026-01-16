@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 declare -a JAR_FILES=(
-    "spin-tools-0.52.0.jar"
+    "spin-tools-0.52.1.jar"
     "commons-cli-1.9.0.jar"
     "commons-codec-1.17.1.jar"
     "commons-collections4-4.4.jar"
