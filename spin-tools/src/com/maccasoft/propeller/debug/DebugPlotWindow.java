@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -11,6 +11,7 @@
 package com.maccasoft.propeller.debug;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.function.Consumer;
 
 import org.eclipse.core.databinding.observable.Realm;
@@ -79,12 +80,16 @@ public class DebugPlotWindow extends DebugWindow {
         int height;
         RGB[] palette;
         byte[] pixels;
+        byte[] alpha;
 
-        public Sprite(int width, int height, RGB[] palette, byte[] pixels) {
+        public Sprite(int width, int height) {
             this.width = width;
             this.height = height;
-            this.palette = palette;
-            this.pixels = pixels;
+            this.palette = new RGB[256];
+            this.pixels = new byte[width * height];
+            this.alpha = new byte[256];
+
+            Arrays.fill(palette, new RGB(0, 0, 0));
         }
 
     }
@@ -550,23 +555,23 @@ public class DebugPlotWindow extends DebugWindow {
                                 int xDim = iter.nextNumber();
                                 if (iter.hasNextNumber()) {
                                     int yDim = iter.nextNumber();
-
-                                    RGB[] palette = new RGB[256];
-                                    byte[] pixels = new byte[xDim * yDim];
+                                    Sprite sprite = new Sprite(xDim, yDim);
 
                                     int idx = 0;
-                                    while (idx < pixels.length) {
-                                        pixels[idx++] = (byte) iter.nextNumber();
+                                    while (idx < sprite.pixels.length) {
+                                        sprite.pixels[idx++] = (byte) iter.nextNumber();
                                     }
 
                                     idx = 0;
-                                    while (iter.hasNextNumber() && idx < palette.length) {
+                                    while (iter.hasNextNumber() && idx < sprite.palette.length) {
                                         int c = iter.nextNumber();
-                                        palette[idx++] = new RGB((c >> 16) & 0xFF, (c >> 8) & 0xFF, c & 0xFF);
+                                        sprite.alpha[idx] = (byte) ((c >> 24) & 0xFF);
+                                        sprite.palette[idx] = new RGB((c >> 16) & 0xFF, (c >> 8) & 0xFF, c & 0xFF);
+                                        idx++;
                                     }
 
                                     if (id >= 0 && id < sprites.length) {
-                                        sprites[id] = new Sprite(xDim, yDim, palette, pixels);
+                                        sprites[id] = sprite;
                                     }
                                 }
                             }
@@ -778,7 +783,8 @@ public class DebugPlotWindow extends DebugWindow {
 
         int idx = 0;
         while (idx < sprite.pixels.length) {
-            int b = sprite.pixels[idx++];
+            int b = sprite.pixels[idx++] & 0xFF;
+            int alpha = sprite.alpha[b] & 0xFF;
             switch (orient) {
                 case 0:
                     if (x >= imageData.width) {
@@ -787,6 +793,7 @@ public class DebugPlotWindow extends DebugWindow {
                             y = 0;
                         }
                     }
+                    imageData.setAlpha(x, y, alpha);
                     imageData.setPixel(x++, y, b);
                     break;
                 case 1:
@@ -796,6 +803,7 @@ public class DebugPlotWindow extends DebugWindow {
                             y = 0;
                         }
                     }
+                    imageData.setAlpha(x, y, alpha);
                     imageData.setPixel(x--, y, b);
                     break;
                 case 2:
@@ -805,6 +813,7 @@ public class DebugPlotWindow extends DebugWindow {
                             y = imageData.height - 1;
                         }
                     }
+                    imageData.setAlpha(x, y, alpha);
                     imageData.setPixel(x++, y, b);
                     break;
                 case 3:
@@ -814,6 +823,7 @@ public class DebugPlotWindow extends DebugWindow {
                             y = imageData.height - 1;
                         }
                     }
+                    imageData.setAlpha(x, y, alpha);
                     imageData.setPixel(x--, y, b);
                     break;
                 case 4:
@@ -823,6 +833,7 @@ public class DebugPlotWindow extends DebugWindow {
                             x = 0;
                         }
                     }
+                    imageData.setAlpha(x, y, alpha);
                     imageData.setPixel(x, y++, b);
                     break;
                 case 5:
@@ -832,6 +843,7 @@ public class DebugPlotWindow extends DebugWindow {
                             x = 0;
                         }
                     }
+                    imageData.setAlpha(x, y, alpha);
                     imageData.setPixel(x, y--, b);
                     break;
                 case 6:
@@ -841,6 +853,7 @@ public class DebugPlotWindow extends DebugWindow {
                             x = imageData.width - 1;
                         }
                     }
+                    imageData.setAlpha(x, y, alpha);
                     imageData.setPixel(x, y++, b);
                     break;
                 case 7:
@@ -850,6 +863,7 @@ public class DebugPlotWindow extends DebugWindow {
                             x = imageData.width - 1;
                         }
                     }
+                    imageData.setAlpha(x, y, alpha);
                     imageData.setPixel(x, y--, b);
                     break;
             }
