@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -89,15 +89,29 @@ public class KeywordIterator {
     }
 
     public boolean hasNextNumber() {
-        if (index < ar.length) {
-            char ch = ar[index].charAt(0);
-            return (ch == '$' || ch == '%' || ch == '-' || ch == '+' || Character.isDigit(ch));
+        try {
+            if (index < ar.length) {
+                getNextNumber();
+                return true;
+            }
+        } catch (Exception e) {
+            // Do nothing
         }
         return false;
     }
 
     public int nextNumber() {
-        String s = ar[index++].replace("_", "");
+        try {
+            int value = getNextNumber();
+            index++;
+            return value;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    int getNextNumber() {
+        String s = ar[index].replace("_", "");
         if (s.startsWith("$")) {
             return (int) Long.parseLong(s.substring(1), 16);
         }
