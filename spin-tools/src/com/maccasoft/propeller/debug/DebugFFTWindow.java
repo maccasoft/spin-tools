@@ -140,7 +140,7 @@ public class DebugFFTWindow extends DebugWindow {
                 if ((legend & 0b0001) != 0) {
                     gc.drawLine(MARGIN_WIDTH, legendMinY, imageSize.x, legendMinY);
                 }
-                if ((legend & 0b0001) != 0) {
+                if ((legend & 0b0010) != 0) {
                     gc.drawLine(MARGIN_WIDTH, legendMaxY, imageSize.x, legendMaxY);
                 }
 
@@ -155,8 +155,9 @@ public class DebugFFTWindow extends DebugWindow {
                     gc.drawText(legendMax, MARGIN_WIDTH + 2, legendMaxY - extent.y / 2, true);
                 }
             }
-            gc.setForeground(color);
             gc.setLineWidth(lineSize);
+            gc.setLineStyle(SWT.LINE_SOLID);
+            gc.setForeground(color);
             gc.drawPolyline(array);
         }
 
