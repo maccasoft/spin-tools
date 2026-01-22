@@ -28,7 +28,7 @@ public class FFT {
     public FFT(int FFTexp) {
         this.FFTexp = FFTexp;
 
-        for (int i = 0; i < (1 << FFTexp) - 1; i++) {
+        for (int i = 0; i < 1 << FFTexp; i++) {
             double Tf = (double) Rev32(i) / 0x100000000L * Math.PI;
             double Yf = Math.sin(Tf);
             double Xf = Math.cos(Tf);
@@ -43,7 +43,7 @@ public class FFT {
         long ax, ay, bx, by, rx, ry;
 
         // Load samples into (real,imag) with Hanning window applied
-        for (i1 = 0; i1 < (1 << FFTexp) - 1; i1++) {
+        for (i1 = 0; i1 < 1 << FFTexp; i1++) {
             FFTreal[i1] = FFTsamp[i1] * FFTwin[i1];
             FFTimag[i1] = 0;
         }
@@ -87,7 +87,7 @@ public class FFT {
         }
 
         // Convert (real,imag) to (power,angle)
-        for (i1 = 0; i1 < 1 << (FFTexp - 1) - 1; i1++) {
+        for (i1 = 0; i1 < 1 << (FFTexp - 1); i1++) {
             i2 = (int) (Rev32(i1) >> (32 - FFTexp));
             rx = FFTreal[i2];
             ry = FFTimag[i2];
