@@ -28,7 +28,7 @@ static const char * common_jar_files[] = {
     "jackson-annotations-2.17.2.jar",
     "jackson-core-2.17.2.jar",
     "jackson-databind-2.17.2.jar",
-    "jssc-2.9.6.jar",
+    "jssc-2.10.2.jar",
     "lz4-java-1.10.1.jar",
     "native-lib-loader-2.5.0.jar",
     "slf4j-api-2.0.16.jar",
