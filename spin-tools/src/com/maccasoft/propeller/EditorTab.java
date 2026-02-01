@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -108,6 +108,7 @@ public class EditorTab implements FindReplaceTarget {
     AtomicBoolean pendingCompile = new AtomicBoolean(false);
 
     Map<File, Long> dependencies = new HashMap<>();
+    Set<File> missingDependencies = new HashSet<>();
 
     boolean errors;
     List<CompilerException> messages = new ArrayList<CompilerException>();
@@ -177,7 +178,7 @@ public class EditorTab implements FindReplaceTarget {
             }
             else {
                 File dependFile = new File(evt.getPropertyName());
-                if (dependencies.containsKey(dependFile)) {
+                if (dependencies.containsKey(dependFile) || missingDependencies.contains(dependFile)) {
                     if (evt.getOldValue() == null && evt.getNewValue() != null) {
                         dependencies.put(dependFile, System.currentTimeMillis());
                     }
@@ -190,6 +191,7 @@ public class EditorTab implements FindReplaceTarget {
                         }
                         scheduleCompile();
                     }
+                    missingDependencies.remove(dependFile);
                 }
             }
         }
@@ -415,6 +417,11 @@ public class EditorTab implements FindReplaceTarget {
         public File getFile(String name) {
             File localFile = file != null ? new File(file.getParentFile(), name) : new File(name).getAbsoluteFile();
 
+            if (sourcePool.containsSource(localFile)) {
+                dependencies.put(localFile, System.currentTimeMillis());
+                return localFile;
+            }
+
             if (localFile.exists()) {
                 dependencies.put(localFile, localFile.lastModified());
                 return localFile;
@@ -428,7 +435,7 @@ public class EditorTab implements FindReplaceTarget {
                 }
             }
 
-            dependencies.put(localFile, 0L);
+            missingDependencies.add(localFile);
 
             return null;
         }
@@ -451,7 +458,13 @@ public class EditorTab implements FindReplaceTarget {
 
         @Override
         protected RootNode getObjectTree(String fileName) {
-            RootNode node = super.getObjectTree(fileName + ".spin");
+            RootNode node = null;
+            if (fileName.toLowerCase().endsWith(".spin") || fileName.toLowerCase().endsWith(".c")) {
+                node = super.getObjectTree(fileName);
+            }
+            if (node == null) {
+                node = super.getObjectTree(fileName + ".spin");
+            }
             if (node == null) {
                 node = super.getObjectTree(fileName + ".c");
             }
@@ -479,7 +492,13 @@ public class EditorTab implements FindReplaceTarget {
 
         @Override
         protected RootNode getObjectTree(String fileName) {
-            RootNode node = super.getObjectTree(fileName + ".spin2");
+            RootNode node = null;
+            if (fileName.toLowerCase().endsWith(".spin2") || fileName.toLowerCase().endsWith(".c")) {
+                node = super.getObjectTree(fileName);
+            }
+            if (node == null) {
+                node = super.getObjectTree(fileName + ".spin2");
+            }
             if (node == null) {
                 node = super.getObjectTree(fileName + ".c");
             }
@@ -520,7 +539,19 @@ public class EditorTab implements FindReplaceTarget {
 
         @Override
         protected RootNode getObjectTree(String fileName) {
-            RootNode node = super.getObjectTree(fileName + ".c");
+            RootNode node = null;
+            if (fileName.toLowerCase().endsWith(".c")) {
+                node = super.getObjectTree(fileName);
+            }
+            if (node == null && isP1() && fileName.toLowerCase().endsWith(".spin")) {
+                node = super.getObjectTree(fileName);
+            }
+            if (node == null && isP2() && fileName.toLowerCase().endsWith(".spin2")) {
+                node = super.getObjectTree(fileName);
+            }
+            if (node == null) {
+                node = super.getObjectTree(fileName + ".c");
+            }
             if (node == null && isP1()) {
                 node = super.getObjectTree(fileName + ".spin");
             }
@@ -561,6 +592,7 @@ public class EditorTab implements FindReplaceTarget {
                         RootNode root = tokenMarker.getRoot();
 
                         dependencies.clear();
+                        missingDependencies.clear();
 
                         Compiler compiler = null;
                         if (".spin".equals(suffix) || ".pasm".equals(suffix)) {
@@ -1385,11 +1417,31 @@ public class EditorTab implements FindReplaceTarget {
         for (Entry<File, Long> entry : new HashMap<>(dependencies).entrySet()) {
             File file = entry.getKey();
             if (!sourcePool.containsSource(file)) {
-                Long lastModified = entry.getValue();
-                if (file.lastModified() > lastModified) {
+                if (!file.exists()) {
+                    dependencies.remove(file);
+                    missingDependencies.add(file);
                     wasUpdated = true;
-                    dependencies.put(file, file.lastModified());
                 }
+                else {
+                    Long lastModified = entry.getValue();
+                    if (file.lastModified() > lastModified) {
+                        dependencies.put(file, file.lastModified());
+                        wasUpdated = true;
+                    }
+                }
+            }
+        }
+
+        for (File file : new HashSet<>(missingDependencies)) {
+            if (sourcePool.containsSource(file)) {
+                dependencies.put(file, file.lastModified());
+                missingDependencies.remove(file);
+                wasUpdated = true;
+            }
+            else if (file.exists()) {
+                dependencies.put(file, file.lastModified());
+                missingDependencies.remove(file);
+                wasUpdated = true;
             }
         }
 

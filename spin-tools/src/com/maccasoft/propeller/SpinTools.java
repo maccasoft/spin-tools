@@ -2364,7 +2364,7 @@ public class SpinTools {
                     try {
                         for (int i = 0; i < tabFolder.getItemCount(); i++) {
                             EditorTab tab = (EditorTab) tabFolder.getItem(i).getData();
-                            File localFile = tab.getFile() != null ? tab.getFile() : new File(tab.getText());
+                            File localFile = tab.getFile() != null ? tab.getFile() : new File(tab.getText()).getAbsoluteFile();
                             if (localFile.equals(file)) {
                                 binary = tab.getEditorText().getBytes();
                                 break;
