@@ -2289,7 +2289,11 @@ public class SpinTools {
     private void handleArchiveProject() {
         EditorTab editorTab = getTargetObjectEditorTab();
         if (editorTab != null) {
-            doArchiveProject(editorTab);
+            try {
+                doArchiveProject(editorTab);
+            } catch (Exception e) {
+                openInternalError(shell, "Unexpected error archiving project", e);
+            }
         }
     }
 
@@ -2356,59 +2360,51 @@ public class SpinTools {
                 Path topFilePath = topFile.getAbsoluteFile().getParentFile().toPath();
 
                 for (File file : editorTab.getDependencies()) {
-                    Path filePath = file.getAbsoluteFile().toPath();
-                    if (filePath.startsWith(topFilePath)) {
-                        archiveStream.putNextEntry(new ZipEntry(topFilePath.relativize(filePath).toString()));
-                    }
-                    else {
-                        archiveStream.putNextEntry(new ZipEntry(file.getName()));
-                    }
-
-                    boolean found = false;
-                    for (int i = 0; i < tabFolder.getItemCount(); i++) {
-                        EditorTab tab = (EditorTab) tabFolder.getItem(i).getData();
-                        File localFile = tab.getFile() != null ? tab.getFile() : new File(tab.getText());
-                        if (localFile.equals(file)) {
-                            archiveStream.write(tab.getEditorText().getBytes());
-                            found = true;
-                            break;
+                    byte[] binary = null;
+                    try {
+                        for (int i = 0; i < tabFolder.getItemCount(); i++) {
+                            EditorTab tab = (EditorTab) tabFolder.getItem(i).getData();
+                            File localFile = tab.getFile() != null ? tab.getFile() : new File(tab.getText());
+                            if (localFile.equals(file)) {
+                                binary = tab.getEditorText().getBytes();
+                                break;
+                            }
                         }
+                        if (binary == null && file.exists() && !file.isDirectory()) {
+                            binary = FileUtils.loadBinaryFromFile(file);
+                        }
+                    } catch (Exception e) {
+                        // Do nothing
+                        e.printStackTrace();
                     }
-                    if (!found) {
-                        archiveStream.write(FileUtils.loadBinaryFromFile(file));
+                    if (binary != null) {
+                        Path filePath = file.getAbsoluteFile().toPath();
+                        if (filePath.startsWith(topFilePath)) {
+                            archiveStream.putNextEntry(new ZipEntry(topFilePath.relativize(filePath).toString()));
+                        }
+                        else {
+                            archiveStream.putNextEntry(new ZipEntry(file.getName()));
+                        }
+                        archiveStream.write(binary);
                     }
                 }
 
-                StringBuilder sb = new StringBuilder();
-                sb.append("----------------------------------");
-                sb.append(System.lineSeparator());
-                sb.append("Parallax Propeller " + processor + " Project Archive");
-                sb.append(System.lineSeparator());
-                sb.append("----------------------------------");
-                sb.append(System.lineSeparator());
-
-                sb.append(System.lineSeparator());
-
-                sb.append(" Project : ");
-                sb.append(editorTab.getText());
-                sb.append(System.lineSeparator());
-                sb.append("Archived : ");
-                sb.append(dateTimeFormat.format(now));
-                sb.append(System.lineSeparator());
-                sb.append("    Tool : ");
-                sb.append(APP_TITLE);
-                sb.append(" version ");
-                sb.append(APP_VERSION);
-                sb.append(System.lineSeparator());
-
-                sb.append(System.lineSeparator());
-                sb.append(editorTab.getObjectTree());
+                String text = "----------------------------------" + System.lineSeparator()
+                    + "Parallax Propeller " + processor + " Project Archive" + System.lineSeparator()
+                    + "----------------------------------" + System.lineSeparator()
+                    + System.lineSeparator()
+                    + " Project : " + editorTab.getText() + System.lineSeparator()
+                    + "Archived : " + dateTimeFormat.format(now) + System.lineSeparator()
+                    + "    Tool : " + APP_TITLE + " version " + APP_VERSION + System.lineSeparator()
+                    + System.lineSeparator()
+                    + editorTab.getObjectTree();
 
                 archiveStream.putNextEntry(new ZipEntry("_README_.txt"));
-                archiveStream.write(sb.toString().getBytes());
+                archiveStream.write(text.getBytes());
 
                 archiveStream.close();
             } catch (Exception e) {
+                // Do nothing
                 e.printStackTrace();
             }
         }
