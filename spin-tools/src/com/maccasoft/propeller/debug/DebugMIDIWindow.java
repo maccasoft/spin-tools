@@ -4,8 +4,7 @@
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.debug;
@@ -22,6 +21,7 @@ import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Transform;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Display;
@@ -38,6 +38,7 @@ public class DebugMIDIWindow extends DebugWindow {
     int channel;
     Color whiteColor;
     Color blackColor;
+    Color backgroundColor;
 
     int state;
     int note;
@@ -56,6 +57,9 @@ public class DebugMIDIWindow extends DebugWindow {
     int[] velocity = new int[128];
 
     Image image;
+
+    ImageData canvasImageData;
+    Image canvasImage;
 
     public DebugMIDIWindow(CircularBuffer transmitBuffer) {
         super(transmitBuffer);
@@ -188,11 +192,26 @@ public class DebugMIDIWindow extends DebugWindow {
         imageSize.y = border + keySize * 6 + border;
         image = new Image(display, new ImageData(imageSize.x, imageSize.y, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF)));
 
-        draw();
+        backgroundColor = display.getSystemColor(SWT.COLOR_WIDGET_BACKGROUND);
 
-        canvas.addPaintListener(e -> paint(e.gc));
+        update();
 
-        canvas.addDisposeListener(e -> image.dispose());
+        canvas.addPaintListener(e -> {
+            if (pendingRedraw.getAndSet(false)) {
+                if (canvasImage != null) {
+                    canvasImage.dispose();
+                }
+                canvasImage = new Image(display, canvasImageData);
+            }
+            paint(e.gc);
+        });
+
+        canvas.addDisposeListener(e -> {
+            if (canvasImage != null) {
+                canvasImage.dispose();
+            }
+            image.dispose();
+        });
 
         GridData gridData = (GridData) canvas.getLayoutData();
         gridData.widthHint = imageSize.x;
@@ -201,13 +220,13 @@ public class DebugMIDIWindow extends DebugWindow {
 
     @Override
     protected void paint(GC gc) {
-        try {
-            gc.setAdvanced(true);
-            gc.setAntialias(SWT.ON);
-            gc.setInterpolation(SWT.OFF);
-            gc.drawImage(image, 0, 0);
-        } catch (Exception e) {
-            e.printStackTrace();
+        gc.setAdvanced(true);
+        gc.setAntialias(SWT.ON);
+        gc.setInterpolation(SWT.OFF);
+
+        if (canvasImage != null) {
+            Point canvasSize = canvas.getSize();
+            gc.drawImage(canvasImage, 0, 0, imageSize.x, imageSize.y, 0, 0, canvasSize.x, canvasSize.y);
         }
     }
 
@@ -278,8 +297,7 @@ public class DebugMIDIWindow extends DebugWindow {
                             break;
                         case 2:
                             velocity[note] = val;
-                            draw();
-                            canvas.redraw();
+                            update();
                             state = 1;
                             break;
                         case 3:
@@ -288,8 +306,7 @@ public class DebugMIDIWindow extends DebugWindow {
                             break;
                         case 4:
                             velocity[note] = val;
-                            draw();
-                            canvas.redraw();
+                            update();
                             state = 3;
                             break;
                     }
@@ -301,8 +318,7 @@ public class DebugMIDIWindow extends DebugWindow {
                 switch (cmd.toUpperCase()) {
                     case "CLEAR":
                         Arrays.fill(velocity, 0);
-                        draw();
-                        canvas.redraw();
+                        update();
                         break;
 
                     case "SAVE":
@@ -310,7 +326,7 @@ public class DebugMIDIWindow extends DebugWindow {
                         break;
 
                     case "CLOSE":
-                        shell.dispose();
+                        close();
                         break;
 
                     case "PC_KEY":
@@ -325,30 +341,36 @@ public class DebugMIDIWindow extends DebugWindow {
         }
     }
 
-    void draw() {
-        GC gc = new GC(image);
-        Transform tr = new Transform(Display.getCurrent());
+    protected void update() {
         try {
-            gc.setInterpolation(SWT.NONE);
-            gc.setTextAntialias(SWT.ON);
+            GC gc = new GC(image);
+            Transform tr = new Transform(display);
+            try {
+                gc.setInterpolation(SWT.NONE);
+                gc.setTextAntialias(SWT.ON);
 
-            gc.setBackground(Display.getCurrent().getSystemColor(SWT.COLOR_WIDGET_BACKGROUND));
-            gc.fillRectangle(0, 0, imageSize.x, imageSize.y);
+                gc.setBackground(backgroundColor);
+                gc.fillRectangle(0, 0, imageSize.x, imageSize.y);
 
-            for (int i = keyFirst; i <= keyLast; i++) {
-                if (!black[i]) {
-                    drawKey(gc, tr, i, WHITE, whiteColor);
+                for (int i = keyFirst; i <= keyLast; i++) {
+                    if (!black[i]) {
+                        drawKey(gc, tr, i, WHITE, whiteColor);
+                    }
                 }
-            }
 
-            for (int i = keyFirst; i <= keyLast; i++) {
-                if (black[i]) {
-                    drawKey(gc, tr, i, BLACK, blackColor);
+                for (int i = keyFirst; i <= keyLast; i++) {
+                    if (black[i]) {
+                        drawKey(gc, tr, i, BLACK, blackColor);
+                    }
                 }
+            } finally {
+                tr.dispose();
+                gc.dispose();
             }
-        } finally {
-            tr.dispose();
-            gc.dispose();
+            canvasImageData = image.getImageData();
+            super.update();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -358,13 +380,12 @@ public class DebugMIDIWindow extends DebugWindow {
         gc.setForeground(BLACK);
         gc.setBackground(keyColor);
         gc.fillRectangle(left[i] - offset, -1, right[i] - left[i] - 1, bottom[i] + 1);
-        gc.drawRectangle(left[i] - offset, -1, right[i] - left[i] - 1, bottom[i] + 1);
-
         if (velocity[i] > 0) {
             int h = (bottom[i] - border) * velocity[i] / 127;
             gc.setBackground(velocityColor);
-            gc.fillRectangle(left[i] - offset + 1, bottom[i] - h, right[i] - left[i] - 2, h);
+            gc.fillRectangle(left[i] - offset, bottom[i] - h, right[i] - left[i] - 1, h);
         }
+        gc.drawRectangle(left[i] - offset, -1, right[i] - left[i] - 1, bottom[i] + 1);
 
         tr.identity();
         tr.translate(numX[i] - offset - fontHeight / 2.0f, border + fontHeight);

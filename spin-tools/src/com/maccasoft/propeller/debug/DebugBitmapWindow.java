@@ -4,8 +4,7 @@
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.debug;
@@ -15,10 +14,6 @@ import java.util.function.Consumer;
 import org.eclipse.core.databinding.observable.Realm;
 import org.eclipse.jface.databinding.swt.DisplayRealm;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.DisposeEvent;
-import org.eclipse.swt.events.DisposeListener;
-import org.eclipse.swt.events.PaintEvent;
-import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
@@ -30,9 +25,6 @@ import org.eclipse.swt.widgets.Display;
 import com.maccasoft.propeller.internal.CircularBuffer;
 
 public class DebugBitmapWindow extends DebugWindow {
-
-    ImageData imageData;
-    Image image;
 
     int x;
     int y;
@@ -49,6 +41,11 @@ public class DebugBitmapWindow extends DebugWindow {
     int rate;
     int rateCount;
     boolean autoUpdate;
+
+    ImageData imageData;
+
+    ImageData canvasImageData;
+    Image canvasImage;
 
     public DebugBitmapWindow(CircularBuffer transmitBuffer) {
         super(transmitBuffer);
@@ -162,24 +159,22 @@ public class DebugBitmapWindow extends DebugWindow {
         }
 
         imageData = new ImageData(imageSize.x, imageSize.y, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF));
-        image = new Image(display, imageData);
+        canvasImageData = new ImageData(imageSize.x, imageSize.y, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF));
 
-        canvas.addPaintListener(new PaintListener() {
-
-            @Override
-            public void paintControl(PaintEvent e) {
-                paint(e.gc);
+        canvas.addPaintListener(e -> {
+            if (pendingRedraw.getAndSet(false)) {
+                if (canvasImage != null) {
+                    canvasImage.dispose();
+                }
+                canvasImage = new Image(display, canvasImageData);
             }
-
+            paint(e.gc);
         });
 
-        canvas.addDisposeListener(new DisposeListener() {
-
-            @Override
-            public void widgetDisposed(DisposeEvent e) {
-                image.dispose();
+        canvas.addDisposeListener(e -> {
+            if (canvasImage != null) {
+                canvasImage.dispose();
             }
-
         });
 
         GridData gridData = (GridData) canvas.getLayoutData();
@@ -227,12 +222,14 @@ public class DebugBitmapWindow extends DebugWindow {
 
     @Override
     protected void paint(GC gc) {
-        Point canvasSize = canvas.getSize();
-
         gc.setAdvanced(true);
         gc.setAntialias(SWT.ON);
         gc.setInterpolation(SWT.OFF);
-        gc.drawImage(image, 0, 0, imageSize.x, imageSize.y, 0, 0, canvasSize.x, canvasSize.y);
+
+        if (canvasImage != null) {
+            Point canvasSize = canvas.getSize();
+            gc.drawImage(canvasImage, 0, 0, imageSize.x, imageSize.y, 0, 0, canvasSize.x, canvasSize.y);
+        }
     }
 
     @Override
@@ -304,21 +301,16 @@ public class DebugBitmapWindow extends DebugWindow {
 
                     case "SCROLL": // TODO
                         if (iter.hasNextNumber()) {
-                            iter.nextNumber();
+                            int xs = iter.nextNumber();
                             if (iter.hasNextNumber()) {
-                                iter.nextNumber();
+                                int ys = iter.nextNumber();
+                                scroll(xs, ys);
                             }
                         }
                         break;
 
                     case "CLEAR":
-                        color = translateColor(0, colorMode);
-                        for (int y = 0; y < imageSize.y; y++) {
-                            for (int x = 0; x < imageSize.x; x++) {
-                                imageData.setPixel(x, y, color);
-                            }
-                        }
-                        update();
+                        clear();
                         break;
 
                     case "UPDATE":
@@ -330,7 +322,7 @@ public class DebugBitmapWindow extends DebugWindow {
                         break;
 
                     case "CLOSE":
-                        shell.dispose();
+                        close();
                         break;
 
                     case "PC_KEY":
@@ -345,10 +337,47 @@ public class DebugBitmapWindow extends DebugWindow {
         }
     }
 
-    void update() {
-        image.dispose();
-        image = new Image(canvas.getDisplay(), imageData);
-        canvas.redraw();
+    public void update() {
+        System.arraycopy(imageData.data, 0, canvasImageData.data, 0, canvasImageData.data.length);
+        super.update();
+    }
+
+    void clear() {
+        int color = translateColor(0, colorMode);
+
+        for (int y = 0; y < imageSize.y; y++) {
+            for (int x = 0; x < imageSize.x; x++) {
+                imageData.setPixel(x, y, color);
+            }
+        }
+
+        if (autoUpdate) {
+            update();
+        }
+    }
+
+    void scroll(int xs, int ys) {
+        ImageData scrolledImageData = new ImageData(imageSize.x, imageSize.y, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF));
+        int color = translateColor(0, colorMode);
+
+        for (int y = 0; y < imageSize.y; y++) {
+            int sy = y + ys;
+            for (int x = 0; x < imageSize.x; x++) {
+                int sx = x + xs;
+                if (sy >= 0 && sy < imageSize.y && sx >= 0 && sx < imageSize.x) {
+                    scrolledImageData.setPixel(x, y, imageData.getPixel(sx, sy));
+                }
+                else {
+                    scrolledImageData.setPixel(x, y, color);
+                }
+            }
+        }
+
+        System.arraycopy(scrolledImageData.data, 0, imageData.data, 0, imageData.data.length);
+
+        if (autoUpdate) {
+            update();
+        }
     }
 
     void colorMode(String cmd, KeywordIterator iter) {

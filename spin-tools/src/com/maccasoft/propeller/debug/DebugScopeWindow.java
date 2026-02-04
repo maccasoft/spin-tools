@@ -4,8 +4,7 @@
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.debug;
@@ -51,6 +50,7 @@ public class DebugScopeWindow extends DebugWindow {
     int defaultColorIndex;
 
     int sampleCount;
+    int sampleIndex;
 
     int triggerChannel;
     int triggerArm;
@@ -104,7 +104,7 @@ public class DebugScopeWindow extends DebugWindow {
             this.color = color;
 
             if (legend != 0 && !auto) {
-                double sy = (double) y_size / (double) (max - min);
+                double sy = min == max ? 0 : (double) y_size / (double) (max - min);
 
                 legendMax = String.format("%c%d", max >= 0 ? '+' : '-', Math.abs(max));
                 legendMaxY = MARGIN_HEIGHT + charHeight + (imageSize.y - y_base) - (int) Math.round((max - min) * sy);
@@ -118,41 +118,50 @@ public class DebugScopeWindow extends DebugWindow {
         }
 
         void update() {
-            double sx = (double) imageSize.x / (double) samples;
-            double sy = (double) y_size / (double) (max - min);
-            int firstSample = sampleData.length - sampleCount;
+            int firstSample = (sampleIndex - sampleCount) & (samples - 1);
 
             if (auto) {
                 min = Integer.MAX_VALUE;
                 max = Integer.MIN_VALUE;
-                for (int i = firstSample; i < sampleData.length; i++) {
-                    int d = sampleData[i];
+                int ptr = firstSample;
+                for (int i = 0; i < sampleCount; i++) {
+                    int d = sampleData[ptr];
                     if (d < min) {
                         min = d;
                     }
                     if (d > max) {
                         max = d;
                     }
-                }
-
-                if (legend != 0) {
-                    legendMax = String.format("%c%d", max >= 0 ? '+' : '-', Math.abs(max));
-                    legendMaxY = MARGIN_HEIGHT + charHeight + (imageSize.y - y_base) - (int) Math.round((max - min) * sy);
-
-                    legendMin = String.format("%c%d", min >= 0 ? '+' : '-', Math.abs(min));
-                    legendMinY = MARGIN_HEIGHT + charHeight + (imageSize.y - y_base);
+                    ptr++;
+                    if (ptr >= samples) {
+                        ptr = 0;
+                    }
                 }
             }
 
-            int arraySize = (sampleData.length - firstSample) * 2;
+            double sx = (double) imageSize.x / (double) samples;
+            double sy = min == max ? 0 : (double) y_size / (double) (max - min);
+
+            if (auto && legend != 0) {
+                legendMax = String.format("%c%d", max >= 0 ? '+' : '-', Math.abs(max));
+                legendMaxY = MARGIN_HEIGHT + charHeight + (imageSize.y - y_base) - (int) Math.round((max - min) * sy);
+
+                legendMin = String.format("%c%d", min >= 0 ? '+' : '-', Math.abs(min));
+                legendMinY = MARGIN_HEIGHT + charHeight + (imageSize.y - y_base);
+            }
+
+            int arraySize = sampleCount * 2;
             if (linePoints.length != arraySize) {
                 linePoints = new int[arraySize];
             }
 
-            double x = firstSample * sx;
-            for (int i = firstSample, idx = 0; i < sampleData.length; i++) {
+            int idx = 0;
+            int ptr = firstSample;
+            double x = (samples - sampleCount) * sx;
+            for (int i = 0; i < sampleCount; i++) {
                 linePoints[idx++] = MARGIN_WIDTH + (int) Math.round(x);
-                linePoints[idx++] = MARGIN_HEIGHT + charHeight + (imageSize.y - y_base) - (int) Math.round((sampleData[i] - min) * sy);
+                linePoints[idx++] = MARGIN_HEIGHT + charHeight + (imageSize.y - y_base) - (int) Math.round((sampleData[ptr] - min) * sy);
+                ptr = (ptr + 1) & (samples - 1);
                 x += sx;
             }
         }
@@ -214,6 +223,7 @@ public class DebugScopeWindow extends DebugWindow {
         defaultColorIndex = 0;
 
         sampleCount = 0;
+        sampleIndex = 0;
 
         triggerChannel = -1;
         triggerArm = -1;
@@ -333,6 +343,7 @@ public class DebugScopeWindow extends DebugWindow {
 
             @Override
             public void paintControl(PaintEvent e) {
+                pendingRedraw.set(false);
                 paint(e.gc);
             }
 
@@ -341,6 +352,8 @@ public class DebugScopeWindow extends DebugWindow {
         GridData gridData = (GridData) canvas.getLayoutData();
         gridData.widthHint = MARGIN_WIDTH + imageSize.x + MARGIN_WIDTH;
         gridData.heightHint = MARGIN_HEIGHT + charHeight + imageSize.y + MARGIN_HEIGHT;
+
+        update();
     }
 
     void rate(KeywordIterator iter) {
@@ -411,6 +424,7 @@ public class DebugScopeWindow extends DebugWindow {
             }
             else if (isString(cmd)) {
                 channel(stringStrip(cmd), iter);
+                update();
             }
             else {
                 switch (cmd.toUpperCase()) {
@@ -451,7 +465,7 @@ public class DebugScopeWindow extends DebugWindow {
                         break;
 
                     case "CLOSE":
-                        shell.dispose();
+                        close();
                         break;
 
                     case "PC_KEY":
@@ -529,29 +543,33 @@ public class DebugScopeWindow extends DebugWindow {
     }
 
     void processSample(int sample) {
-        System.arraycopy(channelData[channelIndex].sampleData, 1, channelData[channelIndex].sampleData, 0, samples - 1);
-        channelData[channelIndex].sampleData[samples - 1] = sample;
+        channelData[channelIndex].sampleData[sampleIndex] = sample;
 
         channelIndex++;
         if (channelIndex >= channelData.length) {
             if (sampleCount < samples) {
                 sampleCount++;
             }
+            sampleIndex++;
+            if (sampleIndex >= samples) {
+                sampleIndex = 0;
+            }
 
             triggered = false;
 
             if (triggerChannel >= 0) {
                 if (sampleCount >= samples) {
-                    sample = channelData[triggerChannel].sampleData[(triggerOffset - 1) % samples];
+                    int offs = (sampleIndex - triggerOffset - 1) & (samples - 1);
+                    int triggerSample = channelData[triggerChannel].sampleData[offs];
                     if (armed) {
                         if (triggerFire >= triggerArm) {
-                            if (sample >= triggerFire) {
+                            if (triggerSample >= triggerFire) {
                                 triggered = true;
                                 armed = false;
                             }
                         }
                         else {
-                            if (sample <= triggerFire) {
+                            if (triggerSample <= triggerFire) {
                                 triggered = true;
                                 armed = false;
                             }
@@ -559,12 +577,12 @@ public class DebugScopeWindow extends DebugWindow {
                     }
                     else {
                         if (triggerFire >= triggerArm) {
-                            if (sample <= triggerFire) {
+                            if (triggerSample <= triggerFire) {
                                 armed = true;
                             }
                         }
                         else {
-                            if (sample >= triggerFire) {
+                            if (triggerSample >= triggerFire) {
                                 armed = true;
                             }
                         }
@@ -613,11 +631,11 @@ public class DebugScopeWindow extends DebugWindow {
         }
     }
 
-    void update() {
+    protected void update() {
         for (int i = 0; i < channelData.length; i++) {
             channelData[i].update();
         }
-        canvas.redraw();
+        super.update();
     }
 
     static String[] data = new String[] {

@@ -4,14 +4,15 @@
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.debug;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import org.eclipse.core.databinding.observable.Realm;
@@ -33,6 +34,7 @@ import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.swt.graphics.Transform;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Display;
 
@@ -70,32 +72,180 @@ public class DebugPlotWindow extends DebugWindow {
 
     boolean autoUpdate;
 
+    Image image;
+    GC imageGc;
+    FontDescriptor defaultFontDescriptor;
+    Transform textTransform;
+
+    ImageData canvasImageData;
     Image canvasImage;
 
-    Image image;
+    static class Sprite {
 
-    class Sprite {
+        ImageData imageData;
+        PaletteData paletteData;
+        byte[] alphaData;
 
-        int width;
-        int height;
-        RGB[] palette;
-        byte[] pixels;
-        byte[] alpha;
+        Map<String, Image> imageCache = new HashMap<>();
 
         public Sprite(int width, int height) {
-            this.width = width;
-            this.height = height;
-            this.palette = new RGB[256];
-            this.pixels = new byte[width * height];
-            this.alpha = new byte[256];
+            paletteData = new PaletteData(new RGB[256]);
+            Arrays.fill(paletteData.colors, new RGB(0, 0, 0));
 
-            Arrays.fill(palette, new RGB(0, 0, 0));
+            alphaData = new byte[256];
+
+            imageData = new ImageData(width, height, 8, paletteData, 4, new byte[width * height]);
+        }
+
+        Image getImage(int orient, int scale) {
+            String key = String.format("%d-%d", orient, scale);
+
+            Image scaledImage = imageCache.get(key);
+            if (scaledImage == null) {
+                scaledImage = new Image(null, transformImage(orient, scale));
+                imageCache.put(key, scaledImage);
+            }
+
+            return scaledImage;
+        }
+
+        ImageData transformImage(int orient, int scale) {
+            ImageData scaledImageData = new ImageData(imageData.width * scale, imageData.height * scale, 8, paletteData, 4, new byte[imageData.width * scale * imageData.height * scale]);
+
+            int x = 0;
+            int y = 0;
+
+            switch (orient & 7) {
+                case 0:
+                case 2:
+                case 4:
+                case 5:
+                    x = 0;
+                    break;
+                default:
+                    x = imageData.width - 1;
+                    break;
+            }
+            switch (orient & 7) {
+                case 0:
+                case 1:
+                case 4:
+                case 6:
+                    y = 0;
+                    break;
+                default:
+                    y = imageData.height - 1;
+                    break;
+            }
+
+            int idx = 0;
+            while (idx < imageData.data.length) {
+                int b = imageData.data[idx++] & 0xFF;
+                int alpha = alphaData[b] & 0xFF;
+                switch (orient) {
+                    case 0:
+                        if (x >= imageData.width) {
+                            x = 0;
+                            if (++y >= imageData.height) {
+                                y = 0;
+                            }
+                        }
+                        setPixel(scaledImageData, x++, y, b, alpha, scale);
+                        break;
+                    case 1:
+                        if (x < 0) {
+                            x = imageData.width - 1;
+                            if (++y >= imageData.height) {
+                                y = 0;
+                            }
+                        }
+                        setPixel(scaledImageData, x--, y, b, alpha, scale);
+                        break;
+                    case 2:
+                        if (x >= imageData.width) {
+                            x = 0;
+                            if (--y < 0) {
+                                y = imageData.height - 1;
+                            }
+                        }
+                        setPixel(scaledImageData, x++, y, b, alpha, scale);
+                        break;
+                    case 3:
+                        if (x < 0) {
+                            x = imageData.width - 1;
+                            if (--y < 0) {
+                                y = imageData.height - 1;
+                            }
+                        }
+                        setPixel(scaledImageData, x--, y, b, alpha, scale);
+                        break;
+                    case 4:
+                        if (y >= imageData.height) {
+                            y = 0;
+                            if (++x >= imageData.width) {
+                                x = 0;
+                            }
+                        }
+                        setPixel(scaledImageData, x, y++, b, alpha, scale);
+                        break;
+                    case 5:
+                        if (y < 0) {
+                            y = imageData.height - 1;
+                            if (++x >= imageData.width) {
+                                x = 0;
+                            }
+                        }
+                        setPixel(scaledImageData, x, y--, b, alpha, scale);
+                        break;
+                    case 6:
+                        if (y >= imageData.height) {
+                            y = 0;
+                            if (--x < 0) {
+                                x = imageData.width - 1;
+                            }
+                        }
+                        setPixel(scaledImageData, x, y++, b, alpha, scale);
+                        break;
+                    case 7:
+                        if (y < 0) {
+                            y = imageData.height - 1;
+                            if (--x < 0) {
+                                x = imageData.width - 1;
+                            }
+                        }
+                        setPixel(scaledImageData, x, y--, b, alpha, scale);
+                        break;
+                }
+            }
+
+            return scaledImageData;
+        }
+
+        void setPixel(ImageData imageData, int x, int y, int b, int alpha, int scale) {
+            int py = y * scale;
+            for (int cy = 0; cy < scale; cy++, py++) {
+                int px = x * scale;
+                for (int cx = 0; cx < scale; cx++, px++) {
+                    imageData.setAlpha(px, py, alpha);
+                    imageData.setPixel(px, py, b);
+                }
+            }
+        }
+
+        void dispose() {
+            for (Map.Entry<String, Image> entry : imageCache.entrySet()) {
+                entry.getValue().dispose();
+            }
+            imageCache.clear();
         }
 
     }
 
     public DebugPlotWindow(CircularBuffer transmitBuffer) {
         super(transmitBuffer);
+
+        defaultFontDescriptor = JFaceResources.getDefaultFontDescriptor();
+        textTransform = new Transform(display);
 
         x = y = 0;
         origin = new Point(0, 0);
@@ -150,8 +300,7 @@ public class DebugPlotWindow extends DebugWindow {
 
                 case "DOTSIZE":
                     if (iter.hasNextNumber()) {
-                        dotSize.x = iter.nextNumber();
-                        dotSize.y = dotSize.x;
+                        dotSize.x = dotSize.y = iter.nextNumber();
                         if (iter.hasNextNumber()) {
                             dotSize.y = iter.nextNumber();
                         }
@@ -203,28 +352,23 @@ public class DebugPlotWindow extends DebugWindow {
 
         image = new Image(display, new ImageData(imageSize.x, imageSize.y, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF)));
 
-        GC imageGc = new GC(image);
-        try {
-            imageGc.setBackground(backColor);
-            imageGc.fillRectangle(0, 0, imageSize.x, imageSize.y);
-        } finally {
-            imageGc.dispose();
-        }
+        imageGc = new GC(image);
+        imageGc.setBackground(backColor);
+        imageGc.fillRectangle(0, 0, imageSize.x, imageSize.y);
+        imageGc.setAntialias(SWT.ON);
 
-        canvasImage = new Image(display, new ImageData(imageSize.x, imageSize.y, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF)));
-
-        GC canvasImageGc = new GC(canvasImage);
-        try {
-            canvasImageGc.setBackground(backColor);
-            canvasImageGc.fillRectangle(0, 0, imageSize.x, imageSize.y);
-        } finally {
-            canvasImageGc.dispose();
-        }
+        canvasImageData = image.getImageData();
 
         canvas.addPaintListener(new PaintListener() {
 
             @Override
             public void paintControl(PaintEvent e) {
+                if (pendingRedraw.getAndSet(false)) {
+                    if (canvasImage != null) {
+                        canvasImage.dispose();
+                    }
+                    canvasImage = new Image(display, canvasImageData);
+                }
                 paint(e.gc);
             }
 
@@ -234,13 +378,22 @@ public class DebugPlotWindow extends DebugWindow {
 
             @Override
             public void widgetDisposed(DisposeEvent e) {
+                synchronized (DebugPlotWindow.this) {
+                    imageGc.dispose();
+                }
+                for (int i = 0; i < sprites.length; i++) {
+                    if (sprites[i] != null) {
+                        sprites[i].dispose();
+                    }
+                }
                 for (int i = 0; i < layer.length; i++) {
                     if (layer[i] != null) {
                         layer[i].dispose();
                     }
                 }
-                canvasImage.dispose();
-                imageGc.dispose();
+                if (canvasImage != null) {
+                    canvasImage.dispose();
+                }
                 image.dispose();
             }
 
@@ -310,12 +463,11 @@ public class DebugPlotWindow extends DebugWindow {
 
     @Override
     protected void paint(GC gc) {
-        Point canvasSize = canvas.getSize();
-
         gc.setAdvanced(true);
         gc.setAntialias(SWT.ON);
         gc.setInterpolation(SWT.OFF);
 
+        Point canvasSize = canvas.getSize();
         gc.drawImage(canvasImage, 0, 0, imageSize.x, imageSize.y, 0, 0, canvasSize.x, canvasSize.y);
     }
 
@@ -324,8 +476,9 @@ public class DebugPlotWindow extends DebugWindow {
         String cmd;
         Color tempColor;
 
-        GC imageGc = new GC(image);
-        try {
+        synchronized (DebugPlotWindow.this) {
+            imageGc.setAlpha(255);
+
             while (iter.hasNext()) {
                 cmd = iter.next().toUpperCase();
                 switch (cmd) {
@@ -506,9 +659,9 @@ public class DebugPlotWindow extends DebugWindow {
                                     int radiusX = iter.nextNumber();
                                     if (iter.hasNext()) {
                                         int radiusY = iter.nextNumber();
-                                        int sizeOverride = iter.hasNextNumber() ? iter.nextNumber() : 0;
+                                        int sizeOverride = iter.hasNextNumber() ? iter.nextNumber() : lineSize;
                                         int opacityOverride = iter.hasNextNumber() ? iter.nextNumber() : opacity;
-                                        obox(imageGc, width, height, sizeOverride, radiusX, radiusY, opacityOverride, color);
+                                        obox(imageGc, width, height, radiusX, radiusY, sizeOverride, opacityOverride, color);
                                     }
                                 }
                             }
@@ -531,19 +684,11 @@ public class DebugPlotWindow extends DebugWindow {
                         }
                         break;
                     case "TEXT": {
-                        int sizeOverride = textSize;
-                        int styleOverride = textStyle;
-                        if (iter.hasNextNumber()) {
-                            sizeOverride = iter.nextNumber();
-                        }
-                        if (iter.hasNextNumber()) {
-                            styleOverride = iter.nextNumber();
-                        }
-                        if (iter.hasNextNumber()) {
-                            iter.nextNumber();
-                        }
+                        int sizeOverride = iter.hasNextNumber() ? iter.nextNumber() : textSize;
+                        int styleOverride = iter.hasNextNumber() ? iter.nextNumber() : textStyle;
+                        int angleOverride = iter.hasNextNumber() ? iter.nextNumber() : textAngle;
                         if (iter.hasNextString()) {
-                            text(imageGc, iter.nextString(), sizeOverride, styleOverride, textColor);
+                            text(iter.nextString(), sizeOverride, styleOverride, angleOverride, textColor);
                         }
                         break;
                     }
@@ -558,15 +703,15 @@ public class DebugPlotWindow extends DebugWindow {
                                     Sprite sprite = new Sprite(xDim, yDim);
 
                                     int idx = 0;
-                                    while (idx < sprite.pixels.length) {
-                                        sprite.pixels[idx++] = (byte) iter.nextNumber();
+                                    while (idx < sprite.imageData.data.length) {
+                                        sprite.imageData.data[idx++] = (byte) iter.nextNumber();
                                     }
 
                                     idx = 0;
-                                    while (iter.hasNextNumber() && idx < sprite.palette.length) {
+                                    while (iter.hasNextNumber() && idx < sprite.paletteData.colors.length) {
                                         int c = iter.nextNumber();
-                                        sprite.alpha[idx] = (byte) ((c >> 24) & 0xFF);
-                                        sprite.palette[idx] = new RGB((c >> 16) & 0xFF, (c >> 8) & 0xFF, c & 0xFF);
+                                        sprite.alphaData[idx] = (byte) ((c >> 24) & 0xFF);
+                                        sprite.paletteData.colors[idx] = new RGB((c >> 16) & 0xFF, (c >> 8) & 0xFF, c & 0xFF);
                                         idx++;
                                     }
 
@@ -580,27 +725,13 @@ public class DebugPlotWindow extends DebugWindow {
                     case "SPRITE":
                         if (iter.hasNextNumber()) {
                             int id = iter.nextNumber();
-                            int orient = 0;
-                            int scale = 1;
-                            int opacityOverride = opacity;
-                            if (iter.hasNextNumber()) {
-                                orient = iter.nextNumber() & 7; // orient
-                            }
-                            if (iter.hasNextNumber()) {
-                                scale = iter.nextNumber() & 63; // scale
-                            }
-                            if (iter.hasNextNumber()) {
-                                opacityOverride = iter.nextNumber() & 255;
-                            }
+                            int orient = iter.hasNextNumber() ? iter.nextNumber() & 7 : 0;
+                            int scale = iter.hasNextNumber() ? iter.nextNumber() & 63 : 1;
+                            int opacityOverride = iter.hasNextNumber() ? iter.nextNumber() & 255 : opacity;
                             if (id >= 0 && id < sprites.length && sprites[id] != null && scale >= 1) {
-                                Image image = transformImage(sprites[id], orient);
-                                try {
-                                    Rectangle bounds = image.getBounds();
-                                    imageGc.setAlpha(opacityOverride);
-                                    imageGc.drawImage(image, 0, 0, bounds.width, bounds.height, x, y, bounds.width * scale, bounds.height * scale);
-                                } finally {
-                                    image.dispose();
-                                }
+                                Image image = sprites[id].getImage(orient, scale);
+                                imageGc.setAlpha(opacityOverride);
+                                imageGc.drawImage(image, x, y);
                             }
                         }
                         break;
@@ -648,7 +779,7 @@ public class DebugPlotWindow extends DebugWindow {
                         break;
 
                     case "CLOSE":
-                        shell.dispose();
+                        close();
                         break;
 
                     case "PC_KEY":
@@ -743,133 +874,11 @@ public class DebugPlotWindow extends DebugWindow {
                         break;
                 }
             }
-        } finally {
-            imageGc.dispose();
         }
 
         if (autoUpdate) {
             update();
         }
-    }
-
-    Image transformImage(Sprite sprite, int orient) {
-        ImageData imageData = new ImageData(sprite.width, sprite.height, 8, new PaletteData(sprite.palette), 4, new byte[sprite.pixels.length]);
-
-        int x = 0;
-        int y = 0;
-
-        switch (orient & 7) {
-            case 0:
-            case 2:
-            case 4:
-            case 5:
-                x = 0;
-                break;
-            default:
-                x = sprite.width - 1;
-                break;
-        }
-        switch (orient & 7) {
-            case 0:
-            case 1:
-            case 4:
-            case 6:
-                y = 0;
-                break;
-            default:
-                y = sprite.height - 1;
-                break;
-        }
-
-        int idx = 0;
-        while (idx < sprite.pixels.length) {
-            int b = sprite.pixels[idx++] & 0xFF;
-            int alpha = sprite.alpha[b] & 0xFF;
-            switch (orient) {
-                case 0:
-                    if (x >= imageData.width) {
-                        x = 0;
-                        if (++y >= imageData.height) {
-                            y = 0;
-                        }
-                    }
-                    imageData.setAlpha(x, y, alpha);
-                    imageData.setPixel(x++, y, b);
-                    break;
-                case 1:
-                    if (x < 0) {
-                        x = imageData.width - 1;
-                        if (++y >= imageData.height) {
-                            y = 0;
-                        }
-                    }
-                    imageData.setAlpha(x, y, alpha);
-                    imageData.setPixel(x--, y, b);
-                    break;
-                case 2:
-                    if (x >= imageData.width) {
-                        x = 0;
-                        if (--y < 0) {
-                            y = imageData.height - 1;
-                        }
-                    }
-                    imageData.setAlpha(x, y, alpha);
-                    imageData.setPixel(x++, y, b);
-                    break;
-                case 3:
-                    if (x < 0) {
-                        x = imageData.width - 1;
-                        if (--y < 0) {
-                            y = imageData.height - 1;
-                        }
-                    }
-                    imageData.setAlpha(x, y, alpha);
-                    imageData.setPixel(x--, y, b);
-                    break;
-                case 4:
-                    if (y >= imageData.height) {
-                        y = 0;
-                        if (++x >= imageData.width) {
-                            x = 0;
-                        }
-                    }
-                    imageData.setAlpha(x, y, alpha);
-                    imageData.setPixel(x, y++, b);
-                    break;
-                case 5:
-                    if (y < 0) {
-                        y = imageData.height - 1;
-                        if (++x >= imageData.width) {
-                            x = 0;
-                        }
-                    }
-                    imageData.setAlpha(x, y, alpha);
-                    imageData.setPixel(x, y--, b);
-                    break;
-                case 6:
-                    if (y >= imageData.height) {
-                        y = 0;
-                        if (--x < 0) {
-                            x = imageData.width - 1;
-                        }
-                    }
-                    imageData.setAlpha(x, y, alpha);
-                    imageData.setPixel(x, y++, b);
-                    break;
-                case 7:
-                    if (y < 0) {
-                        y = imageData.height - 1;
-                        if (--x < 0) {
-                            x = imageData.width - 1;
-                        }
-                    }
-                    imageData.setAlpha(x, y, alpha);
-                    imageData.setPixel(x, y--, b);
-                    break;
-            }
-        }
-
-        return new Image(display, imageData);
     }
 
     Color color(KeywordIterator iter) {
@@ -932,63 +941,60 @@ public class DebugPlotWindow extends DebugWindow {
         }
     }
 
-    void oval(GC imageGc, int width, int height, int lineSize, int opacity, Color color) {
-        imageGc.setAlpha(opacity);
-        imageGc.setLineWidth(lineSize);
-        imageGc.setAntialias(SWT.ON);
-        imageGc.setForeground(color);
+    void oval(GC gc, int width, int height, int lineSize, int opacity, Color color) {
+        gc.setAlpha(opacity);
+        gc.setLineWidth(lineSize);
+        gc.setForeground(color);
 
         width -= lineSize * 2;
         height -= lineSize * 2;
 
         if (lineSize == 0) {
-            imageGc.setBackground(color);
-            imageGc.fillOval(x - width / 2, y - height / 2, width, height);
+            gc.setBackground(color);
+            gc.fillOval(x - width / 2, y - height / 2, width, height);
         }
-        imageGc.drawOval(x - width / 2, y - height / 2, width, height);
+        gc.drawOval(x - width / 2, y - height / 2, width, height);
     }
 
-    void box(GC imageGc, int width, int height, int lineSize, int opacity, Color color) {
-        imageGc.setAlpha(opacity);
-        imageGc.setLineWidth(lineSize);
-        imageGc.setAntialias(SWT.ON);
-        imageGc.setForeground(color);
+    void box(GC gc, int width, int height, int lineSize, int opacity, Color color) {
+        gc.setAlpha(opacity);
+        gc.setLineWidth(lineSize);
+        gc.setForeground(color);
         if (lineSize == 0) {
-            imageGc.setBackground(color);
-            imageGc.fillRectangle(x - width / 2, y - height / 2, width, height);
+            gc.setBackground(color);
+            gc.fillRectangle(x - width / 2, y - height / 2, width, height);
         }
-        imageGc.drawRectangle(x - width / 2, y - height / 2, width, height);
+        gc.drawRectangle(x - width / 2, y - height / 2, width, height);
     }
 
-    void obox(GC imageGc, int width, int height, int radiusX, int radiusY, int lineSize, int opacity, Color color) {
-        imageGc.setAlpha(opacity);
-        imageGc.setLineWidth(lineSize);
-        imageGc.setAntialias(SWT.ON);
-        imageGc.setForeground(color);
+    void obox(GC gc, int width, int height, int radiusX, int radiusY, int lineSize, int opacity, Color color) {
+        gc.setAlpha(opacity);
+        gc.setLineWidth(lineSize);
+        gc.setForeground(color);
         if (lineSize == 0) {
-            imageGc.setBackground(color);
-            imageGc.fillRectangle(x - width / 2, y - height / 2, width, height);
+            gc.setBackground(color);
+            gc.fillRectangle(x - width / 2, y - height / 2, width, height);
         }
-        imageGc.drawRoundRectangle(x - width / 2, y - height / 2, width, height, radiusX, radiusY);
+        gc.drawRoundRectangle(x - width / 2, y - height / 2, width, height, radiusX, radiusY);
     }
 
-    void line(GC imageGc, int dx, int dy, int lineSize, Color color) {
-        imageGc.setAntialias(SWT.ON);
-        imageGc.setForeground(color);
-        imageGc.setLineWidth(lineSize >> precise);
+    void line(GC gc, int dx, int dy, int lineSize, Color color) {
+        gc.setForeground(color);
+        gc.setLineWidth(lineSize >> precise);
 
-        imageGc.setAlpha(opacity);
-        imageGc.drawLine(x >> precise, y >> precise, dx >> precise, dy >> precise);
+        gc.setAlpha(opacity);
+        gc.drawLine(x >> precise, y >> precise, dx >> precise, dy >> precise);
 
         x = dx;
         y = dy;
     }
 
-    void text(GC imageGc, String str, int size, int style, Color color) {
-        imageGc.setAntialias(SWT.ON);
+    void text(String str, int size, int style, int angle, Color color) {
+        int lineWidth = 0;
+
         imageGc.setForeground(color);
 
-        FontDescriptor fontDescriptor = JFaceResources.getDefaultFontDescriptor();
+        FontDescriptor fontDescriptor = defaultFontDescriptor;
 
         switch (style & 0b11) {
             case 0b00:
@@ -997,6 +1003,7 @@ public class DebugPlotWindow extends DebugWindow {
             case 0b10:
             case 0b11:
                 fontDescriptor = fontDescriptor.withStyle(SWT.BOLD);
+                lineWidth = 2;
                 break;
         }
         if ((style & 0b100) != 0) {
@@ -1008,56 +1015,59 @@ public class DebugPlotWindow extends DebugWindow {
         try {
             imageGc.setFont(font);
 
+            textTransform.identity();
+            textTransform.translate(x, y);
+            textTransform.rotate(angle);
+            imageGc.setTransform(textTransform);
+
             Point extent = imageGc.stringExtent(str);
-            int tx = x - extent.x; // left (default)
+            int tx = -extent.x; // left (default)
             switch (style & 0b00110000) { // horizontal justification
                 case 0b00000000: // middle
-                    tx = x - extent.x / 2;
+                    tx = -extent.x / 2;
                     break;
                 case 0b00100000: // right
-                    tx = x;
+                    tx = 0;
                     break;
             }
-            int ty = y - extent.y; // bottom (default)
+            int ty = -extent.y; // bottom (default)
             switch (style & 0b11000000) { // vertical justification
                 case 0b00000000: // middle
-                    ty = y - extent.y / 2;
+                    ty = -extent.y / 2;
                     break;
                 case 0b11000000: // top
-                    ty = y;
+                    ty = 0;
                     break;
             }
 
             imageGc.drawText(str, tx, ty, true);
             if ((style & 0b1000) != 0) { // underline
-                imageGc.setLineWidth(0);
+                imageGc.setLineWidth(lineWidth);
                 imageGc.drawLine(tx, ty + extent.y, tx + extent.x, ty + extent.y);
             }
         } finally {
             font.dispose();
         }
+
+        imageGc.setTransform(null);
     }
 
-    void update() {
-        GC canvasImageGc = new GC(canvasImage);
-        try {
-            canvasImageGc.drawImage(image, 0, 0);
-        } finally {
-            canvasImageGc.dispose();
+    protected void update() {
+        if (image.isDisposed()) {
+            return;
         }
-        canvas.redraw();
+        canvasImageData = image.getImageData();
+        super.update();
     }
 
     static String[] data = new String[] {
-        "title 'Test' size 640 480 hidexy update",
+        "size 384 384 update",
+        "cartesian 1",
+        "spritedef 0 16 16 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $19 $19 $19 $19 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $19 $19 $1F $1F $18 $18 $19 $00 $00 $00 $00 $00 $00 $00 $00 $19 $1F $1F $1F $1F $1F $18 $19 $00 $00 $00 $00 $00 $00 $00 $19 $21 $1F $21 $21 $19 $19 $19 $19 $19 $19 $00 $00 $00 $00 $19 $21 $21 $21 $19 $19 $19 $19 $19 $19 $19 $19 $19 $00 $00 $00 $19 $21 $21 $19 $19 $11 $11 $11 $11 $19 $19 $19 $00 $00 $00 $19 $19 $19 $19 $19 $11 $09 $09 $19 $09 $19 $00 $00 $00 $00 $00 $19 $09 $09 $19 $19 $11 $09 $09 $19 $09 $19 $19 $19 $00 $00 $00 $19 $09 $09 $19 $19 $19 $11 $09 $09 $09 $08 $08 $08 $19 $00 $00 $19 $11 $09 $11 $19 $11 $09 $19 $11 $09 $09 $09 $09 $19 $00 $00 $00 $19 $11 $11 $11 $09 $19 $19 $19 $11 $11 $11 $19 $00 $00 $0000_0000 $FFF8_F8F8 $FFF8_F8F8 $FFF8_F8F8 $FFF8_D898 $FFF8_D890 $FFF8_D848 $FFF0_D848 $FFF8_C890 $FFF0_A070 $FFF8_9068 $FFF8_9838 $FFF8_9818 $FFD8_9048 $FF68_B0D8 $FF60_A8E0 $FF48_90B0 $FFF0_8868 $FFE8_9048 $FFB8_6800 $FFB0_6800 $FF50_88B8 $FF48_6890 $FF40_6090 $FFF8_3050 $FF30_3030 $FFF8_2048 $FFD8_2800 $FFF8_0808 $FF20_2020 $FFD8_0020 $FFD8_0028 $FFF8_F8F8 $FFD8_F8F8 $FFF8_D800 $FFA0_E820 $FFF0_D0B0 $FFF8_D088 $FFF8_C8C0 $FFF8_A830 $FF80_C030 $FFF8_9020 $FFD0_A000 $FFA0_7800 $FF58_9800 $FFE0_5810 $FFF8_4848 $FF98_4800 $FF30_3030 $FFF8_2820 $FFD0_0020 $FF20_2020",
+        "spritedef 1 16 16 $00 $00 $00 $19 $19 $11 $11 $09 $09 $19 $19 $19 $19 $00 $00 $00 $00 $00 $19 $19 $19 $19 $11 $11 $11 $11 $11 $19 $00 $00 $00 $00 $00 $00 $19 $21 $1F $19 $19 $19 $19 $19 $19 $00 $00 $00 $00 $00 $00 $19 $21 $1F $18 $1F $19 $19 $03 $03 $03 $19 $00 $00 $00 $00 $00 $19 $21 $1F $18 $1F $19 $08 $03 $03 $03 $03 $19 $00 $00 $00 $00 $19 $21 $1F $1F $18 $19 $08 $08 $03 $03 $03 $19 $00 $00 $00 $00 $19 $19 $21 $1F $1F $1F $19 $08 $08 $08 $19 $19 $19 $00 $00 $00 $19 $19 $19 $21 $21 $21 $19 $19 $19 $19 $0F $03 $19 $00 $00 $00 $00 $19 $17 $19 $19 $19 $15 $03 $03 $0F $0F $03 $19 $00 $00 $00 $00 $19 $17 $17 $17 $15 $15 $15 $0F $0F $15 $15 $19 $00 $00 $00 $00 $19 $17 $17 $15 $15 $15 $15 $15 $15 $15 $19 $00 $00 $00 $00 $00 $19 $17 $17 $17 $17 $17 $17 $17 $17 $17 $19 $00 $00 $00 $00 $00 $00 $19 $19 $19 $19 $19 $19 $19 $19 $19 $00 $00 $00 $00 $00 $00 $00 $19 $13 $13 $12 $12 $07 $19 $00 $00 $00 $00 $00 $00 $00 $00 $00 $19 $13 $13 $13 $12 $12 $07 $19 $00 $00 $00 $00 $00 $00 $00 $00 $19 $19 $19 $19 $19 $19 $19 $19 $00 $00 $00 $00 $00 $0000_0000 $FFF8_F8F8 $FFF8_F8F8 $FFF8_F8F8 $FFF8_D898 $FFF8_D890 $FFF8_D848 $FFF0_D848 $FFF8_C890 $FFF0_A070 $FFF8_9068 $FFF8_9838 $FFF8_9818 $FFD8_9048 $FF68_B0D8 $FF60_A8E0 $FF48_90B0 $FFF0_8868 $FFE8_9048 $FFB8_6800 $FFB0_6800 $FF50_88B8 $FF48_6890 $FF40_6090 $FFF8_3050 $FF30_3030 $FFF8_2048 $FFD8_2800 $FFF8_0808 $FF20_2020 $FFD8_0020 $FFD8_0028 $FFF8_F8F8 $FFD8_F8F8 $FFF8_D800 $FFA0_E820 $FFF0_D0B0 $FFF8_D088 $FFF8_C8C0 $FFF8_A830 $FF80_C030 $FFF8_9020 $FFD0_A000 $FFA0_7800 $FF58_9800 $FFE0_5810 $FFF8_4848 $FF98_4800 $FF30_3030 $FFF8_2820 $FFD0_0020 $FF20_2020",
         "clear",
-        "set 320 0 line 320 480",
-        "set 0 240 line 640 240",
-        "set 320 240 yellow text 14 %0000_0011 'CENTERED'",
-        "set 160 240 yellow text 14 %1100_0001 'TOP'",
-        "set 480 240 yellow text 14 %1000_0010 'BOTTOM'",
-        "set 320 120 yellow text 14 %0011_0000 'LEFT'",
-        "set 320 360 yellow text 14 %0010_0000 'RIGHT'",
+        "set 0, 0 sprite 0 0 8",
+        "set 0, 128 sprite 0 0 8",
         "update",
     };
 

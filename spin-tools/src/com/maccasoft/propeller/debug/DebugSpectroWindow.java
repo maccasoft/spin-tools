@@ -4,8 +4,7 @@
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.debug;
@@ -31,9 +30,6 @@ import com.maccasoft.propeller.internal.CircularBuffer;
 
 public class DebugSpectroWindow extends DebugWindow {
 
-    ImageData imageData;
-    Image image;
-
     int x;
     int y;
     int traceMode;
@@ -47,6 +43,7 @@ public class DebugSpectroWindow extends DebugWindow {
 
     int samples;
     int sampleCount;
+    int sampleIndex;
 
     int range;
     boolean logScale;
@@ -63,6 +60,10 @@ public class DebugSpectroWindow extends DebugWindow {
 
     int[] FFTsamp;
     int[] FFTpower;
+
+    ImageData imageData;
+    ImageData canvasImageData;
+    Image canvasImage;
 
     static double log2(int value) {
         return Math.log(value) / Math.log(2.0);
@@ -251,12 +252,18 @@ public class DebugSpectroWindow extends DebugWindow {
         }
 
         imageData = new ImageData(imageSize.x, imageSize.y, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF));
-        image = new Image(display, imageData);
+        canvasImageData = new ImageData(imageSize.x, imageSize.y, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF));
 
         canvas.addPaintListener(new PaintListener() {
 
             @Override
             public void paintControl(PaintEvent e) {
+                if (pendingRedraw.getAndSet(false)) {
+                    if (canvasImage != null) {
+                        canvasImage.dispose();
+                    }
+                    canvasImage = new Image(display, canvasImageData);
+                }
                 paint(e.gc);
             }
 
@@ -266,7 +273,9 @@ public class DebugSpectroWindow extends DebugWindow {
 
             @Override
             public void widgetDisposed(DisposeEvent e) {
-                image.dispose();
+                if (canvasImage != null) {
+                    canvasImage.dispose();
+                }
             }
 
         });
@@ -286,12 +295,12 @@ public class DebugSpectroWindow extends DebugWindow {
 
     @Override
     protected void paint(GC gc) {
-        Point canvasSize = canvas.getSize();
-
         gc.setAdvanced(true);
         gc.setAntialias(SWT.ON);
         gc.setInterpolation(SWT.OFF);
-        gc.drawImage(image, 0, 0, imageSize.x, imageSize.y, 0, 0, canvasSize.x, canvasSize.y);
+
+        Point canvasSize = canvas.getSize();
+        gc.drawImage(canvasImage, 0, 0, imageSize.x, imageSize.y, 0, 0, canvasSize.x, canvasSize.y);
     }
 
     @Override
@@ -330,7 +339,7 @@ public class DebugSpectroWindow extends DebugWindow {
                         break;
 
                     case "CLOSE":
-                        shell.dispose();
+                        close();
                         break;
 
                     case "PC_KEY":
@@ -346,40 +355,38 @@ public class DebugSpectroWindow extends DebugWindow {
     }
 
     void processSample(int sample) {
-        System.arraycopy(FFTsamp, 1, FFTsamp, 0, samples - 1);
-        FFTsamp[samples - 1] = sample;
+        FFTsamp[sampleIndex] = sample;
 
+        sampleIndex = (sampleIndex + 1) % samples;
         if (sampleCount < samples) {
             sampleCount++;
         }
-        if (rateCount < rate) {
-            rateCount++;
-        }
-
-        if (sampleCount >= samples && rateCount >= rate) {
-            fft.performFFT(FFTMag, FFTsamp, FFTpower);
-
-            double scale = (double) 255 / (double) range;
-
-            for (int i = FFTfirst, idx = 0; i <= FFTlast; i++) {
-                int v = FFTpower[i];
-
-                if (logScale) {
-                    v = (int) Math.round(log2(v + 1) / log2((range + 1)) * range);
-                }
-                int p = Math.min((int) (v * scale), 255);
-                stepTrace(colorMode.translateColor(p, colorTune));
+        if (sampleCount >= samples) {
+            if (rateCount < rate) {
+                rateCount++;
             }
+            if (rateCount >= rate) {
+                fft.performFFT(FFTMag, FFTsamp, (sampleIndex - samples) & (samples - 1), FFTpower);
 
-            update();
-            rateCount = 0;
+                double scale = (double) 255 / (double) range;
+                for (int i = FFTfirst, idx = 0; i <= FFTlast; i++) {
+                    int v = FFTpower[i];
+                    if (logScale) {
+                        v = (int) Math.round(log2(v + 1) / log2((range + 1)) * range);
+                    }
+                    int p = Math.min((int) (v * scale), 255);
+                    stepTrace(colorMode.translateColor(p, colorTune));
+                }
+                update();
+
+                rateCount = 0;
+            }
         }
     }
 
-    void update() {
-        image.dispose();
-        image = new Image(canvas.getDisplay(), imageData);
-        canvas.redraw();
+    protected void update() {
+        System.arraycopy(imageData.data, 0, canvasImageData.data, 0, canvasImageData.data.length);
+        super.update();
     }
 
     void colorMode(String cmd, KeywordIterator iter) {

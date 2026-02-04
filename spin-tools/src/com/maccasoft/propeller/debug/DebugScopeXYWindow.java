@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.debug;
@@ -75,31 +74,43 @@ public class DebugScopeXYWindow extends DebugWindow {
     class Channel {
         String name;
         Color color;
-        List<Point> points = new ArrayList<>();
+        List<Point> data = new ArrayList<>();
+
+        Point[] points;
 
         Channel(String name, Color color) {
             this.name = name;
             this.color = color;
+            this.points = new Point[0];
         }
 
         void add(Point pt) {
             pt.x += MARGIN_WIDTH;
             pt.y += MARGIN_HEIGHT + charHeight * channelData.length + MARGIN_HEIGHT;
 
-            points.add(pt);
+            data.add(pt);
 
             if (samples != 0) {
-                while (points.size() > samples) {
-                    points.remove(0);
+                while (data.size() > samples) {
+                    data.remove(0);
                 }
             }
         }
 
+        void update() {
+            points = data.toArray(points);
+        }
+
         void draw(GC gc) {
             gc.setBackground(color);
-            for (Point pt : points) {
-                gc.fillOval(pt.x - dotSize / 2, pt.y - dotSize / 2, dotSize + 1, dotSize + 1);
+            for (int i = 0; i < points.length; i++) {
+                gc.fillOval(points[i].x - dotSize / 2, points[i].y - dotSize / 2, dotSize + 1, dotSize + 1);
             }
+        }
+
+        void clear() {
+            data.clear();
+            points = new Point[0];
         }
 
     }
@@ -278,6 +289,7 @@ public class DebugScopeXYWindow extends DebugWindow {
 
             @Override
             public void paintControl(PaintEvent e) {
+                pendingRedraw.set(false);
                 paint(e.gc);
             }
 
@@ -389,7 +401,7 @@ public class DebugScopeXYWindow extends DebugWindow {
                 switch (cmd.toUpperCase()) {
                     case "CLEAR":
                         for (int i = 0; i < channelData.length; i++) {
-                            channelData[i].points.clear();
+                            channelData[i].clear();
                         }
                         break;
 
@@ -398,7 +410,7 @@ public class DebugScopeXYWindow extends DebugWindow {
                         break;
 
                     case "CLOSE":
-                        shell.dispose();
+                        close();
                         break;
 
                     case "PC_KEY":
@@ -421,7 +433,7 @@ public class DebugScopeXYWindow extends DebugWindow {
             channelIndex++;
             if (channelIndex >= channelData.length) {
                 if (++rateCount >= rate) {
-                    canvas.redraw();
+                    update();
                     rateCount = 0;
                 }
                 channelIndex = 0;
@@ -464,8 +476,12 @@ public class DebugScopeXYWindow extends DebugWindow {
         return new Point((imageSize.x / 2) + (int) Math.round(x * scale), (imageSize.y / 2) - (int) Math.round(y * scale));
     }
 
-    void update() {
-        canvas.redraw();
+    @Override
+    protected void update() {
+        for (int i = 0; i < channelData.length; i++) {
+            channelData[i].update();
+        }
+        super.update();
     }
 
     static final String[] data = new String[] {

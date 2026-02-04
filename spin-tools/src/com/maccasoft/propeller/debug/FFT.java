@@ -4,8 +4,7 @@
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.debug;
@@ -38,14 +37,16 @@ public class FFT {
         }
     }
 
-    public void performFFT(int FFTmag, int[] FFTsamp, int[] FFTpower) {
+    public void performFFT(int FFTmag, int[] FFTsamp, int index, int[] FFTpower) {
         int i1, i2, i3, i4, c1, c2, th, ptra, ptrb;
         long ax, ay, bx, by, rx, ry;
 
         // Load samples into (real,imag) with Hanning window applied
+        i2 = index;
         for (i1 = 0; i1 < 1 << FFTexp; i1++) {
-            FFTreal[i1] = FFTsamp[i1] * FFTwin[i1];
+            FFTreal[i1] = FFTsamp[i2] * FFTwin[i1];
             FFTimag[i1] = 0;
+            i2 = (i2 + 1) % (1 << FFTexp);
         }
 
         // Perform FFT on (real,imag)

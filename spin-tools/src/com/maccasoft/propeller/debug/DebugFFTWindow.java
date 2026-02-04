@@ -4,8 +4,7 @@
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.debug;
@@ -61,6 +60,7 @@ public class DebugFFTWindow extends DebugWindow {
     Channel[] channelData;
 
     int sampleCount;
+    int sampleIndex;
 
     int rate;
     int rateCount;
@@ -115,10 +115,11 @@ public class DebugFFTWindow extends DebugWindow {
             double sx = (double) imageSize.x / (double) (FFTlast - FFTfirst);
             double sy = (double) (tall - 1) / (double) high;
 
+            fft.performFFT(mag, FFTsamp, (sampleIndex - samples) & (samples - 1), FFTpower);
+
             double x = 0;
             for (int i = FFTfirst, idx = 0; i <= FFTlast; i++) {
                 int v = FFTpower[i];
-
                 if (logScale) {
                     v = (int) Math.round(log2(v + 1) / log2((high + 1)) * high);
                 }
@@ -325,6 +326,7 @@ public class DebugFFTWindow extends DebugWindow {
 
             @Override
             public void paintControl(PaintEvent e) {
+                pendingRedraw.set(false);
                 paint(e.gc);
             }
 
@@ -415,7 +417,7 @@ public class DebugFFTWindow extends DebugWindow {
                         break;
 
                     case "CLOSE":
-                        shell.dispose();
+                        close();
                         break;
 
                     case "PC_KEY":
@@ -499,35 +501,30 @@ public class DebugFFTWindow extends DebugWindow {
     }
 
     void processSample(int sample) {
-        System.arraycopy(channelData[channelIndex].FFTsamp, 1, channelData[channelIndex].FFTsamp, 0, samples - 1);
-        channelData[channelIndex].FFTsamp[samples - 1] = sample;
+        channelData[channelIndex].FFTsamp[sampleIndex] = sample;
 
         channelIndex++;
         if (channelIndex >= channelData.length) {
+            sampleIndex = (sampleIndex + 1) % samples;
             if (sampleCount < samples) {
                 sampleCount++;
             }
-            if (rateCount < rate) {
+            if (sampleCount >= samples) {
                 rateCount++;
-            }
-
-            if (sampleCount >= samples && rateCount >= rate) {
-                for (int i = 0; i < channelData.length; i++) {
-                    fft.performFFT(channelData[i].mag, channelData[i].FFTsamp, channelData[i].FFTpower);
+                if (rateCount >= rate) {
+                    update();
+                    rateCount = 0;
                 }
-                update();
-                rateCount = 0;
             }
-
             channelIndex = 0;
         }
     }
 
-    void update() {
+    protected void update() {
         for (int i = 0; i < channelData.length; i++) {
             channelData[i].update();
         }
-        canvas.redraw();
+        super.update();
     }
 
     static String[] data = new String[] {
@@ -2607,21 +2604,6 @@ public class DebugFFTWindow extends DebugWindow {
 
             @Override
             public void run() {
-                /*int FFTExp = (int) (Math.log(2048) / Math.log(2));
-                int FFTfirst = 0;
-                int FFTlast = 127;
-
-                FFT fft = new FFT(FFTExp, FFTfirst, FFTlast);
-
-                int idx = 0;
-                for (int i = 2; i < data.length; i++) {
-                    KeywordIterator iter = new KeywordIterator(data[i]);
-                    fft.FFTsamp[idx++] = iter.nextNumber();
-                }
-                fft.perform();
-
-                System.out.println();*/
-
                 try {
                     DebugWindow window = new DebugFFTWindow(new CircularBuffer(128));
                     window.create();

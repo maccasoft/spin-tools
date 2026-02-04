@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.debug;
@@ -59,6 +58,9 @@ public class DebugTermWindow extends DebugWindow {
     Color currentTextBackground;
 
     int prevCh = 0;
+
+    ImageData canvasImageData;
+    Image canvasImage;
 
     public DebugTermWindow(CircularBuffer transmitBuffer) {
         super(transmitBuffer);
@@ -169,6 +171,7 @@ public class DebugTermWindow extends DebugWindow {
         imageSize = new Point(columns * fontWidth, rows * fontHeight);
 
         image = new Image(display, new ImageData(imageSize.x, imageSize.y, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF)));
+        canvasImageData = image.getImageData();
 
         currentTextColor = textForeground[textColor];
         currentTextBackground = textBackground[textColor];
@@ -177,6 +180,12 @@ public class DebugTermWindow extends DebugWindow {
 
             @Override
             public void paintControl(PaintEvent e) {
+                if (pendingRedraw.getAndSet(false)) {
+                    if (canvasImage != null) {
+                        canvasImage.dispose();
+                    }
+                    canvasImage = new Image(display, canvasImageData);
+                }
                 paint(e.gc);
             }
 
@@ -187,8 +196,10 @@ public class DebugTermWindow extends DebugWindow {
             @Override
             public void widgetDisposed(DisposeEvent e) {
                 image.dispose();
-
                 textFont.dispose();
+                if (canvasImage != null) {
+                    canvasImage.dispose();
+                }
             }
 
         });
@@ -203,13 +214,12 @@ public class DebugTermWindow extends DebugWindow {
 
     @Override
     protected void paint(GC gc) {
-        Point canvasSize = canvas.getSize();
-
         gc.setAdvanced(true);
         gc.setAntialias(SWT.ON);
         gc.setInterpolation(SWT.OFF);
 
-        gc.drawImage(image, 0, 0, imageSize.x, imageSize.y, 0, 0, canvasSize.x, canvasSize.y);
+        Point canvasSize = canvas.getSize();
+        gc.drawImage(canvasImage, 0, 0, imageSize.x, imageSize.y, 0, 0, canvasSize.x, canvasSize.y);
     }
 
     @Override
@@ -488,8 +498,12 @@ public class DebugTermWindow extends DebugWindow {
         return new Color(display, (color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF);
     }
 
-    void update() {
-        canvas.redraw();
+    protected void update() {
+        if (image.isDisposed()) {
+            return;
+        }
+        canvasImageData = image.getImageData();
+        super.update();
     }
 
     void scroll(GC gc, int x, int y, int width, int height, int direction, Color backColor) {

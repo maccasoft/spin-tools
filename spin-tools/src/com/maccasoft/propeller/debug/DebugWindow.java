@@ -4,13 +4,13 @@
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.debug;
 
 import java.io.File;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.lang3.BitField;
 import org.eclipse.swt.SWT;
@@ -76,6 +76,7 @@ public abstract class DebugWindow {
     protected Shell shell;
 
     protected Canvas canvas;
+    protected AtomicBoolean pendingRedraw;
 
     protected Point imageSize;
 
@@ -130,6 +131,8 @@ public abstract class DebugWindow {
 
         xDirection = 0;
         yDirection = 0;
+
+        pendingRedraw = new AtomicBoolean(true);
     }
 
     public File getCurrentDirectory() {
@@ -268,6 +271,19 @@ public abstract class DebugWindow {
                 mousePack = mouseWheel.setValue(mousePack, e.count);
             }
         });
+    }
+
+    protected void update() {
+        if (canvas.isDisposed()) {
+            return;
+        }
+        if (!pendingRedraw.getAndSet(true)) {
+            display.asyncExec(() -> {
+                if (!canvas.isDisposed()) {
+                    canvas.redraw();
+                }
+            });
+        }
     }
 
     protected void paint(GC gc) {
@@ -422,20 +438,23 @@ public abstract class DebugWindow {
         return PackMode.NONE();
     }
 
-    protected void save(KeywordIterator iter) {
-        boolean window = false;
+    protected void close() {
+        display.asyncExec(() -> shell.dispose());
+    }
 
+    protected void save(KeywordIterator iter) {
         if (iter.hasNext()) {
             String key = iter.next();
-            if (key.equalsIgnoreCase("WINDOW")) {
-                window = true;
+            boolean window = "WINDOW".equalsIgnoreCase(key);
+            if (window) {
                 if (!iter.hasNext()) {
                     return;
                 }
                 key = iter.next();
             }
             if (isString(key)) {
-                doSaveBitmap(stringStrip(key), window);
+                String fileName = stringStrip(key);
+                display.syncExec(() -> doSaveBitmap(fileName, window));
             }
         }
     }

@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.debug;
@@ -64,6 +63,7 @@ public class DebugLogicWindow extends DebugWindow {
     int holdOffCount;
 
     int sampleCount;
+    int sampleIndex;
 
     Font font;
     int textWidth;
@@ -74,38 +74,42 @@ public class DebugLogicWindow extends DebugWindow {
         String name;
         Color color;
 
+        int[] linePoints;
+
         Channel(int mask, String name, Color color) {
             this.mask = mask;
             this.name = name;
             this.color = color;
+            this.linePoints = new int[0];
         }
 
-        void plot(GC gc, int lineY) {
+        void update(int lineY) {
             int y;
-            int x = MARGIN_WIDTH * 2 + textWidth;
-            int index = 0;
+            int x = MARGIN_WIDTH * 2 + textWidth + (sampleData.length - sampleCount) * spacing;
+            int ptr = (sampleIndex - sampleCount) & (sampleData.length - 1);
+            int idx = 0;
 
+            int arraySize = sampleCount * 4;
+            if (linePoints.length != arraySize) {
+                linePoints = new int[arraySize];
+            }
+
+            for (int i = 0; i < sampleCount; i++) {
+                y = (sampleData[ptr] & mask) == 0 ? lineY + charHeight : lineY;
+                linePoints[idx++] = x;
+                linePoints[idx++] = y;
+                x += spacing;
+                linePoints[idx++] = x;
+                linePoints[idx++] = y;
+                ptr = (ptr + 1) & (sampleData.length - 1);
+            }
+        }
+
+        void plot(GC gc) {
+            gc.setLineStyle(SWT.LINE_SOLID);
             gc.setForeground(color);
             gc.setLineWidth(lineSize);
-
-            y = lineY;
-            if ((sampleData[index++] & mask) == 0) {
-                y += charHeight;
-            }
-            gc.drawLine(x, y, x + spacing, y);
-            x += spacing;
-
-            for (int i = 1; i < sampleData.length; i++, index++) {
-                int newY = lineY;
-                if ((sampleData[index] & mask) == 0) {
-                    newY += charHeight;
-                }
-                gc.drawLine(x, y, x, newY);
-                gc.drawLine(x, newY, x + spacing, newY);
-
-                x += spacing;
-                y = newY;
-            }
+            gc.drawPolyline(linePoints);
         }
 
     }
@@ -140,6 +144,7 @@ public class DebugLogicWindow extends DebugWindow {
         holdOffCount = holdOff;
 
         sampleCount = 0;
+        sampleIndex = 0;
     }
 
     @Override
@@ -266,6 +271,7 @@ public class DebugLogicWindow extends DebugWindow {
 
             @Override
             public void paintControl(PaintEvent e) {
+                pendingRedraw.set(false);
                 paint(e.gc);
             }
 
@@ -408,7 +414,7 @@ public class DebugLogicWindow extends DebugWindow {
         int y = MARGIN_HEIGHT + charHeight;
 
         gc.setFont(font);
-        for (int i = 0; i < channelData.length; i++) {
+        for (int i = channelData.length - 1; i >= 0; i--) {
             Point extent = gc.stringExtent(channelData[i].name);
             gc.setForeground(channelData[i].color);
             gc.drawString(channelData[i].name, MARGIN_WIDTH + textWidth - extent.x, y - extent.y - 1, true);
@@ -424,13 +430,12 @@ public class DebugLogicWindow extends DebugWindow {
         }
 
         y = MARGIN_HEIGHT;
-        for (int i = 0; i < channelData.length; i++) {
+        for (int i = channelData.length - 1; i >= 0; i--) {
             gc.setLineStyle(SWT.LINE_DOT);
             gc.setForeground(gridColor);
             gc.drawLine(MARGIN_WIDTH + textWidth, y, MARGIN_WIDTH + textWidth + imageSize.x, y);
 
-            gc.setLineStyle(SWT.LINE_SOLID);
-            channelData[i].plot(gc, y);
+            channelData[i].plot(gc);
 
             y += charHeight + VERTICAL_SPACING - 1;
         }
@@ -491,7 +496,7 @@ public class DebugLogicWindow extends DebugWindow {
                         break;
 
                     case "CLOSE":
-                        shell.dispose();
+                        close();
                         break;
 
                     case "PC_KEY":
@@ -507,63 +512,72 @@ public class DebugLogicWindow extends DebugWindow {
     }
 
     void processSample(int sample) {
-        System.arraycopy(sampleData, 1, sampleData, 0, sampleData.length - 1);
-        sampleData[sampleData.length - 1] = sample;
+        sampleData[sampleIndex] = sample;
 
         if (sampleCount < sampleData.length) {
             sampleCount++;
         }
-        else {
-            triggered = false;
+        sampleIndex++;
+        if (sampleIndex >= sampleData.length) {
+            sampleIndex = 0;
+        }
 
-            if (triggerMask != 0) {
-                if (sampleCount >= sampleData.length) {
-                    sample = sampleData[(triggerOffset - 1) % sampleData.length];
-                    if (armed) {
-                        if (((sample ^ triggerMatch) & triggerMask) == 0) {
-                            triggered = true;
-                            armed = false;
-                        }
+        triggered = false;
+
+        if (triggerMask != 0) {
+            if (sampleCount >= sampleData.length) {
+                int offs = (sampleIndex - triggerOffset) & (sampleData.length - 1);
+                int triggerSample = sampleData[offs];
+                if (armed) {
+                    if (((triggerSample ^ triggerMatch) & triggerMask) == 0) {
+                        triggered = true;
+                        armed = false;
                     }
-                    else {
-                        if (((sample ^ triggerMatch) & triggerMask) != 0) {
-                            armed = true;
-                        }
+                }
+                else {
+                    if (((triggerSample ^ triggerMatch) & triggerMask) != 0) {
+                        armed = true;
                     }
-                    if (holdOffCount > 0) {
-                        holdOffCount--;
+                }
+                if (holdOffCount > 0) {
+                    holdOffCount--;
+                }
+                if (triggered && holdOffCount == 0) {
+                    rateCount++;
+                    if (rateCount >= rate) {
+                        update();
+                        rateCount = 0;
                     }
-                    if (triggered && holdOffCount == 0) {
-                        rateCount++;
-                        if (rateCount >= rate) {
-                            update();
-                            rateCount = 0;
-                        }
-                        holdOffCount = holdOff;
-                    }
+                    holdOffCount = holdOff;
                 }
             }
-            else {
-                rateCount++;
-                if (rateCount >= rate) {
-                    update();
-                    rateCount = 0;
-                }
+        }
+        else {
+            rateCount++;
+            if (rateCount >= rate) {
+                update();
+                rateCount = 0;
             }
         }
     }
 
-    void update() {
-        canvas.redraw();
+    @Override
+    protected void update() {
+        int y = MARGIN_HEIGHT;
+        for (int i = channelData.length - 1; i >= 0; i--) {
+            channelData[i].update(y);
+            y += charHeight + VERTICAL_SPACING - 1;
+        }
+        super.update();
     }
 
     static String[] data = new String[] {
         "samples 32 spacing 12  'TX' 'IN' longs_2bit",
-        "trigger %10 %10", //"trigger %10 %10 22",
-        "$AABF_FD55 $FFFF_FFAA",
-        "$ABBF_FD55 $FFFF_FFAA",
-        "%10_10_10_10_10_11_11_11_11_11_11_01_01_01_01_01 %11_11_11_11_11_11_11_11_11_11_11_11_10_10_10_10",
-        "%10_10_10_11_10_11_11_11_11_11_11_01_01_01_01_01" // %11_11_11_11_11_11_11_11_11_11_11_11_10_10_10_10",
+        "trigger %10 %10 22",
+        "$AAAF_FD55 $FFFF_FFEA",
+        "$AAEF_FD55 $FFFF_FFEA",
+        "$ABAF_FD55 $FFFF_FFEA",
+        "$ABEF_FD55 $FFFF_FFEA",
     };
 
     public static void main(String[] args) {
