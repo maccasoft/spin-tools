@@ -1028,7 +1028,9 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         logMessage(new CompilerException("structure " + identifier.getText() + " already defined", identifier));
                     }
                     else {
-                        publicSymbols.put(identifier.getText(), new Identifier(token.getText(), scope));
+                        Identifier struct = new Identifier(token.getText(), scope);
+                        struct.setData(token);
+                        publicSymbols.put(identifier.getText(), struct);
                     }
                     if (!iter.hasNext()) {
                         break;

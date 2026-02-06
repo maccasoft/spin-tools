@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -19,7 +19,81 @@ import java.util.List;
 
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.ObjectCompiler;
-import com.maccasoft.propeller.expressions.*;
+import com.maccasoft.propeller.expressions.Abs;
+import com.maccasoft.propeller.expressions.Add;
+import com.maccasoft.propeller.expressions.Addbits;
+import com.maccasoft.propeller.expressions.Addpins;
+import com.maccasoft.propeller.expressions.AddpinsRange;
+import com.maccasoft.propeller.expressions.And;
+import com.maccasoft.propeller.expressions.Bmask;
+import com.maccasoft.propeller.expressions.CharacterLiteral;
+import com.maccasoft.propeller.expressions.Compare;
+import com.maccasoft.propeller.expressions.Context;
+import com.maccasoft.propeller.expressions.ContextLiteral;
+import com.maccasoft.propeller.expressions.DataVariable;
+import com.maccasoft.propeller.expressions.Decod;
+import com.maccasoft.propeller.expressions.Divide;
+import com.maccasoft.propeller.expressions.Encod;
+import com.maccasoft.propeller.expressions.Equals;
+import com.maccasoft.propeller.expressions.Exp;
+import com.maccasoft.propeller.expressions.Exp10;
+import com.maccasoft.propeller.expressions.Exp2;
+import com.maccasoft.propeller.expressions.Expression;
+import com.maccasoft.propeller.expressions.Frac;
+import com.maccasoft.propeller.expressions.GreaterOrEquals;
+import com.maccasoft.propeller.expressions.GreaterOrEqualsUnsigned;
+import com.maccasoft.propeller.expressions.GreaterThan;
+import com.maccasoft.propeller.expressions.GreaterThanUnsigned;
+import com.maccasoft.propeller.expressions.IfElse;
+import com.maccasoft.propeller.expressions.LessOrEquals;
+import com.maccasoft.propeller.expressions.LessOrEqualsUnsigned;
+import com.maccasoft.propeller.expressions.LessThan;
+import com.maccasoft.propeller.expressions.LessThanUnsigned;
+import com.maccasoft.propeller.expressions.LimitMax;
+import com.maccasoft.propeller.expressions.LimitMin;
+import com.maccasoft.propeller.expressions.LocalVariable;
+import com.maccasoft.propeller.expressions.Log;
+import com.maccasoft.propeller.expressions.Log10;
+import com.maccasoft.propeller.expressions.Log2;
+import com.maccasoft.propeller.expressions.LogicalAnd;
+import com.maccasoft.propeller.expressions.LogicalNot;
+import com.maccasoft.propeller.expressions.LogicalOr;
+import com.maccasoft.propeller.expressions.LogicalXor;
+import com.maccasoft.propeller.expressions.MemoryContextLiteral;
+import com.maccasoft.propeller.expressions.Method;
+import com.maccasoft.propeller.expressions.Modulo;
+import com.maccasoft.propeller.expressions.Multiply;
+import com.maccasoft.propeller.expressions.Nan;
+import com.maccasoft.propeller.expressions.Negative;
+import com.maccasoft.propeller.expressions.Not;
+import com.maccasoft.propeller.expressions.NotEquals;
+import com.maccasoft.propeller.expressions.NumberLiteral;
+import com.maccasoft.propeller.expressions.ObjectContextLiteral;
+import com.maccasoft.propeller.expressions.Ones;
+import com.maccasoft.propeller.expressions.Or;
+import com.maccasoft.propeller.expressions.Pow;
+import com.maccasoft.propeller.expressions.QExp;
+import com.maccasoft.propeller.expressions.QLog;
+import com.maccasoft.propeller.expressions.Register;
+import com.maccasoft.propeller.expressions.Rev;
+import com.maccasoft.propeller.expressions.Rol;
+import com.maccasoft.propeller.expressions.Ror;
+import com.maccasoft.propeller.expressions.Round;
+import com.maccasoft.propeller.expressions.Sar;
+import com.maccasoft.propeller.expressions.Sca;
+import com.maccasoft.propeller.expressions.Scas;
+import com.maccasoft.propeller.expressions.ShiftLeft;
+import com.maccasoft.propeller.expressions.ShiftRight;
+import com.maccasoft.propeller.expressions.Signx;
+import com.maccasoft.propeller.expressions.SpinObject;
+import com.maccasoft.propeller.expressions.Sqrt;
+import com.maccasoft.propeller.expressions.Subtract;
+import com.maccasoft.propeller.expressions.Trunc;
+import com.maccasoft.propeller.expressions.UnsignedDivide;
+import com.maccasoft.propeller.expressions.UnsignedModulo;
+import com.maccasoft.propeller.expressions.Variable;
+import com.maccasoft.propeller.expressions.Xor;
+import com.maccasoft.propeller.expressions.Zerox;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.spin2.Spin2Bytecode.Descriptor;
 import com.maccasoft.propeller.spin2.Spin2Debug.DebugDataObject;
@@ -3100,9 +3174,12 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
 
                     source.add(new MemoryOp(context, ss, bb, bitfieldNode != null || push ? MemoryOp.Op.Setup : MemoryOp.Op.Write, popIndex, expression, index));
                 }
-                else {
+                else if (expression instanceof Variable) {
                     source.add(new VariableOp(context, bitfieldNode != null || push ? VariableOp.Op.Setup : VariableOp.Op.Write, popIndex, (Variable) expression, hasIndex, index));
                     ((Variable) expression).setCalledBy(method);
+                }
+                else {
+                    throw new CompilerException("expected variable", node.getTokens());
                 }
 
                 if (bitfieldNode != null) {
