@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller;
@@ -27,7 +26,26 @@ import org.apache.commons.lang3.Strings;
 import org.eclipse.jface.fieldassist.ContentProposal;
 import org.eclipse.jface.fieldassist.IContentProposal;
 
-import com.maccasoft.propeller.model.*;
+import com.maccasoft.propeller.expressions.Context;
+import com.maccasoft.propeller.expressions.Expression;
+import com.maccasoft.propeller.model.ConstantNode;
+import com.maccasoft.propeller.model.ConstantsNode;
+import com.maccasoft.propeller.model.DataLineNode;
+import com.maccasoft.propeller.model.DataNode;
+import com.maccasoft.propeller.model.DirectiveNode;
+import com.maccasoft.propeller.model.FunctionNode;
+import com.maccasoft.propeller.model.MethodNode;
+import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.NodeVisitor;
+import com.maccasoft.propeller.model.ObjectNode;
+import com.maccasoft.propeller.model.ObjectsNode;
+import com.maccasoft.propeller.model.RootNode;
+import com.maccasoft.propeller.model.SourceProvider;
+import com.maccasoft.propeller.model.StatementNode;
+import com.maccasoft.propeller.model.Token;
+import com.maccasoft.propeller.model.TypeDefinitionNode;
+import com.maccasoft.propeller.model.VariableNode;
+import com.maccasoft.propeller.model.VariablesNode;
 
 public abstract class SourceTokenMarker {
 
@@ -169,14 +187,10 @@ public abstract class SourceTokenMarker {
     protected Map<File, RootNode> cache = new HashMap<>();
     protected Set<String> excludedPaths = new HashSet<>();
 
+    protected Context context;
+
     public SourceTokenMarker(SourceProvider sourceProvider) {
         this.sourceProvider = sourceProvider;
-    }
-
-    public void setSourceRoot(RootNode root) {
-        this.root = root;
-        this.constantSeparator = "";
-        this.localLabelPrefix = "";
     }
 
     public boolean isCaseSensitive() {
@@ -190,6 +204,10 @@ public abstract class SourceTokenMarker {
     }
 
     public abstract void refreshTokens(String text);
+
+    public void setContext(Context context) {
+        this.context = context;
+    }
 
     public RootNode getRoot() {
         return root;
@@ -587,10 +605,12 @@ public abstract class SourceTokenMarker {
                             @Override
                             public void visitConstant(ConstantNode node) {
                                 if (node.getIdentifier() != null) {
-                                    if (s[1].equals(node.getIdentifier().getText())) {
-                                        sb.append("<b><code>");
-                                        sb.append(getHtmlSafeString(node.getText()));
-                                        sb.append("</code></b>");
+                                    String identifier = node.getIdentifier().getText();
+                                    if (s[1].equals(identifier)) {
+                                        sb.append("<b><code>").append(getHtmlSafeString(node.getText())).append("</code></b>");
+                                        if (context != null) {
+                                            appendValue(sb, symbol);
+                                        }
                                     }
                                 }
                             }
@@ -617,10 +637,12 @@ public abstract class SourceTokenMarker {
                 @Override
                 public void visitConstant(ConstantNode node) {
                     if (node.getIdentifier() != null) {
-                        if (symbol.equals(node.getIdentifier().getText())) {
-                            sb.append("<b><code>");
-                            sb.append(getHtmlSafeString(node.getText()));
-                            sb.append("</b></code>");
+                        String identifier = node.getIdentifier().getText();
+                        if (symbol.equals(identifier)) {
+                            sb.append("<b><code>").append(getHtmlSafeString(node.getText())).append("</code></b>");
+                            if (context != null) {
+                                appendValue(sb, symbol);
+                            }
                         }
                     }
                 }
@@ -648,7 +670,41 @@ public abstract class SourceTokenMarker {
             });
         }
 
-        return sb.length() != 0 ? sb.toString() : null;
+        return !sb.isEmpty() ? sb.toString() : null;
+    }
+
+    void appendValue(StringBuilder sb, String identifier) {
+        Expression expression = context.getLocalSymbol(identifier);
+        if (expression != null) {
+            sb.append("<p><code>Value: ");
+            try {
+                if (expression.isString()) {
+                    sb.append(expression.getString());
+                }
+                else {
+                    Number number = expression.getNumber();
+                    sb.append(number).append("<br/>");
+                    if (number instanceof Double) {
+                        long value = Float.floatToRawIntBits(number.floatValue()) & 0xFFFFFFFFL;
+                        sb.append("&nbsp;".repeat(7)).append(String.format("$%08X<br/>", Float.floatToRawIntBits(value)));
+                        String bs = Long.toBinaryString(Float.floatToRawIntBits(value));
+                        sb.append("&nbsp;".repeat(7)).append("%").append("0".repeat(32 - bs.length())).append(bs);
+                    }
+                    else {
+                        long value = number.longValue() & 0xFFFFFFFFL;
+                        sb.append("&nbsp;".repeat(7)).append(String.format("$%08X<br/>", value));
+                        String bs = Long.toBinaryString(value);
+                        sb.append("&nbsp;".repeat(7)).append("%").append("0".repeat(32 - bs.length())).append(bs);
+                    }
+                }
+            } catch (Exception e) {
+                sb.append("Evaluation error");
+            }
+            sb.append("</code></p>");
+        }
+        else {
+            sb.append("<p><code>No Value</code></p>");
+        }
     }
 
     public List<IContentProposal> getMethodProposals(Node context, String textToken) {
@@ -1318,7 +1374,7 @@ public abstract class SourceTokenMarker {
         return proposals;
     }
 
-    public List<IContentProposal> getConstantsProposals(Node context, String filterText) {
+    public List<IContentProposal> getConstantsProposals(String filterText) {
         List<IContentProposal> proposals = new ArrayList<>();
         if (root == null) {
             return proposals;
@@ -1330,12 +1386,16 @@ public abstract class SourceTokenMarker {
 
             @Override
             public void visitDirective(DirectiveNode node) {
-                if (node instanceof DirectiveNode.DefineNode) {
-                    DirectiveNode.DefineNode define = (DirectiveNode.DefineNode) node;
+                if (node instanceof DirectiveNode.DefineNode define) {
                     if (define.getIdentifier() != null) {
                         String text = define.getIdentifier().getText();
                         if (Strings.CI.contains(text, filterText)) {
-                            proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                            StringBuilder sb = new StringBuilder();
+                            sb.append("<b><code>").append(getHtmlSafeString(node.getText())).append("</code></b>");
+                            if (context != null) {
+                                appendValue(sb, define.getIdentifier().getText());
+                            }
+                            proposals.add(new ContentProposal(text, text, sb.toString()));
                         }
                     }
                 }
@@ -1343,10 +1403,15 @@ public abstract class SourceTokenMarker {
 
             @Override
             public void visitConstant(ConstantNode node) {
-                if (node.identifier != null) {
-                    String text = node.identifier.getText();
+                if (node.getIdentifier() != null) {
+                    String text = node.getIdentifier().getText();
                     if (Strings.CI.contains(text, filterText)) {
-                        proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                        StringBuilder sb = new StringBuilder();
+                        sb.append("<b><code>").append(getHtmlSafeString(node.getText())).append("</code></b>");
+                        if (context != null) {
+                            appendValue(sb, node.getIdentifier().getText());
+                        }
+                        proposals.add(new ContentProposal(text, text, sb.toString()));
                     }
                 }
             }
@@ -1374,12 +1439,16 @@ public abstract class SourceTokenMarker {
 
                                 @Override
                                 public void visitDirective(DirectiveNode node) {
-                                    if (node instanceof DirectiveNode.DefineNode) {
-                                        DirectiveNode.DefineNode define = (DirectiveNode.DefineNode) node;
+                                    if (node instanceof DirectiveNode.DefineNode define) {
                                         if (define.getIdentifier() != null) {
                                             String text = define.getIdentifier().getText();
                                             if (Strings.CI.contains(text, filterText)) {
-                                                proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                                                StringBuilder sb = new StringBuilder();
+                                                sb.append("<b><code>").append(getHtmlSafeString(node.getText())).append("</code></b>");
+                                                if (context != null) {
+                                                    appendValue(sb, define.getIdentifier().getText());
+                                                }
+                                                proposals.add(new ContentProposal(text, text, sb.toString()));
                                             }
                                         }
                                     }
@@ -1387,10 +1456,16 @@ public abstract class SourceTokenMarker {
 
                                 @Override
                                 public void visitConstant(ConstantNode node) {
-                                    if (node.identifier != null) {
-                                        String text = node.identifier.getText();
+                                    if (node.getIdentifier() != null) {
+                                        String text = node.getIdentifier().getText();
                                         if (Strings.CI.contains(text, filterText)) {
-                                            proposals.add(new ContentProposal(node.identifier.getText(), text, "<b>" + node.getText() + "</b>"));
+                                            StringBuilder sb = new StringBuilder();
+                                            sb.append("<b><code>").append(getHtmlSafeString(node.getText())).append("</code></b>");
+                                            if (context != null) {
+                                                String symbol = filterText.substring(0, dot + 1) + node.getIdentifier().getText();
+                                                appendValue(sb, symbol);
+                                            }
+                                            proposals.add(new ContentProposal(text, text, sb.toString()));
                                         }
                                     }
                                 }
@@ -1417,13 +1492,20 @@ public abstract class SourceTokenMarker {
 
                         @Override
                         public void visitConstant(ConstantNode node) {
-                            if (node.identifier != null) {
-                                String text = node.identifier.getText();
-                                if (Strings.CI.startsWith(text, refName)) {
-                                    proposals.add(new ContentProposal(node.identifier.getText(), text, "<b>" + node.getText() + "</b>"));
-                                }
-                                else if (Strings.CI.contains(text, refName)) {
-                                    secondary.add(new ContentProposal(node.identifier.getText(), text, "<b>" + node.getText() + "</b>"));
+                            if (node.getIdentifier() != null) {
+                                String text = node.getIdentifier().getText();
+                                if (Strings.CI.startsWith(text, refName) || Strings.CI.contains(text, refName)) {
+                                    StringBuilder sb = new StringBuilder();
+                                    sb.append("<b><code>").append(getHtmlSafeString(node.getText())).append("</code></b>");
+                                    if (context != null) {
+                                        appendValue(sb, filterText.substring(0, dot + 1) + node.getIdentifier().getText());
+                                    }
+                                    if (Strings.CI.startsWith(text, refName)) {
+                                        proposals.add(new ContentProposal(node.identifier.getText(), text, sb.toString()));
+                                    }
+                                    else {
+                                        secondary.add(new ContentProposal(node.identifier.getText(), text, sb.toString()));
+                                    }
                                 }
                             }
                         }
@@ -1439,25 +1521,28 @@ public abstract class SourceTokenMarker {
     }
 
     String getMethodDocument(MethodNode node) {
-        Iterator<Token> iter = node.getTokens().iterator();
-        Token start = iter.next();
-        Token stop = start;
-        TokenStream stream = start.getStream();
+        int index;
 
-        while (iter.hasNext()) {
-            stop = iter.next();
-            if (")".equals(stop.getText())) {
-                break;
+        String title = node.getText();
+        if ((index = title.indexOf(")")) != -1) {
+            title = title.substring(0, index + 1);
+        }
+        else {
+            if ((index = title.indexOf(":")) != -1) {
+                title = title.substring(0, index);
+            }
+            if ((index = title.indexOf("|")) != -1) {
+                title = title.substring(0, index);
             }
         }
 
         StringBuilder sb = new StringBuilder();
         sb.append("<pre><b><code>");
-        sb.append(getHtmlSafeString(stream.getSource(start.start, stop.stop).trim()));
+        sb.append(getHtmlSafeString(title.trim()));
         sb.append("</code></b>");
         sb.append(System.lineSeparator());
 
-        iter = node.getDocument().iterator();
+        Iterator<Token> iter = node.getDocument().iterator();
         if (iter.hasNext()) {
             sb.append(System.lineSeparator());
             sb.append("<code>");
@@ -1490,25 +1575,19 @@ public abstract class SourceTokenMarker {
     }
 
     String getMethodDocument(FunctionNode node) {
-        Iterator<Token> iter = node.getTokens().iterator();
-        Token start = iter.next();
-        Token stop = start;
-        TokenStream stream = start.getStream();
-
-        while (iter.hasNext()) {
-            stop = iter.next();
-            if (")".equals(stop.getText())) {
-                break;
-            }
+        String title = node.getText();
+        int index = title.indexOf(")");
+        if (index != -1) {
+            title = title.substring(0, index + 1);
         }
 
         StringBuilder sb = new StringBuilder();
         sb.append("<pre><b><code>");
-        sb.append(getHtmlSafeString(stream.getSource(start.start, stop.stop).trim()));
+        sb.append(getHtmlSafeString(title.trim()));
         sb.append("</code></b>");
         sb.append(System.lineSeparator());
 
-        iter = node.getDocument().iterator();
+        Iterator<Token> iter = node.getDocument().iterator();
         if (iter.hasNext()) {
             sb.append(System.lineSeparator());
             sb.append("<code>");

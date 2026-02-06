@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -2161,7 +2161,7 @@ public class SourceEditor {
             else if (line.instruction != null && position > line.instruction.stop + 1) {
                 if (node.getParent() instanceof StatementNode || node.getParent() instanceof MethodNode) {
                     proposals.addAll(tokenMarker.getInlinePAsmProposals(node, filterText));
-                    proposals.addAll(tokenMarker.getConstantsProposals(node, filterText));
+                    proposals.addAll(tokenMarker.getConstantsProposals(filterText));
                 }
                 else {
                     proposals.addAll(tokenMarker.getPAsmProposals(node, filterText));
@@ -2208,7 +2208,7 @@ public class SourceEditor {
                 proposals.addAll(tokenMarker.getMethodProposals(node, filterText));
                 proposals.addAll(tokenMarker.getPAsmLabelProposals(node, filterText));
             }
-            proposals.addAll(tokenMarker.getConstantsProposals(node, filterText));
+            proposals.addAll(tokenMarker.getConstantsProposals(filterText));
             proposals.addAll(helpProvider.fillProposals(node.getClass().getSimpleName(), filterText));
         }
 

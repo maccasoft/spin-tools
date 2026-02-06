@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller;
@@ -18,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.model.RootNode;
@@ -204,7 +204,13 @@ public abstract class Compiler {
 
     public abstract SpinObject compile(File rootFile, RootNode root);
 
+    public abstract Context getContext();
+
     public ObjectInfo getObjectInfo(ObjectCompiler parent, File file, Map<String, Expression> parameters) throws Exception {
+        return null;
+    }
+
+    public ObjectInfo getObjectInfo(String name) {
         return null;
     }
 

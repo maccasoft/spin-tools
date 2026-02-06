@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spinc;
@@ -18,6 +17,7 @@ import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.ObjectCompiler;
 import com.maccasoft.propeller.SpinObject;
 import com.maccasoft.propeller.SpinObject.LinkDataObject;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.spin1.Spin1Compiler;
@@ -25,6 +25,8 @@ import com.maccasoft.propeller.spin1.Spin1Object;
 import com.maccasoft.propeller.spin1.Spin1ObjectCompiler;
 
 public class Spin1CCompiler extends Spin1Compiler {
+
+    Spin1CObjectCompiler objectCompiler;
 
     public Spin1CCompiler() {
 
@@ -50,11 +52,15 @@ public class Spin1CCompiler extends Spin1Compiler {
         return object;
     }
 
+    public ObjectInfo getObjectInfo(String name) {
+        return objectCompiler.objects.get(name);
+    }
+
     @Override
     public Spin1Object compileObject(File rootFile, RootNode root) {
         int memoryOffset = 16;
 
-        Spin1CObjectCompiler objectCompiler = new Spin1CObjectCompiler(this, rootFile);
+        objectCompiler = new Spin1CObjectCompiler(this, rootFile);
         objectCompiler.compileStep1(root);
 
         objectCompiler.compileStep2(true);
@@ -124,6 +130,11 @@ public class Spin1CCompiler extends Spin1Compiler {
 
         return object;
 
+    }
+
+    @Override
+    public Context getContext() {
+        return objectCompiler.getScope();
     }
 
     @Override

@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spinc;
@@ -19,6 +18,7 @@ import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.ObjectCompiler;
 import com.maccasoft.propeller.SpinObject;
 import com.maccasoft.propeller.SpinObject.LinkDataObject;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.model.RootNode;
@@ -29,6 +29,8 @@ import com.maccasoft.propeller.spin2.Spin2Object;
 import com.maccasoft.propeller.spin2.Spin2ObjectCompiler;
 
 public class Spin2CCompiler extends Spin2Compiler {
+
+    Spin2CObjectCompiler objectCompiler;
 
     public Spin2CCompiler() {
 
@@ -54,9 +56,13 @@ public class Spin2CCompiler extends Spin2Compiler {
         return object;
     }
 
+    public ObjectInfo getObjectInfo(String name) {
+        return objectCompiler.objects.get(name);
+    }
+
     @Override
     protected Spin2Object compileObject(File rootFile, RootNode root) {
-        Spin2CObjectCompiler objectCompiler = new Spin2CObjectCompiler(this, rootFile);
+        objectCompiler = new Spin2CObjectCompiler(this, rootFile);
         objectCompiler.compileStep1(root);
 
         objectCompiler.compileStep2(true);
@@ -137,6 +143,11 @@ public class Spin2CCompiler extends Spin2Compiler {
 
         return object;
 
+    }
+
+    @Override
+    public Context getContext() {
+        return objectCompiler.getScope();
     }
 
     @Override

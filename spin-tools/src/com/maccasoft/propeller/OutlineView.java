@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller;
@@ -38,6 +37,8 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 
 import com.maccasoft.propeller.SourceTokenMarker.TokenId;
+import com.maccasoft.propeller.expressions.Context;
+import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.internal.ColorRegistry;
 import com.maccasoft.propeller.internal.StyledStringBuilder;
 import com.maccasoft.propeller.model.ConstantNode;
@@ -59,6 +60,7 @@ import com.maccasoft.propeller.model.VariablesNode;
 public class OutlineView {
 
     TreeViewer viewer;
+    Context context;
 
     class Includes extends Node {
 
@@ -316,6 +318,7 @@ public class OutlineView {
     TextStyle methodLocalStyle;
     TextStyle methodReturnStyle;
     TextStyle typeStyle;
+    TextStyle numberStyle;
     TextStyle stringStyle;
 
     boolean showSectionsBackground;
@@ -357,6 +360,7 @@ public class OutlineView {
         methodLocalStyle = new TextStyle(null, new Color(0x80, 0x80, 0x00), null);
         methodReturnStyle = new TextStyle(null, new Color(0x90, 0x00, 0x00), null);
         typeStyle = new TextStyle(fontBold, null, null);
+        numberStyle = new TextStyle(null, new Color(0x00, 0x66, 0x99), null);
         stringStyle = new TextStyle(null, new Color(0x7E, 0x00, 0x7E), null);
 
         if ("win32".equals(SWT.getPlatform()) && id == null) {
@@ -435,7 +439,9 @@ public class OutlineView {
         return (Node) viewer.getInput();
     }
 
-    public void setInput(Node node) {
+    public void setInput(Node node, Context context) {
+        this.context = context;
+
         viewer.getTree().setRedraw(false);
         try {
             Object[] expandedElements = viewer.getExpandedElements();
@@ -648,6 +654,22 @@ public class OutlineView {
         StyledStringBuilder sb = new StyledStringBuilder();
 
         sb.append(node.getIdentifier().getText());
+        if (context != null) {
+            try {
+                Expression expression = context.getLocalSymbol(node.getIdentifier().getText());
+                if (expression != null) {
+                    sb.append(" = ");
+                    if (expression.isString()) {
+                        sb.append(expression.getString(), stringStyle);
+                    }
+                    else {
+                        sb.append(expression.getNumber(), numberStyle);
+                    }
+                }
+            } catch (Exception e) {
+                sb.append(" <error>");
+            }
+        }
 
         return sb;
     }

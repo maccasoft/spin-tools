@@ -4,8 +4,7 @@
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller;
@@ -568,6 +567,102 @@ public class EditorTab implements FindReplaceTarget {
 
     boolean debug;
 
+    Compiler createCompiler(String suffix, RootNode root) {
+        Compiler compiler = null;
+        boolean removeUnusedMethods = true;
+        boolean warnUnusedMethods = true;
+        boolean warnUnusedMethodVariables = true;
+        boolean warnUnusedVariables = true;
+
+        if (".spin".equals(suffix) || ".pasm".equals(suffix)) {
+            compiler = new Spin1Compiler(preferences.getSpin1CaseSensitiveSymbols());
+            compiler.setSourceProvider(new EditorTabSourceProvider(preferences.getSpin1LibraryPath()));
+
+            for (Entry<String, String> entry : preferences.getSpin1Defines().entrySet()) {
+                Token token;
+                TokenStream stream = new Spin1TokenStream(entry.getValue());
+                List<Token> list = new ArrayList<>();
+                while ((token = stream.nextToken()).type != Token.EOF) {
+                    list.add(token);
+                }
+                compiler.addDefine(entry.getKey(), list);
+            }
+
+            ((Spin1Compiler) compiler).setFastByteConstants(preferences.getSpin1FastByteConstants());
+            ((Spin1Compiler) compiler).setFoldConstants(preferences.getSpin1FoldConstants());
+
+            removeUnusedMethods = preferences.getSpin1RemoveUnusedMethods();
+            warnUnusedMethods = preferences.getSpin1WarnUnusedMethods();
+            warnUnusedMethodVariables = preferences.getSpin1WarnUnusedMethodVariables();
+            warnUnusedVariables = preferences.getSpin1WarnUnusedVariables();
+        }
+        else if (".spin2".equals(suffix) || ".p2asm".equals(suffix)) {
+            compiler = new Spin2Compiler(preferences.getSpin2CaseSensitiveSymbols());
+            compiler.setSourceProvider(new EditorTabSourceProvider(preferences.getSpin2LibraryPath()));
+
+            for (Entry<String, String> entry : preferences.getSpin2Defines().entrySet()) {
+                Token token;
+                TokenStream stream = new Spin2TokenStream(entry.getValue());
+                List<Token> list = new ArrayList<>();
+                while ((token = stream.nextToken()).type != Token.EOF) {
+                    list.add(token);
+                }
+                compiler.addDefine(entry.getKey(), list);
+            }
+
+            ((Spin2Compiler) compiler).setCompress(preferences.getSpin2Compress());
+
+            removeUnusedMethods = preferences.getSpin2RemoveUnusedMethods();
+            warnUnusedMethods = preferences.getSpin2WarnUnusedMethods();
+            warnUnusedMethodVariables = preferences.getSpin2WarnUnusedMethodVariables();
+            warnUnusedVariables = preferences.getSpin2WarnUnusedVariables();
+        }
+        else if (".c".equals(suffix)) {
+            for (Node node : root.getChilds()) {
+                if (node instanceof DirectiveNode) {
+                    int index = 1;
+                    if (index < node.getTokenCount()) {
+                        if ("pragma".equals(node.getToken(index).getText())) {
+                            index++;
+                            if (index < node.getTokenCount()) {
+                                if ("target".equals(node.getToken(index).getText())) {
+                                    index++;
+                                    if (index < node.getTokenCount()) {
+                                        if ("P1".equals(node.getToken(index).getText())) {
+                                            compiler = new Spin1CCompiler(preferences.getSpin1CaseSensitiveSymbols());
+                                            compiler.setSourceProvider(new EditorTabSourceProvider(preferences.getSpin1LibraryPath()));
+                                        }
+                                        else if ("P2".equals(node.getToken(index).getText())) {
+                                            compiler = new Spin2CCompiler(preferences.getSpin2CaseSensitiveSymbols());
+                                            compiler.setSourceProvider(new EditorTabSourceProvider(preferences.getSpin2LibraryPath()));
+                                            ((Spin2CCompiler) compiler).setCompress(preferences.getSpin2Compress());
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if (compiler == null) {
+                compiler = new Spin2CCompiler();
+                compiler.setSourceProvider(new EditorTabSourceProvider(preferences.getSpin2LibraryPath()));
+            }
+        }
+
+        if (compiler != null) {
+            compiler.setRemoveUnusedMethods(removeUnusedMethods);
+            compiler.setWarnUnusedMethods(warnUnusedMethods);
+            compiler.setWarnUnusedMethodVariables(warnUnusedMethodVariables);
+            compiler.setWarnUnusedVariables(warnUnusedVariables);
+            compiler.setWarnRemovedUnusedMethods(true);
+            compiler.setDebugEnabled(debug);
+        }
+
+        return compiler;
+    }
+
     final Runnable compilerRunnable = new Runnable() {
 
         @Override
@@ -582,11 +677,6 @@ public class EditorTab implements FindReplaceTarget {
 
                     @Override
                     public void run() {
-                        boolean removeUnusedMethods = true;
-                        boolean warnUnusedMethods = true;
-                        boolean warnUnusedMethodVariables = true;
-                        boolean warnUnusedVariables = true;
-
                         String suffix = tabItemText.substring(tabItemText.lastIndexOf('.')).toLowerCase();
                         File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
                         RootNode root = tokenMarker.getRoot();
@@ -594,92 +684,8 @@ public class EditorTab implements FindReplaceTarget {
                         dependencies.clear();
                         missingDependencies.clear();
 
-                        Compiler compiler = null;
-                        if (".spin".equals(suffix) || ".pasm".equals(suffix)) {
-                            compiler = new Spin1Compiler(preferences.getSpin1CaseSensitiveSymbols());
-                            compiler.setSourceProvider(new EditorTabSourceProvider(preferences.getSpin1LibraryPath()));
-
-                            for (Entry<String, String> entry : preferences.getSpin1Defines().entrySet()) {
-                                Token token;
-                                TokenStream stream = new Spin1TokenStream(entry.getValue());
-                                List<Token> list = new ArrayList<>();
-                                while ((token = stream.nextToken()).type != Token.EOF) {
-                                    list.add(token);
-                                }
-                                compiler.addDefine(entry.getKey(), list);
-                            }
-
-                            ((Spin1Compiler) compiler).setFastByteConstants(preferences.getSpin1FastByteConstants());
-                            ((Spin1Compiler) compiler).setFoldConstants(preferences.getSpin1FoldConstants());
-
-                            removeUnusedMethods = preferences.getSpin1RemoveUnusedMethods();
-                            warnUnusedMethods = preferences.getSpin1WarnUnusedMethods();
-                            warnUnusedMethodVariables = preferences.getSpin1WarnUnusedMethodVariables();
-                            warnUnusedVariables = preferences.getSpin1WarnUnusedVariables();
-                        }
-                        else if (".spin2".equals(suffix) || ".p2asm".equals(suffix)) {
-                            compiler = new Spin2Compiler(preferences.getSpin2CaseSensitiveSymbols());
-                            compiler.setSourceProvider(new EditorTabSourceProvider(preferences.getSpin2LibraryPath()));
-
-                            for (Entry<String, String> entry : preferences.getSpin2Defines().entrySet()) {
-                                Token token;
-                                TokenStream stream = new Spin2TokenStream(entry.getValue());
-                                List<Token> list = new ArrayList<>();
-                                while ((token = stream.nextToken()).type != Token.EOF) {
-                                    list.add(token);
-                                }
-                                compiler.addDefine(entry.getKey(), list);
-                            }
-
-                            removeUnusedMethods = preferences.getSpin2RemoveUnusedMethods();
-                            warnUnusedMethods = preferences.getSpin2WarnUnusedMethods();
-                            warnUnusedMethodVariables = preferences.getSpin2WarnUnusedMethodVariables();
-                            warnUnusedVariables = preferences.getSpin2WarnUnusedVariables();
-                        }
-                        else if (".c".equals(suffix)) {
-                            for (Node node : root.getChilds()) {
-                                if (node instanceof DirectiveNode) {
-                                    int index = 1;
-                                    if (index < node.getTokenCount()) {
-                                        if ("pragma".equals(node.getToken(index).getText())) {
-                                            index++;
-                                            if (index < node.getTokenCount()) {
-                                                if ("target".equals(node.getToken(index).getText())) {
-                                                    index++;
-                                                    if (index < node.getTokenCount()) {
-                                                        if ("P1".equals(node.getToken(index).getText())) {
-                                                            compiler = new Spin1CCompiler(preferences.getSpin1CaseSensitiveSymbols());
-                                                            compiler.setSourceProvider(new EditorTabSourceProvider(preferences.getSpin1LibraryPath()));
-                                                        }
-                                                        else if ("P2".equals(node.getToken(index).getText())) {
-                                                            compiler = new Spin2CCompiler(preferences.getSpin2CaseSensitiveSymbols());
-                                                            compiler.setSourceProvider(new EditorTabSourceProvider(preferences.getSpin2LibraryPath()));
-                                                        }
-                                                    }
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            if (compiler == null) {
-                                compiler = new Spin2CCompiler();
-                                compiler.setSourceProvider(new EditorTabSourceProvider(preferences.getSpin2LibraryPath()));
-                            }
-                        }
+                        Compiler compiler = createCompiler(suffix, root);
                         if (compiler != null) {
-                            compiler.setRemoveUnusedMethods(removeUnusedMethods);
-                            compiler.setWarnUnusedMethods(warnUnusedMethods);
-                            compiler.setWarnUnusedMethodVariables(warnUnusedMethodVariables);
-                            compiler.setWarnUnusedVariables(warnUnusedVariables);
-                            compiler.setWarnRemovedUnusedMethods(true);
-                            compiler.setDebugEnabled(debug);
-
-                            if (compiler instanceof Spin2Compiler) {
-                                ((Spin2Compiler) compiler).setCompress(preferences.getSpin2Compress());
-                            }
-
                             try {
                                 object = compiler.compile(localFile, root);
                                 objectTree = compiler.getObjectTree();
@@ -713,8 +719,9 @@ public class EditorTab implements FindReplaceTarget {
                                         editor.redraw();
 
                                         if (outlineView != null && !outlineView.getControl().isDisposed()) {
-                                            outlineView.setInput(root);
+                                            outlineView.setInput(root, compiler.getContext());
                                         }
+                                        tokenMarker.setContext(compiler.getContext());
 
                                         tabItem.setFont(localFile.equals(preferences.getTopObject()) ? boldFont : null);
                                         updateTabItemText();
