@@ -4,8 +4,7 @@
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller;
@@ -16,7 +15,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
@@ -144,7 +142,6 @@ public class SpinTools {
 
     StatusLine statusLine;
 
-    Process process;
     MenuItem runMenuItem;
 
     MenuItem topObjectItem;
@@ -1675,8 +1672,9 @@ public class SpinTools {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
-                consoleView.setVisible(consoleToolItem.getSelection());
-                consoleItem.setSelection(consoleToolItem.getSelection());
+                boolean visible = consoleToolItem.getSelection();
+                consoleView.setVisible(visible);
+                consoleItem.setSelection(visible);
                 centralSashForm.layout();
             }
         });
@@ -2839,8 +2837,9 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                consoleView.setVisible(consoleItem.getSelection());
-                consoleToolItem.setSelection(consoleItem.getSelection());
+                boolean visible = consoleItem.getSelection();
+                consoleView.setVisible(visible);
+                consoleToolItem.setSelection(visible);
                 centralSashForm.layout();
             }
         });
@@ -2984,30 +2983,40 @@ public class SpinTools {
         if (editorFile == null) {
             editorFile = new File(editorTab.getText()).getAbsoluteFile();
         }
+        File editorFileFolder = editorFile.getParentFile();
+
+        ComPort serialPort = comPortList.getSelection();
+
+        SerialTerminal serialTerminal = getSerialTerminal();
+        if (serialTerminal != null) {
+            serialTerminal.setSerialPort(null);
+        }
+
+        if (serialPort != null && serialPort.isOpened()) {
+            serialPort.closePort();
+        }
 
         List<String> cmd = new ArrayList<>();
         cmd.add(tool.getProgram());
 
         String arguments = tool.getArguments();
-        if (arguments != null) {
+        if (arguments != null && !arguments.isEmpty()) {
             String file = editorFile.getName();
             String fileName = file.lastIndexOf('.') != -1 ? file.substring(0, file.lastIndexOf('.')) : file;
-            String fileLoc = editorFile.getParentFile().getAbsolutePath();
 
             String cmdline = arguments.replace("${file}", file) //
+                .replace("${file.binary}", new File(editorFileFolder, fileName + ".binary").getAbsolutePath()) //
                 .replace("${file.name}", fileName) //
-                .replace("${file.loc}", fileLoc);
+                .replace("${file.loc}", editorFileFolder.getAbsolutePath());
 
-            ComPort comPort = comPortList.getSelection();
-            if (comPort instanceof SerialComPort) {
-                cmdline = cmdline.replace("${serial}", comPort.getPortName());
+            if (serialPort instanceof SerialComPort) {
+                cmdline = cmdline.replace("${serial}", serialPort.getPortName());
             }
-            if (comPort instanceof NetworkComPort) {
-                cmdline = cmdline.replace("${ip}", ((NetworkComPort) comPort).getInetAddr().getHostAddress());
+            if (serialPort instanceof NetworkComPort networkComPort) {
+                cmdline = cmdline.replace("${ip}", networkComPort.getInetAddr().getHostAddress());
             }
 
-            String[] args = Utils.splitArguments(cmdline);
-            cmd.addAll(Arrays.asList(args));
+            cmd.addAll(Arrays.asList(Utils.splitArguments(cmdline)));
         }
 
         try {
@@ -3020,9 +3029,34 @@ public class SpinTools {
             }
             consoleView.setSerialPort(null);
             consoleView.closeLogFile();
+            consoleView.setTopObjectFile(editorFile);
             consoleView.setEnabled(true);
 
-            runCommand(cmd, editorFile.getParentFile(), consoleView.getOutputStream());
+            consoleView.runCommand(cmd, editorFile.getParentFile(), () -> {
+                if (shell.isDisposed()) {
+                    return;
+                }
+
+                if (serialTerminal != null) {
+                    serialTerminal.setSerialPort(serialPort);
+                }
+
+                File file = editorTab.getFile();
+                if (file != null) {
+                    fileBrowser.refresh(file);
+                }
+
+                CTabItem tabItem = tabFolder.getSelection();
+                if (tabItem != null) {
+                    EditorTab currentEditorTab = (EditorTab) tabItem.getData();
+                    file = currentEditorTab.getFile();
+                    if (file != null) {
+                        fileBrowser.refresh(file);
+                        currentEditorTab.checkExternalContentUpdate();
+                    }
+                }
+            });
+
         } catch (Exception e) {
             e.printStackTrace();
             MessageDialog.openError(shell, APP_TITLE, e.getMessage());
@@ -3030,6 +3064,7 @@ public class SpinTools {
     }
 
     private boolean handleRunningProcess() {
+        Process process = consoleView.getProcess();
         if (process != null && process.isAlive()) {
             int style = SWT.APPLICATION_MODAL | SWT.ICON_QUESTION | SWT.YES | SWT.NO;
             MessageBox messageBox = new MessageBox(shell, style);
@@ -3050,84 +3085,6 @@ public class SpinTools {
             }
         }
         return true;
-    }
-
-    protected void runCommand(List<String> cmd, File outDir, OutputStream stdout) throws IOException {
-        ComPort serialPort = comPortList.getSelection();
-
-        SerialTerminal serialTerminal = getSerialTerminal();
-        if (serialTerminal != null) {
-            serialTerminal.setSerialPort(null);
-        }
-
-        if (serialPort != null && serialPort.isOpened()) {
-            serialPort.closePort();
-        }
-
-        ProcessBuilder builder = new ProcessBuilder(cmd);
-        builder.redirectErrorStream(true);
-        builder.directory(outDir);
-
-        StringBuilder sb = new StringBuilder();
-        for (String s : cmd) {
-            if (sb.length() != 0) {
-                sb.append(" ");
-            }
-            sb.append(s);
-        }
-        sb.append("\n");
-        stdout.write(sb.toString().getBytes());
-
-        process = builder.start();
-
-        Thread ioThread = new Thread() {
-
-            int count;
-            byte[] buf = new byte[4096];
-
-            @Override
-            public void run() {
-                try {
-                    InputStream out = process.getInputStream();
-
-                    do {
-                        count = out.read(buf);
-                        if (count > 0) {
-                            stdout.write(buf, 0, count);
-                        }
-                    } while (count != -1);
-
-                    out.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-                display.asyncExec(() -> {
-                    if (serialTerminal != null) {
-                        serialTerminal.setSerialPort(serialPort);
-                    }
-
-                    EditorTab editorTab = getTargetObjectEditorTab();
-                    if (editorTab != null) {
-                        File editorFile = editorTab.getFile();
-                        if (editorFile != null) {
-                            fileBrowser.refresh(editorFile);
-                        }
-                    }
-
-                    CTabItem tabItem = tabFolder.getSelection();
-                    if (tabItem != null) {
-                        EditorTab currentEditorTab = (EditorTab) tabItem.getData();
-                        File editorFile = editorTab.getFile();
-                        if (editorFile != null) {
-                            fileBrowser.refresh(editorFile);
-                            currentEditorTab.checkExternalContentUpdate();
-                        }
-                    }
-                });
-            }
-        };
-        ioThread.start();
     }
 
     void createPortMenu(Menu parent) {

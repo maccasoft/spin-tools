@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller;
@@ -17,6 +16,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -81,6 +81,8 @@ public class ConsoleView {
 
     Map<String, DebugWindow> map = new CaseInsensitiveMap<>();
     DebugPAsmWindow[] debugger = new DebugPAsmWindow[8];
+
+    Process process;
 
     final PropertyChangeListener preferencesChangeListener = new PropertyChangeListener() {
 
@@ -389,11 +391,9 @@ public class ConsoleView {
 
             while (consoleThreadRun) {
                 try {
-                    while (transmitBuffer.available() != 0) {
+                    while (serialPort != null && serialPort.isOpened() && transmitBuffer.available() != 0) {
                         if ((count = transmitBuffer.read(b)) > 0) {
-                            if (serialPort != null && serialPort.isOpened()) {
-                                serialPort.writeBytes(b, 0, count);
-                            }
+                            serialPort.writeBytes(b, 0, count);
                         }
                     }
                     synchronized (transmitBuffer) {
@@ -519,9 +519,15 @@ public class ConsoleView {
 
     public void setVisible(boolean visible) {
         if (enabled && console.getVisible() && !visible) {
-            if (serialPort != null && serialPort.isOpened()) {
-                if (preferences.getConsoleResetDeviceOnClose()) {
+            if (preferences.getConsoleResetDeviceOnClose()) {
+                if (serialPort != null && serialPort.isOpened()) {
                     serialPort.hwreset(preferences.getP2ResetControl(), 0);
+                }
+                if (process != null && process.isAlive()) {
+                    process.destroy();
+                    if (process.isAlive()) {
+                        process.destroyForcibly();
+                    }
                 }
             }
             endSession();
@@ -605,10 +611,6 @@ public class ConsoleView {
         os = null;
     }
 
-    public OutputStream getOutputStream() {
-        return consoleOutputStream;
-    }
-
     public void setBackground(Color color) {
         console.setBackground(color);
     }
@@ -690,6 +692,97 @@ public class ConsoleView {
             window.dispose();
         }
         map.clear();
+    }
+
+    void write(byte[] b) throws IOException {
+        synchronized (receiveBuffer) {
+            receiveBuffer.write(b);
+            receiveBuffer.notify();
+        }
+    }
+
+    void write(byte[] b, int off, int len) throws IOException {
+        synchronized (receiveBuffer) {
+            receiveBuffer.write(b, off, len);
+            receiveBuffer.notify();
+        }
+    }
+
+    int read(byte[] b) throws IOException {
+        synchronized (transmitBuffer) {
+            return transmitBuffer.read(b);
+        }
+    }
+
+    public void runCommand(List<String> cmd, File outDir, Runnable terminateRunnable) throws IOException {
+        ProcessBuilder builder = new ProcessBuilder(cmd);
+        builder.redirectErrorStream(true);
+        builder.directory(outDir);
+
+        StringBuilder sb = new StringBuilder();
+        for (String s : cmd) {
+            if (!sb.isEmpty()) {
+                sb.append(" ");
+            }
+            sb.append(s);
+        }
+        sb.append("\n");
+        write(sb.toString().getBytes());
+
+        if (process != null && process.isAlive()) {
+            process.destroy();
+            if (process.isAlive()) {
+                process.destroyForcibly();
+            }
+        }
+        process = builder.start();
+
+        Thread ioThread = new Thread(() -> {
+            int count;
+            byte[] buf = new byte[4096];
+
+            try {
+                InputStream out = process.getInputStream();
+                OutputStream in = process.getOutputStream();
+
+                while (consoleThreadRun) {
+                    if (out.available() > 0) {
+                        if ((count = out.read(buf)) == -1) {
+                            break;
+                        }
+                        if (count > 0) {
+                            write(buf, 0, count);
+                        }
+                    }
+                    if ((count = read(buf)) == -1) {
+                        break;
+                    }
+                    if (count > 0) {
+                        in.write(buf, 0, count);
+                        in.flush();
+                    }
+                }
+
+                if (!consoleThreadRun) {
+                    process.destroy();
+                    if (process.isAlive()) {
+                        process.destroyForcibly();
+                    }
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            if (terminateRunnable != null) {
+                display.asyncExec(terminateRunnable);
+            }
+        });
+        ioThread.start();
+    }
+
+    public Process getProcess() {
+        return process;
     }
 
 }
