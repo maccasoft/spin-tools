@@ -1,16 +1,16 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin1;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import com.maccasoft.propeller.model.Token;
@@ -85,6 +85,8 @@ public class Spin1StatementNode {
                 }
             }
         }
+
+        list.sort(Comparator.comparingInt(o -> o.start));
 
         return list;
     }

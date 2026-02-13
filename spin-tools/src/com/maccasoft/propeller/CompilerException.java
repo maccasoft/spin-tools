@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller;
@@ -37,7 +36,7 @@ public class CompilerException extends RuntimeException {
     Token startToken;
     Token stopToken;
 
-    List<CompilerException> childs = new ArrayList<CompilerException>();
+    List<CompilerException> childs = new ArrayList<>();
 
     public CompilerException() {
 
@@ -91,14 +90,16 @@ public class CompilerException extends RuntimeException {
             this.stopToken = token;
         }
         else if (data instanceof List<?> c) {
-            if (!c.isEmpty()) {
-                Object first = c.get(0);
-                Object last = c.get(c.size() - 1);
-                if ((first instanceof Token) && (last instanceof Token)) {
-                    this.startToken = (Token) first;
-                    this.stopToken = (Token) last;
-                    this.line = this.startToken.line + 1;
-                    this.column = this.startToken.column;
+            for (Object o : c) {
+                if (o instanceof Token token) {
+                    if (this.startToken == null || token.start < this.startToken.start) {
+                        this.startToken = token;
+                        this.line = token.line + 1;
+                        this.column = token.column;
+                    }
+                    if (this.stopToken == null || token.start > this.stopToken.start) {
+                        this.stopToken = token;
+                    }
                 }
             }
         }
