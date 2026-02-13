@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Stack;
@@ -829,6 +828,22 @@ public class SpinTools {
             }
         });
 
+        final Menu openRecentMenu = new Menu(parent.getParent(), SWT.DROP_DOWN);
+        openRecentMenu.addMenuListener(new MenuAdapter() {
+
+            @Override
+            public void menuShown(MenuEvent e) {
+                for (MenuItem item : openRecentMenu.getItems()) {
+                    item.dispose();
+                }
+                populateLruFiles(openRecentMenu);
+            }
+
+        });
+        item = new MenuItem(menu, SWT.CASCADE);
+        item.setText("Recent Files");
+        item.setMenu(openRecentMenu);
+
         final Menu openFromMenu = new Menu(parent.getParent(), SWT.DROP_DOWN);
         openFromMenu.addMenuListener(new MenuAdapter() {
 
@@ -843,7 +858,7 @@ public class SpinTools {
 
         });
         item = new MenuItem(menu, SWT.CASCADE);
-        item.setText("Open From...");
+        item.setText("Open From");
         item.setMenu(openFromMenu);
 
         new MenuItem(menu, SWT.SEPARATOR);
@@ -926,7 +941,7 @@ public class SpinTools {
 
         });
         item = new MenuItem(menu, SWT.CASCADE);
-        item.setText("Save To...");
+        item.setText("Save To");
         item.setMenu(saveToMenu);
 
         item = new MenuItem(menu, SWT.PUSH);
@@ -993,21 +1008,6 @@ public class SpinTools {
             public void handleEvent(Event e) {
                 shell.dispose();
             }
-        });
-
-        menu.addMenuListener(new MenuAdapter() {
-
-            List<MenuItem> list = new ArrayList<MenuItem>();
-
-            @Override
-            public void menuShown(MenuEvent e) {
-                for (MenuItem item : list) {
-                    item.dispose();
-                }
-                list.clear();
-                populateLruFiles(menu, lruIndex, list);
-            }
-
         });
     }
 
@@ -1207,44 +1207,28 @@ public class SpinTools {
         }
     }
 
-    void populateLruFiles(Menu menu, int itemIndex, List<MenuItem> list) {
-        int index = 0;
-
-        Iterator<File> iter = preferences.getLru().iterator();
-        while (iter.hasNext()) {
-            File fileToOpen = iter.next();
-
-            if (index == 0) {
-                list.add(new MenuItem(menu, SWT.SEPARATOR, itemIndex++));
-            }
-
-            MenuItem item = new MenuItem(menu, SWT.PUSH, itemIndex++);
-            item.setText(String.format("%d %s", index + 1, fileToOpen.getName()));
+    void populateLruFiles(Menu menu) {
+        for (File fileToOpen : preferences.getLru()) {
+            MenuItem item = new MenuItem(menu, SWT.PUSH);
+            item.setText(fileToOpen.getName());
             item.setToolTipText(fileToOpen.getAbsolutePath());
-            item.addListener(SWT.Selection, new Listener() {
+            item.addListener(SWT.Selection, event -> {
+                if (!fileToOpen.exists()) {
+                    MessageDialog.openError(shell, APP_TITLE, "File " + fileToOpen + " not found");
+                    preferences.getLru().remove(fileToOpen);
 
-                @Override
-                public void handleEvent(Event event) {
-                    if (!fileToOpen.exists()) {
-                        MessageDialog.openError(shell, APP_TITLE, "File " + fileToOpen + " not found");
-                        preferences.getLru().remove(fileToOpen.toString());
-
-                        File parentFile = fileToOpen.getParentFile();
-                        while (parentFile != null) {
-                            if (parentFile.exists()) {
-                                break;
-                            }
-                            parentFile = parentFile.getParentFile();
+                    File parentFile = fileToOpen.getParentFile();
+                    while (parentFile != null) {
+                        if (parentFile.exists()) {
+                            break;
                         }
-                        handleFileOpenFrom(parentFile != null ? parentFile.getAbsolutePath() : "");
-                        return;
+                        parentFile = parentFile.getParentFile();
                     }
-                    openOrSwitchToTab(fileToOpen);
+                    handleFileOpenFrom(parentFile != null ? parentFile.getAbsolutePath() : "");
+                    return;
                 }
+                openOrSwitchToTab(fileToOpen);
             });
-            list.add(item);
-
-            index++;
         }
     }
 
@@ -2622,7 +2606,7 @@ public class SpinTools {
         bookmarksMenu = new Menu(parent.getParent(), SWT.DROP_DOWN);
 
         item = new MenuItem(menu, SWT.CASCADE);
-        item.setText("Go to Bookmark...");
+        item.setText("Go to Bookmark");
         item.setMenu(bookmarksMenu);
 
         for (int i = 1; i <= 9; i++) {
