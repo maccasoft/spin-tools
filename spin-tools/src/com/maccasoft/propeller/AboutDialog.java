@@ -9,6 +9,7 @@
 
 package com.maccasoft.propeller;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,10 +19,13 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.internal.Platform;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.program.Program;
+import org.eclipse.swt.svg.JSVGRasterizer;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
@@ -248,9 +252,20 @@ public class AboutDialog extends Dialog {
     }
 
     void createKoFiLabel(Composite parent) {
+        int zoom = switch (Platform.PLATFORM) {
+            case "cocoa" -> 50;
+            case "win32" -> 80;
+            default -> 100;
+        };
+
+        InputStream is = ImageRegistry.class.getResourceAsStream("support_me_on_kofi.svg");
+        JSVGRasterizer rasterizer = new JSVGRasterizer();
+        Image image = new Image(parent.getDisplay(), rasterizer.rasterizeSVG(is, zoom));
+
         LinkImage link = new LinkImage(parent);
-        link.setImage(ImageRegistry.getImageFromResources("support_me_on_kofi.svg"));
+        link.setImage(image);
         link.setUrl("https://ko-fi.com/maccasoft");
+        link.addDisposeListener(e -> image.dispose());
     }
 
 }
