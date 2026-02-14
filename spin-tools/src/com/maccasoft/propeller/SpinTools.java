@@ -744,7 +744,8 @@ public class SpinTools {
         new MenuItem(menu, SWT.SEPARATOR);
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Open...");
+        item.setText("Open...\tCtrl+O");
+        item.setAccelerator(SWT.MOD1 + 'O');
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -3597,6 +3598,15 @@ public class SpinTools {
         item = new MenuItem(menu, SWT.PUSH);
         item.setText("Parallax Website...");
         item.addListener(SWT.Selection, e -> Program.launch("https://parallax.com"));
+
+        new MenuItem(menu, SWT.SEPARATOR);
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Keyboard Shortcuts");
+        item.addListener(SWT.Selection, e -> {
+            KeyboardShortcutsDialog dlg = new KeyboardShortcutsDialog(shell);
+            dlg.open();
+        });
 
         item = getSystemMenuItem(SWT.ID_ABOUT);
         if (item == null) {
