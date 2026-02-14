@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller;
@@ -240,6 +239,7 @@ public class Preferences {
         public boolean spin1WarnUnusedMethodVariables;
         public boolean spin1WarnUnusedVariables;
         public String spin1Template;
+        public String spin1ObjectTemplate;
         @JsonInclude(Include.NON_ABSENT)
         public Map<String, String> spin1Defines;
 
@@ -251,6 +251,7 @@ public class Preferences {
         public boolean spin2WarnUnusedMethodVariables;
         public boolean spin2WarnUnusedVariables;
         public String spin2Template;
+        public String spin2ObjectTemplate;
         @JsonInclude(Include.NON_ABSENT)
         public Map<String, String> spin2Defines;
         public boolean spin2Compress;
@@ -1151,6 +1152,14 @@ public class Preferences {
         preferences.spin1Template = spin1Template != null ? spin1Template.getAbsolutePath() : null;
     }
 
+    public File getSpin1ObjectTemplate() {
+        return preferences.spin1ObjectTemplate != null ? new File(preferences.spin1ObjectTemplate) : null;
+    }
+
+    public void setSpin1ObjectTemplate(File spin1Template) {
+        preferences.spin1ObjectTemplate = spin1Template != null ? spin1Template.getAbsolutePath() : null;
+    }
+
     public boolean getSpin1RemoveUnusedMethods() {
         return preferences.spin1RemovedUnusedMethods;
     }
@@ -1283,6 +1292,14 @@ public class Preferences {
 
     public void setSpin2Template(File spin2Template) {
         preferences.spin2Template = spin2Template != null ? spin2Template.getAbsolutePath() : null;
+    }
+
+    public File getSpin2ObjectTemplate() {
+        return preferences.spin2ObjectTemplate != null ? new File(preferences.spin2ObjectTemplate) : null;
+    }
+
+    public void setSpin2ObjectTemplate(File spin2Template) {
+        preferences.spin2ObjectTemplate = spin2Template != null ? spin2Template.getAbsolutePath() : null;
     }
 
     public Map<String, String> getSpin2Defines() {

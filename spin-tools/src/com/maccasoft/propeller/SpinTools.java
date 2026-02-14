@@ -770,7 +770,7 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("New (From P1/C template)\tCtrl+Alt+2");
+        item.setText("New (From P1/C Template)\tCtrl+Alt+2");
         item.setAccelerator(SWT.MOD1 + SWT.MOD3 + '2');
         item.addListener(SWT.Selection, new Listener() {
 
@@ -782,7 +782,7 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("New (From P2/Spin template)\tCtrl+Alt+3");
+        item.setText("New (From P2/Spin Template)\tCtrl+Alt+3");
         item.setAccelerator(SWT.MOD1 + SWT.MOD3 + '3');
         item.addListener(SWT.Selection, new Listener() {
 
@@ -805,7 +805,7 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("New (From P2/C template)\tCtrl+Alt+4");
+        item.setText("New (From P2/C Template)\tCtrl+Alt+4");
         item.setAccelerator(SWT.MOD1 + SWT.MOD3 + '4');
         item.addListener(SWT.Selection, new Listener() {
 
@@ -813,6 +813,46 @@ public class SpinTools {
             public void handleEvent(Event e) {
                 String name = getUniqueName("Untitled", ".c");
                 openNewTab(name, getResourceAsString("template2.c"));
+            }
+        });
+
+        new MenuItem(menu, SWT.SEPARATOR);
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("New (From P1/Spin Object Template)\tCtrl+Alt+6");
+        item.setAccelerator(SWT.MOD1 + SWT.MOD3 + '6');
+        item.addListener(SWT.Selection, e -> {
+            String name = getUniqueName("Untitled", ".spin");
+            File templateFile = preferences.getSpin1ObjectTemplate();
+            if (templateFile != null) {
+                try {
+                    String text = FileUtils.loadFromFile(templateFile);
+                    openNewTab(name, text);
+                } catch (Exception e1) {
+                    openInternalError(shell, "Error opening template file " + templateFile, e1);
+                }
+            }
+            else {
+                openNewTab(name, getResourceAsString("object_template.spin"));
+            }
+        });
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("New (From P2/Spin Object Template)\tCtrl+Alt+7");
+        item.setAccelerator(SWT.MOD1 + SWT.MOD3 + '7');
+        item.addListener(SWT.Selection, e -> {
+            String name = getUniqueName("Untitled", ".spin2");
+            File templateFile = preferences.getSpin2ObjectTemplate();
+            if (templateFile != null) {
+                try {
+                    String text = FileUtils.loadFromFile(templateFile);
+                    openNewTab(name, text);
+                } catch (Exception e1) {
+                    openInternalError(shell, "Error opening template file " + templateFile, e1);
+                }
+            }
+            else {
+                openNewTab(name, getResourceAsString("object_template.spin2"));
             }
         });
 

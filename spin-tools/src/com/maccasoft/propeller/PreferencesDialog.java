@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller;
@@ -135,6 +134,7 @@ public class PreferencesDialog extends Dialog {
     Button spin1WarnUnusedMethodVariables;
     Button spin1WarnUnusedVariables;
     FileSelector spin1Template;
+    FileSelector spin1ObjectTemplate;
 
     PathList spin2Paths;
     Button spin2RemoveUnusedMethods;
@@ -145,6 +145,7 @@ public class PreferencesDialog extends Dialog {
     Button spin2WarnUnusedMethodVariables;
     Button spin2WarnUnusedVariables;
     FileSelector spin2Template;
+    FileSelector spin2ObjectTemplate;
 
     Text terminalFont;
     Spinner terminalFontSize;
@@ -752,15 +753,28 @@ public class PreferencesDialog extends Dialog {
         spin1Template.setFilterIndex(2);
         spin1Template.setSelection(preferences.getSpin1Template());
 
+        label = new Label(composite, SWT.NONE);
+        label.setText("Object Template");
+        spin1ObjectTemplate = new FileSelector(composite);
+        spin1ObjectTemplate.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        spin1ObjectTemplate.setFilterIndex(2);
+        spin1ObjectTemplate.setSelection(preferences.getSpin1ObjectTemplate());
+
         new Label(composite, SWT.NONE);
 
         Composite group = new Composite(composite, SWT.NONE);
-        GridLayout layout = new GridLayout(1, false);
+        GridLayout layout = new GridLayout(2, false);
         layout.marginHeight = layout.marginWidth = 0;
         group.setLayout(layout);
         group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 
-        spin1RemoveUnusedMethods = new Button(group, SWT.CHECK);
+        Composite leftGroup = new Composite(group, SWT.NONE);
+        layout = new GridLayout(1, false);
+        layout.marginHeight = layout.marginWidth = 0;
+        leftGroup.setLayout(layout);
+        leftGroup.setLayoutData(new GridData(SWT.LEFT, SWT.TOP, false, true));
+
+        spin1RemoveUnusedMethods = new Button(leftGroup, SWT.CHECK);
         spin1RemoveUnusedMethods.setText("Remove unused methods");
         spin1RemoveUnusedMethods.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin1RemoveUnusedMethods.setSelection(preferences.getSpin1RemoveUnusedMethods());
@@ -773,7 +787,7 @@ public class PreferencesDialog extends Dialog {
 
         });
 
-        spin1CaseSensitive = new Button(group, SWT.CHECK);
+        spin1CaseSensitive = new Button(leftGroup, SWT.CHECK);
         spin1CaseSensitive.setText("Case sensitive symbols");
         spin1CaseSensitive.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin1CaseSensitive.setSelection(preferences.getSpin1CaseSensitiveSymbols());
@@ -786,7 +800,7 @@ public class PreferencesDialog extends Dialog {
 
         });
 
-        spin1FastByteConstants = new Button(group, SWT.CHECK);
+        spin1FastByteConstants = new Button(leftGroup, SWT.CHECK);
         spin1FastByteConstants.setText("Fast byte constants");
         spin1FastByteConstants.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin1FastByteConstants.setSelection(preferences.getSpin1FastByteConstants());
@@ -799,7 +813,7 @@ public class PreferencesDialog extends Dialog {
 
         });
 
-        spin1FoldConstants = new Button(group, SWT.CHECK);
+        spin1FoldConstants = new Button(leftGroup, SWT.CHECK);
         spin1FoldConstants.setText("Fold constants");
         spin1FoldConstants.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin1FoldConstants.setSelection(preferences.getSpin1FoldConstants());
@@ -812,7 +826,7 @@ public class PreferencesDialog extends Dialog {
 
         });
 
-        spin1WarnUnusedMethods = new Button(group, SWT.CHECK);
+        spin1WarnUnusedMethods = new Button(leftGroup, SWT.CHECK);
         spin1WarnUnusedMethods.setText("Warn unused methods");
         spin1WarnUnusedMethods.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin1WarnUnusedMethods.setSelection(preferences.getSpin1WarnUnusedMethods());
@@ -825,7 +839,7 @@ public class PreferencesDialog extends Dialog {
 
         });
 
-        spin1WarnUnusedMethodVariables = new Button(group, SWT.CHECK);
+        spin1WarnUnusedMethodVariables = new Button(leftGroup, SWT.CHECK);
         spin1WarnUnusedMethodVariables.setText("Warn unused method variables");
         spin1WarnUnusedMethodVariables.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin1WarnUnusedMethodVariables.setSelection(preferences.getSpin1WarnUnusedMethodVariables());
@@ -838,7 +852,7 @@ public class PreferencesDialog extends Dialog {
 
         });
 
-        spin1WarnUnusedVariables = new Button(group, SWT.CHECK);
+        spin1WarnUnusedVariables = new Button(leftGroup, SWT.CHECK);
         spin1WarnUnusedVariables.setText("Warn unused variables");
         spin1WarnUnusedVariables.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin1WarnUnusedVariables.setSelection(preferences.getSpin1WarnUnusedVariables());
@@ -874,15 +888,28 @@ public class PreferencesDialog extends Dialog {
         spin2Template.setFilterIndex(3);
         spin2Template.setSelection(preferences.getSpin2Template());
 
+        label = new Label(composite, SWT.NONE);
+        label.setText("Object Template");
+        spin2ObjectTemplate = new FileSelector(composite);
+        spin2ObjectTemplate.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        spin2ObjectTemplate.setFilterIndex(3);
+        spin2ObjectTemplate.setSelection(preferences.getSpin2ObjectTemplate());
+
         new Label(composite, SWT.NONE);
 
         Composite group = new Composite(composite, SWT.NONE);
-        GridLayout layout = new GridLayout(1, false);
+        GridLayout layout = new GridLayout(2, false);
         layout.marginHeight = layout.marginWidth = 0;
         group.setLayout(layout);
         group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 
-        spin2RemoveUnusedMethods = new Button(group, SWT.CHECK);
+        Composite leftGroup = new Composite(group, SWT.NONE);
+        layout = new GridLayout(1, false);
+        layout.marginHeight = layout.marginWidth = 0;
+        leftGroup.setLayout(layout);
+        leftGroup.setLayoutData(new GridData(SWT.LEFT, SWT.TOP, false, false));
+
+        spin2RemoveUnusedMethods = new Button(leftGroup, SWT.CHECK);
         spin2RemoveUnusedMethods.setText("Remove unused methods");
         spin2RemoveUnusedMethods.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin2RemoveUnusedMethods.setSelection(preferences.getSpin2RemoveUnusedMethods());
@@ -895,7 +922,7 @@ public class PreferencesDialog extends Dialog {
 
         });
 
-        spin2CaseSensitive = new Button(group, SWT.CHECK);
+        spin2CaseSensitive = new Button(leftGroup, SWT.CHECK);
         spin2CaseSensitive.setText("Case sensitive symbols");
         spin2CaseSensitive.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin2CaseSensitive.setSelection(preferences.getSpin2CaseSensitiveSymbols());
@@ -908,7 +935,7 @@ public class PreferencesDialog extends Dialog {
 
         });
 
-        spin2ClockSetter = new Button(group, SWT.CHECK);
+        spin2ClockSetter = new Button(leftGroup, SWT.CHECK);
         spin2ClockSetter.setText("Use clock setter for PASM-only code");
         spin2ClockSetter.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin2ClockSetter.setSelection(preferences.getSpin2ClockSetter());
@@ -921,7 +948,7 @@ public class PreferencesDialog extends Dialog {
 
         });
 
-        spin2Compress = new Button(group, SWT.CHECK);
+        spin2Compress = new Button(leftGroup, SWT.CHECK);
         spin2Compress.setText("Compress binary");
         spin2Compress.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin2Compress.setSelection(preferences.getSpin2Compress());
@@ -934,7 +961,7 @@ public class PreferencesDialog extends Dialog {
 
         });
 
-        spin2WarnUnusedMethods = new Button(group, SWT.CHECK);
+        spin2WarnUnusedMethods = new Button(leftGroup, SWT.CHECK);
         spin2WarnUnusedMethods.setText("Warn unused methods");
         spin2WarnUnusedMethods.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin2WarnUnusedMethods.setSelection(preferences.getSpin2WarnUnusedMethods());
@@ -947,7 +974,7 @@ public class PreferencesDialog extends Dialog {
 
         });
 
-        spin2WarnUnusedMethodVariables = new Button(group, SWT.CHECK);
+        spin2WarnUnusedMethodVariables = new Button(leftGroup, SWT.CHECK);
         spin2WarnUnusedMethodVariables.setText("Warn unused method variables");
         spin2WarnUnusedMethodVariables.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin2WarnUnusedMethodVariables.setSelection(preferences.getSpin2WarnUnusedMethodVariables());
@@ -960,7 +987,7 @@ public class PreferencesDialog extends Dialog {
 
         });
 
-        spin2WarnUnusedVariables = new Button(group, SWT.CHECK);
+        spin2WarnUnusedVariables = new Button(leftGroup, SWT.CHECK);
         spin2WarnUnusedVariables.setText("Warn unused variables");
         spin2WarnUnusedVariables.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin2WarnUnusedVariables.setSelection(preferences.getSpin2WarnUnusedVariables());
@@ -2268,9 +2295,11 @@ public class PreferencesDialog extends Dialog {
 
         preferences.setSpin1LibraryPath(spin1Paths.getFileItems());
         preferences.setSpin1Template(spin1Template.getSelection());
+        preferences.setSpin1ObjectTemplate(spin1ObjectTemplate.getSelection());
 
         preferences.setSpin2LibraryPath(spin2Paths.getFileItems());
         preferences.setSpin2Template(spin2Template.getSelection());
+        preferences.setSpin2ObjectTemplate(spin2ObjectTemplate.getSelection());
 
         preferences.setConsoleMaxLines(consoleMaxLines.getSelection());
         preferences.setConsoleWriteLogFile(consoleWriteLogFile.getSelection());
