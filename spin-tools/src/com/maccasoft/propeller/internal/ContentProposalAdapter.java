@@ -1,12 +1,11 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
+ * All rights reserved.
  *
- * Contributors:
- *     Marco Maccaferri - initial API and implementation
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License v1.0 which accompanies this
+ * distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.internal;
@@ -403,6 +402,8 @@ public class ContentProposalAdapter {
          */
         private class InfoPopupDialog extends PopupDialog {
 
+            static final int POPUP_HORIZONTALSPACING = 2;
+
             /*
              * The text control that displays the text.
              */
@@ -472,9 +473,8 @@ public class ContentProposalAdapter {
                 // Try placing the info popup to the right
                 Rectangle rightProposedBounds = new Rectangle(parentBounds.x
                     + parentBounds.width
-                    + PopupDialog.POPUP_HORIZONTALSPACING,
-                    parentBounds.y
-                        + PopupDialog.POPUP_VERTICALSPACING,
+                    + POPUP_HORIZONTALSPACING,
+                    parentBounds.y,
                     parentBounds.width * 2, parentBounds.height);
                 rightProposedBounds = getConstrainedShellBounds(rightProposedBounds);
                 // If it won't fit on the right, try the left
@@ -491,7 +491,7 @@ public class ContentProposalAdapter {
                             - leftProposedBounds.x) {
                             rightProposedBounds.x = parentBounds.x
                                 + parentBounds.width
-                                + PopupDialog.POPUP_HORIZONTALSPACING;
+                                + POPUP_HORIZONTALSPACING;
                             proposedBounds = rightProposedBounds;
                         }
                         else {
@@ -592,7 +592,7 @@ public class ContentProposalAdapter {
             // On platforms where SWT.ON_TOP overrides SWT.RESIZE, we will live
             // with this.
             // See https://bugs.eclipse.org/bugs/show_bug.cgi?id=126138
-            super(control.getShell(), SWT.RESIZE | SWT.ON_TOP, false, false, false, false, false, null, infoText);
+            super(control.getShell(), SWT.ON_TOP | SWT.TOOL, false, false, false, false, false, null, infoText);
             this.proposals = proposals;
         }
 
@@ -1698,8 +1698,8 @@ public class ContentProposalAdapter {
                             // check the character field...
                             if ((triggerKeyStroke.getModifierKeys() == KeyStroke.NO_KEY && triggerKeyStroke.getNaturalKey() == e.character)
                                 ||
-                            // ...or there are modifiers, in which case the
-                            // keycode and state must match
+                                // ...or there are modifiers, in which case the
+                                // keycode and state must match
                                 (triggerKeyStroke.getNaturalKey() == e.keyCode && ((triggerKeyStroke.getModifierKeys() & e.stateMask) == triggerKeyStroke.getModifierKeys()))) {
                                 // We never propagate the keystroke for an explicit
                                 // keystroke invocation of the popup
