@@ -4,8 +4,7 @@
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2;
@@ -131,7 +130,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 Expression expression = new NumberLiteral(node.getText());
                 source.add(new Constant(context, expression));
                 if (!push) {
-                    logMessage(new CompilerException("expected assignment", node.getTokens()));
+                    logMessage(new CompilerException("expecting assignment", node.getTokens()));
                 }
                 node.setReturnLongs(1);
                 return source;
@@ -139,7 +138,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             if (node.getType() == Token.STRING) {
                 source.addAll(compileString(context, node));
                 if (!push) {
-                    logMessage(new CompilerException("expected assignment", node.getTokens()));
+                    logMessage(new CompilerException("expecting assignment", node.getTokens()));
                 }
                 node.setReturnLongs(1);
                 return source;
@@ -152,7 +151,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     }
                     source.add(new Bytecode(context, Spin2Bytecode.bc_call_recv, node.getText().toUpperCase()));
                     if (!push) {
-                        logMessage(new CompilerException("expected assignment", node.getTokens()));
+                        logMessage(new CompilerException("expecting assignment", node.getTokens()));
                     }
                     node.setReturnLongs(1);
                     return source;
@@ -372,7 +371,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     }
                     else {
                         if (!push) {
-                            logMessage(new CompilerException("expected assignment", node.getTokens()));
+                            logMessage(new CompilerException("expecting assignment", node.getTokens()));
                         }
                         node.setReturnLongs(1);
                     }
@@ -435,7 +434,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                             Spin2Method calledMethod = (Spin2Method) methodExpression.getData(Spin2Method.class.getName());
                             calledMethod.setCalledBy(method);
                             if (!push) {
-                                logMessage(new CompilerException("expected assignment", node.getTokens()));
+                                logMessage(new CompilerException("expecting assignment", node.getTokens()));
                             }
                             node.setReturnLongs(1);
                         }
@@ -521,7 +520,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                             }
 
                             if (!push) {
-                                logMessage(new CompilerException("expected assignment", node.getTokens()));
+                                logMessage(new CompilerException("expecting assignment", node.getTokens()));
                             }
                             node.setReturnLongs(1);
                         }
@@ -541,7 +540,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         }
                         source.add(new Constant(context, expression));
                         if (!push) {
-                            logMessage(new CompilerException("expected assignment", node.getTokens()));
+                            logMessage(new CompilerException("expecting assignment", node.getTokens()));
                         }
                         node.setReturnLongs(1);
                     }
@@ -607,7 +606,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                             }
 
                             if (!push) {
-                                logMessage(new CompilerException("expected assignment", node.getTokens()));
+                                logMessage(new CompilerException("expecting assignment", node.getTokens()));
                             }
                             node.setReturnLongs(1);
                         }
@@ -631,7 +630,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                             }
                             source.add(new MemoryOp(context, MemoryOp.Size.Long, MemoryOp.Base.PBase, MemoryOp.Op.Read, expression));
                             if (!push) {
-                                logMessage(new CompilerException("expected assignment", node.getTokens()));
+                                logMessage(new CompilerException("expecting assignment", node.getTokens()));
                             }
                             node.setReturnLongs(1);
                         }
@@ -653,7 +652,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     }
                     source.add(new Bytecode(context, desc.code, node.getText().toUpperCase()));
                     if (!push && desc.getReturns() != 0) {
-                        logMessage(new CompilerException("expected assignment", node.getTokens()));
+                        logMessage(new CompilerException("expecting assignment", node.getTokens()));
                     }
                     else if (push && desc.getReturns() == 0) {
                         logMessage(new CompilerException("method doesn't return a value", node.getTokens()));
@@ -817,7 +816,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     source.add(end);
 
                     if (!push) {
-                        logMessage(new CompilerException("expected assignment", node.getTokens()));
+                        logMessage(new CompilerException("expecting assignment", node.getTokens()));
                     }
                     node.setReturnLongs(1);
                 }
@@ -881,7 +880,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     source.add(new Bytecode(context, os.toByteArray(), node.getText().toUpperCase()));
 
                     if (!push) {
-                        logMessage(new CompilerException("expected assignment", node.getTokens()));
+                        logMessage(new CompilerException("expecting assignment", node.getTokens()));
                     }
                     node.setReturnLongs(1);
                 }
@@ -941,7 +940,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         source.add(new Bytecode(context, os.toByteArray(), node.getText().toUpperCase() + "S"));
 
                         if (!push) {
-                            logMessage(new CompilerException("expected assignment", node.getTokens()));
+                            logMessage(new CompilerException("expecting assignment", node.getTokens()));
                         }
                         node.setReturnLongs(1);
                     }
@@ -958,7 +957,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         logMessage(new CompilerException("expected type or variable", node.getChild(0).getTokens()));
                     }
                     if (!push) {
-                        logMessage(new CompilerException("expected assignment", node.getTokens()));
+                        logMessage(new CompilerException("expecting assignment", node.getTokens()));
                     }
                     node.setReturnLongs(1);
                 }
@@ -1177,7 +1176,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 }
                 else {
                     if (!push) {
-                        logMessage(new CompilerException("expected assignment", node.getTokens()));
+                        logMessage(new CompilerException("expecting assignment", node.getTokens()));
                     }
                     node.setReturnLongs(1);
                 }
@@ -1205,7 +1204,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     }
                 }
                 if (!push) {
-                    logMessage(new CompilerException("expected assignment", node.getTokens()));
+                    logMessage(new CompilerException("expecting assignment", node.getTokens()));
                 }
                 node.setReturnLongs(1);
                 return source;
@@ -1224,7 +1223,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     }
                 }
                 if (!push) {
-                    logMessage(new CompilerException("expected assignment", node.getTokens()));
+                    logMessage(new CompilerException("expecting assignment", node.getTokens()));
                 }
                 node.setReturnLongs(1);
                 return source;
@@ -1240,7 +1239,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     }
                 }
                 if (!push) {
-                    logMessage(new CompilerException("expected assignment", node.getTokens()));
+                    logMessage(new CompilerException("expecting assignment", node.getTokens()));
                 }
                 node.setReturnLongs(1);
                 return source;
@@ -1417,7 +1416,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         }
 
                         if (!push) {
-                            logMessage(new CompilerException("expected assignment", node.getTokens()));
+                            logMessage(new CompilerException("expecting assignment", node.getTokens()));
                         }
                         node.setReturnLongs(1);
                         return source;
@@ -1473,7 +1472,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     logMessage(new CompilerException("expected 1 value", node.getChild(1).getTokens()));
                 }
                 if (!push) {
-                    logMessage(new CompilerException("expected assignment", node.getTokens()));
+                    logMessage(new CompilerException("expecting assignment", node.getTokens()));
                 }
                 node.setReturnLongs(1);
                 return source;
@@ -1502,7 +1501,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     logMessage(new CompilerException("expected 1 value", elseNode.getTokens()));
                 }
                 if (!push) {
-                    logMessage(new CompilerException("expected assignment", node.getTokens()));
+                    logMessage(new CompilerException("expecting assignment", node.getTokens()));
                 }
                 node.setReturnLongs(1);
                 return source;
@@ -1867,7 +1866,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 }
                 else {
                     if (!push) {
-                        logMessage(new CompilerException("expected assignment", node.getTokens()));
+                        logMessage(new CompilerException("expecting assignment", node.getTokens()));
                     }
                     node.setReturnLongs(1);
                 }
@@ -1946,7 +1945,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 }
                 else {
                     if (!push) {
-                        logMessage(new CompilerException("expected assignment", node.getTokens()));
+                        logMessage(new CompilerException("expecting assignment", node.getTokens()));
                     }
                     node.setReturnLongs(1);
                 }
@@ -1992,7 +1991,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 }
                 else {
                     if (!push) {
-                        logMessage(new CompilerException("expected assignment", node.getTokens()));
+                        logMessage(new CompilerException("expecting assignment", node.getTokens()));
                     }
                     node.setReturnLongs(1);
                 }
@@ -3908,7 +3907,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 else {
                     source.add(new VariableOp(context, VariableOp.Op.Read, popIndex, var, hasIndex, index));
                     if (!push) {
-                        logMessage(new CompilerException("expected assignment", node.getTokens()));
+                        logMessage(new CompilerException("expecting assignment", node.getTokens()));
                     }
                 }
                 if (pointerPostEffectNode != null) {
@@ -4166,7 +4165,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
         }
 
         if (!push && node.getReturnLongs() != 0) {
-            logMessage(new CompilerException("expected assignment", node.getTokens()));
+            logMessage(new CompilerException("expecting assignment", node.getTokens()));
         }
 
         return source;
@@ -4354,7 +4353,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             }
             node.setReturnLongs(1);
             if (!push) {
-                logMessage(new CompilerException("expected assignment", node.getTokens()));
+                logMessage(new CompilerException("expecting assignment", node.getTokens()));
             }
             return source;
         }
@@ -4443,7 +4442,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 source.add(new VariableOp(context, varOp, false, (Variable) expression, false, 0));
                 node.setReturnLongs(1);
                 if (!push && op == MemoryOp.Op.Read) {
-                    logMessage(new CompilerException("expected assignment", node.getTokens()));
+                    logMessage(new CompilerException("expecting assignment", node.getTokens()));
                 }
             }
 
@@ -4758,7 +4757,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 }
             }
             else if (op == MemoryOp.Op.Read && !push && pointerPostEffectNode == null && pointerPostEffectNode == null) {
-                logMessage(new CompilerException("expected assignment", node.getTokens()));
+                logMessage(new CompilerException("expecting assignment", node.getTokens()));
             }
         }
 

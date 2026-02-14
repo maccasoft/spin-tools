@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin1;
@@ -101,7 +100,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 Expression expression = buildConstantExpression(context, node);
                 if (expression.isConstant()) {
                     if (!push) {
-                        logMessage(new CompilerException("expected assignment", node.getTokens()));
+                        logMessage(new CompilerException("expecting assignment", node.getTokens()));
                     }
                     if (expression.isString()) {
                         ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -157,7 +156,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                         }
                         source.add(new Constant(context, expression, compiler.isFastByteConstants()));
                         if (!push) {
-                            logMessage(new CompilerException("expected assignment", node.getTokens()));
+                            logMessage(new CompilerException("expecting assignment", node.getTokens()));
                         }
                     } catch (Exception e) {
                         throw new CompilerException("expression is not constant", node.getChild(0).getToken());
@@ -180,7 +179,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                         }
                         source.add(new Constant(context, new com.maccasoft.propeller.expressions.Float(expression), compiler.isFastByteConstants()));
                         if (!push) {
-                            logMessage(new CompilerException("expected assignment", node.getTokens()));
+                            logMessage(new CompilerException("expecting assignment", node.getTokens()));
                         }
                     } catch (Exception e) {
                         throw new CompilerException("expression is not constant", node.getChild(0).getToken());
@@ -203,7 +202,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                         }
                         source.add(new Constant(context, new Trunc(expression), compiler.isFastByteConstants()));
                         if (!push) {
-                            logMessage(new CompilerException("expected assignment", node.getTokens()));
+                            logMessage(new CompilerException("expecting assignment", node.getTokens()));
                         }
                     } catch (Exception e) {
                         throw new CompilerException("expression is not constant", node.getChild(0).getToken());
@@ -226,7 +225,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                         }
                         source.add(new Constant(context, new Round(expression), compiler.isFastByteConstants()));
                         if (!push) {
-                            logMessage(new CompilerException("expected assignment", node.getTokens()));
+                            logMessage(new CompilerException("expecting assignment", node.getTokens()));
                         }
                     } catch (Exception e) {
                         throw new CompilerException("expression is not constant", node.getChild(0).getToken());
@@ -242,21 +241,21 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                     (byte) 0x34, (byte) 0x80
                 }, "CHIPVER"));
                 if (!push) {
-                    logMessage(new CompilerException("expected assignment", node.getTokens()));
+                    logMessage(new CompilerException("expecting assignment", node.getTokens()));
                 }
             }
             else if ("CLKFREQ".equalsIgnoreCase(node.getText())) {
                 source.add(new Constant(context, new NumberLiteral(0), compiler.isFastByteConstants()));
                 source.add(new MemoryOp(context, MemoryOp.Size.Long, false, MemoryOp.Base.Pop, MemoryOp.Op.Read, null));
                 if (!push) {
-                    logMessage(new CompilerException("expected assignment", node.getTokens()));
+                    logMessage(new CompilerException("expecting assignment", node.getTokens()));
                 }
             }
             else if ("CLKMODE".equalsIgnoreCase(node.getText())) {
                 source.add(new Address(context, new NumberLiteral(4)));
                 source.add(new MemoryOp(context, MemoryOp.Size.Byte, false, MemoryOp.Base.Pop, MemoryOp.Op.Read, null));
                 if (!push) {
-                    logMessage(new CompilerException("expected assignment", node.getTokens()));
+                    logMessage(new CompilerException("expecting assignment", node.getTokens()));
                 }
             }
             else if ("@CLKFREQ".equalsIgnoreCase(node.getText())) {
@@ -271,7 +270,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 }
                 source.add(new RegisterOp(context, RegisterOp.Op.Read, 0x1E9));
                 if (!push) {
-                    logMessage(new CompilerException("expected assignment", node.getTokens()));
+                    logMessage(new CompilerException("expecting assignment", node.getTokens()));
                 }
             }
             else if ("COGNEW".equalsIgnoreCase(node.getText())) {
@@ -367,7 +366,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 source.add(new Bytecode(context, 0b00001111, "LOOKDONE"));
                 source.add(end);
                 if (!push) {
-                    logMessage(new CompilerException("expected assignment", node.getTokens()));
+                    logMessage(new CompilerException("expecting assignment", node.getTokens()));
                 }
             }
             else if ("STRING".equalsIgnoreCase(node.getText())) {
@@ -408,7 +407,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 Spin1Bytecode target = addStringData(new Bytecode(context, os.toByteArray(), "STRING".toUpperCase()));
                 source.add(new MemoryRef(context, MemoryRef.Size.Byte, false, MemoryRef.Base.PBase, MemoryRef.Op.Address, new ContextLiteral(target.getContext())));
                 if (!push) {
-                    logMessage(new CompilerException("expected assignment", node.getTokens()));
+                    logMessage(new CompilerException("expecting assignment", node.getTokens()));
                 }
             }
             else if ("REBOOT".equalsIgnoreCase(node.getText())) {
@@ -449,7 +448,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 Expression expression = new NumberLiteral(node.getText());
                 source.add(new Constant(context, expression, compiler.isFastByteConstants()));
                 if (!push) {
-                    logMessage(new CompilerException("expected assignment", node.getTokens()));
+                    logMessage(new CompilerException("expecting assignment", node.getTokens()));
                 }
             }
             else if (node.getType() == Token.STRING) {
@@ -476,14 +475,14 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                     }
                 }
                 if (!push) {
-                    logMessage(new CompilerException("expected assignment", node.getTokens()));
+                    logMessage(new CompilerException("expecting assignment", node.getTokens()));
                 }
             }
             else if ("-".equals(node.getText()) && node.getChildCount() == 1) {
                 if (node.getChild(0).getToken().type == Token.NUMBER) {
                     source.add(new Constant(context, new Negative(new NumberLiteral(node.getChild(0).getText())), compiler.isFastByteConstants()));
                     if (!push) {
-                        logMessage(new CompilerException("expected assignment", node.getTokens()));
+                        logMessage(new CompilerException("expecting assignment", node.getTokens()));
                     }
                 }
                 else {
@@ -505,7 +504,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
             else if ("+".equals(node.getText()) && node.getChildCount() == 1) {
                 source.addAll(compileBytecodeExpression(context, method, node.getChild(0), true));
                 if (!push) {
-                    logMessage(new CompilerException("expected assignment", node.getTokens()));
+                    logMessage(new CompilerException("expecting assignment", node.getTokens()));
                 }
             }
             else if (":=".equals(node.getText())) {
@@ -542,7 +541,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 source.addAll(compileBytecodeExpression(context, method, node.getChild(1), true));
                 source.add(new MathOp(context, node.getText(), push));
                 if (!push) {
-                    logMessage(new CompilerException("expected assignment", node.getTokens()));
+                    logMessage(new CompilerException("expecting assignment", node.getTokens()));
                 }
             }
             else if ("?".equalsIgnoreCase(node.getText())) {
@@ -576,7 +575,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                     source.add(endSource);
 
                     if (!push) {
-                        logMessage(new CompilerException("expected assignment", node.getTokens()));
+                        logMessage(new CompilerException("expecting assignment", node.getTokens()));
                     }
                 }
             }
@@ -734,7 +733,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                     source.add(compilePostEffect(context, postEffectNode, node.getText(), push));
                 }
                 else if (!push) {
-                    logMessage(new CompilerException("expected assignment", node.getTokens()));
+                    logMessage(new CompilerException("expecting assignment", node.getTokens()));
                 }
             }
             else if ("@BYTE".equalsIgnoreCase(node.getText()) || "@WORD".equalsIgnoreCase(node.getText()) || "@LONG".equalsIgnoreCase(node.getText())) {
@@ -765,7 +764,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 source.add(new MemoryOp(context, ss, popIndex, MemoryOp.Base.Pop, MemoryOp.Op.Address, new NumberLiteral(0)));
 
                 if (!push) {
-                    logMessage(new CompilerException("expected assignment", node.getTokens()));
+                    logMessage(new CompilerException("expecting assignment", node.getTokens()));
                 }
             }
             else if ("@@BYTE".equalsIgnoreCase(node.getText()) || "@@WORD".equalsIgnoreCase(node.getText()) || "@@LONG".equalsIgnoreCase(node.getText())) {
@@ -795,7 +794,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 source.add(new MemoryOp(context, MemoryOp.Size.Byte, true, MemoryOp.Base.PBase, MemoryOp.Op.Address, new NumberLiteral(0)));
 
                 if (!push) {
-                    logMessage(new CompilerException("expected assignment", node.getTokens()));
+                    logMessage(new CompilerException("expecting assignment", node.getTokens()));
                 }
             }
             else {
@@ -852,7 +851,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                         source.add(compilePostEffect(context, postEffectNode, s[1], push));
                     }
                     else if (!push) {
-                        logMessage(new CompilerException("expected assignment", node.getTokens()));
+                        logMessage(new CompilerException("expecting assignment", node.getTokens()));
                     }
                 }
                 else {
@@ -924,7 +923,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                                     source.add(new VariableOp(context, VariableOp.Op.Address, popIndex, (Variable) expression));
                                 }
                                 if (!push) {
-                                    logMessage(new CompilerException("expected assignment", node.getTokens()));
+                                    logMessage(new CompilerException("expecting assignment", node.getTokens()));
                                 }
                             }
                             ((Variable) expression).setCalledBy(method);
@@ -942,7 +941,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                             source.add(new MemoryOp(context, ss, popIndex, MemoryOp.Base.PBase, MemoryOp.Op.Read, expression));
                             source.add(new MemoryOp(context, MemoryOp.Size.Byte, true, MemoryOp.Base.PBase, MemoryOp.Op.Address, new NumberLiteral(0)));
                             if (!push) {
-                                logMessage(new CompilerException("expected assignment", node.getTokens()));
+                                logMessage(new CompilerException("expecting assignment", node.getTokens()));
                             }
                         }
                         else if (expression instanceof ContextLiteral) {
@@ -966,7 +965,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                             else {
                                 source.add(new MemoryOp(context, ss, popIndex, MemoryOp.Base.PBase, MemoryOp.Op.Address, expression));
                                 if (!push) {
-                                    logMessage(new CompilerException("expected assignment", node.getTokens()));
+                                    logMessage(new CompilerException("expecting assignment", node.getTokens()));
                                 }
                             }
                         }
@@ -976,7 +975,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                             }
                             source.add(new Constant(context, expression, compiler.isFastByteConstants()));
                             if (!push) {
-                                logMessage(new CompilerException("expected assignment", node.getTokens()));
+                                logMessage(new CompilerException("expecting assignment", node.getTokens()));
                             }
                         }
                         else {
@@ -1029,7 +1028,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                             source.add(compilePostEffect(context, postEffectNode, "LONG", push));
                         }
                         else if (!push) {
-                            logMessage(new CompilerException("expected assignment", node.getTokens()));
+                            logMessage(new CompilerException("expecting assignment", node.getTokens()));
                         }
                     }
                     else if (expression instanceof Variable) {
@@ -1055,7 +1054,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                         else {
                             source.add(new VariableOp(context, VariableOp.Op.Read, popIndex, (Variable) expression));
                             if (!push) {
-                                logMessage(new CompilerException("expected assignment", node.getTokens()));
+                                logMessage(new CompilerException("expecting assignment", node.getTokens()));
                             }
                         }
                         ((Variable) expression).setCalledBy(method);
@@ -1097,7 +1096,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                         else {
                             source.add(new MemoryOp(context, ss, popIndex, MemoryOp.Base.PBase, MemoryOp.Op.Read, expression));
                             if (!push) {
-                                logMessage(new CompilerException("expected assignment", node.getTokens()));
+                                logMessage(new CompilerException("expecting assignment", node.getTokens()));
                             }
                         }
                     }
@@ -1110,7 +1109,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                         }
                         source.add(new Constant(context, expression, compiler.isFastByteConstants()));
                         if (!push) {
-                            logMessage(new CompilerException("expected assignment", node.getTokens()));
+                            logMessage(new CompilerException("expecting assignment", node.getTokens()));
                         }
                     }
                     else {
