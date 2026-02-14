@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2;
@@ -8344,7 +8343,7 @@ class Spin2ObjectCompilerTest {
             + "    repeat b\n"
             + "        repeat while a < 1\n"
             + "            if a == 1\n"
-            + "                quit 2\n"
+            + "                quit 1\n"
             + "        if a == 1\n"
             + "            quit\n"
             + "        a := 1\n"
@@ -8369,7 +8368,7 @@ class Spin2ObjectCompilerTest {
             + "00012 00012       A2             CONSTANT (1)\n"
             + "00013 00013       70             EQUAL\n"
             + "00014 00014       13 03          JZ $00018 (3)\n"
-            + "'                 quit 2\n"
+            + "'                 quit 1\n"
             + "00016 00016       14 0E          JNZ $00025 (14)\n"
             + "00018 00018       12 73          JMP $0000C (-13)\n"
             + "'         if a == 1\n"
@@ -8396,7 +8395,7 @@ class Spin2ObjectCompilerTest {
             + "    repeat b\n"
             + "        repeat while a < 1\n"
             + "            if a == 1\n"
-            + "                next 2\n"
+            + "                next 1\n"
             + "        if a == 1\n"
             + "            next\n"
             + "        a := 1\n"
@@ -8421,7 +8420,7 @@ class Spin2ObjectCompilerTest {
             + "00012 00012       A2             CONSTANT (1)\n"
             + "00013 00013       70             EQUAL\n"
             + "00014 00014       13 03          JZ $00018 (3)\n"
-            + "'                 next 2\n"
+            + "'                 next 1\n"
             + "00016 00016       12 0C          JMP $00023 (12)\n"
             + "00018 00018       12 73          JMP $0000C (-13)\n"
             + "'         if a == 1\n"

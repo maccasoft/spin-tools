@@ -4,8 +4,7 @@
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2;
@@ -2279,7 +2278,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 line.addChild(quitLine);
             }
             else if ("QUIT".equals(text) || "NEXT".equals(text)) {
-                int level = 1;
+                int level = 0;
                 int pop = 0;
                 String key = text.toLowerCase();
 
@@ -2293,8 +2292,8 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     try {
                         Expression expression = buildConstantExpression(line.getScope(), builder.getRoot());
                         level = Math.abs(expression.getNumber().intValue());
-                        if (level < 1 || level > 16) {
-                            logMessage(new CompilerException("next/quit level count must be from 1 to 16", builder.getTokens()));
+                        if (level < 1 || level > 15) {
+                            logMessage(new CompilerException("next/quit level count must be from 1 to 15", builder.getTokens()));
                         }
                     } catch (Exception e) {
                         logMessage(new CompilerException("expecting constant expression", builder.getTokens()));
@@ -2303,9 +2302,10 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
                 while (parent != null) {
                     if (parent.getStatement().startsWith("REPEAT")) {
-                        if (--level == 0) {
+                        if (level == 0) {
                             break;
                         }
+                        level--;
                     }
                     if (parent.getData("pop") != null) {
                         pop += (Integer) parent.getData("pop");

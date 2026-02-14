@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -111,7 +111,7 @@ public class AboutDialog extends Dialog {
         final String ourLink = "https://www.maccasoft.com/";
         final String forum = "Parallax Forums";
         final String forumLink = "https://forums.parallax.com/discussion/174436/spin-tools-ide";
-        final String message = title + "\r\n" + "Copyright (c) 2021-25 " + our + " and others. All rights reserved.\r\n"
+        final String message = title + "\r\n" + "Copyright (c) 2021-26 " + our + " and others. All rights reserved.\r\n"
             + "\r\n"
             + "Spin2 Interpreter: v52 - 2025.10.08\r\n"
             + "\r\n"
