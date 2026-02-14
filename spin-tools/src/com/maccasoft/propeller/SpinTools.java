@@ -151,7 +151,7 @@ public class SpinTools {
     MenuItem consoleItem;
     ToolItem consoleToolItem;
 
-    Menu bookmarksMenu;
+    MenuItem[] bookmarkItems;
 
     SourcePool sourcePool;
     ComPortList comPortList;
@@ -735,126 +735,11 @@ public class SpinTools {
         item.setText("&File");
         item.setMenu(menu);
 
-        item = new MenuItem(menu, SWT.PUSH);
-        item.setText("New\tCtrl+N");
-        item.setAccelerator(SWT.MOD1 + 'N');
-        item.addListener(SWT.Selection, new Listener() {
-
-            @Override
-            public void handleEvent(Event e) {
-                handleFileNew();
-            }
-        });
-
-        item = new MenuItem(menu, SWT.PUSH);
-        item.setText("New (From P1/Spin template)\tCtrl+Alt+1");
-        item.setAccelerator(SWT.MOD1 + SWT.MOD3 + '1');
-        item.addListener(SWT.Selection, new Listener() {
-
-            @Override
-            public void handleEvent(Event e) {
-                String name = getUniqueName("Untitled", ".spin");
-                File templateFile = preferences.getSpin1Template();
-                if (templateFile != null) {
-                    try {
-                        String text = FileUtils.loadFromFile(templateFile);
-                        openNewTab(name, text);
-                    } catch (Exception e1) {
-                        openInternalError(shell, "Error opening template file " + templateFile, e1);
-                    }
-                }
-                else {
-                    openNewTab(name, getResourceAsString("template.spin"));
-                }
-            }
-        });
-
-        item = new MenuItem(menu, SWT.PUSH);
-        item.setText("New (From P1/C Template)\tCtrl+Alt+2");
-        item.setAccelerator(SWT.MOD1 + SWT.MOD3 + '2');
-        item.addListener(SWT.Selection, new Listener() {
-
-            @Override
-            public void handleEvent(Event e) {
-                String name = getUniqueName("Untitled", ".c");
-                openNewTab(name, getResourceAsString("template1.c"));
-            }
-        });
-
-        item = new MenuItem(menu, SWT.PUSH);
-        item.setText("New (From P2/Spin Template)\tCtrl+Alt+3");
-        item.setAccelerator(SWT.MOD1 + SWT.MOD3 + '3');
-        item.addListener(SWT.Selection, new Listener() {
-
-            @Override
-            public void handleEvent(Event e) {
-                String name = getUniqueName("Untitled", ".spin2");
-                File templateFile = preferences.getSpin2Template();
-                if (templateFile != null) {
-                    try {
-                        String text = FileUtils.loadFromFile(templateFile);
-                        openNewTab(name, text);
-                    } catch (Exception e1) {
-                        openInternalError(shell, "Error opening template file " + templateFile, e1);
-                    }
-                }
-                else {
-                    openNewTab(name, getResourceAsString("template.spin2"));
-                }
-            }
-        });
-
-        item = new MenuItem(menu, SWT.PUSH);
-        item.setText("New (From P2/C Template)\tCtrl+Alt+4");
-        item.setAccelerator(SWT.MOD1 + SWT.MOD3 + '4');
-        item.addListener(SWT.Selection, new Listener() {
-
-            @Override
-            public void handleEvent(Event e) {
-                String name = getUniqueName("Untitled", ".c");
-                openNewTab(name, getResourceAsString("template2.c"));
-            }
-        });
-
-        new MenuItem(menu, SWT.SEPARATOR);
-
-        item = new MenuItem(menu, SWT.PUSH);
-        item.setText("New (From P1/Spin Object Template)\tCtrl+Alt+6");
-        item.setAccelerator(SWT.MOD1 + SWT.MOD3 + '6');
-        item.addListener(SWT.Selection, e -> {
-            String name = getUniqueName("Untitled", ".spin");
-            File templateFile = preferences.getSpin1ObjectTemplate();
-            if (templateFile != null) {
-                try {
-                    String text = FileUtils.loadFromFile(templateFile);
-                    openNewTab(name, text);
-                } catch (Exception e1) {
-                    openInternalError(shell, "Error opening template file " + templateFile, e1);
-                }
-            }
-            else {
-                openNewTab(name, getResourceAsString("object_template.spin"));
-            }
-        });
-
-        item = new MenuItem(menu, SWT.PUSH);
-        item.setText("New (From P2/Spin Object Template)\tCtrl+Alt+7");
-        item.setAccelerator(SWT.MOD1 + SWT.MOD3 + '7');
-        item.addListener(SWT.Selection, e -> {
-            String name = getUniqueName("Untitled", ".spin2");
-            File templateFile = preferences.getSpin2ObjectTemplate();
-            if (templateFile != null) {
-                try {
-                    String text = FileUtils.loadFromFile(templateFile);
-                    openNewTab(name, text);
-                } catch (Exception e1) {
-                    openInternalError(shell, "Error opening template file " + templateFile, e1);
-                }
-            }
-            else {
-                openNewTab(name, getResourceAsString("object_template.spin2"));
-            }
-        });
+        Menu newMenu = new Menu(parent.getParent(), SWT.DROP_DOWN);
+        populateNewMenu(newMenu);
+        item = new MenuItem(menu, SWT.CASCADE);
+        item.setText("New");
+        item.setMenu(newMenu);
 
         new MenuItem(menu, SWT.SEPARATOR);
 
@@ -1047,6 +932,120 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 shell.dispose();
+            }
+        });
+    }
+
+    void populateNewMenu(Menu menu) {
+        MenuItem item = new MenuItem(menu, SWT.PUSH);
+        item.setText("P1 Spin\t");
+        item.setAccelerator(SWT.MOD1 + SWT.MOD3 + '1');
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                String name = getUniqueName(".spin");
+                File templateFile = preferences.getSpin1Template();
+                if (templateFile != null) {
+                    try {
+                        String text = FileUtils.loadFromFile(templateFile);
+                        openNewTab(name, text);
+                    } catch (Exception e1) {
+                        openInternalError(shell, "Error opening template file " + templateFile, e1);
+                    }
+                }
+                else {
+                    openNewTab(name, getResourceAsString("template.spin"));
+                }
+            }
+        });
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("P1 Spin Object\t");
+        item.setAccelerator(SWT.MOD1 + SWT.MOD3 + '2');
+        item.addListener(SWT.Selection, e -> {
+            String name = getUniqueName(".spin");
+            File templateFile = preferences.getSpin1ObjectTemplate();
+            if (templateFile != null) {
+                try {
+                    String text = FileUtils.loadFromFile(templateFile);
+                    openNewTab(name, text);
+                } catch (Exception e1) {
+                    openInternalError(shell, "Error opening template file " + templateFile, e1);
+                }
+            }
+            else {
+                openNewTab(name, getResourceAsString("object_template.spin"));
+            }
+        });
+
+        new MenuItem(menu, SWT.SEPARATOR);
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("P2 Spin\t");
+        item.setAccelerator(SWT.MOD1 + SWT.MOD3 + '3');
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                String name = getUniqueName(".spin2");
+                File templateFile = preferences.getSpin2Template();
+                if (templateFile != null) {
+                    try {
+                        String text = FileUtils.loadFromFile(templateFile);
+                        openNewTab(name, text);
+                    } catch (Exception e1) {
+                        openInternalError(shell, "Error opening template file " + templateFile, e1);
+                    }
+                }
+                else {
+                    openNewTab(name, getResourceAsString("template.spin2"));
+                }
+            }
+        });
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("P2 Spin Object\t");
+        item.setAccelerator(SWT.MOD1 + SWT.MOD3 + '4');
+        item.addListener(SWT.Selection, e -> {
+            String name = getUniqueName(".spin2");
+            File templateFile = preferences.getSpin2ObjectTemplate();
+            if (templateFile != null) {
+                try {
+                    String text = FileUtils.loadFromFile(templateFile);
+                    openNewTab(name, text);
+                } catch (Exception e1) {
+                    openInternalError(shell, "Error opening template file " + templateFile, e1);
+                }
+            }
+            else {
+                openNewTab(name, getResourceAsString("object_template.spin2"));
+            }
+        });
+
+        new MenuItem(menu, SWT.SEPARATOR);
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("P1 C\t");
+        item.setAccelerator(SWT.MOD1 + SWT.MOD3 + '5');
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                String name = getUniqueName(".c");
+                openNewTab(name, getResourceAsString("template1.c"));
+            }
+        });
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("P2 C\t");
+        item.setAccelerator(SWT.MOD1 + SWT.MOD3 + '6');
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                String name = getUniqueName(".c");
+                openNewTab(name, getResourceAsString("template2.c"));
             }
         });
     }
@@ -1283,7 +1282,7 @@ public class SpinTools {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
-                String name = getUniqueName("Untitled", ".spin");
+                String name = getUniqueName(".spin");
                 File templateFile = preferences.getSpin1Template();
                 if (templateFile != null) {
                     try {
@@ -1306,7 +1305,7 @@ public class SpinTools {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
-                String name = getUniqueName("Untitled", ".spin2");
+                String name = getUniqueName(".spin2");
                 File templateFile = preferences.getSpin2Template();
                 if (templateFile != null) {
                     try {
@@ -1475,7 +1474,7 @@ public class SpinTools {
 
         toolItem = new ToolItem(toolBar, SWT.PUSH);
         toolItem.setImage(ImageRegistry.getImageFromResources("document-text-arrow-270-small.png"));
-        toolItem.setToolTipText("Next Annotation");
+        toolItem.setToolTipText("Next Error / Warning");
         toolItem.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -1494,7 +1493,7 @@ public class SpinTools {
 
         toolItem = new ToolItem(toolBar, SWT.PUSH);
         toolItem.setImage(ImageRegistry.getImageFromResources("document-text-arrow-090-small.png"));
-        toolItem.setToolTipText("Previous Annotation");
+        toolItem.setToolTipText("Previous Error / Warning");
         toolItem.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -1519,32 +1518,7 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 try {
-                    if (backStack.isEmpty()) {
-                        return;
-                    }
-
-                    SourceLocation currentLocation = getCurrentSourceLocation();
-
-                    SourceLocation location = backStack.pop();
-                    if (location.file != null) {
-                        EditorTab editorTab = openOrSwitchToTab(location.file);
-                        if (currentLocation != null) {
-                            forwardStack.push(currentLocation);
-                        }
-                        SourceEditor editor = editorTab.getEditor();
-                        shell.getDisplay().asyncExec(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                StyledText styledText = editor.getStyledText();
-                                styledText.setCaretOffset(location.offset);
-                                styledText.setTopPixel(location.topPixel);
-                                updateEditorSelection();
-                                updateCaretPosition();
-                            }
-
-                        });
-                    }
+                    handlePreviousEditLocation();
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -1559,32 +1533,7 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 try {
-                    if (forwardStack.isEmpty()) {
-                        return;
-                    }
-
-                    SourceLocation currentLocation = getCurrentSourceLocation();
-
-                    SourceLocation location = forwardStack.pop();
-                    if (location.file != null) {
-                        EditorTab editorTab = openOrSwitchToTab(location.file);
-                        if (currentLocation != null) {
-                            backStack.push(currentLocation);
-                        }
-                        SourceEditor editor = editorTab.getEditor();
-                        shell.getDisplay().asyncExec(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                StyledText styledText = editor.getStyledText();
-                                styledText.setCaretOffset(location.offset);
-                                styledText.setTopPixel(location.topPixel);
-                                updateEditorSelection();
-                                updateCaretPosition();
-                            }
-
-                        });
-                    }
+                    handleNextEditLocation();
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -1706,6 +1655,64 @@ public class SpinTools {
         return toolBar;
     }
 
+    void handlePreviousEditLocation() {
+        if (backStack.isEmpty()) {
+            return;
+        }
+
+        SourceLocation currentLocation = getCurrentSourceLocation();
+
+        SourceLocation location = backStack.pop();
+        if (location.file != null) {
+            EditorTab editorTab = openOrSwitchToTab(location.file);
+            if (currentLocation != null) {
+                forwardStack.push(currentLocation);
+            }
+            SourceEditor editor = editorTab.getEditor();
+            shell.getDisplay().asyncExec(new Runnable() {
+
+                @Override
+                public void run() {
+                    StyledText styledText = editor.getStyledText();
+                    styledText.setCaretOffset(location.offset);
+                    styledText.setTopPixel(location.topPixel);
+                    updateEditorSelection();
+                    updateCaretPosition();
+                }
+
+            });
+        }
+    }
+
+    void handleNextEditLocation() {
+        if (forwardStack.isEmpty()) {
+            return;
+        }
+
+        SourceLocation currentLocation = getCurrentSourceLocation();
+
+        SourceLocation location = forwardStack.pop();
+        if (location.file != null) {
+            EditorTab editorTab = openOrSwitchToTab(location.file);
+            if (currentLocation != null) {
+                backStack.push(currentLocation);
+            }
+            SourceEditor editor = editorTab.getEditor();
+            shell.getDisplay().asyncExec(new Runnable() {
+
+                @Override
+                public void run() {
+                    StyledText styledText = editor.getStyledText();
+                    styledText.setCaretOffset(location.offset);
+                    styledText.setTopPixel(location.topPixel);
+                    updateEditorSelection();
+                    updateCaretPosition();
+                }
+
+            });
+        }
+    }
+
     ToolBar createSideToolbar(Composite parent) {
         ToolItem toolItem;
         ToolBar toolBar = new ToolBar(parent, SWT.FLAT);
@@ -1726,29 +1733,16 @@ public class SpinTools {
         return toolBar;
     }
 
-    private void handleFileNew() {
-        String suffix = ".spin";
-
-        if (tabFolder.getSelection() != null) {
-            EditorTab currentTab = (EditorTab) tabFolder.getSelection().getData();
-            String tabName = currentTab.getText();
-            suffix = tabName.substring(tabName.lastIndexOf('.'));
-        }
-
-        String name = getUniqueName("Untitled", suffix);
-        openNewTab(name, "");
-    }
-
-    String getUniqueName(String prefix, String suffix) {
+    String getUniqueName(String suffix) {
         int count = 0;
-        String name = prefix + suffix;
+        String name = "Untitled" + suffix;
 
         int index = 0;
         while (index < tabFolder.getItemCount()) {
             CTabItem tabItem = tabFolder.getItem(index);
             EditorTab editorTab = (EditorTab) tabItem.getData();
             if (editorTab.getText().equalsIgnoreCase(name)) {
-                name = prefix + String.valueOf(++count) + suffix;
+                name = "Untitled" + String.valueOf(++count) + suffix;
                 index = -1;
             }
             index++;
@@ -1759,17 +1753,19 @@ public class SpinTools {
 
     String getResourceAsString(String name) {
         InputStream is = getClass().getResourceAsStream(name);
-        try {
-            byte[] b = new byte[is.available()];
-            is.read(b);
-            return new String(b);
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
+        if (is != null) {
             try {
-                is.close();
+                byte[] b = new byte[is.available()];
+                is.read(b);
+                return new String(b);
             } catch (Exception e) {
                 e.printStackTrace();
+            } finally {
+                try {
+                    is.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
         return "";
@@ -1988,15 +1984,11 @@ public class SpinTools {
     Menu createContextMenu() {
         Menu menu = new Menu(shell, SWT.POP_UP);
 
+        Menu newMenu = new Menu(menu.getParent(), SWT.DROP_DOWN);
+        populateNewMenu(newMenu);
         MenuItem item = new MenuItem(menu, SWT.CASCADE);
         item.setText("New");
-        item.addListener(SWT.Selection, new Listener() {
-
-            @Override
-            public void handleEvent(Event e) {
-                handleFileNew();
-            }
-        });
+        item.setMenu(newMenu);
 
         new MenuItem(menu, SWT.SEPARATOR);
 
@@ -2643,31 +2635,9 @@ public class SpinTools {
 
         new MenuItem(menu, SWT.SEPARATOR);
 
-        bookmarksMenu = new Menu(parent.getParent(), SWT.DROP_DOWN);
-
         item = new MenuItem(menu, SWT.CASCADE);
-        item.setText("Go to Bookmark");
-        item.setMenu(bookmarksMenu);
-
-        for (int i = 1; i <= 9; i++) {
-            final int bookmarkNumber = i - 1;
-            item = new MenuItem(bookmarksMenu, SWT.PUSH);
-            item.setText(String.valueOf(i) + "\tCtrl+" + String.valueOf(i));
-            item.setAccelerator(SWT.MOD1 + '0' + i);
-            item.addSelectionListener(new SelectionAdapter() {
-
-                @Override
-                public void widgetSelected(SelectionEvent e) {
-                    CTabItem tabItem = tabFolder.getSelection();
-                    if (tabItem == null) {
-                        return;
-                    }
-                    EditorTab editorTab = (EditorTab) tabItem.getData();
-                    editorTab.getEditor().navigateToBookmark(bookmarkNumber);
-                }
-
-            });
-        }
+        item.setText("Go To");
+        item.setMenu(createGotoMenu(menu));
 
         new MenuItem(menu, SWT.SEPARATOR);
 
@@ -2742,6 +2712,109 @@ public class SpinTools {
                 dlg.open();
             }
         });
+
+        return menu;
+    }
+
+    Menu createGotoMenu(Menu parent) {
+        Menu menu = new Menu(parent.getParent(), SWT.DROP_DOWN);
+
+        MenuItem item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Previous Error / Warning\t");
+        item.setAccelerator(SWT.MOD2 | SWT.MOD3 + SWT.ARROW_UP);
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                try {
+                    CTabItem tabItem = tabFolder.getSelection();
+                    if (tabItem != null) {
+                        EditorTab editorTab = (EditorTab) tabItem.getData();
+                        editorTab.goToPreviousAnnotation();
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+
+        });
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Next Error / Warning\t");
+        item.setAccelerator(SWT.MOD2 | SWT.MOD3 + SWT.ARROW_DOWN);
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                try {
+                    CTabItem tabItem = tabFolder.getSelection();
+                    if (tabItem != null) {
+                        EditorTab editorTab = (EditorTab) tabItem.getData();
+                        editorTab.goToNextAnnotation();
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+
+        });
+
+        new MenuItem(menu, SWT.SEPARATOR);
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Previous Edit Location\t");
+        item.setAccelerator(SWT.MOD2 | SWT.MOD3 + SWT.ARROW_LEFT);
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                try {
+                    handlePreviousEditLocation();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+
+        });
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Next Edit Location\t");
+        item.setAccelerator(SWT.MOD2 | SWT.MOD3 + SWT.ARROW_RIGHT);
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                try {
+                    handleNextEditLocation();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+
+        });
+
+        new MenuItem(menu, SWT.SEPARATOR);
+
+        bookmarkItems = new MenuItem[9];
+        for (int i = 0; i < bookmarkItems.length; i++) {
+            final int bookmarkNumber = i;
+
+            bookmarkItems[i] = new MenuItem(menu, SWT.PUSH);
+            bookmarkItems[i].setText((i + 1) + "\tCtrl+" + i);
+            bookmarkItems[i].setAccelerator(SWT.MOD1 + '0' + i);
+            bookmarkItems[i].addListener(SWT.Selection, new Listener() {
+
+                @Override
+                public void handleEvent(Event e) {
+                    CTabItem tabItem = tabFolder.getSelection();
+                    if (tabItem == null) {
+                        return;
+                    }
+                    EditorTab editorTab = (EditorTab) tabItem.getData();
+                    editorTab.getEditor().navigateToBookmark(bookmarkNumber);
+                }
+            });
+        }
 
         return menu;
     }
@@ -3948,15 +4021,14 @@ public class SpinTools {
     }
 
     void updateBookmarksMenu(Integer[] bookmarks) {
-        MenuItem[] items = bookmarksMenu.getItems();
-        for (int i = 0; i < items.length; i++) {
-            items[i].setEnabled(false);
+        for (int i = 0; i < bookmarkItems.length; i++) {
+            bookmarkItems[i].setEnabled(false);
         }
 
         if (bookmarks != null) {
             int i = 0;
-            while (i < items.length && i < bookmarks.length) {
-                items[i].setEnabled(bookmarks[i] != null);
+            while (i < bookmarks.length && i < bookmarkItems.length) {
+                bookmarkItems[i].setEnabled(bookmarks[i] != null);
                 i++;
             }
         }
