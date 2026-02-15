@@ -253,7 +253,7 @@ public class AboutDialog extends Dialog {
 
     void createKoFiLabel(Composite parent) {
         int zoom = switch (Platform.PLATFORM) {
-            case "cocoa" -> 50;
+            case "cocoa" -> 70;
             case "win32" -> 80;
             default -> 100;
         };
