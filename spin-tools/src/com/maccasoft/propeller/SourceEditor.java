@@ -45,7 +45,26 @@ import org.eclipse.swt.custom.VerifyKeyListener;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
-import org.eclipse.swt.events.*;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.events.FocusAdapter;
+import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.KeyAdapter;
+import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.events.MouseAdapter;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseMoveListener;
+import org.eclipse.swt.events.MouseTrackAdapter;
+import org.eclipse.swt.events.PaintEvent;
+import org.eclipse.swt.events.PaintListener;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.TraverseEvent;
+import org.eclipse.swt.events.TraverseListener;
+import org.eclipse.swt.events.VerifyEvent;
+import org.eclipse.swt.events.VerifyListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.graphics.Font;
@@ -1890,7 +1909,7 @@ public class SourceEditor {
                 }
             }
 
-            if (styledText.getCaret() == overwriteCaret) {
+            if (styledText.getCaret() != insertCaret) {
                 while (currentColumn < nextTabColumn && currentColumn < sb.length() && sb.charAt(currentColumn) == ' ') {
                     currentColumn++;
                 }
@@ -1917,8 +1936,12 @@ public class SourceEditor {
 
             styledText.setRedraw(false);
             try {
-                styledText.replaceTextRange(lineStart, styledText.getLine(lineNumber).length(), sb.toString());
-                styledText.setCaretOffset(lineStart + nextTabColumn);
+                int caretPosition = lineStart + nextTabColumn;
+                String lineText = styledText.getLine(lineNumber);
+                if (!sb.toString().equals(lineText) || caretPosition != styledText.getCaretOffset()) {
+                    styledText.replaceTextRange(lineStart, lineText.length(), sb.toString());
+                }
+                styledText.setCaretOffset(caretPosition);
                 styledText.showSelection();
             } finally {
                 styledText.setRedraw(true);
@@ -2080,7 +2103,7 @@ public class SourceEditor {
                     }
                 }
 
-                if (styledText.getCaret() == overwriteCaret) {
+                if (styledText.getCaret() != insertCaret) {
                     while (currentColumn > 0 && currentColumn > previousTabColumn && sb.charAt(currentColumn) == ' ') {
                         currentColumn--;
                         caretOffset--;
@@ -2109,12 +2132,13 @@ public class SourceEditor {
 
             styledText.setRedraw(false);
             try {
+                int caretPosition = lineStart + currentColumn;
                 String lineText = styledText.getLine(lineNumber);
-                if (!sb.toString().equals(lineText)) {
+                if (!sb.toString().equals(lineText) || caretPosition != styledText.getCaretOffset()) {
                     styledText.replaceTextRange(lineStart, lineText.length(), sb.toString());
-                    styledText.setCaretOffset(lineStart + currentColumn);
-                    styledText.showSelection();
                 }
+                styledText.setCaretOffset(lineStart + currentColumn);
+                styledText.showSelection();
             } finally {
                 styledText.setRedraw(true);
             }

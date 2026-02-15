@@ -437,14 +437,14 @@ public class SourceEditorTest {
         subject.doTab();
         Assertions.assertEquals(""
             + "DAT\n"
-            + "                nop         ' comment\n"
+            + "            nop             ' comment\n"
             + "", subject.styledText.getText());
         Assertions.assertEquals(4 + 4, subject.styledText.getCaretOffset());
 
         subject.doTab();
         Assertions.assertEquals(""
             + "DAT\n"
-            + "                    nop     ' comment\n"
+            + "            nop             ' comment\n"
             + "", subject.styledText.getText());
         Assertions.assertEquals(4 + 8, subject.styledText.getCaretOffset());
     }
@@ -485,14 +485,14 @@ public class SourceEditorTest {
         subject.doBacktab();
         Assertions.assertEquals(""
             + "DAT\n"
-            + "        nop                 ' comment\n"
+            + "            nop             ' comment\n"
             + "", subject.styledText.getText());
         Assertions.assertEquals(4 + 4, subject.styledText.getCaretOffset());
 
         subject.doBacktab();
         Assertions.assertEquals(""
             + "DAT\n"
-            + "    nop                     ' comment\n"
+            + "            nop             ' comment\n"
             + "", subject.styledText.getText());
         Assertions.assertEquals(4, subject.styledText.getCaretOffset());
     }
