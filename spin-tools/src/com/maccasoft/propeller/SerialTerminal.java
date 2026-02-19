@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller;
@@ -863,9 +862,7 @@ public class SerialTerminal {
                     break;
 
                 case Preferences.PROP_TERMINAL_LINE_INPUT:
-                    lineInputGroup.setVisible(((Boolean) evt.getNewValue()).booleanValue());
-                    ((GridData) lineInputGroup.getLayoutData()).exclude = !((Boolean) evt.getNewValue()).booleanValue();
-                    lineInputGroup.getParent().layout(true);
+                    setLineInputGroupVisible((Boolean) evt.getNewValue());
                     break;
 
                 case Preferences.PROP_TERMINAL_LOCAL_ECHO:
@@ -1112,13 +1109,19 @@ public class SerialTerminal {
 
                 e.gc.setFont(font);
 
-                for (int y = y0, cy = y * characterHeight; y < y1; y++, cy += characterHeight) {
-                    for (int x = x0, cx = x * characterWidth; x < x1; x++, cx += characterWidth) {
-                        Cell cell = screen[topRow + y][x];
-                        e.gc.setForeground(cell.foreground);
-                        e.gc.setBackground(cell.background);
-                        e.gc.fillRectangle(cx, cy, characterWidth, characterHeight);
-                        e.gc.drawString(String.valueOf(cell.character), cx, cy, true);
+                for (int y = y0, cy = y * characterHeight; y <= y1; y++, cy += characterHeight) {
+                    for (int x = x0, cx = x * characterWidth; x <= x1; x++, cx += characterWidth) {
+                        try {
+                            Cell cell = screen[topRow + y][x];
+                            e.gc.setForeground(cell.foreground);
+                            e.gc.setBackground(cell.background);
+                            e.gc.fillRectangle(cx, cy, characterWidth, characterHeight);
+                            e.gc.drawString(String.valueOf(cell.character), cx, cy, true);
+                        } catch (Exception ex) {
+                            e.gc.setForeground(foreground);
+                            e.gc.setBackground(background);
+                            e.gc.fillRectangle(cx, cy, characterWidth, characterHeight);
+                        }
                     }
                 }
 
@@ -1341,6 +1344,12 @@ public class SerialTerminal {
 
         lineInputGroup.setVisible(preferences.getTerminalLineInput());
         ((GridData) lineInputGroup.getLayoutData()).exclude = !preferences.getTerminalLineInput();
+    }
+
+    void setLineInputGroupVisible(boolean visible) {
+        lineInputGroup.setVisible(visible);
+        ((GridData) lineInputGroup.getLayoutData()).exclude = !visible;
+        lineInputGroup.getParent().layout(true);
     }
 
     void createBottomControls(Composite parent) {
@@ -1783,13 +1792,12 @@ public class SerialTerminal {
                     SerialTerminal serialTerminal = new SerialTerminal(display, new Preferences());
                     serialTerminal.open();
 
+                    serialTerminal.setLineInputGroupVisible(false);
                     serialTerminal.setTerminalType(ANSI.KEY);
 
-                    new Thread() {
-
-                        @Override
-                        public void run() {
-                            serialTerminal.write("\033[J2\033[H");
+                    new Thread(() -> {
+                        try {
+                            serialTerminal.write("\033[2J\033[H");
 
                             serialTerminal.write("\033[0;37;40mABCDEFGHIJ");
                             serialTerminal.write("\033[0;37;41mABCDEFGHIJ");
@@ -1810,9 +1818,19 @@ public class SerialTerminal {
                             serialTerminal.write("\033[0;37;42mABCDEFGHIJ");
                             serialTerminal.write("\033[0;37;41mABCDEFGHIJ");
                             serialTerminal.write("\033[0;37;40mABCDEFGHIJ");
-                        }
 
-                    }.start();
+                            Thread.sleep(2000);
+
+                            serialTerminal.write(String.format("\033[%d;1HABCDEFGHIJ", serialTerminal.screenHeight));
+                            serialTerminal.write(String.format("\033[%d;%dHA", serialTerminal.screenHeight, serialTerminal.screenWidth));
+
+                            //serialTerminal.write("\033[30;1HABCDEFGHIJ");
+                            //serialTerminal.write("\033[31;1HABCDEFGHIJ");
+                            //serialTerminal.write("\033[32;1H0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZab");
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }).start();
 
                     while (display.getShells().length != 0) {
                         if (!display.readAndDispatch()) {
