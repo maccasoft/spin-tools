@@ -118,7 +118,10 @@ public class DebugScopeWindow extends DebugWindow {
         }
 
         void update() {
-            int firstSample = (sampleIndex - sampleCount) & (samples - 1);
+            int firstSample = sampleIndex - sampleCount;
+            if (firstSample < 0) {
+                firstSample += samples;
+            }
 
             if (auto) {
                 min = Integer.MAX_VALUE;
@@ -132,10 +135,7 @@ public class DebugScopeWindow extends DebugWindow {
                     if (d > max) {
                         max = d;
                     }
-                    ptr++;
-                    if (ptr >= samples) {
-                        ptr = 0;
-                    }
+                    ptr = (ptr + 1) % samples;
                 }
             }
 
@@ -161,7 +161,7 @@ public class DebugScopeWindow extends DebugWindow {
             for (int i = 0; i < sampleCount; i++) {
                 linePoints[idx++] = MARGIN_WIDTH + (int) Math.round(x);
                 linePoints[idx++] = MARGIN_HEIGHT + charHeight + (imageSize.y - y_base) - (int) Math.round((sampleData[ptr] - min) * sy);
-                ptr = (ptr + 1) & (samples - 1);
+                ptr = (ptr + 1) % samples;
                 x += sx;
             }
         }
@@ -550,16 +550,16 @@ public class DebugScopeWindow extends DebugWindow {
             if (sampleCount < samples) {
                 sampleCount++;
             }
-            sampleIndex++;
-            if (sampleIndex >= samples) {
-                sampleIndex = 0;
-            }
+            sampleIndex = (sampleIndex + 1) % samples;
 
             triggered = false;
 
             if (triggerChannel >= 0) {
                 if (sampleCount >= samples) {
-                    int offs = (sampleIndex - triggerOffset - 1) & (samples - 1);
+                    int offs = sampleIndex - triggerOffset - 1;
+                    if (offs < 0) {
+                        offs += samples;
+                    }
                     int triggerSample = channelData[triggerChannel].sampleData[offs];
                     if (armed) {
                         if (triggerFire >= triggerArm) {

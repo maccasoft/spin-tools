@@ -86,7 +86,10 @@ public class DebugLogicWindow extends DebugWindow {
         void update(int lineY) {
             int y;
             int x = MARGIN_WIDTH * 2 + textWidth + (sampleData.length - sampleCount) * spacing;
-            int ptr = (sampleIndex - sampleCount) & (sampleData.length - 1);
+            int ptr = sampleIndex - sampleCount;
+            if (ptr < 0) {
+                ptr += sampleData.length;
+            }
             int idx = 0;
 
             int arraySize = sampleCount * 4;
@@ -101,7 +104,7 @@ public class DebugLogicWindow extends DebugWindow {
                 x += spacing;
                 linePoints[idx++] = x;
                 linePoints[idx++] = y;
-                ptr = (ptr + 1) & (sampleData.length - 1);
+                ptr = (ptr + 1) % sampleData.length;
             }
         }
 
@@ -517,16 +520,16 @@ public class DebugLogicWindow extends DebugWindow {
         if (sampleCount < sampleData.length) {
             sampleCount++;
         }
-        sampleIndex++;
-        if (sampleIndex >= sampleData.length) {
-            sampleIndex = 0;
-        }
+        sampleIndex = (sampleIndex + 1) % sampleData.length;
 
         triggered = false;
 
         if (triggerMask != 0) {
             if (sampleCount >= sampleData.length) {
-                int offs = (sampleIndex - triggerOffset) & (sampleData.length - 1);
+                int offs = sampleIndex - triggerOffset;
+                if (offs < 0) {
+                    offs += sampleData.length;
+                }
                 int triggerSample = sampleData[offs];
                 if (armed) {
                     if (((triggerSample ^ triggerMatch) & triggerMask) == 0) {
