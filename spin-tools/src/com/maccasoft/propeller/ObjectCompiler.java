@@ -164,6 +164,23 @@ public abstract class ObjectCompiler {
                 }
                 break;
 
+            case "undef":
+                node.setExclude(skip);
+                if (!skip) {
+                    if (!iter.hasNext()) {
+                        throw new CompilerException("expecting identifier", new Token(token.getStream(), token.stop));
+                    }
+                    token = iter.next();
+                    if (token.type != Token.KEYWORD) {
+                        throw new CompilerException("invalid identifier", token);
+                    }
+                    scope.removeDefinition(token.getText());
+                    if (iter.hasNext()) {
+                        throw new CompilerException("expecting end of line", iter.next());
+                    }
+                }
+                break;
+
             case "error":
                 node.setExclude(skip);
                 if (!skip) {

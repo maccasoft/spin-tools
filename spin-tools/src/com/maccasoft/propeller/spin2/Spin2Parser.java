@@ -40,7 +40,7 @@ public class Spin2Parser extends Parser {
 
     private static final Set<String> preprocessor = new HashSet<>(Arrays.asList(new String[] {
         "define", "ifdef", "elifdef", "elseifdef", "ifndef", "elifndef", "elseifndef", "else", "if", "elif", "elseif", "endif",
-        "error", "warning", "pragma"
+        "error", "warning", "pragma", "undef"
     }));
 
     final Spin2TokenStream stream;

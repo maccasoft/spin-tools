@@ -171,6 +171,10 @@ public class Context {
         defines.put(identifier, definition);
     }
 
+    public void removeDefinition(String identifier) {
+        defines.remove(identifier);
+    }
+
     public void addDefinition(String identifier, Expression expression) {
         addDefinition(identifier, Collections.emptyList());
         addSymbol(identifier, expression);
