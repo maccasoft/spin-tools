@@ -732,9 +732,10 @@ public class SerialTerminal {
                     }
                     break;
 
-                case 10: // LF: Line Feed
                 case 13: // NL: New Line
                     cx = 0;
+                    // Fall-through
+                case 10: // LF: Line Feed
                     cy++;
                     if (cy >= screen.length) {
                         scrollUp(1);
