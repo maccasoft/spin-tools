@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller;
@@ -108,6 +107,40 @@ public abstract class ObjectCompiler {
 
         token = iter.next();
         switch (token.getText().toLowerCase()) {
+            case "pragma":
+                node.setExclude(skip);
+                if (!skip) {
+                    if (!iter.hasNext()) {
+                        throw new CompilerException("expecting directive", new Token(token.getStream(), token.stop));
+                    }
+                    token = iter.next();
+                    if (!"exportdef".equalsIgnoreCase(token.getText())) {
+                        logMessage(new CompilerException(CompilerException.WARNING, "unsupported directive", token));
+                        break;
+                    }
+                    if (!iter.hasNext()) {
+                        throw new CompilerException("expecting identifier", new Token(token.getStream(), token.stop));
+                    }
+                    token = iter.next();
+                    if (token.type != Token.KEYWORD) {
+                        throw new CompilerException("invalid identifier", token);
+                    }
+                    String identifier = token.getText();
+                    if (scope.isDefined(identifier)) {
+                        if (iter.hasNext()) {
+                            throw new CompilerException("expecting end of line", iter.next());
+                        }
+                    }
+                    else {
+                        List<Token> list = new ArrayList<>();
+                        iter.forEachRemaining(t -> {
+                            list.add(t);
+                        });
+                        scope.addDefinition(identifier, list);
+                    }
+                }
+                break;
+
             case "define":
                 node.setExclude(skip);
                 if (!skip) {
@@ -300,7 +333,7 @@ public abstract class ObjectCompiler {
                 break;
 
             default:
-                logMessage(new CompilerException("unsupported directive", token));
+                logMessage(new CompilerException("unsupported preprocessor directive", node));
                 break;
         }
     }
