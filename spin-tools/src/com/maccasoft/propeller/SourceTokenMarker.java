@@ -546,7 +546,7 @@ public abstract class SourceTokenMarker {
         StringBuilder sb = new StringBuilder();
 
         if (symbol.indexOf('.') != -1) {
-            String[] s = symbol.split("[\\.]");
+            String[] s = symbol.split("[.]");
             if (s.length != 2) {
                 return null;
             }
@@ -603,6 +603,75 @@ public abstract class SourceTokenMarker {
                         objectRoot.accept(new NodeVisitor() {
 
                             @Override
+                            public boolean visitMethod(MethodNode node) {
+                                if (node.getName() != null) {
+                                    if (s[1].equals(node.getName().getText())) {
+                                        sb.append(getMethodDocument(node));
+                                    }
+                                }
+                                return false;
+                            }
+
+                        });
+                    }
+                }
+
+            });
+        }
+        else {
+            root.accept(new NodeVisitor() {
+
+                @Override
+                public boolean visitFunction(FunctionNode node) {
+                    if (node.getIdentifier() != null) {
+                        if (symbol.equals(node.getIdentifier().getText())) {
+                            sb.append(getMethodDocument(node));
+                        }
+                    }
+                    return false;
+                }
+
+                @Override
+                public boolean visitMethod(MethodNode node) {
+                    if (node.getName() != null) {
+                        if (symbol.equals(node.getName().getText())) {
+                            sb.append(getMethodDocument(node));
+                        }
+                    }
+                    return false;
+                }
+
+            });
+        }
+
+        return !sb.isEmpty() ? sb.toString() : null;
+    }
+
+    public String getConstant(String symbol) {
+        StringBuilder sb = new StringBuilder();
+
+        int dot = constantSeparator.isBlank() ? -1 : symbol.indexOf(constantSeparator);
+        if (dot != -1) {
+            String[] s = symbol.split("[" + constantSeparator + "]");
+            if (s.length != 2) {
+                return null;
+            }
+            root.accept(new NodeVisitor() {
+
+                @Override
+                public void visitObject(ObjectNode node) {
+                    if (node.name == null || node.file == null) {
+                        return;
+                    }
+                    if (!node.name.getText().equalsIgnoreCase(s[0])) {
+                        return;
+                    }
+                    String fileName = node.getFileName();
+                    Node objectRoot = getObjectTree(fileName);
+                    if (objectRoot != null) {
+                        objectRoot.accept(new NodeVisitor() {
+
+                            @Override
                             public void visitConstant(ConstantNode node) {
                                 if (node.getIdentifier() != null) {
                                     String identifier = node.getIdentifier().getText();
@@ -613,16 +682,6 @@ public abstract class SourceTokenMarker {
                                         }
                                     }
                                 }
-                            }
-
-                            @Override
-                            public boolean visitMethod(MethodNode node) {
-                                if (node.getName() != null) {
-                                    if (s[1].equals(node.getName().getText())) {
-                                        sb.append(getMethodDocument(node));
-                                    }
-                                }
-                                return false;
                             }
 
                         });
@@ -645,26 +704,6 @@ public abstract class SourceTokenMarker {
                             }
                         }
                     }
-                }
-
-                @Override
-                public boolean visitFunction(FunctionNode node) {
-                    if (node.getIdentifier() != null) {
-                        if (symbol.equals(node.getIdentifier().getText())) {
-                            sb.append(getMethodDocument(node));
-                        }
-                    }
-                    return false;
-                }
-
-                @Override
-                public boolean visitMethod(MethodNode node) {
-                    if (node.getName() != null) {
-                        if (symbol.equals(node.getName().getText())) {
-                            sb.append(getMethodDocument(node));
-                        }
-                    }
-                    return false;
                 }
 
             });
