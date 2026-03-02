@@ -661,7 +661,7 @@ public class SpinCompiler {
 
     static void println(CompilerException obj) {
         if (!quiet) {
-            System.out.print(obj);
+            System.out.println(obj);
             System.out.flush();
         }
     }
