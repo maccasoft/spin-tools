@@ -2253,11 +2253,12 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 return new Compare(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
 
             case "?": {
+                Expression left = buildConstantExpression(context, node.getChild(0), registerConstant);
                 Expression right = buildConstantExpression(context, node.getChild(1), registerConstant);
-                if (!(right instanceof IfElse)) {
+                if (!(right instanceof IfElse ifelse)) {
                     throw new RuntimeException("unsupported operator " + node.getText());
                 }
-                return new IfElse(buildConstantExpression(context, node.getChild(0), registerConstant), ((IfElse) right).getTrueTerm(), ((IfElse) right).getFalseTerm());
+                return new IfElse(left, ifelse.getTrueTerm(), ifelse.getFalseTerm());
             }
             case ":":
                 return new IfElse(null, buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));

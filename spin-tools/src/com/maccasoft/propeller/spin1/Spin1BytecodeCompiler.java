@@ -1291,11 +1291,10 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
             case "?": {
                 Expression left = buildConstantExpression(context, node.getChild(0), force);
                 Expression right = buildConstantExpression(context, node.getChild(1), force);
-                if (!(right instanceof IfElse)) {
+                if (!(right instanceof IfElse ifelse)) {
                     throw new RuntimeException("invalid operator " + node.getText());
                 }
-                left = new IfElse(left, ((IfElse) right).getTrueTerm(), ((IfElse) right).getFalseTerm());
-                break;
+                return new IfElse(left, ifelse.getTrueTerm(), ifelse.getFalseTerm());
             }
             case ":":
                 return new IfElse(null, buildConstantExpression(context, node.getChild(0), force), buildConstantExpression(context, node.getChild(1), force));
