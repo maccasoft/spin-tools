@@ -171,7 +171,7 @@ public class KeyboardShortcutsDialog extends Dialog {
              Ctrl+K          Find Next
              Shift+Ctrl+K    Find Previous
             
-             Ctrl+[0..9]     Go To Bookmark 0..9
+             Ctrl+[1..9]     Go To Bookmark 1..9
             """);
 
         label = new Label(parent, SWT.NONE);
