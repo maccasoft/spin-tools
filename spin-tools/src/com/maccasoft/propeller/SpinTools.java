@@ -2158,6 +2158,131 @@ public class SpinTools {
 
         });
 
+        new MenuItem(menu, SWT.SEPARATOR);
+
+        item = new MenuItem(menu, SWT.CASCADE);
+        item.setText("Go To");
+        item.setMenu(createContextGotoMenu(menu));
+
+        return menu;
+    }
+
+    Menu createContextGotoMenu(Menu parent) {
+        Menu menu = new Menu(parent.getParent(), SWT.DROP_DOWN);
+
+        MenuItem item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Previous Error / Warning");
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                try {
+                    CTabItem tabItem = tabFolder.getSelection();
+                    if (tabItem != null) {
+                        EditorTab editorTab = (EditorTab) tabItem.getData();
+                        editorTab.goToPreviousAnnotation();
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+
+        });
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Next Error / Warning");
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                try {
+                    CTabItem tabItem = tabFolder.getSelection();
+                    if (tabItem != null) {
+                        EditorTab editorTab = (EditorTab) tabItem.getData();
+                        editorTab.goToNextAnnotation();
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+
+        });
+
+        new MenuItem(menu, SWT.SEPARATOR);
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Previous Edit Location");
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                try {
+                    handlePreviousEditLocation();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+
+        });
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Next Edit Location");
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                try {
+                    handleNextEditLocation();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+
+        });
+
+        new MenuItem(menu, SWT.SEPARATOR);
+
+        MenuItem[] items = new MenuItem[9];
+        for (int i = 0; i < items.length; i++) {
+            final int bookmarkNumber = i;
+
+            items[i] = new MenuItem(menu, SWT.PUSH);
+            items[i].setText("Bookmark " + (i + 1));
+            items[i].addListener(SWT.Selection, e -> {
+                CTabItem tabItem = tabFolder.getSelection();
+                if (tabItem == null) {
+                    return;
+                }
+                EditorTab editorTab = (EditorTab) tabItem.getData();
+                editorTab.getEditor().navigateToBookmark(bookmarkNumber);
+            });
+        }
+        menu.addMenuListener(new MenuAdapter() {
+
+            @Override
+            public void menuShown(MenuEvent e) {
+                int index = 0;
+
+                CTabItem tabItem = tabFolder.getSelection();
+                if (tabItem != null) {
+                    EditorTab editorTab = (EditorTab) tabItem.getData();
+                    Integer[] bookmarks = editorTab.getEditor().getRuler().getBookmarks();
+                    if (bookmarks != null) {
+                        while (index < bookmarks.length && index < items.length) {
+                            items[index].setEnabled(bookmarks[index] != null);
+                            index++;
+                        }
+                    }
+                }
+
+                while (index < items.length) {
+                    items[index].setEnabled(false);
+                    index++;
+                }
+            }
+
+        });
+
         return menu;
     }
 
