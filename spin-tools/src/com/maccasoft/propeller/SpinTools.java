@@ -2801,8 +2801,8 @@ public class SpinTools {
             final int bookmarkNumber = i;
 
             bookmarkItems[i] = new MenuItem(menu, SWT.PUSH);
-            bookmarkItems[i].setText((i + 1) + "\tCtrl+" + i);
-            bookmarkItems[i].setAccelerator(SWT.MOD1 + '0' + i);
+            bookmarkItems[i].setText("Bookmark " + (i + 1) + "\tCtrl+" + (i + 1));
+            bookmarkItems[i].setAccelerator(SWT.MOD1 + '0' + (i + 1));
             bookmarkItems[i].addListener(SWT.Selection, new Listener() {
 
                 @Override
