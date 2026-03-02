@@ -2122,7 +2122,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 if (expression.isConstant()) {
                     return expression;
                 }
-                if (registerConstant && (expression instanceof Register) || (expression instanceof DataVariable)) {
+                if (registerConstant && ((expression instanceof Register) || (expression instanceof DataVariable))) {
                     return expression;
                 }
             }
