@@ -1075,8 +1075,7 @@ public class SourceEditor {
                     for (TokenMarker entry : tokenMarker.getCompilerTokens()) {
                         if (entry.id == TokenId.WARNING) {
                             try {
-                                Rectangle r = styledText.getTextBounds(entry.getStart(), entry.getStop());
-                                int[] polyline = computePolyline(new Point(r.x, r.y), new Point(r.x + r.width, r.y), styledText.getLineHeight());
+                                int[] polyline = computePolyline(entry.start, entry.stop);
                                 gc.setForeground(warningColor);
                                 gc.drawPolyline(polyline);
                             } catch (Exception ex) {
@@ -1088,8 +1087,7 @@ public class SourceEditor {
                     for (TokenMarker entry : tokenMarker.getCompilerTokens()) {
                         if (entry.id == TokenId.ERROR) {
                             try {
-                                Rectangle r = styledText.getTextBounds(entry.getStart(), entry.getStop());
-                                int[] polyline = computePolyline(new Point(r.x, r.y), new Point(r.x + r.width, r.y), styledText.getLineHeight());
+                                int[] polyline = computePolyline(entry.start, entry.stop);
                                 gc.setForeground(errorColor);
                                 gc.drawPolyline(polyline);
                             } catch (Exception ex) {
@@ -1162,14 +1160,26 @@ public class SourceEditor {
                 return y0;
             }
 
-            private int[] computePolyline(Point left, Point right, int height) {
+            private int[] computePolyline(int start, int stop) {
+                int WIDTH = 4; // must be even
+                int HEIGHT = 2; // can be any number
 
-                final int WIDTH = 4; // must be even
-                final int HEIGHT = 2; // can be any number
-
-                int peeks = (right.x - left.x) / WIDTH;
-
-                int leftX = left.x;
+                int charCount = styledText.getCharCount();
+                Rectangle r = styledText.getTextBounds(start >= charCount ? charCount - 1 : start, stop >= charCount ? charCount - 1 : stop);
+                if (stop >= charCount) {
+                    r.x += charSize.x;
+                }
+                else {
+                    String s = styledText.getTextRange(stop, 1);
+                    if ("\r".equals(s) || "\n".equals(s)) {
+                        r.x += charSize.x;
+                    }
+                }
+                int left = r.x;
+                int right = r.x + r.width;
+                int y = r.y;
+                int height = styledText.getLineHeight();
+                int peeks = (right - left) / WIDTH;
 
                 // compute (number of point) * 2
                 int length = ((2 * peeks) + 1) * 2;
@@ -1180,20 +1190,20 @@ public class SourceEditor {
                 int[] coordinates = new int[length];
 
                 // cache peeks' y-coordinates
-                int bottom = left.y + height - 1;
+                int bottom = y + height - 1;
                 int top = bottom - HEIGHT;
 
                 // populate array with peek coordinates
-                for (int i = 0; i < peeks; i++) {
-                    int index = 4 * i;
-                    coordinates[index] = leftX + (WIDTH * i);
-                    coordinates[index + 1] = bottom;
-                    coordinates[index + 2] = coordinates[index] + WIDTH / 2;
-                    coordinates[index + 3] = top;
+                for (int i = 0, index = 0; i < peeks; i++) {
+                    coordinates[index++] = left;
+                    coordinates[index++] = bottom;
+                    coordinates[index++] = left + WIDTH / 2;
+                    coordinates[index++] = top;
+                    left += WIDTH;
                 }
 
                 // the last down flank is missing
-                coordinates[length - 2] = left.x + (WIDTH * peeks);
+                coordinates[length - 2] = left;
                 coordinates[length - 1] = bottom;
 
                 return coordinates;
