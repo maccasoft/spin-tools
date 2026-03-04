@@ -1,16 +1,13 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.devices;
-
-import org.eclipse.swt.SWT;
 
 import jssc.SerialPort;
 import jssc.SerialPortEvent;
@@ -62,7 +59,8 @@ public class SerialComPort extends ComPort {
     @Override
     public boolean setParams(int baudRate, int dataBits, int stopBits, int parity) throws ComPortException {
         try {
-            boolean lineState = "win32".equals(SWT.getPlatform()) ? false : true;
+            String os = System.getProperty("os.name");
+            boolean lineState = os != null && os.startsWith("Windows") ? false : true;
             return serialPort.setParams(baudRate, dataBits, stopBits, parity, lineState, lineState);
         } catch (SerialPortException e) {
             throw new ComPortException(e.getExceptionType(), e);
