@@ -172,6 +172,8 @@ public class Preferences {
             lruBookmarks = new HashMap<>();
             lruPositions = new HashMap<>();
 
+            openTabs = new String[0];
+
             showLineNumbers = true;
             showIndentLines = true;
             showEditorOutline = true;
@@ -259,6 +261,7 @@ public class Preferences {
         public List<String> lru;
         public Map<String, Integer[]> lruPositions;
         public Map<String, Integer[]> lruBookmarks;
+        public String currentTab;
 
         public boolean reloadOpenTabs;
         public Map<String, int[]> sectionTabStops;
@@ -1064,6 +1067,17 @@ public class Preferences {
         preferences.lruPositions.put(absolutePath, new Integer[] { topIndex, caretPosition });
     }
 
+    public File getCurrentTab() {
+        if (preferences.currentTab == null) {
+            return null;
+        }
+        return new File(preferences.currentTab);
+    }
+
+    public void setCurrentTab(File currentTab) {
+        preferences.currentTab = currentTab != null ? currentTab.getAbsolutePath() : null;
+    }
+
     public Integer[] getBookmarks(File file) {
         return preferences.lruBookmarks.get(file.getAbsolutePath());
     }
@@ -1391,12 +1405,19 @@ public class Preferences {
         preferences.reloadOpenTabs = reloadOpenTabs;
     }
 
-    public String[] getOpenTabs() {
-        return preferences.openTabs;
+    public File[] getOpenTabs() {
+        File[] result = new File[preferences.openTabs.length];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = new File(preferences.openTabs[i]);
+        }
+        return result;
     }
 
-    public void setOpenTabs(String[] openTabs) {
-        preferences.openTabs = openTabs;
+    public void setOpenTabs(File[] openTabs) {
+        preferences.openTabs = new String[openTabs.length];
+        for (int i = 0; i < openTabs.length; i++) {
+            preferences.openTabs[i] = openTabs[i].getAbsolutePath();
+        }
     }
 
     public Rectangle getTerminalWindow() {

@@ -608,18 +608,26 @@ public class SpinTools {
                     preferences.setWeights("browserSashForm", browserSashForm.getWeights());
                     preferences.setWeights("editorSashForm", editorSashForm.getWeights());
 
-                    List<String> openTabs = new ArrayList<String>();
+                    List<File> openTabs = new ArrayList<>();
                     for (int i = 0; i < tabFolder.getItemCount(); i++) {
                         EditorTab editorTab = (EditorTab) tabFolder.getItem(i).getData();
                         File file = editorTab.getFile();
                         if (file != null) {
                             StyledText styledText = editorTab.getEditor().getStyledText();
                             preferences.setLruData(file, styledText.getTopIndex(), styledText.getCaretOffset());
-
-                            openTabs.add(file.getAbsolutePath());
+                            openTabs.add(file);
                         }
                     }
-                    preferences.setOpenTabs(openTabs.toArray(new String[openTabs.size()]));
+                    preferences.setOpenTabs(openTabs.toArray(new File[0]));
+
+                    CTabItem tabItem = tabFolder.getSelection();
+                    if (tabItem != null) {
+                        EditorTab editorTab = (EditorTab) tabItem.getData();
+                        preferences.setCurrentTab(editorTab.getFile());
+                    }
+                    else {
+                        preferences.setCurrentTab(null);
+                    }
 
                     preferences.setExpandedPaths(fileBrowser.getExpandedPaths());
 
@@ -3865,24 +3873,14 @@ public class SpinTools {
         int tabIndex = -1;
         List<File> list = new ArrayList<>();
 
-        String[] openTabs = preferences.getOpenTabs();
-        if (openTabs != null && preferences.getReloadOpenTabs()) {
-            for (int i = 0; i < openTabs.length; i++) {
-                File file = new File(openTabs[i]);
-                if (!list.contains(file)) {
-                    list.add(file);
-                }
-            }
-
-            File topObjectFile = preferences.getTopObject();
-            if (topObjectFile != null) {
-                list.remove(topObjectFile);
-                list.add(0, topObjectFile);
+        for (File file : preferences.getOpenTabs()) {
+            if (!list.contains(file)) {
+                list.add(file);
             }
         }
 
-        for (int i = 0; i < args.length; i++) {
-            File file = new File(args[i]).getAbsoluteFile();
+        for (String arg : args) {
+            File file = new File(arg).getAbsoluteFile();
             if (FileUtils.isEditable(file) && !list.contains(file)) {
                 list.add(file);
                 if (tabIndex == -1) {
@@ -3891,6 +3889,12 @@ public class SpinTools {
             }
         }
 
+        if (tabIndex == -1) {
+            File currentTabFile = preferences.getCurrentTab();
+            if (currentTabFile != null) {
+                tabIndex = list.indexOf(currentTabFile);
+            }
+        }
         if (tabIndex == -1 && !list.isEmpty()) {
             tabIndex = 0;
         }
@@ -3899,7 +3903,7 @@ public class SpinTools {
             try {
                 String text = FileUtils.loadFromFile(fileToOpen);
 
-                Display.getDefault().syncExec(() -> {
+                display.syncExec(() -> {
                     EditorTab editorTab = new EditorTab(tabFolder, fileToOpen, sourcePool);
                     hookListeners(editorTab);
 
@@ -3915,7 +3919,7 @@ public class SpinTools {
                     }
                 });
             } catch (Exception e) {
-                Display.getDefault().syncExec(() -> {
+                display.syncExec(() -> {
                     MessageDialog.openError(shell, APP_TITLE, "Can't reopen top object " + fileToOpen.getAbsolutePath());
                     preferences.setTopObject(null);
                 });
@@ -3924,7 +3928,7 @@ public class SpinTools {
 
         final File selection = !list.isEmpty() ? list.get(tabIndex) : null;
 
-        Display.getDefault().asyncExec(() -> {
+        display.asyncExec(() -> {
             if (tabFolder.isDisposed()) {
                 return;
             }
