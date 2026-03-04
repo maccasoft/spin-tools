@@ -511,6 +511,7 @@ public class SpinCompiler {
                                                 conWrite(rx[i]);
                                             }
                                         }
+                                        System.out.flush();
                                     }
                                 } catch (Exception e) {
                                     e.printStackTrace();
@@ -539,26 +540,23 @@ public class SpinCompiler {
                                     state++;
                                     return;
                                 }
-                                System.out.print("\033[");
-                                System.out.print(String.valueOf(c + 1));
-                                System.out.print(";");
-                                System.out.print(String.valueOf(p0 + 1));
-                                System.out.print("H");
+                                System.out.printf("\r\033[%d;%dH", c, p0);
                                 cmd = 0;
                                 return;
                             }
                             else if (cmd == 14) { // PX: Position cursor in X
-                                System.out.print("\r\033[");
-                                System.out.print(String.valueOf(c + 1));
-                                System.out.print("C");
+                                System.out.write('\r');
+                                if (c > 1) {
+                                    System.out.printf("\r\033[%dC", c - 1);
+                                }
                                 cmd = 0;
                                 return;
                             }
                             else if (cmd == 15) { // PY: Position cursor in Y
                                 System.out.print("\033[999A");
-                                System.out.print("\033[");
-                                System.out.print(String.valueOf(c + 1));
-                                System.out.print("B");
+                                if (c > 1) {
+                                    System.out.printf("\033[999A\033[%dB", c - 1);
+                                }
                                 cmd = 0;
                                 return;
                             }
@@ -591,13 +589,13 @@ public class SpinCompiler {
                                     System.out.print("\033[B");
                                     break;
 
+                                case 13: // NL: New Line
+                                    System.out.write(13);
                                 case 10: // LF: Line Feed
+                                    System.out.write(10);
                                     if (pendingEndSession) {
                                         endSession.set(true);
                                     }
-                                case 13: // NL: New Line
-                                    System.out.write(13);
-                                    System.out.write(10);
                                     break;
 
                                 case 16: // CS: Clear Screen
@@ -617,10 +615,24 @@ public class SpinCompiler {
                         }
 
                     });
+
+                    String os = System.getProperty("os.name");
+                    boolean isNix = os != null && !os.startsWith("Windows");
+                    byte lastByte = 0;
+
                     while (!endSession.get()) {
-                        if (System.in.available() != 0) {
-                            byte[] b = System.in.readAllBytes();
-                            serialPort.writeBytes(b);
+                        int available = System.in.available();
+                        if (available != 0) {
+                            byte[] b = System.in.readNBytes(available);
+                            for (int i = 0; i < b.length; i++) {
+                                if (isNix && b[i] == 0x0A) {
+                                    serialPort.writeInt(lastByte == 0x0D ? 0x0A : 0x0D);
+                                }
+                                else {
+                                    serialPort.writeByte(b[i]);
+                                }
+                                lastByte = b[i];
+                            }
                         }
                         synchronized (serialPort) {
                             serialPort.wait(100);
