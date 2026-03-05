@@ -167,13 +167,15 @@ public class SourceEditor {
 
     class TextChange {
 
+        int topIndex;
         int caretOffset;
         int start;
         int length;
         String replacedText;
         long timeStamp;
 
-        TextChange(int start, int length, String replacedText, int caretOffset) {
+        TextChange(int topIndex, int start, int length, String replacedText, int caretOffset) {
+            this.topIndex = topIndex;
             this.start = start;
             this.length = length;
             this.replacedText = replacedText;
@@ -385,17 +387,18 @@ public class SourceEditor {
                     e.text = FileUtils.replaceTabs(e.text, styledText.getTabs());
                 }
 
+                int topIndex = styledText.getTopPixel();
                 String replacedText = styledText.getTextRange(e.start, e.end - e.start);
                 if (!ignoreUndo) {
                     if (currentChange == null || currentChange.isExpired()) {
-                        undoStack.push(currentChange = new TextChange(e.start, e.text.length(), replacedText, styledText.getCaretOffset()));
+                        undoStack.push(currentChange = new TextChange(topIndex, e.start, e.text.length(), replacedText, styledText.getCaretOffset()));
                         if (undoStack.size() > UNDO_LIMIT) {
                             undoStack.remove(0);
                         }
                     }
                     else {
                         if (e.start != currentChange.start + currentChange.length) {
-                            undoStack.push(currentChange = new TextChange(e.start, e.text.length(), replacedText, styledText.getCaretOffset()));
+                            undoStack.push(currentChange = new TextChange(topIndex, e.start, e.text.length(), replacedText, styledText.getCaretOffset()));
                             if (undoStack.size() > UNDO_LIMIT) {
                                 undoStack.remove(0);
                             }
@@ -406,7 +409,7 @@ public class SourceEditor {
                     }
                 }
                 else if (!ignoreRedo) {
-                    redoStack.push(new TextChange(e.start, e.text.length(), replacedText, styledText.getCaretOffset()));
+                    redoStack.push(new TextChange(topIndex, e.start, e.text.length(), replacedText, styledText.getCaretOffset()));
                     if (redoStack.size() > UNDO_LIMIT) {
                         redoStack.remove(0);
                     }
@@ -1527,20 +1530,23 @@ public class SourceEditor {
     }
 
     public void undo() {
-        if (undoStack.empty()) {
-            return;
-        }
-
-        TextChange change = undoStack.pop();
-
         ignoreUndo = true;
         try {
             styledText.setRedraw(false);
-            styledText.replaceTextRange(change.start, change.length, change.replacedText);
-            styledText.setCaretOffset(change.caretOffset);
-            styledText.setSelection(change.caretOffset, change.caretOffset);
-            if (redoStack.size() != 0) {
-                redoStack.peek().caretOffset = change.caretOffset;
+            while (!undoStack.empty()) {
+                TextChange change = undoStack.pop();
+                styledText.replaceTextRange(change.start, change.length, change.replacedText);
+                styledText.setCaretOffset(change.caretOffset);
+                styledText.setSelection(change.caretOffset, change.caretOffset);
+                styledText.setTopPixel(change.topIndex);
+                if (!redoStack.empty()) {
+                    TextChange redoChange = redoStack.peek();
+                    redoChange.topIndex = change.topIndex;
+                    redoChange.caretOffset = change.caretOffset;
+                }
+                if (undoStack.empty() || Math.abs(undoStack.peek().timeStamp - change.timeStamp) > CURRENT_CHANGE_TIMER_EXPIRE) {
+                    break;
+                }
             }
         } finally {
             styledText.setRedraw(true);
@@ -1549,18 +1555,19 @@ public class SourceEditor {
     }
 
     public void redo() {
-        if (redoStack.empty()) {
-            return;
-        }
-
-        TextChange change = redoStack.pop();
-
         ignoreRedo = true;
         try {
             styledText.setRedraw(false);
-            styledText.replaceTextRange(change.start, change.length, change.replacedText);
-            styledText.setCaretOffset(change.caretOffset);
-            styledText.setSelection(change.caretOffset, change.caretOffset);
+            while (!redoStack.empty()) {
+                TextChange change = redoStack.pop();
+                styledText.replaceTextRange(change.start, change.length, change.replacedText);
+                styledText.setCaretOffset(change.caretOffset);
+                styledText.setSelection(change.caretOffset, change.caretOffset);
+                styledText.setTopPixel(change.topIndex);
+                if (redoStack.empty() || Math.abs(redoStack.peek().timeStamp - change.timeStamp) > CURRENT_CHANGE_TIMER_EXPIRE) {
+                    break;
+                }
+            }
         } finally {
             styledText.setRedraw(true);
             ignoreRedo = false;

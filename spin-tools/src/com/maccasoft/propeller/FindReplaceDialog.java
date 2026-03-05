@@ -1,26 +1,29 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import org.eclipse.core.databinding.observable.Realm;
+import org.eclipse.jface.databinding.swt.DisplayRealm;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
-import org.eclipse.jface.fieldassist.FieldDecoration;
-import org.eclipse.jface.fieldassist.FieldDecorationRegistry;
 import org.eclipse.jface.layout.PixelConverter;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.DisposeEvent;
-import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
@@ -48,42 +51,98 @@ import com.maccasoft.propeller.internal.ColorRegistry;
 
 public class FindReplaceDialog extends Dialog {
 
-    private Combo fFindField, fReplaceField;
-    private Button fForwardRadioButton, fGlobalRadioButton, fSelectedRangeRadioButton;
-    private Button fCaseCheckBox, fWrapCheckBox, fWholeWordCheckBox, fIncrementalCheckBox;
-    private Button fIsRegExCheckBox;
-    private Label fStatusLabel;
+    Combo findCombo;
+    Combo replaceCombo;
 
-    private FindReplaceTarget fTarget;
-    private boolean fNeedsInitialFindBeforeReplace;
+    Button searchFromTop;
+    Button searchFromCursor;
+    Button searchForward;
+    Button searchBackward;
+    Button searchAll;
+    Button selectedLines;
+    Button caseSensitiveSearch;
+    Button wrapSearch;
+    Button wholeWord;
+    Button regularExpression;
+    Label statusLabel;
 
-    SearchPreferences preferences;
+    Color widgetForeground;
+    Color widgetBackground;
+    Color listForeground;
+    Color listBackground;
+    Color labelForeground;
+    Color buttonBackground;
+
+    Preferences preferences;
+    SearchPreferences searchPreferences;
+    FindReplaceTarget target;
     String findString;
+    Set<FindReplaceTarget> searchedTargets;
+
+    SelectionAdapter selectionAdapter = new SelectionAdapter() {
+
+        @Override
+        public void widgetSelected(SelectionEvent e) {
+            if (searchPreferences == null) {
+                return;
+            }
+            searchPreferences.findHistory = findCombo.getItems();
+            searchPreferences.replaceHistory = replaceCombo.getItems();
+            searchPreferences.searchFromTop = searchFromTop.getSelection();
+            searchPreferences.forwardSearch = searchForward.getSelection();
+            searchPreferences.caseSensitiveSearch = caseSensitiveSearch.getSelection();
+            searchPreferences.wrapSearch = wrapSearch.getSelection();
+            searchPreferences.wholeWordSearch = wholeWord.getSelection();
+            searchPreferences.regexSearch = regularExpression.getSelection();
+            searchFromTop.setText(searchPreferences.forwardSearch ? "Top" : "Bottom");
+        }
+
+    };
+
+    final PropertyChangeListener preferencesChangeListener = new PropertyChangeListener() {
+
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            switch (evt.getPropertyName()) {
+                case Preferences.PROP_THEME:
+                    applyTheme(getShell(), (String) evt.getNewValue());
+                    break;
+            }
+        }
+    };
 
     public FindReplaceDialog(Shell parentShell) {
         super(parentShell);
         setShellStyle(getShellStyle() ^ SWT.APPLICATION_MODAL | SWT.MODELESS);
         setBlockOnOpen(false);
+        searchedTargets = new HashSet<>();
+    }
 
-        preferences = Preferences.getInstance().getSearchPreferences();
+    public void setPreferences(Preferences preferences) {
+        this.preferences = preferences;
+        this.searchPreferences = preferences.getSearchPreferences();
     }
 
     public void setTarget(FindReplaceTarget target) {
-        this.fTarget = target;
-
+        this.target = target;
+        if (searchFromCursor != null && !searchFromCursor.isDisposed()) {
+            boolean searched = searchedTargets.contains(target);
+            searchFromTop.setSelection(!searched && searchPreferences.searchFromTop);
+            searchFromCursor.setSelection(searched || !searchPreferences.searchFromTop);
+        }
     }
 
     @Override
     protected void configureShell(Shell newShell) {
         super.configureShell(newShell);
         newShell.setText("Find / Replace");
-        newShell.addDisposeListener(new DisposeListener() {
-
-            @Override
-            public void widgetDisposed(DisposeEvent e) {
-                Rectangle rect = getShell().getBounds();
-                preferences.window = new Bounds(rect.x, rect.y, rect.width, rect.height);
+        newShell.addDisposeListener(e -> {
+            Rectangle rect = getShell().getBounds();
+            searchPreferences.window = new Bounds(rect.x, rect.y, rect.width, rect.height);
+            if (preferences != null) {
+                preferences.removePropertyChangeListener(preferencesChangeListener);
             }
+            searchedTargets.clear();
         });
     }
 
@@ -96,532 +155,280 @@ public class FindReplaceDialog extends Dialog {
     protected Rectangle getConstrainedShellBounds(Rectangle preferredSize) {
         Rectangle rect = super.getConstrainedShellBounds(preferredSize);
 
-        if (preferences.window != null) {
-            rect.x = preferences.window.x;
-            rect.y = preferences.window.y;
+        if (searchPreferences != null && searchPreferences.window != null) {
+            rect.x = searchPreferences.window.x;
+            rect.y = searchPreferences.window.y;
         }
 
         return rect;
     }
 
     @Override
+    public void create() {
+        super.create();
+
+        initControlsFromPreferences();
+        if (target != null) {
+            initFindStringFromSelection();
+        }
+    }
+
+    @Override
     protected Control createContents(Composite parent) {
-        Composite panel = new Composite(parent, SWT.NULL);
-        GridLayout layout = new GridLayout();
-        layout.numColumns = 1;
-        layout.makeColumnsEqualWidth = true;
-        panel.setLayout(layout);
-        setGridData(panel, SWT.FILL, true, SWT.FILL, true);
-        panel.setBackgroundMode(SWT.INHERIT_DEFAULT);
+        Composite content = new Composite(parent, SWT.NULL);
+        content.setLayout(new GridLayout(1, false));
+        content.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        content.setBackgroundMode(SWT.INHERIT_DEFAULT);
 
-        Composite inputPanel = createInputPanel(panel);
-        setGridData(inputPanel, SWT.FILL, true, SWT.TOP, false);
+        createInputGroup(content);
+        createConfigGroup(content);
+        createButtonSection(content);
+        createStatusAndCloseButton(content);
 
-        Composite configPanel = createConfigPanel(panel);
-        setGridData(configPanel, SWT.FILL, true, SWT.TOP, true);
+        applyDialogFont(content);
 
-        Composite buttonPanel = createButtonSection(panel);
-        setGridData(buttonPanel, SWT.RIGHT, true, SWT.BOTTOM, false);
-
-        Composite statusBar = createStatusAndCloseButton(panel);
-        setGridData(statusBar, SWT.FILL, true, SWT.BOTTOM, false);
-
-        applyDialogFont(panel);
-
-        initFindStringFromSelection();
-        fNeedsInitialFindBeforeReplace = true;
-
-        if ("win32".equals(SWT.getPlatform()) || theme != null) {
-            applyTheme(parent);
-        }
-
-        return panel;
+        return content;
     }
 
-    private Composite createInputPanel(Composite parent) {
+    void createInputGroup(Composite parent) {
+        Composite group = new Composite(parent, SWT.NULL);
+        group.setLayout(new GridLayout(2, false));
+        group.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 
-        Composite panel = new Composite(parent, SWT.NULL);
-        GridLayout layout = new GridLayout();
-        layout.numColumns = 2;
-        panel.setLayout(layout);
+        Label label = new Label(group, SWT.LEFT);
+        label.setText("Find");
+        label.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false));
 
-        Label findLabel = new Label(panel, SWT.LEFT);
-        findLabel.setText("Find");
-        setGridData(findLabel, SWT.LEFT, false, SWT.CENTER, false);
+        findCombo = new Combo(group, SWT.DROP_DOWN | SWT.BORDER);
+        findCombo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
-        fFindField = new Combo(panel, SWT.DROP_DOWN | SWT.BORDER);
-        fFindField.setItems(preferences.findHistory.toArray(new String[0]));
-        setGridData(fFindField, SWT.FILL, true, SWT.CENTER, false);
-        addDecorationMargin(fFindField);
+        label = new Label(group, SWT.LEFT);
+        label.setText("Replace with");
+        label.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false));
 
-        Label fReplaceLabel = new Label(panel, SWT.LEFT);
-        fReplaceLabel.setText("Replace with");
-        setGridData(fReplaceLabel, SWT.LEFT, false, SWT.CENTER, false);
-
-        // Create the replace content assist field
-        fReplaceField = new Combo(panel, SWT.DROP_DOWN | SWT.BORDER);
-        fReplaceField.setItems(preferences.replaceHistory.toArray(new String[0]));
-        setGridData(fReplaceField, SWT.FILL, true, SWT.CENTER, false);
-        addDecorationMargin(fReplaceField);
-
-        return panel;
+        replaceCombo = new Combo(group, SWT.DROP_DOWN | SWT.BORDER);
+        replaceCombo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
     }
 
-    private Composite createConfigPanel(Composite parent) {
+    void createConfigGroup(Composite parent) {
+        Composite container = new Composite(parent, SWT.NONE);
+        container.setLayout(new GridLayout(3, false));
+        container.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 
-        Composite panel = new Composite(parent, SWT.NONE);
-        GridLayout layout = new GridLayout();
-        layout.numColumns = 2;
-        layout.makeColumnsEqualWidth = true;
-        panel.setLayout(layout);
-
-        Composite directionGroup = createDirectionGroup(panel);
-        setGridData(directionGroup, SWT.FILL, true, SWT.FILL, false);
-
-        Composite scopeGroup = createScopeGroup(panel);
-        setGridData(scopeGroup, SWT.FILL, true, SWT.FILL, false);
-
-        Composite optionsGroup = createOptionsGroup(panel);
-        setGridData(optionsGroup, SWT.FILL, true, SWT.FILL, true);
-        ((GridData) optionsGroup.getLayoutData()).horizontalSpan = 2;
-
-        return panel;
+        createOriginGroup(container);
+        createDirectionGroup(container);
+        createScopeGroup(container);
+        createOptionsGroup(container);
     }
 
-    private Composite createDirectionGroup(Composite parent) {
+    void createOriginGroup(Composite parent) {
+        Group group = new Group(parent, SWT.SHADOW_ETCHED_IN);
+        group.setText("Origin");
+        group.setLayout(new GridLayout());
+        group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-        Composite panel = new Composite(parent, SWT.NONE);
-        GridLayout layout = new GridLayout();
-        layout.marginWidth = 0;
-        layout.marginHeight = 0;
-        panel.setLayout(layout);
+        searchFromTop = new Button(group, SWT.RADIO | SWT.LEFT);
+        searchFromTop.setText("Bottom");
+        searchFromTop.addSelectionListener(selectionAdapter);
 
-        Group group = new Group(panel, SWT.SHADOW_ETCHED_IN);
+        searchFromCursor = new Button(group, SWT.RADIO | SWT.LEFT);
+        searchFromCursor.setText("Cursor");
+
+        searchFromTop.setSelection(searchPreferences.searchFromTop);
+        searchFromCursor.setSelection(!searchPreferences.searchFromTop);
+        searchFromCursor.addSelectionListener(selectionAdapter);
+    }
+
+    void createDirectionGroup(Composite parent) {
+        Group group = new Group(parent, SWT.SHADOW_ETCHED_IN);
         group.setText("Direction");
-        GridLayout groupLayout = new GridLayout();
-        group.setLayout(groupLayout);
+        group.setLayout(new GridLayout());
         group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-        SelectionListener selectionListener = new SelectionAdapter() {
+        searchForward = new Button(group, SWT.RADIO | SWT.LEFT);
+        searchForward.setText("Forward");
+        searchForward.addSelectionListener(selectionAdapter);
 
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                preferences.forwardSearch = fForwardRadioButton.getSelection();
-            }
-
-        };
-
-        fForwardRadioButton = new Button(group, SWT.RADIO | SWT.LEFT);
-        fForwardRadioButton.setText("Forward");
-        setGridData(fForwardRadioButton, SWT.LEFT, false, SWT.CENTER, false);
-        fForwardRadioButton.addSelectionListener(selectionListener);
-
-        Button backwardRadioButton = new Button(group, SWT.RADIO | SWT.LEFT);
-        backwardRadioButton.setText("Backward");
-        setGridData(backwardRadioButton, SWT.LEFT, false, SWT.CENTER, false);
-        backwardRadioButton.addSelectionListener(selectionListener);
-
-        fForwardRadioButton.setSelection(preferences.forwardSearch);
-        backwardRadioButton.setSelection(!preferences.forwardSearch);
-
-        return panel;
+        searchBackward = new Button(group, SWT.RADIO | SWT.LEFT);
+        searchBackward.setText("Backward");
+        searchBackward.addSelectionListener(selectionAdapter);
     }
 
-    private Composite createScopeGroup(Composite parent) {
-
-        Composite panel = new Composite(parent, SWT.NONE);
-        GridLayout layout = new GridLayout();
-        layout.marginWidth = 0;
-        layout.marginHeight = 0;
-        panel.setLayout(layout);
-
-        Group group = new Group(panel, SWT.SHADOW_ETCHED_IN);
+    void createScopeGroup(Composite parent) {
+        Group group = new Group(parent, SWT.SHADOW_ETCHED_IN);
         group.setText("Scope");
-        GridLayout groupLayout = new GridLayout();
-        group.setLayout(groupLayout);
+        group.setLayout(new GridLayout());
         group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-        fGlobalRadioButton = new Button(group, SWT.RADIO | SWT.LEFT);
-        fGlobalRadioButton.setText("All");
-        setGridData(fGlobalRadioButton, SWT.LEFT, false, SWT.CENTER, false);
-        fGlobalRadioButton.setSelection(true);
-        fGlobalRadioButton.addSelectionListener(new SelectionAdapter() {
+        searchAll = new Button(group, SWT.RADIO | SWT.LEFT);
+        searchAll.setText("All");
+        searchAll.setSelection(true);
 
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-
-            }
-
-        });
-
-        fSelectedRangeRadioButton = new Button(group, SWT.RADIO | SWT.LEFT);
-        fSelectedRangeRadioButton.setText("Selected lines");
-        setGridData(fSelectedRangeRadioButton, SWT.LEFT, false, SWT.CENTER, false);
-        fSelectedRangeRadioButton.setSelection(false);
-        fSelectedRangeRadioButton.addSelectionListener(new SelectionAdapter() {
-
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-
-            }
-
-        });
-        fSelectedRangeRadioButton.setEnabled(false);
-
-        return panel;
+        selectedLines = new Button(group, SWT.RADIO | SWT.LEFT);
+        selectedLines.setText("Selected lines");
+        selectedLines.setSelection(false);
+        selectedLines.setEnabled(false);
     }
 
-    private Composite createOptionsGroup(Composite parent) {
-
-        Composite panel = new Composite(parent, SWT.NONE);
-        GridLayout layout = new GridLayout();
-        layout.marginWidth = 0;
-        layout.marginHeight = 0;
-        panel.setLayout(layout);
-
-        Group group = new Group(panel, SWT.SHADOW_NONE);
+    void createOptionsGroup(Composite parent) {
+        Group group = new Group(parent, SWT.SHADOW_NONE);
         group.setText("Options");
-        GridLayout groupLayout = new GridLayout();
-        groupLayout.numColumns = 2;
-        groupLayout.makeColumnsEqualWidth = true;
-        group.setLayout(groupLayout);
-        group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        group.setLayout(new GridLayout(2, false));
+        group.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 3, 1));
 
-        SelectionListener selectionListener = new SelectionAdapter() {
+        caseSensitiveSearch = new Button(group, SWT.CHECK | SWT.LEFT);
+        caseSensitiveSearch.setText("Case sensitive");
+        caseSensitiveSearch.addSelectionListener(selectionAdapter);
 
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                preferences.caseSensitiveSearch = fCaseCheckBox.getSelection();
-                preferences.wrapSearch = fWrapCheckBox.getSelection();
-            }
+        wrapSearch = new Button(group, SWT.CHECK | SWT.LEFT);
+        wrapSearch.setText("Wrap search");
+        wrapSearch.addSelectionListener(selectionAdapter);
 
-        };
+        wholeWord = new Button(group, SWT.CHECK | SWT.LEFT);
+        wholeWord.setText("Whole word");
+        wholeWord.addSelectionListener(selectionAdapter);
 
-        fCaseCheckBox = new Button(group, SWT.CHECK | SWT.LEFT);
-        fCaseCheckBox.setText("Case sensitive");
-        setGridData(fCaseCheckBox, SWT.LEFT, false, SWT.CENTER, false);
-        fCaseCheckBox.setSelection(preferences.caseSensitiveSearch);
-        fCaseCheckBox.addSelectionListener(selectionListener);
-        //storeButtonWithMnemonicInMap(fCaseCheckBox);
-
-        fWrapCheckBox = new Button(group, SWT.CHECK | SWT.LEFT);
-        fWrapCheckBox.setText("Wrap search");
-        setGridData(fWrapCheckBox, SWT.LEFT, false, SWT.CENTER, false);
-        fWrapCheckBox.setSelection(preferences.wrapSearch);
-        fWrapCheckBox.addSelectionListener(selectionListener);
-        //storeButtonWithMnemonicInMap(fWrapCheckBox);
-
-        fWholeWordCheckBox = new Button(group, SWT.CHECK | SWT.LEFT);
-        fWholeWordCheckBox.setText("Whole word");
-        setGridData(fWholeWordCheckBox, SWT.LEFT, false, SWT.CENTER, false);
-        fWholeWordCheckBox.setSelection(preferences.wholeWordSearch);
-        fWholeWordCheckBox.addSelectionListener(selectionListener);
-        //storeButtonWithMnemonicInMap(fWholeWordCheckBox);
-
-        fIncrementalCheckBox = new Button(group, SWT.CHECK | SWT.LEFT);
-        fIncrementalCheckBox.setText("Incremental");
-        setGridData(fIncrementalCheckBox, SWT.LEFT, false, SWT.CENTER, false);
-        fIncrementalCheckBox.setSelection(false);
-        fIncrementalCheckBox.addSelectionListener(new SelectionAdapter() {
-
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-
-            }
-
-        });
-        fIncrementalCheckBox.setEnabled(false);
-        //storeButtonWithMnemonicInMap(fIncrementalCheckBox);
-
-        fIsRegExCheckBox = new Button(group, SWT.CHECK | SWT.LEFT);
-        fIsRegExCheckBox.setText("Regular expressions");
-        setGridData(fIsRegExCheckBox, SWT.LEFT, false, SWT.CENTER, false);
-        ((GridData) fIsRegExCheckBox.getLayoutData()).horizontalSpan = 2;
-        fIsRegExCheckBox.setSelection(preferences.regexSearch);
-        fIsRegExCheckBox.addSelectionListener(new SelectionAdapter() {
-
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                preferences.regexSearch = fIsRegExCheckBox.getSelection();
-            }
-
-        });
-        //storeButtonWithMnemonicInMap(fIsRegExCheckBox);
-        fWholeWordCheckBox.addSelectionListener(new SelectionAdapter() {
-
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                preferences.wholeWordSearch = fWholeWordCheckBox.getSelection();
-            }
-
-        });
-        return panel;
+        regularExpression = new Button(group, SWT.CHECK | SWT.LEFT);
+        regularExpression.setText("Regular expressions");
+        regularExpression.addSelectionListener(selectionAdapter);
     }
 
-    private Composite createButtonSection(Composite parent) {
+    void createButtonSection(Composite parent) {
+        Composite container = new Composite(parent, SWT.NONE);
+        container.setLayout(new GridLayout(3, true));
+        container.setLayoutData(new GridData(SWT.FILL, SWT.BOTTOM, true, true));
 
-        Composite panel = new Composite(parent, SWT.NONE);
-        GridLayout layout = new GridLayout();
-        layout.numColumns = -1; // this is intended
-        panel.setLayout(layout);
-
-        Button fFindNextButton = makeButton(panel, "Find", 102, true, new SelectionAdapter() {
+        makeButton(container, "Find", true, new SelectionAdapter() {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
-                if (fTarget == null) {
+                if (target == null) {
                     return;
                 }
-                fStatusLabel.setText("");
+                statusLabel.setText("");
                 performSearch();
-                updateHistory(fFindField, preferences.findHistory);
+                updateHistory(findCombo);
             }
 
         });
-        setGridData(fFindNextButton, SWT.FILL, true, SWT.FILL, false);
 
-        /*Button fSelectAllButton = makeButton(panel, "Select All", 106, false, new SelectionAdapter() {
+        new Label(container, SWT.NONE);
+        new Label(container, SWT.NONE);
 
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-
-            }
-
-        });
-        setGridData(fSelectAllButton, SWT.FILL, true, SWT.FILL, false);*/
-
-        new Label(panel, SWT.NONE); // filler
-        new Label(panel, SWT.NONE);
-
-        Button fReplaceFindButton = makeButton(panel, "Replace/Find", 103, false, new SelectionAdapter() {
+        makeButton(container, "Replace/Find", false, new SelectionAdapter() {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
-                if (fTarget == null) {
+                if (target == null) {
                     return;
                 }
 
-                fStatusLabel.setText("");
-                if (fNeedsInitialFindBeforeReplace) {
-                    performSearch();
-                }
+                statusLabel.setText("");
 
-                String replaceString = fReplaceField.getText();
-                if (fTarget.getSelection().y != 0) {
-                    fTarget.replaceSelection(replaceString);
-                    performSearch();
+                if (target.getSelection().y != 0) {
+                    String replaceString = replaceCombo.getText();
+                    target.replaceSelection(replaceString);
                 }
+                performSearch();
 
-                updateHistory(fFindField, preferences.findHistory);
-                updateHistory(fReplaceField, preferences.replaceHistory);
+                updateHistory(findCombo);
+                updateHistory(replaceCombo);
             }
 
         });
-        setGridData(fReplaceFindButton, SWT.FILL, false, SWT.FILL, false);
 
-        Button fReplaceSelectionButton = makeButton(panel, "Replace", 104, false, new SelectionAdapter() {
+        makeButton(container, "Replace", false, new SelectionAdapter() {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
-                if (fTarget == null) {
+                if (target == null) {
                     return;
                 }
 
-                fStatusLabel.setText("");
-                if (fNeedsInitialFindBeforeReplace) {
-                    performSearch();
+                statusLabel.setText("");
+
+                if (target.getSelection().y != 0) {
+                    String replaceString = replaceCombo.getText();
+                    target.replaceSelection(replaceString);
                 }
 
-                String replaceString = fReplaceField.getText();
-                if (fTarget.getSelection().y != 0) {
-                    fTarget.replaceSelection(replaceString);
-                }
-
-                updateHistory(fFindField, preferences.findHistory);
-                updateHistory(fReplaceField, preferences.replaceHistory);
+                updateHistory(findCombo);
+                updateHistory(replaceCombo);
             }
 
         });
-        setGridData(fReplaceSelectionButton, SWT.FILL, false, SWT.FILL, false);
 
-        Button fReplaceAllButton = makeButton(panel, "Replace All", 105, false, new SelectionAdapter() {
+        makeButton(container, "Replace All", false, new SelectionAdapter() {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
-                if (fTarget == null) {
+                if (target == null) {
                     return;
                 }
-                fStatusLabel.setText("");
+                statusLabel.setText("");
                 performReplaceAll();
-                updateHistory(fFindField, preferences.findHistory);
-                updateHistory(fReplaceField, preferences.replaceHistory);
+                updateHistory(findCombo);
+                updateHistory(replaceCombo);
             }
 
         });
-        setGridData(fReplaceAllButton, SWT.FILL, true, SWT.FILL, false);
-
-        return panel;
     }
 
-    private Composite createStatusAndCloseButton(Composite parent) {
-
-        Composite panel = new Composite(parent, SWT.NULL);
-        GridLayout layout = new GridLayout();
-        layout.numColumns = 2;
-        layout.marginWidth = 0;
-        layout.marginHeight = 0;
-        panel.setLayout(layout);
-
-        fStatusLabel = new Label(panel, SWT.LEFT);
-        setGridData(fStatusLabel, SWT.FILL, true, SWT.CENTER, false);
-
-        Button closeButton = createButton(panel, IDialogConstants.CANCEL_ID, "Close", false);
-        setGridData(closeButton, SWT.RIGHT, false, SWT.BOTTOM, false);
-
-        return panel;
-    }
-
-    private void setGridData(Control component, int horizontalAlignment, boolean grabExcessHorizontalSpace, int verticalAlignment, boolean grabExcessVerticalSpace) {
-        GridData gd;
-        if (component instanceof Button && (((Button) component).getStyle() & SWT.PUSH) != 0) {
-            setButtonDimensionHint((Button) component);
-            gd = (GridData) component.getLayoutData();
-        }
-        else {
-            gd = new GridData();
-            component.setLayoutData(gd);
-            gd.horizontalAlignment = horizontalAlignment;
-            gd.grabExcessHorizontalSpace = grabExcessHorizontalSpace;
-        }
-        gd.verticalAlignment = verticalAlignment;
-        gd.grabExcessVerticalSpace = grabExcessVerticalSpace;
-        if (component instanceof Button && (((Button) component).getStyle() & (SWT.RADIO | SWT.CHECK)) != 0) {
-            String theme = System.getProperty("org.eclipse.swt.internal.gtk.theme");
-            if (theme != null && theme.startsWith("Breeze")) {
-                //gd.horizontalIndent = -4;
-                gd.widthHint = component.computeSize(SWT.DEFAULT, SWT.DEFAULT).x + 8;
-            }
-        }
-    }
-
-    private void setButtonDimensionHint(Button button) {
-        Object gd = button.getLayoutData();
-        if (gd instanceof GridData) {
-            ((GridData) gd).widthHint = getButtonWidthHint(button);
-            ((GridData) gd).horizontalAlignment = GridData.FILL;
-        }
-    }
-
-    private int getButtonWidthHint(Button button) {
+    private Button makeButton(Composite parent, String label, boolean defaultButton, SelectionListener listener) {
+        Button button = new Button(parent, SWT.PUSH);
+        button.setText(label);
+        button.addSelectionListener(listener);
         button.setFont(JFaceResources.getDialogFont());
+
         PixelConverter converter = new PixelConverter(button);
         int widthHint = converter.convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH);
-        return Math.max(widthHint, button.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
-    }
 
-    private void addDecorationMargin(Control control) {
-        Object layoutData = control.getLayoutData();
-        if (!(layoutData instanceof GridData)) {
-            return;
+        GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, false);
+        gridData.widthHint = Math.max(widthHint, button.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
+        button.setLayoutData(gridData);
+
+        if (defaultButton) {
+            Shell shell = parent.getShell();
+            if (shell != null) {
+                shell.setDefaultButton(button);
+            }
         }
-        GridData gd = (GridData) layoutData;
-        FieldDecoration dec = FieldDecorationRegistry.getDefault().getFieldDecoration(FieldDecorationRegistry.DEC_CONTENT_PROPOSAL);
-        gd.horizontalIndent = dec.getImage().getBounds().width;
-    }
 
-    private Button makeButton(Composite parent, String label, int id, boolean dfltButton, SelectionListener listener) {
-        Button button = createButton(parent, id, label, dfltButton);
-        button.addSelectionListener(listener);
-        //storeButtonWithMnemonicInMap(button);
         return button;
     }
 
-    private void initFindStringFromSelection() {
-        String fullSelection = fTarget.getSelectionText();
-        if (!fullSelection.isEmpty()) {
-            fFindField.setText(fullSelection);
-        }
-        else if (fFindField.getItemCount() != 0) {
-            fFindField.select(0);
-        }
-        fFindField.setSelection(new Point(0, fFindField.getText().length()));
-    }
+    void createStatusAndCloseButton(Composite parent) {
+        Composite container = new Composite(parent, SWT.NULL);
+        container.setLayout(new GridLayout(2, false));
+        container.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
-    void performSearch() {
-        boolean forwardSearch = fForwardRadioButton.getSelection();
-        boolean caseSensitiveSearch = fCaseCheckBox.getSelection();
-        boolean wrapSearch = fWrapCheckBox.getSelection();
-        boolean wholeWordSearch = fWholeWordCheckBox.getSelection();
-        boolean regexSearch = fIsRegExCheckBox.getSelection();
+        statusLabel = new Label(container, SWT.NONE);
+        statusLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
-        findString = fFindField.getText();
+        Button button = new Button(container, SWT.PUSH);
+        button.setText(IDialogConstants.CLOSE_LABEL);
+        button.setFont(JFaceResources.getDialogFont());
+        button.addSelectionListener(new SelectionAdapter() {
 
-        Point r = fTarget.getSelection();
-        if (r.x != r.y) {
-            fNeedsInitialFindBeforeReplace = false;
-        }
-        int findReplacePosition = r.x;
-        if (forwardSearch && !fNeedsInitialFindBeforeReplace || !forwardSearch && fNeedsInitialFindBeforeReplace) {
-            findReplacePosition += r.y;
-        }
-        fNeedsInitialFindBeforeReplace = false;
-
-        int index;
-        if (forwardSearch) {
-            index = fTarget.findAndSelect(findReplacePosition, findString, true, caseSensitiveSearch, wholeWordSearch, regexSearch);
-            if (index == -1) {
-                getShell().getDisplay().beep();
-                if (wrapSearch) {
-                    fStatusLabel.setText("Wrapped search");
-                    index = fTarget.findAndSelect(-1, findString, true, caseSensitiveSearch, wholeWordSearch, regexSearch);
-                }
-            }
-        }
-        else {
-            // backward
-            index = findReplacePosition == 0 ? -1 : fTarget.findAndSelect(findReplacePosition - 1, findString, false, caseSensitiveSearch, wholeWordSearch, regexSearch);
-            if (index == -1) {
-                getShell().getDisplay().beep();
-                if (wrapSearch) {
-                    fStatusLabel.setText("Wrapped search");
-                    index = fTarget.findAndSelect(-1, findString, false, caseSensitiveSearch, wholeWordSearch, regexSearch);
-                }
-            }
-        }
-
-        if (index == -1) {
-            fStatusLabel.setText("String not found");
-        }
-    }
-
-    void performReplaceAll() {
-        boolean caseSensitiveSearch = fCaseCheckBox.getSelection();
-        boolean wholeWordSearch = fWholeWordCheckBox.getSelection();
-        boolean regexSearch = fIsRegExCheckBox.getSelection();
-
-        findString = fFindField.getText();
-        String replaceString = fReplaceField.getText();
-
-        if (findString != null && !findString.isEmpty()) {
-            int replaceCount = 0;
-            int findReplacePosition = 0;
-            int index = 0;
-
-            while (index != -1) {
-                index = fTarget.findAndSelect(findReplacePosition, findString, true, caseSensitiveSearch, wholeWordSearch, regexSearch);
-                if (index != -1) {
-                    fTarget.replaceSelection(replaceString);
-                    replaceCount++;
-                    findReplacePosition = index + replaceString.length();
-                }
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                cancelPressed();
             }
 
-            fStatusLabel.setText(replaceCount + ((replaceCount == 1) ? " match replaced" : " matches replaced"));
-        }
+        });
+
+        PixelConverter converter = new PixelConverter(button);
+        int widthHint = converter.convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH);
+
+        GridData gridData = new GridData(SWT.RIGHT, SWT.BOTTOM, false, false);
+        gridData.widthHint = Math.max(widthHint, button.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
+        button.setLayoutData(gridData);
     }
 
-    void updateHistory(Combo combo, List<String> history) {
+    void updateHistory(Combo combo) {
         String findString = combo.getText();
+        List<String> history = new ArrayList<>(Arrays.asList(combo.getItems()));
+
         int index = history.indexOf(findString);
         if (index != 0) {
             if (index != -1) {
@@ -638,26 +445,130 @@ public class FindReplaceDialog extends Dialog {
         }
     }
 
-    public boolean isDisposed() {
-        Shell shell = getShell();
-        return shell == null || shell.isDisposed();
+    private void initControlsFromPreferences() {
+        if (searchPreferences != null) {
+            if (searchPreferences.findHistory != null && searchPreferences.findHistory.length != 0) {
+                findCombo.setItems(searchPreferences.findHistory);
+            }
+            if (searchPreferences.replaceHistory != null) {
+                replaceCombo.setItems(searchPreferences.replaceHistory);
+            }
+
+            searchFromTop.setText(searchPreferences.forwardSearch ? "Top" : "Bottom");
+            searchFromTop.setSelection(searchPreferences.searchFromTop);
+            searchFromCursor.setSelection(!searchPreferences.searchFromTop);
+
+            searchForward.setSelection(searchPreferences.forwardSearch);
+            searchBackward.setSelection(!searchPreferences.forwardSearch);
+
+            caseSensitiveSearch.setSelection(searchPreferences.caseSensitiveSearch);
+            wrapSearch.setSelection(searchPreferences.wrapSearch);
+            wholeWord.setSelection(searchPreferences.wholeWordSearch);
+            regularExpression.setSelection(searchPreferences.regexSearch);
+        }
+        if (preferences != null) {
+            if ("win32".equals(SWT.getPlatform()) || preferences.getTheme() != null) {
+                applyTheme(getShell());
+            }
+            preferences.addPropertyChangeListener(preferencesChangeListener);
+        }
+    }
+
+    private void initFindStringFromSelection() {
+        String fullSelection = target.getSelectionText();
+        if (!fullSelection.isEmpty()) {
+            findCombo.setText(fullSelection);
+        }
+        else if (findCombo.getItemCount() != 0) {
+            findCombo.select(0);
+        }
+        findCombo.setSelection(new Point(0, findCombo.getText().length()));
     }
 
     public String getFindString() {
         return findString;
     }
 
-    String theme;
-    Color widgetForeground;
-    Color widgetBackground;
-    Color listForeground;
-    Color listBackground;
-    Color labelForeground;
-    Color buttonBackground;
+    public boolean isDisposed() {
+        Shell shell = getShell();
+        return shell == null || shell.isDisposed();
+    }
 
-    public void setTheme(String id) {
-        theme = id;
+    void performSearch() {
+        boolean fromTop = searchFromTop.getSelection();
+        boolean forward = searchForward.getSelection();
+        boolean caseSensitive = caseSensitiveSearch.getSelection();
+        boolean wrap = wrapSearch.getSelection();
+        boolean wholeWordSearch = wholeWord.getSelection();
+        boolean regexSearch = regularExpression.getSelection();
 
+        findString = findCombo.getText();
+
+        Point r = target.getSelection();
+        int findReplacePosition = fromTop ? 0 : r.x;
+        if (forward) {
+            findReplacePosition += r.y;
+        }
+
+        int index;
+        if (forward) {
+            index = target.findAndSelect(findReplacePosition, findString, true, caseSensitive, wholeWordSearch, regexSearch);
+            if (index == -1) {
+                getShell().getDisplay().beep();
+                if (wrap) {
+                    statusLabel.setText("Wrapped search");
+                    index = target.findAndSelect(-1, findString, true, caseSensitive, wholeWordSearch, regexSearch);
+                }
+            }
+        }
+        else {
+            // backward
+            index = target.findAndSelect(findReplacePosition - 1, findString, false, caseSensitive, wholeWordSearch, regexSearch);
+            if (index == -1) {
+                getShell().getDisplay().beep();
+                if (wrap) {
+                    statusLabel.setText("Wrapped search");
+                    index = target.findAndSelect(-1, findString, false, caseSensitive, wholeWordSearch, regexSearch);
+                }
+            }
+        }
+
+        if (index == -1) {
+            statusLabel.setText("String not found");
+        }
+
+        searchFromTop.setSelection(false);
+        searchFromCursor.setSelection(true);
+        searchedTargets.add(target);
+    }
+
+    void performReplaceAll() {
+        boolean caseSensitive = caseSensitiveSearch.getSelection();
+        boolean wholeWordSearch = wholeWord.getSelection();
+        boolean regexSearch = regularExpression.getSelection();
+
+        findString = findCombo.getText();
+        String replaceString = replaceCombo.getText();
+
+        if (findString != null && !findString.isEmpty()) {
+            int replaceCount = 0;
+            int findReplacePosition = 0;
+            int index = 0;
+
+            while (index != -1) {
+                index = target.findAndSelect(findReplacePosition, findString, true, caseSensitive, wholeWordSearch, regexSearch);
+                if (index != -1) {
+                    target.replaceSelection(replaceString);
+                    replaceCount++;
+                    findReplacePosition = index + replaceString.length();
+                }
+            }
+
+            statusLabel.setText(replaceCount + ((replaceCount == 1) ? " match replaced" : " matches replaced"));
+        }
+    }
+
+    void applyTheme(Control control, String id) {
         widgetForeground = null;
         widgetBackground = null;
         listForeground = null;
@@ -698,6 +609,8 @@ public class FindReplaceDialog extends Dialog {
             labelForeground = new Color(0x00, 0x00, 0x00);
             buttonBackground = new Color(0xFA, 0xFA, 0xFA);
         }
+
+        applyTheme(control);
     }
 
     void applyTheme(Control control) {
@@ -726,13 +639,46 @@ public class FindReplaceDialog extends Dialog {
         else if (control instanceof Label) {
             control.setForeground(widgetForeground);
         }
-        else if (control instanceof Composite) {
+        else if (control instanceof Group group) {
             control.setBackground(widgetBackground);
-            Control[] children = ((Composite) control).getChildren();
+            control.setForeground(widgetForeground);
+            Control[] children = group.getChildren();
             for (int i = 0; i < children.length; i++) {
                 applyTheme(children[i]);
             }
         }
+        else if (control instanceof Composite composite) {
+            control.setBackground(widgetBackground);
+            Control[] children = composite.getChildren();
+            for (int i = 0; i < children.length; i++) {
+                applyTheme(children[i]);
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        final Display display = new Display();
+
+        display.setErrorHandler(t -> t.printStackTrace());
+        display.setRuntimeExceptionHandler(t -> t.printStackTrace());
+
+        Realm.runWithDefault(DisplayRealm.getRealm(display), () -> {
+            try {
+                Shell shell = new Shell(display);
+
+                FindReplaceDialog dlg = new FindReplaceDialog(shell);
+                dlg.setPreferences(new Preferences());
+                dlg.setBlockOnOpen(true);
+                dlg.open();
+
+                shell.dispose();
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+
+        display.dispose();
     }
 
 }

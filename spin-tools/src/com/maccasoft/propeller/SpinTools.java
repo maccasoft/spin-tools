@@ -1473,7 +1473,7 @@ public class SpinTools {
                 }
 
                 findReplaceDialog = new FindReplaceDialog(shell);
-                findReplaceDialog.setTheme(preferences.getTheme());
+                findReplaceDialog.setPreferences(preferences);
                 findReplaceDialog.setTarget((EditorTab) tabItem.getData());
                 findReplaceDialog.open();
             }
@@ -2159,7 +2159,7 @@ public class SpinTools {
                 }
 
                 findReplaceDialog = new FindReplaceDialog(shell);
-                findReplaceDialog.setTheme(preferences.getTheme());
+                findReplaceDialog.setPreferences(preferences);
                 findReplaceDialog.setTarget((EditorTab) tabItem.getData());
                 findReplaceDialog.open();
             }
@@ -2702,7 +2702,7 @@ public class SpinTools {
                 }
 
                 findReplaceDialog = new FindReplaceDialog(shell);
-                findReplaceDialog.setTheme(preferences.getTheme());
+                findReplaceDialog.setPreferences(preferences);
                 findReplaceDialog.setTarget((EditorTab) tabItem.getData());
                 findReplaceDialog.open();
             }
@@ -2728,7 +2728,7 @@ public class SpinTools {
                     }
 
                     findReplaceDialog = new FindReplaceDialog(shell);
-                    findReplaceDialog.setTheme(preferences.getTheme());
+                    findReplaceDialog.setPreferences(preferences);
                     findReplaceDialog.setTarget((EditorTab) tabItem.getData());
                     findReplaceDialog.open();
                     return;
@@ -2757,7 +2757,7 @@ public class SpinTools {
                     }
 
                     findReplaceDialog = new FindReplaceDialog(shell);
-                    findReplaceDialog.setTheme(preferences.getTheme());
+                    findReplaceDialog.setPreferences(preferences);
                     findReplaceDialog.setTarget((EditorTab) tabItem.getData());
                     findReplaceDialog.open();
                     return;

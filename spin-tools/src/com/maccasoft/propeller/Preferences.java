@@ -544,15 +544,15 @@ public class Preferences {
     public static class SearchPreferences {
 
         public SearchPreferences() {
-            findHistory = new ArrayList<String>();
-            replaceHistory = new ArrayList<String>();
+            searchFromTop = true;
             forwardSearch = true;
             wrapSearch = true;
         }
 
         public Bounds window;
-        public List<String> findHistory;
-        public List<String> replaceHistory;
+        public String[] findHistory;
+        public String[] replaceHistory;
+        public boolean searchFromTop;
         public boolean forwardSearch;
         public boolean caseSensitiveSearch;
         public boolean wrapSearch;
