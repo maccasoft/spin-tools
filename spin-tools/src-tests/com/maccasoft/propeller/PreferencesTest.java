@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller;
@@ -23,7 +22,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -42,7 +40,6 @@ class PreferencesTest {
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
-        mapper.setSerializationInclusion(Include.NON_DEFAULT);
         mapper.writeValue(os, subject.preferences);
 
         Assertions.assertEquals(""
@@ -63,7 +60,6 @@ class PreferencesTest {
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
-        mapper.setSerializationInclusion(Include.NON_DEFAULT);
         mapper.writeValue(os, subject.preferences);
 
         Assertions.assertEquals(""
@@ -119,7 +115,6 @@ class PreferencesTest {
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
-        mapper.setSerializationInclusion(Include.NON_DEFAULT);
         mapper.writeValue(os, subject.preferences);
 
         Assertions.assertEquals(""
@@ -141,7 +136,6 @@ class PreferencesTest {
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
-        mapper.setSerializationInclusion(Include.NON_DEFAULT);
         mapper.writeValue(os, subject.preferences);
 
         Assertions.assertEquals(""
@@ -164,7 +158,6 @@ class PreferencesTest {
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
-        mapper.setSerializationInclusion(Include.NON_DEFAULT);
         mapper.writeValue(os, subject.preferences);
 
         Assertions.assertEquals(""
@@ -183,7 +176,6 @@ class PreferencesTest {
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
-        mapper.setSerializationInclusion(Include.NON_DEFAULT);
         mapper.writeValue(os, subject.preferences);
 
         Assertions.assertEquals(""
@@ -205,7 +197,6 @@ class PreferencesTest {
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
-        mapper.setSerializationInclusion(Include.NON_DEFAULT);
         mapper.writeValue(os, subject.preferences);
 
         Assertions.assertEquals(""
@@ -269,7 +260,6 @@ class PreferencesTest {
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
-        mapper.setSerializationInclusion(Include.NON_DEFAULT);
         mapper.writeValue(os, subject.preferences);
 
         Assertions.assertEquals(""
@@ -460,7 +450,6 @@ class PreferencesTest {
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
-        mapper.setSerializationInclusion(Include.NON_DEFAULT);
         mapper.writeValue(os, subject.preferences);
 
         Assertions.assertEquals(""
@@ -486,7 +475,6 @@ class PreferencesTest {
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
-        mapper.setSerializationInclusion(Include.NON_DEFAULT);
         mapper.writeValue(os, subject.preferences);
 
         Assertions.assertEquals(""
@@ -512,7 +500,6 @@ class PreferencesTest {
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
-        mapper.setSerializationInclusion(Include.NON_DEFAULT);
         mapper.writeValue(os, subject.preferences);
 
         Assertions.assertEquals(""

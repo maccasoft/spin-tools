@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
+ * All rights reserved.
  *
- * Contributors:
- *     Marco Maccaferri - initial API and implementation
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License v1.0 which accompanies this
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller;
@@ -20,11 +18,10 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.eclipse.jface.fieldassist.ContentProposal;
 import org.eclipse.jface.fieldassist.IContentProposal;
 import org.w3c.dom.Document;
@@ -116,7 +113,7 @@ public class EditorHelp {
                                 if ("entry".equals(element.getTagName())) {
                                     String[] key = element.getAttribute("name").split(",");
                                     for (int n = 0; n < key.length; n++) {
-                                        if (StringUtils.startsWithIgnoreCase(key[n], token)) {
+                                        if (Strings.CI.startsWith(key[n], token)) {
                                             String insert = element.getAttribute("insert");
                                             if (insert != null && !"".equals(insert)) {
                                                 list.add(new ContentProposal(insert, key[n], element.getTextContent()));
@@ -175,7 +172,7 @@ public class EditorHelp {
 
             @Override
             public boolean accept(File dir, String name) {
-                return StringUtils.endsWithIgnoreCase(name, sourceFilter);
+                return Strings.CI.endsWith(name, sourceFilter);
             }
 
         });
@@ -183,7 +180,7 @@ public class EditorHelp {
             for (int i = 0; i < list.length; i++) {
                 String name = list[i].getName();
                 name = name.substring(0, name.indexOf(sourceFilter));
-                if (StringUtils.startsWithIgnoreCase(name, prefix)) {
+                if (Strings.CI.startsWith(name, prefix)) {
                     prefixProposals.add(new ContentProposal(name, name, null));
                     included.add(list[i]);
                 }
@@ -191,7 +188,7 @@ public class EditorHelp {
             for (int i = 0; i < list.length; i++) {
                 String name = list[i].getName();
                 name = name.substring(0, name.indexOf(sourceFilter));
-                if (StringUtils.containsIgnoreCase(name, prefix) && !included.contains(list[i])) {
+                if (Strings.CI.contains(name, prefix) && !included.contains(list[i])) {
                     containsProposal.add(new ContentProposal(name, name, null));
                     included.add(list[i]);
                 }

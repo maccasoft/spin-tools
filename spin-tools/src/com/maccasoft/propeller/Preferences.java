@@ -1662,7 +1662,6 @@ public class Preferences {
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
-        mapper.setSerializationInclusion(Include.NON_DEFAULT);
         if (instance == this) {
             mapper.writeValue(preferencesFile, preferences);
         }
