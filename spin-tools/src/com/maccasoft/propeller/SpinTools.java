@@ -588,6 +588,22 @@ public class SpinTools {
 
         preferences.addPropertyChangeListener(preferencesChangeListener);
 
+        shell.addListener(SWT.Activate, new Listener() {
+
+            @Override
+            public void handleEvent(Event event) {
+                if (fileBrowser.getVisible()) {
+                    fileBrowser.refresh();
+                }
+                for (CTabItem tabItem : tabFolder.getItems()) {
+                    EditorTab editorTab = (EditorTab) tabItem.getData();
+                    if (tabItem == tabFolder.getSelection()) {
+                        editorTab.checkExternalContentUpdate();
+                    }
+                    editorTab.scheduleExternalUpdateCompile();
+                }
+            }
+        });
         shell.addListener(SWT.Close, new Listener() {
 
             @Override
@@ -911,23 +927,6 @@ public class SpinTools {
                 handleArchiveProject();
             }
         });
-
-        new MenuItem(menu, SWT.SEPARATOR);
-
-        item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Refresh\tF5");
-        item.setAccelerator(SWT.F5);
-        item.addListener(SWT.Selection, new Listener() {
-
-            @Override
-            public void handleEvent(Event e) {
-                if (fileBrowser.getVisible()) {
-                    fileBrowser.refresh();
-                }
-            }
-        });
-
-        final int lruIndex = menu.getItemCount();
 
         item = getSystemMenuItem(SWT.ID_QUIT);
         if (item == null) {
@@ -3272,24 +3271,22 @@ public class SpinTools {
                     serialTerminal.setSerialPort(serialPort);
                 }
 
-                File file = editorTab.getFile();
-                if (file != null) {
-                    fileBrowser.refresh(file);
+                if (fileBrowser.getVisible()) {
+                    fileBrowser.refresh();
                 }
 
                 CTabItem tabItem = tabFolder.getSelection();
                 if (tabItem != null) {
                     EditorTab currentEditorTab = (EditorTab) tabItem.getData();
-                    file = currentEditorTab.getFile();
-                    if (file != null) {
-                        fileBrowser.refresh(file);
+                    File currentEditorFile = currentEditorTab.getFile();
+                    if (currentEditorFile != null) {
                         currentEditorTab.checkExternalContentUpdate();
+                        currentEditorTab.scheduleExternalUpdateCompile();
                     }
                 }
             });
 
         } catch (Exception e) {
-            e.printStackTrace();
             MessageDialog.openError(shell, APP_TITLE, e.getMessage());
         }
     }

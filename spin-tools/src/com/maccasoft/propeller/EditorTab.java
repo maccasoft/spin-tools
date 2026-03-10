@@ -42,8 +42,6 @@ import org.eclipse.swt.custom.CaretListener;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
-import org.eclipse.swt.events.FocusAdapter;
-import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.graphics.Font;
@@ -372,25 +370,6 @@ public class EditorTab implements FindReplaceTarget {
             }
 
             return selection;
-        }
-
-    };
-
-    private FocusAdapter focusListener = new FocusAdapter() {
-
-        @Override
-        public void focusGained(FocusEvent e) {
-            e.display.asyncExec(new Runnable() {
-
-                @Override
-                public void run() {
-                    if (!e.widget.isDisposed()) {
-                        checkExternalContentUpdate();
-                        scheduleExternalUpdateCompile();
-                    }
-                }
-
-            });
         }
 
     };
@@ -819,7 +798,6 @@ public class EditorTab implements FindReplaceTarget {
             }
 
         });
-        editor.getStyledText().addFocusListener(focusListener);
 
         sourcePool.addPropertyChangeListener(sourcePoolChangeListener);
         preferences.addPropertyChangeListener(preferencesChangeListener);
@@ -1394,27 +1372,22 @@ public class EditorTab implements FindReplaceTarget {
     }
 
     public void checkExternalContentUpdate() {
-        editor.getStyledText().removeFocusListener(focusListener);
-        try {
-            File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
-            if (localFile.lastModified() > lastModified) {
-                MessageDialog dlg =
-                    new MessageDialog(editor.getStyledText().getShell(),
-                        SpinTools.APP_TITLE, null,
-                        "Content was modified outside editor.  Reload?",
-                        MessageDialog.INFORMATION,
-                        0, IDialogConstants.YES_LABEL, IDialogConstants.NO_LABEL);
-                if (dlg.open() == MessageDialog.OK) {
-                    try {
-                        setEditorText(FileUtils.loadFromFile(file));
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+        File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
+        if (localFile.lastModified() > lastModified) {
+            MessageDialog dlg =
+                new MessageDialog(editor.getStyledText().getShell(),
+                    SpinTools.APP_TITLE, null,
+                    "Content was modified outside editor.  Reload?",
+                    MessageDialog.INFORMATION,
+                    0, IDialogConstants.YES_LABEL, IDialogConstants.NO_LABEL);
+            if (dlg.open() == MessageDialog.OK) {
+                try {
+                    setEditorText(FileUtils.loadFromFile(file));
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-                lastModified = localFile.lastModified();
             }
-        } finally {
-            editor.getStyledText().addFocusListener(focusListener);
+            lastModified = localFile.lastModified();
         }
     }
 

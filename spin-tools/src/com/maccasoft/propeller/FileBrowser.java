@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller;
@@ -66,18 +65,8 @@ public class FileBrowser {
     class FileTreeContentProvider implements ITreeContentProvider {
 
         @Override
-        public void dispose() {
-
-        }
-
-        @Override
-        public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
-
-        }
-
-        @Override
         public Object[] getElements(Object inputElement) {
-            if (visibleParents.size() == 0) {
+            if (visibleParents.isEmpty()) {
                 return new File[0];
             }
 
@@ -94,7 +83,7 @@ public class FileBrowser {
                     elements.add(input[i]);
                 }
             }
-            return elements.toArray(new File[elements.size()]);
+            return elements.toArray(new File[0]);
         }
 
         @Override
@@ -179,7 +168,7 @@ public class FileBrowser {
 
             if (visiblePaths != null && visiblePaths.length != 0) {
                 boolean result = false;
-                while ((pathname = pathname.getParentFile()) != null && result == false) {
+                while ((pathname = pathname.getParentFile()) != null && !result) {
                     for (int i = 0; i < visiblePaths.length; i++) {
                         if (pathname.equals(visiblePaths[i])) {
                             result = true;
@@ -187,7 +176,7 @@ public class FileBrowser {
                         }
                     }
                 }
-                if (result == false) {
+                if (!result) {
                     return false;
                 }
             }
@@ -198,7 +187,7 @@ public class FileBrowser {
                 if (hiddenExtensions.contains(ext)) {
                     return false;
                 }
-                return visibleExtensions.size() == 0 || visibleExtensions.contains(ext);
+                return visibleExtensions.isEmpty() || visibleExtensions.contains(ext);
             }
 
             return true;
@@ -223,13 +212,7 @@ public class FileBrowser {
             @Override
             public void update(ViewerCell cell) {
                 File element = (File) cell.getElement();
-
-                String name = element.getName();
-                if (name == null || name.length() == 0) {
-                    name = element.getPath();
-                }
-                cell.setText(name);
-
+                cell.setText(element.getName());
                 cell.setImage(ImageRegistry.getImageForFile(element));
             }
 
@@ -324,14 +307,16 @@ public class FileBrowser {
         viewer.getControl().setRedraw(false);
         try {
             viewer.setSelection(new StructuredSelection(file), true);
-
             while (viewer.getSelection().isEmpty()) {
                 if (!file.isDirectory()) {
-                    if ((file = file.getParentFile().getAbsoluteFile()) == null) {
+                    file = file.getParentFile();
+                }
+                while (viewer.getSelection().isEmpty()) {
+                    if ((file = file.getParentFile()) == null) {
                         return;
                     }
+                    viewer.setSelection(new StructuredSelection(file.getAbsoluteFile()), true);
                 }
-                viewer.setSelection(new StructuredSelection(file), true);
             }
         } finally {
             viewer.getControl().setRedraw(true);
