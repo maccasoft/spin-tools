@@ -949,12 +949,22 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     if (node.getChildCount() != 1) {
                         throw new RuntimeException("expected " + 1 + " argument(s), found " + node.getChildCount());
                     }
-                    Expression expression = getSizeof(context, node.getChild(0).getText());
+                    Expression expression = getSizeof(context, node.getChild(0));
                     if (expression != null) {
                         source.add(new Constant(context, expression));
                     }
-                    else {
-                        logMessage(new CompilerException("expected type or variable", node.getChild(0).getTokens()));
+                    if (!push) {
+                        logMessage(new CompilerException("expecting assignment", node.getTokens()));
+                    }
+                    node.setReturnLongs(1);
+                }
+                else if ("OFFSETOF".equalsIgnoreCase(node.getText())) {
+                    if (node.getChildCount() != 1) {
+                        throw new RuntimeException("expected " + 1 + " argument(s), found " + node.getChildCount());
+                    }
+                    Expression expression = getOffsetOf(context, node.getChild(0));
+                    if (expression != null) {
+                        source.add(new Constant(context, expression));
                     }
                     if (!push) {
                         logMessage(new CompilerException("expecting assignment", node.getTokens()));
@@ -2370,7 +2380,15 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 return new Nan(buildConstantExpression(context, node.getChild(0), registerConstant));
             case "SIZEOF":
                 if (node.getChildCount() == 1) {
-                    Expression exp = getSizeof(context, node.getChild(0).getText());
+                    Expression exp = getSizeof(context, node.getChild(0));
+                    if (exp != null) {
+                        return exp;
+                    }
+                }
+                throw new RuntimeException("expected type or variable (" + node.getText() + ")");
+            case "OFFSETOF":
+                if (node.getChildCount() == 1) {
+                    Expression exp = getOffsetOf(context, node.getChild(0));
                     if (exp != null) {
                         return exp;
                     }
@@ -2381,29 +2399,138 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
         throw new RuntimeException("unknown " + node.getText());
     }
 
-    Expression getSizeof(Context context, String identifier) {
-        Expression expression = context.getLocalSymbol(identifier);
-        if (expression instanceof Variable) {
-            Variable var = (Variable) expression;
+    Expression getSizeof(Context context, Spin2StatementNode node) {
+        if (node.getChildCount() != 0) {
+            return null;
+        }
+
+        String[] identifier = node.getText().split("[\\.]");
+
+        Expression expression = context.getLocalSymbol(identifier[0]);
+        if (expression instanceof Variable var) {
+            int index = 1;
+            while (index < identifier.length) {
+                var = var.getMember(identifier[index++]);
+                if (var == null) {
+                    logMessage(new CompilerException(CompilerException.ERROR, "expecting structure member", node.getTokens()));
+                    return null;
+                }
+            }
             return new NumberLiteral(var.getTypeSize() * var.getSize());
         }
-        else if (context.hasStructureDefinition(identifier)) {
-            Spin2Struct struct = context.getStructureDefinition(identifier);
+        if (context.hasStructureDefinition(identifier[0])) {
+            Spin2Struct struct = context.getStructureDefinition(identifier[0]);
+
+            int index = 1;
+            while (index < identifier.length) {
+                Spin2StructMember member = struct.getMember(identifier[index++]);
+                if (member == null) {
+                    logMessage(new CompilerException(CompilerException.ERROR, "expecting structure member", node.getTokens()));
+                    return null;
+                }
+                String type = member.getType().getText();
+
+                struct = context.getStructureDefinition(member.getType().getText());
+                if (struct == null && member.getType().getText().startsWith("^")) {
+                    struct = context.getStructureDefinition(member.getType().getText().substring(1));
+                }
+
+                if (struct == null) {
+                    if (index < identifier.length) {
+                        logMessage(new CompilerException(CompilerException.ERROR, "expecting structure member", node.getTokens()));
+                    }
+                    long size = member.getSize().getNumber().longValue();
+                    if ("BYTE".equalsIgnoreCase(type)) {
+                        return new NumberLiteral(size);
+                    }
+                    if ("WORD".equalsIgnoreCase(type)) {
+                        return new NumberLiteral(2 * size);
+                    }
+                    if ("LONG".equalsIgnoreCase(type)) {
+                        return new NumberLiteral(4 * size);
+                    }
+                    if ("^BYTE".equalsIgnoreCase(type) || "^WORD".equalsIgnoreCase(type) || "^LONG".equalsIgnoreCase(type)) {
+                        return new NumberLiteral(4 * size);
+                    }
+
+                    logMessage(new CompilerException(CompilerException.ERROR, "expecting structure member", node.getTokens()));
+                    return null;
+                }
+            }
+
+            if (struct == null) {
+                logMessage(new CompilerException(CompilerException.ERROR, "expecting structure member", node.getTokens()));
+                return null;
+            }
             return new NumberLiteral(struct.getTypeSize());
         }
-        else if ("BYTE".equalsIgnoreCase(identifier)) {
+        if ("BYTE".equalsIgnoreCase(identifier[0])) {
             return new NumberLiteral(1);
         }
-        else if ("WORD".equalsIgnoreCase(identifier)) {
+        else if ("WORD".equalsIgnoreCase(identifier[0])) {
             return new NumberLiteral(2);
         }
-        else if ("LONG".equalsIgnoreCase(identifier)) {
+        else if ("LONG".equalsIgnoreCase(identifier[0])) {
             return new NumberLiteral(4);
         }
-        else if ("^BYTE".equalsIgnoreCase(identifier) || "^WORD".equalsIgnoreCase(identifier) || "^LONG".equalsIgnoreCase(identifier)) {
+        else if ("^BYTE".equalsIgnoreCase(identifier[0]) || "^WORD".equalsIgnoreCase(identifier[0]) || "^LONG".equalsIgnoreCase(identifier[0])) {
             return new NumberLiteral(4);
         }
+
+        logMessage(new CompilerException(CompilerException.ERROR, "expecting type or variable", node.getTokens()));
+
         return null;
+    }
+
+    Expression getOffsetOf(Context context, Spin2StatementNode node) {
+        if (node.getChildCount() != 0) {
+            return null;
+        }
+
+        Spin2Struct struct = null;
+        String[] identifier = node.getText().split("[\\.]");
+        if (identifier.length == 1) {
+            logMessage(new CompilerException("expecting structure member", node.getTokens()));
+            return null;
+        }
+
+        Expression expression = context.getLocalSymbol(identifier[0]);
+        if (expression instanceof Variable var) {
+            struct = context.getStructureDefinition(var.getType());
+            if (struct == null && var.getType().startsWith("^")) {
+                struct = context.getStructureDefinition(var.getType().substring(1));
+            }
+        }
+        else if (context.hasStructureDefinition(identifier[0])) {
+            struct = context.getStructureDefinition(identifier[0]);
+        }
+
+        if (struct == null) {
+            logMessage(new CompilerException("expecting structure member", node.getTokens()));
+            return null;
+        }
+
+        int offset = 0;
+
+        int index = 1;
+        while (index < identifier.length) {
+            Spin2StructMember member = struct.getMember(identifier[index++]);
+            if (member == null) {
+                logMessage(new CompilerException(CompilerException.ERROR, "expecting structure member", node.getTokens()));
+                return null;
+            }
+            offset += member.getOffset();
+            struct = context.getStructureDefinition(member.getType().getText());
+            if (struct == null && member.getType().getText().startsWith("^")) {
+                struct = context.getStructureDefinition(member.getType().getText().substring(1));
+            }
+            if (struct == null && index < identifier.length) {
+                logMessage(new CompilerException(CompilerException.ERROR, "expecting structure member", node.getTokens()));
+                return null;
+            }
+        }
+
+        return new NumberLiteral(offset);
     }
 
     protected List<Spin2Bytecode> leftAssign(Context context, Spin2Method method, Spin2StatementNode node, boolean push, boolean write) {
