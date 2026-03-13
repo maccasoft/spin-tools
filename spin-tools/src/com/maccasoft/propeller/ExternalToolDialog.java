@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -16,8 +16,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.eclipse.jface.bindings.keys.KeyStroke;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.fieldassist.ContentProposal;
+import org.eclipse.jface.fieldassist.IContentProposal;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.FocusAdapter;
 import org.eclipse.swt.events.FocusEvent;
@@ -27,6 +30,7 @@ import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -44,7 +48,9 @@ import org.eclipse.swt.widgets.Tree;
 
 import com.maccasoft.propeller.Preferences.ExternalTool;
 import com.maccasoft.propeller.internal.ColorRegistry;
+import com.maccasoft.propeller.internal.ContentProposalAdapter;
 import com.maccasoft.propeller.internal.ImageRegistry;
+import com.maccasoft.propeller.internal.TextContentAdapter;
 
 public class ExternalToolDialog extends Dialog {
 
@@ -62,6 +68,7 @@ public class ExternalToolDialog extends Dialog {
         public void modifyText(ModifyEvent e) {
             validate();
         }
+
     };
 
     FocusListener textFocusListener = new FocusAdapter() {
@@ -206,7 +213,8 @@ public class ExternalToolDialog extends Dialog {
 
         label = new Label(composite, SWT.NONE);
         label.setText("Program");
-        label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
+        label = new Label(composite, SWT.NONE);
+        label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
         Composite programGroup = new Composite(composite, SWT.NONE);
         layout = new GridLayout(2, false);
@@ -244,59 +252,83 @@ public class ExternalToolDialog extends Dialog {
 
         label = new Label(composite, SWT.NONE);
         label.setText("Arguments");
-        label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
-        arguments = new Text(composite, SWT.WRAP | SWT.BORDER);
+        label = new Label(composite, SWT.NONE);
+        label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
+        Composite argumentsGroup = new Composite(composite, SWT.NONE);
+        argumentsGroup.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
+        layout = new GridLayout(1, false);
+        layout.marginWidth = layout.marginHeight = 0;
+        layout.verticalSpacing = 0;
+        argumentsGroup.setLayout(layout);
+
+        arguments = new Text(argumentsGroup, SWT.WRAP | SWT.BORDER);
         arguments.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
+        ((GridData) arguments.getLayoutData()).widthHint = convertWidthInCharsToPixels(75);
         ((GridData) arguments.getLayoutData()).heightHint = convertHeightInCharsToPixels(5);
         arguments.addFocusListener(textFocusListener);
+        arguments.setToolTipText("Type $ or Ctrl+Space to list and insert the available variables.");
+
+        KeyStroke keyStroke = null;
+        try {
+            keyStroke = KeyStroke.getInstance("Ctrl+Space");
+        } catch (Exception e) {
+            // Do nothing
+        }
+        ContentProposalAdapter adapter = new ContentProposalAdapter(
+            arguments,
+            new TextContentAdapter(),
+            (contents, position) -> new IContentProposal[] {
+                new ContentProposal("${file}", "${file}", "The selected editor or pinned top object file name."),
+                new ContentProposal("${file.name}", "${file.name}", "The selected editor or pinned top object file name only (without extension)."),
+                new ContentProposal("${file.loc}", "${file.loc}", "The selected editor or pinned top object absolute location (directory)."),
+                new ContentProposal("${serial}", "${serial}", "The selected serial port."),
+                new ContentProposal("${ip}", "${ip}", "IP address of the selected network device."),
+            },
+            keyStroke,
+            new char[] { '$' });
+        adapter.setPopupSize(new Point(200, 300));
+        adapter.setPropagateKeys(true);
+        adapter.setAutoActivationDelay(500);
+        adapter.setProposalAcceptanceStyle(ContentProposalAdapter.PROPOSAL_REPLACE);
 
         label = new Label(composite, SWT.NONE);
-        label.setText("Check editor state");
+        label.setText("Auto-save Editor");
         label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 
         Composite radioGroup = new Composite(composite, SWT.NONE);
         radioGroup.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
-        radioGroup.setLayout(new GridLayout(3, false));
+        layout = new GridLayout(3, false);
+        layout.marginWidth = layout.marginHeight = 0;
+        radioGroup.setLayout(layout);
+
         editorAction = new HashMap<>();
 
         Button button = new Button(radioGroup, SWT.RADIO);
-        button.setText("None");
+        button.setText("Yes");
+        button.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+        editorAction.put(ExternalTool.EDITOR_AUTOSAVE, button);
+
+        button = new Button(radioGroup, SWT.RADIO);
+        button.setText("No");
         button.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         editorAction.put(ExternalTool.EDITOR_NONE, button);
 
         button = new Button(radioGroup, SWT.RADIO);
-        button.setText("Warn unsaved");
+        button.setText("Ask");
         button.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         editorAction.put(ExternalTool.EDITOR_WARN_UNSAVED, button);
 
-        button = new Button(radioGroup, SWT.RADIO);
-        button.setText("Auto-save");
-        button.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
-        editorAction.put(ExternalTool.EDITOR_AUTOSAVE, button);
-
-        label = new Label(composite, SWT.NONE);
-        label.setText("" +
-            "${file} insert the currently selected editor's file or pinned top file.\n" +
-            "${file.name} insert the currently selected editor's file or pinned top file name.\n" +
-            "${file.loc} insert the currently selected editor's file or pinned top file location.\n" +
-            "${serial} insert the selected serial port.");
-        label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false, 2, 1));
-
-        if (externalTool != null) {
-            name.setText(externalTool.getName());
-            program.setText(externalTool.getProgram());
-            arguments.setText(externalTool.getArguments());
-
-            button = editorAction.get(externalTool.getEditorAction());
-            if (button != null) {
-                button.setSelection(true);
-            }
+        if (externalTool == null) {
+            externalTool = new ExternalTool();
         }
-        else {
-            button = editorAction.get(ExternalTool.DEFAULT_ACTION);
-            if (button != null) {
-                button.setSelection(true);
-            }
+        name.setText(externalTool.getName());
+        program.setText(externalTool.getProgram());
+        arguments.setText(externalTool.getArguments());
+
+        button = editorAction.get(externalTool.getEditorAction());
+        if (button != null) {
+            button.setSelection(true);
         }
 
         name.addModifyListener(textModifyListener);
@@ -334,14 +366,9 @@ public class ExternalToolDialog extends Dialog {
 
     @Override
     protected void okPressed() {
-        if (externalTool == null) {
-            externalTool = new ExternalTool(name.getText(), program.getText(), arguments.getText());
-        }
-        else {
-            externalTool.setName(name.getText());
-            externalTool.setProgram(program.getText());
-            externalTool.setArguments(arguments.getText());
-        }
+        externalTool.setName(name.getText());
+        externalTool.setProgram(program.getText());
+        externalTool.setArguments(arguments.getText());
         for (Entry<String, Button> entry : editorAction.entrySet()) {
             if (entry.getValue().getSelection()) {
                 externalTool.setEditorAction(entry.getKey());

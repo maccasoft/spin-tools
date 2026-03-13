@@ -4,8 +4,7 @@
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.internal;
@@ -45,6 +44,7 @@ import org.eclipse.swt.widgets.ScrollBar;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableItem;
+import org.eclipse.swt.widgets.Text;
 
 public class ContentProposalAdapter {
     /*
@@ -656,14 +656,18 @@ public class ContentProposalAdapter {
         protected void adjustBounds() {
             // Get our control's location in display coordinates.
             Point controlLocation = control.getLocation();
-            if (control instanceof StyledText) {
-                int caretOffset = ((StyledText) control).getCaretOffset();
-                controlLocation = ((StyledText) control).getLocationAtOffset(caretOffset);
-                controlLocation.y += ((StyledText) control).getLineHeight();
+            if (control instanceof StyledText styledText) {
+                int caretOffset = styledText.getCaretOffset();
+                controlLocation = styledText.getLocationAtOffset(caretOffset);
+                controlLocation.y += styledText.getLineHeight();
             }
-            Point location = control.getDisplay().map(control, null, controlLocation);
-            int initialX = location.x + POPUP_OFFSET;
-            int initialY = location.y + POPUP_OFFSET;
+            else if (control instanceof Text text) {
+                controlLocation = text.getCaretLocation();
+                controlLocation.y += text.getLineHeight();
+            }
+            controlLocation = control.getDisplay().map(control, null, controlLocation);
+            int initialX = controlLocation.x + POPUP_OFFSET;
+            int initialY = controlLocation.y + POPUP_OFFSET;
             // If we are inserting content, use the cursor position to
             // position the control.
             /*if (getProposalAcceptanceStyle() == PROPOSAL_INSERT) {
