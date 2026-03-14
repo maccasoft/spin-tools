@@ -703,7 +703,7 @@ public class SerialTerminal {
                     break;
 
                 case 6: // MR: Move cursor Down
-                    if (cy < screen.length - (screenHeight - 1)) {
+                    if (cy < screen.length) {
                         cy++;
                     }
                     break;

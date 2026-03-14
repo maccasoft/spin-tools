@@ -533,30 +533,23 @@ public class SpinCompiler {
                         }
 
                         void pstWrite(byte c) {
-
                             if (cmd == 2) { // PC: Position Cursor in x,y
                                 if (state == 0) {
                                     p0 = c;
                                     state++;
                                     return;
                                 }
-                                System.out.printf("\r\033[%d;%dH", c, p0);
+                                System.out.printf("\033[%d;%dH", c + 1, p0 + 1);
                                 cmd = 0;
                                 return;
                             }
                             else if (cmd == 14) { // PX: Position cursor in X
-                                System.out.write('\r');
-                                if (c > 1) {
-                                    System.out.printf("\r\033[%dC", c - 1);
-                                }
+                                System.out.printf("\r\033[%dC", c + 1);
                                 cmd = 0;
                                 return;
                             }
                             else if (cmd == 15) { // PY: Position cursor in Y
-                                System.out.print("\033[999A");
-                                if (c > 1) {
-                                    System.out.printf("\033[999A\033[%dB", c - 1);
-                                }
+                                System.out.printf("\033[999A\033[%dB", c + 1);
                                 cmd = 0;
                                 return;
                             }
@@ -589,13 +582,16 @@ public class SpinCompiler {
                                     System.out.print("\033[B");
                                     break;
 
-                                case 13: // NL: New Line
-                                    System.out.write(13);
                                 case 10: // LF: Line Feed
                                     System.out.write(10);
                                     if (pendingEndSession) {
                                         endSession.set(true);
                                     }
+                                    break;
+
+                                case 13: // NL: New Line
+                                    System.out.write(13);
+                                    System.out.write(10);
                                     break;
 
                                 case 16: // CS: Clear Screen
@@ -626,7 +622,10 @@ public class SpinCompiler {
                             byte[] b = System.in.readNBytes(available);
                             for (int i = 0; i < b.length; i++) {
                                 if (isNix && b[i] == 0x0A) {
-                                    serialPort.writeInt(lastByte == 0x0D ? 0x0A : 0x0D);
+                                    serialPort.writeByte(lastByte == 0x0D ? (byte) 0x0A : (byte) 0x0D);
+                                }
+                                else if (b[i] == 0x03) { // CTRL-C
+                                    endSession.set(true);
                                 }
                                 else {
                                     serialPort.writeByte(b[i]);
@@ -639,6 +638,7 @@ public class SpinCompiler {
                         }
                     }
                 }
+                System.out.println();
 
                 if (serialPort != null) {
                     serialPort.closePort();
