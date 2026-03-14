@@ -123,7 +123,7 @@ public class Spin2CCompiler extends Spin2Compiler {
             stackFree -= interpreter.getDBase();
         }
 
-        if (debugEnabled) {
+        if (isDebugEnabled()) {
             debugger = new Spin2Debugger();
             object.setDebugData(debugObject);
             stackFree -= debugger.getSize() + debugObject.getSize();

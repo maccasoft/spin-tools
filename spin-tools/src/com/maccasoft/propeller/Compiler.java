@@ -11,7 +11,6 @@ package com.maccasoft.propeller;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -126,19 +125,23 @@ public abstract class Compiler {
 
     }
 
-    protected ObjectTree tree;
-
     protected SourceProvider sourceProvider;
 
     boolean caseSensitive;
     Map<String, List<Token>> defines = new HashMap<>();
 
+    boolean debugEnabled;
     boolean removeUnusedMethods;
 
     boolean warnUnusedMethods;
     boolean warnUnusedMethodVariables;
     boolean warnUnusedVariables;
     boolean warnRemovedUnusedMethods;
+
+    protected boolean errors;
+    protected List<CompilerException> messages = new ArrayList<CompilerException>();
+
+    protected ObjectTree tree;
 
     public Compiler() {
 
@@ -193,11 +196,11 @@ public abstract class Compiler {
     }
 
     public boolean isDebugEnabled() {
-        return false;
+        return debugEnabled;
     }
 
     public void setDebugEnabled(boolean enabled) {
-
+        this.debugEnabled = enabled;
     }
 
     public abstract SpinObject compile(File file) throws Exception;
@@ -210,16 +213,19 @@ public abstract class Compiler {
         return null;
     }
 
-    public ObjectInfo getObjectInfo(String name) {
-        return null;
+    protected void logMessage(CompilerException message) {
+        if (message.type == CompilerException.ERROR) {
+            errors = true;
+        }
+        messages.add(message);
     }
 
     public boolean hasErrors() {
-        return false;
+        return errors;
     }
 
     public List<CompilerException> getMessages() {
-        return Collections.emptyList();
+        return messages;
     }
 
     public File getFile(String name, String... extensions) {
@@ -263,6 +269,10 @@ public abstract class Compiler {
             }
         }
         return null;
+    }
+
+    public byte[] getBinaryFile(String fileName) {
+        return getResource(fileName);
     }
 
     protected byte[] getResource(String name) {

@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spinc;
@@ -14,6 +13,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DirectiveNode;
 import com.maccasoft.propeller.model.ExpressionNode;
@@ -26,16 +26,31 @@ import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenStream.Position;
 import com.maccasoft.propeller.model.TypeDefinitionNode;
 import com.maccasoft.propeller.model.VariableNode;
+import com.maccasoft.propeller.spin1.Spin1GlobalContext;
+import com.maccasoft.propeller.spin2.Spin2GlobalContext;
 import com.maccasoft.propeller.spin2.Spin2Model;
 
 public class CParser extends Parser {
 
+    public static final int P1 = 1;
+    public static final int P2 = 2;
+
     CTokenStream stream;
 
     RootNode root;
+    int target;
+    Context context;
 
     public CParser(String text) {
         this.stream = new CTokenStream(text);
+    }
+
+    public int getTarget() {
+        return target;
+    }
+
+    public Context getContext() {
+        return context;
     }
 
     @Override
@@ -52,12 +67,17 @@ public class CParser extends Parser {
                 if (token.type == Token.BLOCK_COMMENT) {
                     commentToken = token;
                 }
+                continue;
             }
-            else if ("#".equals(token.getText())) {
+            if ("#".equals(token.getText())) {
                 parsePreprocessor(root, token);
                 commentToken = null;
+                continue;
             }
-            else if ("struct".equals(token.getText())) {
+
+            createGlobalContext();
+
+            if ("struct".equals(token.getText())) {
                 Token type = token;
 
                 if ((token = nextTokenSkipNL()).type == Token.EOF) {
@@ -359,14 +379,13 @@ public class CParser extends Parser {
 
     void parseStatement(Node parent) {
         Token token;
-        Node node;
 
         if ((token = nextTokenSkipNL()).type != Token.EOF) {
             if ("#".equals(token.getText())) {
-                node = parsePreprocessor(parent, token);
+                parsePreprocessor(parent, token);
             }
             else {
-                node = new StatementNode(parent);
+                Node node = new StatementNode(parent);
                 node.addToken(token);
 
                 if ("else".equals(token.getText())) {
@@ -563,8 +582,51 @@ public class CParser extends Parser {
         }
     }
 
-    DirectiveNode parsePreprocessor(Node parent, Token token) {
+    void createGlobalContext() {
+        if (context == null) {
+            if (target == 0) {
+                target = P2;
+            }
+            if (target == P1) {
+                context = new Spin1GlobalContext(true);
+            }
+            else {
+                context = new Spin2GlobalContext(true);
+            }
+        }
+    }
+
+    void parsePreprocessor(Node parent, Token token) {
         Token directive = nextToken();
+
+        if ("pragma".equals(directive.getText())) {
+            DirectiveNode node = new DirectiveNode(parent);
+            node.addToken(token);
+
+            Token keyword = nextToken();
+            node.addToken(keyword);
+            if ("target".equals(keyword.getText()) && target == 0) {
+                Token arg = nextToken();
+                node.addToken(arg);
+                if ("P1".equals(arg.getText())) {
+                    target = P1;
+                }
+                else if ("P2".equals(arg.getText())) {
+                    target = P2;
+                }
+            }
+
+            while ((token = nextToken()).type != Token.EOF) {
+                if (token.type == Token.NL) {
+                    break;
+                }
+                node.addToken(token);
+            }
+
+            return;
+        }
+
+        createGlobalContext();
 
         if ("include".equals(directive.getText())) {
             Token file = nextToken();
@@ -593,9 +655,9 @@ public class CParser extends Parser {
                 }
                 node.addToken(token);
             }
-            return node;
+            return;
         }
-        else if ("define".equals(directive.getText())) {
+        if ("define".equals(directive.getText())) {
             Token identifier = nextToken();
             DirectiveNode.DefineNode node = new DirectiveNode.DefineNode(parent, identifier.type == Token.KEYWORD ? identifier : null);
             node.addToken(token);
@@ -618,9 +680,9 @@ public class CParser extends Parser {
                     node.addToken(token);
                 }
             }
-            return node;
+            return;
         }
-        else if ("error".equals(directive.getText()) || "warning".equals(directive.getText())) {
+        if ("error".equals(directive.getText()) || "warning".equals(directive.getText())) {
             DirectiveNode node = new DirectiveNode(parent);
             node.addToken(token);
             node.addToken(directive);
@@ -637,7 +699,7 @@ public class CParser extends Parser {
                 node.addToken(message);
             }
 
-            return node;
+            return;
         }
 
         DirectiveNode node = new DirectiveNode(parent);
@@ -651,7 +713,6 @@ public class CParser extends Parser {
                 node.addToken(token);
             }
         }
-        return node;
     }
 
     void parseDatLine(Node parent) {

@@ -38,9 +38,6 @@ public class Spin1Compiler extends Compiler {
 
     protected List<ObjectInfo> childObjects = new ArrayList<>();
 
-    protected boolean errors;
-    protected List<CompilerException> messages = new ArrayList<>();
-
     Spin1ObjectCompiler objectCompiler;
 
     public Spin1Compiler() {
@@ -154,10 +151,6 @@ public class Spin1Compiler extends Compiler {
         }
 
         return object;
-    }
-
-    public ObjectInfo getObjectInfo(String name) {
-        return objectCompiler.objects.get(name);
     }
 
     public Spin1Object compileObject(File rootFile, RootNode root) {
@@ -281,27 +274,6 @@ public class Spin1Compiler extends Compiler {
             }
         }
         return null;
-    }
-
-    protected byte[] getBinaryFile(String fileName) {
-        return getResource(fileName);
-    }
-
-    protected void logMessage(CompilerException message) {
-        if (message.type == CompilerException.ERROR) {
-            errors = true;
-        }
-        messages.add(message);
-    }
-
-    @Override
-    public boolean hasErrors() {
-        return errors;
-    }
-
-    @Override
-    public List<CompilerException> getMessages() {
-        return messages;
     }
 
 }

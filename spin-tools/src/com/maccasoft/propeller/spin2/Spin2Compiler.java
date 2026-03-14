@@ -35,7 +35,6 @@ import com.maccasoft.propeller.spinc.Spin2CObjectCompiler;
 
 public class Spin2Compiler extends Compiler {
 
-    protected boolean debugEnabled;
     protected List<DebugDataObject> debugStatements = new ArrayList<>();
     protected Spin2Debug debug = new Spin2Debug();
 
@@ -43,9 +42,6 @@ public class Spin2Compiler extends Compiler {
     protected Spin2Debugger debugger;
 
     protected List<ObjectInfo> childObjects = new ArrayList<>();
-
-    protected boolean errors;
-    protected List<CompilerException> messages = new ArrayList<CompilerException>();
 
     boolean compress;
     Spin2ObjectCompiler objectCompiler;
@@ -56,11 +52,6 @@ public class Spin2Compiler extends Compiler {
 
     public Spin2Compiler(boolean caseSensitive) {
         super(caseSensitive);
-    }
-
-    @Override
-    public void setDebugEnabled(boolean enabled) {
-        this.debugEnabled = enabled;
     }
 
     public boolean isCompress() {
@@ -112,10 +103,6 @@ public class Spin2Compiler extends Compiler {
         obj.setCompress(compress);
 
         return obj;
-    }
-
-    public ObjectInfo getObjectInfo(String name) {
-        return objectCompiler.objects.get(name);
     }
 
     protected Spin2Object compileObject(File rootFile, RootNode root) {
@@ -181,7 +168,7 @@ public class Spin2Compiler extends Compiler {
             stackFree -= interpreter.getDBase();
         }
 
-        if (debugEnabled) {
+        if (isDebugEnabled()) {
             debugger = new Spin2Debugger();
             object.setDebugData(debugObject);
             stackFree -= debugger.getSize() + debugObject.getSize();
@@ -206,11 +193,6 @@ public class Spin2Compiler extends Compiler {
     @Override
     public Context getContext() {
         return objectCompiler.getScope();
-    }
-
-    @Override
-    public boolean isDebugEnabled() {
-        return debugEnabled;
     }
 
     public void addDebugStatement(DebugDataObject statement) {
@@ -309,27 +291,6 @@ public class Spin2Compiler extends Compiler {
             }
         }
         return null;
-    }
-
-    protected byte[] getBinaryFile(String fileName) {
-        return getResource(fileName);
-    }
-
-    protected void logMessage(CompilerException message) {
-        if (message.type == CompilerException.ERROR) {
-            errors = true;
-        }
-        messages.add(message);
-    }
-
-    @Override
-    public boolean hasErrors() {
-        return errors;
-    }
-
-    @Override
-    public List<CompilerException> getMessages() {
-        return messages;
     }
 
 }

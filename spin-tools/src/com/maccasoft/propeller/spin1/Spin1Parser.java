@@ -57,9 +57,6 @@ public class Spin1Parser extends Parser {
         root = new RootNode();
 
         while ((token = stream.peekNext()).type != Token.EOF) {
-            if (token.type == Token.EOF) {
-                break;
-            }
             if (token.type == Token.NL) {
                 stream.nextToken();
             }
