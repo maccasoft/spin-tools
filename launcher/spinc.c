@@ -14,10 +14,22 @@
 #include <string.h>
 #include <dirent.h>
 
+#ifdef __linux__
+#include <fcntl.h>
+#include <termios.h>
+#include <linux/kd.h>
+#include <linux/vt.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <gio/gio.h>
+
+void initialize_terminal();
+void restore_terminal();
+#endif
+
 #include "common.h"
 
-int main(int argc, const char * argv[])
-{
+int main(int argc, const char * argv[]) {
     int alloc_size;
     char * app_root = get_app_root(argv[0]);
 
@@ -45,6 +57,11 @@ int main(int argc, const char * argv[])
 #else
     strcat(jvm_path, "/java/lib/server/libjvm.so");
     strcat(jar_path, "/lib");
+#endif
+
+#ifdef __linux__
+    initialize_terminal();
+    atexit(restore_terminal);
 #endif
 
     //printf("app_root = %s\n", app_root);
@@ -76,3 +93,48 @@ int main(int argc, const char * argv[])
 
     return 0;
 }
+
+#ifdef __linux__
+static struct termios old_termio;
+static struct vt_mode old_vtm;
+
+void initialize_terminal() {
+    struct termios new_termio;
+    struct vt_mode new_vtm;
+    int tty_fd_in = fileno(stdin);
+
+    fcntl(tty_fd_in, F_SETFL, O_NONBLOCK);
+
+    ioctl(tty_fd_in, TCGETS, &old_termio);
+    new_termio = old_termio;
+    new_termio.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
+    //new_termio.c_oflag &= ~OPOST;
+    new_termio.c_lflag &= ~(ECHO | ECHONL | ECHOCTL | ICANON | ISIG | IEXTEN);
+    new_termio.c_cflag &= ~(CSIZE | PARENB);
+    new_termio.c_cflag |= CS8;
+    new_termio.c_cc[VMIN] = 1;
+    new_termio.c_cc[VTIME] = 0;
+    ioctl(tty_fd_in, TCSETSW, &new_termio);
+
+    if (isatty(tty_fd_in)) {
+        ioctl(tty_fd_in, VT_GETMODE, &old_vtm);
+        ioctl(tty_fd_in, KDSKBMODE, K_RAW);
+        new_vtm = old_vtm;
+        new_vtm.mode = VT_PROCESS;
+        new_vtm.relsig = SIGUSR1;
+        new_vtm.acqsig = SIGUSR2;
+        ioctl(tty_fd_in, VT_SETMODE, &new_vtm);
+    }
+}
+
+void restore_terminal() {
+    int tty_fd_in = fileno(stdin);
+
+    ioctl(tty_fd_in, TCSETSW, &old_termio);
+
+    if (isatty(tty_fd_in)) {
+        ioctl(tty_fd_in, KDSKBMODE, K_XLATE);
+        ioctl(tty_fd_in, VT_SETMODE, &old_vtm);
+    }
+}
+#endif

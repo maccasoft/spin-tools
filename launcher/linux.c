@@ -1,9 +1,7 @@
 #include <stdio.h>
 #include <dlfcn.h>
 
-#ifdef __linux__
 #include <gio/gio.h>
-#endif
 
 extern unsigned char spinide16_png[];
 extern unsigned int spinide16_png_len;
