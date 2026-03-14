@@ -491,6 +491,16 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         keywords.put("defined", TokenId.DIRECTIVE);
 
         keywords.put("DEBUG_END_SESSION", TokenId.CONSTANT);
+
+        keywords.put("__DATE__", TokenId.CONSTANT);
+        keywords.put("__TIME__", TokenId.CONSTANT);
+        keywords.put("__FILE__", TokenId.CONSTANT);
+        keywords.put("__P2__", TokenId.CONSTANT);
+        keywords.put("__SPINTOOLS__", TokenId.CONSTANT);
+        keywords.put("__VERSION__", TokenId.CONSTANT);
+        keywords.put("__DEBUG__", TokenId.CONSTANT);
+        keywords.put("__propeller__", TokenId.CONSTANT);
+        keywords.put("__propeller2__", TokenId.CONSTANT);
     }
 
     static Map<String, TokenId> debugKeywords = new CaseInsensitiveMap<>();

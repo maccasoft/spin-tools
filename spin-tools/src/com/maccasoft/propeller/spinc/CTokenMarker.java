@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spinc;
@@ -79,6 +78,14 @@ public class CTokenMarker extends SourceTokenMarker {
         keywords.put("@@LONG", TokenId.TYPE);
 
         keywords.put("defined", TokenId.DIRECTIVE);
+
+        keywords.put("__DATE__", TokenId.CONSTANT);
+        keywords.put("__TIME__", TokenId.CONSTANT);
+        keywords.put("__FILE__", TokenId.CONSTANT);
+        keywords.put("__SPINTOOLS__", TokenId.CONSTANT);
+        keywords.put("__VERSION__", TokenId.CONSTANT);
+        keywords.put("__DEBUG__", TokenId.CONSTANT);
+        keywords.put("__propeller__", TokenId.CONSTANT);
     }
 
     static Map<String, TokenId> spin1Keywords = new CaseInsensitiveMap<>();
@@ -127,6 +134,8 @@ public class CTokenMarker extends SourceTokenMarker {
         spin1Keywords.put("VSCL", TokenId.KEYWORD);
         spin1Keywords.put("PAR", TokenId.KEYWORD);
         spin1Keywords.put("SPR", TokenId.KEYWORD);
+
+        spin1Keywords.put("__propeller1__", TokenId.CONSTANT);
     }
 
     static Map<String, TokenId> spin1Functions = new CaseInsensitiveMap<>();
@@ -477,6 +486,8 @@ public class CTokenMarker extends SourceTokenMarker {
         spin2Keywords.put("OUTB", TokenId.PASM_INSTRUCTION);
         spin2Keywords.put("INA", TokenId.PASM_INSTRUCTION);
         spin2Keywords.put("INB", TokenId.PASM_INSTRUCTION);
+
+        spin2Keywords.put("__propeller1__", TokenId.CONSTANT);
     }
 
     static Map<String, TokenId> spin2Functions = new CaseInsensitiveMap<>();

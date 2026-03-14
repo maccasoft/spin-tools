@@ -1,20 +1,21 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin1;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -31,6 +32,7 @@ import com.maccasoft.propeller.SpinObject.LongDataObject;
 import com.maccasoft.propeller.SpinObject.WordDataObject;
 import com.maccasoft.propeller.expressions.Add;
 import com.maccasoft.propeller.expressions.BinaryOperator;
+import com.maccasoft.propeller.expressions.CharacterLiteral;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Expression;
@@ -95,8 +97,18 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
         }
         scope.addDefinitions(compiler.getDefines());
 
+        Date now = new Date();
+        scope.addDefinition("__DATE__", new CharacterLiteral(SimpleDateFormat.getDateInstance().format(now)));
+        scope.addDefinition("__TIME__", new CharacterLiteral(SimpleDateFormat.getTimeInstance().format(now)));
+        scope.addDefinition("__FILE__", new CharacterLiteral(file.getAbsolutePath()));
+
         scope.addDefinition("__P1__", new NumberLiteral(1));
         scope.addDefinition("__SPINTOOLS__", new NumberLiteral(1));
+        if (compiler.isDebugEnabled()) {
+            scope.addDefinition("__DEBUG__", new NumberLiteral(1));
+        }
+        scope.addDefinition("__propeller__", new NumberLiteral(1));
+        scope.addDefinition("__propeller1__", new NumberLiteral(1));
     }
 
     @Override

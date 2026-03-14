@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin1;
@@ -65,16 +64,13 @@ public class Spin1TokenMarker extends SourceTokenMarker {
         keywords.put("OTHER", TokenId.KEYWORD);
         keywords.put("CHIPVER", TokenId.FUNCTION);
         keywords.put("CLKFREQ", TokenId.FUNCTION);
-        keywords.put("_CLKFREQ", TokenId.CONSTANT);
         keywords.put("CLKMODE", TokenId.FUNCTION);
-        keywords.put("_CLKMODE", TokenId.CONSTANT);
         keywords.put("CLKSET", TokenId.FUNCTION);
         keywords.put("COGID", TokenId.FUNCTION);
         keywords.put("COGINIT", TokenId.FUNCTION);
         keywords.put("COGNEW", TokenId.FUNCTION);
         keywords.put("COGSTOP", TokenId.FUNCTION);
         keywords.put("CONSTANT", TokenId.FUNCTION);
-        keywords.put("FLOAT", TokenId.FUNCTION);
         keywords.put("FILE", TokenId.KEYWORD);
         keywords.put("FLOAT", TokenId.FUNCTION);
         keywords.put("IF", TokenId.KEYWORD);
@@ -164,6 +160,16 @@ public class Spin1TokenMarker extends SourceTokenMarker {
         keywords.put("SPR", TokenId.KEYWORD);
 
         keywords.put("defined", TokenId.DIRECTIVE);
+
+        keywords.put("__DATE__", TokenId.CONSTANT);
+        keywords.put("__TIME__", TokenId.CONSTANT);
+        keywords.put("__FILE__", TokenId.CONSTANT);
+        keywords.put("__P1__", TokenId.CONSTANT);
+        keywords.put("__SPINTOOLS__", TokenId.CONSTANT);
+        keywords.put("__VERSION__", TokenId.CONSTANT);
+        keywords.put("__DEBUG__", TokenId.CONSTANT);
+        keywords.put("__propeller__", TokenId.CONSTANT);
+        keywords.put("__propeller1__", TokenId.CONSTANT);
     }
 
     static Map<String, TokenId> pasmKeywords = new CaseInsensitiveMap<>();

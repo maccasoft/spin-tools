@@ -11,8 +11,10 @@ package com.maccasoft.propeller.spin2;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -32,6 +34,7 @@ import com.maccasoft.propeller.SpinObject.LinkDataObject;
 import com.maccasoft.propeller.SpinObject.LongDataObject;
 import com.maccasoft.propeller.expressions.Add;
 import com.maccasoft.propeller.expressions.BinaryOperator;
+import com.maccasoft.propeller.expressions.CharacterLiteral;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Expression;
@@ -110,11 +113,18 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
         scope.addDefinitions(compiler.getDefines());
         scope.addParameters(parameters);
 
+        Date now = new Date();
+        scope.addDefinition("__DATE__", new CharacterLiteral(SimpleDateFormat.getDateInstance().format(now)));
+        scope.addDefinition("__TIME__", new CharacterLiteral(SimpleDateFormat.getTimeInstance().format(now)));
+        scope.addDefinition("__FILE__", new CharacterLiteral(file.getAbsolutePath()));
+
         scope.addDefinition("__P2__", new NumberLiteral(1));
         scope.addDefinition("__SPINTOOLS__", new NumberLiteral(1));
         if (compiler.isDebugEnabled()) {
             scope.addDefinition("__DEBUG__", new NumberLiteral(1));
         }
+        scope.addDefinition("__propeller__", new NumberLiteral(2));
+        scope.addDefinition("__propeller2__", new NumberLiteral(1));
     }
 
     @Override
