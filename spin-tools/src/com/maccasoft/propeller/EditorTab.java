@@ -967,8 +967,8 @@ public class EditorTab implements FindReplaceTarget {
         editor.redo();
     }
 
-    public void setEditorText(String text) {
-        editor.setText(text);
+    public void setEditorText(String text, int caretPosition, int topIndex) {
+        editor.setText(text, caretPosition, topIndex);
     }
 
     public String getEditorText() {
@@ -1382,7 +1382,11 @@ public class EditorTab implements FindReplaceTarget {
                     0, IDialogConstants.YES_LABEL, IDialogConstants.NO_LABEL);
             if (dlg.open() == MessageDialog.OK) {
                 try {
-                    setEditorText(FileUtils.loadFromFile(file));
+                    StyledText styledText = getEditor().getStyledText();
+                    int caretPosition = styledText.getCaretOffset();
+                    int topIndex = styledText.getTopIndex();
+
+                    setEditorText(FileUtils.loadFromFile(file), caretPosition, topIndex);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

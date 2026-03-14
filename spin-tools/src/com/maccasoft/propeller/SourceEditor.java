@@ -1474,13 +1474,28 @@ public class SourceEditor {
         return container.isDisposed();
     }
 
-    public void setText(String text) {
+    public void setText(String text, int caretPosition, int topIndex) {
         styledText.setRedraw(false);
         styledText.removeCaretListener(caretListener);
         try {
             ignoreModify = true;
             currentLine = 0;
+
             styledText.setText(text);
+            if (caretPosition >= styledText.getCharCount()) {
+                caretPosition = styledText.getCharCount() - 1;
+            }
+            if (caretPosition < styledText.getCharCount()) {
+                String s = styledText.getTextRange(caretPosition, 1);
+                while (("\r".equals(s) || "\n".equals(s)) && caretPosition > 0) {
+                    caretPosition--;
+                    s = styledText.getTextRange(caretPosition, 1);
+                }
+            }
+            styledText.setCaretOffset(caretPosition);
+
+            styledText.setTopIndex(topIndex);
+
             undoStack.clear();
             redoStack.clear();
 

@@ -1906,18 +1906,17 @@ public class SpinTools {
 
         tabFolder.getDisplay().asyncExec(() -> {
             try {
-                tabFolder.setSelection(editorTab.getTabItem());
-
-                editorTab.setEditorText(FileUtils.loadFromFile(fileToOpen));
+                int caretPosition = 0;
+                int topIndex = 0;
 
                 LruData lruData = preferences.getLruData(fileToOpen);
                 if (lruData != null) {
-                    StyledText styledText = editorTab.getEditor().getStyledText();
-                    styledText.setCaretOffset(lruData.caretPosition);
-                    if (lruData.topIndex != 0) {
-                        styledText.setTopIndex(lruData.topIndex);
-                    }
+                    caretPosition = lruData.caretPosition;
+                    topIndex = lruData.topIndex;
                 }
+                editorTab.setEditorText(FileUtils.loadFromFile(fileToOpen), caretPosition, topIndex);
+                tabFolder.setSelection(editorTab.getTabItem());
+
                 preferences.addToLru(fileToOpen);
 
                 tabFolder.notifyListeners(SWT.Selection, new Event());
@@ -2310,7 +2309,7 @@ public class SpinTools {
 
                     outlineViewStack.setTopView(editorTab.getOutlineView());
 
-                    editorTab.setEditorText(text);
+                    editorTab.setEditorText(text, 0, 0);
                     editorTab.setFocus();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -3901,19 +3900,18 @@ public class SpinTools {
                 String text = FileUtils.loadFromFile(fileToOpen);
 
                 display.syncExec(() -> {
+                    int caretPosition = 0;
+                    int topIndex = 0;
+
                     EditorTab editorTab = new EditorTab(tabFolder, fileToOpen, sourcePool);
                     hookListeners(editorTab);
 
-                    editorTab.setEditorText(text);
-
                     LruData lruData = preferences.getLruData(fileToOpen);
                     if (lruData != null) {
-                        StyledText styledText = editorTab.getEditor().getStyledText();
-                        styledText.setCaretOffset(lruData.caretPosition);
-                        if (lruData.topIndex != 0) {
-                            styledText.setTopIndex(lruData.topIndex);
-                        }
+                        caretPosition = lruData.caretPosition;
+                        topIndex = lruData.topIndex;
                     }
+                    editorTab.setEditorText(text, caretPosition, topIndex);
                 });
             } catch (Exception e) {
                 display.syncExec(() -> {
