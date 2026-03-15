@@ -474,8 +474,6 @@ public class SpinCompiler {
 
                 serialPort = loader.upload(binaryData, flags);
 
-                println("Done.");
-
                 if (!error.get() && (cmd.hasOption('t') || cmd.hasOption('T'))) {
                     boolean pst = cmd.hasOption('T');
                     AtomicBoolean endSession = new AtomicBoolean();
@@ -512,9 +510,13 @@ public class SpinCompiler {
                                             }
                                         }
                                         System.out.flush();
+                                        if (endSession.get()) {
+                                            event.getComPort().closePort();
+                                            System.exit(0);
+                                        }
                                     }
                                 } catch (Exception e) {
-                                    e.printStackTrace();
+                                    // Do nothing
                                 }
                             }
                         }
@@ -614,31 +616,46 @@ public class SpinCompiler {
 
                     String os = System.getProperty("os.name");
                     boolean isNix = os != null && !os.startsWith("Windows");
-                    byte lastByte = 0;
+                    int lastByte = 0;
 
-                    while (!endSession.get()) {
-                        int available = System.in.available();
-                        if (available != 0) {
-                            byte[] b = System.in.readNBytes(available);
-                            for (int i = 0; i < b.length; i++) {
-                                if (isNix && b[i] == 0x0A) {
-                                    serialPort.writeByte(lastByte == 0x0D ? (byte) 0x0A : (byte) 0x0D);
+                    if (isNix) {
+                        while (true) {
+                            int available = System.in.available();
+                            if (available != 0) {
+                                byte[] b = System.in.readNBytes(available);
+                                for (int i = 0; i < b.length; i++) {
+                                    if (b[i] == 0x0A) {
+                                        serialPort.writeByte(lastByte == 0x0D ? (byte) 0x0A : (byte) 0x0D);
+                                    }
+                                    else if (b[i] == 0x03) { // CTRL-C
+                                        serialPort.closePort();
+                                        System.exit(0);
+                                    }
+                                    else {
+                                        serialPort.writeByte(b[i]);
+                                    }
+                                    lastByte = b[i];
                                 }
-                                else if (b[i] == 0x03) { // CTRL-C
-                                    endSession.set(true);
-                                }
-                                else {
-                                    serialPort.writeByte(b[i]);
-                                }
-                                lastByte = b[i];
+                            }
+                            synchronized (serialPort) {
+                                serialPort.wait(100);
                             }
                         }
-                        synchronized (serialPort) {
-                            serialPort.wait(100);
+                    }
+                    else {
+                        while (true) {
+                            int b = System.in.read();
+                            if (b == 0x03) { // CTRL-C
+                                serialPort.closePort();
+                                System.exit(0);
+                            }
+                            serialPort.writeInt(b);
                         }
                     }
                 }
-                System.out.println();
+                else {
+                    println("Done.");
+                }
 
                 if (serialPort != null) {
                     serialPort.closePort();

@@ -14,6 +14,10 @@
 #include <string.h>
 #include <dirent.h>
 
+#if defined(__MINGW64__) ||  defined(__MINGW32__)
+#include <windows.h>
+#endif
+
 #ifdef __linux__
 #include <fcntl.h>
 #include <termios.h>
@@ -22,10 +26,10 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <gio/gio.h>
+#endif
 
 void initialize_terminal();
 void restore_terminal();
-#endif
 
 #include "common.h"
 
@@ -59,10 +63,8 @@ int main(int argc, const char * argv[]) {
     strcat(jar_path, "/lib");
 #endif
 
-#ifdef __linux__
     initialize_terminal();
     atexit(restore_terminal);
-#endif
 
     //printf("app_root = %s\n", app_root);
     //printf("jvm_path = %s\n", jvm_path);
@@ -94,11 +96,29 @@ int main(int argc, const char * argv[]) {
     return 0;
 }
 
-#ifdef __linux__
+#if defined(__MINGW64__) ||  defined(__MINGW32__)
+static DWORD dwInMode;
+#elif defined(__APPLE__)
+#else
 static struct termios old_termio;
 static struct vt_mode old_vtm;
+#endif
 
 void initialize_terminal() {
+#if defined(__MINGW64__) ||  defined(__MINGW32__)
+    DWORD dwMode;
+
+    HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
+    if (hIn != INVALID_HANDLE_VALUE) {
+        if (GetConsoleMode(hIn, &dwInMode)) {
+            dwMode = dwInMode;
+            dwMode |= ENABLE_VIRTUAL_TERMINAL_INPUT;
+            dwMode &= ~(ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT);
+            SetConsoleMode(hIn, dwMode);
+        }
+    }
+#elif defined(__APPLE__)
+#else
     struct termios new_termio;
     struct vt_mode new_vtm;
     int tty_fd_in = fileno(stdin);
@@ -125,9 +145,23 @@ void initialize_terminal() {
         new_vtm.acqsig = SIGUSR2;
         ioctl(tty_fd_in, VT_SETMODE, &new_vtm);
     }
+#endif
 }
 
 void restore_terminal() {
+    printf("\r\n");
+
+#if defined(__MINGW64__) ||  defined(__MINGW32__)
+    DWORD dwMode;
+
+    HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
+    if (hIn != INVALID_HANDLE_VALUE) {
+        if (GetConsoleMode(hIn, &dwMode)) {
+            SetConsoleMode(hIn, dwInMode);
+        }
+    }
+#elif defined(__APPLE__)
+#else
     int tty_fd_in = fileno(stdin);
 
     ioctl(tty_fd_in, TCSETSW, &old_termio);
@@ -136,5 +170,5 @@ void restore_terminal() {
         ioctl(tty_fd_in, KDSKBMODE, K_XLATE);
         ioctl(tty_fd_in, VT_SETMODE, &old_vtm);
     }
-}
 #endif
+}
