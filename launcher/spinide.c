@@ -35,7 +35,7 @@ static const char * jar_files[] = {
     "org.eclipse.core.databinding-1.13.700.jar",
     "org.eclipse.core.databinding.observable-1.13.500.jar",
     "org.eclipse.core.databinding.property-1.10.500.jar",
-    "org.eclipse.equinox.common-3.20.200.jar",
+    "org.eclipse.equinox.common-3.20.300.jar",
     "org.eclipse.jface-3.39.0.jar",
     "org.eclipse.jface.databinding-1.16.0.jar",
     "org.eclipse.osgi-3.24.100.jar",
