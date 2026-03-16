@@ -714,7 +714,7 @@ public class ConsoleView {
         }
     }
 
-    public void runCommand(List<String> cmd, File outDir, Runnable terminateRunnable) throws IOException {
+    public void runCommand(List<String> cmd, File outDir, boolean runInBackground, Runnable terminateRunnable) throws IOException {
         ProcessBuilder builder = new ProcessBuilder(cmd);
         builder.redirectErrorStream(true);
         builder.directory(outDir);
@@ -729,56 +729,62 @@ public class ConsoleView {
         sb.append("\n");
         write(sb.toString().getBytes());
 
-        if (process != null && process.isAlive()) {
-            process.destroy();
-            if (process.isAlive()) {
-                process.destroyForcibly();
-            }
+        if (runInBackground) {
+            Process process = builder.start();
+            process.onExit().thenRun(() -> display.asyncExec(terminateRunnable));
         }
-        process = builder.start();
+        else {
+            if (process != null && process.isAlive()) {
+                process.destroy();
+                if (process.isAlive()) {
+                    process.destroyForcibly();
+                }
+            }
+            process = builder.start();
 
-        Thread ioThread = new Thread(() -> {
-            int count;
-            byte[] buf = new byte[4096];
+            Thread ioThread = new Thread(() -> {
+                int count;
+                byte[] buf = new byte[4096];
 
-            try {
-                InputStream out = process.getInputStream();
-                OutputStream in = process.getOutputStream();
+                try {
+                    InputStream out = process.getInputStream();
+                    OutputStream in = process.getOutputStream();
 
-                while (consoleThreadRun) {
-                    if (out.available() > 0) {
-                        if ((count = out.read(buf)) == -1) {
+                    while (consoleThreadRun) {
+                        if (out.available() > 0) {
+                            if ((count = out.read(buf)) == -1) {
+                                break;
+                            }
+                            if (count > 0) {
+                                write(buf, 0, count);
+                            }
+                        }
+                        if ((count = read(buf)) == -1) {
                             break;
                         }
                         if (count > 0) {
-                            write(buf, 0, count);
+                            in.write(buf, 0, count);
+                            in.flush();
                         }
                     }
-                    if ((count = read(buf)) == -1) {
-                        break;
+
+                    if (!consoleThreadRun) {
+                        process.destroy();
+                        if (process.isAlive()) {
+                            process.destroyForcibly();
+                        }
                     }
-                    if (count > 0) {
-                        in.write(buf, 0, count);
-                        in.flush();
-                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
 
-                if (!consoleThreadRun) {
-                    process.destroy();
-                    if (process.isAlive()) {
-                        process.destroyForcibly();
-                    }
+                if (terminateRunnable != null) {
+                    display.asyncExec(terminateRunnable);
                 }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            if (terminateRunnable != null) {
-                display.asyncExec(terminateRunnable);
-            }
-        });
-        ioThread.start();
+            });
+            ioThread.start();
+        }
     }
 
     public Process getProcess() {

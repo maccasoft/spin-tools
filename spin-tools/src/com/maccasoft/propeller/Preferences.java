@@ -574,9 +574,15 @@ public class Preferences {
         public String program;
         public String arguments;
         public String editorAction;
+        public boolean showConsole;
+        public boolean runInBackground;
 
         public ExternalTool() {
-
+            this.name = "";
+            this.program = "";
+            this.arguments = "";
+            this.editorAction = DEFAULT_ACTION;
+            this.showConsole = true;
         }
 
         public ExternalTool(ExternalTool other) {
@@ -584,6 +590,8 @@ public class Preferences {
             this.program = other.program;
             this.arguments = other.arguments;
             this.editorAction = other.editorAction;
+            this.runInBackground = other.runInBackground;
+            this.showConsole = other.showConsole;
         }
 
         public ExternalTool(String name, String program, String arguments) {
@@ -591,6 +599,7 @@ public class Preferences {
             this.program = program;
             this.arguments = arguments;
             this.editorAction = DEFAULT_ACTION;
+            this.showConsole = true;
         }
 
         public String getName() {
@@ -623,6 +632,22 @@ public class Preferences {
 
         public void setEditorAction(String editorAction) {
             this.editorAction = editorAction;
+        }
+
+        public boolean isShowConsole() {
+            return showConsole;
+        }
+
+        public void setShowConsole(boolean showConsole) {
+            this.showConsole = showConsole;
+        }
+
+        public boolean isRunInBackground() {
+            return runInBackground;
+        }
+
+        public void setRunInBackground(boolean runInBackground) {
+            this.runInBackground = runInBackground;
         }
 
         @Override

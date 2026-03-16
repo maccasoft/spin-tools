@@ -3212,7 +3212,6 @@ public class SpinTools {
         if (editorFile == null) {
             editorFile = new File(editorTab.getText()).getAbsoluteFile();
         }
-        File editorFileFolder = editorFile.getParentFile();
 
         ComPort serialPort = comPortList.getSelection();
 
@@ -3230,13 +3229,15 @@ public class SpinTools {
 
         String arguments = tool.getArguments();
         if (arguments != null && !arguments.isEmpty()) {
-            String file = editorFile.getName();
-            String fileName = file.lastIndexOf('.') != -1 ? file.substring(0, file.lastIndexOf('.')) : file;
+            String editorFileName = editorFile.getName();
+            if (editorFileName.contains(".")) {
+                editorFileName = editorFileName.substring(0, editorFileName.lastIndexOf('.'));
+            }
 
-            String cmdline = arguments.replace("${file}", file) //
-                .replace("${file.binary}", new File(editorFileFolder, fileName + ".binary").getAbsolutePath()) //
-                .replace("${file.name}", fileName) //
-                .replace("${file.loc}", editorFileFolder.getAbsolutePath());
+            String cmdline = arguments
+                .replace("${file}", editorFile.getName()) //
+                .replace("${file.name}", editorFileName) //
+                .replace("${file.loc}", editorFile.getParentFile().getAbsolutePath());
 
             if (serialPort instanceof SerialComPort) {
                 cmdline = cmdline.replace("${serial}", serialPort.getPortName());
@@ -3249,19 +3250,21 @@ public class SpinTools {
         }
 
         try {
-            consoleView.clear();
-            if (!consoleView.getVisible()) {
-                consoleView.setVisible(true);
-                consoleItem.setSelection(true);
-                consoleToolItem.setSelection(true);
+            if (tool.isShowConsole()) {
+                consoleView.clear();
+            }
+            if (tool.isShowConsole() && !consoleView.getVisible()) {
+                consoleView.setVisible(tool.isShowConsole());
+                consoleItem.setSelection(tool.isShowConsole());
+                consoleToolItem.setSelection(tool.isShowConsole());
                 centralSashForm.layout();
             }
             consoleView.setSerialPort(null);
             consoleView.closeLogFile();
             consoleView.setTopObjectFile(editorFile);
-            consoleView.setEnabled(true);
+            consoleView.setEnabled(tool.isShowConsole());
 
-            consoleView.runCommand(cmd, editorFile.getParentFile(), () -> {
+            consoleView.runCommand(cmd, editorFile.getParentFile(), tool.isRunInBackground(), () -> {
                 if (shell.isDisposed()) {
                     return;
                 }

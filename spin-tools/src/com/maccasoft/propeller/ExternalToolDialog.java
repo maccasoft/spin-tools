@@ -4,8 +4,7 @@
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller;
@@ -59,6 +58,8 @@ public class ExternalToolDialog extends Dialog {
     Text program;
     Text arguments;
     Map<String, Button> editorAction;
+    Button showConsole;
+    Button runInBackground;
 
     ExternalTool externalTool;
 
@@ -211,12 +212,42 @@ public class ExternalToolDialog extends Dialog {
         name.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         name.addFocusListener(textFocusListener);
 
-        label = new Label(composite, SWT.NONE);
-        label.setText("Program");
-        label = new Label(composite, SWT.NONE);
-        label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        createExecutableGroup(composite);
+        createArgumentsGroup(composite);
+        createSettingsGroup(composite);
 
-        Composite programGroup = new Composite(composite, SWT.NONE);
+        if (externalTool == null) {
+            externalTool = new ExternalTool();
+        }
+        name.setText(externalTool.getName());
+        program.setText(externalTool.getProgram());
+        arguments.setText(externalTool.getArguments());
+        runInBackground.setSelection(externalTool.isRunInBackground());
+        showConsole.setSelection(externalTool.isShowConsole());
+
+        Button button = editorAction.get(externalTool.getEditorAction());
+        if (button != null) {
+            button.setSelection(true);
+        }
+
+        name.addModifyListener(textModifyListener);
+        program.addModifyListener(textModifyListener);
+        arguments.addModifyListener(textModifyListener);
+
+        return composite;
+    }
+
+    void createExecutableGroup(Composite parent) {
+        Composite container = new Composite(parent, SWT.NONE);
+        container.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
+        GridLayout layout = new GridLayout(1, false);
+        layout.marginWidth = layout.marginHeight = 0;
+        container.setLayout(layout);
+
+        Label label = new Label(container, SWT.NONE);
+        label.setText("Executable");
+
+        Composite programGroup = new Composite(container, SWT.NONE);
         layout = new GridLayout(2, false);
         layout.marginWidth = layout.marginHeight = 0;
         programGroup.setLayout(layout);
@@ -249,14 +280,20 @@ public class ExternalToolDialog extends Dialog {
             }
 
         });
+    }
 
-        label = new Label(composite, SWT.NONE);
+    void createArgumentsGroup(Composite parent) {
+        Composite container = new Composite(parent, SWT.NONE);
+        container.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
+        GridLayout layout = new GridLayout(1, false);
+        layout.marginWidth = layout.marginHeight = 0;
+        container.setLayout(layout);
+
+        Label label = new Label(container, SWT.NONE);
         label.setText("Arguments");
-        label = new Label(composite, SWT.NONE);
-        label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
-        Composite argumentsGroup = new Composite(composite, SWT.NONE);
-        argumentsGroup.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
+        Composite argumentsGroup = new Composite(container, SWT.NONE);
+        argumentsGroup.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         layout = new GridLayout(1, false);
         layout.marginWidth = layout.marginHeight = 0;
         layout.verticalSpacing = 0;
@@ -291,12 +328,20 @@ public class ExternalToolDialog extends Dialog {
         adapter.setPropagateKeys(true);
         adapter.setAutoActivationDelay(500);
         adapter.setProposalAcceptanceStyle(ContentProposalAdapter.PROPOSAL_REPLACE);
+    }
 
-        label = new Label(composite, SWT.NONE);
-        label.setText("Auto-save Editor");
+    void createSettingsGroup(Composite parent) {
+        Composite container = new Composite(parent, SWT.NONE);
+        container.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
+        GridLayout layout = new GridLayout(2, false);
+        layout.marginWidth = layout.marginHeight = 0;
+        container.setLayout(layout);
+
+        Label label = new Label(container, SWT.NONE);
+        label.setText("Check editor state");
         label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 
-        Composite radioGroup = new Composite(composite, SWT.NONE);
+        Composite radioGroup = new Composite(container, SWT.NONE);
         radioGroup.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
         layout = new GridLayout(3, false);
         layout.marginWidth = layout.marginHeight = 0;
@@ -305,37 +350,27 @@ public class ExternalToolDialog extends Dialog {
         editorAction = new HashMap<>();
 
         Button button = new Button(radioGroup, SWT.RADIO);
-        button.setText("Yes");
-        button.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
-        editorAction.put(ExternalTool.EDITOR_AUTOSAVE, button);
-
-        button = new Button(radioGroup, SWT.RADIO);
-        button.setText("No");
+        button.setText("None");
         button.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         editorAction.put(ExternalTool.EDITOR_NONE, button);
 
         button = new Button(radioGroup, SWT.RADIO);
-        button.setText("Ask");
+        button.setText("Warn unsaved");
         button.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         editorAction.put(ExternalTool.EDITOR_WARN_UNSAVED, button);
 
-        if (externalTool == null) {
-            externalTool = new ExternalTool();
-        }
-        name.setText(externalTool.getName());
-        program.setText(externalTool.getProgram());
-        arguments.setText(externalTool.getArguments());
+        button = new Button(radioGroup, SWT.RADIO);
+        button.setText("Auto-save");
+        button.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+        editorAction.put(ExternalTool.EDITOR_AUTOSAVE, button);
 
-        button = editorAction.get(externalTool.getEditorAction());
-        if (button != null) {
-            button.setSelection(true);
-        }
+        new Label(container, SWT.NONE);
+        runInBackground = new Button(container, SWT.CHECK);
+        runInBackground.setText("Run in Background");
 
-        name.addModifyListener(textModifyListener);
-        program.addModifyListener(textModifyListener);
-        arguments.addModifyListener(textModifyListener);
-
-        return composite;
+        new Label(container, SWT.NONE);
+        showConsole = new Button(container, SWT.CHECK);
+        showConsole.setText("Show Console when Run");
     }
 
     @Override
@@ -375,6 +410,8 @@ public class ExternalToolDialog extends Dialog {
                 break;
             }
         }
+        externalTool.setRunInBackground(runInBackground.getSelection());
+        externalTool.setShowConsole(showConsole.getSelection());
         super.okPressed();
     }
 
