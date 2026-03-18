@@ -8806,6 +8806,33 @@ class Spin2ObjectCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testInlineAssemblyErrors() {
+        String text = ""
+            + "PUB main()\n"
+            + "\n"
+            + "        org\n"
+            + "        mov     a, #0\n"
+            + "        end\n"
+            + "\n"
+            + "";
+
+        Assertions.assertThrows(CompilerException.class, () -> {
+            Spin2Parser parser = new Spin2Parser(text);
+            RootNode root = parser.parse();
+
+            Spin2Compiler compiler = new Spin2Compiler();
+            Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompiler(compiler, new File("test.spin2"));
+            objectCompiler.compileStep1(root);
+
+            for (CompilerException msg : objectCompiler.getMessages()) {
+                if (msg.type == CompilerException.ERROR) {
+                    throw msg;
+                }
+            }
+        });
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }

@@ -1881,11 +1881,11 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
                     int address = 0x1E0;
                     for (LocalVariable var : method.getAllLocalVariables()) {
-                        lineScope.addSymbol(var.getName(), new NumberLiteral(address) {
+                        lineScope.addSymbol(var.getName(), new NumberLiteral(address, 16) {
 
                             @Override
                             public Number getNumber() {
-                                if (var.getOffset() >= 0x1F0) {
+                                if ((var.getOffset() >> 2) >= 0x10) {
                                     throw new CompilerException("local variable must be within the first 16 longs", var.getData());
                                 }
                                 if ("BYTE".equalsIgnoreCase(var.getType()) || "WORD".equalsIgnoreCase(var.getType())) {
@@ -1900,15 +1900,15 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         });
                         address += (var.getTypeSize() * var.getSize() + 3) >> 2;
                         var.setCalledBy(method);
-                        if (address >= 0x1F0) {
-                            break;
-                        }
                     }
 
                     Spin2PAsmLine pasmLine = compileDataLine(scope, lineScope, (DataLineNode) node);
                     line.addSource(new InlinePAsm(line.getScope(), pasmLine));
 
                     compileInlinePAsmStatements(nodeIterator, line);
+
+                    line.resolve(0, compiler.isDebugEnabled());
+                    line.writeTo(new Spin2Object(), compiler.isDebugEnabled());
                 }
             } catch (CompilerException e) {
                 logMessage(e);
