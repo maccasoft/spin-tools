@@ -1100,6 +1100,11 @@ public class Spin2Parser extends Parser {
                     if (",".equals(token.getText())) {
                         parameter = new DataLineNode.ParameterNode(node);
                         node.parameters.add(parameter);
+                        Token next = stream.peekNext();
+                        if ("++".equals(next.getText()) || "--".equals(next.getText()) || "ptra".equals(next.getText()) || "ptrb".equals(next.getText())) {
+                            state = 8;
+                            break;
+                        }
                         break;
                     }
                     if (Spin2Model.isPAsmModifier(token.getText())) {
@@ -1125,6 +1130,21 @@ public class Spin2Parser extends Parser {
                         break;
                     }
                     parameter.count.addToken(token);
+                    break;
+                case 8:
+                    if (",".equals(token.getText())) {
+                        parameter = new DataLineNode.ParameterNode(node);
+                        node.parameters.add(parameter);
+                        state = 5;
+                        break;
+                    }
+                    if (Spin2Model.isPAsmModifier(token.getText())) {
+                        node.modifier = new Node(node);
+                        node.modifier.addToken(token);
+                        state = 6;
+                        break;
+                    }
+                    parameter.addToken(token);
                     break;
             }
         }

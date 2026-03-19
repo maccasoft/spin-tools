@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2;
@@ -84,29 +83,23 @@ public class Spin2PAsmExpression {
                     }
                     result |= o & 0b000011111111111111111111;
                 }
-                else {
-                    if (o < -32 || o > 31) {
-                        throw new CompilerException("constant out of range (-32 to 31)", index.getData());
-                    }
-                    if ("++".equals(pre) || "++".equals(post)) {
-                        if (o < 0) {
-                            o = 32 + o;
-                        }
-                        result |= o & 0x1F;
+                else if (pre != null || post != null) {
+                    if (o < 1 || o > 16) {
+                        throw new CompilerException("PTRA/PTRB index constant must range from 1 to 16", index.getData());
                     }
                     if ("--".equals(pre) || "--".equals(post)) {
                         o = -o;
-                        if (o < 0) {
-                            o = 32 + o;
-                        }
                         result |= o & 0x1F;
                     }
                     else {
-                        if (o < 0) {
-                            o = 64 + o;
-                        }
-                        result |= o & 0x3F;
+                        result |= o & 0x0F;
                     }
+                }
+                else {
+                    if (o < -32 || o > 31) {
+                        throw new CompilerException("PTRA/PTRB index constant must range from -32 to 31", index.getData());
+                    }
+                    result |= o & 0x3F;
                 }
             }
             else {

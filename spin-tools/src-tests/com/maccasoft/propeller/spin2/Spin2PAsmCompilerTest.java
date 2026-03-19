@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2;
@@ -702,10 +701,13 @@ class Spin2PAsmCompilerTest {
             + "DAT             org   $000\n"
             + "\n"
             + "start\n"
-            + "                asmclk\n"
+            + "                mov     a, ##123\n"
             + "\n"
             + "                drvnot  #56\n"
             + "                jmp     #$-1\n"
+            + "\n"
+            + "a               res 1\n"
+            + "b               res 1\n"
             + "";
 
         Spin2Parser parser = new Spin2Parser(text);
@@ -718,9 +720,9 @@ class Spin2PAsmCompilerTest {
         Assertions.assertEquals(0x000L, compiler.source.get(1).getScope().getSymbol("$").getNumber());
         Assertions.assertEquals(0x000L, compiler.source.get(2).getScope().getSymbol("$").getNumber());
         Assertions.assertEquals(0x002L, compiler.source.get(3).getScope().getSymbol("$").getNumber());
-        Assertions.assertEquals(0x004L, compiler.source.get(4).getScope().getSymbol("$").getNumber());
-        Assertions.assertEquals(0x006L, compiler.source.get(5).getScope().getSymbol("$").getNumber());
-        Assertions.assertEquals(0x007L, compiler.source.get(6).getScope().getSymbol("$").getNumber());
+        Assertions.assertEquals(0x003L, compiler.source.get(4).getScope().getSymbol("$").getNumber());
+        Assertions.assertEquals(0x004L, compiler.source.get(5).getScope().getSymbol("$").getNumber());
+        Assertions.assertEquals(0x005L, compiler.source.get(6).getScope().getSymbol("$").getNumber());
     }
 
     @Test
@@ -813,17 +815,15 @@ class Spin2PAsmCompilerTest {
             + "DAT     org    $000\n"
             + "\n"
             + "        rdlong a, ptra[1]\n"
+            + "        rdlong a, ptra[-1]\n"
+            + "        rdlong a, ptrb[1]\n"
             + "        rdlong a, ptrb[-1]\n"
             + "\n"
-            + "        rdlong a, ptra[1]++\n"
-            + "        rdlong a, ptrb[-1]++\n"
-            + "        rdlong a, ptra[1]--\n"
-            + "        rdlong a, ptrb[-1]--\n"
+            + "        rdlong a, ptra++[1]\n"
+            + "        rdlong a, ptra--[1]\n"
             + "\n"
             + "        rdlong a, ++ptra[1]\n"
-            + "        rdlong a, ++ptrb[-1]\n"
             + "        rdlong a, --ptra[1]\n"
-            + "        rdlong a, --ptrb[-1]\n"
             + "\n"
             + "a       res    1\n"
             + "";
@@ -831,17 +831,15 @@ class Spin2PAsmCompilerTest {
         Assertions.assertEquals(""
             + "' Object \"test.spin2\" header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
-            + "00000 00000   000 01 15 04 FB                        rdlong  a, ptra[1]\n"
-            + "00004 00004   001 BF 15 04 FB                        rdlong  a, ptrb[-1]\n"
-            + "00008 00008   002 61 15 04 FB                        rdlong  a, ptra++[1]\n"
-            + "0000C 0000C   003 FF 15 04 FB                        rdlong  a, ptrb++[-1]\n"
-            + "00010 00010   004 7F 15 04 FB                        rdlong  a, ptra--[1]\n"
-            + "00014 00014   005 E1 15 04 FB                        rdlong  a, ptrb--[-1]\n"
-            + "00018 00018   006 41 15 04 FB                        rdlong  a, ++ptra[1]\n"
-            + "0001C 0001C   007 DF 15 04 FB                        rdlong  a, ++ptrb[-1]\n"
-            + "00020 00020   008 5F 15 04 FB                        rdlong  a, --ptra[1]\n"
-            + "00024 00024   009 C1 15 04 FB                        rdlong  a, --ptrb[-1]\n"
-            + "00028 00028   00A                a                   res     1\n"
+            + "00000 00000   000 01 11 04 FB                        rdlong  a, ptra[1]\n"
+            + "00004 00004   001 3F 11 04 FB                        rdlong  a, ptra[-1]\n"
+            + "00008 00008   002 81 11 04 FB                        rdlong  a, ptrb[1]\n"
+            + "0000C 0000C   003 BF 11 04 FB                        rdlong  a, ptrb[-1]\n"
+            + "00010 00010   004 61 11 04 FB                        rdlong  a, ptra++[1]\n"
+            + "00014 00014   005 7F 11 04 FB                        rdlong  a, ptra--[1]\n"
+            + "00018 00018   006 41 11 04 FB                        rdlong  a, ++ptra[1]\n"
+            + "0001C 0001C   007 5F 11 04 FB                        rdlong  a, --ptra[1]\n"
+            + "00020 00020   008                a                   res     1\n"
             + "", compile(text));
     }
 
@@ -1580,6 +1578,39 @@ class Spin2PAsmCompilerTest {
             + "00057 00057   020                                    DITTO   END\n"
             + "00057 00057   020 2D 00 64 FD                        ret\n"
             + "0005B 0005B       04             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testLutInstructions() throws Exception {
+        String text = ""
+            + "DAT             org     $000\n"
+            + "\n"
+            + "                rdlut   c, b        wz\n"
+            + "                rdlut   0-0, ptra++\n"
+            + "                rdlut   a, ptra[8]  wz\n"
+            + "\n"
+            + "                wrlut   c, b\n"
+            + "                wrlut   0-0, ptra++\n"
+            + "                wrlut   a, ptra[8]\n"
+            + "\n"
+            + "a               res     1\n"
+            + "b               res     1\n"
+            + "c               res     1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object \"test.spin2\" header (var size 4)\n"
+            + "00000 00000   000                                    org     $000\n"
+            + "00000 00000   000 07 10 A8 FA                        rdlut   c, b            wz\n"
+            + "00004 00004   001 61 01 A4 FA                        rdlut   0 - 0, ptra++\n"
+            + "00008 00008   002 08 0D AC FA                        rdlut   a, ptra[8]      wz\n"
+            + "0000C 0000C   003 07 10 30 FC                        wrlut   c, b\n"
+            + "00010 00010   004 61 01 34 FC                        wrlut   0 - 0, ptra++\n"
+            + "00014 00014   005 08 0D 34 FC                        wrlut   a, ptra[8]\n"
+            + "00018 00018   006                a                   res     1\n"
+            + "00018 00018   007                b                   res     1\n"
+            + "00018 00018   008                c                   res     1\n"
             + "", compile(text));
     }
 

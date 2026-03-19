@@ -4,8 +4,7 @@
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2.instructions;
@@ -67,26 +66,26 @@ public class Rdlut extends Spin2PAsmInstructionFactory {
             }
             try {
                 if (dst.getInteger() > 0x1FF) {
-                    msgs.addMessage(new CompilerException("destination register cannot exceed $1FF", dst.getExpression().getData()));
+                    msgs.addMessage(new CompilerException("destination register/constant cannot exceed $1FF", dst.getExpression().getData()));
                 }
                 value = d.setValue(value, dst.getInteger());
             } catch (Exception e) {
                 msgs.addMessage(new CompilerException(e.getMessage(), dst.getExpression().getData()));
             }
 
-            if (src.isPtr()) {
-                value = i.setBoolean(value, true);
-            }
-            else {
-                try {
-                    value = i.setBoolean(value, src.isLiteral());
-                    if (!src.isLongLiteral() && src.getInteger() > 0x1FF) {
-                        msgs.addMessage(new CompilerException("source register/constant cannot exceed $1FF", src.getExpression().getData()));
-                    }
-                    value = s.setValue(value, src.getInteger());
-                } catch (Exception e) {
-                    msgs.addMessage(new CompilerException(e.getMessage(), src.getExpression().getData()));
+            try {
+                if (src.isPtr()) {
+                    value = i.setBoolean(value, true);
                 }
+                else {
+                    if ((src.isLiteral() && !src.isLongLiteral()) && src.getInteger() > 0xFF) {
+                        throw new CompilerException("source register/constant cannot exceed $FF", src.getExpression().getData());
+                    }
+                    value = i.setBoolean(value, src.isLiteral());
+                }
+                value = s.setValue(value, src.getInteger());
+            } catch (Exception e) {
+                msgs.addMessage(new CompilerException(e.getMessage(), src.getExpression().getData()));
             }
 
             if (msgs.hasChilds()) {

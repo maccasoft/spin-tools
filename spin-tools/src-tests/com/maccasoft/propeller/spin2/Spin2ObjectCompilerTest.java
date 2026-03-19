@@ -7211,6 +7211,8 @@ class Spin2ObjectCompilerTest {
     @Test
     void testExpandedPAsmLinesLabel() throws Exception {
         String text = ""
+            + "CON\n"
+            + "     _CLKFREQ = 160_000_000\n"
             + "PUB main()\n"
             + "\n"
             + "    coginit(cogexec_new, @entry, 0)\n"
@@ -7226,12 +7228,12 @@ class Spin2ObjectCompilerTest {
             + "00000 00000       24 00 00 80    Method main @ $00024 (0 parameters, 0 returns)\n"
             + "00004 00004       2D 00 00 00    End\n"
             + "00008 00008   000                                    org     $000\n"
-            + "00008 00008   000 00 00 80 FF    entry               hubset  ##clkmode_ & !%11\n"
-            + "0000C 0000C   001 00 00 64 FD\n"
+            + "00008 00008   000 03 80 80 FF    entry               hubset  ##clkmode_ & !%11\n"
+            + "0000C 0000C   001 00 F0 67 FD\n"
             + "00010 00010   002 86 01 80 FF                        waitx   ##20000000 / 100\n"
             + "00014 00014   003 1F 80 66 FD\n"
-            + "00018 00018   004 00 00 80 FF                        hubset  ##clkmode_\n"
-            + "0001C 0001C   005 00 00 64 FD\n"
+            + "00018 00018   004 03 80 80 FF                        hubset  ##clkmode_\n"
+            + "0001C 0001C   005 00 F6 67 FD\n"
             + "00020 00020   006 2D 00 64 FD                        ret\n"
             + "' PUB main()\n"
             + "00024 00024       00             (stack size)\n"
@@ -7242,6 +7244,38 @@ class Spin2ObjectCompilerTest {
             + "0002B 0002B       25             COGINIT\n"
             + "0002C 0002C       04             RETURN\n"
             + "0002D 0002D       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testExpandedPAsmLinesLabelWithDefaultClock() throws Exception {
+        String text = ""
+            + "PUB main()\n"
+            + "\n"
+            + "    coginit(cogexec_new, @entry, 0)\n"
+            + "\n"
+            + "DAT             org   $000\n"
+            + "\n"
+            + "entry           asmclk\n"
+            + "                ret\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object \"test.spin2\" header (var size 4)\n"
+            + "00000 00000       10 00 00 80    Method main @ $00010 (0 parameters, 0 returns)\n"
+            + "00004 00004       19 00 00 00    End\n"
+            + "00008 00008   000                                    org     $000\n"
+            + "00008 00008   000 00 00 64 FD    entry               hubset  #clkmode_ & 1\n"
+            + "0000C 0000C   001 2D 00 64 FD                        ret\n"
+            + "' PUB main()\n"
+            + "00010 00010       00             (stack size)\n"
+            + "'     coginit(cogexec_new, @entry, 0)\n"
+            + "00011 00011       42 10          CONSTANT (16)\n"
+            + "00013 00013       5B 08 7F       MEM_ADDRESS PBASE+$00008\n"
+            + "00016 00016       A1             CONSTANT (0)\n"
+            + "00017 00017       25             COGINIT\n"
+            + "00018 00018       04             RETURN\n"
+            + "00019 00019       00 00 00       Padding\n"
             + "", compile(text));
     }
 

@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2.instructions;
@@ -17,6 +16,7 @@ import java.util.List;
 import com.maccasoft.propeller.expressions.And;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.Divide;
+import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.Identifier;
 import com.maccasoft.propeller.expressions.Not;
 import com.maccasoft.propeller.expressions.NumberLiteral;
@@ -41,28 +41,44 @@ public class AsmClk extends Spin2PAsmInstructionFactory {
             condition = null;
         }
 
-        list.add(new Spin2PAsmLine(
-            line.getScope(), line.getLabel(), condition, "hubset", Spin2PAsmInstructionFactory.get("hubset"),
-            Collections.singletonList(new Spin2PAsmExpression("##",
-                new And(
-                    new Identifier("clkmode_", line.getScope()),
-                    new Not(new NumberLiteral(0b11, 2))),
-                null)),
-            null));
+        Expression clkmode = line.getScope().getLocalSymbol("clkmode_");
+        if (clkmode == null) {
+            throw new RuntimeException("clkmode not set");
+        }
+        if ((clkmode.getNumber().intValue() & 0b10) != 0) {
+            list.add(new Spin2PAsmLine(
+                line.getScope(), line.getLabel(), condition, "hubset", Spin2PAsmInstructionFactory.get("hubset"),
+                Collections.singletonList(new Spin2PAsmExpression("##",
+                    new And(
+                        new Identifier("clkmode_", line.getScope()),
+                        new Not(new NumberLiteral(0b11, 2))),
+                    null)),
+                null));
 
-        list.add(new Spin2PAsmLine(
-            new Context(line.getScope()), null, condition, "waitx", Spin2PAsmInstructionFactory.get("waitx"),
-            Collections.singletonList(new Spin2PAsmExpression("##",
-                new Divide(
-                    new NumberLiteral(20000000),
-                    new NumberLiteral(100)),
-                null)),
-            null));
+            list.add(new Spin2PAsmLine(
+                new Context(line.getScope()), null, condition, "waitx", Spin2PAsmInstructionFactory.get("waitx"),
+                Collections.singletonList(new Spin2PAsmExpression("##",
+                    new Divide(
+                        new NumberLiteral(20000000),
+                        new NumberLiteral(100)),
+                    null)),
+                null));
 
-        list.add(new Spin2PAsmLine(
-            new Context(line.getScope()), null, line.getCondition(), "hubset", Spin2PAsmInstructionFactory.get("hubset"),
-            Collections.singletonList(new Spin2PAsmExpression("##", new Identifier("clkmode_", line.getScope()), null)),
-            null));
+            list.add(new Spin2PAsmLine(
+                new Context(line.getScope()), null, line.getCondition(), "hubset", Spin2PAsmInstructionFactory.get("hubset"),
+                Collections.singletonList(new Spin2PAsmExpression("##", new Identifier("clkmode_", line.getScope()), null)),
+                null));
+        }
+        else {
+            list.add(new Spin2PAsmLine(
+                line.getScope(), line.getLabel(), line.getCondition(), "hubset", Spin2PAsmInstructionFactory.get("hubset"),
+                Collections.singletonList(new Spin2PAsmExpression("#",
+                    new And(
+                        new Identifier("clkmode_", line.getScope()),
+                        new NumberLiteral(1, 10)),
+                    null)),
+                null));
+        }
 
         return list;
     }

@@ -440,53 +440,87 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
     }
 
     PtrExpression getPtrExpression(Context scope, DataLineNode.ParameterNode param) {
-        Token pre = null, ptr, post = null;
         boolean immediate = false;
         Expression index = null;
-        Token token;
+        Token token, ptr;
         int idx = 0;
 
-        if (idx < param.getTokenCount()) {
-            token = param.getToken(idx);
-            if ("++".equals(token.getText()) || "--".equals(token.getText())) {
-                pre = param.getToken(idx++);
+        token = param.getToken(idx);
+        if ("++".equals(token.getText()) || "--".equals(token.getText())) {
+            Token incdec = param.getToken(idx++);
+            if (idx >= param.getTokenCount()) {
+                throw new CompilerException("syntax error", param.getTokens());
             }
-        }
-
-        if (idx < param.getTokenCount()) {
             ptr = param.getToken(idx++);
             if (!("PTRA".equalsIgnoreCase(ptr.getText()) || "PTRB".equalsIgnoreCase(ptr.getText()))) {
-                return null;
-            }
-            if (idx < param.getTokenCount()) {
-                token = param.getTokens().get(idx);
-                if ("++".equals(token.getText()) || "--".equals(token.getText())) {
-                    post = param.getTokens().get(idx++);
-                }
-            }
-
-            if (idx < param.getTokenCount()) {
                 throw new CompilerException("syntax error", param.getTokens());
             }
 
-            if (param.count != null) {
-                idx = 0;
-                if (idx < param.count.getTokenCount()) {
-                    token = param.count.getToken(idx);
-                    if ("##".equals(token.getText())) {
+            if (idx < param.getTokenCount()) {
+                token = param.getToken(idx++);
+                if (!"[".equals(token.getText())) {
+                    throw new CompilerException("syntax error", param.getTokens());
+                }
+                Spin2ExpressionBuilder expressionBuilder = new Spin2ExpressionBuilder(scope);
+                if (idx < param.getTokenCount()) {
+                    if ("##".equals(param.getToken(idx).getText())) {
                         immediate = true;
                         idx++;
                     }
                 }
-                Spin2ExpressionBuilder expressionBuilder = new Spin2ExpressionBuilder(scope);
-                while (idx < param.count.getTokenCount()) {
-                    expressionBuilder.addToken(param.count.getToken(idx++));
+                while (idx < param.getTokenCount()) {
+                    token = param.getToken(idx++);
+                    if ("]".equals(token.getText())) {
+                        break;
+                    }
+                    expressionBuilder.addToken(token);
+                }
+                if (!"]".equals(token.getText()) || idx < param.getTokenCount()) {
+                    throw new CompilerException("syntax error", param.getTokens());
                 }
                 index = expressionBuilder.getExpression();
-                index.setData(param.count);
             }
 
-            PtrExpression expression = new PtrExpression(pre != null ? pre.getText() : null, ptr.getText(), post != null ? post.getText() : null, immediate, index);
+            PtrExpression expression = new PtrExpression(incdec.getText(), ptr.getText(), null, immediate, index);
+            expression.setData(param);
+            return expression;
+        }
+        else if ("PTRA".equalsIgnoreCase(token.getText()) || "PTRB".equalsIgnoreCase(token.getText())) {
+            ptr = param.getToken(idx++);
+
+            Token incdec = null;
+            if (idx < param.getTokenCount()) {
+                if ("++".equals(param.getToken(idx).getText()) || "--".equals(param.getToken(idx).getText())) {
+                    incdec = param.getToken(idx++);
+                }
+            }
+
+            if (idx < param.getTokenCount()) {
+                token = param.getToken(idx++);
+                if (!"[".equals(token.getText())) {
+                    throw new CompilerException("syntax error", param.getTokens());
+                }
+                Spin2ExpressionBuilder expressionBuilder = new Spin2ExpressionBuilder(scope);
+                if (idx < param.getTokenCount()) {
+                    if ("##".equals(param.getToken(idx).getText())) {
+                        immediate = true;
+                        idx++;
+                    }
+                }
+                while (idx < param.getTokenCount()) {
+                    token = param.getToken(idx++);
+                    if ("]".equals(token.getText())) {
+                        break;
+                    }
+                    expressionBuilder.addToken(token);
+                }
+                if (!"]".equals(token.getText()) || idx < param.getTokenCount()) {
+                    throw new CompilerException("syntax error", param.getTokens());
+                }
+                index = expressionBuilder.getExpression();
+            }
+
+            PtrExpression expression = new PtrExpression(null, ptr.getText(), incdec != null ? incdec.getText() : null, immediate, index);
             expression.setData(param);
             return expression;
         }
