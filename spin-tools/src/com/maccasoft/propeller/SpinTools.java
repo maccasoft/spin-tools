@@ -3872,9 +3872,11 @@ public class SpinTools {
         int tabIndex = -1;
         List<File> list = new ArrayList<>();
 
-        for (File file : preferences.getOpenTabs()) {
-            if (!list.contains(file)) {
-                list.add(file);
+        if (preferences.getReloadOpenTabs()) {
+            for (File file : preferences.getOpenTabs()) {
+                if (!list.contains(file)) {
+                    list.add(file);
+                }
             }
         }
 

@@ -105,6 +105,7 @@ public class PreferencesDialog extends Dialog {
     PathList roots;
     Button showToolbar;
     Button showObjectBrowser;
+    Button reloadOpenTabs;
 
     Text editorFont;
     Spinner editorFontSize;
@@ -1214,6 +1215,19 @@ public class PreferencesDialog extends Dialog {
             public void widgetSelected(SelectionEvent e) {
                 preferences.setExpandOutlineSelection(expandOutlineSelection.getSelection());
             }
+        });
+
+        reloadOpenTabs = new Button(group, SWT.CHECK);
+        reloadOpenTabs.setText("Restore editor state on startup");
+        reloadOpenTabs.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false, 2, 1));
+        reloadOpenTabs.setSelection(preferences.getReloadOpenTabs());
+        reloadOpenTabs.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                preferences.setReloadOpenTabs(reloadOpenTabs.getSelection());
+            }
+
         });
 
         boolean IS_MAC = "cocoa".equals(SWT.getPlatform());
