@@ -1,17 +1,17 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2.instructions;
 
 import java.util.List;
 
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
@@ -61,7 +61,7 @@ public class Getrnd extends Spin2PAsmInstructionFactory {
     }
 
     /*
-     * GETRND  D        {WC/WZ/WCZ}
+     * GETRND  D         {WC/WZ/WCZ}
      */
     public class Getrnd_D_ extends Spin2InstructionObject {
 
@@ -84,7 +84,14 @@ public class Getrnd extends Spin2PAsmInstructionFactory {
             value = o.setValue(value, 0b1101011);
             value = cz.setValue(value, encodeEffect(effect));
             value = i.setValue(value, 0);
-            value = d.setValue(value, dst.getInteger());
+            try {
+                if (dst.getInteger() > 0x1FF) {
+                    throw new CompilerException("destination register/constant cannot exceed $1FF", dst.getExpression().getData());
+                }
+                value = d.setValue(value, dst.getInteger());
+            } catch (Exception e) {
+                throw new CompilerException(e.getMessage(), dst.getExpression().getData());
+            }
             value = s.setValue(value, 0b000011011);
             return getBytes(value);
         }

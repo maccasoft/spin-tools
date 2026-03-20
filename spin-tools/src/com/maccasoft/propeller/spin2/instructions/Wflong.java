@@ -1,17 +1,17 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2.instructions;
 
 import java.util.List;
 
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
@@ -54,8 +54,15 @@ public class Wflong extends Spin2PAsmInstructionFactory {
             int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b1101011);
             value = cz.setValue(value, 0b00);
-            value = i.setBoolean(value, dst.isLiteral());
-            value = d.setValue(value, dst.getInteger());
+            try {
+                value = i.setBoolean(value, dst.isLiteral());
+                if (!dst.isLongLiteral() && dst.getInteger() > 0x1FF) {
+                    throw new CompilerException("destination register/constant cannot exceed $1FF", dst.getExpression().getData());
+                }
+                value = d.setValue(value, dst.getInteger());
+            } catch (Exception e) {
+                throw new CompilerException(e.getMessage(), dst.getExpression().getData());
+            }
             value = s.setValue(value, 0b000010111);
             return dst.isLongLiteral() ? getBytes(encodeAugd(condition, dst.getInteger()), value) : getBytes(value);
         }

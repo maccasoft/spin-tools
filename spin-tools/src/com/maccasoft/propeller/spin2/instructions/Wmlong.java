@@ -4,8 +4,7 @@
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2.instructions;
@@ -54,31 +53,40 @@ public class Wmlong extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            CompilerException errors = new CompilerException();
-
             int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b1010011);
             value = cz.setValue(value, 0b11);
 
-            if (!dst.isLongLiteral() && dst.getInteger() > 0x1FF) {
-                throw new CompilerException("destination register/constant cannot exceed $1FF", dst.getExpression().getData());
-            }
-            value = d.setValue(value, dst.getInteger());
+            CompilerException msgs = new CompilerException();
 
-            if (src.isPtr()) {
-                value = i.setValue(value, 1);
-            }
-            else {
-                if ((src.isLiteral() && !src.isLongLiteral()) && src.getInteger() > 0xFF) {
-                    throw new CompilerException("source constant cannot exceed $FF", src.getExpression().getData());
+            try {
+                if (!dst.isLongLiteral() && dst.getInteger() > 0x1FF) {
+                    throw new CompilerException("destination register/constant cannot exceed $1FF", dst.getExpression().getData());
                 }
-                value = i.setBoolean(value, src.isLiteral());
+                value = d.setValue(value, dst.getInteger());
+            } catch (Exception e) {
+                msgs.addMessage(new CompilerException(e.getMessage(), dst.getExpression().getData()));
             }
-            value = s.setValue(value, src.getInteger());
 
-            if (errors.hasChilds()) {
-                throw errors;
+            try {
+                if (src.isPtr()) {
+                    value = i.setValue(value, 1);
+                }
+                else {
+                    if ((src.isLiteral() && !src.isLongLiteral()) && src.getInteger() > 0xFF) {
+                        throw new CompilerException("source constant cannot exceed $FF", src.getExpression().getData());
+                    }
+                    value = i.setBoolean(value, src.isLiteral());
+                }
+                value = s.setValue(value, src.getInteger());
+            } catch (Exception e) {
+                msgs.addMessage(new CompilerException(e.getMessage(), src.getExpression().getData()));
             }
+
+            if (msgs.hasChilds()) {
+                throw msgs;
+            }
+
             if (dst.isLongLiteral() && src.isLongLiteral()) {
                 return getBytes(encodeAugd(condition, dst.getInteger()), encodeAugs(condition, src.getInteger()), value);
             }

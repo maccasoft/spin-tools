@@ -1,17 +1,17 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2.instructions;
 
 import java.util.List;
 
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
@@ -47,7 +47,12 @@ public class Augd extends Spin2PAsmInstructionFactory {
         public byte[] getBytes() {
             int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b1111100);
-            return getBytes(x.setValue(value, argument.getInteger() >> 9));
+            try {
+                value = x.setValue(value, argument.getInteger() >> 9);
+            } catch (Exception e) {
+                throw new CompilerException(e.getMessage(), argument.getExpression().getData());
+            }
+            return getBytes(value);
         }
 
     }

@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2.instructions;
@@ -55,12 +54,7 @@ public class Incmod extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
-            value = o.setValue(value, 0b0111000);
-            value = cz.setValue(value, encodeEffect(effect));
-            value = i.setBoolean(value, src.isLiteral());
-            value = d.setValue(value, dst.getInteger());
-            value = s.setValue(value, src.getInteger());
+            int value = o.setValue(encodeInstructionParameters(condition, dst, src, effect), 0b0111000);
             return src.isLongLiteral() ? getBytes(encodeAugs(condition, src.getInteger()), value) : getBytes(value);
         }
 

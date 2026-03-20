@@ -4,8 +4,7 @@
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2.instructions;
@@ -55,20 +54,24 @@ public class Call extends Spin2PAsmInstructionFactory {
         public byte[] getBytes() {
             int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b1101101);
-            int addr = dst.getInteger();
-            int ours = context.getSymbol("$").getNumber().intValue();
-            if ((ours < 0x400 && addr >= 0x400) || (ours >= 0x400 && addr < 0x400)) {
-                value = r.setBoolean(value, false);
-                value = a.setValue(value, addr);
-            }
-            else {
-                value = r.setBoolean(value, !dst.isAbsolute());
-                if (dst.isAbsolute()) {
+            try {
+                int addr = dst.getInteger();
+                int ours = context.getSymbol("$").getNumber().intValue();
+                if ((ours < 0x400 && addr >= 0x400) || (ours >= 0x400 && addr < 0x400)) {
+                    value = r.setBoolean(value, false);
                     value = a.setValue(value, addr);
                 }
                 else {
-                    value = a.setValue(value, addr < 0x400 ? (addr - ours - 1) * 4 : addr - ours - 4);
+                    value = r.setBoolean(value, !dst.isAbsolute());
+                    if (dst.isAbsolute()) {
+                        value = a.setValue(value, addr);
+                    }
+                    else {
+                        value = a.setValue(value, addr < 0x400 ? (addr - ours - 1) * 4 : addr - ours - 4);
+                    }
                 }
+            } catch (Exception e) {
+                throw new CompilerException(e.getMessage(), dst.getExpression().getData());
             }
             return getBytes(value);
         }

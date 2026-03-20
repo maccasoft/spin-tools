@@ -4,8 +4,7 @@
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2.instructions;
@@ -54,7 +53,7 @@ public class Outh extends Spin2PAsmInstructionFactory {
             value = cz.setValue(value, encodeEffect(effect));
             value = i.setBoolean(value, dst.isLiteral());
             try {
-                if (dst.getInteger() > 0x1FF) {
+                if (!dst.isLongLiteral() && dst.getInteger() > 0x1FF) {
                     throw new Exception("destination register/constant cannot exceed $1FF");
                 }
                 value = d.setValue(value, dst.getInteger());
@@ -62,7 +61,7 @@ public class Outh extends Spin2PAsmInstructionFactory {
                 throw new CompilerException(e.getMessage(), dst.getExpression().getData());
             }
             value = s.setValue(value, 0b001001001);
-            return getBytes(value);
+            return dst.isLongLiteral() ? getBytes(encodeAugs(condition, dst.getInteger()), value) : getBytes(value);
         }
 
     }

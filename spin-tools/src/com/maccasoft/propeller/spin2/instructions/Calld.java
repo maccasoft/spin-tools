@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2.instructions;
@@ -63,25 +62,48 @@ public class Calld extends Spin2PAsmInstructionFactory {
             int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b1011001);
             value = cz.setValue(value, encodeEffect(effect));
-            value = i.setBoolean(value, src.isLiteral());
-            if (dst.getInteger() > 0x1FF) {
-                throw new CompilerException("destination register cannot exceed $1FF", dst.getExpression().getData());
-            }
-            value = d.setValue(value, dst.getInteger());
-            if (!src.isLiteral()) {
-                value = s.setValue(value, src.getInteger());
-                return getBytes(value);
-            }
-            else if (!src.isAbsolute()) {
-                try {
-                    return encodeRelativeJump(value, condition, src);
-                } catch (Exception e) {
-                    // Do nothing, fall-back to alt encoding
+
+            CompilerException msgs = new CompilerException();
+
+            try {
+                if (dst.getInteger() > 0x1FF) {
+                    throw new CompilerException("destination register cannot exceed $1FF", dst.getExpression().getData());
                 }
+                value = d.setValue(value, dst.getInteger());
+            } catch (Exception e) {
+                msgs.addMessage(new CompilerException(e.getMessage(), dst.getExpression().getData()));
             }
-            if (!(dst.getInteger() >= 0x1F6 && dst.getInteger() <= 0x1F9)) {
-                throw new CompilerException("destination register must be PA, PB, PTRA or PTRB", dst.getExpression().getData());
+
+            try {
+                value = i.setBoolean(value, src.isLiteral());
+                if (!src.isLiteral()) {
+                    value = s.setValue(value, src.getInteger());
+                    if (msgs.hasChilds()) {
+                        throw msgs;
+                    }
+                    return getBytes(value);
+                }
+                else if (!src.isAbsolute()) {
+                    try {
+                        if (msgs.hasChilds()) {
+                            throw msgs;
+                        }
+                        return encodeRelativeJump(value, condition, src);
+                    } catch (Exception e) {
+                        // Do nothing, fall-back to alt encoding
+                    }
+                }
+                if (!(dst.getInteger() >= 0x1F6 && dst.getInteger() <= 0x1F9)) {
+                    msgs.addMessage(new CompilerException("destination register must be PA, PB, PTRA or PTRB", dst.getExpression().getData()));
+                }
+            } catch (Exception e) {
+                msgs.addMessage(new CompilerException(e.getMessage(), dst.getExpression().getData()));
             }
+
+            if (msgs.hasChilds()) {
+                throw msgs;
+            }
+
             return getAltBytes();
         }
 
