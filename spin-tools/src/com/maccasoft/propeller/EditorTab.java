@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -376,10 +377,10 @@ public class EditorTab implements FindReplaceTarget {
 
     class EditorTabSourceProvider extends SourceProvider {
 
-        File[] searchPaths;
+        final List<File> searchPaths;
 
         public EditorTabSourceProvider(File[] searchPaths) {
-            this.searchPaths = searchPaths;
+            this.searchPaths = new ArrayList<>(Arrays.asList(searchPaths));
         }
 
         @Override
@@ -396,11 +397,19 @@ public class EditorTab implements FindReplaceTarget {
             File localFile = file != null ? new File(file.getParentFile(), name) : new File(name).getAbsoluteFile();
 
             if (sourcePool.containsSource(localFile)) {
+                File localFileParent = localFile.getParentFile();
+                if (!searchPaths.contains(localFileParent)) {
+                    searchPaths.add(localFileParent);
+                }
                 dependencies.put(localFile, System.currentTimeMillis());
                 return localFile;
             }
 
             if (localFile.exists()) {
+                File localFileParent = localFile.getParentFile();
+                if (!searchPaths.contains(localFileParent)) {
+                    searchPaths.add(localFileParent);
+                }
                 dependencies.put(localFile, localFile.lastModified());
                 return localFile;
             }
@@ -408,6 +417,10 @@ public class EditorTab implements FindReplaceTarget {
             for (File searchPath : searchPaths) {
                 File searchPathFile = new File(searchPath, name);
                 if (searchPathFile.exists()) {
+                    File searchPathFileParent = localFile.getParentFile();
+                    if (!searchPaths.contains(searchPathFileParent)) {
+                        searchPaths.add(searchPathFileParent);
+                    }
                     dependencies.put(searchPathFile.getAbsoluteFile(), searchPathFile.lastModified());
                     return searchPathFile;
                 }

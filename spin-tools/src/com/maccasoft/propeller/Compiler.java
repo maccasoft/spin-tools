@@ -11,6 +11,7 @@ package com.maccasoft.propeller;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -83,12 +84,10 @@ public abstract class Compiler {
 
     public static class FileSourceProvider extends SourceProvider {
 
-        final File[] searchPaths;
-        final List<File> collectedSearchPaths;
+        final List<File> searchPaths;
 
         public FileSourceProvider(File[] searchPaths) {
-            this.searchPaths = searchPaths;
-            this.collectedSearchPaths = new ArrayList<>();
+            this.searchPaths = new ArrayList<>(Arrays.asList(searchPaths));
         }
 
         @Override
@@ -96,26 +95,19 @@ public abstract class Compiler {
             File localFile = new File(name);
             if (localFile.exists()) {
                 File parent = localFile.getParentFile();
-                if (!collectedSearchPaths.contains(parent)) {
-                    collectedSearchPaths.add(parent);
+                if (!searchPaths.contains(parent)) {
+                    searchPaths.add(parent);
                 }
                 return localFile;
             }
 
-            for (File file : collectedSearchPaths) {
+            for (File file : searchPaths) {
                 localFile = new File(file, name);
                 if (localFile.exists()) {
                     File parent = localFile.getParentFile();
-                    if (!collectedSearchPaths.contains(parent)) {
-                        collectedSearchPaths.add(parent);
+                    if (!searchPaths.contains(parent)) {
+                        searchPaths.add(parent);
                     }
-                    return localFile;
-                }
-            }
-
-            for (int i = 0; i < searchPaths.length; i++) {
-                localFile = new File(searchPaths[i], name);
-                if (localFile.exists()) {
                     return localFile;
                 }
             }
