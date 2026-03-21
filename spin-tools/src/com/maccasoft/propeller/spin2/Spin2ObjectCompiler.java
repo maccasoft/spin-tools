@@ -1422,7 +1422,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
             }
 
             if (info.hasErrors()) {
-                for (CompilerException msg : compiler.getMessages()) {
+                for (CompilerException msg : info.compiler.getMessages()) {
                     if (file.equals(msg.getFile()) && "illegal circular reference".equals(msg.getMessage())) {
                         logMessage(new CompilerException(msg.getMessage(), fileToken));
                         return;
