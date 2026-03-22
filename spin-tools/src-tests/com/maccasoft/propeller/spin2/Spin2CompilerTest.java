@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2;
@@ -2094,6 +2093,80 @@ class Spin2CompilerTest {
     }
 
     @Test
+    void testPAsmAddress() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin2", ""
+            + "PUB start() | ptr\n"
+            + "\n"
+            + "    ptr := @b\n"
+            + "    ptr := @@b\n"
+            + "    ptr := @@@b\n"
+            + "\n"
+            + "    ptr := @c\n"
+            + "    ptr := @@c\n"
+            + "    ptr := @@@c\n"
+            + "\n"
+            + "DAT\n"
+            + "                org     $000\n"
+            + "\n"
+            + "b               long    b\n"
+            + "                long    @b\n"
+            + "                long    @@@b\n"
+            + "\n"
+            + "                long    c\n"
+            + "                long    @c\n"
+            + "                long    @@@c\n"
+            + "\n"
+            + "DAT\n"
+            + "                orgh\n"
+            + "\n"
+            + "c               long    c\n"
+            + "                long    @c\n"
+            + "                long    @@@c\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object \"main.spin2\" header (var size 4)\n"
+            + "01844 00000       2C 00 00 80    Method start @ $0002C (0 parameters, 0 returns)\n"
+            + "01848 00004       48 00 00 00    End\n"
+            + "0184C 00008   000                                    org     $000\n"
+            + "0184C 00008   000 00 00 00 00    b                   long    b\n"
+            + "01850 0000C   001 08 00 00 00                        long    @b\n"
+            + "01854 00010   002 4C 18 00 00                        long    @@@b\n"
+            + "01858 00014   003 00 04 00 00                        long    c\n"
+            + "0185C 00018   004 20 00 00 00                        long    @c\n"
+            + "01860 0001C   005 64 18 00 00                        long    @@@c\n"
+            + "01864 00020 00400                                    orgh\n"
+            + "01864 00020 00400 00 04 00 00    c                   long    c\n"
+            + "01868 00024 00404 20 00 00 00                        long    @c\n"
+            + "0186C 00028 00408 64 18 00 00                        long    @@@c\n"
+            + "' PUB start() | ptr\n"
+            + "01870 0002C       01             (stack size)\n"
+            + "'     ptr := @b\n"
+            + "01871 0002D       5B 08 7F       MEM_ADDRESS PBASE+$00008\n"
+            + "01874 00030       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     ptr := @@b\n"
+            + "01875 00031       5B 08 80       MEM_READ LONG PBASE+$00008\n"
+            + "01878 00034       24             ADD_PBASE\n"
+            + "01879 00035       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     ptr := @@@b\n"
+            + "0187A 00036       44 4C 18       CONSTANT ($0184C)\n"
+            + "0187D 00039       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     ptr := @c\n"
+            + "0187E 0003A       5B 20 7F       MEM_ADDRESS PBASE+$00020\n"
+            + "01881 0003D       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     ptr := @@c\n"
+            + "01882 0003E       5B 20 80       MEM_READ LONG PBASE+$00020\n"
+            + "01885 00041       24             ADD_PBASE\n"
+            + "01886 00042       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     ptr := @@@c\n"
+            + "01887 00043       44 64 18       CONSTANT ($01864)\n"
+            + "0188A 00046       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0188B 00047       04             RETURN\n"
+            + "", compile("main.spin2", sources));
+    }
+
+    @Test
     void testChildObjectPAsmAddress() throws Exception {
         Map<String, String> sources = new HashMap<String, String>();
         sources.put("main.spin2", ""
@@ -2118,18 +2191,18 @@ class Spin2CompilerTest {
             + "DAT\n"
             + "                org     $000\n"
             + "\n"
-            + "b               long    #b\n"
+            + "b               long    b\n"
             + "                long    @b\n"
             + "                long    @@@b\n"
             + "\n"
-            + "                long    #c\n"
+            + "                long    c\n"
             + "                long    @c\n"
             + "                long    @@@c\n"
             + "\n"
             + "DAT\n"
             + "                orgh\n"
             + "\n"
-            + "c               long    #c\n"
+            + "c               long    c\n"
             + "                long    @c\n"
             + "                long    @@@c\n"
             + "");
@@ -2148,14 +2221,14 @@ class Spin2CompilerTest {
             + "01858 00000       2C 00 00 80    Method start @ $0002C (0 parameters, 0 returns)\n"
             + "0185C 00004       48 00 00 00    End\n"
             + "01860 00008   000                                    org     $000\n"
-            + "01860 00008   000 00 00 00 00    b                   long    #b\n"
+            + "01860 00008   000 00 00 00 00    b                   long    b\n"
             + "01864 0000C   001 08 00 00 00                        long    @b\n"
             + "01868 00010   002 60 18 00 00                        long    @@@b\n"
-            + "0186C 00014   003 00 04 00 00                        long    #c\n"
+            + "0186C 00014   003 00 04 00 00                        long    c\n"
             + "01870 00018   004 20 00 00 00                        long    @c\n"
             + "01874 0001C   005 78 18 00 00                        long    @@@c\n"
             + "01878 00020 00400                                    orgh\n"
-            + "01878 00020 00400 00 04 00 00    c                   long    #c\n"
+            + "01878 00020 00400 00 04 00 00    c                   long    c\n"
             + "0187C 00024 00404 20 00 00 00                        long    @c\n"
             + "01880 00028 00408 78 18 00 00                        long    @@@c\n"
             + "' PUB start() | ptr\n"

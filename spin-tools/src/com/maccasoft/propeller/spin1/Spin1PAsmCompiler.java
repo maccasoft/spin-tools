@@ -199,18 +199,31 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
             Expression expression = null, count = null;
 
             Token token;
-            if (index < param.getTokens().size()) {
-                token = param.getToken(index);
-                if (token.getText().startsWith("#")) {
-                    prefix = (prefix == null ? "" : prefix) + token.getText();
-                    index++;
-                }
-            }
-            if (index < param.getTokens().size()) {
-                token = param.getToken(index);
-                if ("\\".equals(token.getText())) {
-                    prefix = (prefix == null ? "" : prefix) + token.getText();
-                    index++;
+            if (mnemonic != null) {
+                switch (mnemonic) {
+                    case "ORG":
+                    case "FIT":
+                    case "BYTE":
+                    case "WORD":
+                    case "LONG":
+                    case "BYTEFIT":
+                    case "WORDFIT":
+                    case "RES":
+                    case "NAMESP":
+                    case "DITTO":
+                    case "FILE":
+                    case "INCLUDE":
+                        // Do nothing
+                        break;
+                    default:
+                        if (index < param.getTokens().size()) {
+                            token = param.getToken(index);
+                            if ("#".equals(token.getText())) {
+                                prefix = token.getText();
+                                index++;
+                            }
+                        }
+                        break;
                 }
             }
             if (index < param.getTokens().size()) {
@@ -231,7 +244,10 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
                     throw new CompilerException(e, param.count);
                 }
             }
-            parameters.add(new Spin1PAsmExpression(prefix, expression, count));
+
+            if (expression != null) {
+                parameters.add(new Spin1PAsmExpression(prefix, expression, count));
+            }
         }
 
         Spin1PAsmLine pasmLine = new Spin1PAsmLine(localScope, label, condition, mnemonic, instructionFactory, parameters, modifier);

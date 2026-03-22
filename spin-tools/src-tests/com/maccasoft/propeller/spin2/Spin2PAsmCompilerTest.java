@@ -622,80 +622,6 @@ class Spin2PAsmCompilerTest {
     }
 
     @Test
-    void testAddress() throws Exception {
-        String text = ""
-            + "PUB start() | ptr\n"
-            + "\n"
-            + "    ptr := @b\n"
-            + "    ptr := @@b\n"
-            + "    ptr := @@@b\n"
-            + "\n"
-            + "    ptr := @c\n"
-            + "    ptr := @@c\n"
-            + "    ptr := @@@c\n"
-            + "\n"
-            + "DAT\n"
-            + "                org     $000\n"
-            + "\n"
-            + "b               long    #b\n"
-            + "                long    @b\n"
-            + "                long    @@@b\n"
-            + "\n"
-            + "                long    #c\n"
-            + "                long    @c\n"
-            + "                long    @@@c\n"
-            + "\n"
-            + "DAT\n"
-            + "                orgh\n"
-            + "\n"
-            + "c               long    #c\n"
-            + "                long    @c\n"
-            + "                long    @@@c\n"
-            + "";
-
-        Assertions.assertEquals(""
-            + "' Object \"test.spin2\" header (var size 4)\n"
-            + "00000 00000       2C 00 00 80    Method start @ $0002C (0 parameters, 0 returns)\n"
-            + "00004 00004       45 00 00 00    End\n"
-            + "00008 00008   000                                    org     $000\n"
-            + "00008 00008   000 00 00 00 00    b                   long    #b\n"
-            + "0000C 0000C   001 08 00 00 00                        long    @b\n"
-            + "00010 00010   002 08 00 00 00                        long    @@@b\n"
-            + "00014 00014   003 00 04 00 00                        long    #c\n"
-            + "00018 00018   004 20 00 00 00                        long    @c\n"
-            + "0001C 0001C   005 20 00 00 00                        long    @@@c\n"
-            + "00020 00020 00400                                    orgh\n"
-            + "00020 00020 00400 00 04 00 00    c                   long    #c\n"
-            + "00024 00024 00404 20 00 00 00                        long    @c\n"
-            + "00028 00028 00408 20 00 00 00                        long    @@@c\n"
-            + "' PUB start() | ptr\n"
-            + "0002C 0002C       01             (stack size)\n"
-            + "'     ptr := @b\n"
-            + "0002D 0002D       5B 08 7F       MEM_ADDRESS PBASE+$00008\n"
-            + "00030 00030       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
-            + "'     ptr := @@b\n"
-            + "00031 00031       5B 08 80       MEM_READ LONG PBASE+$00008\n"
-            + "00034 00034       24             ADD_PBASE\n"
-            + "00035 00035       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
-            + "'     ptr := @@@b\n"
-            + "00036 00036       A9             CONSTANT ($00008)\n"
-            + "00037 00037       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
-            + "'     ptr := @c\n"
-            + "00038 00038       5B 20 7F       MEM_ADDRESS PBASE+$00020\n"
-            + "0003B 0003B       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
-            + "'     ptr := @@c\n"
-            + "0003C 0003C       5B 20 80       MEM_READ LONG PBASE+$00020\n"
-            + "0003F 0003F       24             ADD_PBASE\n"
-            + "00040 00040       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
-            + "'     ptr := @@@c\n"
-            + "00041 00041       42 20          CONSTANT ($00020)\n"
-            + "00043 00043       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
-            + "00044 00044       04             RETURN\n"
-            + "00045 00045       00 00 00       Padding\n"
-            + "", compile(text, false));
-    }
-
-    @Test
     void testDollarSymbol() throws Exception {
         String text = ""
             + "DAT             org   $000\n"
@@ -1179,22 +1105,6 @@ class Spin2PAsmCompilerTest {
 
     @Test
     void testStructure() throws Exception {
-        String text = ""
-            + "CON\n"
-            + "    sPoint(word x, word y)\n"
-            + "\n"
-            + "DAT\n"
-            + "pt              sPoint  0\n"
-            + "";
-
-        Assertions.assertEquals(""
-            + "' Object \"test.spin2\" header (var size 4)\n"
-            + "00000 00000 00000 00 00 00 00    pt                  sPoint  0\n"
-            + "", compile(text));
-    }
-
-    @Test
-    void testStructureAlias() throws Exception {
         String text = ""
             + "CON\n"
             + "    sPoint(word x, word y)\n"

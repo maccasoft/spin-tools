@@ -198,6 +198,9 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
             if (instructionFactory == null) {
                 if (scope.getStructureDefinition(mnemonic) != null) {
                     instructionFactory = new DataType(mnemonic);
+                    if (!node.parameters.isEmpty()) {
+                        logMessage(new CompilerException("expecting end of line", node.parameters.getFirst()));
+                    }
                 }
             }
             if (instructionFactory == null) {
@@ -216,54 +219,82 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
             Expression expression = null, count = null;
             Token token;
 
-            if (parameters.size() == 1 && Spin2InstructionObject.ptrInstructions.contains(mnemonic.toLowerCase())) {
-                try {
-                    expression = getPtrExpression(lineScope, param);
-                } catch (CompilerException e) {
-                    logMessage(e);
-                } catch (Exception e) {
-                    logMessage(new CompilerException(e, param));
+            if (mnemonic != null) {
+                switch (mnemonic) {
+                    case "ORG":
+                    case "ORGH":
+                    case "ORGF":
+                    case "FIT":
+                    case "NAMESP":
+                    case "DITTO":
+                    case "BYTE":
+                    case "WORD":
+                    case "LONG":
+                    case "BYTEFIT":
+                    case "WORDFIT":
+                    case "RES":
+                    case "FILE":
+                    case "INCLUDE":
+                        // Do nothing
+                        break;
+                    default:
+                        if (parameters.size() == 1) {
+                            if (Spin2InstructionObject.ptrInstructions.contains(mnemonic.toLowerCase())) {
+                                try {
+                                    if ((expression = getPtrExpression(lineScope, param)) != null) {
+                                        break;
+                                    }
+                                } catch (CompilerException e) {
+                                    logMessage(e);
+                                } catch (Exception e) {
+                                    logMessage(new CompilerException(e, param));
+                                }
+                            }
+                        }
+                        if (index < param.getTokens().size()) {
+                            token = param.getToken(index);
+                            if (token.getText().startsWith("#")) {
+                                prefix = token.getText();
+                                index++;
+                            }
+                        }
+                        if (index < param.getTokens().size()) {
+                            token = param.getToken(index);
+                            if ("\\".equals(token.getText())) {
+                                prefix = (prefix == null ? "" : prefix) + token.getText();
+                                index++;
+                            }
+                        }
+                        break;
+                }
+
+                if (expression == null) {
+                    if (index < param.getTokens().size()) {
+                        try {
+                            Spin2ExpressionBuilder expressionBuilder = new Spin2ExpressionBuilder(lineScope, param.getTokens().subList(index, param.getTokens().size()));
+                            expression = expressionBuilder.getExpression();
+                            expression.setData(param);
+                        } catch (CompilerException e) {
+                            logMessage(e);
+                        } catch (Exception e) {
+                            logMessage(new CompilerException(e, param));
+                        }
+                    }
+
+                    if (param.count != null) {
+                        try {
+                            Spin2ExpressionBuilder expressionBuilder = new Spin2ExpressionBuilder(lineScope, param.count.getTokens());
+                            count = expressionBuilder.getExpression();
+                            count.setData(param.count);
+                        } catch (CompilerException e) {
+                            logMessage(e);
+                        } catch (Exception e) {
+                            logMessage(new CompilerException(e, param));
+                        }
+                    }
                 }
             }
 
-            if (expression == null) {
-                if (index < param.getTokens().size()) {
-                    token = param.getToken(index);
-                    if (token.getText().startsWith("#")) {
-                        prefix = (prefix == null ? "" : prefix) + token.getText();
-                        index++;
-                    }
-                }
-                if (index < param.getTokens().size()) {
-                    token = param.getToken(index);
-                    if ("\\".equals(token.getText())) {
-                        prefix = (prefix == null ? "" : prefix) + token.getText();
-                        index++;
-                    }
-                }
-                if (index < param.getTokens().size()) {
-                    try {
-                        Spin2ExpressionBuilder expressionBuilder = new Spin2ExpressionBuilder(lineScope, param.getTokens().subList(index, param.getTokens().size()));
-                        expression = expressionBuilder.getExpression();
-                        expression.setData(param);
-                    } catch (CompilerException e) {
-                        logMessage(e);
-                    } catch (Exception e) {
-                        logMessage(new CompilerException(e, param));
-                    }
-                }
-                if (param.count != null) {
-                    try {
-                        Spin2ExpressionBuilder expressionBuilder = new Spin2ExpressionBuilder(lineScope, param.count.getTokens());
-                        count = expressionBuilder.getExpression();
-                        count.setData(param.count);
-                    } catch (CompilerException e) {
-                        logMessage(e);
-                    } catch (Exception e) {
-                        logMessage(new CompilerException(e, param));
-                    }
-                }
-            }
             if (expression != null) {
                 parameters.add(new Spin2PAsmExpression(prefix, expression, count));
             }
