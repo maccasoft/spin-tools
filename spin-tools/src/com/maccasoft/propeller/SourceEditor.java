@@ -1493,6 +1493,7 @@ public class SourceEditor {
                 }
             }
             styledText.setCaretOffset(caretPosition);
+            currentLine = styledText.getLineAtOffset(caretPosition);
 
             styledText.setTopIndex(topIndex);
 
