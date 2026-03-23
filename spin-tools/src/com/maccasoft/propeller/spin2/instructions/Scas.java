@@ -63,20 +63,24 @@ public class Scas extends Spin2PAsmInstructionFactory {
             value = z.setBoolean(value, "wz".equalsIgnoreCase(effect));
             try {
                 if (dst.getInteger() > 0x1FF) {
-                    msgs.addMessage(new CompilerException("destination register cannot exceed $1FF", dst.getExpression().getData()));
+                    throw new Exception("destination register cannot exceed $1FF");
                 }
                 value = d.setValue(value, dst.getInteger());
+            } catch (CompilerException e) {
+                msgs.addMessage(e);
             } catch (Exception e) {
-                msgs.addMessage(new CompilerException(e.getMessage(), dst.getExpression().getData()));
+                msgs.addMessage(new CompilerException(e.getMessage(), dst.getData()));
             }
             try {
                 value = i.setBoolean(value, src.isLiteral());
                 if (!src.isLongLiteral() && src.getInteger() > 0x1FF) {
-                    msgs.addMessage(new CompilerException("source register/constant cannot exceed $1FF", src.getExpression().getData()));
+                    throw new Exception("source register/constant cannot exceed $1FF");
                 }
                 value = s.setValue(value, src.getInteger());
+            } catch (CompilerException e) {
+                msgs.addMessage(e);
             } catch (Exception e) {
-                msgs.addMessage(new CompilerException(e.getMessage(), src.getExpression().getData()));
+                msgs.addMessage(new CompilerException(e.getMessage(), src.getData()));
             }
 
             if (msgs.hasChilds()) {

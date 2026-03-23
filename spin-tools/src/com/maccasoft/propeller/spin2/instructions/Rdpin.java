@@ -4,8 +4,7 @@
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2.instructions;
@@ -59,20 +58,24 @@ public class Rdpin extends Spin2PAsmInstructionFactory {
             value = z.setValue(value, 1);
             try {
                 if (dst.getInteger() > 0x1FF) {
-                    msgs.addMessage(new CompilerException("destination register cannot exceed $1FF", dst.getExpression().getData()));
+                    throw new Exception("destination register cannot exceed $1FF");
                 }
                 value = d.setValue(value, dst.getInteger());
+            } catch (CompilerException e) {
+                msgs.addMessage(e);
             } catch (Exception e) {
-                msgs.addMessage(new CompilerException(e.getMessage(), dst.getExpression().getData()));
+                msgs.addMessage(new CompilerException(e.getMessage(), dst.getData()));
             }
             try {
                 value = i.setBoolean(value, src.isLiteral());
                 if (src.getInteger() > 0x1FF) {
-                    msgs.addMessage(new CompilerException("source register/constant cannot exceed $1FF", src.getExpression().getData()));
+                    throw new Exception("source register/constant cannot exceed $1FF");
                 }
                 value = s.setValue(value, src.getInteger());
+            } catch (CompilerException e) {
+                msgs.addMessage(e);
             } catch (Exception e) {
-                msgs.addMessage(new CompilerException(e.getMessage(), src.getExpression().getData()));
+                msgs.addMessage(new CompilerException(e.getMessage(), src.getData()));
             }
             if (msgs.hasChilds()) {
                 throw msgs;

@@ -49,8 +49,10 @@ public class Augd extends Spin2PAsmInstructionFactory {
             value = o.setValue(value, 0b1111100);
             try {
                 value = x.setValue(value, argument.getInteger() >> 9);
+            } catch (CompilerException e) {
+                throw e;
             } catch (Exception e) {
-                throw new CompilerException(e.getMessage(), argument.getExpression().getData());
+                throw new CompilerException(e.getMessage(), argument.getData());
             }
             return getBytes(value);
         }

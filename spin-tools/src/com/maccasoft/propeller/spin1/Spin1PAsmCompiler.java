@@ -203,14 +203,14 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
                 switch (mnemonic) {
                     case "ORG":
                     case "FIT":
+                    case "NAMESP":
+                    case "DITTO":
                     case "BYTE":
                     case "WORD":
                     case "LONG":
                     case "BYTEFIT":
                     case "WORDFIT":
                     case "RES":
-                    case "NAMESP":
-                    case "DITTO":
                     case "FILE":
                     case "INCLUDE":
                         // Do nothing
@@ -240,14 +240,15 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
                 try {
                     Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(localScope, param.count.getTokens());
                     count = builder.getExpression();
+                    count.setData(param.count);
                 } catch (Exception e) {
                     throw new CompilerException(e, param.count);
                 }
             }
 
-            if (expression != null) {
-                parameters.add(new Spin1PAsmExpression(prefix, expression, count));
-            }
+            Spin1PAsmExpression pasmExpression = new Spin1PAsmExpression(prefix, expression, count);
+            parameters.add(pasmExpression);
+            pasmExpression.setData(param);
         }
 
         Spin1PAsmLine pasmLine = new Spin1PAsmLine(localScope, label, condition, mnemonic, instructionFactory, parameters, modifier);

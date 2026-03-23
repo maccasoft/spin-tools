@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2;
@@ -269,24 +268,28 @@ public abstract class Spin2InstructionObject {
         int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
         value = cz.setValue(value, encodeEffect(effect));
         if (dst.isLiteral()) {
-            msgs.addMessage(new CompilerException("immediate destination not allowed", dst.getExpression().getData()));
+            msgs.addMessage(new CompilerException("immediate destination not allowed", dst.getData()));
         }
         try {
             if (dst.getInteger() > 0x1FF) {
-                msgs.addMessage(new CompilerException("destination register cannot exceed $1FF", dst.getExpression().getData()));
+                throw new Exception("destination register cannot exceed $1FF");
             }
             value = d.setValue(value, dst.getInteger());
+        } catch (CompilerException e) {
+            msgs.addMessage(e);
         } catch (Exception e) {
-            msgs.addMessage(new CompilerException(e.getMessage(), dst.getExpression().getData()));
+            throw new CompilerException(e.getMessage(), dst.getData());
         }
         try {
             value = i.setBoolean(value, src.isLiteral());
             if (!src.isLongLiteral() && src.getInteger() > 0x1FF) {
-                msgs.addMessage(new CompilerException("source register/constant cannot exceed $1FF", src.getExpression().getData()));
+                throw new Exception("source register/constant cannot exceed $1FF");
             }
             value = s.setValue(value, src.getInteger());
+        } catch (CompilerException e) {
+            msgs.addMessage(e);
         } catch (Exception e) {
-            msgs.addMessage(new CompilerException(e.getMessage(), src.getExpression().getData()));
+            throw new CompilerException(e.getMessage(), src.getData());
         }
 
         if (msgs.hasChilds()) {
@@ -303,20 +306,22 @@ public abstract class Spin2InstructionObject {
         try {
             value = l.setBoolean(value, dst.isLiteral());
             if (!dst.isLongLiteral() && dst.getInteger() > 0x1FF) {
-                msgs.addMessage(new CompilerException("destination register cannot exceed $1FF", dst.getExpression().getData()));
+                throw new Exception("destination register cannot exceed $1FF");
             }
             value = d.setValue(value, dst.getInteger());
         } catch (Exception e) {
-            msgs.addMessage(new CompilerException(e.getMessage(), dst.getExpression().getData()));
+            msgs.addMessage(new CompilerException(e.getMessage(), dst.getData()));
         }
         try {
             value = i.setBoolean(value, src.isLiteral());
             if (!src.isLongLiteral() && src.getInteger() > 0x1FF) {
-                msgs.addMessage(new CompilerException("source register/constant cannot exceed $1FF", src.getExpression().getData()));
+                throw new Exception("source register/constant cannot exceed $1FF");
             }
             value = s.setValue(value, src.getInteger());
+        } catch (CompilerException e) {
+            throw e;
         } catch (Exception e) {
-            msgs.addMessage(new CompilerException(e.getMessage(), src.getExpression().getData()));
+            throw new CompilerException(e.getMessage(), src.getData());
         }
 
         if (msgs.hasChilds()) {
@@ -327,31 +332,37 @@ public abstract class Spin2InstructionObject {
     }
 
     protected byte[] encodeRelativeJump(int value, String condition, Spin2PAsmExpression src) {
-        if (src.isLiteral()) {
-            int addr = src.getInteger();
-            int ours = context.getSymbol("$").getNumber().intValue();
-            if ((ours < 0x400 && addr >= 0x400) || (ours >= 0x400 && addr < 0x400)) {
-                throw new CompilerException("relative addresses cann't cross between cog and hub domains", src.getExpression().getData());
+        try {
+            if (src.isLiteral()) {
+                int addr = src.getInteger();
+                int ours = context.getSymbol("$").getNumber().intValue();
+                if ((ours < 0x400 && addr >= 0x400) || (ours >= 0x400 && addr < 0x400)) {
+                    throw new Exception("relative addresses cann't cross between cog and hub domains");
+                }
+                int offset = (addr < 0x400 ? (addr - ours) << 2 : (addr - ours)) - 4;
+                if (src.isLongLiteral()) {
+                    offset -= 4;
+                }
+                if ((offset & 0x3) != 0) {
+                    throw new Exception("relative address not aligned with instruction");
+                }
+                offset >>= 2;
+                if (!src.isLongLiteral() && (offset < -256 || offset > 255)) {
+                    throw new Exception("relative offset out of range");
+                }
+                offset &= src.isLongLiteral() ? 0x3FFFF : 0xFFFFF;
+                value = s.setValue(value, offset);
+                if (src.isLongLiteral()) {
+                    return getBytes(encodeAugs(condition, offset), value);
+                }
             }
-            int offset = (addr < 0x400 ? (addr - ours) << 2 : (addr - ours)) - 4;
-            if (src.isLongLiteral()) {
-                offset -= 4;
+            else {
+                value = s.setValue(value, src.getInteger());
             }
-            if ((offset & 0x3) != 0) {
-                throw new CompilerException("relative address not aligned with instruction", src.getExpression().getData());
-            }
-            offset >>= 2;
-            if (!src.isLongLiteral() && (offset < -256 || offset > 255)) {
-                throw new CompilerException("relative offset out of range", src.getExpression().getData());
-            }
-            offset &= src.isLongLiteral() ? 0x3FFFF : 0xFFFFF;
-            value = s.setValue(value, offset);
-            if (src.isLongLiteral()) {
-                return getBytes(encodeAugs(condition, offset), value);
-            }
-        }
-        else {
-            value = s.setValue(value, src.getInteger());
+        } catch (CompilerException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new CompilerException(e.getMessage(), src.getData());
         }
         return getBytes(value);
     }

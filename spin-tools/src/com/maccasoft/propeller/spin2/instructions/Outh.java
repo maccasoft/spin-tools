@@ -57,8 +57,10 @@ public class Outh extends Spin2PAsmInstructionFactory {
                     throw new Exception("destination register/constant cannot exceed $1FF");
                 }
                 value = d.setValue(value, dst.getInteger());
+            } catch (CompilerException e) {
+                throw e;
             } catch (Exception e) {
-                throw new CompilerException(e.getMessage(), dst.getExpression().getData());
+                throw new CompilerException(e.getMessage(), dst.getData());
             }
             value = s.setValue(value, 0b001001001);
             return dst.isLongLiteral() ? getBytes(encodeAugs(condition, dst.getInteger()), value) : getBytes(value);

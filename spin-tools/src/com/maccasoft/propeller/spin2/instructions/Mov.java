@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2.instructions;
@@ -27,15 +26,15 @@ public class Mov extends Spin2PAsmInstructionFactory {
             return new Mov_(context, condition, arguments.get(0), arguments.get(1), effect);
         }
         if (arguments.size() != 2) {
-            throw new RuntimeException("Expected 2 operands, found " + arguments.size());
+            throw new RuntimeException("expected 2 operands, found " + arguments.size());
         }
-        if (arguments.get(0).isLiteral()) {
-            throw new CompilerException("Bad use of immediate for first operand", arguments.get(0).getExpression().getData());
+        if (arguments.getFirst().isLiteral()) {
+            throw new CompilerException("bad use of immediate for first operand", arguments.getFirst().getData());
         }
         if (effect != null && !Spin2PAsmSchema.E_WC_WZ_WCZ.contains(effect.toLowerCase())) {
-            throw new RuntimeException("Bad instruction modifier");
+            throw new RuntimeException("bad instruction modifier");
         }
-        throw new RuntimeException("Syntax error");
+        throw new RuntimeException("syntax error");
     }
 
     /*

@@ -70,11 +70,13 @@ public class Wrlong extends Spin2PAsmInstructionFactory {
 
             try {
                 if (!dst.isLongLiteral() && dst.getInteger() > 0x1FF) {
-                    msgs.addMessage(new CompilerException("destination register cannot exceed $1FF", dst.getExpression().getData()));
+                    throw new Exception("destination register cannot exceed $1FF");
                 }
                 value = d.setValue(value, dst.getInteger());
+            } catch (CompilerException e) {
+                msgs.addMessage(e);
             } catch (Exception e) {
-                msgs.addMessage(new CompilerException(e.getMessage(), dst.getExpression().getData()));
+                msgs.addMessage(new CompilerException(e.getMessage(), dst.getData()));
             }
 
             try {
@@ -83,13 +85,15 @@ public class Wrlong extends Spin2PAsmInstructionFactory {
                 }
                 else {
                     if ((src.isLiteral() && !src.isLongLiteral()) && src.getInteger() > 0xFF) {
-                        msgs.addMessage(new CompilerException("source register/constant cannot exceed $1FF", src.getExpression().getData()));
+                        throw new Exception("source register/constant cannot exceed $1FF");
                     }
                     value = i.setBoolean(value, src.isLiteral());
                 }
                 value = s.setValue(value, src.getInteger());
+            } catch (CompilerException e) {
+                msgs.addMessage(e);
             } catch (Exception e) {
-                msgs.addMessage(new CompilerException(e.getMessage(), src.getExpression().getData()));
+                msgs.addMessage(new CompilerException(e.getMessage(), src.getData()));
             }
 
             if (msgs.hasChilds()) {

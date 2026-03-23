@@ -58,8 +58,10 @@ public class Djf extends Spin2PAsmInstructionFactory {
             value = cz.setValue(value, 0b10);
             try {
                 value = d.setValue(value, dst.getInteger());
+            } catch (CompilerException e) {
+                throw e;
             } catch (Exception e) {
-                throw new CompilerException(e.getMessage(), dst.getExpression().getData());
+                throw new CompilerException(e.getMessage(), dst.getData());
             }
             value = i.setBoolean(value, src.isLiteral());
             return encodeRelativeJump(value, condition, src);

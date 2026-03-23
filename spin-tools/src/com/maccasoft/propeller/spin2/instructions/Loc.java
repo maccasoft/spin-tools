@@ -54,7 +54,7 @@ public class Loc extends Spin2PAsmInstructionFactory {
             try {
                 value = o.setValue(value, 0b1110100 | encodeDst(dst.getExpression().toString()));
             } catch (Exception e) {
-                msgs.addMessage(new CompilerException(e.getMessage(), dst.getExpression().getData()));
+                msgs.addMessage(new CompilerException(e.getMessage(), dst.getData()));
             }
 
             try {
@@ -73,8 +73,10 @@ public class Loc extends Spin2PAsmInstructionFactory {
                         value = a.setValue(value, addr < 0x400 ? (addr - ours - 1) : addr - ours - 4);
                     }
                 }
+            } catch (CompilerException e) {
+                throw e;
             } catch (Exception e) {
-                msgs.addMessage(new CompilerException(e.getMessage(), dst.getExpression().getData()));
+                msgs.addMessage(new CompilerException(e.getMessage(), dst.getData()));
             }
 
             if (msgs.hasChilds()) {

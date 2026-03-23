@@ -86,11 +86,13 @@ public class Getrnd extends Spin2PAsmInstructionFactory {
             value = i.setValue(value, 0);
             try {
                 if (dst.getInteger() > 0x1FF) {
-                    throw new CompilerException("destination register/constant cannot exceed $1FF", dst.getExpression().getData());
+                    throw new Exception("destination register/constant cannot exceed $1FF");
                 }
                 value = d.setValue(value, dst.getInteger());
+            } catch (CompilerException e) {
+                throw e;
             } catch (Exception e) {
-                throw new CompilerException(e.getMessage(), dst.getExpression().getData());
+                throw new CompilerException(e.getMessage(), dst.getData());
             }
             value = s.setValue(value, 0b000011011);
             return getBytes(value);

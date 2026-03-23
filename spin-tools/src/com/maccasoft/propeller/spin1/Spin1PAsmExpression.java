@@ -1,15 +1,15 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin1;
 
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.Type;
 
@@ -18,6 +18,8 @@ public class Spin1PAsmExpression {
     final String prefix;
     final Expression expression;
     final Expression count;
+
+    Object data;
 
     public Spin1PAsmExpression(String prefix, Expression expression, Expression count) {
         this.prefix = prefix;
@@ -41,14 +43,29 @@ public class Spin1PAsmExpression {
         if (count == null) {
             return 1;
         }
-        return count.getNumber().intValue();
+        try {
+            return count.getNumber().intValue();
+        } catch (CompilerException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new CompilerException("invalid expression", count.getData());
+        }
     }
 
     public int getInteger() {
-        if (expression.getNumber() instanceof Double) {
-            return Float.floatToIntBits(expression.getNumber().floatValue());
+        if (expression == null) {
+            throw new RuntimeException("invalid expression");
         }
-        return expression.getNumber().intValue();
+        try {
+            if (expression.getNumber() instanceof Double) {
+                return Float.floatToIntBits(expression.getNumber().floatValue());
+            }
+            return expression.getNumber().intValue();
+        } catch (CompilerException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new CompilerException("invalid expression", expression.getData());
+        }
     }
 
     public byte[] getByte() {
@@ -99,21 +116,13 @@ public class Spin1PAsmExpression {
                 case "WORD":
                     size = value.length * 2;
                     break;
-
                 case "LONG":
                     size = value.length * 4;
                     break;
             }
         }
 
-        int count;
-        try {
-            count = getCount();
-        } catch (Exception e) {
-            count = 1;
-        }
-
-        return size * count;
+        return size * getCount();
     }
 
     public byte[] getWord() {
@@ -164,21 +173,13 @@ public class Spin1PAsmExpression {
                 case "BYTE":
                     size = value.length;
                     break;
-
                 case "LONG":
                     size = value.length * 4;
                     break;
             }
         }
 
-        int count;
-        try {
-            count = getCount();
-        } catch (Exception e) {
-            count = 1;
-        }
-
-        return size * count;
+        return size * getCount();
     }
 
     public byte[] getLong() {
@@ -229,44 +230,52 @@ public class Spin1PAsmExpression {
                 case "BYTE":
                     size = value.length;
                     break;
-
                 case "WORD":
                     size = value.length * 2;
                     break;
             }
         }
 
-        int count;
-        try {
-            count = getCount();
-        } catch (Exception e) {
-            count = 1;
-        }
-
-        return size * count;
+        return size * getCount();
     }
 
     int[] getValue() {
-        if (expression.isString()) {
-            return expression.getStringValues();
-        }
-        if (expression.getNumber() instanceof Double) {
+        try {
+            if (expression.isString()) {
+                return expression.getStringValues();
+            }
+            if (expression.getNumber() instanceof Double) {
+                return new int[] {
+                    Float.floatToIntBits(expression.getNumber().floatValue())
+                };
+            }
             return new int[] {
-                Float.floatToIntBits(expression.getNumber().floatValue())
+                expression.getNumber().intValue()
             };
+        } catch (Exception e) {
+            throw new RuntimeException("invalid expression");
         }
-        return new int[] {
-            expression.getNumber().intValue()
-        };
     }
 
     public String getString() {
-        return expression.getString();
+        try {
+            return expression.getString();
+        } catch (Exception e) {
+            throw new RuntimeException("invalid expression");
+        }
+    }
+
+    public Object getData() {
+        return data;
+    }
+
+    public void setData(Object data) {
+        this.data = data;
     }
 
     @Override
     public String toString() {
-        return (prefix != null ? prefix : "") + expression.toString() + (count != null ? "[" + count.toString() + "]" : "");
+        return (prefix != null ? prefix : "") + expression + (count != null ? "[" + count.toString() + "]" : "");
     }
 
 }

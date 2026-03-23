@@ -4,8 +4,7 @@
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2.instructions;
@@ -65,28 +64,34 @@ public class Setbyte extends Spin2PAsmInstructionFactory {
             value = o.setValue(value, 0b1000110);
             try {
                 if (dst.getInteger() > 0x1FF) {
-                    msgs.addMessage(new CompilerException("destination register cannot exceed $1FF", dst.getExpression().getData()));
+                    throw new Exception("destination register cannot exceed $1FF");
                 }
                 value = d.setValue(value, dst.getInteger());
+            } catch (CompilerException e) {
+                msgs.addMessage(e);
             } catch (Exception e) {
-                msgs.addMessage(new CompilerException(e.getMessage(), dst.getExpression().getData()));
+                msgs.addMessage(new CompilerException(e.getMessage(), dst.getData()));
             }
             try {
                 value = i.setBoolean(value, src.isLiteral());
                 if (!src.isLongLiteral() && src.getInteger() > 0x1FF) {
-                    msgs.addMessage(new CompilerException("source register/constant cannot exceed $1FF", src.getExpression().getData()));
+                    throw new Exception("source register/constant cannot exceed $1FF");
                 }
                 value = s.setValue(value, src.getInteger());
+            } catch (CompilerException e) {
+                msgs.addMessage(e);
             } catch (Exception e) {
-                msgs.addMessage(new CompilerException(e.getMessage(), src.getExpression().getData()));
+                msgs.addMessage(new CompilerException(e.getMessage(), src.getData()));
             }
             try {
                 if (n.getInteger() < 0 || n.getInteger() > 3) {
-                    msgs.addMessage(new CompilerException("selector must be 0 to 3", n.getExpression().getData()));
+                    throw new Exception("selector must be 0 to 3");
                 }
                 value = cz.setValue(value, n.getInteger());
+            } catch (CompilerException e) {
+                msgs.addMessage(e);
             } catch (Exception e) {
-                msgs.addMessage(new CompilerException(e.getMessage(), n.getExpression().getData()));
+                msgs.addMessage(new CompilerException(e.getMessage(), n.getData()));
             }
             if (msgs.hasChilds()) {
                 throw msgs;
@@ -122,11 +127,11 @@ public class Setbyte extends Spin2PAsmInstructionFactory {
             try {
                 value = i.setBoolean(value, src.isLiteral());
                 if (src.getInteger() > 0x1FF) {
-                    throw new CompilerException("source register/constant cannot exceed $1FF", src.getExpression().getData());
+                    throw new Exception("source register/constant cannot exceed $1FF");
                 }
                 value = s.setValue(value, src.getInteger());
             } catch (Exception e) {
-                throw new CompilerException(e.getMessage(), src.getExpression().getData());
+                throw new CompilerException(e.getMessage(), src.getData());
             }
             return getBytes(value);
         }

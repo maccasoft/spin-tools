@@ -23,6 +23,8 @@ public class Spin2PAsmExpression {
     final Expression expression;
     final Expression count;
 
+    Object data;
+
     public static class PtrExpression extends Expression {
 
         String pre;
@@ -177,14 +179,29 @@ public class Spin2PAsmExpression {
         if (count == null) {
             return 1;
         }
-        return count.getNumber().intValue();
+        try {
+            return count.getNumber().intValue();
+        } catch (CompilerException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new CompilerException("invalid expression", count.getData());
+        }
     }
 
     public int getInteger() {
-        if (expression.getNumber() instanceof Double) {
-            return Float.floatToIntBits(expression.getNumber().floatValue());
+        if (expression == null) {
+            throw new RuntimeException("invalid expression");
         }
-        return expression.getNumber().intValue();
+        try {
+            if (expression.getNumber() instanceof Double) {
+                return Float.floatToIntBits(expression.getNumber().floatValue());
+            }
+            return expression.getNumber().intValue();
+        } catch (CompilerException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new CompilerException("invalid expression", expression.getData());
+        }
     }
 
     public byte[] getByte() {
@@ -256,11 +273,9 @@ public class Spin2PAsmExpression {
                 case "WORD":
                     size = value.length * 2;
                     break;
-
                 case "LONG":
                     size = value.length * 4;
                     break;
-
                 case "FVAR": {
                     ByteArrayOutputStream os = new ByteArrayOutputStream();
                     try {
@@ -287,14 +302,7 @@ public class Spin2PAsmExpression {
             }
         }
 
-        int count;
-        try {
-            count = getCount();
-        } catch (Exception e) {
-            count = 1;
-        }
-
-        return size * count;
+        return size * getCount();
     }
 
     public byte[] getWord() {
@@ -366,11 +374,9 @@ public class Spin2PAsmExpression {
                 case "BYTE":
                     size = value.length;
                     break;
-
                 case "LONG":
                     size = value.length * 4;
                     break;
-
                 case "FVAR": {
                     ByteArrayOutputStream os = new ByteArrayOutputStream();
                     try {
@@ -397,14 +403,7 @@ public class Spin2PAsmExpression {
             }
         }
 
-        int count;
-        try {
-            count = getCount();
-        } catch (Exception e) {
-            count = 1;
-        }
-
-        return size * count;
+        return size * getCount();
     }
 
     public byte[] getLong() {
@@ -505,37 +504,46 @@ public class Spin2PAsmExpression {
             }
         }
 
-        int count;
-        try {
-            count = getCount();
-        } catch (Exception e) {
-            count = 1;
-        }
-
-        return size * count;
+        return size * getCount();
     }
 
     int[] getValue() {
-        if (expression.isString()) {
-            return expression.getStringValues();
-        }
-        if (expression.getNumber() instanceof Double) {
+        try {
+            if (expression.isString()) {
+                return expression.getStringValues();
+            }
+            if (expression.getNumber() instanceof Double) {
+                return new int[] {
+                    Float.floatToIntBits(expression.getNumber().floatValue())
+                };
+            }
             return new int[] {
-                Float.floatToIntBits(expression.getNumber().floatValue())
+                expression.getNumber().intValue()
             };
+        } catch (Exception e) {
+            throw new RuntimeException("invalid expression");
         }
-        return new int[] {
-            expression.getNumber().intValue()
-        };
     }
 
     public String getString() {
-        return expression.getString();
+        try {
+            return expression.getString();
+        } catch (Exception e) {
+            throw new RuntimeException("invalid expression");
+        }
+    }
+
+    public Object getData() {
+        return data;
+    }
+
+    public void setData(Object data) {
+        this.data = data;
     }
 
     @Override
     public String toString() {
-        return (prefix != null ? prefix : "") + expression.toString() + (count != null ? "[" + count.toString() + "]" : "");
+        return (prefix != null ? prefix : "") + expression + (count != null ? "[" + count.toString() + "]" : "");
     }
 
 }

@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin1.instructions;
@@ -53,20 +52,33 @@ public class Call extends Spin1PAsmInstructionFactory {
             value = con.setValue(value, encodeCondition(condition));
             value = zcr.setValue(value, encodeEffect(effect));
             value = i.setBoolean(value, true);
-            int dst;
+
+            CompilerException msgs = new CompilerException();
+
             try {
-                dst = context.getInteger(src.getExpression().toString() + "_ret");
+                int dst = context.getInteger(src.getExpression().toString() + "_ret");
+                if (dst > 0x1FF) {
+                    throw new Exception("return register cannot exceed $1FF");
+                }
+                value = d.setValue(value, dst);
             } catch (Exception e) {
-                throw new CompilerException(e.getMessage(), src.getExpression().getData());
+                msgs.addMessage(new CompilerException(e.getMessage(), src.getData()));
             }
-            if (dst > 0b111111111) {
-                throw new CompilerException("Value out of range (" + dst + ")", src.getExpression().getData());
+
+            try {
+                if (!src.isLiteral()) {
+                    msgs.addMessage(new CompilerException("expecting immediate", src.getData()));
+                }
+                if (src.getInteger() > 0x1FF) {
+                    throw new Exception("constant cannot exceed $1FF");
+                }
+                value = s.setValue(value, src.getInteger());
+            } catch (CompilerException e) {
+                throw e;
+            } catch (Exception e) {
+                msgs.addMessage(new CompilerException(e.getMessage(), src.getData()));
             }
-            value = d.setValue(value, dst);
-            if (src.getInteger() > 0b111111111) {
-                throw new CompilerException("Value out of range (" + src.getInteger() + ")", src.getExpression().getData());
-            }
-            value = s.setValue(value, src.getInteger());
+
             return getBytes(value);
         }
 

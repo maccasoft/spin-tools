@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2.instructions;
@@ -57,20 +56,20 @@ public class Wordfit extends Word {
                         switch (((Type) exp.getExpression()).getType().toUpperCase()) {
                             case "BYTE":
                                 if (exp.getInteger() < -0x80 || exp.getInteger() > 0xFF) {
-                                    throw new CompilerException("Byte value must range from -$80 to $FF", exp.getExpression().getData());
+                                    throw new CompilerException("Byte value must range from -$80 to $FF", exp.getData());
                                 }
                                 break;
                             case "LONG":
                                 break;
                             default:
                                 if (exp.getInteger() < -0x8000 || exp.getInteger() > 0xFFFF) {
-                                    throw new CompilerException("Word value must range from -$8000 to $FFFF", exp.getExpression().getData());
+                                    throw new CompilerException("Word value must range from -$8000 to $FFFF", exp.getData());
                                 }
                                 break;
                         }
                     }
                     else if (exp.getInteger() < -0x8000 || exp.getInteger() > 0xFFFF) {
-                        throw new CompilerException("Word value must range from -$8000 to $FFFF", exp.getExpression().getData());
+                        throw new CompilerException("Word value must range from -$8000 to $FFFF", exp.getData());
                     }
 
                     byte[] value = exp.getWord();

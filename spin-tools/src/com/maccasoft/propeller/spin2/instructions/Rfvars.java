@@ -4,8 +4,7 @@
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2.instructions;
@@ -57,8 +56,10 @@ public class Rfvars extends Spin2PAsmInstructionFactory {
                     throw new Exception("destination register cannot exceed $1FF");
                 }
                 value = d.setValue(value, dst.getInteger());
+            } catch (CompilerException e) {
+                throw e;
             } catch (Exception e) {
-                throw new CompilerException(e.getMessage(), dst.getExpression().getData());
+                throw new CompilerException(e.getMessage(), dst.getData());
             }
             value = s.setValue(value, 0b000010100);
             return getBytes(value);

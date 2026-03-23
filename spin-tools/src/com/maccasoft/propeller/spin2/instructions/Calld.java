@@ -56,6 +56,7 @@ public class Calld extends Spin2PAsmInstructionFactory {
         }
 
         // EEEE 1011001 CZI DDDDDDDDD SSSSSSSSS
+        // EEEE 11100WW RAA AAAAAAAAA AAAAAAAAA
 
         @Override
         public byte[] getBytes() {
@@ -67,70 +68,81 @@ public class Calld extends Spin2PAsmInstructionFactory {
 
             try {
                 if (dst.getInteger() > 0x1FF) {
-                    throw new CompilerException("destination register cannot exceed $1FF", dst.getExpression().getData());
+                    throw new Exception("destination register cannot exceed $1FF");
                 }
                 value = d.setValue(value, dst.getInteger());
+            } catch (CompilerException e) {
+                msgs.addMessage(e);
             } catch (Exception e) {
-                msgs.addMessage(new CompilerException(e.getMessage(), dst.getExpression().getData()));
+                msgs.addMessage(new CompilerException(e.getMessage(), dst.getData()));
             }
 
-            try {
-                value = i.setBoolean(value, src.isLiteral());
-                if (!src.isLiteral()) {
+            value = i.setBoolean(value, src.isLiteral());
+            if (!src.isLiteral()) {
+                try {
                     value = s.setValue(value, src.getInteger());
+                } catch (CompilerException e) {
+                    msgs.addMessage(e);
+                } catch (Exception e) {
+                    msgs.addMessage(new CompilerException(e.getMessage(), src.getData()));
+                }
+                if (msgs.hasChilds()) {
+                    throw msgs;
+                }
+                return getBytes(value);
+            }
+
+            if (!src.isAbsolute()) {
+                try {
                     if (msgs.hasChilds()) {
                         throw msgs;
                     }
-                    return getBytes(value);
+                    return encodeRelativeJump(value, condition, src);
+                } catch (Exception e) {
+                    // Do nothing, fall-back to alt encoding
                 }
-                else if (!src.isAbsolute()) {
-                    try {
-                        if (msgs.hasChilds()) {
-                            throw msgs;
-                        }
-                        return encodeRelativeJump(value, condition, src);
-                    } catch (Exception e) {
-                        // Do nothing, fall-back to alt encoding
-                    }
-                }
+            }
+
+            try {
                 if (!(dst.getInteger() >= 0x1F6 && dst.getInteger() <= 0x1F9)) {
-                    msgs.addMessage(new CompilerException("destination register must be PA, PB, PTRA or PTRB", dst.getExpression().getData()));
+                    msgs.addMessage(new CompilerException("destination register must be PA, PB, PTRA or PTRB", dst.getData()));
                 }
             } catch (Exception e) {
-                msgs.addMessage(new CompilerException(e.getMessage(), dst.getExpression().getData()));
+                // Ignore, all exceptions already captured
+            }
+
+            try {
+                value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
+                value = o.setValue(value, 0b1110000 | encodeDst(dst.getExpression().toString()));
+                int addr = src.getInteger();
+                int ours = context.getSymbol("$").getNumber().intValue();
+                if ((ours < 0x400 && addr >= 0x400) || (ours >= 0x400 && addr < 0x400)) {
+                    value = r.setBoolean(value, false);
+                    value = a.setValue(value, addr);
+                }
+                else {
+                    if (src.isAbsolute()) {
+                        value = a.setValue(value, addr);
+                    }
+                    else {
+                        int offset = addr < 0x400 ? (addr - ours - 1) : addr - ours - 4;
+                        if (addr >= 0x400 && (addr & 0x03) == 0) {
+                            offset >>= 2;
+                        }
+                        value = r.setBoolean(value, true);
+                        value = a.setValue(value, offset & 0xFFFFF);
+                    }
+                }
+            } catch (CompilerException e) {
+                msgs.addMessage(e);
+            } catch (Exception e) {
+                msgs.addMessage(new CompilerException(e.getMessage(), src.getData()));
             }
 
             if (msgs.hasChilds()) {
                 throw msgs;
             }
 
-            return getAltBytes();
-        }
-
-        // EEEE 11100WW RAA AAAAAAAAA AAAAAAAAA
-
-        public byte[] getAltBytes() {
-            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
-            value = o.setValue(value, 0b1110000 | encodeDst(dst.getExpression().toString()));
-            int addr = src.getInteger();
-            int ours = context.getSymbol("$").getNumber().intValue();
-            if ((ours < 0x400 && addr >= 0x400) || (ours >= 0x400 && addr < 0x400)) {
-                value = r.setBoolean(value, false);
-                value = a.setValue(value, addr);
-            }
-            else {
-                if (src.isAbsolute()) {
-                    value = a.setValue(value, addr);
-                }
-                else {
-                    int offset = addr < 0x400 ? (addr - ours - 1) : addr - ours - 4;
-                    if (addr >= 0x400 && (addr & 0x03) == 0) {
-                        offset >>= 2;
-                    }
-                    value = r.setBoolean(value, true);
-                    value = a.setValue(value, offset & 0xFFFFF);
-                }
-            }
             return getBytes(value);
         }
 

@@ -70,8 +70,10 @@ public class Callb extends Spin2PAsmInstructionFactory {
                         value = a.setValue(value, addr < 0x400 ? (addr - ours - 1) * 4 : addr - ours - 4);
                     }
                 }
+            } catch (CompilerException e) {
+                throw e;
             } catch (Exception e) {
-                throw new CompilerException(e.getMessage(), dst.getExpression().getData());
+                throw new CompilerException(e.getMessage(), dst.getData());
             }
             return getBytes(value);
         }
@@ -106,8 +108,10 @@ public class Callb extends Spin2PAsmInstructionFactory {
                     throw new Exception("destination register cannot exceed $1FF");
                 }
                 value = d.setValue(value, dst.getInteger());
+            } catch (CompilerException e) {
+                throw e;
             } catch (Exception e) {
-                throw new CompilerException(e.getMessage(), dst.getExpression().getData());
+                throw new CompilerException(e.getMessage(), dst.getData());
             }
             value = s.setValue(value, 0b000101111);
             return getBytes(value);

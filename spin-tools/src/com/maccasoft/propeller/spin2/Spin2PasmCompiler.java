@@ -295,9 +295,9 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
                 }
             }
 
-            if (expression != null) {
-                parameters.add(new Spin2PAsmExpression(prefix, expression, count));
-            }
+            Spin2PAsmExpression pasmExpression = new Spin2PAsmExpression(prefix, expression, count);
+            parameters.add(pasmExpression);
+            pasmExpression.setData(param);
         }
 
         Spin2PAsmLine pasmLine = new Spin2PAsmLine(lineScope, label, condition, mnemonic, instructionFactory, parameters, modifier);

@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin1;
@@ -156,22 +155,26 @@ public abstract class Spin1InstructionObject {
 
         int value = con.setValue(0, encodeCondition(condition));
         value = zcr.setValue(value, encodeEffect(effect));
-        value = i.setBoolean(value, src.isLiteral());
         try {
             if (dst.getInteger() < 0 || dst.getInteger() > 0x1FF) {
-                throw new CompilerException("Destination register cannot exceed $1FF", dst.getExpression().getData());
+                throw new Exception("destination register cannot exceed $1FF");
             }
             value = d.setValue(value, dst.getInteger());
+        } catch (CompilerException e) {
+            msgs.addMessage(e);
         } catch (Exception e) {
-            msgs.addMessage(new CompilerException(e.getMessage(), dst.getExpression().getData()));
+            msgs.addMessage(new CompilerException(e.getMessage(), dst.getData()));
         }
         try {
+            value = i.setBoolean(value, src.isLiteral());
             if (src.getInteger() < 0 || src.getInteger() > 0x1FF) {
-                throw new CompilerException("Source register/constant cannot exceed $1FF", src.getExpression().getData());
+                throw new Exception("source register/constant cannot exceed $1FF");
             }
             value = s.setValue(value, src.getInteger());
+        } catch (CompilerException e) {
+            msgs.addMessage(e);
         } catch (Exception e) {
-            msgs.addMessage(new CompilerException(e.getMessage(), src.getExpression().getData()));
+            msgs.addMessage(new CompilerException(e.getMessage(), src.getData()));
         }
 
         if (msgs.hasChilds()) {

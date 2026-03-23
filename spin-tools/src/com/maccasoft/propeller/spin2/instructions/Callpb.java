@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2.instructions;
@@ -71,22 +70,40 @@ public class Callpb extends Spin2PAsmInstructionFactory {
             value = l.setBoolean(value, dst.isLiteral());
             value = i.setBoolean(value, src.isLiteral());
 
-            if (!dst.isLongLiteral() && dst.getInteger() > 0x1FF) {
-                throw new CompilerException("destination register cannot exceed $1FF", dst.getExpression().getData());
+            CompilerException msgs = new CompilerException();
+
+            try {
+                if (!dst.isLongLiteral() && dst.getInteger() > 0x1FF) {
+                    throw new Exception("destination register cannot exceed $1FF");
+                }
+                value = d.setValue(value, dst.getInteger());
+            } catch (CompilerException e) {
+                msgs.addMessage(e);
+            } catch (Exception e) {
+                msgs.addMessage(new CompilerException(e.getMessage(), dst.getData()));
             }
-            value = d.setValue(value, dst.getInteger());
 
             if (src.isLiteral()) {
-                int addr = src.getInteger();
-                int ours = context.getSymbol("$").getNumber().intValue();
-                if ((ours < 0x400 && addr >= 0x400) || (ours >= 0x400 && addr < 0x400)) {
-                    throw new CompilerException("relative addresses cann't cross between cog and hub domains", src.getExpression().getData());
+                int offset = 0;
+                try {
+                    int addr = src.getInteger();
+                    int ours = context.getSymbol("$").getNumber().intValue();
+                    if ((ours < 0x400 && addr >= 0x400) || (ours >= 0x400 && addr < 0x400)) {
+                        throw new Exception("relative addresses cann't cross between cog and hub domains");
+                    }
+                    offset = (addr < 0x400 ? (addr - ours) : (addr - ours) / 4) - 1;
+                    if (!src.isLongLiteral() && (offset < -256 || offset > 255)) {
+                        throw new Exception("relative offset out of range");
+                    }
+                    value = s.setValue(value, offset);
+                } catch (CompilerException e) {
+                    msgs.addMessage(e);
+                } catch (Exception e) {
+                    msgs.addMessage(new CompilerException(e.getMessage(), src.getData()));
                 }
-                int offset = (addr < 0x400 ? (addr - ours) : (addr - ours) / 4) - 1;
-                if (!src.isLongLiteral() && (offset < -256 || offset > 255)) {
-                    throw new CompilerException("relative offset out of range", src.getExpression().getData());
+                if (msgs.hasChilds()) {
+                    throw msgs;
                 }
-                value = s.setValue(value, offset);
                 if (dst.isLongLiteral() && src.isLongLiteral()) {
                     return getBytes(encodeAugd(condition, dst.getInteger()), encodeAugs(condition, offset), value);
                 }
@@ -95,16 +112,29 @@ public class Callpb extends Spin2PAsmInstructionFactory {
                 }
             }
             else {
-                if (src.getInteger() > 0x1FF) {
-                    throw new CompilerException("source register cannot exceed $1FF", src.getExpression().getData());
+                try {
+                    if (src.getInteger() > 0x1FF) {
+                        throw new Exception("source register cannot exceed $1FF");
+                    }
+                    value = s.setValue(value, src.getInteger());
+                } catch (CompilerException e) {
+                    msgs.addMessage(e);
+                } catch (Exception e) {
+                    msgs.addMessage(new CompilerException(e.getMessage(), src.getData()));
                 }
-                value = s.setValue(value, src.getInteger());
+                if (msgs.hasChilds()) {
+                    throw msgs;
+                }
                 if (dst.isLongLiteral() && src.isLongLiteral()) {
                     return getBytes(encodeAugd(condition, dst.getInteger()), encodeAugs(condition, src.getInteger()), value);
                 }
                 if (src.isLongLiteral()) {
                     return getBytes(encodeAugs(condition, src.getInteger()), value);
                 }
+            }
+
+            if (msgs.hasChilds()) {
+                throw msgs;
             }
 
             if (dst.isLongLiteral()) {
