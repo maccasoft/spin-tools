@@ -22,134 +22,6 @@ import com.maccasoft.propeller.model.Token;
 class Spin2ParserTest {
 
     @Test
-    void testLocalLabel() throws Exception {
-        Spin2Parser subject = new Spin2Parser(""
-            + ".label\n"
-            + "");
-
-        Assertions.assertEquals(".label", subject.nextPAsmToken().getText());
-    }
-
-    @Test
-    void testAddress() throws Exception {
-        Spin2Parser subject = new Spin2Parser(""
-            + "@label\n"
-            + "");
-
-        Assertions.assertEquals("@label", subject.nextPAsmToken().getText());
-    }
-
-    @Test
-    void testAbsoluteAddress() throws Exception {
-        Spin2Parser subject = new Spin2Parser(""
-            + "@@@label\n"
-            + "");
-
-        Assertions.assertEquals("@@@label", subject.nextPAsmToken().getText());
-    }
-
-    @Test
-    void testLocalLabelAddress() throws Exception {
-        Spin2Parser subject = new Spin2Parser(""
-            + "@.label\n"
-            + "");
-
-        Assertions.assertEquals("@.label", subject.nextPAsmToken().getText());
-    }
-
-    @Test
-    void testAbsoluteLocalLabelAddress() throws Exception {
-        Spin2Parser subject = new Spin2Parser(""
-            + "@@@.label\n"
-            + "");
-
-        Assertions.assertEquals("@@@.label", subject.nextPAsmToken().getText());
-    }
-
-    @Test
-    void testImmediateLabel() throws Exception {
-        Spin2Parser subject = new Spin2Parser(""
-            + "#label\n"
-            + "");
-
-        Assertions.assertEquals("#", subject.nextPAsmToken().getText());
-        Assertions.assertEquals("label", subject.nextPAsmToken().getText());
-    }
-
-    @Test
-    void testImmediateLocalLabel() throws Exception {
-        Spin2Parser subject = new Spin2Parser(""
-            + "#.label\n"
-            + "");
-
-        Assertions.assertEquals("#", subject.nextPAsmToken().getText());
-        Assertions.assertEquals(".label", subject.nextPAsmToken().getText());
-    }
-
-    @Test
-    void testAugmentedImmediateLabel() throws Exception {
-        Spin2Parser subject = new Spin2Parser(""
-            + "##label\n"
-            + "");
-
-        Assertions.assertEquals("##", subject.nextPAsmToken().getText());
-        Assertions.assertEquals("label", subject.nextPAsmToken().getText());
-    }
-
-    @Test
-    void testAugmentedImmediateLocalLabel() throws Exception {
-        Spin2Parser subject = new Spin2Parser(""
-            + "##.label\n"
-            + "");
-
-        Assertions.assertEquals("##", subject.nextPAsmToken().getText());
-        Assertions.assertEquals(".label", subject.nextPAsmToken().getText());
-    }
-
-    @Test
-    void testRangeValue() throws Exception {
-        Spin2Parser subject = new Spin2Parser(""
-            + "a..b\n"
-            + "");
-
-        Assertions.assertEquals("a", subject.nextToken().getText());
-        Assertions.assertEquals("..", subject.nextToken().getText());
-        Assertions.assertEquals("b", subject.nextToken().getText());
-    }
-
-    @Test
-    void testSpin1LocalLabel() throws Exception {
-        Spin2Parser subject = new Spin2Parser(""
-            + ":label\n"
-            + "");
-
-        Assertions.assertEquals(":", subject.nextToken().getText());
-        Assertions.assertEquals("label", subject.nextToken().getText());
-    }
-
-    @Test
-    void testObjectMethod() throws Exception {
-        Spin2Parser subject = new Spin2Parser(""
-            + "obj.method\n"
-            + "");
-
-        Assertions.assertEquals("obj.method", subject.nextToken().getText());
-    }
-
-    @Test
-    void testObjectArrayMethod() throws Exception {
-        Spin2Parser subject = new Spin2Parser(""
-            + "obj[0].method\n"
-            + "");
-
-        Assertions.assertEquals("obj", subject.nextToken().getText());
-        Assertions.assertEquals("[", subject.nextToken().getText());
-        Assertions.assertEquals("0", subject.nextToken().getText());
-        Assertions.assertEquals("]", subject.nextToken().getText());
-        Assertions.assertEquals(".method", subject.nextToken().getText());
-    }
-
-    @Test
     void testSingleAssigments() throws Exception {
         Spin2Parser subject = new Spin2Parser(""
             + "CON  EnableFlow = 8\n"
@@ -962,6 +834,83 @@ class Spin2ParserTest {
             + "        +-- Definition type=sPoint identifier=a [sPoint a]\n"
             + "        +-- Definition type=sPoint identifier=b [sPoint b]\n"
             + "        +-- Definition type=BYTE identifier=color [BYTE color]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testInlineAssembly() throws Exception {
+        Spin2Parser subject = new Spin2Parser(""
+            + "PUB main(a)\n"
+            + "\n"
+            + "        org\n"
+            + "        mov     pr0, #0\n"
+            + "l1      add     pr0, a\n"
+            + "        djnz    a, #l1\n"
+            + "        end\n"
+            + "\n"
+            + "        orgh\n"
+            + "        mov     pr0, #0\n"
+            + "l1      add     pr0, a\n"
+            + "        djnz    a, #l1\n"
+            + "        end\n"
+            + "\n"
+            + "");
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "RootNode []\n"
+            + "+-- MethodNode type=PUB name=main [PUB main(a)]\n"
+            + "    +-- ParameterNode identifier=a [a]\n"
+            + "    +-- DataLineNode instruction=org [        org]\n"
+            + "    +-- DataLineNode instruction=mov [        mov     pr0, #0]\n"
+            + "        +-- ParameterNode [pr0]\n"
+            + "        +-- ParameterNode [#0]\n"
+            + "    +-- DataLineNode label=l1 instruction=add [l1      add     pr0, a]\n"
+            + "        +-- ParameterNode [pr0]\n"
+            + "        +-- ParameterNode [a]\n"
+            + "    +-- DataLineNode instruction=djnz [        djnz    a, #l1]\n"
+            + "        +-- ParameterNode [a]\n"
+            + "        +-- ParameterNode [#l1]\n"
+            + "    +-- StatementNode [        end]\n"
+            + "    +-- DataLineNode instruction=orgh [        orgh]\n"
+            + "    +-- DataLineNode instruction=mov [        mov     pr0, #0]\n"
+            + "        +-- ParameterNode [pr0]\n"
+            + "        +-- ParameterNode [#0]\n"
+            + "    +-- DataLineNode label=l1 instruction=add [l1      add     pr0, a]\n"
+            + "        +-- ParameterNode [pr0]\n"
+            + "        +-- ParameterNode [a]\n"
+            + "    +-- DataLineNode instruction=djnz [        djnz    a, #l1]\n"
+            + "        +-- ParameterNode [a]\n"
+            + "        +-- ParameterNode [#l1]\n"
+            + "    +-- StatementNode [        end]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testPreprocessor() throws Exception {
+        Spin2Parser subject = new Spin2Parser(""
+            + "PUB start() | a\n"
+            + "\n"
+            + "#IF 0\n"
+            + "    if CLKFREQ >= 40_000_000\n"
+            + "        b := 1_000\n"
+            + "#ENDIF\n"
+            + "        a := 1_000\n"
+            + "\n"
+            + "    repeat\n"
+            + "");
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "RootNode []\n"
+            + "+-- MethodNode type=PUB name=start [PUB start() | a]\n"
+            + "    +-- LocalVariableNode identifier=a [a]\n"
+            + "    +-- DirectiveNode [#IF 0]\n"
+            + "    +-- StatementNode [    if CLKFREQ >= 40_000_000]\n"
+            + "        +-- StatementNode [        b := 1_000]\n"
+            + "        +-- DirectiveNode [#ENDIF]\n"
+            + "        +-- StatementNode [        a := 1_000]\n"
+            + "    +-- StatementNode [    repeat]\n"
             + "", tree(root));
     }
 

@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin1;
@@ -19,114 +18,6 @@ import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.Token;
 
 class Spin1ParserTest {
-
-    @Test
-    void testLocalLabel() throws Exception {
-        Spin1Parser subject = new Spin1Parser(""
-            + ":label\n"
-            + "");
-
-        Assertions.assertEquals(":label", subject.nextPAsmToken().getText());
-    }
-
-    @Test
-    void testAddress() throws Exception {
-        Spin1Parser subject = new Spin1Parser(""
-            + "@label\n"
-            + "");
-
-        Assertions.assertEquals("@label", subject.nextPAsmToken().getText());
-    }
-
-    @Test
-    void testAbsoluteAddress() throws Exception {
-        Spin1Parser subject = new Spin1Parser(""
-            + "@@label\n"
-            + "");
-
-        Assertions.assertEquals("@@label", subject.nextPAsmToken().getText());
-    }
-
-    @Test
-    void testLocalLabelAddress() throws Exception {
-        Spin1Parser subject = new Spin1Parser(""
-            + "@:label\n"
-            + "");
-
-        Assertions.assertEquals("@:label", subject.nextPAsmToken().getText());
-    }
-
-    @Test
-    void testAbsoluteLocalLabelAddress() throws Exception {
-        Spin1Parser subject = new Spin1Parser(""
-            + "@@:label\n"
-            + "");
-
-        Assertions.assertEquals("@@:label", subject.nextPAsmToken().getText());
-    }
-
-    @Test
-    void testImmediateLabel() throws Exception {
-        Spin1Parser subject = new Spin1Parser(""
-            + "#label\n"
-            + "");
-
-        Assertions.assertEquals("#", subject.nextPAsmToken().getText());
-        Assertions.assertEquals("label", subject.nextPAsmToken().getText());
-    }
-
-    @Test
-    void testImmediateLocalLabel() throws Exception {
-        Spin1Parser subject = new Spin1Parser(""
-            + "#:label\n"
-            + "");
-
-        Assertions.assertEquals("#", subject.nextPAsmToken().getText());
-        Assertions.assertEquals(":label", subject.nextPAsmToken().getText());
-    }
-
-    @Test
-    void testRangeValue() throws Exception {
-        Spin1Parser subject = new Spin1Parser(""
-            + "a..b\n"
-            + "");
-
-        Assertions.assertEquals("a", subject.nextToken().getText());
-        Assertions.assertEquals("..", subject.nextToken().getText());
-        Assertions.assertEquals("b", subject.nextToken().getText());
-    }
-
-    @Test
-    void testSpinLocalLabel() throws Exception {
-        Spin1Parser subject = new Spin1Parser(""
-            + ":label\n"
-            + "");
-
-        Assertions.assertEquals(":", subject.nextToken().getText());
-        Assertions.assertEquals("label", subject.nextToken().getText());
-    }
-
-    @Test
-    void testObjectMethod() throws Exception {
-        Spin1Parser subject = new Spin1Parser(""
-            + "obj.method\n"
-            + "");
-
-        Assertions.assertEquals("obj.method", subject.nextToken().getText());
-    }
-
-    @Test
-    void testObjectArrayMethod() throws Exception {
-        Spin1Parser subject = new Spin1Parser(""
-            + "obj[0].method\n"
-            + "");
-
-        Assertions.assertEquals("obj", subject.nextToken().getText());
-        Assertions.assertEquals("[", subject.nextToken().getText());
-        Assertions.assertEquals("0", subject.nextToken().getText());
-        Assertions.assertEquals("]", subject.nextToken().getText());
-        Assertions.assertEquals(".method", subject.nextToken().getText());
-    }
 
     @Test
     void testSingleAssigments() throws Exception {

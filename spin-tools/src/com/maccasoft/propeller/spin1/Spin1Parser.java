@@ -9,10 +9,6 @@
 
 package com.maccasoft.propeller.spin1;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
 import com.maccasoft.propeller.model.ConstantNode;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
@@ -25,6 +21,7 @@ import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.Parser;
 import com.maccasoft.propeller.model.RootNode;
+import com.maccasoft.propeller.model.SourceLine;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariableNode;
@@ -32,187 +29,281 @@ import com.maccasoft.propeller.model.VariablesNode;
 
 public class Spin1Parser extends Parser {
 
-    private static final Set<String> sections = new HashSet<String>(Arrays.asList(new String[] {
-        "CON", "VAR", "OBJ", "PUB", "PRI", "DAT"
-    }));
-
-    private static final Set<String> preprocessor = new HashSet<>(Arrays.asList(new String[] {
-        "define", "ifdef", "elifdef", "elseifdef", "ifndef", "elifndef", "elseifndef", "else", "if", "elif", "elseif", "endif",
-        "error", "warning", "pragma", "undef"
-    }));
-
-    final Spin1TokenStream stream;
+    final String text;
 
     RootNode root;
+    Node parentNode;
 
     public Spin1Parser(String text) {
-        this.stream = new Spin1TokenStream(text);
+        this.text = text;
     }
 
     @Override
     public RootNode parse() {
-        Token token;
-        ConstantsNode defaultNode = null;
-
         root = new RootNode();
+        parentNode = null;
 
-        while ((token = stream.peekNext()).type != Token.EOF) {
-            if (token.type == Token.NL) {
-                stream.nextToken();
-            }
-            else if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-                root.addComment(stream.nextToken());
-            }
-            else {
-                if ("VAR".equalsIgnoreCase(token.getText())) {
-                    parseVariables();
-                }
-                else if ("OBJ".equalsIgnoreCase(token.getText())) {
-                    parseObjects();
-                }
-                else if ("PUB".equalsIgnoreCase(token.getText()) || "PRI".equalsIgnoreCase(token.getText())) {
-                    parseMethod();
-                }
-                else if ("DAT".equalsIgnoreCase(token.getText())) {
-                    parseDat();
-                }
-                else if ("CON".equalsIgnoreCase(token.getText())) {
-                    parseConstants();
-                }
-                else {
-                    if (defaultNode == null) {
-                        defaultNode = new ConstantsNode(root);
-                    }
-                    parseConstant(defaultNode);
-                }
-            }
+        Spin1TokenStream stream = new Spin1TokenStream(text);
+        for (SourceLine sourceLine : stream.parseSourceLines()) {
+            processSourceLine(sourceLine);
         }
-        stream.nextToken();
 
         return root;
     }
 
-    void parsePreprocessor(Node parent) {
-        parsePreprocessor(parent, null);
-    }
-
-    void parsePreprocessor(Node parent, Token token) {
-        if (token == null) {
-            token = stream.nextToken();
-        }
-
-        if ("define".equals(stream.peekNext().getText())) {
-            DirectiveNode.DefineNode node = new DirectiveNode.DefineNode(parent);
-            node.addToken(token);
-            node.addToken(stream.nextToken());
-            if ((token = nextToken()).type != Token.EOF && token.type != Token.NL) {
-                node.identifier = token;
-                node.addToken(token);
-            }
-            if (token.type != Token.EOF && token.type != Token.NL) {
-                while ((token = nextToken()).type != Token.EOF) {
-                    if (token.type == Token.NL) {
-                        break;
-                    }
-                    node.addToken(token);
-                }
-            }
-        }
-        else if ("error".equals(stream.peekNext().getText()) || "warning".equals(stream.peekNext().getText())) {
-            DirectiveNode node = new DirectiveNode(parent);
-            node.addToken(token);
-            node.addToken(stream.nextToken());
-
-            Token message = stream.nextToken();
-            if (message.type != Token.EOF && message.type != Token.NL) {
-                while ((token = nextToken()).type != Token.EOF) {
-                    if (token.type == Token.NL) {
-                        break;
-                    }
-                    message = message.merge(token);
-                }
-                message.type = Token.STRING;
-                node.addToken(message);
-            }
-        }
-        else {
-            DirectiveNode node = new DirectiveNode(parent);
-            node.addToken(token);
-            while ((token = nextToken()).type != Token.EOF) {
-                if (token.type == Token.NL) {
-                    break;
-                }
-                node.addToken(token);
-            }
-        }
-    }
-
-    void parseConstants() {
+    protected void processSourceLine(SourceLine sourceLine) {
         Token token;
 
-        Node node = new ConstantsNode(root, stream.nextToken());
-
-        while ((token = stream.peekNext()).type != Token.EOF) {
-            if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT) {
-                break;
-            }
-            if (node.getDescription() == null) {
-                node.setDescription(token);
-            }
-            node.addToken(token);
-            root.addComment(stream.nextToken());
-        }
-
-        if ((token = stream.peekNext()).type == Token.NL) {
-            stream.nextToken();
-        }
-        else {
-            parseConstant(node);
-        }
-
-        while ((token = stream.peekNext()).type != Token.EOF) {
-            if (sections.contains(token.getText().toUpperCase())) {
-                return;
-            }
-            parseConstant(node);
-        }
-    }
-
-    void parseConstant(Node parent) {
-        int state = 0;
-        ConstantNode node = null;
-
-        Token token;
-        while ((token = nextToken()).type != Token.EOF) {
+        while ((token = sourceLine.peekNextToken()) != null) {
             if (token.type == Token.NL) {
                 break;
             }
-            switch (state) {
-                case 0:
-                    if ("#".equals(token.getText())) {
-                        Token next = stream.peekNext();
-                        if (preprocessor.contains(next.getText().toLowerCase())) {
-                            parsePreprocessor(parent, token);
-                            return;
+            if ("#".equalsIgnoreCase(token.getText())) {
+                if (parentNode == null) {
+                    parentNode = new ConstantsNode(root);
+                }
+                int index = sourceLine.getIndex();
+                if (parsePreprocessor(parentNode, sourceLine)) {
+                    continue;
+                }
+                sourceLine.setIndex(index);
+            }
+
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                root.addComment(sourceLine.getNextToken());
+                continue;
+            }
+            if ("CON".equalsIgnoreCase(token.getText())) {
+                parentNode = parseConBlock(new ConstantsNode(root, sourceLine.getNextToken()), sourceLine);
+            }
+            else if ("VAR".equalsIgnoreCase(token.getText())) {
+                parentNode = parseVarBlock(new VariablesNode(root, sourceLine.getNextToken()), sourceLine);
+            }
+            else if ("OBJ".equalsIgnoreCase(token.getText())) {
+                parentNode = parseObjBlock(new ObjectsNode(root, sourceLine.getNextToken()), sourceLine);
+            }
+            else if ("PUB".equalsIgnoreCase(token.getText()) || "PRI".equalsIgnoreCase(token.getText())) {
+                parentNode = parseMethodBlock(new MethodNode(root, sourceLine.getNextToken()), sourceLine);
+            }
+            else if ("DAT".equalsIgnoreCase(token.getText())) {
+                parentNode = parseDatBlock(new DataNode(root, sourceLine.getNextToken()), sourceLine);
+            }
+            else {
+                if (parentNode == null) {
+                    parentNode = new ConstantsNode(root);
+                }
+                if (parentNode instanceof VariablesNode) {
+                    parseVariable(new VariablesNode(parentNode), sourceLine);
+                }
+                else if (parentNode instanceof ObjectsNode objectsNode) {
+                    parseObjBlock(objectsNode, sourceLine);
+                }
+                else if (parentNode instanceof MethodNode) {
+                    if (Spin1Model.isBlockStart(token.getText())) {
+                        parentNode = parseStatement(parentNode, sourceLine);
+                    }
+                    else {
+                        parseStatement(parentNode, sourceLine);
+                    }
+                }
+                else if (parentNode instanceof StatementNode) {
+                    while (token.column <= parentNode.getStartToken().column) {
+                        parentNode = parentNode.getParent();
+                        if (parentNode instanceof MethodNode) {
+                            break;
                         }
                     }
-                    state = 1;
-                    // Fall-through
-                case 1:
-                    if (",".equals(token.getText())) {
-                        node = null;
+                    Token parentStartToken = parentNode.getStartToken();
+                    if ("CASE".equalsIgnoreCase(parentStartToken.getText())) {
+                        parentNode = parseCaseStatement(parentNode, sourceLine);
+                    }
+                    else if (Spin1Model.isBlockStart(token.getText())) {
+                        parentNode = parseStatement(parentNode, sourceLine);
+                    }
+                    else {
+                        parseStatement(parentNode, sourceLine);
+                    }
+                }
+                else if (parentNode instanceof DataNode dataNode) {
+                    parseDatLine(dataNode, sourceLine);
+                }
+                else {
+                    parseConstant(parentNode, sourceLine);
+                }
+            }
+        }
+
+        while ((token = sourceLine.getNextToken()) != null) {
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                root.addComment(token);
+            }
+        }
+    }
+
+    boolean parsePreprocessor(Node parent, SourceLine sourceLine) {
+        Token token;
+
+        Token firstToken = sourceLine.getNextToken();
+        if (firstToken == null || !"#".equalsIgnoreCase(firstToken.getText())) {
+            return false;
+        }
+
+        Token keywordToken = sourceLine.getNextToken();
+        if (keywordToken == null) {
+            return false;
+        }
+
+        switch (keywordToken.getText().toLowerCase()) {
+            case "define": {
+                DirectiveNode.DefineNode node = new DirectiveNode.DefineNode(parent);
+                node.addToken(firstToken);
+                node.addToken(keywordToken);
+                if ((token = sourceLine.getNextToken()) != null) {
+                    node.identifier = token;
+                    node.addToken(token);
+                }
+                while ((token = sourceLine.getNextToken()) != null) {
+                    if (token.type == Token.NL) {
                         break;
                     }
+                    if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                        root.addComment(token);
+                    }
+                    node.addToken(token);
+                }
+                while ((token = sourceLine.getNextToken()) != null) {
+                    if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                        root.addComment(token);
+                    }
+                }
+                return true;
+            }
+
+            case "error":
+            case "warning": {
+                DirectiveNode node = new DirectiveNode(parent);
+                node.addToken(firstToken);
+                node.addToken(keywordToken);
+
+                Token message = sourceLine.getNextToken();
+                if (message != null) {
+                    while ((token = sourceLine.getNextToken()) != null) {
+                        if (token.type == Token.NL) {
+                            break;
+                        }
+                        message = message.merge(token);
+                    }
+                    message.type = Token.STRING;
+                    node.addToken(message);
+                }
+                while ((token = sourceLine.getNextToken()) != null) {
+                    if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                        root.addComment(token);
+                    }
+                }
+                return true;
+            }
+
+            case "ifdef":
+            case "elifdef":
+            case "elseifdef":
+            case "ifndef":
+            case "elifndef":
+            case "elseifndef":
+            case "else":
+            case "if":
+            case "elif":
+            case "elseif":
+            case "endif":
+            case "pragma":
+            case "undef": {
+                DirectiveNode node = new DirectiveNode(parent);
+                node.addToken(firstToken);
+                node.addToken(keywordToken);
+                while ((token = sourceLine.getNextToken()) != null) {
+                    if (token.type == Token.NL) {
+                        break;
+                    }
+                    if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                        root.addComment(token);
+                    }
+                    node.addToken(token);
+                }
+                while ((token = sourceLine.getNextToken()) != null) {
+                    if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                        root.addComment(token);
+                    }
+                }
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    ConstantsNode parseConBlock(ConstantsNode node, SourceLine sourceLine) {
+        Token token;
+
+        while ((token = sourceLine.peekNextToken()) != null) {
+            if (token.type == Token.NL) {
+                break;
+            }
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+                if (node.getDescription() == null) {
+                    node.setDescription(token);
+                }
+            }
+            else if (token.type != Token.NEXT_LINE) {
+                parseConstant(node, sourceLine);
+                return node;
+            }
+            root.addComment(token);
+            node.addToken(sourceLine.getNextToken());
+        }
+
+        while ((token = sourceLine.getNextToken()) != null) {
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                root.addComment(token);
+            }
+        }
+
+        return node;
+    }
+
+    void parseConstant(Node parent, SourceLine sourceLine) {
+        int state = 1;
+        ConstantNode node = null;
+
+        Token token;
+        while ((token = sourceLine.getNextToken()) != null) {
+            if (token.type == Token.NL) {
+                break;
+            }
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                root.addComment(token);
+                continue;
+            }
+            switch (state) {
+                case 0:
+                    if (",".equals(token.getText())) {
+                        node = null;
+                        state = 1;
+                        break;
+                    }
+                    node.addToken(token);
+                    break;
+                case 1:
                     if ("#".equals(token.getText())) {
                         node = new ConstantNode(parent);
                         node.start = new ExpressionNode(node);
+                        node.addToken(token);
                         state = 2;
+                        break;
                     }
-                    if (node == null) {
-                        node = new ConstantNode(parent, token);
-                        state = 4;
-                    }
+                    node = new ConstantNode(parent);
+                    node.identifier = token;
                     node.addToken(token);
+                    state = 4;
                     break;
                 case 2:
                     if (",".equals(token.getText())) {
@@ -229,15 +320,9 @@ public class Spin1Parser extends Parser {
                     node.start.addToken(token);
                     break;
                 case 3:
-                    if (",".equals(token.getText())) {
-                        node = null;
-                        state = 1;
-                        break;
-                    }
                     node.addToken(token);
                     if ("]".equals(token.getText())) {
-                        node = null;
-                        state = 1;
+                        state = 0;
                         break;
                     }
                     node.step.addToken(token);
@@ -269,68 +354,64 @@ public class Spin1Parser extends Parser {
                     node.expression.addToken(token);
                     break;
                 case 6:
-                    if (",".equals(token.getText())) {
-                        node = null;
-                        state = 1;
-                        break;
-                    }
                     node.addToken(token);
                     if ("]".equals(token.getText())) {
-                        node = null;
-                        state = 1;
+                        state = 0;
                         break;
                     }
                     node.multiplier.addToken(token);
                     break;
             }
         }
+
+        while ((token = sourceLine.getNextToken()) != null) {
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                root.addComment(token);
+            }
+        }
     }
 
-    void parseVariables() {
+    VariablesNode parseVarBlock(VariablesNode node, SourceLine sourceLine) {
         Token token;
 
-        Node node = new VariablesNode(root);
-        node.addToken(stream.nextToken());
-
-        while ((token = stream.peekNext()).type != Token.EOF) {
-            if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT) {
+        while ((token = sourceLine.peekNextToken()) != null) {
+            if (token.type == Token.NL) {
                 break;
             }
-            if (node.getDescription() == null) {
-                node.setDescription(token);
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+                if (node.getDescription() == null) {
+                    node.setDescription(token);
+                }
             }
-            node.addToken(token);
-            root.addComment(stream.nextToken());
+            else if (token.type != Token.NEXT_LINE) {
+                parseVariable(node, sourceLine);
+                return node;
+            }
+            root.addComment(token);
+            node.addToken(sourceLine.getNextToken());
         }
 
-        if ((token = stream.peekNext()).type == Token.NL) {
-            stream.nextToken();
-        }
-        else {
-            parseVariable(node);
+        while ((token = sourceLine.getNextToken()) != null) {
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                root.addComment(token);
+            }
         }
 
-        while ((token = stream.peekNext()).type != Token.EOF) {
-            if (sections.contains(token.getText().toUpperCase())) {
-                break;
-            }
-            if ("#".equalsIgnoreCase(token.getText())) {
-                parsePreprocessor(node);
-            }
-            else {
-                parseVariable(new VariablesNode(node));
-            }
-        }
+        return node;
     }
 
-    void parseVariable(Node parent) {
+    void parseVariable(VariablesNode parent, SourceLine sourceLine) {
         int state = 1;
         VariableNode node = null;
 
         Token token;
-        while ((token = nextToken()).type != Token.EOF) {
+        while ((token = sourceLine.getNextToken()) != null) {
             if (token.type == Token.NL) {
                 break;
+            }
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                root.addComment(token);
+                continue;
             }
             parent.addToken(token);
             switch (state) {
@@ -373,53 +454,55 @@ public class Spin1Parser extends Parser {
                     break;
             }
         }
+
+        while ((token = sourceLine.getNextToken()) != null) {
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                root.addComment(token);
+            }
+        }
     }
 
-    void parseObjects() {
+    ObjectsNode parseObjBlock(ObjectsNode node, SourceLine sourceLine) {
         Token token;
 
-        Node node = new ObjectsNode(root);
-        node.addToken(stream.nextToken());
-
-        while ((token = stream.peekNext()).type != Token.EOF) {
-            if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT) {
+        while ((token = sourceLine.peekNextToken()) != null) {
+            if (token.type == Token.NL) {
                 break;
             }
-            if (node.getDescription() == null) {
-                node.setDescription(token);
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+                if (node.getDescription() == null) {
+                    node.setDescription(token);
+                }
             }
-            node.addToken(token);
-            root.addComment(stream.nextToken());
+            else if (token.type != Token.NEXT_LINE) {
+                parseObjectLine(node, sourceLine);
+                return node;
+            }
+            root.addComment(token);
+            node.addToken(sourceLine.getNextToken());
         }
 
-        if ((token = stream.peekNext()).type == Token.NL) {
-            stream.nextToken();
-        }
-        else {
-            parseObject(node);
+        while ((token = sourceLine.getNextToken()) != null) {
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                root.addComment(token);
+            }
         }
 
-        while ((token = stream.peekNext()).type != Token.EOF) {
-            if (sections.contains(token.getText().toUpperCase())) {
-                break;
-            }
-            if ("#".equalsIgnoreCase(token.getText())) {
-                parsePreprocessor(node);
-            }
-            else {
-                parseObject(node);
-            }
-        }
+        return node;
     }
 
-    void parseObject(Node parent) {
+    void parseObjectLine(ObjectsNode parent, SourceLine sourceLine) {
         int state = 1;
         ObjectNode object = null;
 
         Token token;
-        while ((token = nextToken()).type != Token.EOF) {
+        while ((token = sourceLine.getNextToken()) != null) {
             if (token.type == Token.NL) {
                 break;
+            }
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                root.addComment(token);
+                continue;
             }
             switch (state) {
                 case 1:
@@ -463,26 +546,28 @@ public class Spin1Parser extends Parser {
                     break;
             }
         }
+
+        while ((token = sourceLine.getNextToken()) != null) {
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                root.addComment(token);
+            }
+        }
     }
 
-    void parseMethod() {
+    MethodNode parseMethodBlock(MethodNode node, SourceLine sourceLine) {
         int state = 1;
         MethodNode.ParameterNode param = null;
         MethodNode.ReturnNode ret = null;
         MethodNode.LocalVariableNode local = null;
-        MethodNode node = new MethodNode(root, stream.nextToken());
 
         Token token;
-        while ((token = nextToken()).type != Token.EOF) {
+        while ((token = sourceLine.getNextToken()) != null) {
             if (token.type == Token.NL) {
-                token = stream.peekNext();
-                if (sections.contains(token.getText().toUpperCase())) {
-                    return;
-                }
-                if ("#".equalsIgnoreCase(token.getText())) {
-                    parsePreprocessor(node);
-                }
                 break;
+            }
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                root.addComment(token);
+                continue;
             }
             node.addToken(token);
             switch (state) {
@@ -610,216 +695,177 @@ public class Spin1Parser extends Parser {
             }
         }
 
-        while ((token = stream.peekNext()).type != Token.EOF) {
-            if (token.type == Token.NL) {
-                stream.nextToken();
-
-                token = stream.peekNext();
-                if (sections.contains(token.getText().toUpperCase())) {
-                    return;
-                }
+        while ((token = sourceLine.getNextToken()) != null) {
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                root.addComment(token);
             }
-            else {
-                if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT) {
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+                if (!token.getText().startsWith("''") && !token.getText().startsWith("{{")) {
                     break;
                 }
-                token = stream.nextToken();
-                if (token.getText().startsWith("''") || token.getText().startsWith("{{")) {
-                    node.addDocument(token);
-                }
+                node.addDocument(token);
+            }
+        }
+
+        while ((token = sourceLine.getNextToken()) != null) {
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
                 root.addComment(token);
             }
         }
 
-        while ((token = stream.peekNext()).type != Token.EOF) {
-            if (token.type == Token.NL) {
-                stream.nextToken();
-                if (sections.contains(stream.peekNext().getText().toUpperCase())) {
-                    break;
-                }
-            }
-            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-                root.addComment(stream.nextToken());
-            }
-            else {
-                parseStatement(node, 0);
-                if (sections.contains(stream.peekNext().getText().toUpperCase())) {
-                    break;
-                }
-            }
-        }
+        return node;
     }
 
-    void parseStatement(Node parent, int column) {
+    StatementNode parseStatement(Node parent, SourceLine sourceLine) {
         Token token;
+        StatementNode node = new StatementNode(parent);
 
-        while ((token = stream.peekNext()).type != Token.EOF) {
+        while ((token = getNextStatementToken(sourceLine)) != null) {
             if (token.type == Token.NL) {
-                stream.nextToken();
-                token = stream.peekNext();
-                if (sections.contains(token.getText().toUpperCase())) {
-                    return;
-                }
-                if ("#".equalsIgnoreCase(token.getText())) {
-                    parsePreprocessor(parent);
-                }
-            }
-            else if (sections.contains(token.getText().toUpperCase())) {
-                return;
-            }
-            else if ("#".equalsIgnoreCase(token.getText())) {
-                parsePreprocessor(parent);
-            }
-            else if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-                root.addComment(stream.nextToken());
-            }
-            else if (token.column < column) {
                 break;
             }
-            else {
-                Token startToken = nextToken();
-
-                Node statement = new StatementNode(parent);
-                statement.addToken(startToken);
-
-                while ((token = nextToken()).type != Token.EOF) {
-                    if (token.type == Token.NL) {
-                        break;
-                    }
-                    statement.addToken(token);
-                }
-
-                if ("CASE".equalsIgnoreCase(startToken.getText())) {
-                    parseCaseStatement(statement, startToken.column + 1);
-                }
-                else if (Spin1Model.isBlockStart(startToken.getText())) {
-                    parseStatement(statement, startToken.column + 1);
-                }
-            }
-        }
-    }
-
-    void parseCaseStatement(Node parent, int column) {
-        Token token;
-
-        while ((token = stream.peekNext()).type != Token.EOF) {
-            if (token.type == Token.NL) {
-                stream.nextToken();
-                token = stream.peekNext();
-                if (sections.contains(token.getText().toUpperCase())) {
-                    return;
-                }
-                if ("#".equalsIgnoreCase(token.getText())) {
-                    parsePreprocessor(parent);
-                }
-            }
-            else if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-                root.addComment(stream.nextToken());
-            }
-            else if (token.column < column) {
-                break;
-            }
-            else {
-                Token startToken = nextToken();
-
-                Node statement = new StatementNode(parent);
-                statement.addToken(startToken);
-
-                while ((token = nextToken()).type != Token.EOF) {
-                    if (token.type == Token.NL) {
-                        token = stream.peekNext();
-                        if (sections.contains(token.getText().toUpperCase())) {
-                            return;
-                        }
-                        if ("#".equalsIgnoreCase(token.getText())) {
-                            parsePreprocessor(parent);
-                        }
-                        break;
-                    }
-                    statement.addToken(token);
-                    if (":".equals(token.getText())) {
-                        while ((token = stream.peekNext()).type != Token.EOF) {
-                            if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT) {
-                                break;
-                            }
-                            root.addComment(stream.nextToken());
-                        }
-                        break;
-                    }
-                }
-
-                parseStatement(statement, startToken.column + 1);
-                token = stream.peekNext();
-                if (sections.contains(token.getText().toUpperCase())) {
-                    return;
-                }
-                if ("#".equalsIgnoreCase(token.getText())) {
-                    parsePreprocessor(parent);
-                }
-            }
-        }
-    }
-
-    void parseDat() {
-        Token token;
-
-        Node node = new DataNode(root);
-        node.addToken(stream.nextToken());
-
-        while ((token = stream.peekNext()).type != Token.EOF) {
-            if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT) {
-                break;
-            }
-            if (node.getDescription() == null) {
-                node.setDescription(token);
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                root.addComment(token);
+                continue;
             }
             node.addToken(token);
-            root.addComment(stream.nextToken());
         }
 
-        if ((token = stream.peekNext()).type == Token.NL) {
-            stream.nextToken();
-        }
-        else {
-            parseDatLine(node);
+        while ((token = sourceLine.getNextToken()) != null) {
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                root.addComment(token);
+            }
         }
 
-        while ((token = stream.peekNext()).type != Token.EOF) {
-            if (sections.contains(token.getText().toUpperCase())) {
-                return;
-            }
-            if ("#".equalsIgnoreCase(token.getText())) {
-                parsePreprocessor(node);
-            }
-            else if (token.type == Token.NL) {
-                stream.nextToken();
-            }
-            else if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-                root.addComment(stream.nextToken());
-            }
-            else {
-                parseDatLine(node);
-            }
-        }
+        return node;
     }
 
-    void parseDatLine(Node parent) {
+    StatementNode parseCaseStatement(Node parent, SourceLine sourceLine) {
+        Token token;
+        StatementNode node = new StatementNode(parent);
+
+        while ((token = getNextStatementToken(sourceLine)) != null) {
+            if (token.type == Token.NL) {
+                break;
+            }
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                root.addComment(token);
+                continue;
+            }
+            node.addToken(token);
+            if (":".equals(token.getText())) {
+                break;
+            }
+        }
+
+        while ((token = sourceLine.peekNextToken()) != null) {
+            if (token.type == Token.NL) {
+                break;
+            }
+            if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT && token.type != Token.NEXT_LINE) {
+                return node;
+            }
+            root.addComment(sourceLine.getNextToken());
+        }
+
+        while ((token = sourceLine.getNextToken()) != null) {
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                root.addComment(token);
+            }
+        }
+
+        return node;
+    }
+
+    Token getNextStatementToken(SourceLine sourceLine) {
+        Token token = sourceLine.getNextToken();
+        if (token != null) {
+            if ("@".equals(token.getText()) || "@@".equals(token.getText()) || "@@@".equals(token.getText())) {
+                Token nextToken = sourceLine.peekNextToken();
+                if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                    token = token.merge(sourceLine.getNextToken());
+                    if (nextToken.type == Token.STRING) {
+                        token.type = Token.STRING;
+                    }
+                }
+            }
+            else if (".".equals(token.getText())) {
+                Token nextToken = sourceLine.peekNextToken();
+                if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                    token = token.merge(sourceLine.getNextToken());
+                    token.type = Token.KEYWORD;
+                }
+            }
+        }
+        return token;
+    }
+
+    DataNode parseDatBlock(DataNode node, SourceLine sourceLine) {
+        Token token;
+
+        while ((token = sourceLine.peekNextToken()) != null) {
+            if (token.type == Token.NL) {
+                break;
+            }
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+                if (node.getDescription() == null) {
+                    node.setDescription(token);
+                }
+            }
+            else if (token.type != Token.NEXT_LINE) {
+                parseDatLine(node, sourceLine);
+                return node;
+            }
+            root.addComment(token);
+            node.addToken(sourceLine.getNextToken());
+        }
+
+        while ((token = sourceLine.getNextToken()) != null) {
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                root.addComment(token);
+            }
+        }
+
+        return node;
+    }
+
+    void parseDatLine(DataNode parent, SourceLine sourceLine) {
         int state = 1;
-        DataLineNode node = null;
+        DataLineNode node = new DataLineNode(parent);
         DataLineNode.ParameterNode parameter = null;
 
         Token token;
-        while ((token = nextPAsmToken()).type != Token.EOF) {
+        while ((token = sourceLine.getNextToken()) != null) {
             if (token.type == Token.NL) {
                 break;
             }
-            if (node != null) {
-                node.addToken(token);
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                root.addComment(token);
+                continue;
             }
+            if (state == 4 || state == 5) {
+                if ("@".equals(token.getText()) || "@@".equals(token.getText()) || "@@@".equals(token.getText())) {
+                    Token nextToken = sourceLine.peekNextToken();
+                    if (":".equals(nextToken.getText()) && token.isAdjacent(nextToken)) {
+                        token = token.merge(sourceLine.getNextToken());
+                        nextToken = sourceLine.peekNextToken();
+                    }
+                    if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                        token = token.merge(sourceLine.getNextToken());
+                    }
+                }
+            }
+            if (state == 1 || state == 4 || state == 5) {
+                if (":".equals(token.getText())) {
+                    Token nextToken = sourceLine.peekNextToken();
+                    if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                        token = token.merge(sourceLine.getNextToken());
+                    }
+                }
+            }
+            node.addToken(token);
             switch (state) {
                 case 1:
-                    node = new DataLineNode(parent);
-                    node.addToken(token);
                     if (Spin1Model.isPAsmCondition(token.getText())) {
                         node.condition = token;
                         state = 3;
@@ -906,66 +952,12 @@ public class Spin1Parser extends Parser {
                     break;
             }
         }
-    }
 
-    Token nextToken() {
-        Token token = stream.nextToken();
-        while (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-            root.addComment(token);
-            token = stream.nextToken();
-        }
-        if (token.type == Token.NL) {
-            while (stream.peekNext().type == Token.NL) {
-                stream.nextToken();
+        while ((token = sourceLine.getNextToken()) != null) {
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                root.addComment(token);
             }
         }
-        else if ("@".equals(token.getText()) || "@@".equals(token.getText()) || "@@@".equals(token.getText())) {
-            Token nextToken = stream.peekNext();
-            if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
-                token = token.merge(stream.nextToken());
-                if (nextToken.type == Token.STRING) {
-                    token.type = Token.STRING;
-                }
-            }
-        }
-        else if (".".equals(token.getText())) {
-            Token nextToken = stream.peekNext();
-            if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
-                token = token.merge(stream.nextToken());
-                token.type = Token.KEYWORD;
-            }
-        }
-        return token;
-    }
-
-    Token nextPAsmToken() {
-        Token token = stream.nextToken();
-        while (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-            root.addComment(token);
-            token = stream.nextToken();
-        }
-        if (token.type == Token.NL) {
-            while (stream.peekNext().type == Token.NL) {
-                stream.nextToken();
-            }
-        }
-        else if ("@".equals(token.getText()) || "@@".equals(token.getText()) || "@@@".equals(token.getText())) {
-            Token nextToken = stream.peekNext();
-            if (":".equals(nextToken.getText()) && token.isAdjacent(nextToken)) {
-                token = token.merge(stream.nextToken());
-                nextToken = stream.peekNext();
-            }
-            if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
-                token = token.merge(stream.nextToken());
-            }
-        }
-        else if (":".equals(token.getText())) {
-            Token nextToken = stream.peekNext();
-            if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
-                token = token.merge(stream.nextToken());
-            }
-        }
-        return token;
     }
 
 }

@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin1;
@@ -297,6 +296,9 @@ public class Spin1TokenStream extends TokenStream {
         char ch1 = index + 1 < text.length() ? text.charAt(index + 1) : 0;
         char ch2 = index + 2 < text.length() ? text.charAt(index + 2) : 0;
 
+        if (ch0 == '.' && ch1 == '.' && ch2 == '.') {
+            return skipToNextLine();
+        }
         if (ch0 == '*' && ch1 == '*') {
             index += 2;
             column += 2;
@@ -498,6 +500,52 @@ public class Spin1TokenStream extends TokenStream {
         column++;
 
         return new Token(this, startIndex, line, startColumn, Token.OPERATOR, text.substring(startIndex, index));
+    }
+
+    Token skipToNextLine() {
+        int startIndex = index++;
+        int startLine = line;
+        int startColumn = column++;
+        int nested = 0;
+
+        while (index < text.length()) {
+            char ch = text.charAt(index);
+            if (ch == '\n') {
+                column = 0;
+                line++;
+                index++;
+                if (nested == 0) {
+                    break;
+                }
+            }
+            else if (ch == '\r') {
+                if (index + 1 < text.length()) {
+                    if (text.charAt(index + 1) == '\n') {
+                        index++;
+                    }
+                }
+                column = 0;
+                line++;
+                index++;
+                if (nested == 0) {
+                    break;
+                }
+            }
+            else {
+                if (ch == '{') {
+                    nested++;
+                }
+                else if (ch == '}') {
+                    if (nested > 0) {
+                        nested--;
+                    }
+                }
+                index++;
+                column++;
+            }
+        }
+
+        return new Token(this, startIndex, startLine, startColumn, Token.NEXT_LINE, text.substring(startIndex, index));
     }
 
 }

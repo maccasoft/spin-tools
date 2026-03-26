@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.model;
@@ -211,14 +210,14 @@ public class Node {
 
     @Override
     public String toString() {
-        if (tokens.size() == 0) {
+        if (tokens.isEmpty()) {
             return "";
         }
-        if (tokens.size() == 1 && tokens.get(0).type == Token.EOF) {
+        if (tokens.size() == 1 && tokens.getFirst().type == Token.EOF) {
             return "<EOF>";
         }
-        int s = tokens.size() != 0 ? tokens.get(0).start - tokens.get(0).column : -1;
-        int e = tokens.size() != 0 ? tokens.get(tokens.size() - 1).stop : -1;
+        int s = tokens.getFirst().start - tokens.getFirst().column;
+        int e = tokens.getLast().stop;
         TokenStream stream = getStartToken().getStream();
         return stream.getSource(s, e);
     }
