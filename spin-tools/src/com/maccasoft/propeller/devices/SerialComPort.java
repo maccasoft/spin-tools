@@ -19,12 +19,19 @@ public class SerialComPort extends ComPort {
 
     final SerialPort serialPort;
 
+    boolean rts;
+    boolean dtr;
+
     public SerialComPort(SerialPort serialPort) {
+        String os = System.getProperty("os.name");
         this.serialPort = serialPort;
+        this.rts = this.dtr = os == null || !os.startsWith("Windows");
     }
 
     public SerialComPort(String portName) {
+        String os = System.getProperty("os.name");
         this.serialPort = new SerialPort(portName);
+        this.rts = this.dtr = os == null || !os.startsWith("Windows");
     }
 
     @Override
@@ -59,9 +66,7 @@ public class SerialComPort extends ComPort {
     @Override
     public boolean setParams(int baudRate, int dataBits, int stopBits, int parity) throws ComPortException {
         try {
-            String os = System.getProperty("os.name");
-            boolean lineState = os != null && os.startsWith("Windows") ? false : true;
-            return serialPort.setParams(baudRate, dataBits, stopBits, parity, lineState, lineState);
+            return serialPort.setParams(baudRate, dataBits, stopBits, parity, rts, dtr);
         } catch (SerialPortException e) {
             throw new ComPortException(e.getExceptionType(), e);
         }
@@ -80,18 +85,22 @@ public class SerialComPort extends ComPort {
     public void hwreset(Control control, int delay) {
         try {
             if (control == Control.DtrRts || control == Control.Dtr) {
-                serialPort.setDTR(true);
+                dtr = !dtr;
             }
             if (control == Control.DtrRts || control == Control.Rts) {
-                serialPort.setRTS(true);
+                rts = !rts;
             }
+            serialPort.setDTR(dtr);
+            serialPort.setRTS(rts);
             Thread.sleep(5);
             if (control == Control.DtrRts || control == Control.Dtr) {
-                serialPort.setDTR(false);
+                dtr = !dtr;
             }
             if (control == Control.DtrRts || control == Control.Rts) {
-                serialPort.setRTS(false);
+                rts = !rts;
             }
+            serialPort.setDTR(dtr);
+            serialPort.setRTS(rts);
             if (delay != 0) {
                 Thread.sleep(delay);
             }
@@ -216,7 +225,8 @@ public class SerialComPort extends ComPort {
     @Override
     public void setRTS(boolean enable) throws ComPortException {
         try {
-            serialPort.setRTS(enable);
+            rts = enable;
+            serialPort.setRTS(rts);
         } catch (SerialPortException e) {
             throw new ComPortException(e.getExceptionType(), e);
         }
@@ -225,7 +235,8 @@ public class SerialComPort extends ComPort {
     @Override
     public void setDTR(boolean enable) throws ComPortException {
         try {
-            serialPort.setDTR(enable);
+            dtr = enable;
+            serialPort.setDTR(dtr);
         } catch (SerialPortException e) {
             throw new ComPortException(e.getExceptionType(), e);
         }
@@ -260,10 +271,9 @@ public class SerialComPort extends ComPort {
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof SerialComPort)) {
+        if (!(o instanceof SerialComPort other)) {
             return false;
         }
-        SerialComPort other = (SerialComPort) o;
         return serialPort.getPortName().equals(other.serialPort.getPortName());
     }
 
