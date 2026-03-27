@@ -1359,9 +1359,6 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 }
                 if (token.getText().equals("(")) {
                     i = markTokens(list, i, ")", debug);
-                    if (i < list.size()) {
-                        token = list.get(i);
-                    }
                 }
             }
             else if (token.type == Token.STRING) {
@@ -1370,6 +1367,9 @@ public class Spin2TokenMarker extends SourceTokenMarker {
             else {
                 int dot = token.getText().indexOf('.');
                 TokenId id = locals.get(token.getText());
+                if (id == null) {
+                    id = symbols.get(token.getText());
+                }
                 if (id == null) {
                     id = externals.get(token.getText());
                 }

@@ -47,12 +47,6 @@ public class Spin1TokenMarker extends SourceTokenMarker {
         keywords.put("BYTE", TokenId.TYPE);
         keywords.put("WORD", TokenId.TYPE);
         keywords.put("LONG", TokenId.TYPE);
-        keywords.put("@BYTE", TokenId.TYPE);
-        keywords.put("@WORD", TokenId.TYPE);
-        keywords.put("@LONG", TokenId.TYPE);
-        keywords.put("@@BYTE", TokenId.TYPE);
-        keywords.put("@@WORD", TokenId.TYPE);
-        keywords.put("@@LONG", TokenId.TYPE);
         keywords.put("BYTEFIT", TokenId.TYPE);
         keywords.put("WORDFIT", TokenId.TYPE);
 
@@ -555,14 +549,18 @@ public class Spin1TokenMarker extends SourceTokenMarker {
             locals.clear();
 
             for (MethodNode.ParameterNode child : node.getParameters()) {
-                locals.put(child.getText(), TokenId.METHOD_LOCAL);
+                if (child.identifier != null) {
+                    locals.put(child.identifier.getText(), TokenId.METHOD_LOCAL);
+                }
                 if (child.defaultValue != null) {
                     markTokens(child, 1, null);
                 }
             }
 
             for (MethodNode.ReturnNode child : node.getReturnVariables()) {
-                locals.put(child.getText(), TokenId.METHOD_RETURN);
+                if (child.identifier != null) {
+                    locals.put(child.identifier.getText(), TokenId.METHOD_RETURN);
+                }
             }
 
             for (MethodNode.LocalVariableNode child : node.getLocalVariables()) {
@@ -592,7 +590,7 @@ public class Spin1TokenMarker extends SourceTokenMarker {
             }
         }
 
-        public void updateTokens(DataLineNode node) {
+        void updateTokens(DataLineNode node) {
             if (node.label != null) {
                 String s = node.label.getText();
                 if (!s.startsWith(":")) {
@@ -676,9 +674,6 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                 }
                 if (token.getText().equals("(")) {
                     i = markTokens(list, i, ")");
-                    if (i < list.size()) {
-                        token = list.get(i);
-                    }
                 }
             }
             else if (token.type == Token.STRING) {
@@ -699,57 +694,73 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                         id = spinKeywords.get(token.getText());
                     }
                 }
-                if (id == null && dot == -1) {
-                    int offset = 0;
-                    String s = token.getText();
-                    if (s.startsWith("@@@")) {
-                        s = s.substring("@@@".length());
-                        tokens.add(new TokenMarker(token.start, token.start + 2, TokenId.OPERATOR));
-                        offset = 3;
-                    }
-                    else if (s.startsWith("@@")) {
-                        s = s.substring("@@".length());
-                        tokens.add(new TokenMarker(token.start, token.start + 1, TokenId.OPERATOR));
-                        offset = 2;
-                    }
-                    else if (s.startsWith("@")) {
-                        s = s.substring("@".length());
-                        tokens.add(new TokenMarker(token.start, token.start, TokenId.OPERATOR));
-                        offset = 1;
-                    }
-                    id = locals.get(s);
-                    if (id == null) {
-                        id = symbols.get(s);
-                    }
-                    if (id == null) {
-                        id = externals.get(s);
-                    }
-                    if (id != null) {
-                        tokens.add(new TokenMarker(token.start + offset, token.stop, id));
-                    }
-                }
-                else if (id == null && dot != -1) {
-                    String left = token.getText().substring(0, dot);
-                    TokenId leftId = locals.get(left);
-                    if (leftId == null && left.startsWith("@")) {
-                        leftId = locals.get(left.substring(1));
-                    }
-                    if (leftId == null) {
-                        leftId = symbols.get(left);
-                        if (leftId == null && left.startsWith("@")) {
-                            leftId = symbols.get(left.substring(1));
+                if (id == null) {
+                    if (dot == -1) {
+                        int offset = 0;
+                        String s = token.getText();
+                        if (s.startsWith("@@@")) {
+                            s = s.substring("@@@".length());
+                            tokens.add(new TokenMarker(token.start, token.start + 2, TokenId.OPERATOR));
+                            offset = 3;
+                        }
+                        else if (s.startsWith("@@")) {
+                            s = s.substring("@@".length());
+                            tokens.add(new TokenMarker(token.start, token.start + 1, TokenId.OPERATOR));
+                            offset = 2;
+                        }
+                        else if (s.startsWith("@")) {
+                            s = s.substring("@".length());
+                            tokens.add(new TokenMarker(token.start, token.start, TokenId.OPERATOR));
+                            offset = 1;
+                        }
+                        id = locals.get(s);
+                        if (id == null) {
+                            id = symbols.get(s);
+                        }
+                        if (id == null) {
+                            id = externals.get(s);
+                        }
+                        if (id != null) {
+                            tokens.add(new TokenMarker(token.start + offset, token.stop, id));
                         }
                     }
-                    if (leftId != null) {
-                        tokens.add(new TokenMarker(token.start, token.start + dot, leftId));
-                    }
+                    else {
+                        int offset = 0;
+                        String left = token.getText().substring(0, dot);
+                        if (left.startsWith("@@@")) {
+                            left = left.substring("@@@".length());
+                            tokens.add(new TokenMarker(token.start, token.start + 2, TokenId.OPERATOR));
+                            offset = 3;
+                        }
+                        else if (left.startsWith("@@")) {
+                            left = left.substring("@@".length());
+                            tokens.add(new TokenMarker(token.start, token.start + 1, TokenId.OPERATOR));
+                            offset = 2;
+                        }
+                        else if (left.startsWith("@")) {
+                            left = left.substring("@".length());
+                            tokens.add(new TokenMarker(token.start, token.start, TokenId.OPERATOR));
+                            offset = 1;
+                        }
+                        TokenId leftId = locals.get(left);
+                        if (leftId == null) {
+                            leftId = symbols.get(left);
+                        }
+                        if (leftId == null) {
+                            leftId = externals.get(left);
+                        }
+                        if (leftId != null) {
+                            tokens.add(new TokenMarker(token.start + offset, token.start + dot, leftId));
+                        }
 
-                    switch (token.getText().substring(dot + 1).toUpperCase()) {
-                        case "LONG":
-                        case "WORD":
-                        case "BYTE":
-                            tokens.add(new TokenMarker(token.start + dot + 1, token.stop, TokenId.TYPE));
-                            break;
+                        dot = token.getText().lastIndexOf('.');
+                        switch (token.getText().substring(dot + 1).toUpperCase()) {
+                            case "LONG":
+                            case "WORD":
+                            case "BYTE":
+                                tokens.add(new TokenMarker(token.start + dot + 1, token.stop, TokenId.TYPE));
+                                break;
+                        }
                     }
                 }
                 if (id != null) {
@@ -768,7 +779,8 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                             Token objToken = token;
                             token = list.get(i);
                             if (token.getText().equals("[")) {
-                                i = markTokens(list, i, "]");
+                                tokens.add(new TokenMarker(token, TokenId.OPERATOR));
+                                i = markTokens(list, i + 1, "]");
                                 if (i < list.size()) {
                                     token = list.get(i);
                                 }
