@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spinc;
@@ -200,18 +199,21 @@ public class Spin2CTreeBuilder {
 
     int index;
     List<Token> tokens = new ArrayList<Token>();
+    Set<String> dependencies = new HashSet<>();
 
     public Spin2CTreeBuilder(Context scope) {
         this.scope = scope;
     }
 
     public void addToken(Token token) {
-        if (token.type == Token.KEYWORD) {
+        if (token.type == Token.KEYWORD && !scope.hasSymbol(token.getText())) {
             List<Token> l = scope.getDefinition(token.getText());
-            if (l != null) {
-                l.iterator().forEachRemaining((t) -> {
-                    addToken(t);
-                });
+            if (l != null && !l.isEmpty()) {
+                if (dependencies.contains(token.getText())) {
+                    throw new CompilerException("circular dependency", token);
+                }
+                dependencies.add(token.getText());
+                l.iterator().forEachRemaining(this::addToken);
                 return;
             }
         }
@@ -242,7 +244,7 @@ public class Spin2CTreeBuilder {
     }
 
     Spin2StatementNode parseLevel(Spin2StatementNode left, int level) {
-        for (;;) {
+        for (; ; ) {
             Token token = peek();
             if (token == null) {
                 return left;
@@ -267,7 +269,7 @@ public class Spin2CTreeBuilder {
             token = next();
 
             Spin2StatementNode right = parseAtom();
-            for (;;) {
+            for (; ; ) {
                 Token nextToken = peek();
                 if (nextToken == null) {
                     break;
@@ -417,7 +419,7 @@ public class Spin2CTreeBuilder {
                         node.setLastToken(token);
                         return node;
                     }
-                    for (;;) {
+                    for (; ; ) {
                         Spin2StatementNode child = parseLevel(parseAtom(), 0);
                         if (node.getChildCount() == 1 && ":".equals(node.getChild(0).getText())) {
                             node.getChild(0).addChild(child);
