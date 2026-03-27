@@ -384,7 +384,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                         try {
                             Expression expression = buildConstantExpression(context, child);
                             if (!expression.isConstant()) {
-                                throw new CompilerException("expression is not constant", child.getToken());
+                                throw new RuntimeException("expression is not constant");
                             }
                             if (expression.isString()) {
                                 int[] s = expression.getStringValues();
@@ -398,8 +398,10 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                                 }
                                 os.write(expression.getByte());
                             }
+                        } catch (CompilerException e) {
+                            logMessage(e);
                         } catch (Exception e) {
-                            throw new CompilerException("expression is not constant", child.getToken());
+                            logMessage(new CompilerException("expression is not constant", child.getToken()));
                         }
                     }
                 }
@@ -1130,7 +1132,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
     }
 
     List<Spin1Bytecode> compileMethodArguments(Context context, Spin1Method method, Spin1Method calledMethod, Spin1StatementNode argsNode) {
-        List<Spin1Bytecode> source = new ArrayList<Spin1Bytecode>();
+        List<Spin1Bytecode> source = new ArrayList<>();
 
         int actual = 0;
         while (actual < argsNode.getChildCount()) {

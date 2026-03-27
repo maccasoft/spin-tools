@@ -832,7 +832,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                             }
                         }
                         else {
-                            Expression expression;
+                            Expression expression = null;
                             if (child.getType() == Token.NUMBER) {
                                 expression = new NumberLiteral(child.getText());
                             }
@@ -840,25 +840,27 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                                 try {
                                     expression = buildConstantExpression(context, child);
                                     if (!expression.isConstant()) {
-                                        throw new CompilerException("expression is not constant", child.getTokens());
+                                        throw new RuntimeException("expression is not constant");
                                     }
                                 } catch (CompilerException e) {
-                                    throw e;
+                                    logMessage(e);
                                 } catch (Exception e) {
-                                    throw new CompilerException("expression is not constant", child.getTokens());
+                                    logMessage(new CompilerException("expression is not constant", child.getToken()));
                                 }
                             }
-                            if (expression.isString()) {
-                                int[] s = expression.getStringValues();
-                                for (int i = 0; i < s.length; i++) {
-                                    sb.write((byte) s[i]);
+                            if (expression != null) {
+                                if (expression.isString()) {
+                                    int[] s = expression.getStringValues();
+                                    for (int i = 0; i < s.length; i++) {
+                                        sb.write((byte) s[i]);
+                                    }
                                 }
-                            }
-                            else {
-                                if (expression.getNumber().intValue() < -0x80 || expression.getNumber().intValue() > 0xFF) {
-                                    logMessage(new CompilerException(CompilerException.WARNING, "byte value range from -$80 to $FF", child.getTokens()));
+                                else {
+                                    if (expression.getNumber().intValue() < -0x80 || expression.getNumber().intValue() > 0xFF) {
+                                        logMessage(new CompilerException(CompilerException.WARNING, "byte value range from -$80 to $FF", child.getTokens()));
+                                    }
+                                    sb.write(expression.getByte());
                                 }
-                                sb.write(expression.getByte());
                             }
                         }
                     }
@@ -3604,7 +3606,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
     }
 
     List<Spin2Bytecode> compileMethodArguments(Context context, Spin2Method method, Spin2Method calledMethod, Spin2StatementNode argsNode) {
-        List<Spin2Bytecode> source = new ArrayList<Spin2Bytecode>();
+        List<Spin2Bytecode> source = new ArrayList<>();
 
         int actual = 0;
         for (int i = 0; i < argsNode.getChildCount(); i++) {
