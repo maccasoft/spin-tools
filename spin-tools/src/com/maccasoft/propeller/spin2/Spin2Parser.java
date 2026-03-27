@@ -1125,11 +1125,6 @@ public class Spin2Parser extends Parser {
             node.addToken(token);
             switch (state) {
                 case 1:
-                    if ("debug".equalsIgnoreCase(token.getText())) {
-                        node.instruction = token;
-                        state = 9;
-                        break;
-                    }
                     if (Spin2Model.isPAsmCondition(token.getText())) {
                         node.condition = token;
                         state = 3;
@@ -1140,10 +1135,9 @@ public class Spin2Parser extends Parser {
                         state = 4;
                         break;
                     }
-                    if (Spin2Model.isPAsmModifier(token.getText())) {
-                        node.modifier = new Node(node);
-                        node.modifier.addToken(token);
-                        state = 6;
+                    if ("debug".equalsIgnoreCase(token.getText())) {
+                        node.instruction = token;
+                        state = 9;
                         break;
                     }
                     node.label = token;
@@ -1155,20 +1149,8 @@ public class Spin2Parser extends Parser {
                         state = 3;
                         break;
                     }
-                    if (Spin2Model.isPAsmModifier(token.getText())) {
-                        node.modifier = new Node(node);
-                        node.modifier.addToken(token);
-                        state = 6;
-                        break;
-                    }
                     // fall-through
                 case 3:
-                    if (Spin2Model.isPAsmModifier(token.getText())) {
-                        node.modifier = new Node(node);
-                        node.modifier.addToken(token);
-                        state = 6;
-                        break;
-                    }
                     node.instruction = token;
                     state = "debug".equalsIgnoreCase(token.getText()) ? 9 : 4;
                     break;

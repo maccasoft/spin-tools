@@ -876,12 +876,6 @@ public class Spin1Parser extends Parser {
                         state = 4;
                         break;
                     }
-                    if (Spin1Model.isPAsmModifier(token.getText())) {
-                        node.modifier = new Node(node);
-                        node.modifier.addToken(token);
-                        state = 6;
-                        break;
-                    }
                     node.label = token;
                     state = 2;
                     break;
@@ -891,20 +885,8 @@ public class Spin1Parser extends Parser {
                         state = 3;
                         break;
                     }
-                    if (Spin1Model.isPAsmModifier(token.getText())) {
-                        node.modifier = new Node(node);
-                        node.modifier.addToken(token);
-                        state = 6;
-                        break;
-                    }
                     // fall-through
                 case 3:
-                    if (Spin1Model.isPAsmModifier(token.getText())) {
-                        node.modifier = new Node(node);
-                        node.modifier.addToken(token);
-                        state = 6;
-                        break;
-                    }
                     node.instruction = token;
                     state = 4;
                     break;
