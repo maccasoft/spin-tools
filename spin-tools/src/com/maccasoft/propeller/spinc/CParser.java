@@ -602,6 +602,7 @@ public class CParser extends Parser {
         if ("pragma".equals(directive.getText())) {
             DirectiveNode node = new DirectiveNode(parent);
             node.addToken(token);
+            node.addToken(directive);
 
             Token keyword = nextToken();
             node.addToken(keyword);
