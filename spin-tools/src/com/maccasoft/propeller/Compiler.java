@@ -10,6 +10,7 @@
 package com.maccasoft.propeller;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -32,20 +33,13 @@ public abstract class Compiler {
         public ObjectCompiler compiler;
         public Map<String, Expression> parameters;
 
-        public RootNode root;
+        public String text;
         public long offset;
         public Expression count;
 
         public ObjectInfo(File file, ObjectCompiler compiler, Map<String, Expression> parameters) {
             this.file = file;
             this.compiler = compiler;
-            this.parameters = parameters;
-        }
-
-        public ObjectInfo(File file, ObjectCompiler compiler, Expression count, Map<String, Expression> parameters) {
-            this.file = file;
-            this.compiler = compiler;
-            this.count = count;
             this.parameters = parameters;
         }
 
@@ -133,6 +127,7 @@ public abstract class Compiler {
     protected boolean errors;
     protected List<CompilerException> messages = new ArrayList<CompilerException>();
 
+    protected RootNode root;
     protected ObjectTree tree;
 
     public Compiler() {
@@ -195,11 +190,25 @@ public abstract class Compiler {
         this.debugEnabled = enabled;
     }
 
-    public abstract SpinObject compile(File file) throws Exception;
+    public SpinObject compile(File file) throws Exception {
+        String text = getSource(file.getAbsolutePath());
+        if (text == null) {
+            throw new FileNotFoundException();
+        }
+        SpinObject object = compile(file, text);
+        if (hasErrors()) {
+            throw new RuntimeException("Compile failed");
+        }
+        return object;
+    }
 
-    public abstract SpinObject compile(File rootFile, RootNode root);
+    public abstract SpinObject compile(File file, String text);
 
     public abstract Context getContext();
+
+    public RootNode getRoot() {
+        return root;
+    }
 
     public ObjectInfo getObjectInfo(ObjectCompiler parent, File file, Map<String, Expression> parameters) throws Exception {
         return null;
@@ -243,6 +252,16 @@ public abstract class Compiler {
             RootNode node = sourceProvider.getParsedSource(file);
             if (node != null) {
                 return node;
+            }
+        }
+        return null;
+    }
+
+    public String getSource(File file) {
+        if (sourceProvider != null) {
+            String text = sourceProvider.getSource(file);
+            if (text != null) {
+                return text;
             }
         }
         return null;

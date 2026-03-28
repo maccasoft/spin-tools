@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spinc;
@@ -14,8 +13,6 @@ import java.io.File;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import com.maccasoft.propeller.model.RootNode;
 
 class Spin1CClockModeTest {
 
@@ -423,11 +420,8 @@ class Spin1CClockModeTest {
     }
 
     Spin1CObjectCompiler buildCompiler(String text) {
-        CParser parser = new CParser(text);
-        RootNode root = parser.parse();
-
         Spin1CObjectCompiler compiler = new Spin1CObjectCompiler(new Spin1CCompiler(), new File("test.spin"));
-        compiler.compileObject(root);
+        compiler.compileObject(text);
 
         return compiler;
     }

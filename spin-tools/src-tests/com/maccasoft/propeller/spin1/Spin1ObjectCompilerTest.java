@@ -18,9 +18,46 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 
 import com.maccasoft.propeller.CompilerException;
-import com.maccasoft.propeller.model.RootNode;
 
 class Spin1ObjectCompilerTest {
+
+    @Test
+    void testConstants() throws Exception {
+        String text = ""
+            + "CON\n"
+            + "   A = 1\n"
+            + "   B = 2, C = 3\n"
+            + "   D = A + B * C\n"
+            + "\n"
+            + "PUB main | v\n"
+            + "  v := A\n"
+            + "  v := B\n"
+            + "  v := C\n"
+            + "  v := D\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object \"test.spin\" header (var size 0)\n"
+            + "00000 00000       14 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
+            + "' PUB main | v\n"
+            + "'   v := A\n"
+            + "00008 00008       36             CONSTANT (1)\n"
+            + "00009 00009       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'   v := B\n"
+            + "0000A 0000A       37 00          CONSTANT (2)\n"
+            + "0000C 0000C       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'   v := C\n"
+            + "0000D 0000D       37 21          CONSTANT (3)\n"
+            + "0000F 0000F       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'   v := D\n"
+            + "00010 00010       37 22          CONSTANT (A + B * C)\n"
+            + "00012 00012       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "00013 00013       32             RETURN\n"
+            + "", compile(text));
+    }
 
     @Test
     void testEnum() throws Exception {
@@ -3034,6 +3071,132 @@ class Spin1ObjectCompilerTest {
     }
 
     @Test
+    void testPreprocessorCaseStatements() throws Exception {
+        String text = ""
+            + "PUB start | a, b\n"
+            + "\n"
+            + "    case a\n"
+            + "        1:\n"
+            + "            b := a + 1\n"
+            + "#IF 0\n"
+            + "        2:"
+            + "            b := a + 2\n"
+            + "#ENDIF\n"
+            + "        3:\n"
+            + "            b := a + 3\n"
+            + "\n"
+            + "    repeat\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object \"test.spin\" header (var size 0)\n"
+            + "00000 00000       24 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 08 00    Function start @ $0008 (local size 8)\n"
+            + "' PUB start | a, b\n"
+            + "'     case a\n"
+            + "00008 00008       38 1E          ADDRESS ($001E)\n"
+            + "0000A 0000A       64             VAR_READ LONG DBASE+$0004 (short)\n"
+            + "0000B 0000B       36             CONSTANT (1)\n"
+            + "0000C 0000C       0D 05          CASE-JMP $00013 (5)\n"
+            + "0000E 0000E       37 21          CONSTANT (3)\n"
+            + "00010 00010       0D 06          CASE-JMP $00018 (6)\n"
+            + "00012 00012       0C             CASE_DONE\n"
+            + "'             b := a + 1\n"
+            + "00013 00013       64             VAR_READ LONG DBASE+$0004 (short)\n"
+            + "00014 00014       36             CONSTANT (1)\n"
+            + "00015 00015       EC             ADD\n"
+            + "00016 00016       69             VAR_WRITE LONG DBASE+$0008 (short)\n"
+            + "00017 00017       0C             CASE_DONE\n"
+            + "'             b := a + 3\n"
+            + "00018 00018       64             VAR_READ LONG DBASE+$0004 (short)\n"
+            + "00019 00019       37 21          CONSTANT (3)\n"
+            + "0001B 0001B       EC             ADD\n"
+            + "0001C 0001C       69             VAR_WRITE LONG DBASE+$0008 (short)\n"
+            + "0001D 0001D       0C             CASE_DONE\n"
+            + "'     repeat\n"
+            + "0001E 0001E       04 7E          JMP $0001E (-2)\n"
+            + "00020 00020       32             RETURN\n"
+            + "00021 00021       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testPreprocessorAlternateBlockStart() throws Exception {
+        String text1 = ""
+            + "PUB start | a, b\n"
+            + "\n"
+            + "#IF 0\n"
+            + "    if a == 1\n"
+            + "#ELSE\n"
+            + "    if a == 2\n"
+            + "#ENDIF\n"
+            + "        b := a + 1\n"
+            + "\n"
+            + "    repeat\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object \"test.spin\" header (var size 0)\n"
+            + "00000 00000       18 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 08 00    Function start @ $0008 (local size 8)\n"
+            + "' PUB start | a, b\n"
+            + "'     if a == 2\n"
+            + "00008 00008       64             VAR_READ LONG DBASE+$0004 (short)\n"
+            + "00009 00009       37 00          CONSTANT (2)\n"
+            + "0000B 0000B       FC             TEST_EQUAL\n"
+            + "0000C 0000C       0A 04          JZ $00012 (4)\n"
+            + "'         b := a + 1\n"
+            + "0000E 0000E       64             VAR_READ LONG DBASE+$0004 (short)\n"
+            + "0000F 0000F       36             CONSTANT (1)\n"
+            + "00010 00010       EC             ADD\n"
+            + "00011 00011       69             VAR_WRITE LONG DBASE+$0008 (short)\n"
+            + "'     repeat\n"
+            + "00012 00012       04 7E          JMP $00012 (-2)\n"
+            + "00014 00014       32             RETURN\n"
+            + "00015 00015       00 00 00       Padding\n"
+            + "", compile(text1));
+
+        String text2 = ""
+            + "PUB start | a, b\n"
+            + "\n"
+            + "#IF 1\n"
+            + "    if a == 1\n"
+            + "#ELSE\n"
+            + "    if a == 2\n"
+            + "#ENDIF\n"
+            + "        b := a + 1\n"
+            + "\n"
+            + "    repeat\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object \"test.spin\" header (var size 0)\n"
+            + "00000 00000       14 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 08 00    Function start @ $0008 (local size 8)\n"
+            + "' PUB start | a, b\n"
+            + "'     if a == 1\n"
+            + "00008 00008       64             VAR_READ LONG DBASE+$0004 (short)\n"
+            + "00009 00009       36             CONSTANT (1)\n"
+            + "0000A 0000A       FC             TEST_EQUAL\n"
+            + "0000B 0000B       0A 04          JZ $00011 (4)\n"
+            + "'         b := a + 1\n"
+            + "0000D 0000D       64             VAR_READ LONG DBASE+$0004 (short)\n"
+            + "0000E 0000E       36             CONSTANT (1)\n"
+            + "0000F 0000F       EC             ADD\n"
+            + "00010 00010       69             VAR_WRITE LONG DBASE+$0008 (short)\n"
+            + "'     repeat\n"
+            + "00011 00011       04 7E          JMP $00011 (-2)\n"
+            + "00013 00013       32             RETURN\n"
+            + "", compile(text2));
+    }
+
+    @Test
     void testConstant() throws Exception {
         String text = ""
             + "PUB main | a\n"
@@ -3438,13 +3601,10 @@ class Spin1ObjectCompilerTest {
     }
 
     String compile(String text, boolean fastByteConstants) throws Exception {
-        Spin1Parser subject = new Spin1Parser(text);
-        RootNode root = subject.parse();
-
         Spin1Compiler compiler = new Spin1Compiler();
         compiler.setFastByteConstants(fastByteConstants);
         Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompiler(compiler, new File("test.spin"));
-        Spin1Object obj = objectCompiler.compileObject(root);
+        Spin1Object obj = objectCompiler.compileObject(text);
 
         for (CompilerException msg : objectCompiler.getMessages()) {
             if (msg.type == CompilerException.ERROR) {

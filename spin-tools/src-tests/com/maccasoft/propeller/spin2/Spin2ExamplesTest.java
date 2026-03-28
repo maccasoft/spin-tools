@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2;
@@ -31,7 +30,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import com.maccasoft.propeller.Compiler.FileSourceProvider;
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.internal.FileUtils;
-import com.maccasoft.propeller.model.RootNode;
 
 @TestInstance(Lifecycle.PER_CLASS)
 class Spin2ExamplesTest {
@@ -119,16 +117,13 @@ class Spin2ExamplesTest {
         String text = FileUtils.replaceTabs(loadFromFile(source), 8);
         byte[] expected = loadBinaryFromFile(binary);
 
-        Spin2Parser subject = new Spin2Parser(text);
-        RootNode root = subject.parse();
-
         Spin2Compiler compiler = new Spin2Compiler();
         compiler.setSourceProvider(new FileSourceProvider(new File[] {
             source.getParentFile(),
             new File(path),
             new File(libraryPath)
         }));
-        Spin2Object obj = compiler.compile(source, root);
+        Spin2Object obj = compiler.compile(source, text);
         for (CompilerException msg : compiler.getMessages()) {
             if (msg.type == CompilerException.ERROR) {
                 throw msg;

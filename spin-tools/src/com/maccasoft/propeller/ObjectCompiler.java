@@ -62,9 +62,9 @@ public abstract class ObjectCompiler {
         return scope;
     }
 
-    public abstract SpinObject compileObject(RootNode root);
+    public abstract SpinObject compileObject(String text);
 
-    public abstract void compileStep1(RootNode root);
+    public abstract RootNode compileStep1(String text);
 
     public abstract void compileStep2(boolean keepFirst);
 

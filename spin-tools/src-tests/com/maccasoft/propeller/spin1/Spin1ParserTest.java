@@ -703,6 +703,72 @@ class Spin1ParserTest {
             + "", tree(root));
     }
 
+    @Test
+    void testCasePreprocessor() throws Exception {
+        Spin1Parser subject = new Spin1Parser(""
+            + "PUB start() | a, b\n"
+            + "\n"
+            + "    case a\n"
+            + "        1:\n"
+            + "            b := a + 1\n"
+            + "#IF 0\n"
+            + "        2:"
+            + "            b := a + 2\n"
+            + "#ENDIF\n"
+            + "        3:\n"
+            + "            b := a + 3\n"
+            + "\n"
+            + "    repeat\n"
+            + "");
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "RootNode []\n"
+            + "+-- MethodNode type=PUB name=start [PUB start() | a, b]\n"
+            + "    +-- LocalVariableNode identifier=a [a]\n"
+            + "    +-- LocalVariableNode identifier=b [b]\n"
+            + "    +-- StatementNode [    case a]\n"
+            + "        +-- StatementNode [        1:]\n"
+            + "            +-- StatementNode [            b := a + 1]\n"
+            + "            +-- DirectiveNode [#IF 0]\n"
+            + "        +-- StatementNode [        2:]\n"
+            + "            +-- StatementNode [        2:            b := a + 2]\n"
+            + "            +-- DirectiveNode [#ENDIF]\n"
+            + "        +-- StatementNode [        3:]\n"
+            + "            +-- StatementNode [            b := a + 3]\n"
+            + "    +-- StatementNode [    repeat]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testPreprocessorAlternateBlockStart() throws Exception {
+        Spin1Parser subject = new Spin1Parser(""
+            + "PUB start | a, b\n"
+            + "\n"
+            + "    if a == 1\n"
+            + "#IF 0\n"
+            + "    if a == 2\n"
+            + "#ENDIF\n"
+            + "        b := a + 1\n"
+            + "\n"
+            + "    repeat\n"
+            + "");
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "RootNode []\n"
+            + "+-- MethodNode type=PUB name=start [PUB start | a, b]\n"
+            + "    +-- LocalVariableNode identifier=a [a]\n"
+            + "    +-- LocalVariableNode identifier=b [b]\n"
+            + "    +-- StatementNode [    if a == 1]\n"
+            + "        +-- DirectiveNode [#IF 0]\n"
+            + "    +-- StatementNode [    if a == 2]\n"
+            + "        +-- DirectiveNode [#ENDIF]\n"
+            + "        +-- StatementNode [        b := a + 1]\n"
+            + "    +-- StatementNode [    repeat]\n"
+            + "", tree(root));
+    }
+
     String tree(Node root) throws Exception {
         return tree(root, 0);
     }

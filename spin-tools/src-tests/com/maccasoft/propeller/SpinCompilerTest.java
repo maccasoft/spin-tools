@@ -9,6 +9,7 @@
 
 package com.maccasoft.propeller;
 
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Assertions;
@@ -44,6 +45,28 @@ class SpinCompilerTest {
         Assertions.assertFalse(Pattern.matches(SpinCompiler.macAddressPattern, "COM3"));
         Assertions.assertFalse(Pattern.matches(SpinCompiler.macAddressPattern, "/dev/ttyUSB0"));
         Assertions.assertFalse(Pattern.matches(SpinCompiler.macAddressPattern, "/dev/tty.usbserial-P8fl2in6"));
+    }
+
+    public static void main(String[] args) {
+        String codice =
+            "/* #pragma target P1 */ \n" +               // Commento multilinea (Ignora)
+                "// #pragma target P1 \n" +                 // Commento linea (Ignora)
+                "printf(\"Testo #pragma target P1\"); \n" + // Stringa letterale (Ignora)
+                "#pragma target P3";                        // VERO TARGET
+
+        // Il target è nel Gruppo 2
+        String regex = "/\\*[\\s\\S]*?\\*/|//.*|\"([^\"\\\\]|\\\\.)*\"|(#pragma\\s+target\\s+P1|P2)";
+
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(codice);
+
+        while (matcher.find()) {
+            // Controlliamo se il Gruppo 2 ha trovato qualcosa
+            if (matcher.group(2) != null) {
+                System.out.println("Vera occorrenza trovata a: " + matcher.start(2));
+                break;
+            }
+        }
     }
 
 }

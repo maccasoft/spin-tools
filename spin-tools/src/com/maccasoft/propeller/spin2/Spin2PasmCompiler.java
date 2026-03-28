@@ -29,7 +29,6 @@ import com.maccasoft.propeller.expressions.RegisterAddress;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.Node;
-import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenIterator;
 import com.maccasoft.propeller.spin2.Spin2Debug.DebugDataObject;
@@ -140,31 +139,6 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
                                     }
                                     else {
                                         namespace = "";
-                                    }
-                                }
-                                else if ("INCLUDE".equalsIgnoreCase(pasmLine.getMnemonic())) {
-                                    if (lineNode.condition != null) {
-                                        throw new CompilerException("not allowed", lineNode.condition);
-                                    }
-                                    if (lineNode.modifier != null) {
-                                        throw new CompilerException("not allowed", lineNode.modifier);
-                                    }
-                                    int index = 0;
-                                    for (Spin2PAsmExpression argument : pasmLine.getArguments()) {
-                                        String fileName = argument.getString();
-                                        File includeFile = compiler.getFile(fileName, ".spin2");
-                                        RootNode includedNode = compiler.getParsedSource(includeFile);
-                                        try {
-                                            if (includedNode == null) {
-                                                throw new RuntimeException("file \"" + fileName + "\" not found");
-                                            }
-                                            compileDatInclude(includedNode);
-                                        } catch (CompilerException e) {
-                                            logMessage(e);
-                                        } catch (Exception e) {
-                                            logMessage(new CompilerException(e, lineNode.parameters.get(index)));
-                                        }
-                                        index++;
                                     }
                                 }
                             }
@@ -569,8 +543,6 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
         }
         return false;
     }
-
-    protected abstract void compileDatInclude(RootNode root);
 
     List<Spin2PAsmLine> processDittoBlock(Context scope, Context datScope, Context localScope, DataLineNode beginLineNode, List<DataLineNode> list, DataLineNode endLineNode) {
         int count = 0;

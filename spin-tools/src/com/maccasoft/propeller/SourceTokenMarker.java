@@ -213,6 +213,10 @@ public abstract class SourceTokenMarker {
         return root;
     }
 
+    public void setRoot(RootNode root) {
+        this.root = root;
+    }
+
     public void refreshCompilerTokens(List<CompilerException> messages) {
         TreeSet<TokenMarker> tokens = new TreeSet<TokenMarker>();
 

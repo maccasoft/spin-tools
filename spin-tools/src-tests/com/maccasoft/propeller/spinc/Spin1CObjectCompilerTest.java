@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spinc;
@@ -18,7 +17,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.CompilerException;
-import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.spin1.Spin1Compiler;
 import com.maccasoft.propeller.spin1.Spin1Object;
 
@@ -2111,11 +2109,8 @@ class Spin1CObjectCompilerTest {
     }
 
     String compile(String text) throws Exception {
-        CParser subject = new CParser(text);
-        RootNode root = subject.parse();
-
         Spin1CObjectCompiler compiler = new Spin1CObjectCompiler(new Spin1Compiler(), new File("test.spin1"));
-        Spin1Object obj = compiler.compileObject(root);
+        Spin1Object obj = compiler.compileObject(text);
 
         for (CompilerException msg : compiler.getMessages()) {
             if (msg.type == CompilerException.ERROR) {

@@ -69,6 +69,11 @@ public class Spin1Parser extends Parser {
                 sourceLine.setIndex(index);
             }
 
+            if (isExcluded()) {
+                root.addComment(sourceLine.getAsToken(Token.COMMENT));
+                break;
+            }
+
             if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
                 root.addComment(sourceLine.getNextToken());
                 continue;
@@ -140,6 +145,14 @@ public class Spin1Parser extends Parser {
         }
     }
 
+    protected RootNode getRoot() {
+        return root;
+    }
+
+    protected boolean isExcluded() {
+        return false;
+    }
+
     boolean parsePreprocessor(Node parent, SourceLine sourceLine) {
         Token token;
 
@@ -176,6 +189,7 @@ public class Spin1Parser extends Parser {
                         root.addComment(token);
                     }
                 }
+                processDirective(node);
                 return true;
             }
 
@@ -201,6 +215,7 @@ public class Spin1Parser extends Parser {
                         root.addComment(token);
                     }
                 }
+                processDirective(node);
                 return true;
             }
 
@@ -234,6 +249,7 @@ public class Spin1Parser extends Parser {
                         root.addComment(token);
                     }
                 }
+                processDirective(node);
                 return true;
             }
         }
@@ -241,7 +257,11 @@ public class Spin1Parser extends Parser {
         return false;
     }
 
-    ConstantsNode parseConBlock(ConstantsNode node, SourceLine sourceLine) {
+    protected void processDirective(DirectiveNode node) {
+        // Do nothing
+    }
+
+    protected ConstantsNode parseConBlock(ConstantsNode node, SourceLine sourceLine) {
         Token token;
 
         while ((token = sourceLine.peekNextToken()) != null) {
@@ -270,7 +290,7 @@ public class Spin1Parser extends Parser {
         return node;
     }
 
-    void parseConstant(Node parent, SourceLine sourceLine) {
+    protected void parseConstant(Node parent, SourceLine sourceLine) {
         int state = 1;
         ConstantNode node = null;
 

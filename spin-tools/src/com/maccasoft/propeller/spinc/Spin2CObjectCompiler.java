@@ -122,15 +122,18 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
     }
 
     @Override
-    public Spin2Object compileObject(RootNode root) {
-        compileStep1(root);
+    public Spin2Object compileObject(String text) {
+        compileStep1(text);
         compileStep2(true);
         return generateObject(0);
     }
 
     @Override
-    public void compileStep1(RootNode root) {
+    public RootNode compileStep1(String text) {
         objectVarSize = 4;
+
+        CParser parser = new CParser(text);
+        RootNode root = parser.parse();
 
         root.accept(new NodeVisitor() {
 
@@ -289,6 +292,8 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                 method.addSource(line);
             }
         }
+
+        return root;
     }
 
     Expression compileDefinedExpression(String identifier) {
@@ -1998,11 +2003,6 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
 
         scope.addBuiltinSymbol("CLKMODE_", new NumberLiteral(clkmode));
         scope.addBuiltinSymbol("CLKFREQ_", new NumberLiteral(finalfreq));
-    }
-
-    @Override
-    protected void compileDatInclude(RootNode root) {
-
     }
 
 }

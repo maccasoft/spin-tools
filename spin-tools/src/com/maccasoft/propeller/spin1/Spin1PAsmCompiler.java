@@ -28,7 +28,6 @@ import com.maccasoft.propeller.expressions.ObjectContextLiteral;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.Node;
-import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenIterator;
 import com.maccasoft.propeller.spin1.instructions.Empty;
@@ -128,31 +127,6 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
                                     }
                                     else {
                                         namespace = "";
-                                    }
-                                }
-                                else if ("INCLUDE".equalsIgnoreCase(pasmLine.getMnemonic())) {
-                                    if (lineNode.condition != null) {
-                                        throw new CompilerException("not allowed", lineNode.condition);
-                                    }
-                                    if (lineNode.modifier != null) {
-                                        throw new CompilerException("not allowed", lineNode.modifier);
-                                    }
-                                    int index = 0;
-                                    for (Spin1PAsmExpression argument : pasmLine.getArguments()) {
-                                        String fileName = argument.getString();
-                                        File includeFile = compiler.getFile(fileName, ".spin");
-                                        RootNode includedNode = compiler.getParsedSource(includeFile);
-                                        try {
-                                            if (includedNode == null) {
-                                                throw new RuntimeException("file \"" + fileName + "\" not found");
-                                            }
-                                            compileDatInclude(includedNode);
-                                        } catch (CompilerException e) {
-                                            logMessage(e);
-                                        } catch (Exception e) {
-                                            logMessage(new CompilerException(e, lineNode.parameters.get(index)));
-                                        }
-                                        index++;
                                     }
                                 }
                             }
@@ -369,8 +343,6 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
         }
         pendingAlias.clear();
     }
-
-    protected abstract void compileDatInclude(RootNode root);
 
     void processDittoBlock(Context globalScope, Context localScope, DataLineNode beginLineNode, List<DataLineNode> list, DataLineNode endLineNode) {
         int count = 0;

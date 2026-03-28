@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin1;
@@ -21,8 +20,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 
 import com.maccasoft.propeller.CompilerException;
-import com.maccasoft.propeller.model.Parser;
-import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.SourceProvider;
 
 class Spin1CompilerTest {
@@ -1141,48 +1138,6 @@ class Spin1CompilerTest {
     }
 
     @Test
-    void testDatInclude() throws Exception {
-        Map<String, String> sources = new HashMap<String, String>();
-        sources.put("main.spin", ""
-            + "PUB main\n"
-            + "\n"
-            + "DAT\n"
-            + "    org $000\n"
-            + "    call    #label\n"
-            + "    jmp     #$\n"
-            + "    include \"text2\"\n"
-            + "a   long    0\n"
-            + "");
-        sources.put("text2.spin", ""
-            + "DAT\n"
-            + "\n"
-            + "label\n"
-            + "          mov a, #1\n"
-            + "label_ret ret\n"
-            + "\n"
-            + "");
-
-        Assertions.assertEquals(""
-            + "' Object \"main.spin\" header (var size 0)\n"
-            + "00010 00000       20 00          Object size\n"
-            + "00012 00002       02             Method count + 1\n"
-            + "00013 00003       00             Object count\n"
-            + "00014 00004       1C 00 00 00    Function main @ $001C (local size 0)\n"
-            + "00018 00008   000                                    org     $000\n"
-            + "00018 00008   000 02 06 FC 5C                        call    #label\n"
-            + "0001C 0000C   001 01 00 7C 5C                        jmp     #$\n"
-            + "00020 00010   002                                    include \"text2\"\n"
-            + "00020 00010   002                label               \n"
-            + "00020 00010   002 01 08 FC A0                        mov     a, #1\n"
-            + "00024 00014   003 00 00 7C 5C    label_ret           ret\n"
-            + "00028 00018   004 00 00 00 00    a                   long    0\n"
-            + "' PUB main\n"
-            + "0002C 0001C       32             RETURN\n"
-            + "0002D 0001D       00 00 00       Padding\n"
-            + "", compile("main.spin", sources));
-    }
-
-    @Test
     void testPreprocessorDefineInheritance() throws Exception {
         Map<String, String> sources = new HashMap<String, String>();
         sources.put("main.spin", ""
@@ -1423,8 +1378,7 @@ class Spin1CompilerTest {
     }
 
     String compile(String rootFile, Map<String, String> sources, boolean removeUnused) throws Exception {
-        Spin1Parser subject = new Spin1Parser(sources.get(rootFile));
-        RootNode root = subject.parse();
+        String text = sources.get(rootFile);
 
         Spin1Compiler compiler = new Spin1Compiler();
         compiler.setSourceProvider(new SourceProvider() {
@@ -1438,19 +1392,13 @@ class Spin1CompilerTest {
             }
 
             @Override
-            public RootNode getParsedSource(File file) {
-                String text = sources.get(file.getName());
-                if (text == null) {
-                    return null;
-                }
-                String suffix = file.getName().substring(file.getName().lastIndexOf('.'));
-                Parser parser = Parser.getInstance(suffix, text);
-                return parser.parse();
+            public String getSource(File file) {
+                return sources.get(file.getName());
             }
 
         });
         compiler.setRemoveUnusedMethods(removeUnused);
-        Spin1Object obj = compiler.compileObject(new File(rootFile), root);
+        Spin1Object obj = compiler.compileObject(new File(rootFile), text);
 
         for (CompilerException msg : compiler.getMessages()) {
             if (msg.type == CompilerException.ERROR) {

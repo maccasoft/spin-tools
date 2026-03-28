@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spinc;
@@ -23,7 +22,6 @@ import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.Compiler.FileSourceProvider;
 import com.maccasoft.propeller.CompilerException;
-import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.spin2.Spin2Debugger;
 import com.maccasoft.propeller.spin2.Spin2Object;
 
@@ -143,13 +141,10 @@ class Spin2CExamplesTest {
     }
 
     String compile(String text, boolean debugEnabled) throws Exception {
-        CParser subject = new CParser(text);
-        RootNode root = subject.parse();
-
         Spin2CCompiler compiler = new Spin2CCompiler();
         compiler.setDebugEnabled(debugEnabled);
         Spin2CObjectCompiler objectCompiler = new Spin2CObjectCompiler(compiler, new File("test.spin2"));
-        Spin2Object obj = objectCompiler.compileObject(root);
+        Spin2Object obj = objectCompiler.compileObject(text);
         if (debugEnabled) {
             obj.setDebugData(compiler.generateDebugData());
             obj.setDebugger(new Spin2Debugger());
@@ -171,16 +166,13 @@ class Spin2CExamplesTest {
         String text = loadFromFile(source);
         byte[] expected = loadBinaryFromFile(binary);
 
-        CParser subject = new CParser(text);
-        RootNode root = subject.parse();
-
         Spin2CCompiler compiler = new Spin2CCompiler();
         compiler.setSourceProvider(new FileSourceProvider(new File[] {
             source.getParentFile(),
             new File(path),
             new File(libraryPath)
         }));
-        Spin2Object obj = compiler.compile(source, root);
+        Spin2Object obj = compiler.compile(source, text);
         for (CompilerException msg : compiler.getMessages()) {
             if (msg.type == CompilerException.ERROR) {
                 throw msg;

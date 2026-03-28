@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2.instructions;
@@ -16,12 +15,10 @@ import java.io.File;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2Object;
 import com.maccasoft.propeller.spin2.Spin2ObjectCompiler;
-import com.maccasoft.propeller.spin2.Spin2Parser;
 
 class BranchTest {
 
@@ -124,11 +121,8 @@ class BranchTest {
     }
 
     byte[] compile(String text) throws Exception {
-        Spin2Parser subject = new Spin2Parser(text);
-        RootNode root = subject.parse();
-
         Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler(), new File("test.spin2"));
-        Spin2Object obj = compiler.compileObject(root);
+        Spin2Object obj = compiler.compileObject(text);
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         obj.generateBinary(os);

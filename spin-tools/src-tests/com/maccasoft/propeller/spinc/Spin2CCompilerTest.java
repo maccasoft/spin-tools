@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spinc;
@@ -20,8 +19,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.CompilerException;
-import com.maccasoft.propeller.model.Parser;
-import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.spin2.Spin2Object;
 
@@ -173,18 +170,14 @@ class Spin2CCompilerTest {
     }
 
     Spin2CObjectCompiler buildCompiler(String text) {
-        CParser parser = new CParser(text);
-        RootNode root = parser.parse();
-
         Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2CCompiler(), new File("test.spin2"));
-        compiler.compileObject(root);
-
+        compiler.compileObject(text);
         return compiler;
     }
 
     @Test
     void testObjectLink() throws Exception {
-        Map<String, String> sources = new HashMap<String, String>();
+        Map<String, String> sources = new HashMap<>();
         sources.put("main.c", ""
             + "text2 o;\n"
             + "\n"
@@ -201,7 +194,7 @@ class Spin2CCompilerTest {
             + "");
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"main.c\" header (var size 8)\n"
             + "00000 00000       14 00 00 00    Object \"text2.spin2\" @ $00014\n"
             + "00004 00004       04 00 00 00    Variables @ $00004\n"
             + "00008 00008       10 00 00 80    Method main @ $00010 (0 parameters, 0 returns)\n"
@@ -230,7 +223,7 @@ class Spin2CCompilerTest {
 
     @Test
     void testObjectConstant() throws Exception {
-        Map<String, String> sources = new HashMap<String, String>();
+        Map<String, String> sources = new HashMap<>();
         sources.put("main.c", ""
             + "#include \"text2\"\n"
             + "\n"
@@ -251,7 +244,7 @@ class Spin2CCompilerTest {
             + "");
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"main.c\" header (var size 4)\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       0C 00 00 00    End\n"
             + "' void main() {\n"
@@ -266,7 +259,7 @@ class Spin2CCompilerTest {
 
     @Test
     void testObjectMethodCall() throws Exception {
-        Map<String, String> sources = new HashMap<String, String>();
+        Map<String, String> sources = new HashMap<>();
         sources.put("main.c", ""
             + "\n"
             + "text2 o;\n"
@@ -284,7 +277,7 @@ class Spin2CCompilerTest {
             + "");
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"main.c\" header (var size 8)\n"
             + "00000 00000       18 00 00 00    Object \"text2.spin2\" @ $00018\n"
             + "00004 00004       04 00 00 00    Variables @ $00004\n"
             + "00008 00008       10 00 00 80    Method main @ $00010 (0 parameters, 0 returns)\n"
@@ -315,7 +308,7 @@ class Spin2CCompilerTest {
 
     @Test
     void testObjectInstances() throws Exception {
-        Map<String, String> sources = new HashMap<String, String>();
+        Map<String, String> sources = new HashMap<>();
         sources.put("main.c", ""
             + "text2 o1;\n"
             + "text2 o2;\n"
@@ -334,7 +327,7 @@ class Spin2CCompilerTest {
             + "");
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"main.c\" header (var size 12)\n"
             + "00000 00000       28 00 00 00    Object \"text2.spin2\" @ $00028\n"
             + "00004 00004       04 00 00 00    Variables @ $00004\n"
             + "00008 00008       28 00 00 00    Object \"text2.spin2\" @ $00028\n"
@@ -373,7 +366,7 @@ class Spin2CCompilerTest {
 
     @Test
     void testObjectArray() throws Exception {
-        Map<String, String> sources = new HashMap<String, String>();
+        Map<String, String> sources = new HashMap<>();
         sources.put("main.c", ""
             + "text2 o[2];\n"
             + "\n"
@@ -390,7 +383,7 @@ class Spin2CCompilerTest {
             + "");
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"main.c\" header (var size 12)\n"
             + "00000 00000       1C 00 00 00    Object \"text2.spin2\" @ $0001C\n"
             + "00004 00004       04 00 00 00    Variables @ $00004\n"
             + "00008 00008       1C 00 00 00    Object \"text2.spin2\" @ $0001C\n"
@@ -408,7 +401,7 @@ class Spin2CCompilerTest {
 
     @Test
     void testObjectArrayMethodCall() throws Exception {
-        Map<String, String> sources = new HashMap<String, String>();
+        Map<String, String> sources = new HashMap<>();
         sources.put("main.c", ""
             + "text2 o[2];\n"
             + "\n"
@@ -426,7 +419,7 @@ class Spin2CCompilerTest {
             + "");
 
         Assertions.assertEquals(""
-            + "' Object header (var size 4)\n"
+            + "' Object \"main.c\" header (var size 12)\n"
             + "00000 00000       28 00 00 00    Object \"text2.spin2\" @ $00028\n"
             + "00004 00004       04 00 00 00    Variables @ $00004\n"
             + "00008 00008       28 00 00 00    Object \"text2.spin2\" @ $00028\n"
@@ -466,7 +459,7 @@ class Spin2CCompilerTest {
 
     @Test
     void testVariablesAndObjectLink() throws Exception {
-        Map<String, String> sources = new HashMap<String, String>();
+        Map<String, String> sources = new HashMap<>();
         sources.put("main.c", ""
             + "text2 o;\n"
             + "\n"
@@ -489,7 +482,7 @@ class Spin2CCompilerTest {
             + "");
 
         Assertions.assertEquals(""
-            + "' Object header (var size 12)\n"
+            + "' Object \"main.c\" header (var size 20)\n"
             + "00000 00000       18 00 00 00    Object \"text2.spin2\" @ $00018\n"
             + "00004 00004       0C 00 00 00    Variables @ $0000C\n"
             + "00008 00008       10 00 00 80    Method main @ $00010 (0 parameters, 0 returns)\n"
@@ -524,8 +517,7 @@ class Spin2CCompilerTest {
     }
 
     String compile(String rootFile, Map<String, String> sources, boolean removeUnused, boolean debugEnabled) throws Exception {
-        CParser subject = new CParser(sources.get(rootFile));
-        RootNode root = subject.parse();
+        String text = sources.get(rootFile);
 
         Spin2CCompiler compiler = new Spin2CCompiler();
         compiler.setSourceProvider(new SourceProvider() {
@@ -539,20 +531,14 @@ class Spin2CCompilerTest {
             }
 
             @Override
-            public RootNode getParsedSource(File file) {
-                String text = sources.get(file.getName());
-                if (text == null) {
-                    return null;
-                }
-                String suffix = file.getName().substring(file.getName().lastIndexOf('.'));
-                Parser parser = Parser.getInstance(suffix, text);
-                return parser.parse();
+            public String getSource(File file) {
+                return sources.get(file.getName());
             }
 
         });
         compiler.setRemoveUnusedMethods(removeUnused);
         compiler.setDebugEnabled(debugEnabled);
-        Spin2Object obj = compiler.compileObject(new File(rootFile), root);
+        Spin2Object obj = compiler.compileObject(new File(rootFile), text);
 
         for (CompilerException msg : compiler.getMessages()) {
             if (msg.type == CompilerException.ERROR) {

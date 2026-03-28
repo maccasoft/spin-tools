@@ -58,7 +58,6 @@ import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
-import com.maccasoft.propeller.model.DirectiveNode;
 import com.maccasoft.propeller.model.FunctionNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
@@ -84,6 +83,8 @@ import com.maccasoft.propeller.spinc.Spin2CCompiler;
 public class EditorTab implements FindReplaceTarget {
 
     public static final String OBJECT_TREE = "objectTree";
+
+    static final String pragmaTargetRegex = "/\\*[\\s\\S]*?\\*/|//.*|\"([^\"\\\\]|\\\\.)*\"|(#pragma\\s+target\\s+P1|P2)";
 
     SourcePool sourcePool;
 
@@ -559,7 +560,7 @@ public class EditorTab implements FindReplaceTarget {
 
     boolean debug;
 
-    Compiler createCompiler(String suffix, RootNode root) {
+    Compiler createCompiler(String suffix, String text) {
         Compiler compiler = null;
         boolean removeUnusedMethods = true;
         boolean warnUnusedMethods = true;
@@ -610,31 +611,20 @@ public class EditorTab implements FindReplaceTarget {
             warnUnusedVariables = preferences.getSpin2WarnUnusedVariables();
         }
         else if (".c".equals(suffix)) {
-            for (Node node : root.getChilds()) {
-                if (node instanceof DirectiveNode) {
-                    int index = 1;
-                    if (index < node.getTokenCount()) {
-                        if ("pragma".equals(node.getToken(index).getText())) {
-                            index++;
-                            if (index < node.getTokenCount()) {
-                                if ("target".equals(node.getToken(index).getText())) {
-                                    index++;
-                                    if (index < node.getTokenCount()) {
-                                        if ("P1".equals(node.getToken(index).getText())) {
-                                            compiler = new Spin1CCompiler(preferences.getSpin1CaseSensitiveSymbols());
-                                            compiler.setSourceProvider(new EditorTabSourceProvider(preferences.getSpin1LibraryPath()));
-                                        }
-                                        else if ("P2".equals(node.getToken(index).getText())) {
-                                            compiler = new Spin2CCompiler(preferences.getSpin2CaseSensitiveSymbols());
-                                            compiler.setSourceProvider(new EditorTabSourceProvider(preferences.getSpin2LibraryPath()));
-                                            ((Spin2CCompiler) compiler).setCompress(preferences.getSpin2Compress());
-                                        }
-                                    }
-                                    break;
-                                }
-                            }
-                        }
+            Pattern pattern = Pattern.compile(pragmaTargetRegex);
+            Matcher matcher = pattern.matcher(text);
+            while (matcher.find()) {
+                if (matcher.group(2) != null) {
+                    if (matcher.group(2).endsWith("P1")) {
+                        compiler = new Spin1CCompiler();
+                        compiler.setSourceProvider(new EditorTabSourceProvider(preferences.getSpin1LibraryPath()));
                     }
+                    else if (matcher.group(2).endsWith("P2")) {
+                        compiler = new Spin2CCompiler();
+                        compiler.setSourceProvider(new EditorTabSourceProvider(preferences.getSpin2LibraryPath()));
+                        ((Spin2CCompiler) compiler).setCompress(preferences.getSpin2Compress());
+                    }
+                    break;
                 }
             }
             if (compiler == null) {
@@ -671,18 +661,17 @@ public class EditorTab implements FindReplaceTarget {
                     public void run() {
                         String suffix = tabItemText.substring(tabItemText.lastIndexOf('.')).toLowerCase();
                         File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
-                        RootNode root = tokenMarker.getRoot();
+                        String text = sourcePool.getSource(localFile);
 
                         dependencies.clear();
                         missingDependencies.clear();
 
-                        Compiler compiler = createCompiler(suffix, root);
+                        Compiler compiler = createCompiler(suffix, text);
                         if (compiler != null) {
                             try {
-                                object = compiler.compile(localFile, root);
+                                object = compiler.compile(localFile, text);
                                 objectTree = compiler.getObjectTree();
                                 errors = compiler.hasErrors();
-
                             } catch (Exception e) {
                                 errors = true;
                                 e.printStackTrace();
@@ -699,25 +688,24 @@ public class EditorTab implements FindReplaceTarget {
                                     }
                                 }
 
-                                Display.getDefault().asyncExec(new Runnable() {
-
-                                    @Override
-                                    public void run() {
-                                        if (editor == null || editor.isDisposed() || tabItem.isDisposed()) {
-                                            return;
-                                        }
-                                        changeSupport.firePropertyChange(OBJECT_TREE, null, objectTree);
-                                        editor.setCompilerMessages(list);
-                                        editor.redraw();
-
-                                        if (outlineView != null && !outlineView.getControl().isDisposed()) {
-                                            outlineView.setInput(root, compiler.getContext());
-                                        }
-                                        tokenMarker.setContext(compiler.getContext());
-
-                                        tabItem.setFont(localFile.equals(preferences.getTopObject()) ? boldFont : null);
-                                        updateTabItemText();
+                                Display.getDefault().asyncExec(() -> {
+                                    if (editor == null || editor.isDisposed() || tabItem.isDisposed()) {
+                                        return;
                                     }
+                                    changeSupport.firePropertyChange(OBJECT_TREE, null, objectTree);
+
+                                    tokenMarker.setRoot(compiler.getRoot());
+                                    tokenMarker.setContext(compiler.getContext());
+
+                                    editor.setCompilerMessages(list);
+                                    editor.redraw();
+
+                                    if (outlineView != null && !outlineView.getControl().isDisposed()) {
+                                        outlineView.setInput(compiler.getRoot(), compiler.getContext());
+                                    }
+
+                                    tabItem.setFont(localFile.equals(preferences.getTopObject()) ? boldFont : null);
+                                    updateTabItemText();
                                 });
                             }
                         }

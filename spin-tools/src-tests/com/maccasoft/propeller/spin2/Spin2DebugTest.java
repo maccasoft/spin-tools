@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2;
@@ -24,7 +23,6 @@ import com.maccasoft.propeller.SpinObject.DataObject;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.DataVariable;
 import com.maccasoft.propeller.expressions.NumberLiteral;
-import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.spin2.Spin2Debug.DebugDataObject;
 
@@ -1208,13 +1206,10 @@ class Spin2DebugTest {
     }
 
     String compile(String text) throws Exception {
-        Spin2Parser parser = new Spin2Parser(text);
-        RootNode root = parser.parse();
-
         Spin2Compiler compiler = new Spin2Compiler();
         compiler.setDebugEnabled(true);
         Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompiler(compiler, new File("test.spin2"));
-        Spin2Object obj = objectCompiler.compileObject(root);
+        Spin2Object obj = objectCompiler.compileObject(text);
         obj.setDebugData(compiler.generateDebugData());
         obj.setDebugger(new Spin2Debugger());
 

@@ -109,14 +109,17 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
     }
 
     @Override
-    public Spin1Object compileObject(RootNode root) {
-        compileStep1(root);
+    public Spin1Object compileObject(String text) {
+        compileStep1(text);
         return generateObject(0);
     }
 
     @Override
-    public void compileStep1(RootNode root) {
+    public RootNode compileStep1(String text) {
         objectVarSize = 0;
+
+        CParser parser = new CParser(text);
+        RootNode root = parser.parse();
 
         root.accept(new NodeVisitor() {
 
@@ -237,6 +240,8 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
                 method.addSource(line);
             }
         }
+
+        return root;
     }
 
     Expression compileDefinedExpression(String identifier) {
@@ -1619,11 +1624,6 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
         }
 
         return bitPos;
-    }
-
-    @Override
-    protected void compileDatInclude(RootNode root) {
-
     }
 
 }

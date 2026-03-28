@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin1;
@@ -28,7 +27,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import com.maccasoft.propeller.Compiler.FileSourceProvider;
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.internal.FileUtils;
-import com.maccasoft.propeller.model.RootNode;
 
 @TestInstance(Lifecycle.PER_CLASS)
 class Spin1ExamplesTest {
@@ -93,8 +91,6 @@ class Spin1ExamplesTest {
 
     void compileAndCompare(File source, File binary) throws Exception {
         String text = FileUtils.loadFromFile(source);
-        Spin1Parser subject = new Spin1Parser(text);
-        RootNode root = subject.parse();
 
         Spin1Compiler compiler = new Spin1Compiler();
         compiler.setSourceProvider(new FileSourceProvider(new File[] {
@@ -102,7 +98,7 @@ class Spin1ExamplesTest {
             new File(path),
             new File(libraryPath)
         }));
-        Spin1Object obj = compiler.compile(source, root);
+        Spin1Object obj = compiler.compile(source, text);
         for (CompilerException msg : compiler.getMessages()) {
             if (msg.type == CompilerException.ERROR) {
                 throw msg;

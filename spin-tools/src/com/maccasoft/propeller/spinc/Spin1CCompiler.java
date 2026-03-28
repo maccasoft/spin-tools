@@ -10,16 +10,18 @@
 package com.maccasoft.propeller.spinc;
 
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Map;
 
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.ObjectCompiler;
 import com.maccasoft.propeller.SpinObject;
+import com.maccasoft.propeller.SpinObject.ByteDataObject;
 import com.maccasoft.propeller.SpinObject.LinkDataObject;
+import com.maccasoft.propeller.SpinObject.LongDataObject;
+import com.maccasoft.propeller.SpinObject.WordDataObject;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.Expression;
-import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.spin1.Spin1Compiler;
 import com.maccasoft.propeller.spin1.Spin1Object;
 import com.maccasoft.propeller.spin1.Spin1ObjectCompiler;
@@ -37,31 +39,63 @@ public class Spin1CCompiler extends Spin1Compiler {
     }
 
     @Override
-    public Spin1Object compile(File file) throws Exception {
-        String text = getSource(file.getAbsolutePath());
-        if (text == null) {
-            throw new FileNotFoundException();
-        }
-        CParser parser = new CParser(text);
-        Spin1Object object = compile(file, parser.parse());
+    public Spin1Object compile(File file, String text) {
+        Spin1Object obj = compileObject(file, text);
 
-        if (hasErrors()) {
-            throw new CompilerException(getMessages());
+        Spin1Object object = new Spin1Object();
+        object.setClkFreq(obj.getClkFreq());
+        object.setClkMode(obj.getClkMode());
+
+        object.writeLong(object.getClkFreq(), "CLKFREQ");
+        object.writeByte(object.getClkMode(), "CLKMODE");
+        ByteDataObject checksum = object.writeByte(0, "Checksum");
+
+        WordDataObject pbase = object.writeWord(0, "PBASE");
+        WordDataObject vbase = object.writeWord(0, "VBASE");
+        WordDataObject dbase = object.writeWord(0, "DBASE");
+
+        WordDataObject pcurr = object.writeWord(0, "PCURR");
+        WordDataObject dcurr = object.writeWord(0, "DCURR");
+
+        pbase.setValue(object.getSize());
+
+        object.writeObject(obj);
+
+        vbase.setValue(object.getSize());
+
+        int offset = obj.getVarSize() + 8;
+        dbase.setValue(object.getSize() + offset);
+
+        if (!(obj.getObject(4) instanceof LongDataObject)) {
+            logMessage(new CompilerException(CompilerException.ERROR, file, "No PUB routines found", (Object) null));
+            return null;
+        }
+        pcurr.setValue((int) (pbase.getValue() + (((LongDataObject) obj.getObject(4)).getValue() & 0xFFFF)));
+
+        offset = 4 + obj.getDcurr();
+        dcurr.setValue(dbase.getValue() + offset);
+
+        try {
+            byte[] data = object.getBinary();
+
+            byte sum = 0;
+            for (int i = 0; i < data.length; i++) {
+                sum += data[i];
+            }
+            checksum.setValue(0x14 - sum);
+
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
         return object;
     }
 
-    public ObjectInfo getObjectInfo(String name) {
-        return objectCompiler.objects.get(name);
-    }
-
-    @Override
-    public Spin1Object compileObject(File rootFile, RootNode root) {
+    Spin1Object compileObject(File file, String text) {
         int memoryOffset = 16;
 
-        objectCompiler = new Spin1CObjectCompiler(this, rootFile);
-        objectCompiler.compileStep1(root);
+        objectCompiler = new Spin1CObjectCompiler(this, file);
+        root = objectCompiler.compileStep1(text);
 
         objectCompiler.compileStep2(true);
         for (ObjectInfo info : childObjects) {
@@ -101,6 +135,16 @@ public class Spin1CCompiler extends Spin1Compiler {
             }
         }
 
+        messages.addAll(objectCompiler.getMessages());
+        for (ObjectInfo info : childObjects) {
+            messages.addAll(info.compiler.getMessages());
+        }
+
+        errors = objectCompiler.hasErrors();
+        for (ObjectInfo info : childObjects) {
+            errors |= info.compiler.hasErrors();
+        }
+
         int stackRequired = 16;
         if (objectCompiler.getScope().hasSymbol("_STACK")) {
             stackRequired = objectCompiler.getScope().getLocalSymbol("_STACK").getNumber().intValue();
@@ -110,23 +154,16 @@ public class Spin1CCompiler extends Spin1Compiler {
         }
 
         if (stackRequired > 0x2000) {
-            logMessage(new CompilerException(rootFile.getName(), "_STACK and _FREE must sum to under 8k longs."));
+            logMessage(new CompilerException(file.getName(), "_STACK and _FREE must sum to under 8k longs."));
         }
         else {
             int requiredSize = object.getSize() + object.getVarSize() + (stackRequired << 2);
             if (requiredSize >= 0x8000) {
-                logMessage(new CompilerException(rootFile.getName(), "object exceeds runtime memory limit by " + ((requiredSize - 0x8000) >> 2) + " longs."));
+                logMessage(new CompilerException(file.getName(), "object exceeds runtime memory limit by " + ((requiredSize - 0x8000) >> 2) + " longs."));
             }
         }
 
         tree = buildFrom(objectCompiler);
-
-        errors = objectCompiler.hasErrors();
-
-        messages.addAll(objectCompiler.getMessages());
-        for (ObjectInfo info : childObjects) {
-            messages.addAll(info.compiler.getMessages());
-        }
 
         return object;
 
@@ -139,8 +176,6 @@ public class Spin1CCompiler extends Spin1Compiler {
 
     @Override
     public ObjectInfo getObjectInfo(ObjectCompiler parent, File file, Map<String, Expression> parameters) throws Exception {
-        RootNode objectRoot = getParsedSource(file);
-
         ObjectCompiler objectCompiler;
         if (file.getName().toLowerCase().endsWith(".spin")) {
             objectCompiler = new Spin1ObjectCompiler(this, parent, file);
@@ -157,13 +192,15 @@ public class Spin1CCompiler extends Spin1Compiler {
         }
 
         ObjectInfo info = new ObjectInfo(file, objectCompiler, parameters);
+        info.text = getSource(file);
 
         int index = childObjects.indexOf(info);
         if (index != -1) {
             info = childObjects.remove(index);
         }
         childObjects.add(info);
-        objectCompiler.compileStep1(objectRoot);
+
+        objectCompiler.compileStep1(info.text);
 
         return info;
     }

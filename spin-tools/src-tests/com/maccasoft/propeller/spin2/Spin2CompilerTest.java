@@ -20,8 +20,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 
 import com.maccasoft.propeller.CompilerException;
-import com.maccasoft.propeller.model.Parser;
-import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.SourceProvider;
 
 class Spin2CompilerTest {
@@ -2453,47 +2451,6 @@ class Spin2CompilerTest {
     }
 
     @Test
-    void testDatInclude() throws Exception {
-        Map<String, String> sources = new HashMap<String, String>();
-        sources.put("main.spin2", ""
-            + "PUB main()\n"
-            + "\n"
-            + "DAT\n"
-            + "    org $000\n"
-            + "    call    #\\label\n"
-            + "    jmp     #$\n"
-            + "    include \"text2\"\n"
-            + "a   long    0\n"
-            + "");
-        sources.put("text2.spin2", ""
-            + "DAT\n"
-            + "\n"
-            + "label\n"
-            + "          mov a, #1\n"
-            + "          ret\n"
-            + "\n"
-            + "");
-
-        Assertions.assertEquals(""
-            + "' Object \"main.spin2\" header (var size 4)\n"
-            + "01844 00000       1C 00 00 80    Method main @ $0001C (0 parameters, 0 returns)\n"
-            + "01848 00004       1E 00 00 00    End\n"
-            + "0184C 00008   000                                    org     $000\n"
-            + "0184C 00008   000 02 00 A0 FD                        call    #\\label\n"
-            + "01850 0000C   001 FC FF 9F FD                        jmp     #$\n"
-            + "01854 00010   002                                    include \"text2\"\n"
-            + "01854 00010   002                label               \n"
-            + "01854 00010   002 01 08 04 F6                        mov     a, #1\n"
-            + "01858 00014   003 2D 00 64 FD                        ret\n"
-            + "0185C 00018   004 00 00 00 00    a                   long    0\n"
-            + "' PUB main()\n"
-            + "01860 0001C       00             (stack size)\n"
-            + "01861 0001D       04             RETURN\n"
-            + "01862 0001E       00 00          Padding\n"
-            + "", compile("main.spin2", sources));
-    }
-
-    @Test
     void testObjectParameters() throws Exception {
         Map<String, String> sources = new HashMap<String, String>();
         sources.put("main.spin2", ""
@@ -2753,9 +2710,6 @@ class Spin2CompilerTest {
     }
 
     String compile(String rootFile, Map<String, String> sources, boolean removeUnused, boolean debugEnabled) throws Exception {
-        Spin2Parser subject = new Spin2Parser(sources.get(rootFile));
-        RootNode root = subject.parse();
-
         Spin2Compiler compiler = new Spin2Compiler();
         compiler.setSourceProvider(new SourceProvider() {
 
@@ -2768,20 +2722,14 @@ class Spin2CompilerTest {
             }
 
             @Override
-            public RootNode getParsedSource(File file) {
-                String text = sources.get(file.getName());
-                if (text == null) {
-                    return null;
-                }
-                String suffix = file.getName().substring(file.getName().lastIndexOf('.'));
-                Parser parser = Parser.getInstance(suffix, text);
-                return parser.parse();
+            public String getSource(File file) {
+                return sources.get(file.getName());
             }
 
         });
         compiler.setRemoveUnusedMethods(removeUnused);
         compiler.setDebugEnabled(debugEnabled);
-        Spin2Object obj = compiler.compile(new File(rootFile), root);
+        Spin2Object obj = compiler.compile(new File(rootFile), sources.get(rootFile));
 
         for (CompilerException msg : compiler.getMessages()) {
             if (msg.type == CompilerException.ERROR) {

@@ -10,7 +10,7 @@
 package com.maccasoft.propeller.spinc;
 
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -21,7 +21,6 @@ import com.maccasoft.propeller.SpinObject.LinkDataObject;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.Method;
-import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
 import com.maccasoft.propeller.spin2.Spin2Debugger;
 import com.maccasoft.propeller.spin2.Spin2Interpreter;
@@ -41,29 +40,23 @@ public class Spin2CCompiler extends Spin2Compiler {
     }
 
     @Override
-    public Spin2Object compile(File file) throws Exception {
-        String text = getSource(file.getAbsolutePath());
-        if (text == null) {
-            throw new FileNotFoundException();
-        }
-        CParser parser = new CParser(text);
-        Spin2Object object = compile(file, parser.parse());
+    public Spin2Object compile(File file, String text) {
+        Spin2Object obj = compileObject(file, text);
 
-        if (hasErrors()) {
-            throw new CompilerException(getMessages());
+        if (interpreter != null) {
+            obj.setInterpreter(interpreter);
         }
+        if (debugger != null) {
+            obj.setDebugger(debugger);
+        }
+        obj.setCompress(isCompress());
 
-        return object;
+        return obj;
     }
 
-    public ObjectInfo getObjectInfo(String name) {
-        return objectCompiler.objects.get(name);
-    }
-
-    @Override
-    protected Spin2Object compileObject(File rootFile, RootNode root) {
-        objectCompiler = new Spin2CObjectCompiler(this, rootFile);
-        objectCompiler.compileStep1(root);
+    Spin2Object compileObject(File file, String text) {
+        objectCompiler = new Spin2CObjectCompiler(this, file);
+        root = objectCompiler.compileStep1(text);
 
         objectCompiler.compileStep2(true);
         for (ObjectInfo info : childObjects) {
@@ -80,14 +73,15 @@ public class Spin2CCompiler extends Spin2Compiler {
         }
 
         Spin2Object object = objectCompiler.generateObject(memoryOffset);
+        object.getObject(0).setText("Object \"" + file.getName() + "\" header (var size " + object.getVarSize() + ")");
         memoryOffset += object.getSize();
 
         for (ObjectInfo info : childObjects) {
             info.offset = object.getSize();
             SpinObject linkedObject = info.compiler.generateObject(memoryOffset);
-            memoryOffset += linkedObject.getSize();
             linkedObject.getObject(0).setText("Object \"" + info.file.getName() + "\" header (var size " + linkedObject.getVarSize() + ")");
             object.writeObject(linkedObject);
+            memoryOffset += linkedObject.getSize();
         }
 
         for (ObjectInfo info : childObjects) {
@@ -112,7 +106,15 @@ public class Spin2CCompiler extends Spin2Compiler {
             }
         }
 
-        Spin2Object debugObject = generateDebugData();
+        messages.addAll(objectCompiler.getMessages());
+        for (ObjectInfo info : childObjects) {
+            messages.addAll(info.compiler.getMessages());
+        }
+
+        errors = objectCompiler.hasErrors();
+        for (ObjectInfo info : childObjects) {
+            errors |= info.compiler.hasErrors();
+        }
 
         int stackFree = 512 * 1024;
 
@@ -125,21 +127,20 @@ public class Spin2CCompiler extends Spin2Compiler {
 
         if (isDebugEnabled()) {
             debugger = new Spin2Debugger();
-            object.setDebugData(debugObject);
-            stackFree -= debugger.getSize() + debugObject.getSize();
+            try {
+                Spin2Object debugObject = generateDebugData();
+                object.setDebugData(debugObject);
+                stackFree -= debugger.getSize() + debugObject.getSize();
+            } catch (Exception e) {
+                logMessage(new CompilerException(file, e.getMessage(), null));
+            }
+        }
+
+        if (stackFree < 0) {
+            logMessage(new CompilerException(file, "program exceeds runtime memory limit by " + Math.abs(stackFree) + " bytes.", null));
         }
 
         tree = buildFrom(objectCompiler);
-
-        errors = objectCompiler.hasErrors();
-        if (stackFree < 0) {
-            logMessage(new CompilerException(rootFile, "program exceeds runtime memory limit by " + Math.abs(stackFree) + " longs.", null));
-        }
-
-        messages.addAll(objectCompiler.getMessages());
-        for (ObjectInfo info : childObjects) {
-            messages.addAll(info.compiler.getMessages());
-        }
 
         return object;
 
@@ -152,11 +153,9 @@ public class Spin2CCompiler extends Spin2Compiler {
 
     @Override
     public ObjectInfo getObjectInfo(ObjectCompiler parent, File file, Map<String, Expression> parameters) throws Exception {
-        RootNode objectRoot = getParsedSource(file);
-
         ObjectCompiler objectCompiler;
         if (file.getName().toLowerCase().endsWith(".spin2")) {
-            objectCompiler = new Spin2ObjectCompiler(this, parent, file);
+            objectCompiler = new Spin2ObjectCompiler(this, parent, file, Collections.emptyMap());
         }
         else {
             objectCompiler = new Spin2CObjectCompiler(this, parent, file);
@@ -170,13 +169,15 @@ public class Spin2CCompiler extends Spin2Compiler {
         }
 
         ObjectInfo info = new ObjectInfo(file, objectCompiler, parameters);
+        info.text = getSource(file);
 
         int index = childObjects.indexOf(info);
         if (index != -1) {
             info = childObjects.remove(index);
         }
         childObjects.add(info);
-        objectCompiler.compileStep1(objectRoot);
+
+        objectCompiler.compileStep1(info.text);
 
         return info;
     }

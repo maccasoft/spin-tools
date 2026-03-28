@@ -18,9 +18,46 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 
 import com.maccasoft.propeller.CompilerException;
-import com.maccasoft.propeller.model.RootNode;
 
 class Spin2ObjectCompilerTest {
+
+    @Test
+    void testConstants() throws Exception {
+        String text = ""
+            + "CON\n"
+            + "   A = 1\n"
+            + "   B = 2, C = 3\n"
+            + "   D = A + B * C\n"
+            + "\n"
+            + "PUB main() | v\n"
+            + "  v := A\n"
+            + "  v := B\n"
+            + "  v := C\n"
+            + "  v := D\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object \"test.spin2\" header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       12 00 00 00    End\n"
+            + "' PUB main() | v\n"
+            + "00008 00008       01             (stack size)\n"
+            + "'   v := A\n"
+            + "00009 00009       A2             CONSTANT (1)\n"
+            + "0000A 0000A       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'   v := B\n"
+            + "0000B 0000B       A3             CONSTANT (2)\n"
+            + "0000C 0000C       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'   v := C\n"
+            + "0000D 0000D       A4             CONSTANT (3)\n"
+            + "0000E 0000E       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'   v := D\n"
+            + "0000F 0000F       A8             CONSTANT (A + B * C)\n"
+            + "00010 00010       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00011 00011       04             RETURN\n"
+            + "00012 00012       00 00          Padding\n"
+            + "", compile(text));
+    }
 
     @Test
     void testEnum() throws Exception {
@@ -148,11 +185,8 @@ class Spin2ObjectCompilerTest {
             + "PUB main()\n"
             + "";
 
-        Spin2Parser parser = new Spin2Parser(text);
-        RootNode root = parser.parse();
-
         Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler(), new File("test.spin2"));
-        compiler.compileObject(root);
+        compiler.compileObject(text);
 
         Assertions.assertEquals(0b00_00, compiler.getScope().getLocalSymbol("CLKMODE_").getNumber().intValue() & 0b11_11);
         Assertions.assertEquals(20_000_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
@@ -165,11 +199,8 @@ class Spin2ObjectCompilerTest {
             + "PUB main()\n"
             + "";
 
-        Spin2Parser parser = new Spin2Parser(text);
-        RootNode root = parser.parse();
-
         Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler(), new File("test.spin2"));
-        compiler.compileObject(root);
+        compiler.compileObject(text);
 
         Assertions.assertEquals(250_000_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
         Assertions.assertEquals(0b10_11, compiler.getScope().getLocalSymbol("CLKMODE_").getNumber().intValue() & 0b11_11);
@@ -183,11 +214,8 @@ class Spin2ObjectCompilerTest {
             + "PUB main()\n"
             + "";
 
-        Spin2Parser parser = new Spin2Parser(text);
-        RootNode root = parser.parse();
-
         Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler(), new File("test.spin2"));
-        compiler.compileObject(root);
+        compiler.compileObject(text);
 
         Assertions.assertEquals(148_500_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
         Assertions.assertEquals("011C62FF", String.format("%08X", compiler.getScope().getLocalSymbol("CLKMODE_").getNumber().intValue()));
@@ -201,11 +229,8 @@ class Spin2ObjectCompilerTest {
             + "PUB main()\n"
             + "";
 
-        Spin2Parser parser = new Spin2Parser(text);
-        RootNode root = parser.parse();
-
         Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler(), new File("test.spin2"));
-        compiler.compileObject(root);
+        compiler.compileObject(text);
 
         Assertions.assertEquals(100_000_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
         Assertions.assertEquals("0100090B", String.format("%08X", compiler.getScope().getLocalSymbol("CLKMODE_").getNumber().intValue()));
@@ -218,11 +243,8 @@ class Spin2ObjectCompilerTest {
             + "PUB main()\n"
             + "";
 
-        Spin2Parser parser = new Spin2Parser(text);
-        RootNode root = parser.parse();
-
         Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler(), new File("test.spin2"));
-        compiler.compileObject(root);
+        compiler.compileObject(text);
 
         Assertions.assertEquals(16_000_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
         Assertions.assertEquals("0000000A", String.format("%08X", compiler.getScope().getLocalSymbol("CLKMODE_").getNumber().intValue()));
@@ -236,11 +258,8 @@ class Spin2ObjectCompilerTest {
             + "PUB main()\n"
             + "";
 
-        Spin2Parser parser = new Spin2Parser(text);
-        RootNode root = parser.parse();
-
         Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler(), new File("test.spin2"));
-        compiler.compileObject(root);
+        compiler.compileObject(text);
 
         Assertions.assertEquals(297_500_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
         Assertions.assertEquals("01FE52F7", String.format("%08X", compiler.getScope().getLocalSymbol("CLKMODE_").getNumber().intValue()));
@@ -253,11 +272,8 @@ class Spin2ObjectCompilerTest {
             + "PUB main()\n"
             + "";
 
-        Spin2Parser parser = new Spin2Parser(text);
-        RootNode root = parser.parse();
-
         Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler(), new File("test.spin2"));
-        compiler.compileObject(root);
+        compiler.compileObject(text);
 
         Assertions.assertEquals(16_000_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
         Assertions.assertEquals("00000006", String.format("%08X", compiler.getScope().getLocalSymbol("CLKMODE_").getNumber().intValue()));
@@ -270,11 +286,8 @@ class Spin2ObjectCompilerTest {
             + "PUB main()\n"
             + "";
 
-        Spin2Parser parser = new Spin2Parser(text);
-        RootNode root = parser.parse();
-
         Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler(), new File("test.spin2"));
-        compiler.compileObject(root);
+        compiler.compileObject(text);
 
         Assertions.assertEquals(20_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
         Assertions.assertEquals("00000001", String.format("%08X", compiler.getScope().getLocalSymbol("CLKMODE_").getNumber().intValue()));
@@ -287,11 +300,8 @@ class Spin2ObjectCompilerTest {
             + "PUB main()\n"
             + "";
 
-        Spin2Parser parser = new Spin2Parser(text);
-        RootNode root = parser.parse();
-
         Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler(), new File("test.spin2"));
-        compiler.compileObject(root);
+        compiler.compileObject(text);
 
         Assertions.assertEquals(20_000_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
         Assertions.assertEquals("00000000", String.format("%08X", compiler.getScope().getLocalSymbol("CLKMODE_").getNumber().intValue()));
@@ -6602,6 +6612,129 @@ class Spin2ObjectCompilerTest {
     }
 
     @Test
+    void testPreprocessorCaseStatements() throws Exception {
+        String text = ""
+            + "PUB start() | a, b\n"
+            + "\n"
+            + "    case a\n"
+            + "        1:\n"
+            + "            b := a + 1\n"
+            + "#IF 0\n"
+            + "        2:"
+            + "            b := a + 2\n"
+            + "#ENDIF\n"
+            + "        3:\n"
+            + "            b := a + 3\n"
+            + "\n"
+            + "    repeat\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object \"test.spin2\" header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method start @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       20 00 00 00    End\n"
+            + "' PUB start() | a, b\n"
+            + "00008 00008       02             (stack size)\n"
+            + "'     case a\n"
+            + "00009 00009       42 1D          ADDRESS ($0001D)\n"
+            + "0000B 0000B       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000C 0000C       A2             CONSTANT (1)\n"
+            + "0000D 0000D       1C 05          CASE_JMP $00013 (5)\n"
+            + "0000F 0000F       A4             CONSTANT (3)\n"
+            + "00010 00010       1C 07          CASE_JMP $00018 (7)\n"
+            + "00012 00012       1E             CASE_DONE\n"
+            + "'             b := a + 1\n"
+            + "00013 00013       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00014 00014       A2             CONSTANT (1)\n"
+            + "00015 00015       8A             ADD\n"
+            + "00016 00016       F1             VAR_WRITE LONG DBASE+$00001 (short)\n"
+            + "00017 00017       1E             CASE_DONE\n"
+            + "'             b := a + 3\n"
+            + "00018 00018       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00019 00019       A4             CONSTANT (3)\n"
+            + "0001A 0001A       8A             ADD\n"
+            + "0001B 0001B       F1             VAR_WRITE LONG DBASE+$00001 (short)\n"
+            + "0001C 0001C       1E             CASE_DONE\n"
+            + "'     repeat\n"
+            + "0001D 0001D       12 7F          JMP $0001D (-1)\n"
+            + "0001F 0001F       04             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testPreprocessorAlternateBlockStart() throws Exception {
+        String text1 = ""
+            + "PUB start() | a, b\n"
+            + "\n"
+            + "#IF 0\n"
+            + "    if a == 1\n"
+            + "#ELSE\n"
+            + "    if a == 2\n"
+            + "#ENDIF\n"
+            + "        b := a + 1\n"
+            + "\n"
+            + "    repeat\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object \"test.spin2\" header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method start @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       15 00 00 00    End\n"
+            + "' PUB start() | a, b\n"
+            + "00008 00008       02             (stack size)\n"
+            + "'     if a == 2\n"
+            + "00009 00009       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000A 0000A       A3             CONSTANT (2)\n"
+            + "0000B 0000B       70             EQUAL\n"
+            + "0000C 0000C       13 05          JZ $00012 (5)\n"
+            + "'         b := a + 1\n"
+            + "0000E 0000E       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000F 0000F       A2             CONSTANT (1)\n"
+            + "00010 00010       8A             ADD\n"
+            + "00011 00011       F1             VAR_WRITE LONG DBASE+$00001 (short)\n"
+            + "'     repeat\n"
+            + "00012 00012       12 7F          JMP $00012 (-1)\n"
+            + "00014 00014       04             RETURN\n"
+            + "00015 00015       00 00 00       Padding\n"
+            + "", compile(text1));
+
+        String text2 = ""
+            + "PUB start() | a, b\n"
+            + "\n"
+            + "#IF 1\n"
+            + "    if a == 1\n"
+            + "#ELSE\n"
+            + "    if a == 2\n"
+            + "#ENDIF\n"
+            + "        b := a + 1\n"
+            + "\n"
+            + "    repeat\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object \"test.spin2\" header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method start @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       15 00 00 00    End\n"
+            + "' PUB start() | a, b\n"
+            + "00008 00008       02             (stack size)\n"
+            + "'     if a == 1\n"
+            + "00009 00009       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000A 0000A       A2             CONSTANT (1)\n"
+            + "0000B 0000B       70             EQUAL\n"
+            + "0000C 0000C       13 05          JZ $00012 (5)\n"
+            + "'         b := a + 1\n"
+            + "0000E 0000E       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000F 0000F       A2             CONSTANT (1)\n"
+            + "00010 00010       8A             ADD\n"
+            + "00011 00011       F1             VAR_WRITE LONG DBASE+$00001 (short)\n"
+            + "'     repeat\n"
+            + "00012 00012       12 7F          JMP $00012 (-1)\n"
+            + "00014 00014       04             RETURN\n"
+            + "00015 00015       00 00 00       Padding\n"
+            + "", compile(text2));
+    }
+
+    @Test
     void testClkModeAndFreq() throws Exception {
         String text = ""
             + "_CLKFREQ = 250_000_000\n"
@@ -8852,12 +8985,9 @@ class Spin2ObjectCompilerTest {
             + "";
 
         Assertions.assertThrows(CompilerException.class, () -> {
-            Spin2Parser parser = new Spin2Parser(text);
-            RootNode root = parser.parse();
-
             Spin2Compiler compiler = new Spin2Compiler();
             Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompiler(compiler, new File("test.spin2"));
-            objectCompiler.compileStep1(root);
+            objectCompiler.compileStep1(text);
 
             for (CompilerException msg : objectCompiler.getMessages()) {
                 if (msg.type == CompilerException.ERROR) {
@@ -8872,13 +9002,10 @@ class Spin2ObjectCompilerTest {
     }
 
     String compile(String text, boolean debugEnabled) throws Exception {
-        Spin2Parser parser = new Spin2Parser(text);
-        RootNode root = parser.parse();
-
         Spin2Compiler compiler = new Spin2Compiler();
         compiler.setDebugEnabled(debugEnabled);
         Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompiler(compiler, new File("test.spin2"));
-        Spin2Object obj = objectCompiler.compileObject(root);
+        Spin2Object obj = objectCompiler.compileObject(text);
         if (debugEnabled) {
             obj.setDebugData(compiler.generateDebugData());
             obj.setDebugger(new Spin2Debugger());

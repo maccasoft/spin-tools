@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spinc;
@@ -20,8 +19,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.CompilerException;
-import com.maccasoft.propeller.model.Parser;
-import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.spin1.Spin1Object;
 
@@ -330,8 +327,7 @@ class Spin1CCompilerTest {
     }
 
     String compile(String rootFile, Map<String, String> sources, boolean removeUnused) throws Exception {
-        CParser subject = new CParser(sources.get(rootFile));
-        RootNode root = subject.parse();
+        String text = sources.get(rootFile);
 
         Spin1CCompiler compiler = new Spin1CCompiler();
         compiler.setSourceProvider(new SourceProvider() {
@@ -345,19 +341,13 @@ class Spin1CCompilerTest {
             }
 
             @Override
-            public RootNode getParsedSource(File file) {
-                String text = sources.get(file.getName());
-                if (text == null) {
-                    return null;
-                }
-                String suffix = file.getName().substring(file.getName().lastIndexOf('.'));
-                Parser parser = Parser.getInstance(suffix, text);
-                return parser.parse();
+            public String getSource(File file) {
+                return sources.get(file.getName());
             }
 
         });
         compiler.setRemoveUnusedMethods(removeUnused);
-        Spin1Object obj = compiler.compileObject(new File(rootFile), root);
+        Spin1Object obj = compiler.compileObject(new File(rootFile), text);
 
         for (CompilerException msg : compiler.getMessages()) {
             if (msg.type == CompilerException.ERROR) {

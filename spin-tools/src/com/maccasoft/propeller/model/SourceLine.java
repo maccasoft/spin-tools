@@ -50,6 +50,48 @@ public class SourceLine {
         return tokens.get(index + offset);
     }
 
+    public Token skipCommentsAndGetNextToken() {
+        while (index < tokens.size()) {
+            Token token = tokens.get(index);
+            if (token.type == Token.NL) {
+                return null;
+            }
+            index++;
+            if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT && token.type != Token.NEXT_LINE) {
+                return token;
+            }
+        }
+        return null;
+    }
+
+    public Token skipCommentsAndPeekNextToken() {
+        int idx = index;
+        while (idx < tokens.size()) {
+            Token token = tokens.get(idx++);
+            if (token.type == Token.NL) {
+                return null;
+            }
+            if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT && token.type != Token.NEXT_LINE) {
+                return token;
+            }
+        }
+        return null;
+    }
+
+    public boolean hasMoreTokens() {
+        int idx = index;
+        while (idx < tokens.size()) {
+            Token token = tokens.get(idx++);
+            if (token.type == Token.NL) {
+                return false;
+            }
+            if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT && token.type != Token.NEXT_LINE) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public String getText() {
         StringBuilder sb = new StringBuilder();
 
@@ -64,6 +106,14 @@ public class SourceLine {
         sb.append(System.lineSeparator());
 
         return sb.toString();
+    }
+
+    public Token getAsToken(int type) {
+        Token firstToken = tokens.getFirst();
+        Token lastToken = tokens.getLast();
+        TokenStream stream = firstToken.getStream();
+        String text = stream.getSource(firstToken.start - firstToken.column, lastToken.stop);
+        return new Token(stream, firstToken.start - firstToken.column, firstToken.line, 0, type, text);
     }
 
 }

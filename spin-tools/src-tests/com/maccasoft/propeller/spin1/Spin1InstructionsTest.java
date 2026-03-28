@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin1;
@@ -14,8 +13,6 @@ import java.io.File;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import com.maccasoft.propeller.model.RootNode;
 
 class Spin1InstructionsTest {
 
@@ -521,11 +518,8 @@ class Spin1InstructionsTest {
     }
 
     byte[] compile(String text) throws Exception {
-        Spin1Parser parser = new Spin1Parser(text);
-        RootNode root = parser.parse();
-
         Spin1ObjectCompiler compiler = new Spin1ObjectCompiler(new Spin1Compiler(), new File("test.spin"));
-        compiler.compileObject(root);
+        compiler.compileObject(text);
 
         Spin1InstructionObject obj = compiler.source.get(0).getInstructionObject();
         return obj.getBytes();
