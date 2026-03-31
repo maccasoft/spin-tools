@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -52,8 +51,6 @@ import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
 
 import com.maccasoft.propeller.Preferences.SpinFormatPreferences;
-import com.maccasoft.propeller.SourceTokenMarker.TokenId;
-import com.maccasoft.propeller.SourceTokenMarker.TokenMarker;
 import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
@@ -110,7 +107,7 @@ public class EditorTab implements FindReplaceTarget {
     Set<File> missingDependencies = new HashSet<>();
 
     boolean errors;
-    List<CompilerException> messages = new ArrayList<CompilerException>();
+    List<CompilerException> messages = new ArrayList<>();
 
     SpinObject object;
     ObjectTree objectTree;
@@ -678,15 +675,13 @@ public class EditorTab implements FindReplaceTarget {
                             }
 
                             if (!pendingCompile.get()) {
-                                messages.clear();
-                                messages.addAll(compiler.getMessages());
-
-                                List<CompilerException> list = new ArrayList<CompilerException>();
-                                for (CompilerException msg : messages) {
+                                List<CompilerException> list = new ArrayList<>();
+                                for (CompilerException msg : compiler.getMessages()) {
                                     if (localFile.equals(msg.getFile())) {
                                         list.add(msg);
                                     }
                                 }
+                                messages = list;
 
                                 Display.getDefault().asyncExec(() -> {
                                     if (editor == null || editor.isDisposed() || tabItem.isDisposed()) {
@@ -991,56 +986,44 @@ public class EditorTab implements FindReplaceTarget {
         return errors;
     }
 
-    public List<CompilerException> getMessages() {
-        return messages;
-    }
-
     public SpinObject getObject() {
         return object;
     }
 
     public void goToFirstError() {
-        Iterator<TokenMarker> iter = tokenMarker.getCompilerTokens().iterator();
-        while (iter.hasNext()) {
-            TokenMarker marker = iter.next();
-            if (marker.id == TokenId.ERROR) {
-                int markerLine = editor.getStyledText().getLineAtOffset(marker.start);
-                editor.goToLineColumn(markerLine, marker.start - editor.getStyledText().getOffsetAtLine(markerLine));
+        for (CompilerException msg : messages) {
+            if (msg.type == CompilerException.ERROR) {
+                editor.goToLineColumn(msg.line - 1, msg.column);
                 break;
             }
         }
     }
 
     public void goToNextAnnotation() {
-        TokenMarker marker = getNextMarker(TokenId.ERROR);
-        if (marker == null) {
-            marker = getNextMarker(null);
+        CompilerException msg = getNextMarker(CompilerException.ERROR);
+        if (msg == null) {
+            msg = getNextMarker(CompilerException.WARNING);
         }
-        if (marker != null) {
-            int markerLine = editor.getStyledText().getLineAtOffset(marker.start);
-            editor.goToLineColumn(markerLine, marker.start - editor.getStyledText().getOffsetAtLine(markerLine));
+        if (msg != null) {
+            editor.goToLineColumn(msg.line - 1, msg.column);
         }
         else {
             Display.getDefault().beep();
         }
     }
 
-    TokenMarker getNextMarker(TokenId id) {
+    CompilerException getNextMarker(int type) {
         int offset = editor.getStyledText().getCaretOffset();
 
-        Iterator<TokenMarker> iter = tokenMarker.getCompilerTokens().iterator();
-        while (iter.hasNext()) {
-            TokenMarker marker = iter.next();
-            if ((id == null || marker.id == id) && marker.start > offset) {
-                return marker;
+        for (CompilerException msg : messages) {
+            if (msg.type == type && msg.startToken.start > offset) {
+                return msg;
             }
         }
 
-        iter = tokenMarker.getCompilerTokens().iterator();
-        while (iter.hasNext()) {
-            TokenMarker marker = iter.next();
-            if (id == null || marker.id == id) {
-                return marker;
+        for (CompilerException msg : messages) {
+            if (msg.type == type) {
+                return msg;
             }
         }
 
@@ -1048,35 +1031,30 @@ public class EditorTab implements FindReplaceTarget {
     }
 
     public void goToPreviousAnnotation() {
-        TokenMarker marker = getPreviousMarker(TokenId.ERROR);
-        if (marker == null) {
-            marker = getPreviousMarker(null);
+        CompilerException msg = getPreviousMarker(CompilerException.ERROR);
+        if (msg == null) {
+            msg = getPreviousMarker(CompilerException.WARNING);
         }
-        if (marker != null) {
-            int markerLine = editor.getStyledText().getLineAtOffset(marker.start);
-            editor.goToLineColumn(markerLine, marker.start - editor.getStyledText().getOffsetAtLine(markerLine));
+        if (msg != null) {
+            editor.goToLineColumn(msg.line - 1, msg.column);
         }
         else {
             Display.getDefault().beep();
         }
     }
 
-    TokenMarker getPreviousMarker(TokenId id) {
+    CompilerException getPreviousMarker(int type) {
         int offset = editor.getStyledText().getCaretOffset();
 
-        Iterator<TokenMarker> iter = tokenMarker.getCompilerTokens().descendingIterator();
-        while (iter.hasNext()) {
-            TokenMarker marker = iter.next();
-            if ((id == null || marker.id == id) && marker.start < offset) {
-                return marker;
+        for (CompilerException msg : messages.reversed()) {
+            if (msg.type == type && msg.startToken.start < offset) {
+                return msg;
             }
         }
 
-        iter = tokenMarker.getCompilerTokens().descendingIterator();
-        while (iter.hasNext()) {
-            TokenMarker marker = iter.next();
-            if (id == null || marker.id == id) {
-                return marker;
+        for (CompilerException msg : messages.reversed()) {
+            if (msg.type == type) {
+                return msg;
             }
         }
 

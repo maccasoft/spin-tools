@@ -173,7 +173,6 @@ public abstract class SourceTokenMarker {
 
     protected RootNode root;
     protected TreeSet<TokenMarker> tokens = new TreeSet<>();
-    protected TreeSet<TokenMarker> compilerTokens = new TreeSet<>();
     protected TreeSet<TokenMarker> excludedNodes = new TreeSet<>();
 
     protected boolean caseSensitive;
@@ -218,25 +217,6 @@ public abstract class SourceTokenMarker {
     }
 
     public void refreshCompilerTokens(List<CompilerException> messages) {
-        TreeSet<TokenMarker> tokens = new TreeSet<TokenMarker>();
-
-        for (CompilerException message : messages) {
-            if (message.hasChilds()) {
-                for (CompilerException childMessage : message.getChilds()) {
-                    TokenId id = childMessage.type == CompilerException.ERROR ? TokenId.ERROR : TokenId.WARNING;
-                    TokenMarker marker = childMessage.getStartToken() != null ? new TokenMarker(childMessage.getStartToken(), childMessage.getStopToken(), id) : new TokenMarker(0, 0, id);
-                    marker.setError(childMessage.getMessage());
-                    tokens.add(marker);
-                }
-            }
-            else {
-                TokenId id = message.type == CompilerException.ERROR ? TokenId.ERROR : TokenId.WARNING;
-                TokenMarker marker = message.getStartToken() != null ? new TokenMarker(message.getStartToken(), message.getStopToken(), id) : new TokenMarker(0, 0, id);
-                marker.setError(message.getMessage());
-                tokens.add(marker);
-            }
-        }
-
         excludedPaths.clear();
         excludedNodes.clear();
 
@@ -327,12 +307,6 @@ public abstract class SourceTokenMarker {
             }
 
         });
-
-        compilerTokens = tokens;
-    }
-
-    public TreeSet<TokenMarker> getCompilerTokens() {
-        return compilerTokens;
     }
 
     public Set<TokenMarker> getLineTokens(int lineStart, String lineText) {
@@ -340,20 +314,6 @@ public abstract class SourceTokenMarker {
     }
 
     public TokenMarker getMarkerAtOffset(int offset) {
-        for (TokenMarker marker : compilerTokens) {
-            if (marker.id == TokenId.ERROR) {
-                if (offset >= marker.start && offset <= marker.stop) {
-                    return marker;
-                }
-            }
-        }
-        for (TokenMarker marker : compilerTokens) {
-            if (marker.id == TokenId.WARNING) {
-                if (offset >= marker.start && offset <= marker.stop) {
-                    return marker;
-                }
-            }
-        }
         for (TokenMarker marker : tokens) {
             if (offset >= marker.start && offset <= marker.stop) {
                 return marker;

@@ -12,7 +12,6 @@ package com.maccasoft.propeller;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -106,6 +105,7 @@ import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.ObjectsNode;
+import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariableNode;
@@ -150,6 +150,7 @@ public class SourceEditor {
     SourceTokenMarker tokenMarker;
     Map<TokenId, TextStyle> styleMap = new HashMap<TokenId, TextStyle>();
     Map<Integer, StyleRange[]> lineStylesCache = new HashMap<>();
+    List<CompilerException> compilerMessages = new ArrayList<>();
 
     EditorHelp helpProvider;
     ContentProposalAdapter proposalAdapter;
@@ -546,18 +547,51 @@ public class SourceEditor {
 
             @Override
             public void textChanging(TextChangingEvent event) {
-                fixupTokens(event, tokenMarker.getCompilerTokens());
-                fixupTokens(event, tokenMarker.getExcludedNodes());
-            }
+                for (CompilerException msg : compilerMessages) {
+                    if (msg.startToken != null && msg.stopToken != null) {
+                        if (event.newCharCount != 0) {
+                            if (event.start < msg.startToken.start) {
+                                msg.startToken.start += event.newCharCount;
+                                msg.stopToken.stop += event.newCharCount;
+                            }
+                            else if (event.start <= msg.stopToken.stop + 1) {
+                                msg.stopToken.stop += event.newCharCount;
+                            }
+                        }
+                        if (event.replaceCharCount != 0) {
+                            if (event.start + event.replaceCharCount <= msg.startToken.start) {
+                                msg.startToken.start -= event.replaceCharCount;
+                                msg.stopToken.stop -= event.replaceCharCount;
+                            }
+                            else if (event.start >= msg.startToken.start && event.start <= msg.stopToken.stop) {
+                                if (event.start + event.replaceCharCount > msg.stopToken.stop) {
+                                    msg.stopToken.stop -= msg.stopToken.stop - event.start;
+                                }
+                                else {
+                                    msg.stopToken.stop -= event.replaceCharCount;
+                                }
+                            }
+                            else if (event.start < msg.startToken.start) {
+                                if (event.start + event.replaceCharCount <= msg.stopToken.stop) {
+                                    msg.stopToken.stop -= (event.start + event.replaceCharCount) - msg.startToken.start;
+                                    msg.stopToken.stop -= msg.startToken.start - event.start;
+                                    msg.startToken.start -= msg.startToken.start - event.start;
+                                }
+                                else {
+                                    msg.stopToken.stop = msg.startToken.start;
+                                }
+                            }
+                        }
+                    }
+                }
 
-            void fixupTokens(TextChangingEvent event, Collection<TokenMarker> c) {
-                for (TokenMarker entry : c) {
+                for (TokenMarker entry : tokenMarker.getExcludedNodes()) {
                     if (event.newCharCount != 0) {
                         if (event.start < entry.start) {
                             entry.start += event.newCharCount;
                             entry.stop += event.newCharCount;
                         }
-                        else if (event.start >= entry.start && event.start <= entry.stop + 1) {
+                        else if (event.start <= entry.stop + 1) {
                             entry.stop += event.newCharCount;
                         }
                     }
@@ -751,23 +785,17 @@ public class SourceEditor {
 
                 int offset = styledText.getOffsetAtPoint(new Point(e.x, e.y));
 
-                Token token = tokenMarker.getTokenAt(offset);
-                if (token == null || token.type == Token.EOF) {
-                    return;
-                }
+                CompilerException message = getCompilerMessageAtOffset(offset);
+                if (message != null) {
+                    Rectangle textBounds = styledText.getTextBounds(message.startToken.start, message.stopToken.stop);
 
-                popupMouseBounds = styledText.getTextBounds(token.start, token.stop);
-                popupMouseBounds.x -= 5;
-                popupMouseBounds.y -= 5;
-                popupMouseBounds.width += 10;
-                popupMouseBounds.height += 10;
+                    popupMouseBounds = textBounds;
+                    popupMouseBounds.x -= 5;
+                    popupMouseBounds.y -= 5;
+                    popupMouseBounds.width += 10;
+                    popupMouseBounds.height += 10;
 
-                Node context = tokenMarker.getContextAtLine(styledText.getLineAtOffset(offset));
-                TokenMarker marker = tokenMarker.getMarkerAtOffset(offset);
-                Rectangle bounds = display.map(styledText, null, styledText.getTextBounds(token.start, token.stop));
-
-                if (marker != null && marker.getError() != null) {
-                    popupWindow = new Shell(styledText.getShell(), SWT.RESIZE | SWT.ON_TOP);
+                    popupWindow = new Shell(styledText.getShell(), SWT.ON_TOP);
                     FillLayout layout = new FillLayout();
                     layout.marginHeight = layout.marginWidth = 5;
                     popupWindow.setLayout(layout);
@@ -777,13 +805,19 @@ public class SourceEditor {
 
                     Label content = new Label(popupWindow, SWT.NONE);
                     content.setForeground(textForeground);
-                    content.setText(marker.getError());
+                    content.setText(message.getMessage());
                     popupWindow.pack();
 
                     Point size = popupWindow.getSize();
+                    Rectangle bounds = display.map(styledText, null, textBounds);
                     popupWindow.setLocation(bounds.x, bounds.y - size.y - 3);
 
                     popupWindow.setVisible(true);
+                    return;
+                }
+
+                Token token = tokenMarker.getTokenAt(offset);
+                if (token == null || token.type == Token.EOF) {
                     return;
                 }
 
@@ -836,10 +870,17 @@ public class SourceEditor {
                         index++;
                     }
                     if (index < lineText.length() && lineText.charAt(index) != '[') {
+                        Node context = tokenMarker.getContextAtLine(styledText.getLineAtOffset(offset));
                         text = helpProvider.getString(context != null ? context.getClass().getSimpleName() : null, token.getText().toLowerCase());
                     }
                 }
                 if (text != null && !text.isEmpty()) {
+                    popupMouseBounds = styledText.getTextBounds(token.start, token.stop);
+                    popupMouseBounds.x -= 5;
+                    popupMouseBounds.y -= 5;
+                    popupMouseBounds.width += 10;
+                    popupMouseBounds.height += 10;
+
                     popupWindow = new Shell(styledText.getShell(), SWT.RESIZE | SWT.ON_TOP);
                     FillLayout layout = new FillLayout();
                     layout.marginHeight = layout.marginWidth = 0;
@@ -859,6 +900,7 @@ public class SourceEditor {
 
                     popupWindow.pack();
 
+                    Rectangle bounds = display.map(styledText, null, styledText.getTextBounds(token.start, token.stop));
                     bounds.y += bounds.height + 3;
                     bounds.width = Math.max(Math.max(640, bounds.width),
                         htmlText.getLineSize() +
@@ -872,6 +914,17 @@ public class SourceEditor {
 
                     popupWindow.setVisible(true);
                 }
+            }
+
+            CompilerException getCompilerMessageAtOffset(int offset) {
+                for (CompilerException msg : compilerMessages) {
+                    if (msg.startToken != null && msg.stopToken != null) {
+                        if (offset >= msg.startToken.start && offset <= msg.stopToken.stop) {
+                            return msg;
+                        }
+                    }
+                }
+                return null;
             }
 
         });
@@ -1031,69 +1084,63 @@ public class SourceEditor {
                     gc.setLineWidth(indentLinesSize);
                     gc.setForeground(ColorRegistry.getColor(0xA0, 0xA0, 0xA0));
 
+                    int topIndex = styledText.getTopIndex();
+                    int bottomIndex = styledText.getLineIndex(clientArea.height);
+
                     if (showIndentLines) {
-                        Node root = tokenMarker.getRoot();
+                        RootNode root = tokenMarker.getRoot();
                         if (root != null) {
-                            for (Node node : root.getChilds()) {
-                                if (node instanceof MethodNode) {
-                                    for (int i = 0; i < node.getChildCount(); i++) {
-                                        Node child = node.getChild(i);
-                                        if ((child instanceof StatementNode) || (child instanceof DataLineNode)) {
-                                            int y2 = paintBlock(gc, child);
-                                            Token token = child.getStartToken();
-                                            String tokenText = token.getText().toUpperCase();
-                                            if ("REPEAT".equals(tokenText)) {
-                                                if (i + 1 < node.getChildCount()) {
-                                                    Node nextChild = node.getChild(i + 1);
-                                                    Token nextToken = nextChild.getStartToken();
-                                                    String nextTokenText = nextToken.getText().toUpperCase();
-                                                    if ("WHILE".equals(nextTokenText) || "UNTIL".equals(nextTokenText)) {
-                                                        int x2 = (charSize.x * token.column + charSize.x) - rightOffset;
-                                                        int y3 = styledText.getLinePixel(nextToken.line);
-                                                        gc.drawLine(x2, y2, x2, y3);
-                                                    }
-                                                }
-                                            }
-                                            else if ("IF".equals(tokenText) || "IFNOT".equals(tokenText) || "ELSEIF".equals(tokenText) || "ELSEIFNOT".equals(tokenText) || "ELSE".equals(tokenText)) {
-                                                if (i + 1 < node.getChildCount()) {
-                                                    Node nextChild = node.getChild(i + 1);
-                                                    Token nextToken = nextChild.getStartToken();
-                                                    String nextTokenText = nextToken.getText().toUpperCase();
-                                                    if ("ELSEIF".equals(nextTokenText) || "ELSEIFNOT".equals(nextTokenText) || "ELSE".equals(nextTokenText)) {
-                                                        int x2 = (charSize.x * token.column + charSize.x) - rightOffset;
-                                                        int y3 = styledText.getLinePixel(nextToken.line);
-                                                        gc.drawLine(x2, y2, x2, y3);
-                                                    }
-                                                }
-                                            }
-                                        }
+                            MethodNode previousNode = null;
+
+                            for (Node child : root.getChilds()) {
+                                if (child instanceof MethodNode node) {
+                                    int startLine = child.getStartToken().line;
+                                    if (startLine > bottomIndex) {
+                                        break;
+                                    }
+                                    if (startLine >= topIndex) {
+                                        paintNode(gc, node);
+                                    }
+                                    else {
+                                        previousNode = node;
                                     }
                                 }
+                            }
+                            if (previousNode != null) {
+                                paintNode(gc, previousNode);
                             }
                         }
                     }
 
                     gc.setLineWidth(0);
 
-                    for (TokenMarker entry : tokenMarker.getCompilerTokens()) {
-                        if (entry.id == TokenId.WARNING) {
+                    int lineHeight = styledText.getLineHeight();
+
+                    for (CompilerException msg : compilerMessages) {
+                        if (msg.type == CompilerException.WARNING && msg.line >= topIndex && msg.line <= bottomIndex) {
                             try {
-                                int[] polyline = computePolyline(entry.start, entry.stop);
+                                int y = styledText.getLinePixel(msg.line - 1);
+                                int x = clientArea.x + msg.column * charSize.x - rightOffset;
+                                int width = (msg.stopToken.stop - msg.startToken.start + 1) * charSize.x;
+                                int[] polyline = computePolyline(x, y, width, lineHeight);
                                 gc.setForeground(warningColor);
                                 gc.drawPolyline(polyline);
-                            } catch (Exception ex) {
+                            } catch (Exception ignore) {
                                 // Ignore
                             }
                         }
                     }
 
-                    for (TokenMarker entry : tokenMarker.getCompilerTokens()) {
-                        if (entry.id == TokenId.ERROR) {
+                    for (CompilerException msg : compilerMessages) {
+                        if (msg.type == CompilerException.ERROR && msg.line >= topIndex && msg.line <= bottomIndex) {
                             try {
-                                int[] polyline = computePolyline(entry.start, entry.stop);
+                                int y = styledText.getLinePixel(msg.line - 1);
+                                int x = clientArea.x + msg.column * charSize.x - rightOffset;
+                                int width = (msg.stopToken.stop - msg.startToken.start + 1) * charSize.x;
+                                int[] polyline = computePolyline(x, y, width, lineHeight);
                                 gc.setForeground(errorColor);
                                 gc.drawPolyline(polyline);
-                            } catch (Exception ex) {
+                            } catch (Exception ignore) {
                                 // Ignore
                             }
                         }
@@ -1106,6 +1153,41 @@ public class SourceEditor {
                     }
                 } catch (Exception ex) {
                     ex.printStackTrace();
+                }
+            }
+
+            void paintNode(GC gc, MethodNode node) {
+                for (int i = 0; i < node.getChildCount(); i++) {
+                    Node child = node.getChild(i);
+                    if ((child instanceof StatementNode) || (child instanceof DataLineNode)) {
+                        int y2 = paintBlock(gc, child);
+                        Token token = child.getStartToken();
+                        String tokenText = token.getText().toUpperCase();
+                        if ("REPEAT".equals(tokenText)) {
+                            if (i + 1 < node.getChildCount()) {
+                                Node nextChild = node.getChild(i + 1);
+                                Token nextToken = nextChild.getStartToken();
+                                String nextTokenText = nextToken.getText().toUpperCase();
+                                if ("WHILE".equals(nextTokenText) || "UNTIL".equals(nextTokenText)) {
+                                    int x2 = (charSize.x * token.column + charSize.x) - rightOffset;
+                                    int y3 = styledText.getLinePixel(nextToken.line);
+                                    gc.drawLine(x2, y2, x2, y3);
+                                }
+                            }
+                        }
+                        else if ("IF".equals(tokenText) || "IFNOT".equals(tokenText) || "ELSEIF".equals(tokenText) || "ELSEIFNOT".equals(tokenText) || "ELSE".equals(tokenText)) {
+                            if (i + 1 < node.getChildCount()) {
+                                Node nextChild = node.getChild(i + 1);
+                                Token nextToken = nextChild.getStartToken();
+                                String nextTokenText = nextToken.getText().toUpperCase();
+                                if ("ELSEIF".equals(nextTokenText) || "ELSEIFNOT".equals(nextTokenText) || "ELSE".equals(nextTokenText)) {
+                                    int x2 = (charSize.x * token.column + charSize.x) - rightOffset;
+                                    int y3 = styledText.getLinePixel(nextToken.line);
+                                    gc.drawLine(x2, y2, x2, y3);
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -1163,26 +1245,12 @@ public class SourceEditor {
                 return y0;
             }
 
-            private int[] computePolyline(int start, int stop) {
+            private int[] computePolyline(int x, int y, int width, int height) {
                 int WIDTH = 4; // must be even
                 int HEIGHT = 2; // can be any number
 
-                int charCount = styledText.getCharCount();
-                Rectangle r = styledText.getTextBounds(start >= charCount ? charCount - 1 : start, stop >= charCount ? charCount - 1 : stop);
-                if (stop >= charCount) {
-                    r.x += charSize.x;
-                }
-                else {
-                    String s = styledText.getTextRange(stop, 1);
-                    if ("\r".equals(s) || "\n".equals(s)) {
-                        r.x += charSize.x;
-                    }
-                }
-                int left = r.x;
-                int right = r.x + r.width;
-                int y = r.y;
-                int height = styledText.getLineHeight();
-                int peeks = (right - left) / WIDTH;
+                int right = x + width;
+                int peeks = (right - x) / WIDTH;
 
                 // compute (number of point) * 2
                 int length = ((2 * peeks) + 1) * 2;
@@ -1198,19 +1266,20 @@ public class SourceEditor {
 
                 // populate array with peek coordinates
                 for (int i = 0, index = 0; i < peeks; i++) {
-                    coordinates[index++] = left;
+                    coordinates[index++] = x;
                     coordinates[index++] = bottom;
-                    coordinates[index++] = left + WIDTH / 2;
+                    coordinates[index++] = x + WIDTH / 2;
                     coordinates[index++] = top;
-                    left += WIDTH;
+                    x += WIDTH;
                 }
 
                 // the last down flank is missing
-                coordinates[length - 2] = left;
+                coordinates[length - 2] = x;
                 coordinates[length - 1] = bottom;
 
                 return coordinates;
             }
+
         });
 
         display.addFilter(SWT.MouseDown, modifiersFilterListener);
@@ -2377,13 +2446,17 @@ public class SourceEditor {
 
         ruler.clearHighlights();
         overview.clearHighlights();
+        compilerMessages.clear();
+
         for (CompilerException msg : messages) {
             if (msg.type == CompilerException.ERROR) {
                 ruler.setHighlight(msg.line);
                 overview.setErrorHighlight(msg.line, msg.getMessage());
+                compilerMessages.add(msg);
             }
             else if (msg.type == CompilerException.WARNING) {
                 overview.setWarningHighlight(msg.line, msg.getMessage());
+                compilerMessages.add(msg);
             }
         }
     }
