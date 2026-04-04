@@ -2487,8 +2487,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
             if (node.isExclude()) {
                 continue;
             }
-            if (node instanceof DataLineNode) {
-                DataLineNode lineNode = (DataLineNode) node;
+            if (node instanceof DataLineNode lineNode) {
                 if (lineNode.label != null && !lineNode.label.getText().startsWith(".")) {
                     lineScope = rootScope;
                 }
@@ -2502,7 +2501,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         if (!n2.isExclude() && (n2 instanceof DataLineNode)) {
                             lineNode = (DataLineNode) n2;
                             if ("DITTO".equalsIgnoreCase(lineNode.instruction.getText())) {
-                                if (!lineNode.parameters.isEmpty() && "END".equalsIgnoreCase(lineNode.parameters.get(0).getText())) {
+                                if (!lineNode.parameters.isEmpty() && "END".equalsIgnoreCase(lineNode.parameters.getFirst().getText())) {
                                     endLineNode = lineNode;
                                     break;
                                 }

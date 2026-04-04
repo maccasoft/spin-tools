@@ -21,11 +21,6 @@ public class StatementNode extends Node {
     }
 
     @Override
-    public void addToken(Token token) {
-        tokens.add(token);
-    }
-
-    @Override
     public void accept(NodeVisitor visitor) {
         if (visitor.visitStatement(this)) {
             super.accept(visitor);
@@ -34,7 +29,30 @@ public class StatementNode extends Node {
 
     @Override
     public int getStartIndex() {
-        return tokens.size() != 0 ? tokens.get(0).start - tokens.get(0).column : -1;
+        return !tokens.isEmpty() ? tokens.getFirst().start - tokens.getFirst().column : -1;
+    }
+
+    public String getText() {
+        if (tokens.isEmpty()) {
+            return "";
+        }
+        if (tokens.size() == 1 && tokens.getFirst().type == Token.EOF) {
+            return "<EOF>";
+        }
+        int s = tokens.getFirst().start - tokens.getFirst().column;
+        int e = tokens.getLast().stop;
+        TokenStream stream = getStartToken().getStream();
+        return stream.getSource(s, e);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(getClass().getSimpleName());
+        sb.append(dumpTokens());
+
+        return sb.toString();
     }
 
 }

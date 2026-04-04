@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
+ * All rights reserved.
  *
- * Contributors:
- *     Marco Maccaferri - initial API and implementation
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License v1.0 which accompanies this
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.model;
@@ -15,12 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DataLineNode extends Node {
-
-    public Token label;
-    public Token condition;
-    public Token instruction;
-    public List<ParameterNode> parameters = new ArrayList<ParameterNode>();
-    public Node modifier;
 
     public static class ParameterNode extends Node {
 
@@ -36,13 +28,22 @@ public class DataLineNode extends Node {
 
     }
 
-    public DataLineNode(Node parent) {
-        super(parent);
+    public static class ModifierNode extends Node {
+
+        public ModifierNode(Node parent) {
+            super(parent);
+        }
+
     }
 
-    @Override
-    public void addToken(Token token) {
-        tokens.add(token);
+    public Token label;
+    public Token condition;
+    public Token instruction;
+    public List<ParameterNode> parameters = new ArrayList<ParameterNode>();
+    public ModifierNode modifier;
+
+    public DataLineNode(Node parent) {
+        super(parent);
     }
 
     @Override
@@ -52,7 +53,7 @@ public class DataLineNode extends Node {
 
     @Override
     public int getStartIndex() {
-        return tokens.size() != 0 ? tokens.get(0).start - tokens.get(0).column : -1;
+        return !tokens.isEmpty() ? tokens.getFirst().start - tokens.getFirst().column : -1;
     }
 
     @Override
@@ -69,6 +70,38 @@ public class DataLineNode extends Node {
         else {
             sb.append(parent.indexOf(this));
         }
+
+        return sb.toString();
+    }
+
+    public String getText() {
+        if (tokens.isEmpty()) {
+            return "";
+        }
+        if (tokens.size() == 1 && tokens.getFirst().type == Token.EOF) {
+            return "<EOF>";
+        }
+        int s = tokens.getFirst().start - tokens.getFirst().column;
+        int e = tokens.getLast().stop;
+        TokenStream stream = getStartToken().getStream();
+        return stream.getSource(s, e);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(getClass().getSimpleName());
+        if (label != null) {
+            sb.append(" label=").append(label.getText());
+        }
+        if (condition != null) {
+            sb.append(" condition=").append(condition.getText());
+        }
+        if (instruction != null) {
+            sb.append(" instruction=").append(instruction.getText());
+        }
+        sb.append(dumpTokens());
 
         return sb.toString();
     }

@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spinc;
@@ -16,7 +15,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.model.Node;
-import com.maccasoft.propeller.model.Token;
 
 class CParserTest {
 
@@ -76,19 +74,19 @@ class CParserTest {
         Assertions.assertEquals(""
             + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
-            + "    +-- StatementNode [    method(1, 2);]\n"
-            + "    +-- StatementNode [    a = function(1, 2);]\n"
+            + "    +-- StatementNode [method(1, 2);]\n"
+            + "    +-- StatementNode [a = function(1, 2);]\n"
             + "    +-- StatementNode [}]\n"
             + "+-- FunctionNode type=void identifier=method [void method(int a, int b) {]\n"
             + "    +-- ParameterNode type=int identifier=a [int a]\n"
             + "    +-- ParameterNode type=int identifier=b [int b]\n"
-            + "    +-- StatementNode [    d = a * b;]\n"
+            + "    +-- StatementNode [d = a * b;]\n"
             + "    +-- StatementNode [}]\n"
             + "+-- FunctionNode type=int identifier=function [int function(int a, int b) {]\n"
             + "    +-- ParameterNode type=int identifier=a [int a]\n"
             + "    +-- ParameterNode type=int identifier=b [int b]\n"
-            + "    +-- StatementNode [    d = a * b;]\n"
-            + "    +-- StatementNode [    return d;]\n"
+            + "    +-- StatementNode [d = a * b;]\n"
+            + "    +-- StatementNode [return d;]\n"
             + "    +-- StatementNode [}]\n"
             + "", tree(root));
     }
@@ -108,10 +106,10 @@ class CParserTest {
         Assertions.assertEquals(""
             + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
-            + "    +-- StatementNode [    if (a == 1) {]\n"
-            + "        +-- StatementNode [        method(1, 2);]\n"
-            + "    +-- StatementNode [    }]\n"
-            + "    +-- StatementNode [    a = function(1, 2);]\n"
+            + "    +-- StatementNode [if (a == 1) {]\n"
+            + "        +-- StatementNode [method(1, 2);]\n"
+            + "    +-- StatementNode [}]\n"
+            + "    +-- StatementNode [a = function(1, 2);]\n"
             + "    +-- StatementNode [}]\n"
             + "", tree(root));
     }
@@ -132,12 +130,12 @@ class CParserTest {
         Assertions.assertEquals(""
             + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
-            + "    +-- StatementNode [    if (a == 1) {]\n"
-            + "        +-- StatementNode [        method(1, 2);]\n"
-            + "    +-- StatementNode [    }]\n"
-            + "    +-- StatementNode [    else {]\n"
-            + "        +-- StatementNode [        a = function(1, 2);]\n"
-            + "    +-- StatementNode [    }]\n"
+            + "    +-- StatementNode [if (a == 1) {]\n"
+            + "        +-- StatementNode [method(1, 2);]\n"
+            + "    +-- StatementNode [}]\n"
+            + "    +-- StatementNode [else {]\n"
+            + "        +-- StatementNode [a = function(1, 2);]\n"
+            + "    +-- StatementNode [}]\n"
             + "    +-- StatementNode [}]\n"
             + "", tree(root));
     }
@@ -168,19 +166,19 @@ class CParserTest {
         Assertions.assertEquals(""
             + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
-            + "    +-- StatementNode [    int a;]\n"
-            + "    +-- StatementNode [    if (a == 0) {]\n"
-            + "        +-- StatementNode [        a = 1;]\n"
-            + "    +-- StatementNode [    }]\n"
-            + "    +-- StatementNode [    else if (a == 1) {]\n"
-            + "        +-- StatementNode [        a = 2;]\n"
-            + "    +-- StatementNode [    }]\n"
-            + "    +-- StatementNode [    else if (a == 2) {]\n"
-            + "        +-- StatementNode [        a = 3;]\n"
-            + "    +-- StatementNode [    }]\n"
-            + "    +-- StatementNode [    else {]\n"
-            + "        +-- StatementNode [        a = 4;]\n"
-            + "    +-- StatementNode [    }]\n"
+            + "    +-- StatementNode [int a;]\n"
+            + "    +-- StatementNode [if (a == 0) {]\n"
+            + "        +-- StatementNode [a = 1;]\n"
+            + "    +-- StatementNode [}]\n"
+            + "    +-- StatementNode [else if (a == 1) {]\n"
+            + "        +-- StatementNode [a = 2;]\n"
+            + "    +-- StatementNode [}]\n"
+            + "    +-- StatementNode [else if (a == 2) {]\n"
+            + "        +-- StatementNode [a = 3;]\n"
+            + "    +-- StatementNode [}]\n"
+            + "    +-- StatementNode [else {]\n"
+            + "        +-- StatementNode [a = 4;]\n"
+            + "    +-- StatementNode [}]\n"
             + "    +-- StatementNode [}]\n"
             + "", tree(root));
     }
@@ -199,9 +197,9 @@ class CParserTest {
         Assertions.assertEquals(""
             + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
-            + "    +-- StatementNode [    if (a == 1)]\n"
-            + "        +-- StatementNode [        method(1, 2);]\n"
-            + "    +-- StatementNode [    a = function(1, 2);]\n"
+            + "    +-- StatementNode [if (a == 1)]\n"
+            + "        +-- StatementNode [method(1, 2);]\n"
+            + "    +-- StatementNode [a = function(1, 2);]\n"
             + "    +-- StatementNode [}]\n"
             + "", tree(root));
     }
@@ -221,10 +219,10 @@ class CParserTest {
         Assertions.assertEquals(""
             + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
-            + "    +-- StatementNode [    if (a == 1)]\n"
-            + "        +-- StatementNode [        method(1, 2);]\n"
-            + "    +-- StatementNode [    else]\n"
-            + "        +-- StatementNode [        a = function(1, 2);]\n"
+            + "    +-- StatementNode [if (a == 1)]\n"
+            + "        +-- StatementNode [method(1, 2);]\n"
+            + "    +-- StatementNode [else]\n"
+            + "        +-- StatementNode [a = function(1, 2);]\n"
             + "    +-- StatementNode [}]\n"
             + "", tree(root));
     }
@@ -251,15 +249,15 @@ class CParserTest {
         Assertions.assertEquals(""
             + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
-            + "    +-- StatementNode [    int a;]\n"
-            + "    +-- StatementNode [    if (a == 0)]\n"
-            + "        +-- StatementNode [        a = 1;]\n"
-            + "    +-- StatementNode [    else if (a == 1)]\n"
-            + "        +-- StatementNode [        a = 2;]\n"
-            + "    +-- StatementNode [    else if (a == 2)]\n"
-            + "        +-- StatementNode [        a = 3;]\n"
-            + "    +-- StatementNode [    else]\n"
-            + "        +-- StatementNode [        a = 4;]\n"
+            + "    +-- StatementNode [int a;]\n"
+            + "    +-- StatementNode [if (a == 0)]\n"
+            + "        +-- StatementNode [a = 1;]\n"
+            + "    +-- StatementNode [else if (a == 1)]\n"
+            + "        +-- StatementNode [a = 2;]\n"
+            + "    +-- StatementNode [else if (a == 2)]\n"
+            + "        +-- StatementNode [a = 3;]\n"
+            + "    +-- StatementNode [else]\n"
+            + "        +-- StatementNode [a = 4;]\n"
             + "    +-- StatementNode [}]\n"
             + "", tree(root));
     }
@@ -280,11 +278,11 @@ class CParserTest {
         Assertions.assertEquals(""
             + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
-            + "    +-- StatementNode [    while (a == 1) {]\n"
-            + "        +-- StatementNode [        method(1, 2);]\n"
-            + "        +-- StatementNode [        d++;]\n"
-            + "    +-- StatementNode [    }]\n"
-            + "    +-- StatementNode [    a = function(1, 2);]\n"
+            + "    +-- StatementNode [while (a == 1) {]\n"
+            + "        +-- StatementNode [method(1, 2);]\n"
+            + "        +-- StatementNode [d++;]\n"
+            + "    +-- StatementNode [}]\n"
+            + "    +-- StatementNode [a = function(1, 2);]\n"
             + "    +-- StatementNode [}]\n"
             + "", tree(root));
     }
@@ -305,11 +303,11 @@ class CParserTest {
         Assertions.assertEquals(""
             + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
-            + "    +-- StatementNode [    do {]\n"
-            + "        +-- StatementNode [        method(1, 2);]\n"
-            + "        +-- StatementNode [        d++;]\n"
-            + "    +-- StatementNode [    } while (a == 1);]\n"
-            + "    +-- StatementNode [    a = function(1, 2);]\n"
+            + "    +-- StatementNode [do {]\n"
+            + "        +-- StatementNode [method(1, 2);]\n"
+            + "        +-- StatementNode [d++;]\n"
+            + "    +-- StatementNode [} while (a == 1);]\n"
+            + "    +-- StatementNode [a = function(1, 2);]\n"
             + "    +-- StatementNode [}]\n"
             + "", tree(root));
     }
@@ -331,12 +329,12 @@ class CParserTest {
         Assertions.assertEquals(""
             + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
-            + "    +-- StatementNode [    for(a = 1; a < 100; a++) {]\n"
-            + "        +-- StatementNode [        method(a, 2);]\n"
-            + "    +-- StatementNode [    }]\n"
-            + "    +-- StatementNode [    for(;;) {]\n"
-            + "        +-- StatementNode [        method(a++, 2);]\n"
-            + "    +-- StatementNode [    }]\n"
+            + "    +-- StatementNode [for(a = 1; a < 100; a++) {]\n"
+            + "        +-- StatementNode [method(a, 2);]\n"
+            + "    +-- StatementNode [}]\n"
+            + "    +-- StatementNode [for(;;) {]\n"
+            + "        +-- StatementNode [method(a++, 2);]\n"
+            + "    +-- StatementNode [}]\n"
             + "    +-- StatementNode [}]\n"
             + "", tree(root));
     }
@@ -387,12 +385,12 @@ class CParserTest {
         Assertions.assertEquals(""
             + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
-            + "    +-- StatementNode [    if (a == 1)]\n"
-            + "        +-- StatementNode [    if (a == 1) method(1, 2);]\n"
-            + "    +-- StatementNode [    while (a < 10) {]\n"
-            + "        +-- StatementNode [    while (a < 10) { a++;]\n"
-            + "    +-- StatementNode [    while (a < 10) { a++; }]\n"
-            + "    +-- StatementNode [    a = function(1, 2);]\n"
+            + "    +-- StatementNode [if (a == 1)]\n"
+            + "        +-- StatementNode [method(1, 2);]\n"
+            + "    +-- StatementNode [while (a < 10) {]\n"
+            + "        +-- StatementNode [a++;]\n"
+            + "    +-- StatementNode [}]\n"
+            + "    +-- StatementNode [a = function(1, 2);]\n"
             + "    +-- StatementNode [}]\n"
             + "", tree(root));
     }
@@ -426,19 +424,19 @@ class CParserTest {
             + "    +-- VariableNode identifier=c [c = 3]\n"
             + "+-- VariableNode type=short identifier=d [short d]\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
-            + "    +-- StatementNode [    method(1, 2);]\n"
-            + "    +-- StatementNode [    a = function(1, 2);]\n"
+            + "    +-- StatementNode [method(1, 2);]\n"
+            + "    +-- StatementNode [a = function(1, 2);]\n"
             + "    +-- StatementNode [}]\n"
             + "+-- FunctionNode type=void identifier=method [void method(int a, int b) {]\n"
             + "    +-- ParameterNode type=int identifier=a [int a]\n"
             + "    +-- ParameterNode type=int identifier=b [int b]\n"
-            + "    +-- StatementNode [    d = a * b;]\n"
+            + "    +-- StatementNode [d = a * b;]\n"
             + "    +-- StatementNode [}]\n"
             + "+-- FunctionNode type=int identifier=function [int function(int a, int b) {]\n"
             + "    +-- ParameterNode type=int identifier=a [int a]\n"
             + "    +-- ParameterNode type=int identifier=b [int b]\n"
-            + "    +-- StatementNode [    d = a * b;]\n"
-            + "    +-- StatementNode [    return d;]\n"
+            + "    +-- StatementNode [d = a * b;]\n"
+            + "    +-- StatementNode [return d;]\n"
             + "    +-- StatementNode [}]\n"
             + "", tree(root));
     }
@@ -459,10 +457,10 @@ class CParserTest {
         Assertions.assertEquals(""
             + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
-            + "    +-- StatementNode [    asm {]\n"
-            + "        +-- DataLineNode instruction=nop [        nop]\n"
-            + "        +-- DataLineNode instruction=ret [        ret]\n"
-            + "    +-- StatementNode [    }]\n"
+            + "    +-- StatementNode [asm {]\n"
+            + "        +-- DataLineNode instruction=nop [nop]\n"
+            + "        +-- DataLineNode instruction=ret [ret]\n"
+            + "    +-- StatementNode [}]\n"
             + "    +-- StatementNode [}]\n"
             + "", tree(root));
     }
@@ -521,11 +519,11 @@ class CParserTest {
         Node root = subject.parse();
         Assertions.assertEquals(""
             + "RootNode []\n"
-            + "+-- VariableNode type=int* identifier=a [int *a, *b]\n"
+            + "+-- VariableNode type=int* identifier=a [int*a, *b]\n"
             + "    +-- VariableNode type=* identifier=b [*b]\n"
-            + "+-- VariableNode type=short* identifier=c [short *c]\n"
+            + "+-- VariableNode type=short* identifier=c [short*c]\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
-            + "    +-- StatementNode [    int *d;]\n"
+            + "    +-- StatementNode [int *d;]\n"
             + "    +-- StatementNode [}]\n"
             + "", tree(root));
     }
@@ -553,17 +551,17 @@ class CParserTest {
         Assertions.assertEquals(""
             + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
-            + "    +-- StatementNode [    switch(a) {]\n"
-            + "        +-- StatementNode [        case 1:]\n"
-            + "            +-- StatementNode [            a = 4;]\n"
-            + "            +-- StatementNode [            break;]\n"
-            + "        +-- StatementNode [        case 2:]\n"
-            + "            +-- StatementNode [            a = 5;]\n"
-            + "            +-- StatementNode [            break;]\n"
-            + "        +-- StatementNode [        case 3:]\n"
-            + "            +-- StatementNode [            a = 6;]\n"
-            + "            +-- StatementNode [            break;]\n"
-            + "    +-- StatementNode [    }]\n"
+            + "    +-- StatementNode [switch(a) {]\n"
+            + "        +-- StatementNode [case 1:]\n"
+            + "            +-- StatementNode [a = 4;]\n"
+            + "            +-- StatementNode [break;]\n"
+            + "        +-- StatementNode [case 2:]\n"
+            + "            +-- StatementNode [a = 5;]\n"
+            + "            +-- StatementNode [break;]\n"
+            + "        +-- StatementNode [case 3:]\n"
+            + "            +-- StatementNode [a = 6;]\n"
+            + "            +-- StatementNode [break;]\n"
+            + "    +-- StatementNode [}]\n"
             + "    +-- StatementNode [}]\n"
             + "", tree(root));
     }
@@ -591,17 +589,17 @@ class CParserTest {
         Assertions.assertEquals(""
             + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
-            + "    +-- StatementNode [    switch(a) {]\n"
-            + "        +-- StatementNode [        case 1:]\n"
-            + "            +-- StatementNode [            a = 4;]\n"
-            + "            +-- StatementNode [            break;]\n"
-            + "        +-- StatementNode [        case 2:]\n"
-            + "            +-- StatementNode [            a = 5;]\n"
-            + "            +-- StatementNode [            break;]\n"
-            + "        +-- StatementNode [        default:]\n"
-            + "            +-- StatementNode [            a = 6;]\n"
-            + "            +-- StatementNode [            break;]\n"
-            + "    +-- StatementNode [    }]\n"
+            + "    +-- StatementNode [switch(a) {]\n"
+            + "        +-- StatementNode [case 1:]\n"
+            + "            +-- StatementNode [a = 4;]\n"
+            + "            +-- StatementNode [break;]\n"
+            + "        +-- StatementNode [case 2:]\n"
+            + "            +-- StatementNode [a = 5;]\n"
+            + "            +-- StatementNode [break;]\n"
+            + "        +-- StatementNode [default:]\n"
+            + "            +-- StatementNode [a = 6;]\n"
+            + "            +-- StatementNode [break;]\n"
+            + "    +-- StatementNode [}]\n"
             + "    +-- StatementNode [}]\n"
             + "", tree(root));
     }
@@ -627,15 +625,15 @@ class CParserTest {
         Assertions.assertEquals(""
             + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
-            + "    +-- StatementNode [    switch(a) {]\n"
-            + "        +-- StatementNode [        case 1:]\n"
-            + "            +-- StatementNode [            a = 4;]\n"
-            + "        +-- StatementNode [        case 2:]\n"
-            + "            +-- StatementNode [            a = 5;]\n"
-            + "        +-- StatementNode [        case 3:]\n"
-            + "            +-- StatementNode [            a = 6;]\n"
-            + "            +-- StatementNode [            break;]\n"
-            + "    +-- StatementNode [    }]\n"
+            + "    +-- StatementNode [switch(a) {]\n"
+            + "        +-- StatementNode [case 1:]\n"
+            + "            +-- StatementNode [a = 4;]\n"
+            + "        +-- StatementNode [case 2:]\n"
+            + "            +-- StatementNode [a = 5;]\n"
+            + "        +-- StatementNode [case 3:]\n"
+            + "            +-- StatementNode [a = 6;]\n"
+            + "            +-- StatementNode [break;]\n"
+            + "    +-- StatementNode [}]\n"
             + "    +-- StatementNode [}]\n"
             + "", tree(root));
     }
@@ -658,9 +656,9 @@ class CParserTest {
             + "+-- FunctionNode type=void identifier=main [void main(int a) {]\n"
             + "    +-- ParameterNode type=int identifier=a [int a]\n"
             + "    +-- DirectiveNode [#ifdef TEST]\n"
-            + "    +-- StatementNode [    a = 1;]\n"
+            + "    +-- StatementNode [a = 1;]\n"
             + "    +-- DirectiveNode [#endif]\n"
-            + "    +-- StatementNode [    a++;]\n"
+            + "    +-- StatementNode [a++;]\n"
             + "    +-- StatementNode [}]\n"
             + "", tree(root));
     }
@@ -747,12 +745,12 @@ class CParserTest {
         Assertions.assertEquals(""
             + "RootNode []\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
-            + "    +-- StatementNode [    if (a == 1)]\n"
-            + "        +-- StatementNode [    while (a == 1) {]\n"
-            + "            +-- StatementNode [        method(1, 2);]\n"
-            + "            +-- StatementNode [        d++;]\n"
-            + "        +-- StatementNode [    }]\n"
-            + "    +-- StatementNode [    a = function(1, 2);]\n"
+            + "    +-- StatementNode [if (a == 1)]\n"
+            + "        +-- StatementNode [while (a == 1) {]\n"
+            + "            +-- StatementNode [method(1, 2);]\n"
+            + "            +-- StatementNode [d++;]\n"
+            + "        +-- StatementNode [}]\n"
+            + "    +-- StatementNode [a = function(1, 2);]\n"
             + "    +-- StatementNode [}]\n"
             + "", tree(root));
     }
@@ -765,38 +763,15 @@ class CParserTest {
         StringBuilder sb = new StringBuilder();
         Field[] field = root.getClass().getFields();
 
-        sb.append(root.getClass().getSimpleName());
-
-        for (Token token : root.getTokens()) {
-            for (int i = 0; i < field.length; i++) {
-                if (field[i].get(root) == token) {
-                    sb.append(" ");
-                    sb.append(field[i].getName());
-                    sb.append("=");
-                    sb.append(token);
-                    break;
-                }
-            }
-        }
-
-        String text = root.getText().replaceAll("[\n\r]+[ ]*", " ");
-        if (text.indexOf('}') < text.indexOf('{')) {
-            text = text.replaceAll("}[ ]+", "");
-        }
-
-        sb.append(" [");
-        sb.append(text);
-        sb.append("]");
+        sb.append(root);
         sb.append(System.lineSeparator());
 
         for (Node child : root.getChilds()) {
-            for (int i = 0; i < indent; i++) {
-                sb.append("    ");
-            }
+            sb.repeat("    ", Math.max(0, indent));
             sb.append("+-- ");
-            for (int i = 0; i < field.length; i++) {
-                if (field[i].get(root) == child) {
-                    sb.append(field[i].getName());
+            for (Field value : field) {
+                if (value.get(root) == child) {
+                    sb.append(value.getName());
                     sb.append(" = ");
                     break;
                 }

@@ -12,6 +12,7 @@ package com.maccasoft.propeller.spin2;
 import com.maccasoft.propeller.model.ConstantNode;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
+import com.maccasoft.propeller.model.DataLineNode.ModifierNode;
 import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.DirectiveNode;
 import com.maccasoft.propeller.model.ExpressionNode;
@@ -692,7 +693,7 @@ public class Spin2Parser extends Parser {
                     break;
 
                 case 8:
-                    object.addToken(token);
+                    param.addToken(token);
                     if ("=".equals(token.getText())) {
                         param.expression = new ExpressionNode(param);
                         state = 9;
@@ -1176,7 +1177,7 @@ public class Spin2Parser extends Parser {
                     break;
                 case 4:
                     if (Spin2Model.isPAsmModifier(token.getText())) {
-                        node.modifier = new Node(node);
+                        node.modifier = new ModifierNode(node);
                         node.modifier.addToken(token);
                         state = 6;
                         break;
@@ -1198,7 +1199,7 @@ public class Spin2Parser extends Parser {
                         break;
                     }
                     if (Spin2Model.isPAsmModifier(token.getText())) {
-                        node.modifier = new Node(node);
+                        node.modifier = new ModifierNode(node);
                         node.modifier.addToken(token);
                         state = 6;
                         break;
@@ -1229,7 +1230,7 @@ public class Spin2Parser extends Parser {
                         break;
                     }
                     if (Spin2Model.isPAsmModifier(token.getText())) {
-                        node.modifier = new Node(node);
+                        node.modifier = new ModifierNode(node);
                         node.modifier.addToken(token);
                         state = 6;
                         break;

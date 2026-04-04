@@ -77,8 +77,7 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
                 Iterator<Node> nodeIterator = node.getChilds().iterator();
                 while (nodeIterator.hasNext()) {
                     Node n2 = nodeIterator.next();
-                    if (!n2.isExclude() && (n2 instanceof DataLineNode)) {
-                        DataLineNode lineNode = (DataLineNode) n2;
+                    if (!n2.isExclude() && (n2 instanceof DataLineNode lineNode)) {
                         try {
                             if (lineNode.instruction != null && "DITTO".equalsIgnoreCase(lineNode.instruction.getText())) {
                                 DataLineNode beginLineNode = lineNode;
@@ -90,7 +89,7 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
                                     if (!n2.isExclude() && (n2 instanceof DataLineNode)) {
                                         lineNode = (DataLineNode) n2;
                                         if ("DITTO".equalsIgnoreCase(lineNode.instruction.getText())) {
-                                            if (lineNode.parameters.size() != 0 && "END".equalsIgnoreCase(lineNode.parameters.get(0).getText())) {
+                                            if (!lineNode.parameters.isEmpty() && "END".equalsIgnoreCase(lineNode.parameters.getFirst().getText())) {
                                                 endLineNode = lineNode;
                                                 break;
                                             }

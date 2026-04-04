@@ -11,6 +11,7 @@ package com.maccasoft.propeller.model;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 public class Node {
@@ -53,17 +54,17 @@ public class Node {
     }
 
     public Token getStartToken() {
-        if (tokens.size() == 0) {
+        if (tokens.isEmpty()) {
             return null;
         }
-        return tokens.get(0);
+        return tokens.getFirst();
     }
 
     public Token getStopToken() {
-        if (tokens.size() == 0) {
+        if (tokens.isEmpty()) {
             return null;
         }
-        return tokens.get(tokens.size() - 1);
+        return tokens.getLast();
     }
 
     public List<Token> getTokens() {
@@ -103,19 +104,24 @@ public class Node {
     }
 
     public int getStartIndex() {
-        return tokens.size() != 0 ? tokens.get(0).start : -1;
+        return !tokens.isEmpty() ? tokens.getFirst().start : -1;
     }
 
     public int getStopIndex() {
-        return tokens.size() != 0 ? tokens.get(tokens.size() - 1).stop : -1;
+        return !tokens.isEmpty() ? tokens.getLast().stop : -1;
     }
 
     public String getText() {
-        if (getTokenCount() == 0) {
+        if (tokens.isEmpty()) {
             return "";
         }
+        if (tokens.size() == 1 && tokens.getFirst().type == Token.EOF) {
+            return "<EOF>";
+        }
+        int s = tokens.getFirst().start;
+        int e = tokens.getLast().stop;
         TokenStream stream = getStartToken().getStream();
-        return stream.getSource(getStartIndex(), getStopIndex());
+        return stream.getSource(s, e);
     }
 
     public void addDocument(Token token) {
@@ -210,16 +216,36 @@ public class Node {
 
     @Override
     public String toString() {
-        if (tokens.isEmpty()) {
-            return "";
+        return getClass().getSimpleName() + dumpTokens();
+    }
+
+    protected String dumpTokens() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(" [");
+
+        Iterator<Token> iter = tokens.iterator();
+        if (iter.hasNext()) {
+            Token token = iter.next();
+            sb.append(token.getText());
+            int line = token.line;
+            int index = token.stop + 1;
+            while (iter.hasNext()) {
+                token = iter.next();
+                if (token.line != line || index > token.start) {
+                    sb.append(" ");
+                }
+                else {
+                    sb.repeat(" ", token.start - index);
+                }
+                sb.append(token.getText());
+                line = token.line;
+                index = token.stop + 1;
+            }
         }
-        if (tokens.size() == 1 && tokens.getFirst().type == Token.EOF) {
-            return "<EOF>";
-        }
-        int s = tokens.getFirst().start - tokens.getFirst().column;
-        int e = tokens.getLast().stop;
-        TokenStream stream = getStartToken().getStream();
-        return stream.getSource(s, e);
+
+        sb.append("]");
+
+        return sb.toString();
     }
 
 }

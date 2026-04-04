@@ -17,7 +17,6 @@ import org.junit.jupiter.api.Test;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.Node;
-import com.maccasoft.propeller.model.Token;
 
 class Spin2ParserTest {
 
@@ -167,7 +166,7 @@ class Spin2ParserTest {
     }
 
     @Test
-    void testObjectNodeToString() throws Exception {
+    void testObjectGetText() throws Exception {
         Spin2Parser subject = new Spin2Parser(""
             + "OBJ\n"
             + "    obj0 : \"file0\"\n"
@@ -175,8 +174,8 @@ class Spin2ParserTest {
             + "");
 
         Node root = subject.parse();
-        Assertions.assertEquals("    obj0 : \"file0\"", root.getChild(0).getChild(0).toString());
-        Assertions.assertEquals("    obj1 : \"file0\" | par0 = 1, par1 = 1", root.getChild(0).getChild(1).toString());
+        Assertions.assertEquals("    obj0 : \"file0\"", root.getChild(0).getChild(0).getText());
+        Assertions.assertEquals("    obj1 : \"file0\" | par0 = 1, par1 = 1", root.getChild(0).getChild(1).getText());
     }
 
     @Test
@@ -397,15 +396,15 @@ class Spin2ParserTest {
             + "    +-- ReturnNode identifier=c [c]\n"
             + "    +-- LocalVariableNode identifier=d [d]\n"
             + "    +-- LocalVariableNode identifier=e [e]\n"
-            + "    +-- DataLineNode instruction=org [  org]\n"
-            + "    +-- DataLineNode instruction=mov [      mov d, a]\n"
+            + "    +-- DataLineNode instruction=org [org]\n"
+            + "    +-- DataLineNode instruction=mov [mov d, a]\n"
             + "        +-- ParameterNode [d]\n"
             + "        +-- ParameterNode [a]\n"
-            + "    +-- DataLineNode instruction=and [      and d, e wz]\n"
+            + "    +-- DataLineNode instruction=and [and d, e wz]\n"
             + "        +-- ParameterNode [d]\n"
             + "        +-- ParameterNode [e]\n"
-            + "        +-- modifier = Node [wz]\n"
-            + "    +-- StatementNode [  end]\n"
+            + "        +-- modifier = ModifierNode [wz]\n"
+            + "    +-- StatementNode [end]\n"
             + "", tree(root));
     }
 
@@ -424,22 +423,22 @@ class Spin2ParserTest {
         Assertions.assertEquals(""
             + "RootNode []\n"
             + "+-- DataNode [DAT]\n"
-            + "    +-- DataLineNode instruction=wrlong [DAT    wrlong a,ptra]\n"
+            + "    +-- DataLineNode instruction=wrlong [wrlong a,ptra]\n"
             + "        +-- ParameterNode [a]\n"
             + "        +-- ParameterNode [ptra]\n"
-            + "    +-- DataLineNode instruction=wrlong [       wrlong a,ptra++]\n"
+            + "    +-- DataLineNode instruction=wrlong [wrlong a,ptra++]\n"
             + "        +-- ParameterNode [a]\n"
             + "        +-- ParameterNode [ptra++]\n"
-            + "    +-- DataLineNode instruction=wrlong [       wrlong a,++ptra]\n"
+            + "    +-- DataLineNode instruction=wrlong [wrlong a,++ptra]\n"
             + "        +-- ParameterNode [a]\n"
             + "        +-- ParameterNode [++ptra]\n"
-            + "    +-- DataLineNode instruction=wrlong [       wrlong a,ptra[3]]\n"
+            + "    +-- DataLineNode instruction=wrlong [wrlong a,ptra[3]]\n"
             + "        +-- ParameterNode [a]\n"
             + "        +-- ParameterNode [ptra[3]]\n"
-            + "    +-- DataLineNode instruction=wrlong [       wrlong a,ptra--[3]]\n"
+            + "    +-- DataLineNode instruction=wrlong [wrlong a,ptra--[3]]\n"
             + "        +-- ParameterNode [a]\n"
             + "        +-- ParameterNode [ptra--[3]]\n"
-            + "    +-- DataLineNode instruction=wrlong [       wrlong a,--ptra[3]]\n"
+            + "    +-- DataLineNode instruction=wrlong [wrlong a,--ptra[3]]\n"
             + "        +-- ParameterNode [a]\n"
             + "        +-- ParameterNode [--ptra[3]]\n"
             + "", tree(root));
@@ -581,7 +580,7 @@ class Spin2ParserTest {
         Assertions.assertEquals(""
             + "RootNode []\n"
             + "+-- MethodNode type=PUB name=main [PUB main()]\n"
-            + "    +-- StatementNode [    a := ...\\n         1 + 2 * 3]\n"
+            + "    +-- StatementNode [a := 1 + 2 * 3]\n"
             + "", tree(root));
     }
 
@@ -621,13 +620,13 @@ class Spin2ParserTest {
             + "RootNode []\n"
             + "+-- MethodNode type=PUB name=main [PUB main() | a]\n"
             + "    +-- LocalVariableNode identifier=a [a]\n"
-            + "    +-- StatementNode [    case a]\n"
-            + "        +-- StatementNode [        1:]\n"
-            + "            +-- StatementNode [        1: a := 4]\n"
-            + "        +-- StatementNode [        2:]\n"
-            + "            +-- StatementNode [        2: a := 5]\n"
-            + "        +-- StatementNode [        3:]\n"
-            + "            +-- StatementNode [        3: a := 6]\n"
+            + "    +-- StatementNode [case a]\n"
+            + "        +-- StatementNode [1:]\n"
+            + "            +-- StatementNode [a := 4]\n"
+            + "        +-- StatementNode [2:]\n"
+            + "            +-- StatementNode [a := 5]\n"
+            + "        +-- StatementNode [3:]\n"
+            + "            +-- StatementNode [a := 6]\n"
             + "", tree(root));
     }
 
@@ -720,7 +719,7 @@ class Spin2ParserTest {
             + "RootNode []\n"
             + "+-- MethodNode type=PUB name=main [PUB main()]\n"
             + "    +-- DirectiveNode [#ifdef A]\n"
-            + "    +-- StatementNode [    a := b * 2]\n"
+            + "    +-- StatementNode [a := b * 2]\n"
             + "    +-- DirectiveNode [#endif]\n"
             + "", tree(root));
     }
@@ -739,9 +738,9 @@ class Spin2ParserTest {
         Assertions.assertEquals(""
             + "RootNode []\n"
             + "+-- MethodNode type=PUB name=main [PUB main()]\n"
-            + "    +-- StatementNode [    if 1]\n"
+            + "    +-- StatementNode [if 1]\n"
             + "        +-- DirectiveNode [#ifdef A]\n"
-            + "        +-- StatementNode [        a := b * 2]\n"
+            + "        +-- StatementNode [a := b * 2]\n"
             + "        +-- DirectiveNode [#endif]\n"
             + "", tree(root));
     }
@@ -761,14 +760,14 @@ class Spin2ParserTest {
         Assertions.assertEquals(""
             + "RootNode []\n"
             + "+-- DataNode [DAT]\n"
-            + "    +-- DataLineNode instruction=org [        org $000]\n"
+            + "    +-- DataLineNode instruction=org [org $000]\n"
             + "        +-- ParameterNode [$000]\n"
             + "    +-- DirectiveNode [#ifdef A]\n"
-            + "    +-- DataLineNode instruction=mov [        mov a, #1]\n"
+            + "    +-- DataLineNode instruction=mov [mov a, #1]\n"
             + "        +-- ParameterNode [a]\n"
             + "        +-- ParameterNode [#1]\n"
             + "    +-- DirectiveNode [#endif]\n"
-            + "    +-- DataLineNode instruction=ret [        ret]\n"
+            + "    +-- DataLineNode instruction=ret [ret]\n"
             + "", tree(root));
     }
 
@@ -861,28 +860,28 @@ class Spin2ParserTest {
             + "RootNode []\n"
             + "+-- MethodNode type=PUB name=main [PUB main(a)]\n"
             + "    +-- ParameterNode identifier=a [a]\n"
-            + "    +-- DataLineNode instruction=org [        org]\n"
-            + "    +-- DataLineNode instruction=mov [        mov     pr0, #0]\n"
+            + "    +-- DataLineNode instruction=org [org]\n"
+            + "    +-- DataLineNode instruction=mov [mov     pr0, #0]\n"
             + "        +-- ParameterNode [pr0]\n"
             + "        +-- ParameterNode [#0]\n"
             + "    +-- DataLineNode label=l1 instruction=add [l1      add     pr0, a]\n"
             + "        +-- ParameterNode [pr0]\n"
             + "        +-- ParameterNode [a]\n"
-            + "    +-- DataLineNode instruction=djnz [        djnz    a, #l1]\n"
+            + "    +-- DataLineNode instruction=djnz [djnz    a, #l1]\n"
             + "        +-- ParameterNode [a]\n"
             + "        +-- ParameterNode [#l1]\n"
-            + "    +-- StatementNode [        end]\n"
-            + "    +-- DataLineNode instruction=orgh [        orgh]\n"
-            + "    +-- DataLineNode instruction=mov [        mov     pr0, #0]\n"
+            + "    +-- StatementNode [end]\n"
+            + "    +-- DataLineNode instruction=orgh [orgh]\n"
+            + "    +-- DataLineNode instruction=mov [mov     pr0, #0]\n"
             + "        +-- ParameterNode [pr0]\n"
             + "        +-- ParameterNode [#0]\n"
             + "    +-- DataLineNode label=l1 instruction=add [l1      add     pr0, a]\n"
             + "        +-- ParameterNode [pr0]\n"
             + "        +-- ParameterNode [a]\n"
-            + "    +-- DataLineNode instruction=djnz [        djnz    a, #l1]\n"
+            + "    +-- DataLineNode instruction=djnz [djnz    a, #l1]\n"
             + "        +-- ParameterNode [a]\n"
             + "        +-- ParameterNode [#l1]\n"
-            + "    +-- StatementNode [        end]\n"
+            + "    +-- StatementNode [end]\n"
             + "", tree(root));
     }
 
@@ -906,11 +905,11 @@ class Spin2ParserTest {
             + "+-- MethodNode type=PUB name=start [PUB start() | a]\n"
             + "    +-- LocalVariableNode identifier=a [a]\n"
             + "    +-- DirectiveNode [#IF 0]\n"
-            + "    +-- StatementNode [    if CLKFREQ >= 40_000_000]\n"
-            + "        +-- StatementNode [        b := 1_000]\n"
+            + "    +-- StatementNode [if CLKFREQ >= 40_000_000]\n"
+            + "        +-- StatementNode [b := 1_000]\n"
             + "        +-- DirectiveNode [#ENDIF]\n"
-            + "        +-- StatementNode [        a := 1_000]\n"
-            + "    +-- StatementNode [    repeat]\n"
+            + "        +-- StatementNode [a := 1_000]\n"
+            + "    +-- StatementNode [repeat]\n"
             + "", tree(root));
     }
 
@@ -938,16 +937,16 @@ class Spin2ParserTest {
             + "+-- MethodNode type=PUB name=start [PUB start() | a, b]\n"
             + "    +-- LocalVariableNode identifier=a [a]\n"
             + "    +-- LocalVariableNode identifier=b [b]\n"
-            + "    +-- StatementNode [    case a]\n"
-            + "        +-- StatementNode [        1:]\n"
-            + "            +-- StatementNode [            b := a + 1]\n"
+            + "    +-- StatementNode [case a]\n"
+            + "        +-- StatementNode [1:]\n"
+            + "            +-- StatementNode [b := a + 1]\n"
             + "            +-- DirectiveNode [#IF 0]\n"
-            + "        +-- StatementNode [        2:]\n"
-            + "            +-- StatementNode [        2:            b := a + 2]\n"
+            + "        +-- StatementNode [2:]\n"
+            + "            +-- StatementNode [b := a + 2]\n"
             + "            +-- DirectiveNode [#ENDIF]\n"
-            + "        +-- StatementNode [        3:]\n"
-            + "            +-- StatementNode [            b := a + 3]\n"
-            + "    +-- StatementNode [    repeat]\n"
+            + "        +-- StatementNode [3:]\n"
+            + "            +-- StatementNode [b := a + 3]\n"
+            + "    +-- StatementNode [repeat]\n"
             + "", tree(root));
     }
 
@@ -971,12 +970,12 @@ class Spin2ParserTest {
             + "+-- MethodNode type=PUB name=start [PUB start() | a, b]\n"
             + "    +-- LocalVariableNode identifier=a [a]\n"
             + "    +-- LocalVariableNode identifier=b [b]\n"
-            + "    +-- StatementNode [    if a == 1]\n"
+            + "    +-- StatementNode [if a == 1]\n"
             + "        +-- DirectiveNode [#IF 0]\n"
-            + "    +-- StatementNode [    if a == 2]\n"
+            + "    +-- StatementNode [if a == 2]\n"
             + "        +-- DirectiveNode [#ENDIF]\n"
-            + "        +-- StatementNode [        b := a + 1]\n"
-            + "    +-- StatementNode [    repeat]\n"
+            + "        +-- StatementNode [b := a + 1]\n"
+            + "    +-- StatementNode [repeat]\n"
             + "", tree(root));
     }
 
@@ -988,23 +987,7 @@ class Spin2ParserTest {
         StringBuilder sb = new StringBuilder();
         Field[] field = root.getClass().getFields();
 
-        sb.append(root.getClass().getSimpleName());
-
-        for (Token token : root.getTokens()) {
-            for (int i = 0; i < field.length; i++) {
-                if (field[i].get(root) == token) {
-                    sb.append(" ");
-                    sb.append(field[i].getName());
-                    sb.append("=");
-                    sb.append(token);
-                    break;
-                }
-            }
-        }
-
-        sb.append(" [");
-        sb.append(root.getText().replaceAll("\n", "\\\\n"));
-        sb.append("]");
+        sb.append(root);
         sb.append(System.lineSeparator());
 
         for (Node child : root.getChilds()) {

@@ -65,4 +65,17 @@ public class ConstantNode extends Node {
         return sb.toString();
     }
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(getClass().getSimpleName());
+        if (identifier != null) {
+            sb.append(" identifier=").append(identifier.getText());
+        }
+        sb.append(dumpTokens());
+
+        return sb.toString();
+    }
+
 }

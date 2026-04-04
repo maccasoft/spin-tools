@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.model.Node;
-import com.maccasoft.propeller.model.Token;
 
 class Spin1ParserTest {
 
@@ -651,7 +650,7 @@ class Spin1ParserTest {
             + "RootNode []\n"
             + "+-- MethodNode type=PUB name=main [PUB main()]\n"
             + "    +-- DirectiveNode [#ifdef A]\n"
-            + "    +-- StatementNode [    a := b * 2]\n"
+            + "    +-- StatementNode [a := b * 2]\n"
             + "    +-- DirectiveNode [#endif]\n"
             + "", tree(root));
     }
@@ -670,9 +669,9 @@ class Spin1ParserTest {
         Assertions.assertEquals(""
             + "RootNode []\n"
             + "+-- MethodNode type=PUB name=main [PUB main()]\n"
-            + "    +-- StatementNode [    if 1]\n"
+            + "    +-- StatementNode [if 1]\n"
             + "        +-- DirectiveNode [#ifdef A]\n"
-            + "        +-- StatementNode [        a := b * 2]\n"
+            + "        +-- StatementNode [a := b * 2]\n"
             + "        +-- DirectiveNode [#endif]\n"
             + "", tree(root));
     }
@@ -692,14 +691,14 @@ class Spin1ParserTest {
         Assertions.assertEquals(""
             + "RootNode []\n"
             + "+-- DataNode [DAT]\n"
-            + "    +-- DataLineNode instruction=org [        org $000]\n"
+            + "    +-- DataLineNode instruction=org [org $000]\n"
             + "        +-- ParameterNode [$000]\n"
             + "    +-- DirectiveNode [#ifdef A]\n"
-            + "    +-- DataLineNode instruction=mov [        mov a, #1]\n"
+            + "    +-- DataLineNode instruction=mov [mov a, #1]\n"
             + "        +-- ParameterNode [a]\n"
             + "        +-- ParameterNode [#1]\n"
             + "    +-- DirectiveNode [#endif]\n"
-            + "    +-- DataLineNode instruction=ret [        ret]\n"
+            + "    +-- DataLineNode instruction=ret [ret]\n"
             + "", tree(root));
     }
 
@@ -727,16 +726,16 @@ class Spin1ParserTest {
             + "+-- MethodNode type=PUB name=start [PUB start() | a, b]\n"
             + "    +-- LocalVariableNode identifier=a [a]\n"
             + "    +-- LocalVariableNode identifier=b [b]\n"
-            + "    +-- StatementNode [    case a]\n"
-            + "        +-- StatementNode [        1:]\n"
-            + "            +-- StatementNode [            b := a + 1]\n"
+            + "    +-- StatementNode [case a]\n"
+            + "        +-- StatementNode [1:]\n"
+            + "            +-- StatementNode [b := a + 1]\n"
             + "            +-- DirectiveNode [#IF 0]\n"
-            + "        +-- StatementNode [        2:]\n"
-            + "            +-- StatementNode [        2:            b := a + 2]\n"
+            + "        +-- StatementNode [2:]\n"
+            + "            +-- StatementNode [b := a + 2]\n"
             + "            +-- DirectiveNode [#ENDIF]\n"
-            + "        +-- StatementNode [        3:]\n"
-            + "            +-- StatementNode [            b := a + 3]\n"
-            + "    +-- StatementNode [    repeat]\n"
+            + "        +-- StatementNode [3:]\n"
+            + "            +-- StatementNode [b := a + 3]\n"
+            + "    +-- StatementNode [repeat]\n"
             + "", tree(root));
     }
 
@@ -760,12 +759,12 @@ class Spin1ParserTest {
             + "+-- MethodNode type=PUB name=start [PUB start | a, b]\n"
             + "    +-- LocalVariableNode identifier=a [a]\n"
             + "    +-- LocalVariableNode identifier=b [b]\n"
-            + "    +-- StatementNode [    if a == 1]\n"
+            + "    +-- StatementNode [if a == 1]\n"
             + "        +-- DirectiveNode [#IF 0]\n"
-            + "    +-- StatementNode [    if a == 2]\n"
+            + "    +-- StatementNode [if a == 2]\n"
             + "        +-- DirectiveNode [#ENDIF]\n"
-            + "        +-- StatementNode [        b := a + 1]\n"
-            + "    +-- StatementNode [    repeat]\n"
+            + "        +-- StatementNode [b := a + 1]\n"
+            + "    +-- StatementNode [repeat]\n"
             + "", tree(root));
     }
 
@@ -777,33 +776,15 @@ class Spin1ParserTest {
         StringBuilder sb = new StringBuilder();
         Field[] field = root.getClass().getFields();
 
-        sb.append(root.getClass().getSimpleName());
-
-        for (Token token : root.getTokens()) {
-            for (int i = 0; i < field.length; i++) {
-                if (field[i].get(root) == token) {
-                    sb.append(" ");
-                    sb.append(field[i].getName());
-                    sb.append("=");
-                    sb.append(token);
-                    break;
-                }
-            }
-        }
-
-        sb.append(" [");
-        sb.append(root.getText().replaceAll("\n", "\\\\n"));
-        sb.append("]");
+        sb.append(root);
         sb.append(System.lineSeparator());
 
         for (Node child : root.getChilds()) {
-            for (int i = 0; i < indent; i++) {
-                sb.append("    ");
-            }
+            sb.repeat("    ", Math.max(0, indent));
             sb.append("+-- ");
-            for (int i = 0; i < field.length; i++) {
-                if (field[i].get(root) == child) {
-                    sb.append(field[i].getName());
+            for (Field value : field) {
+                if (value.get(root) == child) {
+                    sb.append(value.getName());
                     sb.append(" = ");
                     break;
                 }

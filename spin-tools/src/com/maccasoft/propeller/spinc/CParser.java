@@ -15,6 +15,7 @@ import java.util.Set;
 
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.model.DataLineNode;
+import com.maccasoft.propeller.model.DataLineNode.ModifierNode;
 import com.maccasoft.propeller.model.DirectiveNode;
 import com.maccasoft.propeller.model.ExpressionNode;
 import com.maccasoft.propeller.model.FunctionNode;
@@ -749,7 +750,7 @@ public class CParser extends Parser {
                         break;
                     }
                     if (Spin2Model.isPAsmModifier(token.getText())) {
-                        node.modifier = new Node(node);
+                        node.modifier = new ModifierNode(node);
                         node.modifier.addToken(token);
                         state = 6;
                         break;
@@ -764,7 +765,7 @@ public class CParser extends Parser {
                         break;
                     }
                     if (Spin2Model.isPAsmModifier(token.getText())) {
-                        node.modifier = new Node(node);
+                        node.modifier = new ModifierNode(node);
                         node.modifier.addToken(token);
                         state = 6;
                         break;
@@ -772,7 +773,7 @@ public class CParser extends Parser {
                     // fall-through
                 case 3:
                     if (Spin2Model.isPAsmModifier(token.getText())) {
-                        node.modifier = new Node(node);
+                        node.modifier = new ModifierNode(node);
                         node.modifier.addToken(token);
                         state = 6;
                         break;
@@ -782,7 +783,7 @@ public class CParser extends Parser {
                     break;
                 case 4:
                     if (Spin2Model.isPAsmModifier(token.getText())) {
-                        node.modifier = new Node(node);
+                        node.modifier = new ModifierNode(node);
                         node.modifier.addToken(token);
                         state = 6;
                         break;
@@ -799,7 +800,7 @@ public class CParser extends Parser {
                         break;
                     }
                     if (Spin2Model.isPAsmModifier(token.getText())) {
-                        node.modifier = new Node(node);
+                        node.modifier = new ModifierNode(node);
                         node.modifier.addToken(token);
                         state = 6;
                         break;

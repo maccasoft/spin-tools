@@ -12,6 +12,7 @@ package com.maccasoft.propeller.spin1;
 import com.maccasoft.propeller.model.ConstantNode;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
+import com.maccasoft.propeller.model.DataLineNode.ModifierNode;
 import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.DirectiveNode;
 import com.maccasoft.propeller.model.ExpressionNode;
@@ -912,7 +913,7 @@ public class Spin1Parser extends Parser {
                     break;
                 case 4:
                     if (Spin1Model.isPAsmModifier(token.getText())) {
-                        node.modifier = new Node(node);
+                        node.modifier = new ModifierNode(node);
                         node.modifier.addToken(token);
                         state = 6;
                         break;
@@ -929,7 +930,7 @@ public class Spin1Parser extends Parser {
                         break;
                     }
                     if (Spin1Model.isPAsmModifier(token.getText())) {
-                        node.modifier = new Node(node);
+                        node.modifier = new ModifierNode(node);
                         node.modifier.addToken(token);
                         state = 6;
                         break;

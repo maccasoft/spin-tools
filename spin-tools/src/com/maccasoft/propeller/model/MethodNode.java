@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.model;
@@ -32,11 +31,6 @@ public class MethodNode extends Node {
             parent.parameters.add(this);
         }
 
-        @Override
-        public void addToken(Token token) {
-            tokens.add(token);
-        }
-
         public Token getType() {
             return type;
         }
@@ -48,6 +42,23 @@ public class MethodNode extends Node {
         public ExpressionNode getDefaultValue() {
             return defaultValue;
         }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+
+            sb.append(getClass().getSimpleName());
+            if (type != null) {
+                sb.append(" type=").append(type.getText());
+            }
+            if (identifier != null) {
+                sb.append(" identifier=").append(identifier.getText());
+            }
+            sb.append(dumpTokens());
+
+            return sb.toString();
+        }
+
     }
 
     public static class ReturnNode extends Node {
@@ -60,11 +71,6 @@ public class MethodNode extends Node {
             parent.returnVariables.add(this);
         }
 
-        @Override
-        public void addToken(Token token) {
-            tokens.add(token);
-        }
-
         public Token getType() {
             return type;
         }
@@ -72,6 +78,23 @@ public class MethodNode extends Node {
         public Token getIdentifier() {
             return identifier;
         }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+
+            sb.append(getClass().getSimpleName());
+            if (type != null) {
+                sb.append(" type=").append(type.getText());
+            }
+            if (identifier != null) {
+                sb.append(" identifier=").append(identifier.getText());
+            }
+            sb.append(dumpTokens());
+
+            return sb.toString();
+        }
+
     }
 
     public static class LocalVariableNode extends Node {
@@ -85,11 +108,6 @@ public class MethodNode extends Node {
             parent.localVariables.add(this);
         }
 
-        @Override
-        public void addToken(Token token) {
-            tokens.add(token);
-        }
-
         public Token getType() {
             return type;
         }
@@ -101,6 +119,23 @@ public class MethodNode extends Node {
         public ExpressionNode getSize() {
             return size;
         }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+
+            sb.append(getClass().getSimpleName());
+            if (type != null) {
+                sb.append(" type=").append(type.getText());
+            }
+            if (identifier != null) {
+                sb.append(" identifier=").append(identifier.getText());
+            }
+            sb.append(dumpTokens());
+
+            return sb.toString();
+        }
+
     }
 
     public MethodNode(RootNode parent, Token type) {
@@ -177,6 +212,22 @@ public class MethodNode extends Node {
         else {
             sb.append(parent.indexOf(this));
         }
+
+        return sb.toString();
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(getClass().getSimpleName());
+        if (type != null) {
+            sb.append(" type=").append(type.getText());
+        }
+        if (name != null) {
+            sb.append(" name=").append(name.getText());
+        }
+        sb.append(dumpTokens());
 
         return sb.toString();
     }

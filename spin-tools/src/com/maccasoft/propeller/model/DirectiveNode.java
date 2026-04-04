@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
+ * All rights reserved.
  *
- * Contributors:
- *     Marco Maccaferri - initial API and implementation
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License v1.0 which accompanies this
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.model;
@@ -51,6 +49,16 @@ public class DirectiveNode extends Node {
             return sb.toString();
         }
 
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+
+            sb.append(getClass().getSimpleName());
+            sb.append(dumpTokens());
+
+            return sb.toString();
+        }
+
     }
 
     public static class DefineNode extends DirectiveNode {
@@ -80,6 +88,19 @@ public class DirectiveNode extends Node {
             super.addToken(token);
         }
 
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+
+            sb.append(getClass().getSimpleName());
+            if (identifier != null) {
+                sb.append(" identifier=").append(identifier.getText());
+            }
+            sb.append(dumpTokens());
+
+            return sb.toString();
+        }
+
     }
 
     public DirectiveNode(Node parent) {
@@ -93,6 +114,16 @@ public class DirectiveNode extends Node {
 
     public Token getDirective() {
         return tokens.size() >= 2 ? tokens.get(1) : null;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(getClass().getSimpleName());
+        sb.append(dumpTokens());
+
+        return sb.toString();
     }
 
 }
