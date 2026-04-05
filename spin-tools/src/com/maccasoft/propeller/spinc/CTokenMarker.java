@@ -289,6 +289,8 @@ public class CTokenMarker extends SourceTokenMarker {
         spin2Keywords.put("P_INVERT_IN", TokenId.CONSTANT);
         spin2Keywords.put("P_TRUE_OUTPUT", TokenId.CONSTANT);
         spin2Keywords.put("P_INVERT_OUTPUT", TokenId.CONSTANT);
+        spin2Keywords.put("P_TRUE_OUT", TokenId.CONSTANT);
+        spin2Keywords.put("P_INVERT_OUT", TokenId.CONSTANT);
         spin2Keywords.put("P_HIGH_FAST", TokenId.CONSTANT);
         spin2Keywords.put("P_HIGH_1K5", TokenId.CONSTANT);
         spin2Keywords.put("P_HIGH_15K", TokenId.CONSTANT);

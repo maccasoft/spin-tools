@@ -287,6 +287,8 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         keywords.put("P_INVERT_IN", TokenId.CONSTANT);
         keywords.put("P_TRUE_OUTPUT", TokenId.CONSTANT);
         keywords.put("P_INVERT_OUTPUT", TokenId.CONSTANT);
+        keywords.put("P_TRUE_OUT", TokenId.CONSTANT);
+        keywords.put("P_INVERT_OUT", TokenId.CONSTANT);
         keywords.put("P_HIGH_FAST", TokenId.CONSTANT);
         keywords.put("P_HIGH_1K5", TokenId.CONSTANT);
         keywords.put("P_HIGH_15K", TokenId.CONSTANT);
