@@ -258,6 +258,7 @@ public class Spin2ExpressionBuilder {
                 }
                 dependencies.add(token.getText());
                 l.iterator().forEachRemaining(this::addToken);
+                dependencies.remove(token.getText());
                 return;
             }
         }

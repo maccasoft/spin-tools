@@ -234,6 +234,7 @@ public class Spin2TreeBuilder {
                 }
                 dependencies.add(token.getText());
                 l.iterator().forEachRemaining(this::addToken);
+                dependencies.remove(token.getText());
                 return;
             }
         }

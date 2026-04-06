@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spinc;
@@ -13,7 +12,6 @@ package com.maccasoft.propeller.spinc;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -93,6 +91,7 @@ public class CExpressionBuilder {
 
     protected Context context;
     protected List<Token> tokens = new ArrayList<Token>();
+    boolean ignoreMissing;
 
     int index;
     Set<String> dependencies = new HashSet<>();
@@ -101,22 +100,24 @@ public class CExpressionBuilder {
         this.context = context;
     }
 
+    public void setIgnoreMissing(boolean ignoreMissing) {
+        this.ignoreMissing = ignoreMissing;
+    }
+
     public void addToken(Token token) {
-        List<Token> list = context.getDefinition(token.getText());
-        if (list != null && list.size() != 0) {
-            if (dependencies.contains(token.getText())) {
-                throw new CompilerException("circular dependency", token);
+        if (token.type == Token.KEYWORD && !context.hasSymbol(token.getText())) {
+            List<Token> l = context.getDefinition(token.getText());
+            if (l != null && !l.isEmpty()) {
+                if (dependencies.contains(token.getText())) {
+                    throw new CompilerException("circular dependency", token);
+                }
+                dependencies.add(token.getText());
+                l.iterator().forEachRemaining(this::addToken);
+                dependencies.remove(token.getText());
+                return;
             }
-            dependencies.add(token.getText());
-            Iterator<Token> iter = list.iterator();
-            while (iter.hasNext()) {
-                addToken(iter.next());
-            }
-            dependencies.remove(token.getText());
         }
-        else {
-            tokens.add(token);
-        }
+        tokens.add(token);
     }
 
     public void addTokenLiteral(Token token) {
@@ -135,7 +136,7 @@ public class CExpressionBuilder {
     }
 
     protected Expression parseLevel(Expression left, int level) {
-        for (;;) {
+        for (; ; ) {
             Token token = peek();
             if (token == null) {
                 return left;
@@ -148,7 +149,7 @@ public class CExpressionBuilder {
             token = next();
 
             Expression right = parseAtom();
-            for (;;) {
+            for (; ; ) {
                 Token nextToken = peek();
                 if (nextToken == null) {
                     break;
@@ -290,7 +291,9 @@ public class CExpressionBuilder {
                 String s = token.getText().substring(1);
                 return new CharacterLiteral(s.substring(0, s.length() - 1));
             }
-            return new Identifier(token.getText(), context);
+            Expression result = new Identifier(token.getText(), context, ignoreMissing ? 0L : null);
+            result.setData(token);
+            return result;
         }
 
         throw new CompilerException("unexpected " + token.getText(), token);

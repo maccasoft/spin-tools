@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin1;
@@ -176,9 +175,7 @@ public class Spin1ExpressionBuilder {
         this.context = context;
         this.allowRegisters = allowRegisters;
 
-        tokens.iterator().forEachRemaining((t) -> {
-            addToken(t);
-        });
+        tokens.iterator().forEachRemaining(this::addToken);
     }
 
     public void setIgnoreMissing(boolean ignoreMissing) {
@@ -188,14 +185,13 @@ public class Spin1ExpressionBuilder {
     public void addToken(Token token) {
         if (token.type == Token.KEYWORD) {
             List<Token> l = context.getDefinition(token.getText());
-            if (l != null && l.size() != 0) {
+            if (l != null && !l.isEmpty()) {
                 if (dependencies.contains(token.getText())) {
                     throw new CompilerException("circular dependency", token);
                 }
                 dependencies.add(token.getText());
-                l.iterator().forEachRemaining((t) -> {
-                    addToken(t);
-                });
+                l.iterator().forEachRemaining(this::addToken);
+                dependencies.remove(token.getText());
                 return;
             }
         }
@@ -215,7 +211,7 @@ public class Spin1ExpressionBuilder {
     }
 
     public Expression getExpression() {
-        if (tokens.size() == 0) {
+        if (tokens.isEmpty()) {
             throw new RuntimeException("expecting expression");
         }
 

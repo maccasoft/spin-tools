@@ -214,6 +214,7 @@ public class Spin2CTreeBuilder {
                 }
                 dependencies.add(token.getText());
                 l.iterator().forEachRemaining(this::addToken);
+                dependencies.remove(token.getText());
                 return;
             }
         }

@@ -2005,4 +2005,31 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
         scope.addBuiltinSymbol("CLKFREQ_", new NumberLiteral(finalfreq));
     }
 
+    @Override
+    protected Expression buildPreprocessorExpression(TokenIterator iter) {
+        CExpressionBuilder builder = new CExpressionBuilder(scope);
+        builder.setIgnoreMissing(true);
+
+        while (iter.hasNext()) {
+            Token token = iter.next();
+            if ("defined".equals(token.getText())) {
+                builder.addTokenLiteral(token);
+                if (iter.hasNext() && "(".equals(iter.peekNext().getText())) {
+                    builder.addToken(iter.next());
+                    if (iter.hasNext()) {
+                        builder.addTokenLiteral(iter.next());
+                        if (iter.hasNext() && ")".equals(iter.peekNext().getText())) {
+                            builder.addToken(iter.next());
+                        }
+                    }
+                }
+            }
+            else {
+                builder.addToken(token);
+            }
+        }
+
+        return builder.getExpression();
+    }
+
 }
