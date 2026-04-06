@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin1;
@@ -30,6 +29,10 @@ public class Spin1Method {
     List<LocalVariable> parameters;
     List<LocalVariable> returns;
     List<LocalVariable> localVariables;
+
+    int varOffset = 4;
+    int maxScopedStack = 0;
+    int scopedStack = 0;
 
     List<Spin1MethodLine> lines = new ArrayList<>();
 
@@ -64,16 +67,10 @@ public class Spin1Method {
     }
 
     public LocalVariable addParameter(String type, String name, Expression value) {
-        LocalVariable var = new LocalVariable(type.toUpperCase(), name, value, 1, 0) {
-
-            @Override
-            public int getOffset() {
-                return 4 + parameters.indexOf(this) * 4;
-            }
-
-        };
+        LocalVariable var = new LocalVariable(type.toUpperCase(), name, value, 1, varOffset);
         scope.addSymbol(name, var);
         parameters.add(var);
+        varOffset += 4;
         return var;
     }
 
@@ -85,35 +82,39 @@ public class Spin1Method {
     }
 
     public LocalVariable addLocalVariable(String type, String name, int size) {
-        LocalVariable var = new LocalVariable(type.toUpperCase(), name, size, 0) {
-
-            @Override
-            public int getOffset() {
-                int offset = 4 + parameters.size() * 4;
-
-                for (LocalVariable var : localVariables) {
-                    int typeSize = 1;
-                    if ("WORD".equalsIgnoreCase(var.getType())) {
-                        typeSize = 2;
-                        offset = (offset + 1) & ~1;
-                    }
-                    else if (!"BYTE".equalsIgnoreCase(var.getType())) {
-                        typeSize = 4;
-                        offset = (offset + 3) & ~3;
-                    }
-                    if (var == this) {
-                        break;
-                    }
-                    offset += typeSize * var.getSize();
-                }
-
-                return offset;
-            }
-
-        };
+        if ("WORD".equalsIgnoreCase(type)) {
+            varOffset = (varOffset + 1) & ~1;
+        }
+        else if (!"BYTE".equalsIgnoreCase(type)) {
+            varOffset = (varOffset + 3) & ~3;
+        }
+        LocalVariable var = new LocalVariable(type.toUpperCase(), name, size, varOffset);
         scope.addSymbol(name, var);
         localVariables.add(var);
+        varOffset += var.getTypeSize() * var.getSize();
         return var;
+    }
+
+    public LocalVariable addScopedLocalVariable(String type, String name, int size) {
+        if ("WORD".equalsIgnoreCase(type)) {
+            scopedStack = (scopedStack + 1) & ~1;
+        }
+        else if (!"BYTE".equalsIgnoreCase(type)) {
+            scopedStack = (scopedStack + 3) & ~3;
+        }
+        LocalVariable var = new LocalVariable(type.toUpperCase(), name, size, varOffset + scopedStack);
+
+        scopedStack += var.getTypeSize() * var.getSize();
+        if (scopedStack > maxScopedStack) {
+            maxScopedStack = scopedStack;
+        }
+
+        return var;
+    }
+
+    public void removeScopedLocalVariable(LocalVariable var) {
+        scopedStack -= var.getTypeSize() * var.getSize();
+        localVariables.remove(var);
     }
 
     public void register() {
@@ -175,26 +176,23 @@ public class Spin1Method {
     }
 
     public int getLocalsSize() {
-        int count = 0;
+        int count = maxScopedStack;
 
         for (LocalVariable var : localVariables) {
-            int typeSize = 1;
             if ("WORD".equalsIgnoreCase(var.getType())) {
-                typeSize = 2;
                 count = (count + 1) & ~1;
             }
             else if (!"BYTE".equalsIgnoreCase(var.getType())) {
-                typeSize = 4;
                 count = (count + 3) & ~3;
             }
-            count += typeSize * var.getSize();
+            count += var.getTypeSize() * var.getSize();
         }
 
         return (count + 3) & ~3;
     }
 
     public int getStackSize() {
-        return parameters.size() * 4 + getLocalsSize();
+        return varOffset + maxScopedStack - 4;
     }
 
     public void addSource(Spin1MethodLine line) {

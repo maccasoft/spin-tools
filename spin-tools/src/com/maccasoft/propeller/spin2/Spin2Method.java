@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2;
@@ -34,6 +33,8 @@ public class Spin2Method {
     List<LocalVariable> localVariables;
 
     int varOffset;
+    int maxScopedStack = 0;
+    int scopedStack = 0;
 
     List<Spin2MethodLine> lines = new ArrayList<>();
     public List<Spin2StatementNode> debugNodes = new ArrayList<>();
@@ -65,7 +66,7 @@ public class Spin2Method {
     }
 
     public int getVarOffset() {
-        return varOffset;
+        return varOffset + scopedStack;
     }
 
     public void addParameter(LocalVariable var) {
@@ -84,6 +85,22 @@ public class Spin2Method {
         scope.addSymbol(var.getName(), var);
         localVariables.add(var);
         varOffset += var.getTypeSize() * var.getSize();
+    }
+
+    public int getScopedVarOffset() {
+        return varOffset + scopedStack;
+    }
+
+    public void addScopedLocalVariable(LocalVariable var) {
+        scopedStack += var.getTypeSize() * var.getSize();
+        if (scopedStack > maxScopedStack) {
+            maxScopedStack = scopedStack;
+        }
+    }
+
+    public void removeScopedLocalVariable(LocalVariable var) {
+        scopedStack -= var.getTypeSize() * var.getSize();
+        localVariables.remove(var);
     }
 
     public void alignWord() {
@@ -181,7 +198,7 @@ public class Spin2Method {
     }
 
     public int getLocalVariableLongs() {
-        int count = 0;
+        int count = maxScopedStack;
 
         for (LocalVariable var : localVariables) {
             count += var.getTypeSize() * var.getSize();

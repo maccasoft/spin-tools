@@ -42,6 +42,7 @@ import com.maccasoft.propeller.expressions.SpinObject;
 import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.model.DirectiveNode;
 import com.maccasoft.propeller.model.FunctionNode;
+import com.maccasoft.propeller.model.FunctionNode.LocalVariableNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
 import com.maccasoft.propeller.model.RootNode;
@@ -736,6 +737,7 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
 
     List<Spin1MethodLine> compileStatement(Spin1Method method, Context context, Spin1MethodLine parent, Node statementNode) {
         List<Spin1MethodLine> lines = new ArrayList<Spin1MethodLine>();
+        List<LocalVariable> scopedVariables = new ArrayList<>();
 
         Spin1MethodLine previousLine = null;
 
@@ -748,7 +750,7 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
                 }
                 if (node instanceof StatementNode) {
                     if (conditionStack.isEmpty() || !conditionStack.peek().skip) {
-                        Spin1MethodLine line = compileStatement(method, context, parent, node, previousLine);
+                        Spin1MethodLine line = compileStatement(method, context, parent, node, previousLine, scopedVariables);
                         if (line != null) {
                             lines.add(line);
                             if (!"}".equals(line.getStatement())) {
@@ -764,11 +766,16 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
             }
         }
 
+        for (LocalVariable var : scopedVariables) {
+            method.removeScopedLocalVariable(var);
+        }
+
         return lines;
     }
 
-    Spin1MethodLine compileStatement(Spin1Method method, Context context, Spin1MethodLine parent, Node node, Spin1MethodLine previousLine) {
+    Spin1MethodLine compileStatement(Spin1Method method, Context context, Spin1MethodLine parent, Node node, Spin1MethodLine previousLine, List<LocalVariable> blockVariables) {
         Spin1MethodLine line = null;
+        FunctionNode functionNode = (FunctionNode) method.getData();
 
         TokenIterator iter = node.tokenIterator();
         if (!iter.hasNext()) {
@@ -830,22 +837,14 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
                         }
                     }
 
-                    LocalVariable variable = method.addLocalVariable(typeText, identifierText, size.getNumber().intValue());
-                    variable.setData(identifier);
+                    LocalVariableNode local = new LocalVariableNode(functionNode);
+                    local.type = type;
+                    local.identifier = identifier;
 
-                    boolean add = true;
-                    FunctionNode functionNode = (FunctionNode) method.getData();
-                    for (FunctionNode.LocalVariableNode param : functionNode.getLocalVariables()) {
-                        if (param.getIdentifier().equals(identifier)) {
-                            add = false;
-                            break;
-                        }
-                    }
-                    if (add) {
-                        FunctionNode.LocalVariableNode local = new FunctionNode.LocalVariableNode(functionNode);
-                        local.type = type;
-                        local.identifier = identifier;
-                    }
+                    LocalVariable var = method.addScopedLocalVariable(typeText, identifierText, size.getNumber().intValue());
+                    context.addSymbol(var.getName(), var);
+                    var.setData(identifier);
+                    blockVariables.add(var);
                 } catch (Exception e) {
                     logMessage(new CompilerException(e, identifier));
                 }
@@ -900,6 +899,10 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
             Spin1StatementNode initializer = null;
             Spin1StatementNode condition = null;
             Spin1StatementNode increment = null;
+            List<LocalVariable> scopedVariables = new ArrayList<>();
+
+            line = new Spin1MethodLine(context, parent, null, node);
+            context = line.getScope();
 
             Spin1CTreeBuilder builder = new Spin1CTreeBuilder(context);
             if (iter.hasNext()) {
@@ -936,8 +939,18 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
                     }
                     try {
                         String identifierText = identifier.getText();
-                        LocalVariable variable = method.addLocalVariable(type, identifierText, 1);
-                        variable.setData(identifier);
+                        Expression expression = context.getLocalSymbol(identifierText);
+                        if (expression != null) {
+                            logMessage(new CompilerException("symbol '" + identifier + "' already defined", identifier));
+                        }
+
+                        LocalVariableNode local = new LocalVariableNode(functionNode);
+                        local.identifier = identifier;
+
+                        LocalVariable var = method.addScopedLocalVariable(type, identifierText, 1);
+                        context.addSymbol(var.getName(), var);
+                        var.setData(identifier);
+                        scopedVariables.add(var);
                     } catch (Exception e) {
                         logMessage(new CompilerException(e, identifier));
                     }
@@ -1018,7 +1031,6 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
                 throw new RuntimeException("syntax error");
             }
 
-            line = new Spin1MethodLine(context, parent, null, node);
             if (initializer != null) {
                 for (int i = 0; i < initializer.getChildCount(); i++) {
                     line.addSource(compileBytecodeExpression(context, method, initializer.getChild(i), false));
@@ -1049,6 +1061,10 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
             line.addChild(repeatLine);
 
             line.addChild(quitLine);
+
+            for (LocalVariable var : scopedVariables) {
+                method.removeScopedLocalVariable(var);
+            }
         }
         else if ("do".equals(token.getText())) {
             line = new Spin1MethodLine(context, parent, token.getText(), node);

@@ -42,6 +42,7 @@ import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DirectiveNode;
 import com.maccasoft.propeller.model.FunctionNode;
+import com.maccasoft.propeller.model.FunctionNode.LocalVariableNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
 import com.maccasoft.propeller.model.RootNode;
@@ -280,13 +281,13 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                 method.addSource(line);
             }
 
-            if (setupLines.size() != 0) {
+            if (!setupLines.isEmpty()) {
                 method.getLines().addAll(0, setupLines);
                 setupLines.clear();
             }
 
             List<Spin2MethodLine> lines = method.getLines();
-            if (lines.size() == 0 || !"return".equals(lines.get(lines.size() - 1).getStatement())) {
+            if (lines.isEmpty() || !"return".equals(lines.getLast().getStatement())) {
                 Spin2MethodLine line = new Spin2MethodLine(method.getScope(), "RETURN");
                 line.addSource(new Bytecode(line.getScope(), Spin2Bytecode.bc_return_results, line.getStatement()));
                 method.addSource(line);
@@ -919,7 +920,8 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
     }
 
     List<Spin2MethodLine> compileStatement(Spin2Method method, Context context, Spin2MethodLine parent, Node statementNode) {
-        List<Spin2MethodLine> lines = new ArrayList<Spin2MethodLine>();
+        List<Spin2MethodLine> lines = new ArrayList<>();
+        List<LocalVariable> scopedVariables = new ArrayList<>();
 
         Spin2MethodLine previousLine = null;
 
@@ -932,7 +934,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                 }
                 if (node instanceof StatementNode) {
                     if (conditionStack.isEmpty() || !conditionStack.peek().skip) {
-                        Spin2MethodLine line = compileStatement(method, context, parent, node, previousLine);
+                        Spin2MethodLine line = compileStatement(method, context, parent, node, previousLine, scopedVariables);
                         if (line != null) {
                             lines.add(line);
                             if (!"}".equals(line.getStatement())) {
@@ -948,11 +950,16 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
             }
         }
 
+        for (LocalVariable var : scopedVariables) {
+            method.removeScopedLocalVariable(var);
+        }
+
         return lines;
     }
 
-    Spin2MethodLine compileStatement(Spin2Method method, Context context, Spin2MethodLine parent, Node node, Spin2MethodLine previousLine) {
+    Spin2MethodLine compileStatement(Spin2Method method, Context context, Spin2MethodLine parent, Node node, Spin2MethodLine previousLine, List<LocalVariable> blockVariables) {
         Spin2MethodLine line = null;
+        FunctionNode functionNode = (FunctionNode) method.getData();
 
         TokenIterator iter = node.tokenIterator();
         if (!iter.hasNext()) {
@@ -980,7 +987,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                 throw new CompilerException("expecting identifier", new Token(token.getStream(), token.stop));
             }
 
-            String typeText = token.getText();
+            Token type = token;
             Token identifier = iter.next();
 
             int varSize = 1;
@@ -992,16 +999,19 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                 varSize = buildIndexExpression(iter).getNumber().intValue();
             }
 
-            LocalVariable var = new LocalVariable(typeText, identifier.getText(), varSize, method.getVarOffset());
-            Spin2Struct memberStruct = scope.getStructureDefinition(typeText);
+            LocalVariableNode local = new LocalVariableNode(functionNode);
+            local.type = type;
+            local.identifier = identifier;
+
+            LocalVariable var = new LocalVariable(type.getText(), identifier.getText(), varSize, method.getScopedVarOffset());
+            Spin2Struct memberStruct = scope.getStructureDefinition(type.getText());
             if (memberStruct != null) {
                 compileStructureVariable(var, memberStruct);
             }
-            method.addLocalVariable(var);
-
-            scope.addSymbol(identifier.getText(), var);
-            variables.add(var);
+            method.addScopedLocalVariable(var);
+            context.addSymbol(var.getName(), var);
             var.setData(identifier);
+            blockVariables.add(var);
 
             if (iter.hasNext()) {
                 //throw new CompilerException("expecting end of statement", iter.next());
@@ -1036,33 +1046,23 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                 try {
                     String identifierText = identifier.getText();
 
-                    Expression expression = method.getScope().getLocalSymbol(identifierText);
+                    Expression expression = context.getLocalSymbol(identifierText);
                     if (expression instanceof LocalVariable) {
                         logMessage(new CompilerException("symbol '" + identifier + "' already defined", identifier));
                     }
-                    else {
-                        if (expression != null) {
-                            logMessage(new CompilerException(CompilerException.WARNING, "local variable '" + identifier.getText() + "' hides global", identifier));
-                        }
+                    else if (expression instanceof Variable) {
+                        logMessage(new CompilerException(CompilerException.WARNING, "local variable '" + identifier.getText() + "' hides global", identifier));
                     }
 
-                    LocalVariable var = new LocalVariable(typeText, identifierText, size.getNumber().intValue(), method.getVarOffset());
-                    method.addLocalVariable(var);
+                    LocalVariableNode local = new LocalVariableNode(functionNode);
+                    local.type = type;
+                    local.identifier = identifier;
+
+                    LocalVariable var = new LocalVariable(typeText, identifierText, size.getNumber().intValue(), method.getScopedVarOffset());
+                    method.addScopedLocalVariable(var);
+                    context.addSymbol(var.getName(), var);
                     var.setData(identifier);
-
-                    boolean add = true;
-                    FunctionNode functionNode = (FunctionNode) method.getData();
-                    for (FunctionNode.LocalVariableNode param : functionNode.getLocalVariables()) {
-                        if (param.getIdentifier().equals(identifier)) {
-                            add = false;
-                            break;
-                        }
-                    }
-                    if (add) {
-                        FunctionNode.LocalVariableNode local = new FunctionNode.LocalVariableNode(functionNode);
-                        local.type = type;
-                        local.identifier = identifier;
-                    }
+                    blockVariables.add(var);
                 } catch (Exception e) {
                     logMessage(new CompilerException(e, identifier));
                 }
@@ -1073,7 +1073,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                         break;
                     }
                     if ("=".equals(token.getText())) {
-                        Spin2CTreeBuilder builder = new Spin2CTreeBuilder(scope);
+                        Spin2CTreeBuilder builder = new Spin2CTreeBuilder(context);
                         builder.addToken(identifier);
                         builder.addToken(token);
                         while (iter.hasNext()) {
@@ -1117,8 +1117,10 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
             Spin2StatementNode initializer = null;
             Spin2StatementNode condition = null;
             Spin2StatementNode increment = null;
+            List<LocalVariable> scopedVariables = new ArrayList<>();
 
             line = new Spin2MethodLine(context, parent, null, node);
+            context = line.getScope();
 
             Spin2CTreeBuilder builder = new Spin2CTreeBuilder(context);
             if (iter.hasNext()) {
@@ -1155,9 +1157,19 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                     }
                     try {
                         String identifierText = identifier.getText();
-                        LocalVariable var = new LocalVariable(type, identifierText, 1, method.getVarOffset());
-                        method.addLocalVariable(var);
+                        Expression expression = context.getLocalSymbol(identifierText);
+                        if (expression != null) {
+                            logMessage(new CompilerException("symbol '" + identifier + "' already defined", identifier));
+                        }
+
+                        LocalVariableNode local = new LocalVariableNode(functionNode);
+                        local.identifier = identifier;
+
+                        LocalVariable var = new LocalVariable(type, identifierText, 1, method.getScopedVarOffset());
+                        method.addScopedLocalVariable(var);
+                        context.addSymbol(var.getName(), var);
                         var.setData(identifier);
+                        scopedVariables.add(var);
                     } catch (Exception e) {
                         logMessage(new CompilerException(e, identifier));
                     }
@@ -1268,6 +1280,10 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
             line.addChild(repeatLine);
 
             line.addChild(quitLine);
+
+            for (LocalVariable var : scopedVariables) {
+                method.removeScopedLocalVariable(var);
+            }
         }
         else if ("do".equals(token.getText())) {
             line = new Spin2MethodLine(context, parent, token.getText(), node);
