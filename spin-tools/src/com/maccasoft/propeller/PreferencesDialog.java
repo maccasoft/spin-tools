@@ -220,6 +220,7 @@ public class PreferencesDialog extends Dialog {
     boolean oldTerminalLineInput;
     boolean oldTerminalLocalEcho;
     String oldConsoleFont;
+    int oldTerminalCursor;
 
     static int lastPage;
 
@@ -562,6 +563,7 @@ public class PreferencesDialog extends Dialog {
         oldTerminalLineInput = preferences.getTerminalLineInput();
         oldTerminalLocalEcho = preferences.getTerminalLocalEcho();
         oldConsoleFont = preferences.getConsoleFont();
+        oldTerminalCursor = preferences.getTerminalCursor();
 
         return composite;
     }
@@ -1514,9 +1516,71 @@ public class PreferencesDialog extends Dialog {
         terminalFont.setText(fontData.getName());
         terminalFontSize.setSelection(fontData.getHeight());
 
-        new Label(composite, SWT.NONE);
+        label = new Label(composite, SWT.NONE);
+        label.setText("Cursor");
 
         Composite group = new Composite(composite, SWT.NONE);
+        layout = new GridLayout(2, false);
+        layout.marginHeight = layout.marginWidth = 0;
+        group.setLayout(layout);
+        group.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+
+        int cursorState = preferences.getTerminalCursor();
+
+        Combo combo = new Combo(group, SWT.DROP_DOWN);
+        combo.setItems("None", "Underline", "Block");
+        if ((cursorState & Preferences.CURSOR_ON) == 0) {
+            combo.select(0);
+        }
+        else if ((cursorState & Preferences.CURSOR_ULINE) != 0) {
+            combo.select(1);
+        }
+        else {
+            combo.select(2);
+        }
+        combo.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                int cursorState = preferences.getTerminalCursor() & Preferences.CURSOR_FLASH;
+                int selection = ((Combo) e.widget).getSelectionIndex();
+                if (selection == 0) {
+                    cursorState |= Preferences.CURSOR_OFF;
+                }
+                else if (selection == 1) {
+                    cursorState |= Preferences.CURSOR_ON | Preferences.CURSOR_ULINE;
+                }
+                else if (selection == 2) {
+                    cursorState |= Preferences.CURSOR_ON | Preferences.CURSOR_BLOCK;
+                }
+                preferences.setTerminalCursor(cursorState);
+            }
+
+        });
+
+        Button blinkCursor = new Button(group, SWT.CHECK);
+        blinkCursor.setText("Blinking");
+        blinkCursor.setSelection(preferences.getTerminalLocalEcho());
+        blinkCursor.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                int cursorState = preferences.getTerminalCursor();
+                if (((Button) e.widget).getSelection()) {
+                    cursorState |= Preferences.CURSOR_FLASH;
+                }
+                else {
+                    cursorState &= ~Preferences.CURSOR_FLASH;
+                }
+                preferences.setTerminalCursor(cursorState);
+            }
+
+        });
+        blinkCursor.setSelection((cursorState & Preferences.CURSOR_FLASH) != 0);
+
+        new Label(composite, SWT.NONE);
+
+        group = new Composite(composite, SWT.NONE);
         layout = new GridLayout(1, false);
         layout.marginHeight = layout.marginWidth = 0;
         group.setLayout(layout);
@@ -2268,6 +2332,7 @@ public class PreferencesDialog extends Dialog {
         preferences.setTerminalFont(oldTerminalFont);
         preferences.setTerminalLineInput(oldTerminalLineInput);
         preferences.setTerminalLocalEcho(oldTerminalLocalEcho);
+        preferences.setTerminalCursor(oldTerminalCursor);
 
         preferences.setConsoleFont(oldConsoleFont);
 

@@ -86,12 +86,12 @@ public class SerialTerminal {
 
     public static final String WINDOW_TITLE = "Serial Terminal";
 
-    public static final int CURSOR_OFF = 0x00;
-    public static final int CURSOR_ON = 0x04;
-    public static final int CURSOR_ULINE = 0x02;
-    public static final int CURSOR_BLOCK = 0x00;
-    public static final int CURSOR_FLASH = 0x01;
-    public static final int CURSOR_SOLID = 0x00;
+    public static final int CURSOR_OFF = Preferences.CURSOR_OFF;
+    public static final int CURSOR_ON = Preferences.CURSOR_ON;
+    public static final int CURSOR_ULINE = Preferences.CURSOR_ULINE;
+    public static final int CURSOR_BLOCK = Preferences.CURSOR_BLOCK;
+    public static final int CURSOR_FLASH = Preferences.CURSOR_FLASH;
+    public static final int CURSOR_SOLID = Preferences.CURSOR_SOLID;
 
     public static final int CURSOR_DISPLAY = 0x1000;
 
@@ -215,9 +215,6 @@ public class SerialTerminal {
         @Override
         public void run() {
             if (canvas.isDisposed()) {
-                return;
-            }
-            if (lineInputGroup.getVisible()) {
                 return;
             }
             frameCounter++;
@@ -863,11 +860,17 @@ public class SerialTerminal {
                     break;
 
                 case Preferences.PROP_TERMINAL_LINE_INPUT:
+                    cy = 0;
                     setLineInputGroupVisible((Boolean) evt.getNewValue());
                     break;
 
                 case Preferences.PROP_TERMINAL_LOCAL_ECHO:
                     localEcho = (Boolean) evt.getNewValue();
+                    break;
+
+                case Preferences.PROP_TERMINAL_CURSOR:
+                    cursorState = (cursorState & CURSOR_DISPLAY) | (Integer) evt.getNewValue();
+                    redraw(cx, cy, 1, 1);
                     break;
 
                 case Preferences.PROP_THEME:
@@ -897,7 +900,7 @@ public class SerialTerminal {
                 break;
         }
 
-        cursorState = CURSOR_DISPLAY | CURSOR_ON | CURSOR_FLASH | CURSOR_ULINE;
+        cursorState = CURSOR_DISPLAY | preferences.getTerminalCursor();
     }
 
     public void open() {
@@ -1126,8 +1129,8 @@ public class SerialTerminal {
                     }
                 }
 
-                if (!lineInputGroup.getVisible()) {
-                    if ((cursorState & (CURSOR_DISPLAY | CURSOR_ON)) == (CURSOR_DISPLAY | CURSOR_ON)) {
+                if ((cursorState & CURSOR_ON) != 0) {
+                    if ((cursorState & CURSOR_FLASH) == 0 || (cursorState & (CURSOR_DISPLAY | CURSOR_FLASH)) == (CURSOR_DISPLAY | CURSOR_FLASH)) {
                         int h = characterHeight;
                         if ((cursorState & CURSOR_ULINE) != 0) {
                             h = characterHeight / 4;

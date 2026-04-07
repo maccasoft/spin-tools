@@ -66,12 +66,20 @@ public class Preferences {
     public static final String PROP_TERMINAL_FONT = "terminalFont";
     public static final String PROP_TERMINAL_LINE_INPUT = "terminalLineInput";
     public static final String PROP_TERMINAL_LOCAL_ECHO = "terminalLocalEcho";
+    public static final String PROP_TERMINAL_CURSOR = "terminalCursor";
     public static final String PROP_CONSOLE_FONT = "consoleFont";
     public static final String PROP_CONSOLE_MAX_LINES = "consoleMaxLines";
     public static final String PROP_CONSOLE_WRITE_LOG_FILE = "consoleWriteLogFile";
     public static final String PROP_THEME = "theme";
     public static final String PROP_EXTERNAL_TOOLS = "externalTools";
     public static final String PROP_WINDOW_FONT = "windowFont";
+
+    public static final int CURSOR_OFF = 0x00;
+    public static final int CURSOR_ON = 0x04;
+    public static final int CURSOR_ULINE = 0x02;
+    public static final int CURSOR_BLOCK = 0x00;
+    public static final int CURSOR_FLASH = 0x01;
+    public static final int CURSOR_SOLID = 0x00;
 
     public static final String PREFERENCES_NAME = ".spin-tools";
 
@@ -469,12 +477,14 @@ public class Preferences {
         public String type;
         public String font;
         public int baudRate;
+        public int cursor;
 
         public TerminalPreferences() {
             lineInput = true;
             localEcho = false;
             type = "pst";
             baudRate = 115200;
+            cursor = CURSOR_ON | CURSOR_FLASH | CURSOR_ULINE;
         }
 
         @Override
@@ -482,7 +492,7 @@ public class Preferences {
             final int prime = 31;
             int result = 1;
             result = prime * result + Arrays.hashCode(history);
-            result = prime * result + Objects.hash(baudRate, font, lineInput, localEcho, type, window);
+            result = prime * result + Objects.hash(baudRate, font, lineInput, localEcho, type, window, cursor);
             return result;
         }
 
@@ -1504,6 +1514,14 @@ public class Preferences {
 
     public void setTerminalLocalEcho(boolean terminalLocalEcho) {
         changeSupport.firePropertyChange(PROP_TERMINAL_LOCAL_ECHO, preferences.terminal.localEcho, preferences.terminal.localEcho = terminalLocalEcho);
+    }
+
+    public int getTerminalCursor() {
+        return preferences.terminal.cursor;
+    }
+
+    public void setTerminalCursor(int terminalCursor) {
+        changeSupport.firePropertyChange(PROP_TERMINAL_CURSOR, preferences.terminal.cursor, preferences.terminal.cursor = terminalCursor);
     }
 
     public String getConsoleFont() {
