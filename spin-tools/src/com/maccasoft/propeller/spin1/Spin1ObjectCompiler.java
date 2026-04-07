@@ -127,7 +127,13 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
             @Override
             protected void processDirective(DirectiveNode node) {
-                compileDirective(node);
+                try {
+                    compileDirective(node);
+                } catch (CompilerException e) {
+                    logMessage(e);
+                } catch (Exception e) {
+                    logMessage(new CompilerException(e, node.getTokens()));
+                }
             }
 
             @Override

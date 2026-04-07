@@ -15,13 +15,6 @@ import java.util.Objects;
 
 public class FunctionNode extends Node {
 
-    public Token modifier;
-    public Token type;
-    public Token identifier;
-    public List<ParameterNode> parameters = new ArrayList<ParameterNode>();
-    public List<ReturnNode> returnVariables = new ArrayList<ReturnNode>();
-    public List<LocalVariableNode> localVariables = new ArrayList<LocalVariableNode>();
-
     public static class ParameterNode extends Node {
 
         public Token type;
@@ -73,12 +66,6 @@ public class FunctionNode extends Node {
             parent.returnVariables.add(this);
         }
 
-        @Override
-        public void addToken(Token token) {
-            tokens.add(token);
-            parent.addToken(token);
-        }
-
         public Token getIdentifier() {
             return identifier;
         }
@@ -107,12 +94,6 @@ public class FunctionNode extends Node {
         public LocalVariableNode(FunctionNode parent) {
             super(parent);
             parent.localVariables.add(this);
-        }
-
-        @Override
-        public void addToken(Token token) {
-            tokens.add(token);
-            parent.addToken(token);
         }
 
         public Token getType() {
@@ -163,6 +144,17 @@ public class FunctionNode extends Node {
             return sb.toString();
         }
 
+    }
+
+    public Token modifier;
+    public Token type;
+    public Token identifier;
+    public List<ParameterNode> parameters = new ArrayList<ParameterNode>();
+    public List<ReturnNode> returnVariables = new ArrayList<ReturnNode>();
+    public List<LocalVariableNode> localVariables = new ArrayList<LocalVariableNode>();
+
+    public FunctionNode(RootNode parent) {
+        super(parent);
     }
 
     public FunctionNode(RootNode parent, Token modifier, Token type, Token identifier) {

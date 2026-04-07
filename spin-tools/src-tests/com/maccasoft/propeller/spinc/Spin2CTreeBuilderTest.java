@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spinc;
@@ -114,9 +113,9 @@ class Spin2CTreeBuilderTest {
     String parse(String text) {
         Spin2CTreeBuilder builder = new Spin2CTreeBuilder(new Context());
 
-        CParser parser = new CParser(text);
+        CTokenStream stream = new CTokenStream(text);
         while (true) {
-            Token token = parser.nextTokenSkipNL();
+            Token token = nextTokenSkipNL(stream);
             if (token.type == Token.EOF) {
                 break;
             }
@@ -128,6 +127,33 @@ class Spin2CTreeBuilderTest {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         print(new PrintStream(os), root, 0);
         return os.toString().replaceAll("\\r\\n", "\n");
+    }
+
+    Token nextTokenSkipNL(CTokenStream stream) {
+        Token token = stream.nextToken();
+        while (true) {
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+
+            }
+            else if (token.type != Token.NL) {
+                break;
+            }
+            token = stream.nextToken();
+        }
+        if ("&".equals(token.getText())) {
+            Token nextToken = stream.peekNext();
+            if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                token = token.merge(stream.nextToken());
+            }
+        }
+        else if (".".equals(token.getText())) {
+            Token nextToken = stream.peekNext();
+            if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                token = token.merge(stream.nextToken());
+                token.type = 0;
+            }
+        }
+        return token;
     }
 
     void print(PrintStream out, Spin2StatementNode node, int indent) {

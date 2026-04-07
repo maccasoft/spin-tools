@@ -10,15 +10,20 @@
 package com.maccasoft.propeller.model;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class SourceLine {
 
     int index;
-    List<Token> tokens;
+    List<Token> tokens = new ArrayList<>();
 
     public SourceLine(List<Token> tokens) {
-        this.tokens = new ArrayList<>(tokens);
+        this.tokens.addAll(tokens);
+    }
+
+    public List<Token> getTokens() {
+        return tokens;
     }
 
     public int getIndex() {
@@ -92,6 +97,18 @@ public class SourceLine {
         return false;
     }
 
+    public Token getFirstToken() {
+        return tokens.isEmpty() ? null : tokens.getFirst();
+    }
+
+    public Token getLastToken() {
+        return tokens.isEmpty() ? null : tokens.getLast();
+    }
+
+    public List<Token> getTokens(int from, int to) {
+        return tokens.subList(from, to);
+    }
+
     public String getText() {
         StringBuilder sb = new StringBuilder();
 
@@ -114,6 +131,31 @@ public class SourceLine {
         TokenStream stream = firstToken.getStream();
         String text = stream.getSource(firstToken.start - firstToken.column, lastToken.stop);
         return new Token(stream, firstToken.start - firstToken.column, firstToken.line, 0, type, text);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        Iterator<Token> iter = tokens.iterator();
+        if (iter.hasNext()) {
+            Token token = iter.next();
+            sb.append(token.getText());
+            int line = token.line;
+            int index = token.stop + 1;
+            while (iter.hasNext()) {
+                token = iter.next();
+                if (token.line != line || index > token.start) {
+                    sb.append(" ");
+                }
+                else {
+                    sb.repeat(" ", token.start - index);
+                }
+                sb.append(token.getText());
+                line = token.line;
+                index = token.stop + 1;
+            }
+        }
+        return sb.toString();
     }
 
 }

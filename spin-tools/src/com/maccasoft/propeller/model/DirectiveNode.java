@@ -16,11 +16,10 @@ public class DirectiveNode extends Node {
 
     public static class IncludeNode extends DirectiveNode {
 
-        Token file;
+        public Token file;
 
-        public IncludeNode(Node parent, Token file) {
+        public IncludeNode(Node parent) {
             super(parent);
-            this.file = file;
         }
 
         public Token getFile() {
@@ -54,6 +53,9 @@ public class DirectiveNode extends Node {
             StringBuilder sb = new StringBuilder();
 
             sb.append(getClass().getSimpleName());
+            if (file != null) {
+                sb.append(" file=").append(file.getText());
+            }
             sb.append(dumpTokens());
 
             return sb.toString();

@@ -332,8 +332,8 @@ public class Spin1Parser extends Parser {
                         state = 1;
                         break;
                     }
-                    node.addToken(token);
                     if ("[".equals(token.getText())) {
+                        node.addToken(token);
                         node.step = new ExpressionNode(node);
                         state = 3;
                         break;
@@ -341,8 +341,8 @@ public class Spin1Parser extends Parser {
                     node.start.addToken(token);
                     break;
                 case 3:
-                    node.addToken(token);
                     if ("]".equals(token.getText())) {
+                        node.addToken(token);
                         state = 0;
                         break;
                     }
@@ -371,12 +371,11 @@ public class Spin1Parser extends Parser {
                         state = 1;
                         break;
                     }
-                    node.addToken(token);
                     node.expression.addToken(token);
                     break;
                 case 6:
-                    node.addToken(token);
                     if ("]".equals(token.getText())) {
+                        node.addToken(token);
                         state = 0;
                         break;
                     }
@@ -466,8 +465,8 @@ public class Spin1Parser extends Parser {
                     break;
 
                 case 3:
-                    node.addToken(token);
                     if ("]".equals(token.getText())) {
+                        node.addToken(token);
                         state = 2;
                         break;
                     }
@@ -554,8 +553,8 @@ public class Spin1Parser extends Parser {
                     break;
 
                 case 5:
-                    object.addToken(token);
                     if ("]".equals(token.getText())) {
+                        object.addToken(token);
                         state = 3;
                         break;
                     }
@@ -643,7 +642,6 @@ public class Spin1Parser extends Parser {
                         param.defaultValue = new ExpressionNode(param);
                     }
                     param.defaultValue.addToken(token);
-                    param.addToken(token);
                     break;
 
                 case 6:
@@ -706,8 +704,8 @@ public class Spin1Parser extends Parser {
                     }
                     break;
                 case 12:
-                    local.addToken(token);
                     if ("]".equals(token.getText())) {
+                        local.addToken(token);
                         state = 11;
                         break;
                     }
@@ -871,7 +869,7 @@ public class Spin1Parser extends Parser {
                         token = token.merge(sourceLine.getNextToken());
                         nextToken = sourceLine.peekNextToken();
                     }
-                    if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                    if (nextToken.type != Token.OPERATOR && token.isAdjacent(nextToken)) {
                         token = token.merge(sourceLine.getNextToken());
                     }
                 }
@@ -879,7 +877,7 @@ public class Spin1Parser extends Parser {
             if (state == 1 || state == 4 || state == 5) {
                 if (":".equals(token.getText())) {
                     Token nextToken = sourceLine.peekNextToken();
-                    if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                    if (nextToken.type != Token.OPERATOR && token.isAdjacent(nextToken)) {
                         token = token.merge(sourceLine.getNextToken());
                     }
                 }

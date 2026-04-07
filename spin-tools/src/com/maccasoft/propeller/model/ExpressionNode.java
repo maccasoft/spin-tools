@@ -20,13 +20,11 @@ public class ExpressionNode extends Node {
     }
 
     @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-
-        sb.append(getClass().getSimpleName());
-        sb.append(dumpTokens());
-
-        return sb.toString();
+    public void addToken(Token token) {
+        if (parent != null) {
+            parent.addToken(token);
+        }
+        super.addToken(token);
     }
 
 }

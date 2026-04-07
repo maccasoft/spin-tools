@@ -70,6 +70,14 @@ public class VariableNode extends Node {
     }
 
     @Override
+    public void addToken(Token token) {
+        if (parent instanceof VariableNode) {
+            parent.addToken(token);
+        }
+        super.addToken(token);
+    }
+
+    @Override
     public String getPath() {
         StringBuilder sb = new StringBuilder();
 

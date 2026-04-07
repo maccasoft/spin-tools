@@ -55,6 +55,12 @@ public class TypeDefinitionNode extends Node {
         }
 
         @Override
+        public void addToken(Token token) {
+            parent.addToken(token);
+            super.addToken(token);
+        }
+
+        @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
 
@@ -77,6 +83,10 @@ public class TypeDefinitionNode extends Node {
 
     public Token type;
     public Token identifier;
+
+    public TypeDefinitionNode(Node parent) {
+        super(parent);
+    }
 
     public TypeDefinitionNode(Node parent, Token identifier) {
         super(parent);

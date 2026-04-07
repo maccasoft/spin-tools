@@ -102,7 +102,7 @@ public abstract class ObjectCompiler {
 
         token = iter.next();
         if (!iter.hasNext()) {
-            throw new CompilerException("expecting directive", new Token(token.getStream(), token.stop));
+            throw new CompilerException("expecting directive", token);
         }
 
         token = iter.next();
@@ -111,7 +111,7 @@ public abstract class ObjectCompiler {
                 node.setExclude(skip);
                 if (!skip) {
                     if (!iter.hasNext()) {
-                        throw new CompilerException("expecting directive", new Token(token.getStream(), token.stop));
+                        throw new CompilerException("expecting directive", token);
                     }
                     token = iter.next();
                     if (!"exportdef".equalsIgnoreCase(token.getText())) {
@@ -119,7 +119,7 @@ public abstract class ObjectCompiler {
                         break;
                     }
                     if (!iter.hasNext()) {
-                        throw new CompilerException("expecting identifier", new Token(token.getStream(), token.stop));
+                        throw new CompilerException("expecting identifier", token);
                     }
                     token = iter.next();
                     if (token.type != Token.KEYWORD) {
@@ -145,7 +145,7 @@ public abstract class ObjectCompiler {
                 node.setExclude(skip);
                 if (!skip) {
                     if (!iter.hasNext()) {
-                        throw new CompilerException("expecting identifier", new Token(token.getStream(), token.stop));
+                        throw new CompilerException("expecting identifier", token);
                     }
                     token = iter.next();
                     if (token.type != Token.KEYWORD) {
@@ -168,7 +168,7 @@ public abstract class ObjectCompiler {
                 node.setExclude(skip);
                 if (!skip) {
                     if (!iter.hasNext()) {
-                        throw new CompilerException("expecting identifier", new Token(token.getStream(), token.stop));
+                        throw new CompilerException("expecting identifier", token);
                     }
                     token = iter.next();
                     if (token.type != Token.KEYWORD) {
@@ -199,7 +199,7 @@ public abstract class ObjectCompiler {
                 node.setExclude(skip);
                 if (!skip) {
                     if (!iter.hasNext()) {
-                        throw new CompilerException("expecting identifier", new Token(token.getStream(), token.stop));
+                        throw new CompilerException("expecting identifier", token);
                     }
                     Token identifier = iter.next();
                     if (token.type != Token.KEYWORD) {
@@ -243,7 +243,7 @@ public abstract class ObjectCompiler {
                 node.setExclude(skip);
                 if (!skip) {
                     if (!iter.hasNext()) {
-                        throw new CompilerException("expecting identifier", new Token(token.getStream(), token.stop));
+                        throw new CompilerException("expecting identifier", token);
                     }
                     Token identifier = iter.next();
                     if (token.type != Token.KEYWORD) {

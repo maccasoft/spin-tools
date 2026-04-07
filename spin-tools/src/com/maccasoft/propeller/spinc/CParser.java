@@ -9,11 +9,9 @@
 
 package com.maccasoft.propeller.spinc;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
-import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataLineNode.ModifierNode;
 import com.maccasoft.propeller.model.DirectiveNode;
@@ -22,723 +20,932 @@ import com.maccasoft.propeller.model.FunctionNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.Parser;
 import com.maccasoft.propeller.model.RootNode;
+import com.maccasoft.propeller.model.SourceLine;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
-import com.maccasoft.propeller.model.TokenStream.Position;
 import com.maccasoft.propeller.model.TypeDefinitionNode;
 import com.maccasoft.propeller.model.VariableNode;
-import com.maccasoft.propeller.spin1.Spin1GlobalContext;
-import com.maccasoft.propeller.spin2.Spin2GlobalContext;
 import com.maccasoft.propeller.spin2.Spin2Model;
 
 public class CParser extends Parser {
 
-    public static final int P1 = 1;
-    public static final int P2 = 2;
+    enum State {
+        S1, S2, S3, S4, S5, S6, Struct1, Struct2
+    }
 
-    CTokenStream stream;
+    String text;
 
     RootNode root;
-    int target;
-    Context context;
+    Node parentNode;
+
+    State state = State.S1;
+    List<Token> tokens = new ArrayList<>();
+    List<String> nestingBraces = new ArrayList<>();
 
     public CParser(String text) {
-        this.stream = new CTokenStream(text);
-    }
-
-    public int getTarget() {
-        return target;
-    }
-
-    public Context getContext() {
-        return context;
+        this.text = text;
     }
 
     @Override
     public RootNode parse() {
-        root = new RootNode();
+        Token token;
+        List<Token> lineTokens = new ArrayList<>();
 
-        Token token, commentToken = null;
+        root = new RootNode();
+        parentNode = root;
+
+        state = State.S1;
+        CTokenStream stream = new CTokenStream(text);
+
         while ((token = stream.nextToken()).type != Token.EOF) {
             if (token.type == Token.NL) {
-                continue;
-            }
-            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-                root.addComment(token);
-                if (token.type == Token.BLOCK_COMMENT) {
-                    commentToken = token;
-                }
-                continue;
-            }
-            if ("#".equals(token.getText())) {
-                parsePreprocessor(root, token);
-                commentToken = null;
-                continue;
-            }
-
-            createGlobalContext();
-
-            if ("struct".equals(token.getText())) {
-                Token type = token;
-
-                if ((token = nextTokenSkipNL()).type == Token.EOF) {
-                    break;
-                }
-                Token identifier = token;
-
-                if ((token = nextTokenSkipNL()).type != Token.EOF) {
-                    if ("{".equals(token.getText())) {
-                        TypeDefinitionNode node = new TypeDefinitionNode(root, type, identifier);
-                        node.addToken(token);
-                        parseStructure(node);
+                if (!lineTokens.isEmpty()) {
+                    if ("#".equals(lineTokens.getFirst().getText())) {
+                        parsePreprocessor(parentNode, new SourceLine(lineTokens));
+                        lineTokens.clear();
                     }
-                    else {
-                        VariableNode node = new VariableNode(root, type, identifier, token);
-                        VariableNode child = null;
-
-                        token = nextTokenSkipNL();
-                        while (token.type != Token.EOF) {
-                            if (";".equals(token.getText())) {
-                                break;
-                            }
-                            node.addToken(token);
-                            if (",".equals(token.getText())) {
-                                if ((token = nextTokenSkipNL()).type == Token.EOF) {
-                                    break;
-                                }
-                                node.addToken(token);
-                                if ("*".equals(token.getText())) {
-                                    type = token;
-                                    if ((token = nextTokenSkipNL()).type == Token.EOF) {
-                                        break;
-                                    }
-                                    node.addToken(token);
-                                    child = new VariableNode(node, null, type, token);
-                                }
-                                else {
-                                    child = new VariableNode(node, null, null, token);
-                                }
-                            }
-                            else if (child != null) {
-                                child.addToken(token);
-                            }
-                            token = nextTokenSkipNL();
+                    else if (parentNode instanceof StatementNode) {
+                        Token firstToken = parentNode.getStartToken();
+                        if (firstToken != null && "asm".equals(firstToken.getText())) {
+                            parseDatLine(parentNode, new SourceLine(lineTokens));
+                            lineTokens.clear();
                         }
                     }
                 }
-
+            }
+            else if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                root.addComment(token);
             }
             else {
-                Token modifier = null;
+                lineTokens.add(token);
 
-                if ("static".equals(token.getText())) {
-                    modifier = token;
-                    if ((token = nextTokenSkipNL()).type != Token.EOF) {
-                        break;
-                    }
+                if (processParenthesis(token)) {
+                    continue;
+                }
+                if (!nestingBraces.isEmpty()) {
+                    continue;
                 }
 
-                Token type = token;
-
-                token = nextTokenSkipNL();
-                if ("*".equals(token.getText())) {
-                    type = type.merge(token);
-                    type.type = Token.KEYWORD;
-                    if ((token = nextTokenSkipNL()).type == Token.EOF) {
-                        break;
+                if ("}".equals(token.getText())) {
+                    Token nextToken = stream.peekNext();
+                    if (";".equals(nextToken.getText())) {
+                        if (parentNode instanceof TypeDefinitionNode) {
+                            lineTokens.add(stream.nextToken());
+                        }
+                        else if ("struct".equals(lineTokens.getFirst().getText())) {
+                            lineTokens.add(stream.nextToken());
+                        }
+                    }
+                    else if ("while".equals(nextToken.getText())) {
+                        Token parentFirstToken = parentNode.getStartToken();
+                        if (parentFirstToken != null && "do".equals(parentFirstToken.getText())) {
+                            continue;
+                        }
                     }
                 }
-
-                Token identifier = token;
-
-                if ((token = nextTokenSkipNL()).type == Token.EOF) {
-                    break;
-                }
-
-                Node node;
-                if ("(".equals(token.getText())) {
-                    node = new FunctionNode(root, modifier, type, identifier);
-                    node.addToken(token);
-
-                    if (commentToken != null) {
-                        node.addDocument(commentToken);
+                if (";".equals(token.getText()) || "{".equals(token.getText()) || "}".equals(token.getText())) {
+                    SourceLine sourceLine = new SourceLine(lineTokens);
+                    if (isExcluded()) {
+                        root.addComment(sourceLine.getAsToken(Token.COMMENT));
                     }
-
-                    while ((token = nextTokenSkipNL()).type != Token.EOF) {
-                        if (")".equals(token.getText())) {
-                            node.addToken(token);
-                            break;
-                        }
-
-                        FunctionNode.ParameterNode param = new FunctionNode.ParameterNode((FunctionNode) node);
-                        param.type = token;
-
-                        token = nextTokenSkipNL();
-                        if ("*".equals(token.getText())) {
-                            param.type = param.type.merge(token);
-                            param.type.type = Token.KEYWORD;
-                            if ((token = nextTokenSkipNL()).type == Token.EOF) {
-                                break;
-                            }
-                        }
-                        param.addToken(param.type);
-
-                        if (")".equals(token.getText())) {
-                            node.addToken(token);
-                            break;
-                        }
-                        if (!",".equals(token.getText())) {
-                            param.identifier = token;
-                            param.addToken(token);
-                            while ((token = nextTokenSkipNL()).type != Token.EOF) {
-                                if (")".equals(token.getText()) || ",".equals(token.getText())) {
-                                    node.addToken(token);
-                                    break;
-                                }
-                                param.addToken(token);
-                            }
-                        }
-                        if (")".equals(token.getText())) {
-                            break;
-                        }
-                    }
-
-                    while ((token = nextTokenSkipNL()).type != Token.EOF) {
-                        if ("#".equals(token.getText())) {
-                            parsePreprocessor(node, token);
+                    else if (parentNode instanceof RootNode) {
+                        if ("struct".equals(sourceLine.peekNextToken().getText())) {
+                            parseStructure(sourceLine);
                         }
                         else {
-                            node.addToken(token);
-                            if ("{".equals(token.getText())) {
-                                while ((token = peekNextTokenSkipNL()).type != Token.EOF) {
-                                    if ("}".equals(token.getText())) {
-                                        node = new StatementNode(node);
-                                        node.addToken(nextTokenSkipNL());
-                                        break;
-                                    }
-                                    parseStatement(node);
-                                }
-                                break;
-                            }
-                            else if (!";".equals(token.getText())) {
-                                while ((token = nextTokenSkipNL()).type != Token.EOF) {
-                                    if (";".equals(token.getText())) {
-                                        break;
-                                    }
-                                }
-                                break;
+                            Node node = parseDeclaration(sourceLine);
+                            if (node instanceof FunctionNode) {
+                                parentNode = node;
+                                state = State.S1;
                             }
                         }
                     }
-                }
-                else {
-                    node = new VariableNode(root, modifier, type, identifier);
-                    VariableNode child = null;
-                    while (token.type != Token.EOF) {
-                        if (";".equals(token.getText())) {
-                            break;
-                        }
-                        node.addToken(token);
-                        if (",".equals(token.getText())) {
-                            if ((token = nextTokenSkipNL()).type == Token.EOF) {
-                                break;
-                            }
-                            node.addToken(token);
-                            if ("*".equals(token.getText())) {
-                                type = token;
-                                if ((token = nextTokenSkipNL()).type == Token.EOF) {
-                                    break;
-                                }
-                                node.addToken(token);
-                                child = new VariableNode(node, null, type, token);
-                            }
-                            else {
-                                child = new VariableNode(node, null, null, token);
-                            }
-                        }
-                        else if (child != null) {
-                            child.addToken(token);
-                        }
-                        token = nextTokenSkipNL();
+                    else if (parentNode instanceof TypeDefinitionNode) {
+                        parseStructure(sourceLine);
                     }
+                    else {
+                        parseStatement(sourceLine);
+                    }
+                    lineTokens.clear();
                 }
-                commentToken = null;
             }
+        }
+
+        if (!lineTokens.isEmpty()) {
+            StatementNode node = new StatementNode((parentNode));
+            node.addAllTokens(lineTokens);
         }
 
         return root;
     }
 
-    void parseStructure(TypeDefinitionNode parent) {
+    void parseStatement(SourceLine sourceLine) {
         Token token;
 
-        while ((token = nextTokenSkipNL()).type != Token.EOF) {
-            parent.addToken(token);
-
-            if ("}".equals(token.getText())) {
-                break;
-            }
-
-            Token modifier = null;
-
-            if ("struct".equals(token.getText())) {
-                modifier = token;
-                if ((token = nextTokenSkipNL()).type != Token.EOF) {
-                    break;
+        while ((token = sourceLine.getNextToken()) != null) {
+            if ("&".equals(token.getText())) {
+                Token nextToken = sourceLine.peekNextToken();
+                if (nextToken != null && token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                    token = token.merge(sourceLine.getNextToken());
                 }
-                parent.addToken(token);
             }
-
-            Token type = token;
-
-            token = nextTokenSkipNL();
-            if ("*".equals(token.getText())) {
-                parent.addToken(token);
-                type = type.merge(token);
-                type.type = Token.KEYWORD;
-                if ((token = nextTokenSkipNL()).type == Token.EOF) {
-                    break;
+            else if (".".equals(token.getText())) {
+                Token nextToken = sourceLine.peekNextToken();
+                if (nextToken != null && token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                    token = token.merge(sourceLine.getNextToken());
+                    token.type = 0;
                 }
             }
 
-            Token identifier = token;
-            parent.addToken(token);
-
-            if ((token = nextTokenSkipNL()).type == Token.EOF) {
-                break;
-            }
-
-            TypeDefinitionNode.Definition node = new TypeDefinitionNode.Definition(parent, modifier, type, identifier);
-            TypeDefinitionNode.Definition child = node;
-
-            while (token.type != Token.EOF) {
-                parent.addToken(token);
-                if (";".equals(token.getText())) {
-                    break;
-                }
-                if (",".equals(token.getText())) {
-                    if ((token = nextTokenSkipNL()).type == Token.EOF) {
+            switch (state) {
+                case S1: // Start of statement
+                    if ("{".equals(token.getText())) {
+                        parentNode = new StatementNode((parentNode));
+                        parentNode.addToken(token);
                         break;
                     }
-                    parent.addToken(token);
-                    if ("*".equals(token.getText())) {
-                        type = token;
-                        if ((token = nextTokenSkipNL()).type == Token.EOF) {
+                    if ("}".equals(token.getText())) {
+                        if (parentNode instanceof FunctionNode) {
+                            StatementNode node = new StatementNode((parentNode));
+                            node.addToken(token);
+                            parentNode = parentNode.getParent();
                             break;
                         }
-                        parent.addToken(token);
-                        child = new TypeDefinitionNode.Definition(node, null, type, token);
+                        while (!(parentNode.getParent() instanceof FunctionNode)) {
+                            Token parentLastToken = parentNode.getStopToken();
+                            if (parentLastToken == null || "{".equals(parentLastToken.getText())) {
+                                break;
+                            }
+                            parentNode = parentNode.getParent();
+                        }
+                        Token parentFirstToken = parentNode.getStartToken();
+                        parentNode = parentNode.getParent();
+                        if (parentFirstToken != null && "do".equals(parentFirstToken.getText())) {
+                            tokens.add(token);
+                            state = State.S2;
+                            break;
+                        }
+                        StatementNode node = new StatementNode((parentNode));
+                        node.addToken(token);
+                        break;
+                    }
+                    tokens.add(token);
+                    if ("if".equals(token.getText()) || "for".equals(token.getText()) || "while".equals(token.getText()) || "switch".equals(token.getText())) {
+                        state = State.S3;
+                        break;
+                    }
+                    if ("case".equals(token.getText()) || "default".equals(token.getText())) {
+                        while (!(parentNode instanceof FunctionNode)) {
+                            Token nodeToken = parentNode.getStartToken();
+                            if (nodeToken != null && "switch".equals(nodeToken.getText())) {
+                                break;
+                            }
+                            parentNode = parentNode.getParent();
+                        }
+                        state = State.S6;
+                        break;
+                    }
+                    if ("else".equals(token.getText())) {
+                        state = State.S4;
+                        while (!(parentNode.getParent() instanceof RootNode) && !parentNode.getChilds().isEmpty()) {
+                            Node node = parentNode.getChilds().getLast();
+                            Token nodeToken = node.getStartToken();
+                            if (nodeToken != null) {
+                                if ("}".equals(nodeToken.getText())) {
+                                    break;
+                                }
+                                if ("else".equals(nodeToken.getText())) {
+                                    nodeToken = node.getStopToken();
+                                }
+                                if (nodeToken != null && "if".equals(nodeToken.getText())) {
+                                    break;
+                                }
+                            }
+                            parentNode = parentNode.getParent();
+                        }
+                        break;
+                    }
+                    while (!(parentNode.getParent() instanceof RootNode)) {
+                        Token parentFirstToken = parentNode.getStartToken();
+                        if (parentFirstToken != null && ("case".equals(parentFirstToken.getText()) || "default".equals(parentFirstToken.getText()))) {
+                            break;
+                        }
+                        Token parentLastToken = parentNode.getStopToken();
+                        if (parentLastToken == null || "{".equals(parentLastToken.getText())) {
+                            break;
+                        }
+                        parentNode = parentNode.getParent();
+                    }
+                    state = State.S2;
+                    break;
+
+                case S2: // Terminate with ;
+                    tokens.add(token);
+                    if (processParenthesis(token)) {
+                        break;
+                    }
+                    if ("{".equals(token.getText())) {
+                        parentNode = new StatementNode((parentNode));
+                        parentNode.addAllTokens(tokens);
+                        tokens.clear();
+                        state = State.S1;
+                        break;
+                    }
+                    if (";".equals(token.getText())) {
+                        StatementNode node = new StatementNode((parentNode));
+                        node.addAllTokens(tokens);
+                        tokens.clear();
+
+                        Token parentFirstToken = parentNode.getStartToken();
+                        if (parentFirstToken != null && ("case".equals(parentFirstToken.getText()) || "default".equals(parentFirstToken.getText()))) {
+                            state = State.S1;
+                            break;
+                        }
+
+                        Token parentLastToken = parentNode.getStopToken();
+                        if (parentLastToken != null && !"{".equals(parentLastToken.getText())) {
+                            parentNode = parentNode.getParent();
+                        }
+
+                        state = State.S1;
+                        break;
+                    }
+                    break;
+
+                case S3:
+                    tokens.add(token);
+                    if ("(".equals(token.getText())) {
+                        nestingBraces.add(token.getText());
+                        state = State.S5;
+                        break;
+                    }
+                    break;
+
+                case S4:
+                    if ("if".equals(token.getText())) {
+                        tokens.add(token);
+                        state = State.S3;
+                        break;
+                    }
+                    parentNode = new StatementNode((parentNode));
+                    parentNode.addAllTokens(tokens);
+
+                    tokens.clear();
+
+                    if ("{".equals(token.getText())) {
+                        parentNode.addToken(token);
+                        state = State.S1;
+                        break;
+                    }
+
+                    tokens.add(token);
+                    if ("for".equals(token.getText()) || "while".equals(token.getText())) {
+                        state = State.S3;
+                        break;
+                    }
+                    state = State.S2;
+                    break;
+
+                case S5: // Balance parenthesis and start new block
+                    if (processParenthesis(token)) {
+                        tokens.add(token);
+                        break;
+                    }
+                    if (nestingBraces.isEmpty()) {
+                        parentNode = new StatementNode((parentNode));
+                        parentNode.addAllTokens(tokens);
+
+                        tokens.clear();
+
+                        if ("{".equals(token.getText())) {
+                            parentNode.addToken(token);
+                            state = State.S1;
+                            break;
+                        }
+
+                        tokens.add(token);
+                        if ("if".equals(token.getText()) || "for".equals(token.getText()) || "while".equals(token.getText()) || "switch".equals(token.getText())) {
+                            state = State.S3;
+                            break;
+                        }
+                        if ("else".equals(token.getText())) {
+                            state = State.S4;
+                            break;
+                        }
+                        state = State.S2;
+                        break;
+                    }
+                    tokens.add(token);
+                    break;
+
+                case S6: // Case statement
+                    tokens.add(token);
+                    if (processParenthesis(token)) {
+                        break;
+                    }
+                    if (nestingBraces.isEmpty() && ":".equals(token.getText())) {
+                        parentNode = new StatementNode((parentNode));
+                        parentNode.addAllTokens(tokens);
+                        tokens.clear();
+                        state = State.S1;
+                        break;
+                    }
+                    break;
+            }
+        }
+
+        if (!sourceLine.hasMoreTokens() && !tokens.isEmpty()) {
+            Node node = new StatementNode(parentNode);
+            node.addAllTokens(tokens);
+            tokens.clear();
+        }
+    }
+
+    boolean processParenthesis(Token token) {
+        if ("(".equals(token.getText()) || "[".equals(token.getText())) {
+            nestingBraces.add(token.getText());
+            return true;
+        }
+        if (")".equals(token.getText())) {
+            if (!nestingBraces.isEmpty() && "(".equals(nestingBraces.getLast())) {
+                nestingBraces.removeLast();
+            }
+            return true;
+        }
+        if ("]".equals(token.getText())) {
+            if (!nestingBraces.isEmpty() && "[".equals(nestingBraces.getLast())) {
+                nestingBraces.removeLast();
+            }
+            return true;
+        }
+        return false;
+    }
+
+    void parseStructure(SourceLine sourceLine) {
+        Token token;
+
+        if (parentNode instanceof RootNode) {
+            Token type = sourceLine.getNextToken();
+            Token identifier = sourceLine.getNextToken();
+
+            token = sourceLine.getNextToken();
+            if (token != null) {
+                if ("{".equals(token.getText())) {
+                    TypeDefinitionNode node = new TypeDefinitionNode(root, type, identifier);
+                    node.addToken(token);
+                    parentNode = node;
+                    state = State.Struct1;
+                }
+                else {
+                    sourceLine.setIndex(1);
+                    parseDeclaration(sourceLine);
+                }
+            }
+        }
+        else if (parentNode instanceof TypeDefinitionNode node) {
+            if (state == State.Struct2) {
+                parseStructureVariable(node, sourceLine);
+                parentNode = root;
+                return;
+            }
+            while ((token = sourceLine.getNextToken()) != null) {
+                if ("}".equals(token.getText())) {
+                    node.addToken(token);
+                    state = State.Struct2;
+                    break;
+                }
+
+                TypeDefinitionNode.Definition member = new TypeDefinitionNode.Definition(node);
+
+                member.addToken(member.type = token);
+                if ((token = sourceLine.getNextToken()) != null) {
+                    if ("*".equals(token.getText())) {
+                        member.addToken(token);
+                        member.type = member.type.merge(token);
+                        member.type.type = Token.KEYWORD;
+                        if ((token = sourceLine.getNextToken()) == null) {
+                            break;
+                        }
+                    }
+                }
+                member.addToken(member.identifier = token);
+
+                if ((token = sourceLine.getNextToken()) != null) {
+                    if ("[".equals(token.getText())) {
+                        member.addToken(token);
+                        member.size = new ExpressionNode(member);
+                        while ((token = sourceLine.getNextToken()) != null) {
+                            if ("]".equals(token.getText())) {
+                                member.addToken(token);
+                                break;
+                            }
+                            member.size.addToken(token);
+                        }
+                        if (token != null && "]".equals(token.getText())) {
+                            token = sourceLine.getNextToken();
+                        }
+                    }
+                    if (token != null && ",".equals(token.getText())) {
+                        member.addToken(token);
+                        while ((token = sourceLine.getNextToken()) != null) {
+                            TypeDefinitionNode.Definition child = new TypeDefinitionNode.Definition(member);
+
+                            if ("*".equals(token.getText())) {
+                                child.addToken(child.type = token);
+                                if ((token = sourceLine.getNextToken()) == null) {
+                                    break;
+                                }
+                            }
+                            child.addToken(child.identifier = token);
+
+                            if ((token = sourceLine.getNextToken()) != null) {
+                                if ("[".equals(token.getText())) {
+                                    child.addToken(token);
+                                    child.size = new ExpressionNode(node);
+                                    while ((token = sourceLine.getNextToken()) != null) {
+                                        if ("]".equals(token.getText())) {
+                                            child.addToken(token);
+                                            break;
+                                        }
+                                        child.size.addToken(token);
+                                    }
+                                    if (token != null && "]".equals(token.getText())) {
+                                        token = sourceLine.getNextToken();
+                                    }
+                                }
+                            }
+                            if (token == null || !",".equals(token.getText())) {
+                                break;
+                            }
+                        }
+                    }
+                    if (token != null) {
+                        member.addToken(token);
+                    }
+                }
+            }
+            if (token != null && "}".equals(token.getText())) {
+                if ((token = sourceLine.peekNextToken()) != null) {
+                    if (";".equals(token.getText())) {
+                        node.addToken(token);
                     }
                     else {
-                        child = new TypeDefinitionNode.Definition(node, null, null, token);
+                        parseStructureVariable(node, sourceLine);
                     }
-                }
-                else if (child != null) {
-                    child.addToken(token);
-                }
-                token = nextTokenSkipNL();
-            }
-        }
-
-        if ((token = nextTokenSkipNL()).type != Token.EOF) {
-            parent.addToken(token);
-            if (!";".equals(token.getText())) {
-                new VariableNode(parent, null, null, token);
-
-                token = nextTokenSkipNL();
-                while (token.type != Token.EOF) {
-                    parent.addToken(token);
-                    if (";".equals(token.getText())) {
-                        break;
-                    }
-                    if (",".equals(token.getText())) {
-                        if ((token = nextTokenSkipNL()).type == Token.EOF) {
-                            break;
-                        }
-                        parent.addToken(token);
-                        if ("*".equals(token.getText())) {
-                            Token type = token;
-                            if ((token = nextTokenSkipNL()).type == Token.EOF) {
-                                break;
-                            }
-                            parent.addToken(token);
-                            new VariableNode(parent, null, type, token);
-                        }
-                        else {
-                            new VariableNode(parent, null, null, token);
-                        }
-                    }
-                    token = nextTokenSkipNL();
+                    parentNode = root;
                 }
             }
         }
     }
 
-    private static Set<String> argBlocks = new HashSet<>(Arrays.asList(new String[] {
-        "for", "if", "while", "until", "switch"
-    }));
-
-    void parseStatement(Node parent) {
+    void parseStructureVariable(TypeDefinitionNode struct, SourceLine sourceLine) {
         Token token;
 
-        if ((token = nextTokenSkipNL()).type != Token.EOF) {
-            if ("#".equals(token.getText())) {
-                parsePreprocessor(parent, token);
-            }
-            else {
-                Node node = new StatementNode(parent);
+        while ((token = sourceLine.getNextToken()) != null) {
+            VariableNode node = new VariableNode(root);
+
+            node.addToken(node.type = struct.identifier);
+            if ("*".equals(token.getText())) {
                 node.addToken(token);
-
-                if ("else".equals(token.getText())) {
-                    if ("if".equals(peekNextToken().getText())) {
-                        token = nextToken();
-                        node.addToken(token);
-                    }
+                node.type = new Token(node.type.start, node.type.line, node.type.column, Token.KEYWORD, node.type.getText() + " " + token.getText());
+                if ((token = sourceLine.getNextToken()) == null) {
+                    return;
                 }
+            }
+            node.addToken(node.identifier = token);
 
-                if ("asm".equals(token.getText())) {
-                    if ((token = peekNextTokenSkipNL()).type != Token.EOF) {
-                        if ("{".equals(token.getText())) {
-                            node.addToken(nextTokenSkipNL());
-                            while ((token = peekNextTokenSkipNL()).type != Token.EOF) {
-                                if ("}".equals(token.getText())) {
-                                    node = new StatementNode(parent);
-                                    node.addToken(nextTokenSkipNL());
-                                    break;
-                                }
-                                parseDatLine(node);
-                            }
+            token = sourceLine.getNextToken();
+            if (token != null) {
+                if ("[".equals(token.getText())) {
+                    node.addToken(token);
+                    node.size = new ExpressionNode(node);
+                    while ((token = sourceLine.getNextToken()) != null) {
+                        if ("]".equals(token.getText())) {
+                            node.addToken(token);
+                            break;
                         }
+                        node.size.addToken(token);
+                    }
+                    if (token != null && "]".equals(token.getText())) {
+                        token = sourceLine.getNextToken();
                     }
                 }
-                else if ("case".equals(token.getText()) || "default".equals(token.getText())) {
-                    while ((token = nextTokenSkipNL()).type != Token.EOF) {
+                else if ("=".equals(token.getText())) {
+                    node.addToken(token);
+                    while ((token = sourceLine.getNextToken()) != null) {
+                        if (";".equals(token.getText()) || ",".equals(token.getText())) {
+                            break;
+                        }
                         node.addToken(token);
-                        if (":".equals(token.getText())) {
+                    }
+                }
+            }
+            if (token != null) {
+                node.addToken(token);
+            }
+
+            if (token != null && ",".equals(token.getText())) {
+                while ((token = sourceLine.getNextToken()) != null) {
+                    VariableNode child = new VariableNode(node);
+
+                    if ("*".equals(token.getText())) {
+                        child.addToken(child.type = token);
+                        if ((token = sourceLine.getNextToken()) == null) {
                             break;
                         }
                     }
-                    if ((token = peekNextTokenSkipNL()).type != Token.EOF) {
-                        if ("{".equals(token.getText())) {
-                            node.addToken(token);
-                            while ((token = peekNextTokenSkipNL()).type != Token.EOF) {
-                                if ("}".equals(token.getText())) {
-                                    node = new StatementNode(parent);
-                                    node.addToken(nextTokenSkipNL());
-                                    break;
-                                }
-                                parseStatement(node);
-                            }
-                        }
-                        else {
-                            StatementNode child;
-                            do {
-                                if ("case".equals(peekNextTokenSkipNL().getText()) || "default".equals(peekNextTokenSkipNL().getText())) {
-                                    break;
-                                }
-                                child = new StatementNode(node);
-                                while ((token = nextTokenSkipNL()).type != Token.EOF) {
+                    child.addToken(child.identifier = token);
+
+                    if ((token = sourceLine.getNextToken()) != null) {
+                        if ("[".equals(token.getText())) {
+                            child.addToken(token);
+                            child.size = new ExpressionNode(node);
+                            while ((token = sourceLine.getNextToken()) != null) {
+                                if ("]".equals(token.getText())) {
                                     child.addToken(token);
-                                    if (";".equals(token.getText())) {
-                                        break;
-                                    }
+                                    break;
                                 }
-                            } while (token.type != Token.EOF && !"break".equals(child.getStartToken().getText()));
+                                child.size.addToken(token);
+                            }
+                            if (token != null && "]".equals(token.getText())) {
+                                token = sourceLine.getNextToken();
+                            }
+                        }
+                        else if ("=".equals(token.getText())) {
+                            child.addToken(token);
+                            while ((token = sourceLine.getNextToken()) != null) {
+                                if (";".equals(token.getText()) || ",".equals(token.getText())) {
+                                    break;
+                                }
+                                child.addToken(token);
+                            }
                         }
                     }
-                }
-                else if (argBlocks.contains(token.getText())) {
-                    int nested = 0;
 
-                    while ((token = nextTokenSkipNL()).type != Token.EOF) {
+                    while (token != null) {
                         node.addToken(token);
-                        if ("(".equals(token.getText())) {
-                            nested++;
-                        }
-                        if (")".equals(token.getText())) {
-                            nested--;
-                            if (nested <= 0) {
-                                break;
-                            }
-                        }
-                    }
-
-                    if ((token = peekNextTokenSkipNL()).type != Token.EOF) {
-                        if (";".equals(token.getText())) {
-                            node.addToken(nextTokenSkipNL());
-                        }
-                        else if ("{".equals(token.getText())) {
-                            node.addToken(nextTokenSkipNL());
-                            while ((token = peekNextTokenSkipNL()).type != Token.EOF) {
-                                if ("}".equals(token.getText())) {
-                                    node = new StatementNode(parent);
-                                    node.addToken(nextTokenSkipNL());
-                                    break;
-                                }
-                                parseStatement(node);
-                            }
-                        }
-                        else {
-                            parseStatement(node);
-                        }
-                    }
-                }
-                else if ("{".equals(token.getText())) {
-                    node.addToken(token);
-                    while ((token = peekNextTokenSkipNL()).type != Token.EOF) {
-                        if ("}".equals(token.getText())) {
-                            node = new StatementNode(parent);
-                            node.addToken(nextTokenSkipNL());
-
-                            token = peekNextTokenSkipNL();
-                            if ("while".equals(token.getText()) || "until".equals(token.getText())) {
-                                while ((token = nextTokenSkipNL()).type != Token.EOF) {
-                                    node.addToken(token);
-                                    if (";".equals(token.getText())) {
-                                        break;
-                                    }
-                                }
-                            }
-
+                        if (";".equals(token.getText()) || ",".equals(token.getText())) {
                             break;
                         }
-                        parseStatement(node);
+                        token = sourceLine.getNextToken();
                     }
-                }
-                else if ("else".equals(token.getText())) {
-                    if ((token = peekNextTokenSkipNL()).type != Token.EOF) {
-                        if ("{".equals(token.getText())) {
-                            node.addToken(nextTokenSkipNL());
-                            while ((token = peekNextTokenSkipNL()).type != Token.EOF) {
-                                if ("}".equals(token.getText())) {
-                                    boolean isDo = "do".equals(node.getStartToken().getText());
-
-                                    node = new StatementNode(parent);
-                                    node.addToken(nextTokenSkipNL());
-
-                                    if (isDo) {
-                                        token = peekNextTokenSkipNL();
-                                        if ("while".equals(token.getText()) || "until".equals(token.getText())) {
-                                            while ((token = nextTokenSkipNL()).type != Token.EOF) {
-                                                node.addToken(token);
-                                                if (";".equals(token.getText())) {
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    break;
-                                }
-                                parseStatement(node);
-                            }
-                        }
-                        else {
-                            parseStatement(node);
-                        }
-                    }
-                }
-                else if (!";".equals(token.getText())) {
-                    while ((token = nextToken()).type != Token.EOF && token.type != Token.NL) {
-                        node.addToken(token);
-                        if (";".equals(token.getText())) {
-                            break;
-                        }
-                        if (",".equals(token.getText())) {
-                            token = nextTokenSkipNL();
-                            if (token.type == Token.EOF) {
-                                break;
-                            }
-                            node.addToken(token);
-                        }
-                        if ("{".equals(token.getText())) {
-                            while ((token = peekNextTokenSkipNL()).type != Token.EOF) {
-                                if ("}".equals(token.getText())) {
-                                    boolean isDo = "do".equals(node.getStartToken().getText());
-
-                                    node = new StatementNode(parent);
-                                    node.addToken(nextTokenSkipNL());
-
-                                    if (isDo) {
-                                        token = peekNextTokenSkipNL();
-                                        if ("while".equals(token.getText()) || "until".equals(token.getText())) {
-                                            while ((token = nextTokenSkipNL()).type != Token.EOF) {
-                                                node.addToken(token);
-                                                if (";".equals(token.getText())) {
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    break;
-                                }
-                                parseStatement(node);
-                            }
-                            break;
-                        }
+                    if (token == null || !",".equals(token.getText())) {
+                        break;
                     }
                 }
             }
         }
     }
 
-    void createGlobalContext() {
-        if (context == null) {
-            if (target == 0) {
-                target = P2;
+    Node parseDeclaration(SourceLine sourceLine) {
+        Token token;
+
+        if ((token = sourceLine.getNextToken()) == null) {
+            return null;
+        }
+
+        Token modifier = null;
+        if ("static".equals(token.getText())) {
+            modifier = token;
+            if ((token = sourceLine.getNextToken()) == null) {
+                VariableNode node = new VariableNode(root);
+                node.addToken(node.modifier = modifier);
+                return node;
             }
-            if (target == P1) {
-                context = new Spin1GlobalContext(true);
+        }
+
+        Token type = token;
+        Token pointer = null;
+        if ((token = sourceLine.getNextToken()) != null) {
+            if ("*".equals(token.getText())) {
+                pointer = token;
+                if ((token = sourceLine.getNextToken()) == null) {
+                    VariableNode node = new VariableNode(root);
+                    node.modifier = modifier;
+                    node.type = new Token(type.getStream(), type.start, type.line, type.column, Token.KEYWORD, type.getText() + " " + pointer.getText());
+                    if (modifier != null) {
+                        node.addToken(modifier);
+                    }
+                    node.addToken(type);
+                    node.addToken(pointer);
+                    return node;
+                }
+            }
+        }
+        Token identifier = token;
+
+        token = sourceLine.getNextToken();
+        if (token != null && "(".equals(token.getText())) {
+            FunctionNode node = new FunctionNode(root, modifier, type, identifier);
+            node.addToken(token);
+
+            while ((token = sourceLine.getNextToken()) != null) {
+                if (")".equals(token.getText())) {
+                    node.addToken(token);
+                    break;
+                }
+
+                FunctionNode.ParameterNode param = new FunctionNode.ParameterNode(node);
+                param.type = token;
+                param.addToken(token);
+                if ((token = sourceLine.getNextToken()) != null) {
+                    param.addToken(token);
+                    if ("*".equals(token.getText())) {
+                        param.type = type.merge(token);
+                        param.type.type = Token.KEYWORD;
+                        if ((token = sourceLine.getNextToken()) == null) {
+                            break;
+                        }
+                        param.addToken(token);
+                    }
+                }
+                param.identifier = token;
+
+                while ((token = sourceLine.getNextToken()) != null) {
+                    if (",".equals(token.getText()) || ")".equals(token.getText())) {
+                        node.addToken(token);
+                        break;
+                    }
+                    param.addToken(token);
+                }
+                if (token == null || !",".equals(token.getText())) {
+                    break;
+                }
+            }
+
+            token = sourceLine.getNextToken();
+            if (token != null) {
+                node.addToken(token);
+                if ("{".equals(token.getText())) {
+                    return node;
+                }
+            }
+        }
+        else {
+            VariableNode node = new VariableNode(root);
+            if (modifier != null) {
+                node.addToken(node.modifier = modifier);
+            }
+            if (pointer != null) {
+                node.addToken(type);
+                node.addToken(pointer);
+                node.type = new Token(type.getStream(), type.start, type.line, type.column, Token.KEYWORD, type.getText() + " " + pointer.getText());
             }
             else {
-                context = new Spin2GlobalContext(true);
+                node.addToken(node.type = type);
             }
+            node.addToken(node.identifier = identifier);
+
+            if (token != null) {
+                if ("[".equals(token.getText())) {
+                    node.addToken(token);
+                    node.size = new ExpressionNode(node);
+                    while ((token = sourceLine.getNextToken()) != null) {
+                        if ("]".equals(token.getText())) {
+                            node.addToken(token);
+                            break;
+                        }
+                        node.size.addToken(token);
+                    }
+                    if (token != null && "]".equals(token.getText())) {
+                        token = sourceLine.getNextToken();
+                    }
+                }
+                else if ("=".equals(token.getText())) {
+                    node.addToken(token);
+                    while ((token = sourceLine.getNextToken()) != null) {
+                        if (";".equals(token.getText()) || ",".equals(token.getText())) {
+                            break;
+                        }
+                        node.addToken(token);
+                    }
+                }
+            }
+            if (token != null) {
+                node.addToken(token);
+            }
+
+            if (token != null && ",".equals(token.getText())) {
+                while ((token = sourceLine.getNextToken()) != null) {
+                    VariableNode child = new VariableNode(node);
+
+                    if ("*".equals(token.getText())) {
+                        child.addToken(child.type = token);
+                        if ((token = sourceLine.getNextToken()) == null) {
+                            break;
+                        }
+                    }
+                    child.addToken(child.identifier = token);
+
+                    if ((token = sourceLine.getNextToken()) != null) {
+                        if ("[".equals(token.getText())) {
+                            child.addToken(token);
+                            child.size = new ExpressionNode(node);
+                            while ((token = sourceLine.getNextToken()) != null) {
+                                if ("]".equals(token.getText())) {
+                                    child.addToken(token);
+                                    break;
+                                }
+                                child.size.addToken(token);
+                            }
+                            if (token != null && "]".equals(token.getText())) {
+                                token = sourceLine.getNextToken();
+                            }
+                        }
+                        else if ("=".equals(token.getText())) {
+                            child.addToken(token);
+                            while ((token = sourceLine.getNextToken()) != null) {
+                                if (";".equals(token.getText()) || ",".equals(token.getText())) {
+                                    break;
+                                }
+                                child.addToken(token);
+                            }
+                        }
+                    }
+
+                    while (token != null) {
+                        node.addToken(token);
+                        if (";".equals(token.getText()) || ",".equals(token.getText())) {
+                            break;
+                        }
+                        token = sourceLine.getNextToken();
+                    }
+                    if (token == null || !",".equals(token.getText())) {
+                        break;
+                    }
+                }
+            }
+
+            return node;
         }
+
+        return null;
     }
 
-    void parsePreprocessor(Node parent, Token token) {
-        Token directive = nextToken();
+    void parsePreprocessor(Node parent, SourceLine sourceLine) {
+        Token token;
 
-        if ("pragma".equals(directive.getText())) {
-            DirectiveNode node = new DirectiveNode(parent);
-            node.addToken(token);
-            node.addToken(directive);
-
-            Token keyword = nextToken();
-            node.addToken(keyword);
-            if ("target".equals(keyword.getText()) && target == 0) {
-                Token arg = nextToken();
-                node.addToken(arg);
-                if ("P1".equals(arg.getText())) {
-                    target = P1;
-                }
-                else if ("P2".equals(arg.getText())) {
-                    target = P2;
-                }
-            }
-
-            while ((token = nextToken()).type != Token.EOF) {
-                if (token.type == Token.NL) {
-                    break;
-                }
-                node.addToken(token);
-            }
-
+        Token firstToken = sourceLine.getNextToken();
+        Token keywordToken = sourceLine.getNextToken();
+        if (keywordToken == null) {
             return;
         }
 
-        createGlobalContext();
-
-        if ("include".equals(directive.getText())) {
-            Token file = nextToken();
-            if ("<".equals(file.getText())) {
-                Token t;
-                while ((t = nextToken()).type != Token.EOF) {
-                    if (t.type == Token.NL) {
-                        break;
-                    }
-                    file = file.merge(t);
-                    if (">".equals(t.getText())) {
-                        break;
-                    }
+        switch (keywordToken.getText().toLowerCase()) {
+            case "define": {
+                DirectiveNode.DefineNode node = new DirectiveNode.DefineNode(parent);
+                node.addToken(firstToken);
+                node.addToken(keywordToken);
+                if ((token = sourceLine.getNextToken()) != null) {
+                    node.identifier = token;
+                    node.addToken(token);
                 }
-                file.type = Token.STRING;
-            }
-            DirectiveNode node = new DirectiveNode.IncludeNode(parent, file.type == Token.STRING && file.getText().length() > 2 ? file : null);
-            node.addToken(token);
-            node.addToken(directive);
-            if (file.type != Token.EOF && file.type != Token.NL) {
-                node.addToken(file);
-            }
-            while ((token = nextToken()).type != Token.EOF) {
-                if (token.type == Token.NL) {
-                    break;
-                }
-                node.addToken(token);
-            }
-            return;
-        }
-        if ("define".equals(directive.getText())) {
-            Token identifier = nextToken();
-            DirectiveNode.DefineNode node = new DirectiveNode.DefineNode(parent, identifier.type == Token.KEYWORD ? identifier : null);
-            node.addToken(token);
-            node.addToken(directive);
-            if (identifier.type == Token.KEYWORD) {
-                node.addToken(identifier);
-                while ((token = nextToken()).type != Token.EOF) {
+                while ((token = sourceLine.getNextToken()) != null) {
                     if (token.type == Token.NL) {
                         break;
                     }
-                    node.addDefinition(token);
-                }
-            }
-            else if (identifier.type != Token.EOF && identifier.type != Token.NL) {
-                node.addToken(identifier);
-                while ((token = nextToken()).type != Token.EOF) {
-                    if (token.type == Token.NL) {
-                        break;
+                    if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                        root.addComment(token);
                     }
                     node.addToken(token);
                 }
+                while ((token = sourceLine.getNextToken()) != null) {
+                    if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                        root.addComment(token);
+                    }
+                }
+                processDirective(node);
+                break;
             }
-            return;
-        }
-        if ("error".equals(directive.getText()) || "warning".equals(directive.getText())) {
-            DirectiveNode node = new DirectiveNode(parent);
-            node.addToken(token);
-            node.addToken(directive);
 
-            Token message = stream.nextToken();
-            if (message.type != Token.EOF && message.type != Token.NL) {
-                while ((token = nextToken()).type != Token.EOF) {
+            case "error":
+            case "warning": {
+                DirectiveNode node = new DirectiveNode(parent);
+                node.addToken(firstToken);
+                node.addToken(keywordToken);
+
+                Token message = sourceLine.getNextToken();
+                if (message != null) {
+                    while ((token = sourceLine.getNextToken()) != null) {
+                        if (token.type == Token.NL) {
+                            break;
+                        }
+                        message = message.merge(token);
+                    }
+                    message.type = Token.STRING;
+                    node.addToken(message);
+                }
+                while ((token = sourceLine.getNextToken()) != null) {
+                    if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                        root.addComment(token);
+                    }
+                }
+                processDirective(node);
+                break;
+            }
+
+            case "include": {
+                DirectiveNode.IncludeNode node = new DirectiveNode.IncludeNode(parent);
+                node.addToken(firstToken);
+                node.addToken(keywordToken);
+
+                node.file = sourceLine.getNextToken();
+                if (node.file != null) {
+                    if ("<".equals(node.file.getText())) {
+                        node.addToken(node.file);
+                        while ((token = sourceLine.getNextToken()) != null) {
+                            node.addToken(token);
+                            node.file = node.file.merge(token);
+                            if (">".equals(token.getText())) {
+                                break;
+                            }
+                        }
+                    }
+                    else {
+                        node.addToken(node.file);
+                    }
+                    while ((token = sourceLine.getNextToken()) != null) {
+                        node.addToken(token);
+                    }
+                }
+
+                processDirective(node);
+                break;
+            }
+
+            default: {
+                DirectiveNode node = new DirectiveNode(parent);
+                node.addToken(firstToken);
+                node.addToken(keywordToken);
+                while ((token = sourceLine.getNextToken()) != null) {
                     if (token.type == Token.NL) {
                         break;
                     }
-                    message = message.merge(token);
+                    if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                        root.addComment(token);
+                    }
+                    node.addToken(token);
                 }
-                message.type = Token.STRING;
-                node.addToken(message);
-            }
-
-            return;
-        }
-
-        DirectiveNode node = new DirectiveNode(parent);
-        node.addToken(token);
-        if (directive.type != Token.EOF && directive.type != Token.NL) {
-            node.addToken(directive);
-            while ((token = nextToken()).type != Token.EOF) {
-                if (token.type == Token.NL) {
-                    break;
+                while ((token = sourceLine.getNextToken()) != null) {
+                    if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                        root.addComment(token);
+                    }
                 }
-                node.addToken(token);
+                processDirective(node);
+                break;
             }
         }
     }
 
-    void parseDatLine(Node parent) {
+    protected boolean isExcluded() {
+        return false;
+    }
+
+    protected void processDirective(DirectiveNode node) {
+        // Do nothing
+    }
+
+    void parseDatLine(Node parent, SourceLine sourceLine) {
         int state = 1;
-        DataLineNode node = null;
+        DataLineNode node = new DataLineNode(parent);
         DataLineNode.ParameterNode parameter = null;
 
-        Token token;
-        while ((token = nextPAsmToken()).type != Token.EOF) {
+        Token token, nextToken;
+        while ((token = sourceLine.getNextToken()) != null) {
             if (token.type == Token.NL) {
                 break;
             }
-            if (node != null) {
-                node.addToken(token);
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                root.addComment(token);
+                continue;
             }
+            if (state == 4 || state == 5) {
+                if ("@".equals(token.getText()) || "@@".equals(token.getText()) || "@@@".equals(token.getText())) {
+                    if ((nextToken = sourceLine.peekNextToken()) != null) {
+                        if (".".equals(nextToken.getText()) && token.isAdjacent(nextToken)) {
+                            token = token.merge(sourceLine.getNextToken());
+                            nextToken = sourceLine.peekNextToken();
+                        }
+                    }
+                    if (nextToken != null) {
+                        if (nextToken.type != Token.OPERATOR && token.isAdjacent(nextToken)) {
+                            token = token.merge(sourceLine.getNextToken());
+                        }
+                    }
+                }
+            }
+            if (state == 1 || state == 4 || state == 5) {
+                if (".".equals(token.getText())) {
+                    if ((nextToken = sourceLine.peekNextToken()) != null) {
+                        if (nextToken.type != Token.OPERATOR && token.isAdjacent(nextToken)) {
+                            token = token.merge(sourceLine.getNextToken());
+                        }
+                    }
+                }
+            }
+            node.addToken(token);
             switch (state) {
                 case 1:
-                    node = new DataLineNode(parent);
-                    node.addToken(token);
-                    if ("debug".equalsIgnoreCase(token.getText())) {
-                        node.instruction = token;
-                        state = 9;
-                        break;
-                    }
                     if (Spin2Model.isPAsmCondition(token.getText())) {
                         node.condition = token;
                         state = 3;
@@ -749,10 +956,9 @@ public class CParser extends Parser {
                         state = 4;
                         break;
                     }
-                    if (Spin2Model.isPAsmModifier(token.getText())) {
-                        node.modifier = new ModifierNode(node);
-                        node.modifier.addToken(token);
-                        state = 6;
+                    if ("debug".equalsIgnoreCase(token.getText())) {
+                        node.instruction = token;
+                        state = 9;
                         break;
                     }
                     node.label = token;
@@ -764,20 +970,8 @@ public class CParser extends Parser {
                         state = 3;
                         break;
                     }
-                    if (Spin2Model.isPAsmModifier(token.getText())) {
-                        node.modifier = new ModifierNode(node);
-                        node.modifier.addToken(token);
-                        state = 6;
-                        break;
-                    }
                     // fall-through
                 case 3:
-                    if (Spin2Model.isPAsmModifier(token.getText())) {
-                        node.modifier = new ModifierNode(node);
-                        node.modifier.addToken(token);
-                        state = 6;
-                        break;
-                    }
                     node.instruction = token;
                     state = "debug".equalsIgnoreCase(token.getText()) ? 9 : 4;
                     break;
@@ -797,6 +991,11 @@ public class CParser extends Parser {
                     if (",".equals(token.getText())) {
                         parameter = new DataLineNode.ParameterNode(node);
                         node.parameters.add(parameter);
+                        Token next = sourceLine.peekNextToken();
+                        if ("++".equals(next.getText()) || "--".equals(next.getText()) || "ptra".equals(next.getText()) || "ptrb".equals(next.getText())) {
+                            state = 8;
+                            break;
+                        }
                         break;
                     }
                     if (Spin2Model.isPAsmModifier(token.getText())) {
@@ -823,133 +1022,22 @@ public class CParser extends Parser {
                     }
                     parameter.count.addToken(token);
                     break;
-            }
-        }
-    }
-
-    Token nextPAsmToken() {
-        Token token = stream.nextToken();
-        while (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-            root.addComment(token);
-            token = stream.nextToken();
-        }
-        if (token.type == Token.NL) {
-            while (stream.peekNext().type == Token.NL) {
-                stream.nextToken();
-            }
-        }
-        else if ("@".equals(token.getText()) || "@@".equals(token.getText())) {
-            Token nextToken = stream.peekNext();
-            if (".".equals(nextToken.getText()) && token.isAdjacent(nextToken)) {
-                token = token.merge(stream.nextToken());
-                nextToken = stream.peekNext();
-            }
-            if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
-                token = token.merge(stream.nextToken());
-            }
-        }
-        else if (".".equals(token.getText())) {
-            Token nextToken = stream.peekNext();
-            if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
-                token = token.merge(stream.nextToken());
-            }
-        }
-        else if ("#".equals(token.getText())) {
-            Token nextToken = stream.peekNext();
-            if (token.isAdjacent(nextToken) && "#".equals(nextToken.getText())) {
-                token = token.merge(stream.nextToken());
-            }
-        }
-        return token;
-    }
-
-    Token nextToken() {
-        Token token = stream.nextToken();
-        while (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-            root.addComment(token);
-            token = stream.nextToken();
-        }
-        if ("&".equals(token.getText())) {
-            Token nextToken = stream.peekNext();
-            if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
-                token = token.merge(stream.nextToken());
-            }
-        }
-        else if (".".equals(token.getText())) {
-            Token nextToken = stream.peekNext();
-            if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
-                token = token.merge(stream.nextToken());
-                token.type = 0;
-            }
-        }
-        return token;
-    }
-
-    Token peekNextToken() {
-        Token token = stream.peekNext();
-        while (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-            root.addComment(stream.nextToken());
-            token = stream.peekNext();
-        }
-        return token;
-    }
-
-    Token nextTokenSkipNL() {
-        Token token = stream.nextToken();
-        while (true) {
-            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-                root.addComment(token);
-            }
-            else if (token.type != Token.NL) {
-                break;
-            }
-            token = stream.nextToken();
-        }
-        if ("&".equals(token.getText())) {
-            Token nextToken = stream.peekNext();
-            if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
-                token = token.merge(stream.nextToken());
-            }
-        }
-        else if (".".equals(token.getText())) {
-            Token nextToken = stream.peekNext();
-            if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
-                token = token.merge(stream.nextToken());
-                token.type = 0;
-            }
-        }
-        return token;
-    }
-
-    Token peekNextTokenSkipNL() {
-        Position pos = stream.mark();
-        try {
-            Token token = stream.nextToken();
-            while (true) {
-                if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-                    ;
-                }
-                else if (token.type != Token.NL) {
+                case 8:
+                    if (",".equals(token.getText())) {
+                        parameter = new DataLineNode.ParameterNode(node);
+                        node.parameters.add(parameter);
+                        state = 5;
+                        break;
+                    }
+                    if (Spin2Model.isPAsmModifier(token.getText())) {
+                        node.modifier = new ModifierNode(node);
+                        node.modifier.addToken(token);
+                        state = 6;
+                        break;
+                    }
+                    parameter.addToken(token);
                     break;
-                }
-                token = stream.nextToken();
             }
-            if ("&".equals(token.getText())) {
-                Token nextToken = stream.peekNext();
-                if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
-                    token = token.merge(stream.nextToken());
-                }
-            }
-            else if (".".equals(token.getText())) {
-                Token nextToken = stream.peekNext();
-                if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
-                    token = token.merge(stream.nextToken());
-                    token.type = 0;
-                }
-            }
-            return token;
-        } finally {
-            stream.restore(pos);
         }
     }
 

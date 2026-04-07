@@ -12,16 +12,13 @@ package com.maccasoft.propeller.spinc;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import org.apache.commons.collections4.map.ListOrderedMap;
 
@@ -44,7 +41,6 @@ import com.maccasoft.propeller.model.DirectiveNode;
 import com.maccasoft.propeller.model.FunctionNode;
 import com.maccasoft.propeller.model.FunctionNode.LocalVariableNode;
 import com.maccasoft.propeller.model.Node;
-import com.maccasoft.propeller.model.NodeVisitor;
 import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
@@ -119,40 +115,26 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
     public RootNode compileStep1(String text) {
         objectVarSize = 0;
 
-        CParser parser = new CParser(text);
-        RootNode root = parser.parse();
-
-        root.accept(new NodeVisitor() {
+        CParser parser = new CParser(text) {
 
             @Override
-            public void visitDirective(DirectiveNode node) {
+            protected boolean isExcluded() {
+                return !conditionStack.isEmpty() && conditionStack.peek().skip;
+            }
+
+            @Override
+            protected void processDirective(DirectiveNode node) {
                 try {
                     compileDirective(node);
                 } catch (CompilerException e) {
                     logMessage(e);
                 } catch (Exception e) {
-                    logMessage(new CompilerException(e, node));
+                    logMessage(new CompilerException(e, node.getTokens()));
                 }
             }
 
-            @Override
-            public void visitVariable(VariableNode node) {
-                node.setExclude(!conditionStack.isEmpty() && conditionStack.peek().skip);
-            }
-
-            @Override
-            public boolean visitFunction(FunctionNode node) {
-                node.setExclude(!conditionStack.isEmpty() && conditionStack.peek().skip);
-                return true;
-            }
-
-            @Override
-            public boolean visitStatement(StatementNode node) {
-                node.setExclude(!conditionStack.isEmpty() && conditionStack.peek().skip);
-                return true;
-            }
-
-        });
+        };
+        RootNode root = parser.parse();
 
         while (!conditionStack.isEmpty()) {
             Condition c = conditionStack.pop();
@@ -161,12 +143,8 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
 
         for (Node node : new ArrayList<>(root.getChilds())) {
             try {
-                if (node.isExclude()) {
-                    continue;
-                }
-                if (node instanceof TypeDefinitionNode) {
+                if (node instanceof TypeDefinitionNode typeNode) {
                     if (conditionStack.isEmpty() || !conditionStack.peek().skip) {
-                        TypeDefinitionNode typeNode = (TypeDefinitionNode) node;
                         if (typeNode.getIdentifier() != null) {
                             String symbol = typeNode.getIdentifier().getText();
                             if (structures.containsKey(symbol)) {
@@ -271,14 +249,14 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
         Iterator<Token> iter = node.getTokens().iterator();
         token = iter.next();
         if (!iter.hasNext()) {
-            throw new CompilerException("expecting directive", new Token(token.getStream(), token.stop));
+            throw new CompilerException("expecting directive", token);
         }
         token = iter.next();
         if ("include".equals(token.getText())) {
             node.setExclude(skip);
             if (!skip) {
                 if (!iter.hasNext()) {
-                    throw new CompilerException("expecting object file", new Token(token.getStream(), token.stop));
+                    throw new CompilerException("expecting object file", token);
                 }
                 token = iter.next();
                 if (token.type != Token.STRING) {
@@ -422,8 +400,8 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
 
             objectVarSize += size.getNumber().intValue() * var.getTypeSize();
 
-            if (iter.hasNext()) {
-                throw new CompilerException("expecting end of statement", iter.next());
+            if (!iter.hasNext() || (iter.hasNext() && !";".equals(iter.next().getText()))) {
+                throw new CompilerException("expecting end of statement", iter.current());
             }
         }
         else if (!type.matches("(int|long|short|word|byte)[\\s]*[*]?")) {
@@ -470,8 +448,8 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
                     size = buildIndexExpression(iter);
                 }
 
-                if (iter.hasNext()) {
-                    throw new CompilerException("expecting end of statement", iter.next());
+                if (!iter.hasNext() || (iter.hasNext() && !";".equals(iter.next().getText()))) {
+                    throw new CompilerException("expecting end of statement", iter.current());
                 }
 
                 objects.put(identifier.getText(), new ObjectInfo(info, size));
@@ -481,9 +459,8 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
 
                     LinkDataObject linkData = new Spin1LinkDataObject(info.compiler, info.compiler.getVarSize());
                     for (Entry<String, Expression> objEntry : info.compiler.getPublicSymbols().entrySet()) {
-                        if (objEntry.getValue() instanceof Method) {
+                        if (objEntry.getValue() instanceof Method objectMethod) {
                             String qualifiedName = identifier.getText() + "." + objEntry.getKey();
-                            Method objectMethod = (Method) objEntry.getValue();
                             Method method = new Method(objectMethod.getName(), objectMethod.getArgumentsCount(), objectMethod.getReturnLongs()) {
 
                                 @Override
@@ -644,15 +621,11 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
         return null;
     }
 
-    Set<String> types = new HashSet<>(Arrays.asList(new String[] {
-        "void", "int", "byte", "word", "float"
-    }));
-
     void compileFunction(FunctionNode node) {
-        Iterator<Token> iter = node.getTokens().iterator();
+        TokenIterator iter = node.tokenIterator();
 
         Token type = iter.next();
-        if (!types.contains(type.getText())) {
+        if (!type.getText().matches("(void|int|long|float|short|word|byte)[\\s]*[*]?")) {
             throw new CompilerException("unsupported type", type);
         }
 
@@ -669,9 +642,6 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
         method.setData(node);
 
         if (!"void".equals(type.getText())) {
-            if (!"int".equals(type.getText())) {
-                throw new CompilerException("unsupported return type", type);
-            }
             method.addReturnVariable("__default_return__");
         }
 
@@ -687,6 +657,9 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
             }
 
             String paramType = token.getText();
+            if (iter.hasNext() && "*".equals(iter.peekNext().getText())) {
+                paramType += " " + iter.next().getText();
+            }
             if (!paramType.matches("(int|long|short|word|byte)[\\s]*[*]?")) {
                 throw new CompilerException("unsupported parameter type", token);
             }
@@ -907,7 +880,7 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
             Spin1CTreeBuilder builder = new Spin1CTreeBuilder(context);
             if (iter.hasNext()) {
                 token = iter.peekNext();
-                if (types.contains(token.getText())) {
+                if (token.getText().matches("(int|long|float|short|word|byte)[\\s]*[*]?")) {
                     String type = "LONG";
                     if ("short".equals(token.getText()) || "word".equals(token.getText())) {
                         type = "WORD";

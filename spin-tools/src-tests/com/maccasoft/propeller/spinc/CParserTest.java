@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.Token;
 
 class CParserTest {
 
@@ -28,10 +29,10 @@ class CParserTest {
         Node root = subject.parse();
         Assertions.assertEquals(""
             + "RootNode []\n"
-            + "+-- VariableNode type=int identifier=a [int a, b, c]\n"
+            + "+-- VariableNode type=int identifier=a [int a, b, c;]\n"
             + "    +-- VariableNode identifier=b [b]\n"
             + "    +-- VariableNode identifier=c [c]\n"
-            + "+-- VariableNode type=short identifier=d [short d]\n"
+            + "+-- VariableNode type=short identifier=d [short d;]\n"
             + "", tree(root));
     }
 
@@ -45,10 +46,10 @@ class CParserTest {
         Node root = subject.parse();
         Assertions.assertEquals(""
             + "RootNode []\n"
-            + "+-- VariableNode type=int identifier=a [int a = 1, b = 2, c = 3]\n"
+            + "+-- VariableNode type=int identifier=a [int a = 1, b = 2, c = 3;]\n"
             + "    +-- VariableNode identifier=b [b = 2]\n"
             + "    +-- VariableNode identifier=c [c = 3]\n"
-            + "+-- VariableNode type=short identifier=d [short d = 4]\n"
+            + "+-- VariableNode type=short identifier=d [short d = 4;]\n"
             + "", tree(root));
     }
 
@@ -366,8 +367,8 @@ class CParserTest {
         Node root = subject.parse();
         Assertions.assertEquals(""
             + "RootNode []\n"
-            + "+-- IncludeNode [#include \"object\"]\n"
-            + "+-- IncludeNode [#include <object>]\n"
+            + "+-- IncludeNode file=\"object\" [#include \"object\"]\n"
+            + "+-- IncludeNode file=<object> [#include <object>]\n"
             + "", tree(root));
     }
 
@@ -419,10 +420,10 @@ class CParserTest {
         Node root = subject.parse();
         Assertions.assertEquals(""
             + "RootNode []\n"
-            + "+-- VariableNode type=int identifier=a [int a = 1, b = 2, c = 3]\n"
+            + "+-- VariableNode type=int identifier=a [int a = 1, b = 2, c = 3;]\n"
             + "    +-- VariableNode identifier=b [b = 2]\n"
             + "    +-- VariableNode identifier=c [c = 3]\n"
-            + "+-- VariableNode type=short identifier=d [short d]\n"
+            + "+-- VariableNode type=short identifier=d [short d;]\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
             + "    +-- StatementNode [method(1, 2);]\n"
             + "    +-- StatementNode [a = function(1, 2);]\n"
@@ -475,33 +476,33 @@ class CParserTest {
         Node root = subject.parse();
         Assertions.assertEquals(""
             + "RootNode []\n"
-            + "+-- VariableNode type=object identifier=a [object a, b, c]\n"
+            + "+-- VariableNode type=object identifier=a [object a, b, c;]\n"
             + "    +-- VariableNode identifier=b [b]\n"
             + "    +-- VariableNode identifier=c [c]\n"
-            + "+-- VariableNode type=object identifier=d [object d]\n"
+            + "+-- VariableNode type=object identifier=d [object d;]\n"
             + "", tree(root));
     }
 
     @Test
     void testObjectMethod() throws Exception {
-        CParser subject = new CParser(""
+        CTokenStream subject = new CTokenStream(""
             + "obj.method\n"
             + "");
 
-        Assertions.assertEquals("obj.method", subject.nextToken().getText());
+        Assertions.assertEquals("obj.method", nextToken(subject).getText());
     }
 
     @Test
     void testObjectArrayMethod() throws Exception {
-        CParser subject = new CParser(""
+        CTokenStream subject = new CTokenStream(""
             + "obj[0].method\n"
             + "");
 
-        Assertions.assertEquals("obj", subject.nextToken().getText());
-        Assertions.assertEquals("[", subject.nextToken().getText());
-        Assertions.assertEquals("0", subject.nextToken().getText());
-        Assertions.assertEquals("]", subject.nextToken().getText());
-        Assertions.assertEquals(".method", subject.nextToken().getText());
+        Assertions.assertEquals("obj", nextToken(subject).getText());
+        Assertions.assertEquals("[", nextToken(subject).getText());
+        Assertions.assertEquals("0", nextToken(subject).getText());
+        Assertions.assertEquals("]", nextToken(subject).getText());
+        Assertions.assertEquals(".method", nextToken(subject).getText());
     }
 
     @Test
@@ -519,9 +520,9 @@ class CParserTest {
         Node root = subject.parse();
         Assertions.assertEquals(""
             + "RootNode []\n"
-            + "+-- VariableNode type=int* identifier=a [int*a, *b]\n"
+            + "+-- VariableNode type=int * identifier=a [int *a, *b;]\n"
             + "    +-- VariableNode type=* identifier=b [*b]\n"
-            + "+-- VariableNode type=short* identifier=c [short*c]\n"
+            + "+-- VariableNode type=short * identifier=c [short *c;]\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"
             + "    +-- StatementNode [int *d;]\n"
             + "    +-- StatementNode [}]\n"
@@ -677,10 +678,11 @@ class CParserTest {
         Assertions.assertEquals(""
             + "RootNode []\n"
             + "+-- TypeDefinitionNode type=struct identifier=data [struct data { byte a; byte b, c; byte d[10]; };]\n"
-            + "    +-- Definition type=byte identifier=a [byte a]\n"
-            + "    +-- Definition type=byte identifier=b [byte b]\n"
+            + "    +-- Definition type=byte identifier=a [byte a;]\n"
+            + "    +-- Definition type=byte identifier=b [byte b, c;]\n"
             + "        +-- Definition identifier=c [c]\n"
-            + "    +-- Definition type=byte identifier=d [byte d[10]]\n"
+            + "    +-- Definition type=byte identifier=d [byte d[10];]\n"
+            + "        +-- size = ExpressionNode [10]\n"
             + "", tree(root));
     }
 
@@ -697,12 +699,13 @@ class CParserTest {
         Node root = subject.parse();
         Assertions.assertEquals(""
             + "RootNode []\n"
-            + "+-- TypeDefinitionNode type=struct identifier=data [struct data { byte a; byte b, c; byte d[10]; } a, *b, c;]\n"
-            + "    +-- Definition type=byte identifier=a [byte a]\n"
-            + "    +-- Definition type=byte identifier=b [byte b]\n"
+            + "+-- TypeDefinitionNode type=struct identifier=data [struct data { byte a; byte b, c; byte d[10]; }]\n"
+            + "    +-- Definition type=byte identifier=a [byte a;]\n"
+            + "    +-- Definition type=byte identifier=b [byte b, c;]\n"
             + "        +-- Definition identifier=c [c]\n"
-            + "    +-- Definition type=byte identifier=d [byte d[10]]\n"
-            + "    +-- VariableNode identifier=a [a]\n"
+            + "    +-- Definition type=byte identifier=d [byte d[10];]\n"
+            + "        +-- size = ExpressionNode [10]\n"
+            + "+-- VariableNode type=data identifier=a [data a, *b, c;]\n"
             + "    +-- VariableNode type=* identifier=b [*b]\n"
             + "    +-- VariableNode identifier=c [c]\n"
             + "", tree(root));
@@ -719,10 +722,10 @@ class CParserTest {
         Node root = subject.parse();
         Assertions.assertEquals(""
             + "RootNode []\n"
-            + "+-- VariableNode modifier=struct type=data identifier=a [struct data a]\n"
-            + "+-- VariableNode modifier=struct type=data identifier=b [struct data b, c]\n"
+            + "+-- VariableNode type=data identifier=a [data a;]\n"
+            + "+-- VariableNode type=data identifier=b [data b, c;]\n"
             + "    +-- VariableNode identifier=c [c]\n"
-            + "+-- VariableNode modifier=struct type=data identifier=* [struct data *d, e, *f]\n"
+            + "+-- VariableNode type=data * identifier=d [data *d, e, *f;]\n"
             + "    +-- VariableNode identifier=e [e]\n"
             + "    +-- VariableNode type=* identifier=f [*f]\n"
             + "", tree(root));
@@ -780,6 +783,27 @@ class CParserTest {
         }
 
         return sb.toString();
+    }
+
+    Token nextToken(CTokenStream stream) {
+        Token token = stream.nextToken();
+        while (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+            token = stream.nextToken();
+        }
+        if ("&".equals(token.getText())) {
+            Token nextToken = stream.peekNext();
+            if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                token = token.merge(stream.nextToken());
+            }
+        }
+        else if (".".equals(token.getText())) {
+            Token nextToken = stream.peekNext();
+            if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                token = token.merge(stream.nextToken());
+                token.type = 0;
+            }
+        }
+        return token;
     }
 
 }
