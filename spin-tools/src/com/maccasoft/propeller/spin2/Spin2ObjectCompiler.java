@@ -187,6 +187,9 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
         };
         RootNode root = parser.parse();
+        for (String name : objects.keySet()) {
+            root.addObjectRoot(name, objects.get(name).root);
+        }
 
         while (!conditionStack.isEmpty()) {
             Condition c = conditionStack.pop();

@@ -12,6 +12,7 @@ package com.maccasoft.propeller;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -585,6 +586,40 @@ public class SourceEditor {
                     }
                 }
 
+                for (Token msg : tokenMarker.comments) {
+                    if (event.newCharCount != 0) {
+                        if (event.start < msg.start) {
+                            msg.start += event.newCharCount;
+                            msg.stop += event.newCharCount;
+                        }
+                        else if (event.start <= msg.stop + 1) {
+                            msg.stop += event.newCharCount;
+                        }
+                    }
+                    if (event.replaceCharCount != 0) {
+                        if (event.start + event.replaceCharCount <= msg.start) {
+                            msg.start -= event.replaceCharCount;
+                            msg.stop -= event.replaceCharCount;
+                        }
+                        else if (event.start >= msg.start && event.start <= msg.stop) {
+                            if (event.start + event.replaceCharCount > msg.stop) {
+                                msg.stop -= msg.stop - event.start;
+                            }
+                            else {
+                                msg.stop -= event.replaceCharCount;
+                            }
+                        }
+                        else if (event.start < msg.start) {
+                            if (event.start + event.replaceCharCount <= msg.stop) {
+                                msg.start -= msg.start - event.start;
+                            }
+                            else {
+                                msg.stop = msg.start;
+                            }
+                        }
+                    }
+                }
+
                 for (TokenMarker entry : tokenMarker.getExcludedNodes()) {
                     if (event.newCharCount != 0) {
                         if (event.start < entry.start) {
@@ -642,24 +677,52 @@ public class SourceEditor {
             @Override
             public void lineGetStyle(LineStyleEvent event) {
                 event.styles = lineStylesCache.get(event.lineOffset);
+                if (event.styles != null) {
+                    return;
+                }
+                if (tokenMarker != null && !event.lineText.isEmpty()) {
+                    int lineOffset = event.lineOffset;
+                    int endOffset = event.lineOffset + event.lineText.length();
+                    int lineEndOffset = lineOffset + event.lineText.length();
+                    int lineIndex = styledText.getLineAtOffset(event.lineOffset);
+                    String lineText = event.lineText;
 
-                if (event.styles == null && tokenMarker != null) {
-                    try {
-                        List<StyleRange> ranges = new ArrayList<StyleRange>();
-                        for (TokenMarker entry : tokenMarker.getLineTokens(event.lineOffset, event.lineText)) {
-                            TextStyle style = styleMap.get(entry.getId());
-                            if (style != null) {
-                                StyleRange range = new StyleRange(style);
-                                range.start = entry.getStart();
-                                range.length = entry.getStop() - range.start + 1;
-                                ranges.add(range);
-                            }
+                    int idx = lineIndex - 1;
+                    while (idx >= 0) {
+                        int idxLineOffset = styledText.getOffsetAtLine(idx);
+                        if (!tokenMarker.hasLineContinuation(idx, idxLineOffset, styledText.getLine(idx))) {
+                            break;
                         }
-                        event.styles = ranges.toArray(new StyleRange[ranges.size()]);
-                        lineStylesCache.put(event.lineOffset, event.styles);
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                        lineOffset = idxLineOffset;
+                        idx--;
                     }
+                    if (tokenMarker.hasLineContinuation(lineIndex, lineOffset, lineText)) {
+                        idx = lineIndex + 1;
+                        while (idx < styledText.getLineCount()) {
+                            String idxLineText = styledText.getLine(idx);
+                            int idxLineOffset = styledText.getOffsetAtLine(idx);
+                            endOffset = idxLineOffset + idxLineText.length();
+                            if (!tokenMarker.hasLineContinuation(idx, idxLineOffset, idxLineText)) {
+                                break;
+                            }
+                            idx++;
+                        }
+                    }
+
+                    Collection<TokenMarker> tokens = tokenMarker.getTokens(lineIndex, lineOffset, styledText.getText(lineOffset, endOffset - 1));
+
+                    List<StyleRange> ranges = new ArrayList<>();
+                    for (TokenMarker entry : tokens) {
+                        TextStyle style = styleMap.get(entry.id);
+                        if (style != null && lineOffset + entry.start >= event.lineOffset && lineOffset + entry.start < lineEndOffset) {
+                            StyleRange range = new StyleRange(style);
+                            range.start = lineOffset + entry.start;
+                            range.length = entry.stop - entry.start + 1;
+                            ranges.add(range);
+                        }
+                    }
+                    event.styles = ranges.toArray(new StyleRange[ranges.size()]);
+                    lineStylesCache.put(event.lineOffset, event.styles);
                 }
             }
 
@@ -670,9 +733,7 @@ public class SourceEditor {
             @Override
             public void lineGetBackground(LineBackgroundEvent event) {
                 if (preferences.getShowSectionsBackground()) {
-                    if (!(tokenMarker instanceof CTokenMarker)) {
-                        event.lineBackground = getLineBackground(tokenMarker.getRoot(), event.lineOffset);
-                    }
+                    event.lineBackground = getLineBackground(tokenMarker.getRoot(), event.lineOffset);
                 }
                 if (highlightCurrentLine) {
                     if (styledText.getLineAtOffset(event.lineOffset) == currentLine) {
@@ -1082,7 +1143,12 @@ public class SourceEditor {
                     gc.setClipping(clientArea);
 
                     gc.setLineWidth(indentLinesSize);
-                    gc.setForeground(ColorRegistry.getColor(0xA0, 0xA0, 0xA0));
+                    if (tokenMarker instanceof CTokenMarker) {
+                        gc.setForeground(ColorRegistry.getColor(0xD0, 0xD0, 0xD0));
+                    }
+                    else {
+                        gc.setForeground(ColorRegistry.getColor(0xA0, 0xA0, 0xA0));
+                    }
 
                     int topIndex = styledText.getTopIndex();
                     int bottomIndex = styledText.getLineIndex(clientArea.height);
@@ -1442,6 +1508,7 @@ public class SourceEditor {
 
             styleMap.put(TokenId.METHOD_PUB, new TextStyle(fontBold, new Color(0x12, 0x90, 0xC3), null));
             styleMap.put(TokenId.METHOD_PRI, new TextStyle(fontBoldItalic, new Color(0x12, 0x90, 0xC3), null));
+            styleMap.put(TokenId.METHOD_PARAMETER, new TextStyle(font, new Color(0xAF, 0xAF, 0x00), null));
             styleMap.put(TokenId.METHOD_LOCAL, new TextStyle(font, new Color(0xAF, 0xAF, 0x00), null));
             styleMap.put(TokenId.METHOD_RETURN, new TextStyle(font, new Color(0xCC, 0x6C, 0x1D), null));
 
@@ -1484,6 +1551,7 @@ public class SourceEditor {
 
             styleMap.put(TokenId.METHOD_PUB, new TextStyle(fontBold, new Color(0x00, 0x00, 0xA0), null));
             styleMap.put(TokenId.METHOD_PRI, new TextStyle(fontBoldItalic, new Color(0x00, 0x00, 0xA0), null));
+            styleMap.put(TokenId.METHOD_PARAMETER, new TextStyle(font, new Color(0x80, 0x80, 0x00), null));
             styleMap.put(TokenId.METHOD_LOCAL, new TextStyle(font, new Color(0x80, 0x80, 0x00), null));
             styleMap.put(TokenId.METHOD_RETURN, new TextStyle(font, new Color(0x90, 0x00, 0x00), null));
 
@@ -1507,8 +1575,6 @@ public class SourceEditor {
 
     public void setTokenMarker(SourceTokenMarker tokenMarker) {
         this.tokenMarker = tokenMarker;
-        this.tokenMarker.refreshTokens(styledText.getText());
-        styledText.redraw();
     }
 
     public void setHelpProvider(EditorHelp helpProvider) {
@@ -1550,6 +1616,7 @@ public class SourceEditor {
             ignoreModify = true;
             currentLine = 0;
 
+            tokenMarker.refreshTokens(text);
             styledText.setText(text);
             if (caretPosition >= styledText.getCharCount()) {
                 caretPosition = styledText.getCharCount() - 1;
@@ -1564,7 +1631,9 @@ public class SourceEditor {
             styledText.setCaretOffset(caretPosition);
             currentLine = styledText.getLineAtOffset(caretPosition);
 
-            styledText.setTopIndex(topIndex);
+            if (topIndex != 0) {
+                styledText.setTopIndex(topIndex);
+            }
 
             undoStack.clear();
             redoStack.clear();
@@ -1619,7 +1688,7 @@ public class SourceEditor {
         try {
             styledText.setRedraw(false);
             while (!undoStack.empty()) {
-                TextChange change = undoStack.pop();
+                SourceEditor.TextChange change = undoStack.pop();
                 styledText.replaceTextRange(change.start, change.length, change.replacedText);
                 styledText.setCaretOffset(change.caretOffset);
                 styledText.setSelection(change.caretOffset, change.caretOffset);

@@ -173,6 +173,9 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
         };
         RootNode root = parser.parse();
+        for (String name : objects.keySet()) {
+            root.addObjectRoot(name, objects.get(name).root);
+        }
 
         while (!conditionStack.isEmpty()) {
             Condition c = conditionStack.pop();

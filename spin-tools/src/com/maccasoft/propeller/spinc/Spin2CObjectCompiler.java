@@ -160,24 +160,21 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                 if (node.isExclude()) {
                     continue;
                 }
-                else if (node instanceof TypeDefinitionNode) {
-                    if (conditionStack.isEmpty() || !conditionStack.peek().skip) {
-                        compileTypeDefinition((TypeDefinitionNode) node);
+                switch (node) {
+                    case TypeDefinitionNode typeDefinitionNode -> compileTypeDefinition(typeDefinitionNode);
+                    case VariableNode variableNode -> compileVariable(variableNode);
+                    case FunctionNode functionNode -> compileFunction(functionNode);
+                    default -> {
                     }
-                }
-                else if (node instanceof VariableNode) {
-                    if (conditionStack.isEmpty() || !conditionStack.peek().skip) {
-                        compileVariable((VariableNode) node);
-                    }
-                }
-                else if (node instanceof FunctionNode) {
-                    compileFunction((FunctionNode) node);
                 }
             } catch (CompilerException e) {
                 logMessage(e);
             } catch (Exception e) {
                 logMessage(new CompilerException(e, node));
             }
+        }
+        for (String name : objects.keySet()) {
+            root.addObjectRoot(name, objects.get(name).root);
         }
 
         objectVarSize = (objectVarSize + 3) & ~3;
@@ -351,9 +348,6 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                     }
                 }
             }
-        }
-        else if ("pragma".equals(token.getText())) {
-            node.setExclude(skip);
         }
         else {
             super.compileDirective(node);

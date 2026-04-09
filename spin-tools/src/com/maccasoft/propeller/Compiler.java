@@ -37,6 +37,8 @@ public abstract class Compiler {
         public long offset;
         public Expression count;
 
+        public RootNode root;
+
         public ObjectInfo(File file, ObjectCompiler compiler, Map<String, Expression> parameters) {
             this.file = file;
             this.compiler = compiler;
@@ -48,6 +50,7 @@ public abstract class Compiler {
             this.compiler = info.compiler;
             this.parameters = info.parameters;
             this.count = count;
+            this.root = info.root;
         }
 
         public boolean hasErrors() {

@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller;
@@ -1187,7 +1186,19 @@ public abstract class Formatter {
     }
 
     void appendComment(FormatterStringBuilder sb, Token token) {
-        if (token.type == Token.COMMENT) {
+        if (token.getText().startsWith("{")) {
+            if (blockCommentIndentAlign) {
+                sb.alignToColumn(sb.previousLineIndent);
+            }
+            else {
+                sb.alignToColumn(token.column);
+            }
+            if (sb.column > 0 && sb.lastChar() != ' ') {
+                sb.append(" ");
+            }
+            sb.append(alignBlockComment(token, sb.column));
+        }
+        else {
             if (lineCommentAlign == Align.None) {
                 sb.alignToColumn(token.column);
             }
@@ -1201,18 +1212,6 @@ public abstract class Formatter {
                 sb.append(" ");
             }
             sb.append(token);
-        }
-        else if (token.type == Token.BLOCK_COMMENT) {
-            if (blockCommentIndentAlign) {
-                sb.alignToColumn(sb.previousLineIndent);
-            }
-            else {
-                sb.alignToColumn(token.column);
-            }
-            if (sb.column > 0 && sb.lastChar() != ' ') {
-                sb.append(" ");
-            }
-            sb.append(alignBlockComment(token, sb.column));
         }
     }
 

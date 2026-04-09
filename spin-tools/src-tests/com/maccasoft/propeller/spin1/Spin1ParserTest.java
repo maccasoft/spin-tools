@@ -14,7 +14,9 @@ import java.lang.reflect.Field;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.spin2.Spin2Parser;
 
 class Spin1ParserTest {
 
@@ -766,6 +768,77 @@ class Spin1ParserTest {
             + "        +-- StatementNode [b := a + 1]\n"
             + "    +-- StatementNode [repeat]\n"
             + "", tree(root));
+    }
+
+    @Test
+    void testSectionDescription() throws Exception {
+        Spin2Parser subject = new Spin2Parser(""
+            + "CON ' Constants\n"
+            + "\n"
+            + "VAR ' Variables\n"
+            + "\n"
+            + "OBJ ' Objects\n"
+            + "\n"
+            + "PUB start ' Method\n"
+            + "\n"
+            + "DAT ' Data\n"
+            + "");
+
+        Node root = subject.parse();
+
+        Assertions.assertEquals("Constants", root.getChild(0).getDescription());
+        Assertions.assertEquals("Variables", root.getChild(1).getDescription());
+        Assertions.assertEquals("Objects", root.getChild(2).getDescription());
+        //Assertions.assertEquals("Method", root.getChild(3).getDescription());
+        Assertions.assertEquals("Data", root.getChild(4).getDescription());
+    }
+
+    @Test
+    void testMethodDocument() throws Exception {
+        Spin2Parser subject = new Spin2Parser(""
+            + "PUB start ' Method\n"
+            + "'' Document as comment lines\n"
+            + "' End\n"
+            + "\n"
+            + "PRI method1\n"
+            + "{{ Document as block comment lines }}\n"
+            + "\n"
+            + "PRI method2\n"
+            + "' Ignore\n"
+            + "\n"
+            + "PRI method3\n"
+            + "{ Ignore }\n"
+            + "\n"
+            + "PRI method4\n"
+            + "'' Document as \n"
+            + "'' comment lines\n"
+            + "\n"
+            + "PRI method5\n"
+            + "{{ Document as }}\n"
+            + "{{ block comment lines }}\n"
+            + "");
+
+        Node root = subject.parse();
+
+        MethodNode node = (MethodNode) root.getChild(0);
+        Assertions.assertEquals(1, node.getDocument().size());
+        Assertions.assertEquals("'' Document as comment lines", node.getDocument().get(0).getText());
+
+        node = (MethodNode) root.getChild(1);
+        Assertions.assertEquals(1, node.getDocument().size());
+        Assertions.assertEquals("{{ Document as block comment lines }}", node.getDocument().get(0).getText());
+
+        node = (MethodNode) root.getChild(2);
+        Assertions.assertEquals(0, node.getDocument().size());
+
+        node = (MethodNode) root.getChild(3);
+        Assertions.assertEquals(0, node.getDocument().size());
+
+        node = (MethodNode) root.getChild(4);
+        Assertions.assertEquals(2, node.getDocument().size());
+
+        node = (MethodNode) root.getChild(5);
+        Assertions.assertEquals(2, node.getDocument().size());
     }
 
     String tree(Node root) throws Exception {

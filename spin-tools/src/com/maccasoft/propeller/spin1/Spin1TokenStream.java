@@ -22,6 +22,12 @@ public class Spin1TokenStream extends TokenStream {
         eofToken = new Token(this, text.length() - 1, Token.EOF);
     }
 
+    public Spin1TokenStream(String text, int startIndex) {
+        super(text);
+        index = startIndex;
+        eofToken = new Token(this, text.length() - 1, Token.EOF);
+    }
+
     @Override
     public Token nextToken() {
         while (index < text.length()) {
@@ -142,6 +148,9 @@ public class Spin1TokenStream extends TokenStream {
             }
         }
 
+        if (startLine == line) {
+            return new Token(this, startIndex, startLine, startColumn, Token.COMMENT, text.substring(startIndex, index));
+        }
         return new Token(this, startIndex, startLine, startColumn, Token.BLOCK_COMMENT, text.substring(startIndex, index));
     }
 

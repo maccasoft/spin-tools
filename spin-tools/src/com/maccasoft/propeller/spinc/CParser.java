@@ -49,6 +49,9 @@ public class CParser extends Parser {
     @Override
     public RootNode parse() {
         Token token;
+        int blockStart = -1;
+        int blockLineStart = -1;
+        boolean excluded = false;
         List<Token> lineTokens = new ArrayList<>();
 
         root = new RootNode();
@@ -58,10 +61,25 @@ public class CParser extends Parser {
         CTokenStream stream = new CTokenStream(text);
 
         while ((token = stream.nextToken()).type != Token.EOF) {
+            if (blockStart == -1 && excluded) {
+                blockStart = token.start - token.column;
+                blockLineStart = token.line;
+            }
             if (token.type == Token.NL) {
                 if (!lineTokens.isEmpty()) {
                     if ("#".equals(lineTokens.getFirst().getText())) {
                         parsePreprocessor(parentNode, new SourceLine(lineTokens));
+                        excluded = isExcluded();
+                        if (blockStart != -1 && !excluded) {
+                            Token firstToken = lineTokens.getFirst();
+                            token = new Token(Token.BLOCK_COMMENT, text.substring(blockStart, firstToken.start));
+                            token.start = blockStart;
+                            token.stop = firstToken.start - 1;
+                            token.line = blockLineStart;
+                            token.type = Token.BLOCK_COMMENT;
+                            root.addComment(token);
+                            blockStart = -1;
+                        }
                         lineTokens.clear();
                     }
                     else if (parentNode instanceof StatementNode) {
@@ -71,14 +89,23 @@ public class CParser extends Parser {
                             lineTokens.clear();
                         }
                     }
+                    if (excluded) {
+                        lineTokens.clear();
+                    }
                 }
             }
-            else if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
-                root.addComment(token);
+            else if (excluded) {
+                lineTokens.add(token);
             }
             else {
-                lineTokens.add(token);
+                if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                    if (token.type == Token.BLOCK_COMMENT) {
+                        root.addComment(token);
+                    }
+                    continue;
+                }
 
+                lineTokens.add(token);
                 if (processParenthesis(token)) {
                     continue;
                 }
@@ -105,10 +132,13 @@ public class CParser extends Parser {
                 }
                 if (";".equals(token.getText()) || "{".equals(token.getText()) || "}".equals(token.getText())) {
                     SourceLine sourceLine = new SourceLine(lineTokens);
-                    if (isExcluded()) {
-                        root.addComment(sourceLine.getAsToken(Token.COMMENT));
+                    if ((parentNode instanceof FunctionNode) || (parentNode instanceof StatementNode)) {
+                        parseStatement(sourceLine);
                     }
-                    else if (parentNode instanceof RootNode) {
+                    else if (parentNode instanceof TypeDefinitionNode) {
+                        parseStructure(sourceLine);
+                    }
+                    else {
                         if ("struct".equals(sourceLine.peekNextToken().getText())) {
                             parseStructure(sourceLine);
                         }
@@ -119,12 +149,6 @@ public class CParser extends Parser {
                                 state = State.S1;
                             }
                         }
-                    }
-                    else if (parentNode instanceof TypeDefinitionNode) {
-                        parseStructure(sourceLine);
-                    }
-                    else {
-                        parseStatement(sourceLine);
                     }
                     lineTokens.clear();
                 }

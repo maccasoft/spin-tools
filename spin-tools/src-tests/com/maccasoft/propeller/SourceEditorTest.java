@@ -631,8 +631,8 @@ public class SourceEditorTest {
         SourceEditor subject = new SourceEditor(shell);
         subject.setTokenMarker(new Spin2TokenMarker(null));
 
+        subject.tokenMarker.refreshTokens(text);
         subject.styledText.setText(text);
-        subject.tokenMarker.refreshTokens(subject.styledText.getText());
 
         int offset1 = text.indexOf("a := ");
         NavigationTarget target1 = subject.getNavigationTarget(offset1);
@@ -666,8 +666,8 @@ public class SourceEditorTest {
         SourceEditor subject = new SourceEditor(shell);
         subject.setTokenMarker(new Spin2TokenMarker(null));
 
+        subject.tokenMarker.refreshTokens(text);
         subject.styledText.setText(text);
-        subject.tokenMarker.refreshTokens(subject.styledText.getText());
 
         int offset1 = text.indexOf(":= VALUE1") + 3;
         NavigationTarget target1 = subject.getNavigationTarget(offset1);
@@ -720,8 +720,8 @@ public class SourceEditorTest {
 
         }));
 
+        subject.tokenMarker.refreshTokens(text);
         subject.styledText.setText(text);
-        subject.tokenMarker.refreshTokens(subject.styledText.getText());
 
         int offset1 = text.indexOf(".VALUE1") + 1;
         NavigationTarget target1 = subject.getNavigationTarget(offset1 + 2);
@@ -776,8 +776,8 @@ public class SourceEditorTest {
 
         }));
 
+        subject.tokenMarker.refreshTokens(text);
         subject.styledText.setText(text);
-        subject.tokenMarker.refreshTokens(subject.styledText.getText());
 
         int offset1 = text.indexOf("#VALUE1") + 1;
         NavigationTarget target1 = subject.getNavigationTarget(offset1 + 2);
@@ -812,8 +812,8 @@ public class SourceEditorTest {
         SourceEditor subject = new SourceEditor(shell);
         subject.setTokenMarker(new Spin2TokenMarker(null));
 
+        subject.tokenMarker.refreshTokens(text);
         subject.styledText.setText(text);
-        subject.tokenMarker.refreshTokens(subject.styledText.getText());
 
         int offset1 = text.indexOf("a, ");
         NavigationTarget target1 = subject.getNavigationTarget(offset1);
@@ -865,8 +865,8 @@ public class SourceEditorTest {
 
         }));
 
+        subject.tokenMarker.refreshTokens(text);
         subject.styledText.setText(text);
-        subject.tokenMarker.refreshTokens(subject.styledText.getText());
 
         int offset = text.indexOf(".VALUE1") + 1;
         NavigationTarget target = subject.getNavigationTarget(offset + 2);
@@ -911,8 +911,8 @@ public class SourceEditorTest {
 
         }));
 
+        subject.tokenMarker.refreshTokens(text);
         subject.styledText.setText(text);
-        subject.tokenMarker.refreshTokens(subject.styledText.getText());
 
         int offset = text.indexOf("#VALUE1") + 1;
         NavigationTarget target = subject.getNavigationTarget(offset + 2);
@@ -944,8 +944,8 @@ public class SourceEditorTest {
         SourceEditor subject = new SourceEditor(shell);
         subject.setTokenMarker(new Spin2TokenMarker(null));
 
+        subject.tokenMarker.refreshTokens(text);
         subject.styledText.setText(text);
-        subject.tokenMarker.refreshTokens(subject.styledText.getText());
 
         int offset1 = text.indexOf(".a, #VALUE1");
         NavigationTarget target1 = subject.getNavigationTarget(offset1 + 1);
@@ -984,8 +984,8 @@ public class SourceEditorTest {
         SourceEditor subject = new SourceEditor(shell);
         subject.setTokenMarker(new Spin1TokenMarker(null));
 
+        subject.tokenMarker.refreshTokens(text);
         subject.styledText.setText(text);
-        subject.tokenMarker.refreshTokens(subject.styledText.getText());
 
         int offset1 = text.indexOf(":a, #VALUE1");
         NavigationTarget target1 = subject.getNavigationTarget(offset1 + 1);
@@ -1020,8 +1020,8 @@ public class SourceEditorTest {
         SourceEditor subject = new SourceEditor(shell);
         subject.setTokenMarker(new Spin2TokenMarker(null));
 
+        subject.tokenMarker.refreshTokens(text);
         subject.styledText.setText(text);
-        subject.tokenMarker.refreshTokens(subject.styledText.getText());
 
         int offset1 = text.indexOf("label, #VALUE1");
         NavigationTarget target1 = subject.getNavigationTarget(offset1 + 1);

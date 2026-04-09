@@ -42,12 +42,39 @@ public class Spin2Parser extends Parser {
 
     @Override
     public RootNode parse() {
+        int blockStart = -1;
+        int blockLineStart = -1;
+
         root = new RootNode();
         parentNode = null;
 
         Spin2TokenStream stream = new Spin2TokenStream(text);
         for (SourceLine sourceLine : stream.parseSourceLines()) {
+            boolean excluded = isExcluded();
+
+            Token firstToken = sourceLine.getFirstToken();
+            if (excluded && blockStart == -1) {
+                blockStart = firstToken.start - firstToken.column;
+                blockLineStart = firstToken.line;
+            }
             processSourceLine(sourceLine);
+            if (!isExcluded() && blockStart != -1) {
+                Token token = new Token(Token.BLOCK_COMMENT, text.substring(blockStart, firstToken.start - firstToken.column));
+                token.start = blockStart;
+                token.stop = firstToken.start - firstToken.column - 1;
+                token.line = blockLineStart;
+                token.type = Token.BLOCK_COMMENT;
+                root.addComment(token);
+                blockStart = -1;
+            }
+        }
+
+        if (blockStart != -1) {
+            Token token = new Token(Token.BLOCK_COMMENT, text.substring(blockStart));
+            token.start = blockStart;
+            token.stop = text.length() - 1;
+            token.line = blockLineStart;
+            root.addComment(token);
         }
 
         return root;
@@ -72,15 +99,16 @@ public class Spin2Parser extends Parser {
             }
 
             if (isExcluded()) {
-                root.addComment(sourceLine.getAsToken(Token.COMMENT));
                 break;
             }
 
             if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
-                root.addComment(sourceLine.getNextToken());
-                continue;
+                if (token.type == Token.BLOCK_COMMENT) {
+                    root.addComment(token);
+                }
+                sourceLine.getNextToken();
             }
-            if ("CON".equalsIgnoreCase(token.getText())) {
+            else if ("CON".equalsIgnoreCase(token.getText())) {
                 parentNode = parseConBlock(new ConstantsNode(root, sourceLine.getNextToken()), sourceLine);
             }
             else if ("VAR".equalsIgnoreCase(token.getText())) {
@@ -157,7 +185,7 @@ public class Spin2Parser extends Parser {
         }
 
         while ((token = sourceLine.getNextToken()) != null) {
-            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+            if (token.type == Token.BLOCK_COMMENT) {
                 root.addComment(token);
             }
         }
@@ -197,13 +225,15 @@ public class Spin2Parser extends Parser {
                     if (token.type == Token.NL) {
                         break;
                     }
-                    if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                    if (token.type == Token.BLOCK_COMMENT) {
                         root.addComment(token);
                     }
-                    node.addToken(token);
+                    else if (token.type != Token.COMMENT && token.type != Token.NEXT_LINE) {
+                        node.addToken(token);
+                    }
                 }
                 while ((token = sourceLine.getNextToken()) != null) {
-                    if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                    if (token.type == Token.BLOCK_COMMENT) {
                         root.addComment(token);
                     }
                 }
@@ -229,7 +259,7 @@ public class Spin2Parser extends Parser {
                     node.addToken(message);
                 }
                 while ((token = sourceLine.getNextToken()) != null) {
-                    if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                    if (token.type == Token.BLOCK_COMMENT) {
                         root.addComment(token);
                     }
                 }
@@ -257,13 +287,15 @@ public class Spin2Parser extends Parser {
                     if (token.type == Token.NL) {
                         break;
                     }
-                    if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                    if (token.type == Token.BLOCK_COMMENT) {
                         root.addComment(token);
                     }
-                    node.addToken(token);
+                    else if (token.type != Token.COMMENT && token.type != Token.NEXT_LINE) {
+                        node.addToken(token);
+                    }
                 }
                 while ((token = sourceLine.getNextToken()) != null) {
-                    if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                    if (token.type == Token.BLOCK_COMMENT) {
                         root.addComment(token);
                     }
                 }
@@ -286,21 +318,21 @@ public class Spin2Parser extends Parser {
             if (token.type == Token.NL) {
                 break;
             }
-            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-                if (node.getDescription() == null) {
-                    node.setDescription(token);
-                }
-            }
-            else if (token.type != Token.NEXT_LINE) {
+            if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT && token.type != Token.NEXT_LINE) {
                 parseConstant(node, sourceLine);
                 return node;
             }
-            root.addComment(token);
-            node.addToken(sourceLine.getNextToken());
+            if (token.type == Token.BLOCK_COMMENT) {
+                root.addComment(token);
+            }
+            else if (token.type == Token.COMMENT && node.getDescription() == null) {
+                node.setDescription(token);
+            }
+            sourceLine.skip();
         }
 
         while ((token = sourceLine.getNextToken()) != null) {
-            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+            if (token.type == Token.BLOCK_COMMENT) {
                 root.addComment(token);
             }
         }
@@ -320,7 +352,9 @@ public class Spin2Parser extends Parser {
                 break;
             }
             if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
-                root.addComment(token);
+                if (token.type == Token.BLOCK_COMMENT) {
+                    root.addComment(token);
+                }
                 continue;
             }
             switch (state) {
@@ -475,7 +509,7 @@ public class Spin2Parser extends Parser {
         }
 
         while ((token = sourceLine.getNextToken()) != null) {
-            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+            if (token.type == Token.BLOCK_COMMENT) {
                 root.addComment(token);
             }
         }
@@ -488,21 +522,21 @@ public class Spin2Parser extends Parser {
             if (token.type == Token.NL) {
                 break;
             }
-            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-                if (node.getDescription() == null) {
-                    node.setDescription(token);
-                }
-            }
-            else if (token.type != Token.NEXT_LINE) {
+            if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT && token.type != Token.NEXT_LINE) {
                 parseVariable(node, sourceLine);
                 return node;
             }
-            root.addComment(token);
-            node.addToken(sourceLine.getNextToken());
+            if (token.type == Token.BLOCK_COMMENT) {
+                root.addComment(token);
+            }
+            else if (token.type == Token.COMMENT && node.getDescription() == null) {
+                node.setDescription(token);
+            }
+            sourceLine.skip();
         }
 
         while ((token = sourceLine.getNextToken()) != null) {
-            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+            if (token.type == Token.BLOCK_COMMENT) {
                 root.addComment(token);
             }
         }
@@ -520,7 +554,9 @@ public class Spin2Parser extends Parser {
                 break;
             }
             if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
-                root.addComment(token);
+                if (token.type == Token.BLOCK_COMMENT) {
+                    root.addComment(token);
+                }
                 continue;
             }
             if (state == 1) {
@@ -554,29 +590,32 @@ public class Spin2Parser extends Parser {
                     }
                     // fall-through
                 case 2:
+                    if (node == null) {
+                        node = new VariableNode(parent);
+                    }
+                    node.identifier = token;
+                    node.addToken(token);
+                    state = 3;
+                    break;
+
+                case 3:
                     if (",".equals(token.getText())) {
                         node = null;
                         state = 1;
                         break;
                     }
-                    if (node == null) {
-                        node = new VariableNode(parent);
-                    }
-                    if (node.identifier == null) {
-                        node.identifier = token;
-                    }
                     node.addToken(token);
                     if ("[".equals(token.getText())) {
                         node.size = new ExpressionNode(node);
-                        state = 3;
+                        state = 4;
                         break;
                     }
                     break;
 
-                case 3:
+                case 4:
                     if ("]".equals(token.getText())) {
                         node.addToken(token);
-                        state = 2;
+                        state = 3;
                         break;
                     }
                     node.size.addToken(token);
@@ -585,7 +624,7 @@ public class Spin2Parser extends Parser {
         }
 
         while ((token = sourceLine.getNextToken()) != null) {
-            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+            if (token.type == Token.BLOCK_COMMENT) {
                 root.addComment(token);
             }
         }
@@ -598,21 +637,21 @@ public class Spin2Parser extends Parser {
             if (token.type == Token.NL) {
                 break;
             }
-            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-                if (node.getDescription() == null) {
-                    node.setDescription(token);
-                }
-            }
-            else if (token.type != Token.NEXT_LINE) {
+            if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT && token.type != Token.NEXT_LINE) {
                 parseObjectLine(node, sourceLine);
                 return node;
             }
-            root.addComment(token);
-            node.addToken(sourceLine.getNextToken());
+            if (token.type == Token.BLOCK_COMMENT) {
+                root.addComment(token);
+            }
+            else if (token.type == Token.COMMENT && node.getDescription() == null) {
+                node.setDescription(token);
+            }
+            sourceLine.skip();
         }
 
         while ((token = sourceLine.getNextToken()) != null) {
-            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+            if (token.type == Token.BLOCK_COMMENT) {
                 root.addComment(token);
             }
         }
@@ -631,7 +670,9 @@ public class Spin2Parser extends Parser {
                 break;
             }
             if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
-                root.addComment(token);
+                if (token.type == Token.BLOCK_COMMENT) {
+                    root.addComment(token);
+                }
                 continue;
             }
             switch (state) {
@@ -714,7 +755,7 @@ public class Spin2Parser extends Parser {
         }
 
         while ((token = sourceLine.getNextToken()) != null) {
-            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+            if (token.type == Token.BLOCK_COMMENT) {
                 root.addComment(token);
             }
         }
@@ -732,7 +773,9 @@ public class Spin2Parser extends Parser {
                 break;
             }
             if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
-                root.addComment(token);
+                if (token.type == Token.BLOCK_COMMENT) {
+                    root.addComment(token);
+                }
                 continue;
             }
             if (state == 4 || state == 7 || state == 9) {
@@ -901,7 +944,7 @@ public class Spin2Parser extends Parser {
         }
 
         while ((token = sourceLine.getNextToken()) != null) {
-            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+            if (token.type == Token.BLOCK_COMMENT) {
                 root.addComment(token);
             }
             if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
@@ -913,7 +956,7 @@ public class Spin2Parser extends Parser {
         }
 
         while ((token = sourceLine.getNextToken()) != null) {
-            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+            if (token.type == Token.BLOCK_COMMENT) {
                 root.addComment(token);
             }
         }
@@ -930,14 +973,16 @@ public class Spin2Parser extends Parser {
                 break;
             }
             if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
-                root.addComment(token);
+                if (token.type == Token.BLOCK_COMMENT) {
+                    root.addComment(token);
+                }
                 continue;
             }
             node.addToken(token);
         }
 
         while ((token = sourceLine.getNextToken()) != null) {
-            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+            if (token.type == Token.BLOCK_COMMENT) {
                 root.addComment(token);
             }
         }
@@ -954,7 +999,9 @@ public class Spin2Parser extends Parser {
                 break;
             }
             if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
-                root.addComment(token);
+                if (token.type == Token.BLOCK_COMMENT) {
+                    root.addComment(token);
+                }
                 continue;
             }
             node.addToken(token);
@@ -970,11 +1017,14 @@ public class Spin2Parser extends Parser {
             if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT && token.type != Token.NEXT_LINE) {
                 return node;
             }
-            root.addComment(sourceLine.getNextToken());
+            if (token.type == Token.BLOCK_COMMENT) {
+                root.addComment(token);
+            }
+            sourceLine.skip();
         }
 
         while ((token = sourceLine.getNextToken()) != null) {
-            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+            if (token.type == Token.BLOCK_COMMENT) {
                 root.addComment(token);
             }
         }
@@ -1046,13 +1096,15 @@ public class Spin2Parser extends Parser {
                     break;
                 }
                 if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
-                    root.addComment(token);
+                    if (token.type == Token.BLOCK_COMMENT) {
+                        root.addComment(token);
+                    }
                     continue;
                 }
                 node.addToken(token);
             }
             while ((token = sourceLine.getNextToken()) != null) {
-                if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+                if (token.type == Token.BLOCK_COMMENT) {
                     root.addComment(token);
                 }
             }
@@ -1069,21 +1121,21 @@ public class Spin2Parser extends Parser {
             if (token.type == Token.NL) {
                 break;
             }
-            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-                if (node.getDescription() == null) {
-                    node.setDescription(token);
-                }
-            }
-            else if (token.type != Token.NEXT_LINE) {
+            if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT && token.type != Token.NEXT_LINE) {
                 parseDatLine(node, sourceLine);
                 return node;
             }
-            root.addComment(token);
-            node.addToken(sourceLine.getNextToken());
+            if (token.type == Token.BLOCK_COMMENT) {
+                root.addComment(token);
+            }
+            else if (token.type == Token.COMMENT && node.getDescription() == null) {
+                node.setDescription(token);
+            }
+            sourceLine.skip();
         }
 
         while ((token = sourceLine.getNextToken()) != null) {
-            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+            if (token.type == Token.BLOCK_COMMENT) {
                 root.addComment(token);
             }
         }
@@ -1102,7 +1154,9 @@ public class Spin2Parser extends Parser {
                 break;
             }
             if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
-                root.addComment(token);
+                if (token.type == Token.BLOCK_COMMENT) {
+                    root.addComment(token);
+                }
                 continue;
             }
             if (state == 4 || state == 5) {
@@ -1227,7 +1281,7 @@ public class Spin2Parser extends Parser {
         }
 
         while ((token = sourceLine.getNextToken()) != null) {
-            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
+            if (token.type == Token.BLOCK_COMMENT) {
                 root.addComment(token);
             }
         }

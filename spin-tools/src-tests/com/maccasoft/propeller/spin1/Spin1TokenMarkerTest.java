@@ -7,7 +7,7 @@
  * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
-package com.maccasoft.propeller.spin2;
+package com.maccasoft.propeller.spin1;
 
 import java.util.Collection;
 
@@ -19,13 +19,13 @@ import com.maccasoft.propeller.SourceTokenMarker.TokenMarker;
 import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.SourceProvider;
 
-class Spin2TokenMarkerTest {
+class Spin1TokenMarkerTest {
 
     @Test
     void testSectionConstants() {
         String text = "CON  EnableFlow = 8                ' Single assignments";
 
-        Spin2TokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
+        Spin1TokenMarker subject = new Spin1TokenMarker(SourceProvider.NULL);
         subject.setRoot(new RootNode());
 
         Collection<TokenMarker> result = subject.getTokens(0, 0, text);
@@ -46,7 +46,7 @@ class Spin2TokenMarkerTest {
             + "  } CON  EnableFlow = 8 ' Single assignments\n"
             + "";
 
-        Spin2TokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
+        Spin1TokenMarker subject = new Spin1TokenMarker(SourceProvider.NULL);
         subject.refreshTokens(text);
 
         Collection<TokenMarker> result = subject.getTokens(2, 26, text.substring(26, 70));
@@ -67,7 +67,7 @@ class Spin2TokenMarkerTest {
             + "  B = A + 1\n"
             + "";
 
-        Spin2TokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
+        Spin1TokenMarker subject = new Spin1TokenMarker(SourceProvider.NULL);
         subject.refreshTokens(text);
 
         Collection<TokenMarker> result = subject.getTokens(1, 8, text.substring(8, 19));

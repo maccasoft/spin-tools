@@ -239,7 +239,7 @@ public class Spin1Compiler extends Compiler {
         }
         childObjects.add(info);
 
-        objectCompiler.compileStep1(info.text);
+        info.root = objectCompiler.compileStep1(info.text);
 
         return info;
     }

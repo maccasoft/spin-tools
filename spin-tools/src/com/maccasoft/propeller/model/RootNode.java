@@ -11,11 +11,15 @@ package com.maccasoft.propeller.model;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class RootNode extends Node {
 
-    List<Token> comments = new ArrayList<Token>();
+    List<Token> comments = new ArrayList<>();
+
+    Map<String, RootNode> objectRoots = new HashMap<>();
 
     public RootNode() {
 
@@ -31,6 +35,14 @@ public class RootNode extends Node {
 
     public List<Token> getComments() {
         return comments;
+    }
+
+    public void addObjectRoot(String name, RootNode node) {
+        objectRoots.put(name, node);
+    }
+
+    public RootNode getObjectRoot(String name) {
+        return objectRoots.get(name);
     }
 
     @Override

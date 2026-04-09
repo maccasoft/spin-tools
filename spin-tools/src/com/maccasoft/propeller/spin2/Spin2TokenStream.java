@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2;
@@ -46,6 +45,14 @@ public class Spin2TokenStream extends TokenStream {
 
     public Spin2TokenStream(String text) {
         super(text);
+        backtickState = 0;
+        backtickNestedParens = 0;
+        eofToken = new Token(this, text.length() - 1, Token.EOF);
+    }
+
+    public Spin2TokenStream(String text, int startIndex) {
+        super(text);
+        index = startIndex;
         backtickState = 0;
         backtickNestedParens = 0;
         eofToken = new Token(this, text.length() - 1, Token.EOF);
@@ -187,6 +194,9 @@ public class Spin2TokenStream extends TokenStream {
             }
         }
 
+        if (startLine == line) {
+            return new Token(this, startIndex, startLine, startColumn, Token.COMMENT, text.substring(startIndex, index));
+        }
         return new Token(this, startIndex, startLine, startColumn, Token.BLOCK_COMMENT, text.substring(startIndex, index));
     }
 

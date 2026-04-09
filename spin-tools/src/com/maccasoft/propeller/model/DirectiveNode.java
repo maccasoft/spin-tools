@@ -72,11 +72,6 @@ public class DirectiveNode extends Node {
             super(parent);
         }
 
-        public DefineNode(Node parent, Token identifier) {
-            super(parent);
-            this.identifier = identifier;
-        }
-
         public Token getIdentifier() {
             return identifier;
         }

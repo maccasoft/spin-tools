@@ -135,6 +135,9 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
 
         };
         RootNode root = parser.parse();
+        for (String name : objects.keySet()) {
+            root.addObjectRoot(name, objects.get(name).root);
+        }
 
         while (!conditionStack.isEmpty()) {
             Condition c = conditionStack.pop();
@@ -295,9 +298,6 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
                     }
                 }
             }
-        }
-        else if ("pragma".equals(token.getText())) {
-            node.setExclude(skip);
         }
         else {
             super.compileDirective(node);

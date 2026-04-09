@@ -11,7 +11,6 @@ package com.maccasoft.propeller;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.TreeSet;
 
 import org.eclipse.jface.fieldassist.IContentProposal;
@@ -581,43 +580,6 @@ public class SourceTokenMarkerTest {
         Iterator<TokenMarker> iter = set.iterator();
         Assertions.assertSame(marker1, iter.next());
         Assertions.assertSame(marker2, iter.next());
-    }
-
-    @Test
-    public void testSkipOverriddenMarkers() throws Exception {
-        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
-
-        TokenMarker marker1 = new TokenMarker(11, 19, TokenId.KEYWORD);
-        TokenMarker marker2 = new TokenMarker(0, 30, TokenId.COMMENT);
-        subject.tokens.add(marker1);
-        subject.tokens.add(marker2);
-        Assertions.assertEquals(2, subject.tokens.size());
-
-        Set<TokenMarker> result = subject.getLineTokens(0, 30);
-        Assertions.assertEquals(1, result.size());
-        Iterator<TokenMarker> iter = result.iterator();
-        Assertions.assertEquals(TokenId.COMMENT, iter.next().id);
-    }
-
-    @Test
-    public void test() throws Exception {
-        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
-
-        TokenMarker marker1 = new TokenMarker(0, 30, TokenId.COMMENT);
-        TokenMarker marker2 = new TokenMarker(0, 0, TokenId.ERROR);
-        subject.tokens.add(marker1);
-        subject.tokens.add(marker2);
-        Assertions.assertEquals(2, subject.tokens.size());
-
-        Iterator<TokenMarker> iter = subject.tokens.iterator();
-        Assertions.assertSame(marker2, iter.next());
-        Assertions.assertSame(marker1, iter.next());
-
-        Set<TokenMarker> result = subject.getLineTokens(0, 30);
-        Assertions.assertEquals(2, result.size());
-        iter = result.iterator();
-        Assertions.assertEquals(TokenId.ERROR, iter.next().id);
-        Assertions.assertEquals(TokenId.COMMENT, iter.next().id);
     }
 
 }

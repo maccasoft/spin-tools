@@ -82,6 +82,9 @@ public class OutlineView {
 
                 @Override
                 public void visitDirective(DirectiveNode node) {
+                    if (node.isExclude()) {
+                        return;
+                    }
                     if (node instanceof DirectiveNode.IncludeNode) {
                         includes.addChild(node);
                     }

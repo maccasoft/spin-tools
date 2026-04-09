@@ -181,10 +181,11 @@ public abstract class SourceTokenMarker {
 
     protected Map<String, TokenId> externals = new CaseInsensitiveMap<>();
     protected Map<String, TokenId> symbols = new CaseInsensitiveMap<>();
-    protected Map<String, TokenId> locals = new CaseInsensitiveMap<>();
+    protected Map<String, Map<String, TokenId>> locals = new HashMap<>();
 
     protected Map<File, RootNode> cache = new HashMap<>();
     protected Set<String> excludedPaths = new HashSet<>();
+    public List<Token> comments = new ArrayList<>();
 
     protected Context context;
 
@@ -2024,6 +2025,18 @@ public abstract class SourceTokenMarker {
                 blockToggle[0] = blockToggle[1] = blockToggle[2] = blockToggle[3] = blockToggle[5] = false;
             }
         }
+        else if (node instanceof FunctionNode) {
+            if (((FunctionNode) node).isPublic()) {
+                result = blockToggle[3] ? TokenId.PUB_ALT : TokenId.PUB;
+                blockToggle[3] = !blockToggle[3];
+                blockToggle[0] = blockToggle[1] = blockToggle[2] = blockToggle[4] = blockToggle[5] = false;
+            }
+            else {
+                result = blockToggle[4] ? TokenId.PRI_ALT : TokenId.PRI;
+                blockToggle[4] = !blockToggle[4];
+                blockToggle[0] = blockToggle[1] = blockToggle[2] = blockToggle[3] = blockToggle[5] = false;
+            }
+        }
         else if (node instanceof DataNode) {
             result = blockToggle[5] ? TokenId.DAT_ALT : TokenId.DAT;
             blockToggle[5] = !blockToggle[5];
@@ -2036,6 +2049,14 @@ public abstract class SourceTokenMarker {
         }
 
         return result;
+    }
+
+    public Collection<TokenMarker> getTokens(int lineIndex, int lineOffset, String lineText) {
+        return new ArrayList<>();
+    }
+
+    public boolean hasLineContinuation(int lineIndex, int lineOffset, String lineText) {
+        return false;
     }
 
 }

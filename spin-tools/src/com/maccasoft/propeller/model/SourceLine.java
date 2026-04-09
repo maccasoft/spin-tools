@@ -22,16 +22,18 @@ public class SourceLine {
         this.tokens.addAll(tokens);
     }
 
-    public List<Token> getTokens() {
-        return tokens;
-    }
-
     public int getIndex() {
         return index;
     }
 
     public void setIndex(int index) {
         this.index = index;
+    }
+
+    public void skip() {
+        if (index < tokens.size()) {
+            index++;
+        }
     }
 
     public Token getNextToken() {
@@ -115,7 +117,7 @@ public class SourceLine {
         int index = 0;
         for (Token token : tokens) {
             if (token.start > index) {
-                sb.append(" ".repeat(token.start - index));
+                sb.repeat(" ", token.start - index);
             }
             sb.append(token.getText());
             index = token.stop + 1;

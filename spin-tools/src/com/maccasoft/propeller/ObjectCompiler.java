@@ -108,35 +108,46 @@ public abstract class ObjectCompiler {
         token = iter.next();
         switch (token.getText().toLowerCase()) {
             case "pragma":
-                node.setExclude(skip);
                 if (!skip) {
                     if (!iter.hasNext()) {
-                        throw new CompilerException("expecting directive", token);
-                    }
-                    token = iter.next();
-                    if (!"exportdef".equalsIgnoreCase(token.getText())) {
-                        logMessage(new CompilerException(CompilerException.WARNING, "unsupported directive", token));
+                        logMessage(new CompilerException("expecting directive", token));
                         break;
                     }
-                    if (!iter.hasNext()) {
-                        throw new CompilerException("expecting identifier", token);
-                    }
                     token = iter.next();
-                    if (token.type != Token.KEYWORD) {
-                        throw new CompilerException("invalid identifier", token);
-                    }
-                    String identifier = token.getText();
-                    if (scope.isDefined(identifier)) {
-                        if (iter.hasNext()) {
-                            throw new CompilerException("expecting end of line", iter.next());
+                    if ("target".equalsIgnoreCase(token.getText())) {
+                        if (!iter.hasNext()) {
+                            logMessage(new CompilerException("expecting P1 or P2", token));
+                            break;
+                        }
+                        token = iter.next();
+                        if (!"P1".equals(token.getText()) && !"P2".equals(token.getText())) {
+                            logMessage(new CompilerException("expecting P1 or P2", token));
+                            break;
                         }
                     }
                     else {
-                        List<Token> list = new ArrayList<>();
-                        iter.forEachRemaining(t -> {
-                            list.add(t);
-                        });
-                        scope.addDefinition(identifier, list);
+                        if (!"exportdef".equalsIgnoreCase(token.getText())) {
+                            logMessage(new CompilerException(CompilerException.WARNING, "unsupported directive", token));
+                            break;
+                        }
+                        if (!iter.hasNext()) {
+                            logMessage(new CompilerException("expecting identifier", token));
+                        }
+                        token = iter.next();
+                        if (token.type != Token.KEYWORD) {
+                            throw new CompilerException("invalid identifier", token);
+                        }
+                        String identifier = token.getText();
+                        if (scope.isDefined(identifier)) {
+                            if (iter.hasNext()) {
+                                throw new CompilerException("expecting end of line", iter.next());
+                            }
+                        }
+                        else {
+                            List<Token> list = new ArrayList<>();
+                            iter.forEachRemaining(list::add);
+                            scope.addDefinition(identifier, list);
+                        }
                     }
                 }
                 break;
@@ -165,7 +176,6 @@ public abstract class ObjectCompiler {
                 break;
 
             case "undef":
-                node.setExclude(skip);
                 if (!skip) {
                     if (!iter.hasNext()) {
                         throw new CompilerException("expecting identifier", token);
@@ -182,21 +192,18 @@ public abstract class ObjectCompiler {
                 break;
 
             case "error":
-                node.setExclude(skip);
                 if (!skip) {
                     throw new CompilerException(CompilerException.ERROR, node.getText(), node);
                 }
                 break;
 
             case "warning":
-                node.setExclude(skip);
                 if (!skip) {
                     throw new CompilerException(CompilerException.WARNING, node.getText(), node);
                 }
                 break;
 
             case "ifdef":
-                node.setExclude(skip);
                 if (!skip) {
                     if (!iter.hasNext()) {
                         throw new CompilerException("expecting identifier", token);
@@ -219,7 +226,6 @@ public abstract class ObjectCompiler {
                     throw new CompilerException("misplaced #" + token.getText(), token);
                 }
                 condition = conditionStack.peek();
-                node.setExclude(skip && !condition.evaluated);
                 if (condition.evaluated) {
                     if (!condition.flipped) {
                         condition.skip = !condition.skip;
@@ -240,7 +246,6 @@ public abstract class ObjectCompiler {
                 break;
 
             case "ifndef":
-                node.setExclude(skip);
                 if (!skip) {
                     if (!iter.hasNext()) {
                         throw new CompilerException("expecting identifier", token);
@@ -263,7 +268,6 @@ public abstract class ObjectCompiler {
                     throw new CompilerException("misplaced #" + token.getText(), token);
                 }
                 condition = conditionStack.peek();
-                node.setExclude(skip && !condition.evaluated);
                 if (condition.evaluated) {
                     if (!condition.flipped) {
                         condition.skip = !condition.skip;
@@ -288,7 +292,6 @@ public abstract class ObjectCompiler {
                     throw new CompilerException("misplaced #" + token.getText(), token);
                 }
                 condition = conditionStack.peek();
-                node.setExclude(skip && !condition.evaluated);
                 if (condition.evaluated) {
                     if (!condition.flipped) {
                         condition.skip = !condition.skip;
@@ -298,7 +301,6 @@ public abstract class ObjectCompiler {
                 break;
 
             case "if":
-                node.setExclude(skip);
                 if (!skip) {
                     Expression expression = buildPreprocessorExpression(iter);
                     if (!expression.isConstant()) {
@@ -318,7 +320,6 @@ public abstract class ObjectCompiler {
                     throw new CompilerException("misplaced #" + token.getText(), token);
                 }
                 condition = conditionStack.peek();
-                node.setExclude(skip && !condition.evaluated);
                 if (condition.evaluated) {
                     if (!condition.flipped) {
                         condition.skip = !condition.skip;
@@ -346,7 +347,6 @@ public abstract class ObjectCompiler {
                     throw new CompilerException("misplaced #" + token.getText(), token);
                 }
                 condition = conditionStack.pop();
-                node.setExclude(skip && !condition.evaluated);
                 break;
 
             default:

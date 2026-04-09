@@ -200,7 +200,7 @@ public class Spin1CCompiler extends Spin1Compiler {
         }
         childObjects.add(info);
 
-        objectCompiler.compileStep1(info.text);
+        info.root = objectCompiler.compileStep1(info.text);
 
         return info;
     }

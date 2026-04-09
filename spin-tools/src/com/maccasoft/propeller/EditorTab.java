@@ -81,7 +81,7 @@ public class EditorTab implements FindReplaceTarget {
 
     public static final String OBJECT_TREE = "objectTree";
 
-    static final String pragmaTargetRegex = "/\\*[\\s\\S]*?\\*/|//.*|\"([^\"\\\\]|\\\\.)*\"|(#pragma\\s+target\\s+P1|P2)";
+    static final Pattern pragmaTargetPattern = Pattern.compile("/\\*[\\s\\S]*?\\*/|//.*|\"([^\"\\\\]|\\\\.)*\"|(#pragma\\s+target\\s+P1|P2)");
 
     SourcePool sourcePool;
 
@@ -439,10 +439,9 @@ public class EditorTab implements FindReplaceTarget {
 
         @Override
         public void refreshTokens(String text) {
-            super.refreshTokens(text);
-
             File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
             sourcePool.setSource(localFile, text);
+            super.refreshTokens(text);
         }
 
         @Override
@@ -473,10 +472,9 @@ public class EditorTab implements FindReplaceTarget {
 
         @Override
         public void refreshTokens(String text) {
-            super.refreshTokens(text);
-
             File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
             sourcePool.setSource(localFile, text);
+            super.refreshTokens(text);
         }
 
         @Override
@@ -507,23 +505,9 @@ public class EditorTab implements FindReplaceTarget {
 
         @Override
         public void refreshTokens(String text) {
-            super.refreshTokens(text);
-
             File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
             sourcePool.setSource(localFile, text);
-        }
-
-        @Override
-        protected void setP1(boolean p1) {
-            if (p1) {
-                this.sourceProvider = new EditorTabSourceProvider(preferences.getSpin1LibraryPath());
-                editor.setHelpProvider(new EditorHelp("Spin1CInstructions.xml", new File(""), ".spin"));
-            }
-            else {
-                this.sourceProvider = new EditorTabSourceProvider(preferences.getSpin2LibraryPath());
-                editor.setHelpProvider(new EditorHelp("Spin2CInstructions.xml", new File(""), ".spin2"));
-            }
-            super.setP1(p1);
+            super.refreshTokens(text);
         }
 
         @Override
@@ -608,8 +592,7 @@ public class EditorTab implements FindReplaceTarget {
             warnUnusedVariables = preferences.getSpin2WarnUnusedVariables();
         }
         else if (".c".equals(suffix)) {
-            Pattern pattern = Pattern.compile(pragmaTargetRegex);
-            Matcher matcher = pattern.matcher(text);
+            Matcher matcher = pragmaTargetPattern.matcher(text);
             while (matcher.find()) {
                 if (matcher.group(2) != null) {
                     if (matcher.group(2).endsWith("P1")) {
@@ -757,20 +740,22 @@ public class EditorTab implements FindReplaceTarget {
         lastModified = localFile.lastModified();
 
         String suffix = tabItemText.substring(tabItemText.lastIndexOf('.')).toLowerCase();
-        if (".spin".equals(suffix) || ".pasm".equals(suffix)) {
-            tokenMarker = new Spin1TokenMarkerAdatper();
-            tokenMarker.setCaseSensitive(preferences.getSpin1CaseSensitiveSymbols());
-            editor.setHelpProvider(new EditorHelp("Spin1Instructions.xml", localFile.getParentFile(), ".spin"));
-        }
-        else if (".spin2".equals(suffix) || ".p2asm".equals(suffix)) {
-            tokenMarker = new Spin2TokenMarkerAdatper();
-            tokenMarker.setCaseSensitive(preferences.getSpin2CaseSensitiveSymbols());
-            editor.setHelpProvider(new EditorHelp("Spin2Instructions.xml", localFile.getParentFile(), ".spin2"));
-        }
-        else if (".c".equals(suffix)) {
-            tokenMarker = new CTokenMarkerAdatper();
-            tokenMarker.setCaseSensitive(true);
-            editor.setHelpProvider(new EditorHelp("Spin2CInstructions.xml", localFile.getParentFile(), ".spin2"));
+        switch (suffix) {
+            case ".spin", ".pasm" -> {
+                tokenMarker = new Spin1TokenMarkerAdatper();
+                tokenMarker.setCaseSensitive(preferences.getSpin1CaseSensitiveSymbols());
+                editor.setHelpProvider(new EditorHelp("Spin1Instructions.xml", localFile.getParentFile(), ".spin"));
+            }
+            case ".spin2", ".p2asm" -> {
+                tokenMarker = new Spin2TokenMarkerAdatper();
+                tokenMarker.setCaseSensitive(preferences.getSpin2CaseSensitiveSymbols());
+                editor.setHelpProvider(new EditorHelp("Spin2Instructions.xml", localFile.getParentFile(), ".spin2"));
+            }
+            case ".c" -> {
+                tokenMarker = new CTokenMarkerAdatper();
+                tokenMarker.setCaseSensitive(true);
+                editor.setHelpProvider(new EditorHelp("Spin2CInstructions.xml", localFile.getParentFile(), ".spin2"));
+            }
         }
         editor.setTokenMarker(tokenMarker);
 
@@ -901,34 +886,43 @@ public class EditorTab implements FindReplaceTarget {
         sourcePool.removeSource(localFile);
         preferences.removeBookmarks(localFile);
 
-        if (file != null) {
-            tabItem.setToolTipText(file.getAbsolutePath());
-        }
         this.file = file;
         this.lastModified = file.lastModified();
 
         String suffix = tabItemText.substring(tabItemText.lastIndexOf('.')).toLowerCase();
-        if (".spin".equals(suffix) || ".pasm".equals(suffix)) {
-            tokenMarker = new Spin1TokenMarkerAdatper();
-            tokenMarker.setCaseSensitive(preferences.getSpin1CaseSensitiveSymbols());
-            editor.setHelpProvider(new EditorHelp("Spin1Instructions.xml", localFile.getParentFile(), ".spin"));
-        }
-        else if (".spin2".equals(suffix) || ".p2asm".equals(suffix)) {
-            tokenMarker = new Spin2TokenMarkerAdatper();
-            tokenMarker.setCaseSensitive(preferences.getSpin2CaseSensitiveSymbols());
-            editor.setHelpProvider(new EditorHelp("Spin2Instructions.xml", localFile.getParentFile(), ".spin2"));
-        }
-        else if (".c".equals(suffix)) {
-            tokenMarker = new CTokenMarkerAdatper();
-            tokenMarker.setCaseSensitive(true);
-            editor.setHelpProvider(new EditorHelp("Spin2CInstructions.xml", localFile.getParentFile(), ".spin2"));
+        switch (suffix) {
+            case ".spin", ".pasm" -> {
+                if (!(tokenMarker instanceof Spin1TokenMarkerAdatper)) {
+                    tokenMarker = new Spin1TokenMarkerAdatper();
+                    tokenMarker.setCaseSensitive(preferences.getSpin1CaseSensitiveSymbols());
+                    tokenMarker.refreshTokens(editor.getStyledText().getText());
+                    editor.setHelpProvider(new EditorHelp("Spin1Instructions.xml", localFile.getParentFile(), ".spin"));
+                }
+            }
+            case ".spin2", ".p2asm" -> {
+                if (!(tokenMarker instanceof Spin2TokenMarkerAdatper)) {
+                    tokenMarker = new Spin2TokenMarkerAdatper();
+                    tokenMarker.setCaseSensitive(preferences.getSpin2CaseSensitiveSymbols());
+                    tokenMarker.refreshTokens(editor.getStyledText().getText());
+                    editor.setHelpProvider(new EditorHelp("Spin2Instructions.xml", localFile.getParentFile(), ".spin2"));
+                }
+            }
+            case ".c" -> {
+                if (!(tokenMarker instanceof CTokenMarkerAdatper)) {
+                    tokenMarker = new CTokenMarkerAdatper();
+                    tokenMarker.setCaseSensitive(true);
+                    tokenMarker.refreshTokens(editor.getStyledText().getText());
+                    editor.setHelpProvider(new EditorHelp("Spin2CInstructions.xml", localFile.getParentFile(), ".spin2"));
+                }
+            }
         }
         editor.setTokenMarker(tokenMarker);
+        editor.redraw();
 
-        if (file != null && file.equals(preferences.getTopObject())) {
+        if (file.equals(preferences.getTopObject())) {
             tabItem.setFont(boldFont);
         }
-        tabItem.setToolTipText(file != null ? file.getAbsolutePath() : "");
+        tabItem.setToolTipText(file.getAbsolutePath());
     }
 
     public void setFocus() {
