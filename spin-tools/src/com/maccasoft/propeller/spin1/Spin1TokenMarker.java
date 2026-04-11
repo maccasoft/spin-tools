@@ -363,13 +363,7 @@ public class Spin1TokenMarker extends SourceTokenMarker {
             }
         }
 
-        Node contextNode = null;
-        for (Node node : root.getChilds()) {
-            if (node.getTokenCount() != 0 && lineIndex >= node.getStartToken().line) {
-                contextNode = node;
-            }
-        }
-
+        Node contextNode = getSectionAtLine(lineIndex);
         Spin1TokenStream stream = new Spin1TokenStream(lineText, startIndex);
 
         while ((token = stream.peekNext()).type != Token.EOF) {
