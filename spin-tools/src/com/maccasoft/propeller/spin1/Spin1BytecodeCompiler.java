@@ -1403,7 +1403,8 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                         source.addAll(compileBytecodeExpression(context, method, node.getChild(n++), true));
                     }
                     else {
-                        if (range = "..".equals(node.getChild(n).getText())) {
+                        range = "..".equals(node.getChild(n).getText());
+                        if (range) {
                             Spin1StatementNode rangeNode = node.getChild(n++);
                             if (rangeNode.getChildCount() != 2) {
                                 throw new RuntimeException("expression syntax error");
@@ -1438,26 +1439,14 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                     source.add(compilePostEffect(context, postEffectNode, "LONG", push));
                 }
             }
-            else if (expression instanceof Variable) {
-                boolean indexed = false;
-                if (node.getChildCount() != 0) {
-                    source.addAll(compileBytecodeExpression(context, method, node.getChild(0), true));
-                    indexed = true;
-                }
-                source.add(new VariableOp(context, push ? VariableOp.Op.Assign : VariableOp.Op.Write, indexed, (Variable) expression));
-                ((Variable) expression).setCalledBy(method);
-            }
-            else {
+            else if (expression instanceof ContextLiteral) {
                 MemoryOp.Size ss = MemoryOp.Size.Long;
-                if (expression instanceof DataVariable) {
-                    switch (((DataVariable) expression).getType()) {
-                        case "BYTE":
-                            ss = MemoryOp.Size.Byte;
-                            break;
-                        case "WORD":
-                            ss = MemoryOp.Size.Word;
-                            break;
-                    }
+                if (expression instanceof DataVariable dataVariable) {
+                    ss = switch (dataVariable.getType()) {
+                        case "BYTE" -> MemoryOp.Size.Byte;
+                        case "WORD" -> MemoryOp.Size.Word;
+                        default -> ss;
+                    };
                 }
 
                 boolean indexed = false;
@@ -1466,6 +1455,18 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                     indexed = true;
                 }
                 source.add(new MemoryOp(context, ss, indexed, MemoryOp.Base.PBase, push ? MemoryOp.Op.Assign : MemoryOp.Op.Write, expression));
+            }
+            else if (expression instanceof Variable variable) {
+                boolean indexed = false;
+                if (node.getChildCount() != 0) {
+                    source.addAll(compileBytecodeExpression(context, method, node.getChild(0), true));
+                    indexed = true;
+                }
+                source.add(new VariableOp(context, push ? VariableOp.Op.Assign : VariableOp.Op.Write, indexed, variable));
+                variable.setCalledBy(method);
+            }
+            else {
+                throw new CompilerException("expected variable", node.getTokens());
             }
         }
 
