@@ -25,9 +25,9 @@ import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.maccasoft.propeller.Preferences.ExternalTool;
-import com.maccasoft.propeller.Preferences.SerializedPreferences;
 import com.maccasoft.propeller.model.MethodNode;
+import com.maccasoft.propeller.preferences.ExternalTool;
+import com.maccasoft.propeller.preferences.SerializedPreferences;
 
 class PreferencesTest {
 

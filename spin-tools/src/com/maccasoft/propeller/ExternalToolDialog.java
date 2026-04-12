@@ -45,11 +45,11 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 
-import com.maccasoft.propeller.Preferences.ExternalTool;
 import com.maccasoft.propeller.internal.ColorRegistry;
 import com.maccasoft.propeller.internal.ContentProposalAdapter;
 import com.maccasoft.propeller.internal.ImageRegistry;
 import com.maccasoft.propeller.internal.TextContentAdapter;
+import com.maccasoft.propeller.preferences.ExternalTool;
 
 public class ExternalToolDialog extends Dialog {
 

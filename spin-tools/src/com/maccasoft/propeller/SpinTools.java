@@ -93,10 +93,6 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 
-import com.maccasoft.propeller.Preferences.ExternalTool;
-import com.maccasoft.propeller.Preferences.LruData;
-import com.maccasoft.propeller.Preferences.PackageFile;
-import com.maccasoft.propeller.Preferences.SearchPreferences;
 import com.maccasoft.propeller.devices.ComPort;
 import com.maccasoft.propeller.devices.ComPortException;
 import com.maccasoft.propeller.devices.ComPortList;
@@ -111,6 +107,10 @@ import com.maccasoft.propeller.internal.Utils;
 import com.maccasoft.propeller.model.DirectiveNode;
 import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.VariableNode;
+import com.maccasoft.propeller.preferences.ExternalTool;
+import com.maccasoft.propeller.preferences.LruData;
+import com.maccasoft.propeller.preferences.PackageFile;
+import com.maccasoft.propeller.preferences.SearchPreferences;
 import com.maccasoft.propeller.spin1.Spin1Object;
 import com.maccasoft.propeller.spin2.Spin2Object;
 import com.maccasoft.propeller.spinc.CTokenMarker;
@@ -119,9 +119,6 @@ public class SpinTools {
 
     public static final String APP_TITLE = "Spin Tools IDE";
     public static final String APP_VERSION = "0.54.1";
-
-    static final File defaultSpin1Examples = new File(System.getProperty("APP_DIR"), "examples/P1").getAbsoluteFile();
-    static final File defaultSpin2Examples = new File(System.getProperty("APP_DIR"), "examples/P2").getAbsoluteFile();
 
     Display display;
     Shell shell;
@@ -1061,8 +1058,8 @@ public class SpinTools {
     void populateOpenFromMenu(Menu menu) {
         List<String> list = new ArrayList<String>();
         List<String> defaultList = Arrays.asList(new String[] {
-            defaultSpin1Examples.getAbsolutePath(),
-            defaultSpin2Examples.getAbsolutePath(),
+            Preferences.defaultSpin1Examples.getAbsolutePath(),
+            Preferences.defaultSpin2Examples.getAbsolutePath(),
             Preferences.defaultSpin1LibraryPath.getAbsolutePath(),
             Preferences.defaultSpin2LibraryPath.getAbsolutePath()
         });
@@ -1160,8 +1157,8 @@ public class SpinTools {
     void populateSaveToMenu(Menu menu) {
         List<String> list = new ArrayList<String>();
         List<String> defaultList = Arrays.asList(new String[] {
-            defaultSpin1Examples.getAbsolutePath(),
-            defaultSpin1Examples.getAbsolutePath(),
+            Preferences.defaultSpin1Examples.getAbsolutePath(),
+            Preferences.defaultSpin1Examples.getAbsolutePath(),
             Preferences.defaultSpin1LibraryPath.getAbsolutePath(),
             Preferences.defaultSpin2LibraryPath.getAbsolutePath()
         });
@@ -2342,7 +2339,7 @@ public class SpinTools {
                     doFileSaveAs(editorTab, editorTab.getFile());
                     return;
                 }
-                if (parentFile.equals(defaultSpin1Examples) || parentFile.equals(defaultSpin2Examples)) {
+                if (parentFile.equals(Preferences.defaultSpin1Examples) || parentFile.equals(Preferences.defaultSpin2Examples)) {
                     doFileSaveAs(editorTab, editorTab.getFile());
                     return;
                 }
@@ -2383,7 +2380,7 @@ public class SpinTools {
                 if (parentFile.equals(Preferences.defaultSpin1LibraryPath) || parentFile.equals(Preferences.defaultSpin2LibraryPath)) {
                     parentFile = null;
                 }
-                else if (parentFile.equals(defaultSpin1Examples) || parentFile.equals(defaultSpin2Examples)) {
+                else if (parentFile.equals(Preferences.defaultSpin1Examples) || parentFile.equals(Preferences.defaultSpin2Examples)) {
                     parentFile = null;
                 }
             }
@@ -2393,7 +2390,7 @@ public class SpinTools {
                     if (parentFile.equals(Preferences.defaultSpin1LibraryPath) || parentFile.equals(Preferences.defaultSpin2LibraryPath)) {
                         parentFile = null;
                     }
-                    else if (parentFile.equals(defaultSpin1Examples) || parentFile.equals(defaultSpin2Examples)) {
+                    else if (parentFile.equals(Preferences.defaultSpin1Examples) || parentFile.equals(Preferences.defaultSpin2Examples)) {
                         parentFile = null;
                     }
                 }

@@ -50,7 +50,6 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
 
-import com.maccasoft.propeller.Preferences.SpinFormatPreferences;
 import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
@@ -64,6 +63,7 @@ import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenStream;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
+import com.maccasoft.propeller.preferences.SpinFormatPreferences;
 import com.maccasoft.propeller.spin1.Spin1Compiler;
 import com.maccasoft.propeller.spin1.Spin1Formatter;
 import com.maccasoft.propeller.spin1.Spin1TokenMarker;

@@ -45,9 +45,9 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 
-import com.maccasoft.propeller.Preferences.Bounds;
-import com.maccasoft.propeller.Preferences.SearchPreferences;
 import com.maccasoft.propeller.internal.ColorRegistry;
+import com.maccasoft.propeller.preferences.Bounds;
+import com.maccasoft.propeller.preferences.SearchPreferences;
 
 public class FindReplaceDialog extends Dialog {
 

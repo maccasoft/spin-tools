@@ -74,9 +74,6 @@ import org.eclipse.swt.widgets.Tree;
 
 import com.maccasoft.propeller.Formatter.Align;
 import com.maccasoft.propeller.Formatter.Case;
-import com.maccasoft.propeller.Preferences.ExternalTool;
-import com.maccasoft.propeller.Preferences.RemoteDevice;
-import com.maccasoft.propeller.Preferences.SpinFormatPreferences;
 import com.maccasoft.propeller.devices.ComPort;
 import com.maccasoft.propeller.devices.DeviceDescriptor;
 import com.maccasoft.propeller.devices.NetworkUtils;
@@ -88,6 +85,9 @@ import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.VariablesNode;
+import com.maccasoft.propeller.preferences.ExternalTool;
+import com.maccasoft.propeller.preferences.RemoteDevice;
+import com.maccasoft.propeller.preferences.SpinFormatPreferences;
 
 import jssc.SerialPortList;
 

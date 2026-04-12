@@ -84,10 +84,10 @@ import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.maccasoft.propeller.Preferences.PackageFile;
 import com.maccasoft.propeller.internal.BusyIndicator;
 import com.maccasoft.propeller.internal.ColorRegistry;
 import com.maccasoft.propeller.internal.ImageRegistry;
+import com.maccasoft.propeller.preferences.PackageFile;
 
 public class FirmwarePackDialog {
 
