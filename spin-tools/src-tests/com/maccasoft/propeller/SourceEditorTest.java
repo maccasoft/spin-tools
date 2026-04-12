@@ -9,8 +9,6 @@
 
 package com.maccasoft.propeller;
 
-import java.io.File;
-
 import org.eclipse.swt.custom.StyledTextContent;
 import org.eclipse.swt.custom.TextChangeListener;
 import org.eclipse.swt.custom.TextChangingEvent;
@@ -30,7 +28,6 @@ import com.maccasoft.propeller.SourceEditor.NavigationTarget;
 import com.maccasoft.propeller.SourceTokenMarker.TokenId;
 import com.maccasoft.propeller.SourceTokenMarker.TokenMarker;
 import com.maccasoft.propeller.model.Node;
-import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.spin1.Spin1Parser;
 import com.maccasoft.propeller.spin1.Spin1TokenMarker;
@@ -704,23 +701,20 @@ public class SourceEditorTest {
             + "\n"
             + "";
 
+        SourceTokenMarker tokenMarker = new Spin2TokenMarker(SourceProvider.NULL) {
+
+            @Override
+            public void refreshTokens(String text) {
+                // Do nothing
+            }
+
+        };
+        tokenMarker.root = new Spin2Parser(text).parse();
+        tokenMarker.root.addObjectRoot("child", new Spin2Parser(childText).parse());
+
         SourceEditor subject = new SourceEditor(shell);
-        subject.setTokenMarker(new Spin2TokenMarker(new SourceProvider() {
+        subject.setTokenMarker(tokenMarker);
 
-            @Override
-            public File getFile(String name) {
-                return new File(name);
-            }
-
-            @Override
-            public RootNode getParsedSource(File file) {
-                Spin2Parser parser = new Spin2Parser(childText);
-                return parser.parse();
-            }
-
-        }));
-
-        subject.tokenMarker.refreshTokens(text);
         subject.styledText.setText(text);
 
         int offset1 = text.indexOf(".VALUE1") + 1;
@@ -760,23 +754,20 @@ public class SourceEditorTest {
             + "\n"
             + "";
 
+        SourceTokenMarker tokenMarker = new Spin1TokenMarker(SourceProvider.NULL) {
+
+            @Override
+            public void refreshTokens(String text) {
+                // Do nothing
+            }
+
+        };
+        tokenMarker.root = new Spin1Parser(text).parse();
+        tokenMarker.root.addObjectRoot("child", new Spin1Parser(childText).parse());
+
         SourceEditor subject = new SourceEditor(shell);
-        subject.setTokenMarker(new Spin1TokenMarker(new SourceProvider() {
+        subject.setTokenMarker(tokenMarker);
 
-            @Override
-            public File getFile(String name) {
-                return new File(name);
-            }
-
-            @Override
-            public RootNode getParsedSource(File file) {
-                Spin1Parser parser = new Spin1Parser(childText);
-                return parser.parse();
-            }
-
-        }));
-
-        subject.tokenMarker.refreshTokens(text);
         subject.styledText.setText(text);
 
         int offset1 = text.indexOf("#VALUE1") + 1;
@@ -849,23 +840,20 @@ public class SourceEditorTest {
             + "\n"
             + "";
 
+        SourceTokenMarker tokenMarker = new Spin2TokenMarker(SourceProvider.NULL) {
+
+            @Override
+            public void refreshTokens(String text) {
+                // Do nothing
+            }
+
+        };
+        tokenMarker.root = new Spin2Parser(text).parse();
+        tokenMarker.root.addObjectRoot("child", new Spin2Parser(childText).parse());
+
         SourceEditor subject = new SourceEditor(shell);
-        subject.setTokenMarker(new Spin2TokenMarker(new SourceProvider() {
+        subject.setTokenMarker(tokenMarker);
 
-            @Override
-            public File getFile(String name) {
-                return new File(name);
-            }
-
-            @Override
-            public RootNode getParsedSource(File file) {
-                Spin2Parser parser = new Spin2Parser(childText);
-                return parser.parse();
-            }
-
-        }));
-
-        subject.tokenMarker.refreshTokens(text);
         subject.styledText.setText(text);
 
         int offset = text.indexOf(".VALUE1") + 1;
@@ -895,23 +883,20 @@ public class SourceEditorTest {
             + "\n"
             + "";
 
+        SourceTokenMarker tokenMarker = new Spin1TokenMarker(SourceProvider.NULL) {
+
+            @Override
+            public void refreshTokens(String text) {
+                // Do nothing
+            }
+
+        };
+        tokenMarker.root = new Spin1Parser(text).parse();
+        tokenMarker.root.addObjectRoot("child", new Spin1Parser(childText).parse());
+
         SourceEditor subject = new SourceEditor(shell);
-        subject.setTokenMarker(new Spin1TokenMarker(new SourceProvider() {
+        subject.setTokenMarker(tokenMarker);
 
-            @Override
-            public File getFile(String name) {
-                return new File(name);
-            }
-
-            @Override
-            public RootNode getParsedSource(File file) {
-                Spin1Parser parser = new Spin1Parser(childText);
-                return parser.parse();
-            }
-
-        }));
-
-        subject.tokenMarker.refreshTokens(text);
         subject.styledText.setText(text);
 
         int offset = text.indexOf("#VALUE1") + 1;

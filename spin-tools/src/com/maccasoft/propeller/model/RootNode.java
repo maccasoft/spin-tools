@@ -19,6 +19,13 @@ public class RootNode extends Node {
 
     List<Token> comments = new ArrayList<>();
 
+    List<ConstantNode> constants = new ArrayList<>();
+    List<TypeDefinitionNode> typeDefinitions = new ArrayList<>();
+    List<VariableNode> variables = new ArrayList<>();
+    List<ObjectNode> objects = new ArrayList<>();
+    List<MethodNode> methods = new ArrayList<>();
+    List<FunctionNode> functions = new ArrayList<>();
+
     Map<String, RootNode> objectRoots = new HashMap<>();
 
     public RootNode() {
@@ -37,12 +44,64 @@ public class RootNode extends Node {
         return comments;
     }
 
+    public void addConstant(ConstantNode node) {
+        constants.add(node);
+    }
+
+    public List<ConstantNode> getConstants() {
+        return constants;
+    }
+
+    public void addStruct(TypeDefinitionNode node) {
+        typeDefinitions.add(node);
+    }
+
+    public List<TypeDefinitionNode> getStructs() {
+        return typeDefinitions;
+    }
+
+    public void addVariable(VariableNode node) {
+        variables.add(node);
+    }
+
+    public List<VariableNode> getVariables() {
+        return variables;
+    }
+
+    public void addObject(ObjectNode node) {
+        objects.add(node);
+    }
+
+    public List<ObjectNode> getObjects() {
+        return objects;
+    }
+
+    public void addMethod(MethodNode node) {
+        methods.add(node);
+    }
+
+    public List<MethodNode> getMethods() {
+        return methods;
+    }
+
+    public void addFunction(FunctionNode node) {
+        functions.add(node);
+    }
+
+    public List<FunctionNode> getFunctions() {
+        return functions;
+    }
+
     public void addObjectRoot(String name, RootNode node) {
         objectRoots.put(name, node);
     }
 
     public RootNode getObjectRoot(String name) {
         return objectRoots.get(name);
+    }
+
+    public Map<String, RootNode> getObjectRoots() {
+        return objectRoots;
     }
 
     @Override

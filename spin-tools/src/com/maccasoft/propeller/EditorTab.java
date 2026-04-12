@@ -59,7 +59,6 @@ import com.maccasoft.propeller.model.FunctionNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.ObjectsNode;
-import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenStream;
@@ -444,24 +443,6 @@ public class EditorTab implements FindReplaceTarget {
             super.refreshTokens(text);
         }
 
-        @Override
-        protected RootNode getObjectTree(String fileName) {
-            RootNode node = null;
-            if (fileName.toLowerCase().endsWith(".spin") || fileName.toLowerCase().endsWith(".c")) {
-                node = super.getObjectTree(fileName);
-            }
-            if (node == null) {
-                node = super.getObjectTree(fileName + ".spin");
-            }
-            if (node == null) {
-                node = super.getObjectTree(fileName + ".c");
-            }
-            if (node == null) {
-                node = super.getObjectTree(fileName);
-            }
-            return node;
-        }
-
     }
 
     class Spin2TokenMarkerAdatper extends Spin2TokenMarker {
@@ -477,24 +458,6 @@ public class EditorTab implements FindReplaceTarget {
             super.refreshTokens(text);
         }
 
-        @Override
-        protected RootNode getObjectTree(String fileName) {
-            RootNode node = null;
-            if (fileName.toLowerCase().endsWith(".spin2") || fileName.toLowerCase().endsWith(".c")) {
-                node = super.getObjectTree(fileName);
-            }
-            if (node == null) {
-                node = super.getObjectTree(fileName + ".spin2");
-            }
-            if (node == null) {
-                node = super.getObjectTree(fileName + ".c");
-            }
-            if (node == null) {
-                node = super.getObjectTree(fileName);
-            }
-            return node;
-        }
-
     }
 
     class CTokenMarkerAdatper extends CTokenMarker {
@@ -508,33 +471,6 @@ public class EditorTab implements FindReplaceTarget {
             File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
             sourcePool.setSource(localFile, text);
             super.refreshTokens(text);
-        }
-
-        @Override
-        protected RootNode getObjectTree(String fileName) {
-            RootNode node = null;
-            if (fileName.toLowerCase().endsWith(".c")) {
-                node = super.getObjectTree(fileName);
-            }
-            if (node == null && isP1() && fileName.toLowerCase().endsWith(".spin")) {
-                node = super.getObjectTree(fileName);
-            }
-            if (node == null && isP2() && fileName.toLowerCase().endsWith(".spin2")) {
-                node = super.getObjectTree(fileName);
-            }
-            if (node == null) {
-                node = super.getObjectTree(fileName + ".c");
-            }
-            if (node == null && isP1()) {
-                node = super.getObjectTree(fileName + ".spin");
-            }
-            if (node == null && isP2()) {
-                node = super.getObjectTree(fileName + ".spin2");
-            }
-            if (node == null) {
-                node = super.getObjectTree(fileName);
-            }
-            return node;
         }
 
     }

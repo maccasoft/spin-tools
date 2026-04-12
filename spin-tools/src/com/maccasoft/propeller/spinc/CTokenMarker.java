@@ -833,7 +833,6 @@ public class CTokenMarker extends SourceTokenMarker {
     public void setRoot(RootNode root) {
         symbols.clear();
         locals.clear();
-        excludedPaths.clear();
 
         comments.clear();
         comments.addAll(root.getComments());
@@ -844,26 +843,24 @@ public class CTokenMarker extends SourceTokenMarker {
 
     void collectTokens(RootNode root) {
         for (Node child : root.getChilds()) {
-            if (child.isExclude()) {
-                excludedPaths.add(child.getPath());
-            }
             switch (child) {
                 case DirectiveNode.DefineNode node -> {
-                    if (!isExcludedNode(node) && node.identifier != null) {
+                    if (!node.isExclude()) {
                         symbols.put(node.identifier.getText(), TokenId.CONSTANT);
                     }
                 }
                 case DirectiveNode.IncludeNode node -> {
-                    if (!isExcludedNode(node) && node.file != null) {
-                        String name = node.file.getText();
-                        if (name.startsWith("\"") || name.startsWith("<")) {
-                            name = name.substring(1);
-                        }
-                        if (name.endsWith("\"") || name.endsWith("<")) {
-                            name = name.substring(0, name.length() - 1);
-                        }
-                        symbols.put(name, TokenId.TYPE);
+                    if (node.isExclude()) {
+                        break;
                     }
+                    String name = node.file.getText();
+                    if (name.startsWith("\"") || name.startsWith("<")) {
+                        name = name.substring(1);
+                    }
+                    if (name.endsWith("\"") || name.endsWith("<")) {
+                        name = name.substring(0, name.length() - 1);
+                    }
+                    symbols.put(name, TokenId.TYPE);
                 }
                 case TypeDefinitionNode node -> {
                     if (node.identifier != null) {
@@ -872,12 +869,16 @@ public class CTokenMarker extends SourceTokenMarker {
                 }
                 case VariableNode node -> {
                     if (node.identifier != null) {
-                        String name = node.identifier.getText();
-                        RootNode objectRoot = node.getRoot().getObjectRoot(name);
+                        RootNode objectRoot = root.getObjectRoot(node.identifier.getText());
                         if (objectRoot != null) {
-                            collectObjectTokens(name, objectRoot);
+                            collectObjectTokens(node.identifier.getText(), objectRoot);
+                            symbols.put(node.type.getText(), TokenId.TYPE);
+                            symbols.put(node.identifier.getText(), TokenId.OBJECT);
                         }
-                        symbols.put(name, objectRoot != null ? TokenId.OBJECT : TokenId.VARIABLE);
+                        else {
+                            symbols.put(node.type.getText(), TokenId.TYPE);
+                            symbols.put(node.identifier.getText(), TokenId.VARIABLE);
+                        }
                     }
                 }
                 case FunctionNode node -> {
@@ -905,9 +906,6 @@ public class CTokenMarker extends SourceTokenMarker {
 
     void collectObjectTokens(String qualifier, Node root) {
         for (Node child : root.getChilds()) {
-            if (child.isExclude()) {
-                excludedPaths.add(child.getPath());
-            }
             switch (child) {
                 case ConstantsNode node -> {
                     collectObjectTokens(qualifier, node);

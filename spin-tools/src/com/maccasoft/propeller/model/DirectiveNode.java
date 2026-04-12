@@ -18,6 +18,10 @@ public class DirectiveNode extends Node {
 
         public Token file;
 
+        public IncludeNode() {
+
+        }
+
         public IncludeNode(Node parent) {
             super(parent);
         }
@@ -68,6 +72,10 @@ public class DirectiveNode extends Node {
         public Token identifier;
         public List<Token> definition = new ArrayList<>();
 
+        public DefineNode() {
+
+        }
+
         public DefineNode(Node parent) {
             super(parent);
         }
@@ -97,6 +105,10 @@ public class DirectiveNode extends Node {
 
             return sb.toString();
         }
+
+    }
+
+    public DirectiveNode() {
 
     }
 

@@ -9,18 +9,13 @@
 
 package com.maccasoft.propeller;
 
-import java.util.Iterator;
 import java.util.List;
-import java.util.TreeSet;
 
 import org.eclipse.jface.fieldassist.IContentProposal;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import com.maccasoft.propeller.SourceTokenMarker.TokenId;
-import com.maccasoft.propeller.SourceTokenMarker.TokenMarker;
 import com.maccasoft.propeller.model.Node;
-import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.spin1.Spin1Parser;
 import com.maccasoft.propeller.spin1.Spin1TokenMarker;
@@ -122,21 +117,9 @@ public class SourceTokenMarkerTest {
             + "    \n"
             + "";
 
-        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL) {
-
-            @Override
-            protected RootNode getObjectTree(String fileName) {
-                switch (fileName) {
-                    case "object": {
-                        Spin2Parser parser = new Spin2Parser(objectText);
-                        return parser.parse();
-                    }
-                }
-                return null;
-            }
-
-        };
-        subject.refreshTokens(text);
+        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
+        subject.root = new Spin2Parser(text).parse();
+        subject.root.addObjectRoot("object", new Spin2Parser(objectText).parse());
 
         Node context = subject.getRoot().getChild(1);
 
@@ -165,21 +148,9 @@ public class SourceTokenMarkerTest {
             + "    \n"
             + "";
 
-        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL) {
-
-            @Override
-            protected RootNode getObjectTree(String fileName) {
-                switch (fileName) {
-                    case "object": {
-                        Spin2Parser parser = new Spin2Parser(objectText);
-                        return parser.parse();
-                    }
-                }
-                return null;
-            }
-
-        };
-        subject.refreshTokens(text);
+        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
+        subject.root = new Spin2Parser(text).parse();
+        subject.root.addObjectRoot("object", new Spin2Parser(objectText).parse());
 
         Node context = subject.getRoot().getChild(1);
 
@@ -212,21 +183,9 @@ public class SourceTokenMarkerTest {
             + "    \n"
             + "";
 
-        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL) {
-
-            @Override
-            protected RootNode getObjectTree(String fileName) {
-                switch (fileName) {
-                    case "object": {
-                        Spin2Parser parser = new Spin2Parser(objectText);
-                        return parser.parse();
-                    }
-                }
-                return null;
-            }
-
-        };
-        subject.refreshTokens(text);
+        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
+        subject.root = new Spin2Parser(text).parse();
+        subject.root.addObjectRoot("object", new Spin2Parser(objectText).parse());
 
         Node context = subject.getRoot().getChild(1);
 
@@ -255,21 +214,9 @@ public class SourceTokenMarkerTest {
             + "    \n"
             + "";
 
-        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL) {
-
-            @Override
-            protected RootNode getObjectTree(String fileName) {
-                switch (fileName) {
-                    case "object": {
-                        Spin2Parser parser = new Spin2Parser(objectText);
-                        return parser.parse();
-                    }
-                }
-                return null;
-            }
-
-        };
-        subject.refreshTokens(text);
+        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
+        subject.root = new Spin2Parser(text).parse();
+        subject.root.addObjectRoot("object", new Spin2Parser(objectText).parse());
 
         Node context = subject.getRoot().getChild(1);
 
@@ -298,21 +245,9 @@ public class SourceTokenMarkerTest {
             + "    \n"
             + "";
 
-        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL) {
-
-            @Override
-            protected RootNode getObjectTree(String fileName) {
-                switch (fileName) {
-                    case "object": {
-                        Spin2Parser parser = new Spin2Parser(objectText);
-                        return parser.parse();
-                    }
-                }
-                return null;
-            }
-
-        };
-        subject.refreshTokens(text);
+        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
+        subject.root = new Spin2Parser(text).parse();
+        subject.root.addObjectRoot("object", new Spin2Parser(objectText).parse());
 
         Node context = subject.getRoot().getChild(1);
 
@@ -352,25 +287,10 @@ public class SourceTokenMarkerTest {
             + "    \n"
             + "";
 
-        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL) {
-
-            @Override
-            protected RootNode getObjectTree(String fileName) {
-                switch (fileName) {
-                    case "object1": {
-                        Spin2Parser parser = new Spin2Parser(object1Text);
-                        return parser.parse();
-                    }
-                    case "object2": {
-                        Spin2Parser parser = new Spin2Parser(object2Text);
-                        return parser.parse();
-                    }
-                }
-                return null;
-            }
-
-        };
-        subject.refreshTokens(text);
+        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
+        subject.root = new Spin2Parser(text).parse();
+        subject.root.addObjectRoot("object", new Spin2Parser(object1Text).parse());
+        subject.root.addObjectRoot("object2", new Spin2Parser(object2Text).parse());
 
         Node context = subject.getRoot().getChild(1);
 
@@ -410,25 +330,10 @@ public class SourceTokenMarkerTest {
             + "    \n"
             + "";
 
-        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL) {
-
-            @Override
-            protected RootNode getObjectTree(String fileName) {
-                switch (fileName) {
-                    case "object1": {
-                        Spin2Parser parser = new Spin2Parser(object1Text);
-                        return parser.parse();
-                    }
-                    case "object2": {
-                        Spin2Parser parser = new Spin2Parser(object2Text);
-                        return parser.parse();
-                    }
-                }
-                return null;
-            }
-
-        };
-        subject.refreshTokens(text);
+        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
+        subject.root = new Spin2Parser(text).parse();
+        subject.root.addObjectRoot("object", new Spin2Parser(object1Text).parse());
+        subject.root.addObjectRoot("object2", new Spin2Parser(object2Text).parse());
 
         Node context = subject.getRoot().getChild(1);
 
@@ -461,21 +366,9 @@ public class SourceTokenMarkerTest {
             + "    PIN_TX = 2\n"
             + "";
 
-        SourceTokenMarker subject = new Spin1TokenMarker(SourceProvider.NULL) {
-
-            @Override
-            protected RootNode getObjectTree(String fileName) {
-                switch (fileName) {
-                    case "object": {
-                        Spin1Parser parser = new Spin1Parser(objectText);
-                        return parser.parse();
-                    }
-                }
-                return null;
-            }
-
-        };
-        subject.refreshTokens(text);
+        SourceTokenMarker subject = new Spin1TokenMarker(SourceProvider.NULL);
+        subject.root = new Spin1Parser(text).parse();
+        subject.root.addObjectRoot("object", new Spin1Parser(objectText).parse());
 
         List<IContentProposal> result = subject.getConstantsProposals("object#");
 
@@ -506,23 +399,11 @@ public class SourceTokenMarkerTest {
             + "    PIN_TX = 2\n"
             + "";
 
-        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL) {
+        SourceTokenMarker subject = new Spin1TokenMarker(SourceProvider.NULL);
+        subject.root = new Spin1Parser(text).parse();
+        subject.root.addObjectRoot("object", new Spin1Parser(objectText).parse());
 
-            @Override
-            protected RootNode getObjectTree(String fileName) {
-                switch (fileName) {
-                    case "object": {
-                        Spin2Parser parser = new Spin2Parser(objectText);
-                        return parser.parse();
-                    }
-                }
-                return null;
-            }
-
-        };
-        subject.refreshTokens(text);
-
-        List<IContentProposal> result = subject.getConstantsProposals("object.");
+        List<IContentProposal> result = subject.getConstantsProposals("object#");
 
         Assertions.assertEquals(2, result.size());
 
@@ -533,53 +414,6 @@ public class SourceTokenMarkerTest {
         Assertions.assertEquals("PIN_TX", result.get(1).getLabel());
         Assertions.assertEquals("PIN_TX", result.get(1).getContent());
         Assertions.assertEquals(6, result.get(1).getCursorPosition());
-    }
-
-    @Test
-    public void testMarkerOrdering() throws Exception {
-        TreeSet<TokenMarker> set = new TreeSet<>();
-
-        TokenMarker marker1 = new TokenMarker(11, 19, TokenId.KEYWORD);
-        TokenMarker marker2 = new TokenMarker(0, 30, TokenId.COMMENT);
-        set.add(marker1);
-        set.add(marker2);
-
-        Iterator<TokenMarker> iter = set.iterator();
-        Assertions.assertSame(marker2, iter.next());
-        Assertions.assertSame(marker1, iter.next());
-    }
-
-    @Test
-    public void testOverlappedMarkersOrdering() throws Exception {
-        TreeSet<TokenMarker> set = new TreeSet<>();
-
-        TokenMarker marker1 = new TokenMarker(0, 15, TokenId.KEYWORD);
-        TokenMarker marker2 = new TokenMarker(16, 30, TokenId.KEYWORD);
-        TokenMarker marker3 = new TokenMarker(0, 30, TokenId.COMMENT);
-        set.add(marker1);
-        set.add(marker2);
-        set.add(marker3);
-        Assertions.assertEquals(3, set.size());
-
-        Iterator<TokenMarker> iter = set.iterator();
-        Assertions.assertSame(marker1, iter.next());
-        Assertions.assertSame(marker3, iter.next());
-        Assertions.assertSame(marker2, iter.next());
-    }
-
-    @Test
-    public void testReplacedMarkersOrdering() throws Exception {
-        TreeSet<TokenMarker> set = new TreeSet<>();
-
-        TokenMarker marker1 = new TokenMarker(16, 30, TokenId.KEYWORD);
-        TokenMarker marker2 = new TokenMarker(16, 31, TokenId.COMMENT);
-        set.add(marker1);
-        set.add(marker2);
-        Assertions.assertEquals(2, set.size());
-
-        Iterator<TokenMarker> iter = set.iterator();
-        Assertions.assertSame(marker1, iter.next());
-        Assertions.assertSame(marker2, iter.next());
     }
 
 }

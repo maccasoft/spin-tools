@@ -619,42 +619,6 @@ public class SourceEditor {
                         }
                     }
                 }
-
-                for (TokenMarker entry : tokenMarker.getExcludedNodes()) {
-                    if (event.newCharCount != 0) {
-                        if (event.start < entry.start) {
-                            entry.start += event.newCharCount;
-                            entry.stop += event.newCharCount;
-                        }
-                        else if (event.start <= entry.stop + 1) {
-                            entry.stop += event.newCharCount;
-                        }
-                    }
-                    if (event.replaceCharCount != 0) {
-                        if (event.start + event.replaceCharCount <= entry.start) {
-                            entry.start -= event.replaceCharCount;
-                            entry.stop -= event.replaceCharCount;
-                        }
-                        else if (event.start >= entry.start && event.start <= entry.stop) {
-                            if (event.start + event.replaceCharCount > entry.stop) {
-                                entry.stop -= entry.stop - event.start;
-                            }
-                            else {
-                                entry.stop -= event.replaceCharCount;
-                            }
-                        }
-                        else if (event.start < entry.start) {
-                            if (event.start + event.replaceCharCount <= entry.stop) {
-                                entry.stop -= (event.start + event.replaceCharCount) - entry.start;
-                                entry.stop -= entry.start - event.start;
-                                entry.start -= entry.start - event.start;
-                            }
-                            else {
-                                entry.stop = entry.start;
-                            }
-                        }
-                    }
-                }
             }
 
             @Override
@@ -2352,34 +2316,32 @@ public class SourceEditor {
         else if (node instanceof VariablesNode) {
             proposals.addAll(tokenMarker.getTypeProposals(node, filterText));
         }
-        else if (node instanceof VariableNode) {
-            VariableNode line = (VariableNode) node;
+        else if (node instanceof VariableNode variableNode) {
             position = styledText.getCaretOffset();
-            if (line.type != null && position >= line.type.start && position <= line.type.stop + 1) {
+            if (variableNode.type != null && position >= variableNode.type.start && position <= variableNode.type.stop + 1) {
                 proposals.addAll(helpProvider.fillSourceProposals(filterText));
             }
         }
-        else if (node instanceof DataLineNode) {
-            DataLineNode line = (DataLineNode) node;
+        else if (node instanceof DataLineNode dataLineNode) {
             position = styledText.getCaretOffset();
 
-            if (node.getStartToken().line != lineIndex || (line.condition == null && line.instruction == null)) {
+            if (node.getStartToken().line != lineIndex || (dataLineNode.condition == null && dataLineNode.instruction == null)) {
                 proposals.addAll(helpProvider.fillProposals("Condition", filterText));
                 proposals.addAll(helpProvider.fillProposals("Instruction", filterText));
             }
-            else if (line.condition != null && position >= line.condition.start && position <= line.condition.stop + 1) {
+            else if (dataLineNode.condition != null && position >= dataLineNode.condition.start && position <= dataLineNode.condition.stop + 1) {
                 proposals.addAll(helpProvider.fillProposals("Condition", filterText));
             }
-            else if (line.condition != null && line.instruction == null && position > line.condition.stop) {
+            else if (dataLineNode.condition != null && dataLineNode.instruction == null && position > dataLineNode.condition.stop) {
                 proposals.addAll(helpProvider.fillProposals("Instruction", filterText));
             }
-            else if (line.instruction != null && position >= line.instruction.start && position <= line.instruction.stop + 1) {
+            else if (dataLineNode.instruction != null && position >= dataLineNode.instruction.start && position <= dataLineNode.instruction.stop + 1) {
                 proposals.addAll(helpProvider.fillProposals("Instruction", filterText));
             }
-            else if (line.instruction != null && line.condition == null && position < line.instruction.start) {
+            else if (dataLineNode.instruction != null && dataLineNode.condition == null && position < dataLineNode.instruction.start) {
                 proposals.addAll(helpProvider.fillProposals("Condition", filterText));
             }
-            else if (line.instruction != null && position > line.instruction.stop + 1) {
+            else if (dataLineNode.instruction != null && position > dataLineNode.instruction.stop + 1) {
                 if (node.getParent() instanceof StatementNode || node.getParent() instanceof MethodNode) {
                     proposals.addAll(tokenMarker.getInlinePAsmProposals(node, filterText));
                     proposals.addAll(tokenMarker.getConstantsProposals(filterText));
@@ -2390,9 +2352,8 @@ public class SourceEditor {
                 proposals.addAll(helpProvider.fillProposals(node.getClass().getSimpleName(), filterText));
             }
         }
-        else if (node instanceof MethodNode) {
+        else if (node instanceof MethodNode methodNode) {
             boolean found = false;
-            MethodNode methodNode = (MethodNode) node;
             for (MethodNode.ParameterNode child : methodNode.getParameters()) {
                 if (child.type != null && position >= child.type.start && position <= child.type.stop + 1) {
                     proposals.addAll(tokenMarker.getTypeProposals(node, filterText));
@@ -2425,7 +2386,7 @@ public class SourceEditor {
             }
         }
         else if (node != null) {
-            if ((node instanceof StatementNode) || (node instanceof MethodNode) || (node instanceof FunctionNode)) {
+            if (node instanceof StatementNode || node instanceof FunctionNode) {
                 proposals.addAll(tokenMarker.getMethodProposals(node, filterText));
                 proposals.addAll(tokenMarker.getPAsmLabelProposals(node, filterText));
             }
@@ -2674,17 +2635,19 @@ public class SourceEditor {
         }
 
         String itemName = token.getText();
-        if (itemName.startsWith("@@")) {
+        if (itemName.startsWith("@@@")) {
+            itemName = itemName.substring(3);
+        }
+        else if (itemName.startsWith("@@")) {
             itemName = itemName.substring(2);
         }
-        if (itemName.startsWith("@")) {
+        else if (itemName.startsWith("@")) {
             itemName = itemName.substring(1);
         }
 
         Node context = getNodeAtOffset(offset);
 
-        if (context instanceof ObjectNode) {
-            ObjectNode obj = (ObjectNode) context;
+        if (context instanceof ObjectNode obj) {
             if (obj.count != null && obj.count.contains(token)) {
                 context = obj.count;
             }
@@ -2698,13 +2661,12 @@ public class SourceEditor {
                 }
             }
         }
-        else if (context instanceof DirectiveNode.IncludeNode) {
-            if (((DirectiveNode.IncludeNode) context).getFile() == token) {
+        else if (context instanceof DirectiveNode.IncludeNode obj) {
+            if (obj.getFile() == token) {
                 return new NavigationTarget(token, context);
             }
         }
-        else if (context instanceof VariableNode) {
-            VariableNode obj = (VariableNode) context;
+        else if (context instanceof VariableNode obj) {
             if (obj.getType() == token) {
                 if ("LONG".equalsIgnoreCase(token.getText()) || "WORD".equalsIgnoreCase(token.getText()) || "BYTE".equalsIgnoreCase(token.getText())) {
                     return null;
@@ -2722,8 +2684,7 @@ public class SourceEditor {
             if (itemName.startsWith(tokenMarker.localLabelPrefix)) {
                 int index = parent.getChilds().indexOf(lineNode);
                 while (index > 0) {
-                    if (parent.getChild(index) instanceof DataLineNode) {
-                        DataLineNode obj = (DataLineNode) parent.getChild(index);
+                    if (parent.getChild(index) instanceof DataLineNode obj) {
                         if (obj.instruction != null && "NAMESP".equalsIgnoreCase(obj.instruction.getText())) {
                             break;
                         }
@@ -2740,8 +2701,7 @@ public class SourceEditor {
                 }
                 index = parent.getChilds().indexOf(lineNode) + 1;
                 while (index < parent.getChildCount()) {
-                    if (parent.getChild(index) instanceof DataLineNode) {
-                        DataLineNode obj = (DataLineNode) parent.getChild(index);
+                    if (parent.getChild(index) instanceof DataLineNode obj) {
                         if (obj.instruction != null && "NAMESP".equalsIgnoreCase(obj.instruction.getText())) {
                             break;
                         }
@@ -2760,8 +2720,7 @@ public class SourceEditor {
             else if (itemName.indexOf('.') == -1) {
                 int index = parent.getChilds().indexOf(lineNode);
                 while (index > 0) {
-                    if (parent.getChild(index) instanceof DataLineNode) {
-                        DataLineNode obj = (DataLineNode) parent.getChild(index);
+                    if (parent.getChild(index) instanceof DataLineNode obj) {
                         if (obj.instruction != null && "NAMESP".equalsIgnoreCase(obj.instruction.getText())) {
                             break;
                         }
@@ -2777,8 +2736,7 @@ public class SourceEditor {
                 }
                 index = parent.getChilds().indexOf(lineNode) + 1;
                 while (index < parent.getChildCount()) {
-                    if (parent.getChild(index) instanceof DataLineNode) {
-                        DataLineNode obj = (DataLineNode) parent.getChild(index);
+                    if (parent.getChild(index) instanceof DataLineNode obj) {
                         if (obj.instruction != null && "NAMESP".equalsIgnoreCase(obj.instruction.getText())) {
                             break;
                         }
@@ -2799,12 +2757,11 @@ public class SourceEditor {
             for (Node node : tokenMarker.getRoot().getChilds()) {
                 if (node instanceof DataNode) {
                     for (Node child : node.getChilds()) {
-                        if (!(child instanceof DataLineNode)) {
+                        if (!(child instanceof DataLineNode obj)) {
                             continue;
                         }
-                        DataLineNode obj = (DataLineNode) child;
                         if (obj.instruction != null && "NAMESP".equalsIgnoreCase(obj.instruction.getText())) {
-                            namespace = obj.parameters.size() != 0 ? obj.parameters.get(0).getText() + "." : "";
+                            namespace = !obj.parameters.isEmpty() ? obj.parameters.getFirst().getText() + "." : "";
                         }
                         if (obj.label != null) {
                             String qualifiedName = namespace + obj.label.getText();
@@ -2818,8 +2775,7 @@ public class SourceEditor {
 
             if ((parent instanceof StatementNode) || (parent instanceof MethodNode)) {
                 for (int index = 0; index < parent.getChildCount(); index++) {
-                    if (parent.getChild(index) instanceof DataLineNode) {
-                        DataLineNode obj = (DataLineNode) parent.getChild(index);
+                    if (parent.getChild(index) instanceof DataLineNode obj) {
                         if (obj.label != null) {
                             if (obj.label.equals(itemName, tokenMarker.isCaseSensitive())) {
                                 return new NavigationTarget(token, obj.label);
@@ -2827,10 +2783,9 @@ public class SourceEditor {
                         }
                     }
                 }
-                while (!(parent instanceof MethodNode)) {
+                while (!(parent instanceof MethodNode node)) {
                     parent = parent.getParent();
                 }
-                MethodNode node = (MethodNode) parent;
                 for (MethodNode.ParameterNode obj : node.getParameters()) {
                     if (obj.identifier.equals(itemName, tokenMarker.isCaseSensitive())) {
                         return new NavigationTarget(token, obj.identifier);
@@ -2928,50 +2883,28 @@ public class SourceEditor {
         }
 
         if ((context instanceof StatementNode) || (context instanceof ExpressionNode) || (context instanceof DataLineNode.ParameterNode)) {
-            Node root = tokenMarker.getRoot();
+            RootNode root = tokenMarker.getRoot();
             if (objectName != null) {
-                for (Node node : root.getChilds()) {
-                    if (node instanceof ObjectsNode) {
-                        for (Node child : node.getChilds()) {
-                            if (!(child instanceof ObjectNode)) {
-                                continue;
-                            }
-                            ObjectNode obj = (ObjectNode) child;
-                            if (objectName != null) {
-                                if (offset >= objstart && offset <= objstop) {
-                                    if (obj.name.equals(objectName, tokenMarker.isCaseSensitive())) {
-                                        Token highlight =
-                                            new Token(token.getStream(), token.start, token.line, token.column, token.type, token.getText().substring(0, dot));
-                                        return new NavigationTarget(highlight, obj.name);
-                                    }
+                for (ObjectNode obj : root.getObjects()) {
+                    if (offset >= objstart && offset <= objstop) {
+                        if (obj.name.equals(objectName, tokenMarker.isCaseSensitive())) {
+                            Token highlight = new Token(token.getStream(), token.start, token.line, token.column, token.type, token.getText().substring(0, dot));
+                            return new NavigationTarget(highlight, obj.name);
+                        }
+                    }
+                    else if (obj.name.equals(objectName, tokenMarker.isCaseSensitive())) {
+                        RootNode objectRoot = root.getObjectRoot(objectName);
+                        if (objectRoot != null) {
+                            for (ConstantNode node : objectRoot.getConstants()) {
+                                if (node.identifier != null && node.identifier.equals(itemName, tokenMarker.isCaseSensitive())) {
+                                    Token highlight = new Token(token.getStream(), token.start + dot + 1, token.line, token.column + dot + 1, token.type, token.getText().substring(dot + 1));
+                                    return new NavigationTarget(highlight, obj, node.identifier);
                                 }
-                                else if (obj.name.equals(objectName, tokenMarker.isCaseSensitive())) {
-                                    String fileName = obj.getFileName();
-                                    Node objectRoot = tokenMarker.getObjectTree(fileName);
-                                    if (objectRoot != null) {
-                                        for (Node objectNode : objectRoot.getChilds()) {
-                                            if (objectNode instanceof ConstantsNode) {
-                                                for (Node objectChildNode : objectNode.getChilds()) {
-                                                    if (objectChildNode instanceof ConstantNode) {
-                                                        ConstantNode constant = (ConstantNode) objectChildNode;
-                                                        if (constant.identifier != null && constant.identifier.equals(itemName, tokenMarker.isCaseSensitive())) {
-                                                            Token highlight =
-                                                                new Token(token.getStream(), token.start + dot + 1, token.line, token.column + dot + 1, token.type, token.getText().substring(dot + 1));
-                                                            return new NavigationTarget(highlight, obj, constant.identifier);
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                            else if (objectNode instanceof MethodNode) {
-                                                MethodNode method = (MethodNode) objectNode;
-                                                if (method.name.equals(itemName, tokenMarker.isCaseSensitive())) {
-                                                    Token highlight =
-                                                        new Token(token.getStream(), token.start + dot + 1, token.line, token.column + dot + 1, token.type, token.getText().substring(dot + 1));
-                                                    return new NavigationTarget(highlight, obj, method.name);
-                                                }
-                                            }
-                                        }
-                                    }
+                            }
+                            for (MethodNode node : objectRoot.getMethods()) {
+                                if (node.name.equals(itemName, tokenMarker.isCaseSensitive())) {
+                                    Token highlight = new Token(token.getStream(), token.start + dot + 1, token.line, token.column + dot + 1, token.type, token.getText().substring(dot + 1));
+                                    return new NavigationTarget(highlight, obj, node.name);
                                 }
                             }
                         }
@@ -2991,14 +2924,13 @@ public class SourceEditor {
         return null;
     }
 
-    NavigationTarget getNavigationTarget(Node node, Token token, String itemName) {
+    SourceEditor.NavigationTarget getNavigationTarget(Node node, Token token, String itemName) {
 
         if (node instanceof ObjectsNode) {
             for (Node child : node.getChilds()) {
-                if (!(child instanceof ObjectNode)) {
+                if (!(child instanceof ObjectNode obj)) {
                     continue;
                 }
-                ObjectNode obj = (ObjectNode) child;
                 if (obj.name.equals(itemName, tokenMarker.isCaseSensitive())) {
                     return new NavigationTarget(token, obj.name);
                 }
@@ -3006,25 +2938,22 @@ public class SourceEditor {
         }
         else if (node instanceof ConstantsNode) {
             for (Node child : node.getChilds()) {
-                if (!(child instanceof ConstantNode)) {
+                if (!(child instanceof ConstantNode obj)) {
                     continue;
                 }
-                ConstantNode obj = (ConstantNode) child;
                 if (obj.identifier != null && obj.identifier.equals(itemName, tokenMarker.isCaseSensitive())) {
                     return new NavigationTarget(token, obj.identifier);
                 }
             }
         }
-        else if (node instanceof MethodNode) {
-            MethodNode method = (MethodNode) node;
+        else if (node instanceof MethodNode method) {
             if (method.name.equals(itemName, tokenMarker.isCaseSensitive())) {
                 return new NavigationTarget(token, method.name);
             }
         }
         else if (node instanceof VariablesNode) {
             for (Node child : node.getChilds()) {
-                if (child instanceof VariableNode) {
-                    VariableNode obj = (VariableNode) child;
+                if (child instanceof VariableNode obj) {
                     if (obj.identifier != null && obj.identifier.equals(itemName, tokenMarker.isCaseSensitive())) {
                         return new NavigationTarget(token, obj.identifier);
                     }
@@ -3040,12 +2969,11 @@ public class SourceEditor {
         else if (node instanceof DataNode) {
             String namespace = "";
             for (Node child : node.getChilds()) {
-                if (!(child instanceof DataLineNode)) {
+                if (!(child instanceof DataLineNode obj)) {
                     continue;
                 }
-                DataLineNode obj = (DataLineNode) child;
                 if (obj.instruction != null && "NAMESP".equalsIgnoreCase(obj.instruction.getText())) {
-                    namespace = obj.parameters.size() != 0 ? obj.parameters.get(0).getText() + "." : "";
+                    namespace = !obj.parameters.isEmpty() ? obj.parameters.getFirst().getText() + "." : "";
                 }
                 if (obj.label != null) {
                     String qualifiedName = namespace + obj.label.getText();

@@ -358,6 +358,7 @@ public class Spin1Parser extends Parser {
                     node = new ConstantNode(parent);
                     node.identifier = token;
                     node.addToken(token);
+                    root.addConstant(node);
                     state = 4;
                     break;
                 case 2:
@@ -486,6 +487,7 @@ public class Spin1Parser extends Parser {
                     }
                     node.identifier = token;
                     node.addToken(token);
+                    root.addVariable(node);
                     state = 3;
                     break;
 
@@ -552,7 +554,7 @@ public class Spin1Parser extends Parser {
 
     void parseObjectLine(ObjectsNode parent, SourceLine sourceLine) {
         int state = 1;
-        ObjectNode object = null;
+        ObjectNode node = null;
 
         Token token;
         while ((token = sourceLine.getNextToken()) != null) {
@@ -567,43 +569,44 @@ public class Spin1Parser extends Parser {
             }
             switch (state) {
                 case 1:
-                    object = new ObjectNode(parent);
-                    object.addToken(token);
-                    object.name = token;
+                    node = new ObjectNode(parent);
+                    node.addToken(token);
+                    node.name = token;
+                    root.addObject(node);
                     state = 2;
                     break;
                 case 2:
                     if ("[".equals(token.getText())) {
-                        object.addToken(token);
-                        object.count = new ExpressionNode(object);
+                        node.addToken(token);
+                        node.count = new ExpressionNode(node);
                         state = 5;
                         break;
                     }
                     // fall-through
                 case 3:
-                    object.addToken(token);
+                    node.addToken(token);
                     if (":".equals(token.getText())) {
                         state = 4;
                         break;
                     }
                     break;
                 case 4:
-                    object.addToken(token);
-                    object.file = token;
+                    node.addToken(token);
+                    node.file = token;
                     state = 8;
                     break;
 
                 case 5:
                     if ("]".equals(token.getText())) {
-                        object.addToken(token);
+                        node.addToken(token);
                         state = 3;
                         break;
                     }
-                    object.count.addToken(token);
+                    node.count.addToken(token);
                     break;
 
                 case 8:
-                    object.addToken(token);
+                    node.addToken(token);
                     break;
             }
         }
@@ -636,6 +639,7 @@ public class Spin1Parser extends Parser {
             switch (state) {
                 case 1:
                     node.name = token;
+                    root.addMethod(node);
                     state = 2;
                     break;
                 case 2:

@@ -662,6 +662,7 @@ public class CParser extends Parser {
         if (token != null && "(".equals(token.getText())) {
             FunctionNode node = new FunctionNode(root, modifier, type, identifier);
             node.addToken(token);
+            root.addFunction(node);
 
             while ((token = sourceLine.getNextToken()) != null) {
                 if (")".equals(token.getText())) {

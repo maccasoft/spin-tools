@@ -235,7 +235,6 @@ public class Spin1TokenMarker extends SourceTokenMarker {
     public void setRoot(RootNode root) {
         symbols.clear();
         locals.clear();
-        excludedPaths.clear();
 
         comments.clear();
         comments.addAll(root.getComments());
@@ -246,12 +245,9 @@ public class Spin1TokenMarker extends SourceTokenMarker {
 
     void collectTokens(Node root) {
         for (Node child : root.getChilds()) {
-            if (child.isExclude()) {
-                excludedPaths.add(child.getPath());
-            }
             switch (child) {
                 case DirectiveNode.DefineNode node -> {
-                    if (!isExcludedNode(node) && node.identifier != null) {
+                    if (!node.isExclude()) {
                         symbols.put(node.identifier.getText(), TokenId.CONSTANT);
                     }
                 }
@@ -321,9 +317,6 @@ public class Spin1TokenMarker extends SourceTokenMarker {
 
     void collectObjectTokens(String qualifier, Node root) {
         for (Node child : root.getChilds()) {
-            if (child.isExclude()) {
-                excludedPaths.add(child.getPath());
-            }
             switch (child) {
                 case ConstantsNode node -> {
                     collectObjectTokens(qualifier, node);
