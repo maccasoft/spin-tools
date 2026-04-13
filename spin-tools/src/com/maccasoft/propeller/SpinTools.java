@@ -23,8 +23,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Stack;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -960,7 +963,7 @@ public class SpinTools {
                     }
                 }
                 else {
-                    openNewTab(name, getResourceAsString("template.spin"));
+                    openNewTab(name, getResourceAsString("template.spin", Collections.emptyMap()));
                 }
             }
         });
@@ -980,7 +983,7 @@ public class SpinTools {
                 }
             }
             else {
-                openNewTab(name, getResourceAsString("object_template.spin"));
+                openNewTab(name, getResourceAsString("object_template.spin", Collections.emptyMap()));
             }
         });
 
@@ -1004,7 +1007,7 @@ public class SpinTools {
                     }
                 }
                 else {
-                    openNewTab(name, getResourceAsString("template.spin2"));
+                    openNewTab(name, getResourceAsString("template.spin2", Collections.emptyMap()));
                 }
             }
         });
@@ -1024,7 +1027,7 @@ public class SpinTools {
                 }
             }
             else {
-                openNewTab(name, getResourceAsString("object_template.spin2"));
+                openNewTab(name, getResourceAsString("object_template.spin2", Collections.emptyMap()));
             }
         });
 
@@ -1038,7 +1041,9 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 String name = getUniqueName(".c");
-                openNewTab(name, getResourceAsString("template1.c"));
+                Map<String, String> vars = new HashMap<>();
+                vars.put("target", "P1");
+                openNewTab(name, getResourceAsString("template.c", vars));
             }
         });
 
@@ -1050,7 +1055,9 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 String name = getUniqueName(".c");
-                openNewTab(name, getResourceAsString("template2.c"));
+                Map<String, String> vars = new HashMap<>();
+                vars.put("target", "P2");
+                openNewTab(name, getResourceAsString("template.c", vars));
             }
         });
     }
@@ -1298,7 +1305,7 @@ public class SpinTools {
                     }
                 }
                 else {
-                    openNewTab(name, getResourceAsString("template.spin"));
+                    openNewTab(name, getResourceAsString("template.spin", Collections.emptyMap()));
                 }
             }
         });
@@ -1321,7 +1328,7 @@ public class SpinTools {
                     }
                 }
                 else {
-                    openNewTab(name, getResourceAsString("template.spin2"));
+                    openNewTab(name, getResourceAsString("template.spin2", Collections.emptyMap()));
                 }
             }
         });
@@ -1756,13 +1763,17 @@ public class SpinTools {
         return name;
     }
 
-    String getResourceAsString(String name) {
+    String getResourceAsString(String name, Map<String, String> variables) {
         InputStream is = getClass().getResourceAsStream(name);
         if (is != null) {
             try {
                 byte[] b = new byte[is.available()];
-                is.read(b);
-                return new String(b);
+                int readed = is.read(b);
+                String text = new String(b, 0, readed);
+                for (Entry<String, String> entry : variables.entrySet()) {
+                    text = text.replace("${" + entry.getKey() + "}", entry.getValue());
+                }
+                return text;
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {
