@@ -15,7 +15,10 @@ import org.eclipse.jface.fieldassist.IContentProposal;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import com.maccasoft.propeller.model.ConstantsNode;
+import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.spin1.Spin1Parser;
 import com.maccasoft.propeller.spin1.Spin1TokenMarker;
@@ -414,6 +417,27 @@ public class SourceTokenMarkerTest {
         Assertions.assertEquals("PIN_TX", result.get(1).getLabel());
         Assertions.assertEquals("PIN_TX", result.get(1).getContent());
         Assertions.assertEquals(6, result.get(1).getCursorPosition());
+    }
+
+    @Test
+    public void testGetSectionAtLine() {
+        String text = ""
+            + "\n"
+            + "CON\n"
+            + "\n"
+            + "OBJ\n"
+            + "    object : \"object\"\n"
+            + "\n"
+            + "PUB main()\n"
+            + "\n"
+            + "";
+
+        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
+        subject.root = new Spin2Parser(text).parse();
+
+        Assertions.assertEquals(ConstantsNode.class, subject.getSectionAtLine(1).getClass());
+        Assertions.assertEquals(ObjectsNode.class, subject.getSectionAtLine(4).getClass());
+        Assertions.assertEquals(MethodNode.class, subject.getSectionAtLine(7).getClass());
     }
 
 }

@@ -178,6 +178,42 @@ public abstract class SourceTokenMarker {
 
     }
 
+    public void adjustTokens(int start, int newCharCount, int replaceCharCount) {
+        for (Token token : comments) {
+            if (newCharCount != 0) {
+                if (start <= token.start) {
+                    token.start += newCharCount;
+                    token.stop += newCharCount;
+                }
+                else if (start <= token.stop) {
+                    token.stop += newCharCount;
+                }
+            }
+            if (replaceCharCount != 0) {
+                if (start + replaceCharCount <= token.start) {
+                    token.start -= replaceCharCount;
+                    token.stop -= replaceCharCount;
+                }
+                else if (start >= token.start && start <= token.stop) {
+                    if (start + replaceCharCount > token.stop) {
+                        token.stop -= token.stop - start;
+                    }
+                    else {
+                        token.stop -= replaceCharCount;
+                    }
+                }
+                else if (start < token.start) {
+                    if (start + replaceCharCount <= token.stop) {
+                        token.start -= token.start - start;
+                    }
+                    else {
+                        token.stop = token.start;
+                    }
+                }
+            }
+        }
+    }
+
     public Token getTokenAt(int index) {
         if (root == null) {
             return null;
@@ -204,14 +240,16 @@ public abstract class SourceTokenMarker {
     public Node getSectionAtLine(int lineIndex) {
         Node result = null;
 
-        if (root != null) {
-            for (Node node : root.getChilds()) {
-                if (node.getTokenCount() != 0) {
-                    if (lineIndex < node.getStartToken().line) {
-                        break;
-                    }
-                    result = node;
+        if (root == null) {
+            return result;
+        }
+
+        for (Node node : root.getChilds()) {
+            if (node.getTokenCount() != 0) {
+                if (lineIndex < node.getStartToken().line) {
+                    break;
                 }
+                result = node;
             }
         }
 
