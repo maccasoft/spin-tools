@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.internal;
@@ -33,6 +32,7 @@ import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Resource;
 
 import com.maccasoft.propeller.Preferences;
 
@@ -69,7 +69,7 @@ public class HTMLStyledTextDecorator extends ParserCallback {
 
             @Override
             public void widgetDisposed(DisposeEvent e) {
-                fonts.values().forEach((f) -> f.dispose());
+                fonts.values().forEach(Resource::dispose);
             }
         });
     }
@@ -97,7 +97,7 @@ public class HTMLStyledTextDecorator extends ParserCallback {
     @Override
     public void handleStartTag(final Tag t, final MutableAttributeSet a, final int pos) {
         if (t == Tag.P) {
-            if (sb.length() > 0 && sb.charAt(sb.length() - 1) != '\n') {
+            if (!sb.isEmpty() && sb.charAt(sb.length() - 1) != '\n') {
                 sb.append("\n");
             }
             sb.append("\n");
@@ -123,7 +123,7 @@ public class HTMLStyledTextDecorator extends ParserCallback {
     @Override
     public void handleEndTag(final Tag t, final int pos) {
         if (t == Tag.P) {
-            if (sb.length() > 0 && sb.charAt(sb.length() - 1) != '\n') {
+            if (!sb.isEmpty() && sb.charAt(sb.length() - 1) != '\n') {
                 sb.append("\n");
             }
             sb.append("\n");
@@ -178,11 +178,6 @@ public class HTMLStyledTextDecorator extends ParserCallback {
                 // Do nothing
             }
         }
-    }
-
-    @Override
-    public void handleError(final String errorMsg, final int pos) {
-
     }
 
     @Override

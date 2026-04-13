@@ -898,22 +898,36 @@ public abstract class SourceTokenMarker {
     String getMethodDocument(MethodNode node) {
         int index;
 
-        String title = node.getText();
-        if ((index = title.indexOf(")")) != -1) {
-            title = title.substring(0, index + 1);
-        }
-        else {
-            if ((index = title.indexOf(":")) != -1) {
-                title = title.substring(0, index);
+        StringBuilder title = new StringBuilder();
+        title.append(node.getStartToken().getText()).append(" ");
+        title.append(node.getName().getText());
+        title.append("(");
+        for (MethodNode.ParameterNode param : node.getParameters()) {
+            if (title.charAt(title.length() - 1) != '(') {
+                title.append(", ");
             }
-            if ((index = title.indexOf("|")) != -1) {
-                title = title.substring(0, index);
+            if (param.getType() != null) {
+                title.append(param.getType().getText()).append(" ");
+            }
+            title.append(param.getIdentifier().getText());
+        }
+        title.append(")");
+        if (!node.getReturnVariables().isEmpty()) {
+            title.append(" : ");
+            for (MethodNode.ReturnNode param : node.getReturnVariables()) {
+                if (title.charAt(title.length() - 1) != ' ') {
+                    title.append(", ");
+                }
+                if (param.getType() != null) {
+                    title.append(param.getType().getText()).append(" ");
+                }
+                title.append(param.getIdentifier().getText());
             }
         }
 
         StringBuilder sb = new StringBuilder();
         sb.append("<pre><b><code>");
-        sb.append(getHtmlSafeString(title.trim()));
+        sb.append(getHtmlSafeString(title.toString()));
         sb.append("</code></b>");
         sb.append(System.lineSeparator());
 
@@ -923,23 +937,36 @@ public abstract class SourceTokenMarker {
             sb.append("<code>");
             while (iter.hasNext()) {
                 Token token = iter.next();
-                if (token.type == Token.COMMENT) {
-                    String s = token.getText().substring(2);
-                    sb.append(getHtmlSafeString(s));
+                String tokenText = token.getText();
+                if (tokenText.startsWith(("''"))) {
+                    if (tokenText.startsWith(("'' "))) {
+                        tokenText = tokenText.substring(3);
+                    }
+                    else {
+                        tokenText = tokenText.substring(2);
+                    }
+                    sb.append(getHtmlSafeString(tokenText.stripTrailing()));
                     sb.append(System.lineSeparator());
                 }
-                else if (token.type == Token.BLOCK_COMMENT) {
-                    String s = token.getText().substring(2);
-                    s = s.substring(0, s.length() - 2);
-                    s = getHtmlSafeString(s);
-                    s = s.replaceAll("[\\r\\n|\\r|\\n]", System.lineSeparator());
-                    while (s.startsWith(System.lineSeparator())) {
-                        s = s.substring(System.lineSeparator().length());
+                else if (tokenText.startsWith("{{")) {
+                    if (tokenText.startsWith(("{{ "))) {
+                        tokenText = tokenText.substring(3);
                     }
-                    while (s.endsWith(System.lineSeparator())) {
-                        s = s.substring(0, s.length() - System.lineSeparator().length());
+                    else {
+                        tokenText = tokenText.substring(2);
                     }
-                    sb.append(s);
+                    if (tokenText.endsWith("}}")) {
+                        tokenText = tokenText.substring(0, tokenText.length() - 2);
+                    }
+                    tokenText = getHtmlSafeString(tokenText);
+                    tokenText = tokenText.replaceAll("[\\r\\n|\\r|\\n]", System.lineSeparator());
+                    while (tokenText.startsWith(System.lineSeparator())) {
+                        tokenText = tokenText.substring(System.lineSeparator().length());
+                    }
+                    while (tokenText.endsWith(System.lineSeparator())) {
+                        tokenText = tokenText.substring(0, tokenText.length() - System.lineSeparator().length());
+                    }
+                    sb.append(tokenText);
                 }
             }
             sb.append("</code>");
@@ -950,15 +977,27 @@ public abstract class SourceTokenMarker {
     }
 
     String getMethodDocument(FunctionNode node) {
-        String title = node.getText();
-        int index = title.indexOf(")");
-        if (index != -1) {
-            title = title.substring(0, index + 1);
+        StringBuilder title = new StringBuilder();
+        if (node.getModifier() != null) {
+            title.append(node.getModifier().getText()).append(" ");
         }
+        title.append(node.getType().getText()).append(" ");
+        title.append(node.getIdentifier().getText());
+        title.append("(");
+        for (FunctionNode.ParameterNode param : node.getParameters()) {
+            if (title.charAt(title.length() - 1) != '(') {
+                title.append(", ");
+            }
+            if (param.getType() != null) {
+                title.append(param.getType().getText()).append(" ");
+            }
+            title.append(param.getIdentifier().getText());
+        }
+        title.append(")");
 
         StringBuilder sb = new StringBuilder();
         sb.append("<pre><b><code>");
-        sb.append(getHtmlSafeString(title.trim()));
+        sb.append(getHtmlSafeString(title.toString()));
         sb.append("</code></b>");
         sb.append(System.lineSeparator());
 
@@ -968,23 +1007,36 @@ public abstract class SourceTokenMarker {
             sb.append("<code>");
             while (iter.hasNext()) {
                 Token token = iter.next();
-                if (token.type == Token.COMMENT) {
-                    String s = token.getText().substring(2);
-                    sb.append(getHtmlSafeString(s));
+                String tokenText = token.getText();
+                if (tokenText.startsWith(("''"))) {
+                    if (tokenText.startsWith(("'' "))) {
+                        tokenText = tokenText.substring(3);
+                    }
+                    else {
+                        tokenText = tokenText.substring(2);
+                    }
+                    sb.append(getHtmlSafeString(tokenText.stripTrailing()));
                     sb.append(System.lineSeparator());
                 }
-                else if (token.type == Token.BLOCK_COMMENT) {
-                    String s = token.getText().substring(2);
-                    s = s.substring(0, s.length() - 2);
-                    s = getHtmlSafeString(s);
-                    s = s.replaceAll("[\\r\\n|\\r|\\n]", System.lineSeparator());
-                    while (s.startsWith(System.lineSeparator())) {
-                        s = s.substring(System.lineSeparator().length());
+                else if (tokenText.startsWith("{{")) {
+                    if (tokenText.startsWith(("{{ "))) {
+                        tokenText = tokenText.substring(3);
                     }
-                    while (s.endsWith(System.lineSeparator())) {
-                        s = s.substring(0, s.length() - System.lineSeparator().length());
+                    else {
+                        tokenText = tokenText.substring(2);
                     }
-                    sb.append(s);
+                    if (tokenText.endsWith("}}")) {
+                        tokenText = tokenText.substring(0, tokenText.length() - 2);
+                    }
+                    tokenText = getHtmlSafeString(tokenText);
+                    tokenText = tokenText.replaceAll("[\\r\\n|\\r|\\n]", System.lineSeparator());
+                    while (tokenText.startsWith(System.lineSeparator())) {
+                        tokenText = tokenText.substring(System.lineSeparator().length());
+                    }
+                    while (tokenText.endsWith(System.lineSeparator())) {
+                        tokenText = tokenText.substring(0, tokenText.length() - System.lineSeparator().length());
+                    }
+                    sb.append(tokenText);
                 }
             }
             sb.append("</code>");

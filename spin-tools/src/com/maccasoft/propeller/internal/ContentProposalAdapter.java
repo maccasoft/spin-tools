@@ -471,33 +471,21 @@ public class ContentProposalAdapter {
                 Rectangle parentBounds = getParentShell().getBounds();
                 Rectangle proposedBounds;
                 // Try placing the info popup to the right
-                Rectangle rightProposedBounds = new Rectangle(parentBounds.x
-                    + parentBounds.width
-                    + POPUP_HORIZONTALSPACING,
-                    parentBounds.y,
-                    parentBounds.width * 2, parentBounds.height);
+                Rectangle rightProposedBounds = new Rectangle(parentBounds.x + parentBounds.width + POPUP_HORIZONTALSPACING, parentBounds.y, parentBounds.width * 2, parentBounds.height);
                 rightProposedBounds = getConstrainedShellBounds(rightProposedBounds);
-                // If it won't fit on the right, try the left
+                // If it doesn't fit on the right, try the left
                 if (rightProposedBounds.intersects(parentBounds)) {
-                    Rectangle leftProposedBounds = new Rectangle(parentBounds.x
-                        - parentBounds.width - POPUP_HORIZONTALSPACING - 1,
-                        parentBounds.y, parentBounds.width,
-                        parentBounds.height);
+                    Rectangle leftProposedBounds = new Rectangle(parentBounds.x - parentBounds.width - POPUP_HORIZONTALSPACING - 1, parentBounds.y, parentBounds.width, parentBounds.height);
                     leftProposedBounds = getConstrainedShellBounds(leftProposedBounds);
-                    // If it won't fit on the left, choose the proposed bounds
+                    // If it doesn't fit on the left, choose the proposed bounds
                     // that fits the best
                     if (leftProposedBounds.intersects(parentBounds)) {
-                        if (rightProposedBounds.x - parentBounds.x >= parentBounds.x
-                            - leftProposedBounds.x) {
-                            rightProposedBounds.x = parentBounds.x
-                                + parentBounds.width
-                                + POPUP_HORIZONTALSPACING;
+                        if (rightProposedBounds.x - parentBounds.x >= parentBounds.x - leftProposedBounds.x) {
+                            rightProposedBounds.x = parentBounds.x + parentBounds.width + POPUP_HORIZONTALSPACING;
                             proposedBounds = rightProposedBounds;
                         }
                         else {
-                            leftProposedBounds.width = parentBounds.x
-                                - POPUP_HORIZONTALSPACING
-                                - leftProposedBounds.x;
+                            leftProposedBounds.width = parentBounds.x - POPUP_HORIZONTALSPACING - leftProposedBounds.x;
                             proposedBounds = leftProposedBounds;
                         }
                     }
@@ -517,6 +505,7 @@ public class ContentProposalAdapter {
              * Set the text contents of the popup.
              */
             void setContents(String newContents) {
+                Point size = getShell().getSize();
                 if (newContents == null) {
                     newContents = EMPTY;
                 }
@@ -524,6 +513,8 @@ public class ContentProposalAdapter {
                 if (text != null && !text.isDisposed()) {
                     htmlText.setText(newContents);
                 }
+                getShell().pack();
+                getShell().setSize(Math.max(size.x, getShell().getSize().x), size.y);
             }
 
             /*
@@ -533,8 +524,7 @@ public class ContentProposalAdapter {
                 if (text == null || text.isDisposed()) {
                     return false;
                 }
-                return text.getShell().isFocusControl()
-                    || text.isFocusControl();
+                return text.getShell().isFocusControl() || text.isFocusControl();
             }
         }
 
@@ -598,14 +588,12 @@ public class ContentProposalAdapter {
 
         @Override
         protected Color getForeground() {
-            return JFaceResources.getColorRegistry().get(
-                JFacePreferences.CONTENT_ASSIST_FOREGROUND_COLOR);
+            return JFaceResources.getColorRegistry().get(JFacePreferences.CONTENT_ASSIST_FOREGROUND_COLOR);
         }
 
         @Override
         protected Color getBackground() {
-            return JFaceResources.getColorRegistry().get(
-                JFacePreferences.CONTENT_ASSIST_BACKGROUND_COLOR);
+            return JFaceResources.getColorRegistry().get(JFacePreferences.CONTENT_ASSIST_BACKGROUND_COLOR);
         }
 
         /*
@@ -681,10 +669,8 @@ public class ContentProposalAdapter {
             // up a layout on the table.
             if (popupSize == null) {
                 GridData data = new GridData(GridData.FILL_BOTH);
-                data.heightHint = proposalTable.getItemHeight()
-                    * POPUP_CHAR_HEIGHT;
-                data.widthHint = Math.max(control.getSize().x,
-                    POPUP_MINIMUM_WIDTH);
+                data.heightHint = proposalTable.getItemHeight() * POPUP_CHAR_HEIGHT;
+                data.widthHint = Math.max(control.getSize().x, POPUP_MINIMUM_WIDTH);
                 proposalTable.setLayoutData(data);
                 getShell().pack();
                 popupSize = getShell().getSize();

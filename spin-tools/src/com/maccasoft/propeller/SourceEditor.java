@@ -927,14 +927,8 @@ public class SourceEditor {
 
                     Rectangle bounds = display.map(styledText, null, styledText.getTextBounds(token.start, token.stop));
                     bounds.y += bounds.height + 3;
-                    bounds.width = Math.max(Math.max(640, bounds.width),
-                        htmlText.getLineSize() +
-                            content.getLeftMargin() + content.getRightMargin() +
-                            layout.marginWidth * 2 +
-                            popupWindow.getBorderWidth() * 2 + 5);
-                    if (bounds.height < 240) {
-                        bounds.height = 240;
-                    }
+                    bounds.width = Math.max(640, popupWindow.getSize().x);
+                    bounds.height = 240;
                     popupWindow.setBounds(bounds);
 
                     popupWindow.setVisible(true);
