@@ -120,7 +120,7 @@ public class Spin2Compiler extends Compiler {
         for (ObjectInfo info : childObjects) {
             for (LinkDataObject linkData : info.compiler.getObjectLinks()) {
                 for (ObjectInfo info2 : childObjects) {
-                    if (linkData.isObject(info2.compiler)) {
+                    if (linkData.isObjectCompiler(info2.compiler)) {
                         linkData.setOffset(info2.offset - info.offset);
                         linkData.setText(String.format("Object \"%s\" @ $%05X", info2.file.getName(), linkData.getOffset()));
                         break;
@@ -131,7 +131,7 @@ public class Spin2Compiler extends Compiler {
 
         for (LinkDataObject linkData : objectCompiler.getObjectLinks()) {
             for (ObjectInfo info : childObjects) {
-                if (linkData.isObject(info.compiler)) {
+                if (linkData.isObjectCompiler(info.compiler)) {
                     linkData.setOffset(info.offset);
                     linkData.setText(String.format("Object \"%s\" @ $%05X", info.file.getName(), linkData.getOffset()));
                     break;

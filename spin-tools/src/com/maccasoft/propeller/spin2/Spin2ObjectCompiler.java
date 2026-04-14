@@ -253,21 +253,21 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
             try {
                 int count = info.count.getNumber().intValue();
+                int objectIndex = objectLinks.size();
 
-                LinkDataObject linkData = new Spin2LinkDataObject(info.compiler, info.compiler.getVarSize());
                 for (Entry<String, Expression> objEntry : info.compiler.getPublicSymbols().entrySet()) {
                     if (objEntry.getValue() instanceof Method objectMethod) {
                         String qualifiedName = name + "." + objEntry.getKey();
                         Method method = new Method(objectMethod.getName(), objectMethod.getMinArgumentsCount(), objectMethod.getArgumentsCount(), objectMethod.getReturnLongs()) {
 
                             @Override
-                            public int getIndex() {
-                                return objectMethod.getIndex();
+                            public int getObjectIndex() {
+                                return objectIndex;
                             }
 
                             @Override
-                            public int getObjectIndex() {
-                                return objectLinks.indexOf(linkData);
+                            public int getIndex() {
+                                return objectMethod.getIndex();
                             }
 
                         };
@@ -279,13 +279,12 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
                     @Override
                     public int getIndex() {
-                        return objectLinks.indexOf(linkData);
+                        return objectIndex;
                     }
 
                 });
-                objectLinks.add(linkData);
 
-                for (int i = 1; i < count; i++) {
+                for (int i = 0; i < count; i++) {
                     objectLinks.add(new Spin2LinkDataObject(info.compiler, info.compiler.getVarSize()));
                 }
 

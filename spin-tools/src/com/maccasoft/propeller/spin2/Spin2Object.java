@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2;
@@ -18,6 +17,7 @@ import java.io.PrintStream;
 
 import org.apache.commons.lang3.BitField;
 
+import com.maccasoft.propeller.ObjectCompiler;
 import com.maccasoft.propeller.SpinObject;
 
 import net.jpountz.lz4.LZ4Compressor;
@@ -34,8 +34,8 @@ public class Spin2Object extends SpinObject {
 
     public static class Spin2LinkDataObject extends LinkDataObject {
 
-        public Spin2LinkDataObject(Object object, long varSize) {
-            super(object, varSize);
+        public Spin2LinkDataObject(ObjectCompiler objectCompiler, long varSize) {
+            super(objectCompiler, varSize);
         }
 
         @Override

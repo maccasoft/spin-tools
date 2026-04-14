@@ -305,21 +305,21 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
             try {
                 int count = info.count.getNumber().intValue();
+                int objectIndex = objectLinks.size();
 
-                LinkDataObject linkData = new Spin1LinkDataObject(info.compiler, info.compiler.getVarSize());
                 for (Entry<String, Expression> objEntry : info.compiler.getPublicSymbols().entrySet()) {
                     if (objEntry.getValue() instanceof Method objectMethod) {
                         String qualifiedName = name + "." + objEntry.getKey();
                         Method method = new Method(objectMethod.getName(), objectMethod.getMinArgumentsCount(), objectMethod.getArgumentsCount(), objectMethod.getReturnLongs()) {
 
                             @Override
-                            public int getIndex() {
-                                return objectMethod.getIndex();
+                            public int getObjectIndex() {
+                                return objectIndex + methods.size() + 1;
                             }
 
                             @Override
-                            public int getObjectIndex() {
-                                return objectLinks.indexOf(linkData) + methods.size() + 1;
+                            public int getIndex() {
+                                return objectMethod.getIndex();
                             }
 
                         };
@@ -331,13 +331,12 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
                     @Override
                     public int getIndex() {
-                        return objectLinks.indexOf(linkData) + methods.size() + 1;
+                        return objectIndex + methods.size() + 1;
                     }
 
                 });
-                objectLinks.add(linkData);
 
-                for (int i = 1; i < count; i++) {
+                for (int i = 0; i < count; i++) {
                     objectLinks.add(new Spin1LinkDataObject(info.compiler, info.compiler.getVarSize()));
                 }
 

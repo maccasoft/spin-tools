@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller;
@@ -117,21 +116,19 @@ public abstract class SpinObject {
 
     public static abstract class LinkDataObject extends DataObject {
 
-        Object object;
         long offset;
         long varOffset;
         long varSize;
+        ObjectCompiler objectCompiler;
 
-        private int hash = (int) (Math.random() * Integer.MAX_VALUE);
-
-        public LinkDataObject(Object object, long varSize) {
+        public LinkDataObject(ObjectCompiler objectCompiler, long varSize) {
             super(new byte[] {
                 (byte) 0,
                 (byte) 0,
                 (byte) 0,
                 (byte) 0
             });
-            this.object = object;
+            this.objectCompiler = objectCompiler;
             this.varSize = varSize;
         }
 
@@ -155,18 +152,8 @@ public abstract class SpinObject {
             this.varOffset = varOffset;
         }
 
-        public boolean isObject(Object other) {
-            return this.object == other;
-        }
-
-        @Override
-        public int hashCode() {
-            return hash;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            return (this == obj);
+        public boolean isObjectCompiler(ObjectCompiler other) {
+            return this.objectCompiler == other;
         }
 
     }

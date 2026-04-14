@@ -457,8 +457,8 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
 
                 try {
                     int count = size.getNumber().intValue();
+                    int objectIndex = objectLinks.size();
 
-                    LinkDataObject linkData = new Spin1LinkDataObject(info.compiler, info.compiler.getVarSize());
                     for (Entry<String, Expression> objEntry : info.compiler.getPublicSymbols().entrySet()) {
                         if (objEntry.getValue() instanceof Method objectMethod) {
                             String qualifiedName = identifier.getText() + "." + objEntry.getKey();
@@ -471,7 +471,7 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
 
                                 @Override
                                 public int getObjectIndex() {
-                                    return objectLinks.indexOf(linkData) + methods.size() + 1;
+                                    return objectIndex + methods.size() + 1;
                                 }
 
                             };
@@ -483,13 +483,12 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
 
                         @Override
                         public int getIndex() {
-                            return objectLinks.indexOf(linkData) + methods.size() + 1;
+                            return objectIndex + methods.size() + 1;
                         }
 
                     });
-                    objectLinks.add(linkData);
 
-                    for (int i = 1; i < count; i++) {
+                    for (int i = 0; i < count; i++) {
                         objectLinks.add(new Spin1LinkDataObject(info.compiler, info.compiler.getVarSize()));
                     }
 
