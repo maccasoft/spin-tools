@@ -40,8 +40,9 @@ import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.model.StatementNode;
+import com.maccasoft.propeller.model.StructNode;
+import com.maccasoft.propeller.model.StructNode.Member;
 import com.maccasoft.propeller.model.Token;
-import com.maccasoft.propeller.model.TypeDefinitionNode;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
 
@@ -496,8 +497,8 @@ public abstract class SourceTokenMarker {
         String refName = dot != -1 ? filterText.substring(dot + 1) : filterText;
         String refObject = objectName;
 
-        Map<String, TypeDefinitionNode> structs = new HashMap<>();
-        for (TypeDefinitionNode node : root.getStructs()) {
+        Map<String, StructNode> structs = new HashMap<>();
+        for (StructNode node : root.getStructs()) {
             structs.put(node.identifier.getText(), node);
             structs.put("^" + node.identifier.getText(), node);
         }
@@ -512,7 +513,7 @@ public abstract class SourceTokenMarker {
                 }
                 else if (child.getType() != null) {
                     if (refObject.equalsIgnoreCase(child.getIdentifier().getText())) {
-                        TypeDefinitionNode typeNode = structs.get(child.getType().getText());
+                        StructNode typeNode = structs.get(child.getType().getText());
                         if (typeNode != null) {
                             proposals.addAll(getMembersProposals(structs, typeNode, refName));
                         }
@@ -529,7 +530,7 @@ public abstract class SourceTokenMarker {
                 }
                 else if (child.getType() != null) {
                     if (refObject.equalsIgnoreCase(child.getIdentifier().getText())) {
-                        TypeDefinitionNode typeNode = structs.get(child.getType().getText());
+                        StructNode typeNode = structs.get(child.getType().getText());
                         if (typeNode != null) {
                             proposals.addAll(getMembersProposals(structs, typeNode, refName));
                         }
@@ -546,7 +547,7 @@ public abstract class SourceTokenMarker {
                 }
                 else if (child.getType() != null) {
                     if (refObject.equalsIgnoreCase(child.getIdentifier().getText())) {
-                        TypeDefinitionNode typeNode = structs.get(child.getType().getText());
+                        StructNode typeNode = structs.get(child.getType().getText());
                         if (typeNode != null) {
                             proposals.addAll(getMembersProposals(structs, typeNode, refName));
                         }
@@ -588,7 +589,7 @@ public abstract class SourceTokenMarker {
             }
             else if (node.getType() != null) {
                 if (refObject.equalsIgnoreCase(node.getIdentifier().getText())) {
-                    TypeDefinitionNode typeNode = structs.get(node.getType().getText());
+                    StructNode typeNode = structs.get(node.getType().getText());
                     if (typeNode != null) {
                         proposals.addAll(getMembersProposals(structs, typeNode, refName));
                     }
@@ -680,13 +681,13 @@ public abstract class SourceTokenMarker {
         return proposals;
     }
 
-    List<IContentProposal> getMembersProposals(Map<String, TypeDefinitionNode> structs, TypeDefinitionNode typeNode, String refName) {
+    List<IContentProposal> getMembersProposals(Map<String, StructNode> structs, StructNode typeNode, String refName) {
         List<IContentProposal> proposals = new ArrayList<>();
 
         if (refName.contains(".")) {
             String[] ar = refName.split("[.]");
             for (Node n : typeNode.getChilds()) {
-                if (!(n instanceof TypeDefinitionNode.Definition member)) {
+                if (!(n instanceof Member member)) {
                     continue;
                 }
                 if (ar[0].equalsIgnoreCase(member.getIdentifier().getText())) {
@@ -700,7 +701,7 @@ public abstract class SourceTokenMarker {
             }
         }
         for (Node n : typeNode.getChilds()) {
-            if (!(n instanceof TypeDefinitionNode.Definition member)) {
+            if (!(n instanceof Member member)) {
                 continue;
             }
             String text = member.getIdentifier().getText();
@@ -862,7 +863,7 @@ public abstract class SourceTokenMarker {
 
         if (root != null) {
             List<IContentProposal> localProposals = new ArrayList<>();
-            for (TypeDefinitionNode node : root.getStructs()) {
+            for (StructNode node : root.getStructs()) {
                 String text = node.getIdentifier().getText();
                 if (Strings.CI.contains(text, filterText)) {
                     localProposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
@@ -875,7 +876,7 @@ public abstract class SourceTokenMarker {
             for (ObjectNode objectNode : root.getObjects()) {
                 RootNode objectRoot = root.getObjectRoot(objectNode.name.getText());
                 if (objectRoot != null) {
-                    for (TypeDefinitionNode node : objectRoot.getStructs()) {
+                    for (StructNode node : objectRoot.getStructs()) {
                         String text = objectNode.name.getText() + "." + node.getIdentifier().getText();
                         if (Strings.CI.contains(text, filterText)) {
                             objectProposals.add(new ContentProposal(node.getIdentifier().getText(), text, "<b>" + node.getText() + "</b>"));
@@ -1265,8 +1266,8 @@ public abstract class SourceTokenMarker {
         String namespace = "";
         int dot = filterText.indexOf('.');
 
-        Map<String, TypeDefinitionNode> structs = new HashMap<>();
-        for (TypeDefinitionNode node : root.getStructs()) {
+        Map<String, StructNode> structs = new HashMap<>();
+        for (StructNode node : root.getStructs()) {
             structs.put(node.identifier.getText(), node);
             structs.put("^" + node.identifier.getText(), node);
         }
@@ -1293,7 +1294,7 @@ public abstract class SourceTokenMarker {
                                 String content = dot == -1 ? text : lineNode.label.getText();
                                 String description = "";
                                 if (lineNode.instruction != null) {
-                                    TypeDefinitionNode typeNode = structs.get(lineNode.instruction.getText());
+                                    StructNode typeNode = structs.get(lineNode.instruction.getText());
                                     if (typeNode != null) {
                                         description = "<b>" + typeNode.getText() + "</b>";
                                     }
@@ -1302,11 +1303,11 @@ public abstract class SourceTokenMarker {
                             }
                         }
                         if (dot != -1 && lineNode.instruction != null) {
-                            TypeDefinitionNode typeNode = structs.get(lineNode.instruction.getText());
+                            StructNode typeNode = structs.get(lineNode.instruction.getText());
                             if (typeNode != null) {
                                 String identifier = namespace + lineNode.label.getText();
                                 for (Node n : typeNode.getChilds()) {
-                                    if (!(n instanceof TypeDefinitionNode.Definition member)) {
+                                    if (!(n instanceof Member member)) {
                                         continue;
                                     }
                                     String text = identifier + "." + member.getIdentifier().getText();

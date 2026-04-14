@@ -43,9 +43,9 @@ import com.maccasoft.propeller.model.FunctionNode.LocalVariableNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.StatementNode;
+import com.maccasoft.propeller.model.StructNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenIterator;
-import com.maccasoft.propeller.model.TypeDefinitionNode;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
@@ -161,7 +161,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                     continue;
                 }
                 switch (node) {
-                    case TypeDefinitionNode typeDefinitionNode -> compileTypeDefinition(typeDefinitionNode);
+                    case StructNode structNode -> compileStruct(structNode);
                     case VariableNode variableNode -> compileVariable(variableNode);
                     case FunctionNode functionNode -> compileFunction(functionNode);
                     default -> {
@@ -354,7 +354,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
         }
     }
 
-    void compileTypeDefinition(TypeDefinitionNode node) {
+    void compileStruct(StructNode node) {
         try {
             TokenIterator iter = node.tokenIterator();
 

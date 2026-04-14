@@ -22,8 +22,8 @@ import com.maccasoft.propeller.model.Parser;
 import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.SourceLine;
 import com.maccasoft.propeller.model.StatementNode;
+import com.maccasoft.propeller.model.StructNode;
 import com.maccasoft.propeller.model.Token;
-import com.maccasoft.propeller.model.TypeDefinitionNode;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.spin2.Spin2Model;
 
@@ -116,7 +116,7 @@ public class CParser extends Parser {
                 if ("}".equals(token.getText())) {
                     Token nextToken = stream.peekNext();
                     if (";".equals(nextToken.getText())) {
-                        if (parentNode instanceof TypeDefinitionNode) {
+                        if (parentNode instanceof StructNode) {
                             lineTokens.add(stream.nextToken());
                         }
                         else if ("struct".equals(lineTokens.getFirst().getText())) {
@@ -135,7 +135,7 @@ public class CParser extends Parser {
                     if ((parentNode instanceof FunctionNode) || (parentNode instanceof StatementNode)) {
                         parseStatement(sourceLine);
                     }
-                    else if (parentNode instanceof TypeDefinitionNode) {
+                    else if (parentNode instanceof StructNode) {
                         parseStructure(sourceLine);
                     }
                     else {
@@ -415,7 +415,7 @@ public class CParser extends Parser {
             token = sourceLine.getNextToken();
             if (token != null) {
                 if ("{".equals(token.getText())) {
-                    TypeDefinitionNode node = new TypeDefinitionNode(root, type, identifier);
+                    StructNode node = new StructNode(root, type, identifier);
                     node.addToken(token);
                     parentNode = node;
                     state = State.Struct1;
@@ -426,7 +426,7 @@ public class CParser extends Parser {
                 }
             }
         }
-        else if (parentNode instanceof TypeDefinitionNode node) {
+        else if (parentNode instanceof StructNode node) {
             if (state == State.Struct2) {
                 parseStructureVariable(node, sourceLine);
                 parentNode = root;
@@ -439,7 +439,7 @@ public class CParser extends Parser {
                     break;
                 }
 
-                TypeDefinitionNode.Definition member = new TypeDefinitionNode.Definition(node);
+                StructNode.Member member = new StructNode.Member(node);
 
                 member.addToken(member.type = token);
                 if ((token = sourceLine.getNextToken()) != null) {
@@ -472,7 +472,7 @@ public class CParser extends Parser {
                     if (token != null && ",".equals(token.getText())) {
                         member.addToken(token);
                         while ((token = sourceLine.getNextToken()) != null) {
-                            TypeDefinitionNode.Definition child = new TypeDefinitionNode.Definition(member);
+                            StructNode.Member child = new StructNode.Member(member);
 
                             if ("*".equals(token.getText())) {
                                 child.addToken(child.type = token);
@@ -522,7 +522,7 @@ public class CParser extends Parser {
         }
     }
 
-    void parseStructureVariable(TypeDefinitionNode struct, SourceLine sourceLine) {
+    void parseStructureVariable(StructNode struct, SourceLine sourceLine) {
         Token token;
 
         while ((token = sourceLine.getNextToken()) != null) {

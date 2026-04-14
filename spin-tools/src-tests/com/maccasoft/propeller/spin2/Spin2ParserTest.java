@@ -784,13 +784,13 @@ class Spin2ParserTest {
         Assertions.assertEquals(""
             + "RootNode []\n"
             + "+-- ConstantsNode [CON]\n"
-            + "    +-- TypeDefinitionNode identifier=sPoint [sPoint(x, y)]\n"
-            + "        +-- Definition identifier=x [x]\n"
-            + "        +-- Definition identifier=y [y]\n"
-            + "    +-- TypeDefinitionNode identifier=sLine [sLine(sPoint a, sPoint b, BYTE color)]\n"
-            + "        +-- Definition type=sPoint identifier=a [sPoint a]\n"
-            + "        +-- Definition type=sPoint identifier=b [sPoint b]\n"
-            + "        +-- Definition type=BYTE identifier=color [BYTE color]\n"
+            + "    +-- StructNode identifier=sPoint [sPoint(x, y)]\n"
+            + "        +-- Member identifier=x [x]\n"
+            + "        +-- Member identifier=y [y]\n"
+            + "    +-- StructNode identifier=sLine [sLine(sPoint a, sPoint b, BYTE color)]\n"
+            + "        +-- Member type=sPoint identifier=a [sPoint a]\n"
+            + "        +-- Member type=sPoint identifier=b [sPoint b]\n"
+            + "        +-- Member type=BYTE identifier=color [BYTE color]\n"
             + "", tree(root));
     }
 
@@ -806,13 +806,13 @@ class Spin2ParserTest {
         Assertions.assertEquals(""
             + "RootNode []\n"
             + "+-- ConstantsNode [CON]\n"
-            + "    +-- TypeDefinitionNode type=struct identifier=sPoint [struct sPoint(x, y)]\n"
-            + "        +-- Definition identifier=x [x]\n"
-            + "        +-- Definition identifier=y [y]\n"
-            + "    +-- TypeDefinitionNode type=struct identifier=sLine [struct sLine(sPoint a, sPoint b, BYTE color)]\n"
-            + "        +-- Definition type=sPoint identifier=a [sPoint a]\n"
-            + "        +-- Definition type=sPoint identifier=b [sPoint b]\n"
-            + "        +-- Definition type=BYTE identifier=color [BYTE color]\n"
+            + "    +-- StructNode type=struct identifier=sPoint [struct sPoint(x, y)]\n"
+            + "        +-- Member identifier=x [x]\n"
+            + "        +-- Member identifier=y [y]\n"
+            + "    +-- StructNode type=struct identifier=sLine [struct sLine(sPoint a, sPoint b, BYTE color)]\n"
+            + "        +-- Member type=sPoint identifier=a [sPoint a]\n"
+            + "        +-- Member type=sPoint identifier=b [sPoint b]\n"
+            + "        +-- Member type=BYTE identifier=color [BYTE color]\n"
             + "", tree(root));
     }
 
@@ -827,13 +827,13 @@ class Spin2ParserTest {
         Assertions.assertEquals(""
             + "RootNode []\n"
             + "+-- ConstantsNode [CON]\n"
-            + "    +-- TypeDefinitionNode type=struct identifier=sPoint [struct sPoint(x, y)]\n"
-            + "        +-- Definition identifier=x [x]\n"
-            + "        +-- Definition identifier=y [y]\n"
-            + "    +-- TypeDefinitionNode type=struct identifier=sLine [struct sLine(sPoint a, sPoint b, BYTE color)]\n"
-            + "        +-- Definition type=sPoint identifier=a [sPoint a]\n"
-            + "        +-- Definition type=sPoint identifier=b [sPoint b]\n"
-            + "        +-- Definition type=BYTE identifier=color [BYTE color]\n"
+            + "    +-- StructNode type=struct identifier=sPoint [struct sPoint(x, y)]\n"
+            + "        +-- Member identifier=x [x]\n"
+            + "        +-- Member identifier=y [y]\n"
+            + "    +-- StructNode type=struct identifier=sLine [struct sLine(sPoint a, sPoint b, BYTE color)]\n"
+            + "        +-- Member type=sPoint identifier=a [sPoint a]\n"
+            + "        +-- Member type=sPoint identifier=b [sPoint b]\n"
+            + "        +-- Member type=BYTE identifier=color [BYTE color]\n"
             + "", tree(root));
     }
 

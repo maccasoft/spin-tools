@@ -43,9 +43,10 @@ import com.maccasoft.propeller.model.FunctionNode.LocalVariableNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.StatementNode;
+import com.maccasoft.propeller.model.StructNode;
+import com.maccasoft.propeller.model.StructNode.Member;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenIterator;
-import com.maccasoft.propeller.model.TypeDefinitionNode;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.spin1.Spin1Compiler;
 import com.maccasoft.propeller.spin1.Spin1GlobalContext;
@@ -146,7 +147,7 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
 
         for (Node node : new ArrayList<>(root.getChilds())) {
             try {
-                if (node instanceof TypeDefinitionNode typeNode) {
+                if (node instanceof StructNode typeNode) {
                     if (conditionStack.isEmpty() || !conditionStack.peek().skip) {
                         if (typeNode.getIdentifier() != null) {
                             String symbol = typeNode.getIdentifier().getText();
@@ -156,7 +157,7 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
 
                             Variable var = new Variable("BYTE", "struct " + symbol, 1, 0, true);
                             for (Node child : node.getChilds()) {
-                                if (child instanceof TypeDefinitionNode.Definition) {
+                                if (child instanceof Member) {
                                     compileStructureDefinition(var, child);
                                 }
                             }
@@ -393,7 +394,7 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
 
             Node definitionRoot = structures.get(type);
             for (Node child : definitionRoot.getChilds()) {
-                if (child instanceof TypeDefinitionNode.Definition) {
+                if (child instanceof Member) {
                     compileStructureDefinition(var, child);
                 }
             }

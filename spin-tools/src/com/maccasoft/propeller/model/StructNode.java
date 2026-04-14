@@ -9,33 +9,17 @@
 
 package com.maccasoft.propeller.model;
 
-public class TypeDefinitionNode extends Node {
+public class StructNode extends Node {
 
-    public static class Definition extends Node {
+    public static class Member extends Node {
 
         public Token modifier;
         public Token type;
         public Token identifier;
         public ExpressionNode size;
 
-        public Definition(Node parent) {
+        public Member(Node parent) {
             super(parent);
-        }
-
-        public Definition(Node parent, Token modifier, Token type, Token identifier) {
-            super(parent);
-            this.modifier = modifier;
-            this.type = type;
-            this.identifier = identifier;
-            if (modifier != null) {
-                tokens.add(modifier);
-            }
-            if (type != null) {
-                tokens.add(type);
-            }
-            if (identifier != null) {
-                tokens.add(identifier);
-            }
         }
 
         public Token getModifier() {
@@ -84,11 +68,11 @@ public class TypeDefinitionNode extends Node {
     public Token type;
     public Token identifier;
 
-    public TypeDefinitionNode(Node parent) {
+    public StructNode(Node parent) {
         super(parent);
     }
 
-    public TypeDefinitionNode(Node parent, Token identifier) {
+    public StructNode(Node parent, Token identifier) {
         super(parent);
         this.identifier = identifier;
         if (identifier != null) {
@@ -96,7 +80,7 @@ public class TypeDefinitionNode extends Node {
         }
     }
 
-    public TypeDefinitionNode(Node parent, Token type, Token identifier) {
+    public StructNode(Node parent, Token type, Token identifier) {
         super(parent);
         this.type = type;
         this.identifier = identifier;
@@ -118,7 +102,7 @@ public class TypeDefinitionNode extends Node {
 
     @Override
     public void accept(NodeVisitor visitor) {
-        visitor.visitTypeDefinition(this);
+        visitor.visitStruct(this);
     }
 
     @Override

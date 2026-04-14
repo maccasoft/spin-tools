@@ -52,8 +52,8 @@ import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
 import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.ObjectsNode;
+import com.maccasoft.propeller.model.StructNode;
 import com.maccasoft.propeller.model.Token;
-import com.maccasoft.propeller.model.TypeDefinitionNode;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
 
@@ -99,7 +99,7 @@ public class OutlineView {
                         node.accept(new NodeVisitor() {
 
                             @Override
-                            public void visitTypeDefinition(TypeDefinitionNode node) {
+                            public void visitStruct(StructNode node) {
                                 if (node.getIdentifier() != null) {
                                     list.add(node);
                                 }
@@ -165,7 +165,7 @@ public class OutlineView {
 
         @Override
         public Object[] getChildren(Object parentElement) {
-            List<Object> list = new ArrayList<Object>();
+            List<Object> list = new ArrayList<>();
 
             if (parentElement instanceof Includes) {
                 list.addAll(((Includes) parentElement).getChilds());
@@ -182,7 +182,7 @@ public class OutlineView {
                 }
 
                 @Override
-                public void visitTypeDefinition(TypeDefinitionNode node) {
+                public void visitStruct(StructNode node) {
                     if (node.identifier != null) {
                         list.add(node);
                     }
@@ -240,32 +240,32 @@ public class OutlineView {
                 else if (element instanceof Includes) {
                     sb = decorateBlockStart(element);
                 }
-                else if (element instanceof DirectiveNode.IncludeNode) {
-                    sb = decorateIncludes((DirectiveNode.IncludeNode) element);
+                else if (element instanceof DirectiveNode.IncludeNode node) {
+                    sb = decorateIncludes(node);
                 }
-                else if (element instanceof DirectiveNode.DefineNode) {
-                    sb = decorateDefines((DirectiveNode.DefineNode) element);
+                else if (element instanceof DirectiveNode.DefineNode node) {
+                    sb = decorateDefines(node);
                 }
-                else if (element instanceof ConstantNode) {
-                    sb = decorateConstant((ConstantNode) element);
+                else if (element instanceof ConstantNode node) {
+                    sb = decorateConstant(node);
                 }
-                else if (element instanceof TypeDefinitionNode) {
-                    sb = decorateTypeDefinition((TypeDefinitionNode) element);
+                else if (element instanceof StructNode node) {
+                    sb = decorateStruct(node);
                 }
-                else if (element instanceof VariableNode) {
-                    sb = decorateVariable((VariableNode) element);
+                else if (element instanceof VariableNode node) {
+                    sb = decorateVariable(node);
                 }
-                else if (element instanceof ObjectNode) {
-                    sb = decorateObject((ObjectNode) element);
+                else if (element instanceof ObjectNode node) {
+                    sb = decorateObject(node);
                 }
-                else if (element instanceof MethodNode) {
-                    sb = decorateMethod((MethodNode) element);
+                else if (element instanceof MethodNode node) {
+                    sb = decorateMethod(node);
                 }
-                else if (element instanceof FunctionNode) {
-                    sb = decorateFunction((FunctionNode) element);
+                else if (element instanceof FunctionNode node) {
+                    sb = decorateFunction(node);
                 }
-                else if (element instanceof DataLineNode) {
-                    sb = decorateData((DataLineNode) element);
+                else if (element instanceof DataLineNode node) {
+                    sb = decorateData(node);
                 }
 
                 if (sb != null) {
@@ -677,7 +677,7 @@ public class OutlineView {
         return sb;
     }
 
-    StyledStringBuilder decorateTypeDefinition(TypeDefinitionNode node) {
+    StyledStringBuilder decorateStruct(StructNode node) {
         StyledStringBuilder sb = new StyledStringBuilder();
 
         sb.append(node.getIdentifier().getText());

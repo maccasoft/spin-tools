@@ -765,7 +765,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     logMessage(new CompilerException("expecting identifier", identifier));
                     break;
                 }
-                compileTypeDefinition(identifier, sourceLine);
+                compileStruct(identifier, sourceLine);
                 if (sourceLine.hasMoreTokens()) {
                     token = sourceLine.skipCommentsAndGetNextToken();
                     if (!",".equals(token.getText())) {
@@ -797,7 +797,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     }
                 }
                 else if ("(".equals(sourceLine.skipCommentsAndPeekNextToken().getText())) {
-                    compileTypeDefinition(identifier, sourceLine);
+                    compileStruct(identifier, sourceLine);
                     if (sourceLine.hasMoreTokens()) {
                         token = sourceLine.skipCommentsAndGetNextToken();
                         if (!",".equals(token.getText())) {
@@ -910,7 +910,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
         } while (sourceLine.hasMoreTokens());
     }
 
-    void compileTypeDefinition(Token identifier, SourceLine sourceLine) {
+    void compileStruct(Token identifier, SourceLine sourceLine) {
         Token token = sourceLine.skipCommentsAndGetNextToken();
 
         if ("(".equals(token.getText())) {

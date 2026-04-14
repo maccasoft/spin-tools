@@ -20,7 +20,7 @@ public class RootNode extends Node {
     List<Token> comments = new ArrayList<>();
 
     List<ConstantNode> constants = new ArrayList<>();
-    List<TypeDefinitionNode> typeDefinitions = new ArrayList<>();
+    List<StructNode> structs = new ArrayList<>();
     List<VariableNode> variables = new ArrayList<>();
     List<ObjectNode> objects = new ArrayList<>();
     List<MethodNode> methods = new ArrayList<>();
@@ -52,12 +52,12 @@ public class RootNode extends Node {
         return constants;
     }
 
-    public void addStruct(TypeDefinitionNode node) {
-        typeDefinitions.add(node);
+    public void addStruct(StructNode node) {
+        structs.add(node);
     }
 
-    public List<TypeDefinitionNode> getStructs() {
-        return typeDefinitions;
+    public List<StructNode> getStructs() {
+        return structs;
     }
 
     public void addVariable(VariableNode node) {

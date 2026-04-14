@@ -24,8 +24,9 @@ import com.maccasoft.propeller.model.Parser;
 import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.SourceLine;
 import com.maccasoft.propeller.model.StatementNode;
+import com.maccasoft.propeller.model.StructNode;
+import com.maccasoft.propeller.model.StructNode.Member;
 import com.maccasoft.propeller.model.Token;
-import com.maccasoft.propeller.model.TypeDefinitionNode;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
 
@@ -343,8 +344,8 @@ public class Spin2Parser extends Parser {
     protected void parseConstant(Node parent, SourceLine sourceLine) {
         int state = 1;
         ConstantNode node = null;
-        TypeDefinitionNode typeDefinitionNode = null;
-        TypeDefinitionNode.Definition member = null;
+        StructNode structNode = null;
+        Member member = null;
 
         Token token, nextToken;
         while ((token = sourceLine.getNextToken()) != null) {
@@ -360,13 +361,13 @@ public class Spin2Parser extends Parser {
             switch (state) {
                 case 0:
                     if (",".equals(token.getText())) {
-                        typeDefinitionNode = null;
+                        structNode = null;
                         node = null;
                         state = 1;
                         break;
                     }
-                    if (typeDefinitionNode != null) {
-                        typeDefinitionNode.addToken(token);
+                    if (structNode != null) {
+                        structNode.addToken(token);
                     }
                     else {
                         node.addToken(token);
@@ -374,21 +375,21 @@ public class Spin2Parser extends Parser {
                     break;
                 case 1:
                     if ("struct".equalsIgnoreCase(token.getText())) {
-                        typeDefinitionNode = new TypeDefinitionNode(parent, token, null);
+                        structNode = new StructNode(parent, token, null);
                         token = sourceLine.getNextToken();
                         if (token == null || token.type == Token.NL) {
                             break;
                         }
-                        typeDefinitionNode.identifier = token;
-                        typeDefinitionNode.addToken(token);
+                        structNode.identifier = token;
+                        structNode.addToken(token);
                         if ((nextToken = sourceLine.peekNextToken()) != null) {
                             if ("(".equals(nextToken.getText())) {
-                                typeDefinitionNode.addToken(sourceLine.getNextToken());
+                                structNode.addToken(sourceLine.getNextToken());
                                 state = 7;
                                 break;
                             }
                             if ("=".equals(nextToken.getText())) {
-                                typeDefinitionNode.addToken(sourceLine.getNextToken());
+                                structNode.addToken(sourceLine.getNextToken());
                                 state = 9;
                                 break;
                             }
@@ -403,8 +404,8 @@ public class Spin2Parser extends Parser {
                         break;
                     }
                     if ((nextToken = sourceLine.peekNextToken()) != null && "(".equals(nextToken.getText())) {
-                        typeDefinitionNode = new TypeDefinitionNode(parent, token);
-                        typeDefinitionNode.addToken(sourceLine.getNextToken());
+                        structNode = new StructNode(parent, token);
+                        structNode.addToken(sourceLine.getNextToken());
                         state = 7;
                         break;
                     }
@@ -471,23 +472,23 @@ public class Spin2Parser extends Parser {
                     break;
                 case 7:
                     if (")".equals(token.getText())) {
-                        typeDefinitionNode.addToken(token);
+                        structNode.addToken(token);
                         state = 0;
                         break;
                     }
-                    member = new TypeDefinitionNode.Definition(typeDefinitionNode);
+                    member = new StructNode.Member(structNode);
                     member.identifier = token;
                     member.addToken(token);
                     state = 8;
                     break;
                 case 8:
                     if (")".equals(token.getText())) {
-                        typeDefinitionNode.addToken(token);
+                        structNode.addToken(token);
                         state = 0;
                         break;
                     }
                     if (",".equals(token.getText())) {
-                        typeDefinitionNode.addToken(token);
+                        structNode.addToken(token);
                         state = 7;
                         break;
                     }
@@ -499,12 +500,12 @@ public class Spin2Parser extends Parser {
                     break;
                 case 9:
                     if (",".equals(token.getText())) {
-                        typeDefinitionNode = null;
+                        structNode = null;
                         node = null;
                         state = 1;
                         break;
                     }
-                    typeDefinitionNode.addToken(token);
+                    structNode.addToken(token);
                     break;
             }
         }

@@ -34,10 +34,10 @@ import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.model.StatementNode;
+import com.maccasoft.propeller.model.StructNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenStream;
 import com.maccasoft.propeller.model.TokenStream.Position;
-import com.maccasoft.propeller.model.TypeDefinitionNode;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
 
@@ -758,7 +758,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                         symbols.put(node.identifier.getText(), TokenId.CONSTANT);
                     }
                 }
-                case TypeDefinitionNode node -> {
+                case StructNode node -> {
                     if (node.identifier != null) {
                         symbols.put(node.identifier.getText(), TokenId.TYPE);
                     }

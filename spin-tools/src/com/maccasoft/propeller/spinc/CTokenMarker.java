@@ -30,9 +30,9 @@ import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.SourceProvider;
+import com.maccasoft.propeller.model.StructNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenStream;
-import com.maccasoft.propeller.model.TypeDefinitionNode;
 import com.maccasoft.propeller.model.VariableNode;
 
 public class CTokenMarker extends SourceTokenMarker {
@@ -862,7 +862,7 @@ public class CTokenMarker extends SourceTokenMarker {
                     }
                     symbols.put(name, TokenId.TYPE);
                 }
-                case TypeDefinitionNode node -> {
+                case StructNode node -> {
                     if (node.identifier != null) {
                         symbols.put(node.identifier.getText(), TokenId.TYPE);
                     }

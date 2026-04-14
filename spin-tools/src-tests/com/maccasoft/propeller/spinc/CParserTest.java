@@ -677,11 +677,11 @@ class CParserTest {
         Node root = subject.parse();
         Assertions.assertEquals(""
             + "RootNode []\n"
-            + "+-- TypeDefinitionNode type=struct identifier=data [struct data { byte a; byte b, c; byte d[10]; };]\n"
-            + "    +-- Definition type=byte identifier=a [byte a;]\n"
-            + "    +-- Definition type=byte identifier=b [byte b, c;]\n"
-            + "        +-- Definition identifier=c [c]\n"
-            + "    +-- Definition type=byte identifier=d [byte d[10];]\n"
+            + "+-- StructNode type=struct identifier=data [struct data { byte a; byte b, c; byte d[10]; };]\n"
+            + "    +-- Member type=byte identifier=a [byte a;]\n"
+            + "    +-- Member type=byte identifier=b [byte b, c;]\n"
+            + "        +-- Member identifier=c [c]\n"
+            + "    +-- Member type=byte identifier=d [byte d[10];]\n"
             + "        +-- size = ExpressionNode [10]\n"
             + "", tree(root));
     }
@@ -699,11 +699,11 @@ class CParserTest {
         Node root = subject.parse();
         Assertions.assertEquals(""
             + "RootNode []\n"
-            + "+-- TypeDefinitionNode type=struct identifier=data [struct data { byte a; byte b, c; byte d[10]; }]\n"
-            + "    +-- Definition type=byte identifier=a [byte a;]\n"
-            + "    +-- Definition type=byte identifier=b [byte b, c;]\n"
-            + "        +-- Definition identifier=c [c]\n"
-            + "    +-- Definition type=byte identifier=d [byte d[10];]\n"
+            + "+-- StructNode type=struct identifier=data [struct data { byte a; byte b, c; byte d[10]; }]\n"
+            + "    +-- Member type=byte identifier=a [byte a;]\n"
+            + "    +-- Member type=byte identifier=b [byte b, c;]\n"
+            + "        +-- Member identifier=c [c]\n"
+            + "    +-- Member type=byte identifier=d [byte d[10];]\n"
             + "        +-- size = ExpressionNode [10]\n"
             + "+-- VariableNode type=data identifier=a [data a, *b, c;]\n"
             + "    +-- VariableNode type=* identifier=b [*b]\n"
