@@ -53,6 +53,7 @@ import com.maccasoft.propeller.expressions.Not;
 import com.maccasoft.propeller.expressions.NotEquals;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.expressions.ObjectContextLiteral;
+import com.maccasoft.propeller.expressions.ObjectIdentifier;
 import com.maccasoft.propeller.expressions.Or;
 import com.maccasoft.propeller.expressions.Register;
 import com.maccasoft.propeller.expressions.Rev;
@@ -63,7 +64,6 @@ import com.maccasoft.propeller.expressions.Sca;
 import com.maccasoft.propeller.expressions.Scas;
 import com.maccasoft.propeller.expressions.ShiftLeft;
 import com.maccasoft.propeller.expressions.ShiftRight;
-import com.maccasoft.propeller.expressions.SpinObject;
 import com.maccasoft.propeller.expressions.Sqrt;
 import com.maccasoft.propeller.expressions.Subtract;
 import com.maccasoft.propeller.expressions.Trunc;
@@ -1529,7 +1529,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                     throw new CompilerException("undefined symbol " + node.getText(), node.getToken());
                 }
 
-                if (expression instanceof SpinObject) {
+                if (expression instanceof ObjectIdentifier) {
                     if (node.getChildCount() != 2) {
                         throw new CompilerException("syntax error", node.getToken());
                     }

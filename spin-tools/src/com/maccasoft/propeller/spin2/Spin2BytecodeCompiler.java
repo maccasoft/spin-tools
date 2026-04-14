@@ -68,6 +68,7 @@ import com.maccasoft.propeller.expressions.Not;
 import com.maccasoft.propeller.expressions.NotEquals;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.expressions.ObjectContextLiteral;
+import com.maccasoft.propeller.expressions.ObjectIdentifier;
 import com.maccasoft.propeller.expressions.Ones;
 import com.maccasoft.propeller.expressions.Or;
 import com.maccasoft.propeller.expressions.Pow;
@@ -84,7 +85,6 @@ import com.maccasoft.propeller.expressions.Scas;
 import com.maccasoft.propeller.expressions.ShiftLeft;
 import com.maccasoft.propeller.expressions.ShiftRight;
 import com.maccasoft.propeller.expressions.Signx;
-import com.maccasoft.propeller.expressions.SpinObject;
 import com.maccasoft.propeller.expressions.Sqrt;
 import com.maccasoft.propeller.expressions.Subtract;
 import com.maccasoft.propeller.expressions.Trunc;
@@ -423,7 +423,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 }
 
                 if (expression != null) {
-                    if (expression instanceof SpinObject) {
+                    if (expression instanceof ObjectIdentifier) {
                         source.addAll(compileMethodCall(context, method, expression, node, push, false));
                         return source;
                     }
@@ -1556,7 +1556,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     if (expression instanceof Method) {
                         source.addAll(compileMethodCall(context, method, expression, node.getChild(0), push, true));
                     }
-                    else if (expression instanceof SpinObject) {
+                    else if (expression instanceof ObjectIdentifier) {
                         source.addAll(compileMethodCall(context, method, expression, node.getChild(0), push, true));
                     }
                     else if (expression instanceof Variable) {
@@ -3358,7 +3358,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
     Expression getMethodExpression(Context context, Spin2StatementNode node) {
         Expression symbol = context.getLocalSymbol(node.getText());
 
-        if (symbol instanceof SpinObject) {
+        if (symbol instanceof ObjectIdentifier) {
             Spin2StatementNode methodNode = null;
 
             int n = 0;
@@ -3403,7 +3403,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
     List<Spin2Bytecode> compileMethodCall(Context context, Spin2Method method, Expression symbol, Spin2StatementNode node, Boolean push, boolean trap) {
         List<Spin2Bytecode> source = new ArrayList<Spin2Bytecode>();
 
-        if (symbol instanceof SpinObject) {
+        if (symbol instanceof ObjectIdentifier) {
             Spin2StatementNode indexNode = null;
             Spin2StatementNode methodNode = null;
 

@@ -43,8 +43,8 @@ import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.expressions.Multiply;
 import com.maccasoft.propeller.expressions.NumberLiteral;
+import com.maccasoft.propeller.expressions.ObjectIdentifier;
 import com.maccasoft.propeller.expressions.Register;
-import com.maccasoft.propeller.expressions.SpinObject;
 import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
@@ -275,7 +275,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         scope.addSymbol(qualifiedName, method);
                     }
                 }
-                scope.addSymbol(name, new SpinObject(name, count) {
+                scope.addSymbol(name, new ObjectIdentifier(name, count) {
 
                     @Override
                     public int getIndex() {

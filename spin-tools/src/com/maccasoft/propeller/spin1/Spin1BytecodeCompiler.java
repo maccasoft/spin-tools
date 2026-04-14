@@ -49,6 +49,7 @@ import com.maccasoft.propeller.expressions.Not;
 import com.maccasoft.propeller.expressions.NotEquals;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.expressions.ObjectContextLiteral;
+import com.maccasoft.propeller.expressions.ObjectIdentifier;
 import com.maccasoft.propeller.expressions.Or;
 import com.maccasoft.propeller.expressions.Register;
 import com.maccasoft.propeller.expressions.Rev;
@@ -59,7 +60,6 @@ import com.maccasoft.propeller.expressions.Sar;
 import com.maccasoft.propeller.expressions.Scl;
 import com.maccasoft.propeller.expressions.ShiftLeft;
 import com.maccasoft.propeller.expressions.ShiftRight;
-import com.maccasoft.propeller.expressions.SpinObject;
 import com.maccasoft.propeller.expressions.Subtract;
 import com.maccasoft.propeller.expressions.Trunc;
 import com.maccasoft.propeller.expressions.Variable;
@@ -601,7 +601,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 if (expression instanceof Method) {
                     source.addAll(compileMethodCall(context, method, expression, node.getChild(0), push, true));
                 }
-                else if (expression instanceof SpinObject) {
+                else if (expression instanceof ObjectIdentifier) {
                     source.addAll(compileMethodCall(context, method, expression, node.getChild(0), push, true));
                 }
                 else {
@@ -885,7 +885,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                         throw new CompilerException("undefined symbol " + node.getText(), node.getToken());
                     }
 
-                    if (expression instanceof SpinObject) {
+                    if (expression instanceof ObjectIdentifier) {
                         source.addAll(compileMethodCall(context, method, expression, node, push, false));
                     }
                     else if (isAddress(node.getText())) {
@@ -1495,7 +1495,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 logMessage(new CompilerException("method doesn't return a value", node.getToken()));
             }
         }
-        else if (expression instanceof SpinObject) {
+        else if (expression instanceof ObjectIdentifier) {
             Spin1StatementNode indexNode = null;
             Spin1StatementNode methodNode = null;
 

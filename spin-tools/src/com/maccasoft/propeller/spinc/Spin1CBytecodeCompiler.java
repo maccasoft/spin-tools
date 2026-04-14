@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spinc;
@@ -42,6 +41,7 @@ import com.maccasoft.propeller.expressions.Negative;
 import com.maccasoft.propeller.expressions.Not;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.expressions.ObjectContextLiteral;
+import com.maccasoft.propeller.expressions.ObjectIdentifier;
 import com.maccasoft.propeller.expressions.Or;
 import com.maccasoft.propeller.expressions.Register;
 import com.maccasoft.propeller.expressions.Rev;
@@ -49,7 +49,6 @@ import com.maccasoft.propeller.expressions.Rol;
 import com.maccasoft.propeller.expressions.Ror;
 import com.maccasoft.propeller.expressions.Sar;
 import com.maccasoft.propeller.expressions.ShiftLeft;
-import com.maccasoft.propeller.expressions.SpinObject;
 import com.maccasoft.propeller.expressions.Subtract;
 import com.maccasoft.propeller.expressions.Trunc;
 import com.maccasoft.propeller.expressions.Variable;
@@ -910,7 +909,7 @@ public abstract class Spin1CBytecodeCompiler extends Spin1PAsmCompiler {
                     }
                 }
 
-                if (expression instanceof SpinObject) {
+                if (expression instanceof ObjectIdentifier) {
                     if (node.getChildCount() != 2) {
                         throw new RuntimeException("syntax error" + node);
                     }
