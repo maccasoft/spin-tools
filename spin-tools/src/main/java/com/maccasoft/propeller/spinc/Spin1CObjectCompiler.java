@@ -136,9 +136,6 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
 
         };
         RootNode root = parser.parse();
-        for (String name : objects.keySet()) {
-            root.addObjectRoot(name, objects.get(name).root);
-        }
 
         while (!conditionStack.isEmpty()) {
             Condition c = conditionStack.pop();
@@ -147,12 +144,15 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
 
         for (Node node : new ArrayList<>(root.getChilds())) {
             try {
-                if (node instanceof StructNode typeNode) {
-                    if (conditionStack.isEmpty() || !conditionStack.peek().skip) {
-                        if (typeNode.getIdentifier() != null) {
-                            String symbol = typeNode.getIdentifier().getText();
+                if (node.isExclude()) {
+                    continue;
+                }
+                switch (node) {
+                    case StructNode structNode -> {
+                        if (structNode.getIdentifier() != null) {
+                            String symbol = structNode.getIdentifier().getText();
                             if (structures.containsKey(symbol)) {
-                                logMessage(new CompilerException("structure " + symbol + " redefinition", typeNode.getIdentifier()));
+                                logMessage(new CompilerException("structure " + symbol + " redefinition", structNode.getIdentifier()));
                             }
 
                             Variable var = new Variable("BYTE", "struct " + symbol, 1, 0, true);
@@ -167,23 +167,22 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
                                 // Ignore
                             }
 
-                            structures.put(symbol, typeNode);
+                            structures.put(symbol, structNode);
                         }
                     }
-                }
-                else if (node instanceof VariableNode) {
-                    if (conditionStack.isEmpty() || !conditionStack.peek().skip) {
-                        compileVariable((VariableNode) node);
+                    case VariableNode variableNode -> compileVariable(variableNode);
+                    case FunctionNode functionNode -> compileFunction(functionNode);
+                    default -> {
                     }
-                }
-                else if (node instanceof FunctionNode) {
-                    compileFunction((FunctionNode) node);
                 }
             } catch (CompilerException e) {
                 logMessage(e);
             } catch (Exception e) {
                 logMessage(new CompilerException(e, node));
             }
+        }
+        for (String name : objects.keySet()) {
+            root.addObjectRoot(name, objects.get(name).root);
         }
 
         objectVarSize = (objectVarSize + 3) & ~3;
