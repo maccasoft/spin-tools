@@ -146,9 +146,9 @@ public class SourceTokenMarkerTest {
             + "\n"
             + "";
         String objectText = ""
-            + "PUB null()\n"
+            + "PUB method1()\n"
             + "\n"
-            + "PUB method()\n"
+            + "PUB method2()\n"
             + "\n"
             + "";
 
@@ -164,13 +164,46 @@ public class SourceTokenMarkerTest {
 
         Assertions.assertEquals(2, result.size());
 
-        Assertions.assertEquals("null", result.get(0).getLabel());
-        Assertions.assertEquals("null()", result.get(0).getContent());
-        Assertions.assertEquals(6, result.get(0).getCursorPosition());
+        Assertions.assertEquals("method1", result.get(0).getLabel());
+        Assertions.assertEquals("method1()", result.get(0).getContent());
+        Assertions.assertEquals(9, result.get(0).getCursorPosition());
 
-        Assertions.assertEquals("method", result.get(1).getLabel());
-        Assertions.assertEquals("method()", result.get(1).getContent());
-        Assertions.assertEquals(8, result.get(1).getCursorPosition());
+        Assertions.assertEquals("method2", result.get(1).getLabel());
+        Assertions.assertEquals("method2()", result.get(1).getContent());
+        Assertions.assertEquals(9, result.get(1).getCursorPosition());
+    }
+
+    @Test
+    public void testObjectMethodProposalsSkipFirstNullMethod() throws Exception {
+        String text = ""
+            + "OBJ\n"
+            + "    object : \"object\"\n"
+            + "\n"
+            + "PUB main()\n"
+            + "\n"
+            + "";
+        String objectText = ""
+            + "PUB null()\n"
+            + "\n"
+            + "PUB method2()\n"
+            + "\n"
+            + "";
+
+        RootNode root = new Spin2Parser(text).parse();
+        root.addObjectRoot("object", new Spin2Parser(objectText).parse());
+
+        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
+        subject.setRoot(root);
+
+        Node context = subject.getRoot().getChild(1);
+
+        List<IContentProposal> result = subject.getMethodProposals(context, "object.");
+
+        Assertions.assertEquals(1, result.size());
+
+        Assertions.assertEquals("method2", result.get(0).getLabel());
+        Assertions.assertEquals("method2()", result.get(0).getContent());
+        Assertions.assertEquals(9, result.get(0).getCursorPosition());
     }
 
     @Test
@@ -247,9 +280,9 @@ public class SourceTokenMarkerTest {
             + "\n"
             + "";
         String objectText = ""
-            + "PUB null()\n"
+            + "PUB method1()\n"
             + "\n"
-            + "PUB method()\n"
+            + "PUB method2()\n"
             + "\n"
             + "";
 
@@ -265,13 +298,13 @@ public class SourceTokenMarkerTest {
 
         Assertions.assertEquals(2, result.size());
 
-        Assertions.assertEquals("null", result.get(0).getLabel());
-        Assertions.assertEquals("null()", result.get(0).getContent());
-        Assertions.assertEquals(6, result.get(0).getCursorPosition());
+        Assertions.assertEquals("method1", result.get(0).getLabel());
+        Assertions.assertEquals("method1()", result.get(0).getContent());
+        Assertions.assertEquals(9, result.get(0).getCursorPosition());
 
-        Assertions.assertEquals("method", result.get(1).getLabel());
-        Assertions.assertEquals("method()", result.get(1).getContent());
-        Assertions.assertEquals(8, result.get(1).getCursorPosition());
+        Assertions.assertEquals("method2", result.get(1).getLabel());
+        Assertions.assertEquals("method2()", result.get(1).getContent());
+        Assertions.assertEquals(9, result.get(1).getCursorPosition());
     }
 
     @Test
@@ -285,15 +318,15 @@ public class SourceTokenMarkerTest {
             + "\n"
             + "";
         String object1Text = ""
-            + "PUB null()\n"
+            + "PUB method1()\n"
             + "\n"
-            + "PUB method()\n"
+            + "PUB method2()\n"
             + "\n"
             + "";
         String object2Text = ""
-            + "PUB null()\n"
+            + "PUB method3()\n"
             + "\n"
-            + "PUB method2()\n"
+            + "PUB method4()\n"
             + "\n"
             + "";
 
@@ -310,13 +343,13 @@ public class SourceTokenMarkerTest {
 
         Assertions.assertEquals(2, result.size());
 
-        Assertions.assertEquals("null", result.get(0).getLabel());
-        Assertions.assertEquals("null()", result.get(0).getContent());
-        Assertions.assertEquals(6, result.get(0).getCursorPosition());
+        Assertions.assertEquals("method1", result.get(0).getLabel());
+        Assertions.assertEquals("method1()", result.get(0).getContent());
+        Assertions.assertEquals(9, result.get(0).getCursorPosition());
 
-        Assertions.assertEquals("method", result.get(1).getLabel());
-        Assertions.assertEquals("method()", result.get(1).getContent());
-        Assertions.assertEquals(8, result.get(1).getCursorPosition());
+        Assertions.assertEquals("method2", result.get(1).getLabel());
+        Assertions.assertEquals("method2()", result.get(1).getContent());
+        Assertions.assertEquals(9, result.get(1).getCursorPosition());
     }
 
     @Test
@@ -330,15 +363,15 @@ public class SourceTokenMarkerTest {
             + "\n"
             + "";
         String object1Text = ""
-            + "PUB null()\n"
-            + "    \n"
-            + "PUB method()\n"
+            + "PUB method1()\n"
+            + "\n"
+            + "PUB method2()\n"
             + "\n"
             + "";
         String object2Text = ""
-            + "PUB null()\n"
+            + "PUB method3()\n"
             + "\n"
-            + "PUB method2()\n"
+            + "PUB method4()\n"
             + "\n"
             + "";
 
@@ -355,13 +388,13 @@ public class SourceTokenMarkerTest {
 
         Assertions.assertEquals(2, result.size());
 
-        Assertions.assertEquals("null", result.get(0).getLabel());
-        Assertions.assertEquals("null()", result.get(0).getContent());
-        Assertions.assertEquals(6, result.get(0).getCursorPosition());
+        Assertions.assertEquals("method1", result.get(0).getLabel());
+        Assertions.assertEquals("method1()", result.get(0).getContent());
+        Assertions.assertEquals(9, result.get(0).getCursorPosition());
 
-        Assertions.assertEquals("method", result.get(1).getLabel());
-        Assertions.assertEquals("method()", result.get(1).getContent());
-        Assertions.assertEquals(8, result.get(1).getCursorPosition());
+        Assertions.assertEquals("method2", result.get(1).getLabel());
+        Assertions.assertEquals("method2()", result.get(1).getContent());
+        Assertions.assertEquals(9, result.get(1).getCursorPosition());
     }
 
     @Test

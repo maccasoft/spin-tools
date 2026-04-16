@@ -623,17 +623,22 @@ public abstract class SourceTokenMarker {
         });
 
         if (dot != -1) {
+            boolean first = true;
             List<IContentProposal> secondary = new ArrayList<>();
 
             RootNode objectRoot = rootNodes.get(refObject);
             if (objectRoot != null) {
                 for (MethodNode node : objectRoot.getMethods()) {
                     String text = node.getName().getText();
+                    if (first && "null".equalsIgnoreCase(text)) {
+                        continue;
+                    }
                     if (node.isPublic() && Strings.CI.contains(text, refName)) {
                         String content = getMethodInsert(node);
                         int cursorPosition = content.endsWith("()") ? content.length() : (content.indexOf('(') + 1);
                         proposals.add(new ContentProposal(content, text, getMethodDocument(node), cursorPosition));
                     }
+                    first = false;
                 }
                 for (FunctionNode node : objectRoot.getFunctions()) {
                     String text = node.getIdentifier().getText();
