@@ -737,6 +737,10 @@ public class Spin2TokenMarker extends SourceTokenMarker {
 
         comments.clear();
         comments.addAll(root.getComments());
+
+        rootNodes.clear();
+        rootNodes.putAll(root.getObjectRoots());
+
         collectTokens(root);
 
         super.setRoot(root);
@@ -1551,6 +1555,10 @@ public class Spin2TokenMarker extends SourceTokenMarker {
     @Override
     public boolean hasLineContinuation(int lineIndex, int lineOffset, String lineText) {
         Token token;
+
+        if (root == null) {
+            return false;
+        }
 
         for (Token blockCommentToken : root.getComments()) {
             if (lineOffset >= blockCommentToken.start && lineOffset <= blockCommentToken.stop) {

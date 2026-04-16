@@ -238,6 +238,10 @@ public class Spin1TokenMarker extends SourceTokenMarker {
 
         comments.clear();
         comments.addAll(root.getComments());
+
+        rootNodes.clear();
+        rootNodes.putAll(root.getObjectRoots());
+
         collectTokens(root);
 
         super.setRoot(root);

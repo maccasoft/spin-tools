@@ -142,6 +142,7 @@ public abstract class SourceTokenMarker {
     protected String localLabelPrefix;
 
     protected List<Token> comments = new ArrayList<>();
+    protected Map<String, RootNode> rootNodes = new CaseInsensitiveMap<>();
     protected Map<String, TokenId> symbols = new CaseInsensitiveMap<>();
     protected Map<String, Map<String, TokenId>> locals = new HashMap<>();
 
@@ -360,7 +361,7 @@ public abstract class SourceTokenMarker {
             String refObject = symbol.substring(0, dot);
             String refName = symbol.substring(dot + 1);
 
-            RootNode objectRoot = root.getObjectRoot(refObject);
+            RootNode objectRoot = rootNodes.get(refObject);
             if (objectRoot != null) {
                 for (MethodNode node : objectRoot.getMethods()) {
                     if (node.isPublic() && refName.equalsIgnoreCase(node.getName().getText())) {
@@ -396,7 +397,7 @@ public abstract class SourceTokenMarker {
                 String refObject = symbol.substring(0, dot);
                 String refName = symbol.substring(dot + 1);
 
-                RootNode objectRoot = root.getObjectRoot(refObject);
+                RootNode objectRoot = rootNodes.get(refObject);
                 if (objectRoot != null) {
                     for (ConstantNode node : objectRoot.getConstants()) {
                         String identifier = node.getIdentifier().getText();
@@ -624,7 +625,7 @@ public abstract class SourceTokenMarker {
         if (dot != -1) {
             List<IContentProposal> secondary = new ArrayList<>();
 
-            RootNode objectRoot = root.getObjectRoot(refObject);
+            RootNode objectRoot = rootNodes.get(refObject);
             if (objectRoot != null) {
                 for (MethodNode node : objectRoot.getMethods()) {
                     String text = node.getName().getText();
@@ -647,7 +648,7 @@ public abstract class SourceTokenMarker {
             for (VariableNode varNode : root.getVariables()) {
                 String name = varNode.getIdentifier().getText();
                 if (refObject.equalsIgnoreCase(name)) {
-                    RootNode varObjectRoot = root.getObjectRoot(varNode.getType().getText());
+                    RootNode varObjectRoot = rootNodes.get(varNode.getType().getText());
                     if (varObjectRoot != null) {
                         for (MethodNode node : varObjectRoot.getMethods()) {
                             if (node.isPublic()) {
@@ -874,7 +875,7 @@ public abstract class SourceTokenMarker {
 
             List<IContentProposal> objectProposals = new ArrayList<>();
             for (ObjectNode objectNode : root.getObjects()) {
-                RootNode objectRoot = root.getObjectRoot(objectNode.name.getText());
+                RootNode objectRoot = rootNodes.get(objectNode.name.getText());
                 if (objectRoot != null) {
                     for (StructNode node : objectRoot.getStructs()) {
                         String text = objectNode.name.getText() + "." + node.getIdentifier().getText();
@@ -901,7 +902,7 @@ public abstract class SourceTokenMarker {
                     String refObject = filterText.substring(0, dot);
                     String refName = filterText.substring(dot + 1);
 
-                    RootNode objectRoot = root.getObjectRoot(refObject);
+                    RootNode objectRoot = rootNodes.get(refObject);
                     if (objectRoot != null) {
                         for (ConstantNode node : objectRoot.getConstants()) {
                             String text = node.getIdentifier().getText();
@@ -1234,7 +1235,7 @@ public abstract class SourceTokenMarker {
                     continue;
                 }
 
-                RootNode objectRoot = root.getObjectRoot(refObject);
+                RootNode objectRoot = rootNodes.get(refObject);
                 if (objectRoot != null) {
                     for (ConstantNode node : root.getConstants()) {
                         String text = node.identifier.getText();

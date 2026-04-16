@@ -19,6 +19,7 @@ import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.ObjectsNode;
+import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.spin1.Spin1Parser;
 import com.maccasoft.propeller.spin1.Spin1TokenMarker;
@@ -31,9 +32,9 @@ public class SourceTokenMarkerTest {
     public void testMethodProposals() throws Exception {
         String text = ""
             + "PUB main()\n"
-            + "    \n"
+            + "\n"
             + "PUB method()\n"
-            + "    \n"
+            + "\n"
             + "";
 
         SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
@@ -54,9 +55,9 @@ public class SourceTokenMarkerTest {
     public void testMethodArgumentsProposals() throws Exception {
         String text = ""
             + "PUB main()\n"
-            + "    \n"
+            + "\n"
             + "PUB method(a, b)\n"
-            + "    \n"
+            + "\n"
             + "";
 
         SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
@@ -77,13 +78,13 @@ public class SourceTokenMarkerTest {
     public void testMatchingMethodsProposals() throws Exception {
         String text = ""
             + "PUB main()\n"
-            + "    \n"
+            + "\n"
             + "PUB abcd_1234()\n"
-            + "    \n"
+            + "\n"
             + "PUB abcd_5678()\n"
-            + "    \n"
+            + "\n"
             + "PUB efgh_1234()\n"
-            + "    \n"
+            + "\n"
             + "";
 
         SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
@@ -111,13 +112,13 @@ public class SourceTokenMarkerTest {
             + "    object : \"object\"\n"
             + "\n"
             + "PUB main()\n"
-            + "    \n"
+            + "\n"
             + "";
         String objectText = ""
             + "PUB null()\n"
-            + "    \n"
+            + "\n"
             + "PUB method()\n"
-            + "    \n"
+            + "\n"
             + "";
 
         SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
@@ -142,18 +143,20 @@ public class SourceTokenMarkerTest {
             + "    object : \"object\"\n"
             + "\n"
             + "PUB main()\n"
-            + "    \n"
+            + "\n"
             + "";
         String objectText = ""
             + "PUB null()\n"
-            + "    \n"
+            + "\n"
             + "PUB method()\n"
-            + "    \n"
+            + "\n"
             + "";
 
+        RootNode root = new Spin2Parser(text).parse();
+        root.addObjectRoot("object", new Spin2Parser(objectText).parse());
+
         SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
-        subject.root = new Spin2Parser(text).parse();
-        subject.root.addObjectRoot("object", new Spin2Parser(objectText).parse());
+        subject.setRoot(root);
 
         Node context = subject.getRoot().getChild(1);
 
@@ -177,13 +180,13 @@ public class SourceTokenMarkerTest {
             + "    object : \"object\"\n"
             + "\n"
             + "PUB main()\n"
-            + "    \n"
+            + "\n"
             + "";
         String objectText = ""
             + "PUB null()\n"
-            + "    \n"
+            + "\n"
             + "PUB method()\n"
-            + "    \n"
+            + "\n"
             + "";
 
         SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
@@ -208,18 +211,20 @@ public class SourceTokenMarkerTest {
             + "    object : \"object\"\n"
             + "\n"
             + "PUB main()\n"
-            + "    \n"
+            + "\n"
             + "";
         String objectText = ""
             + "PUB null()\n"
-            + "    \n"
+            + "\n"
             + "PUB method()\n"
-            + "    \n"
+            + "\n"
             + "";
 
+        RootNode root = new Spin2Parser(text).parse();
+        root.addObjectRoot("object", new Spin2Parser(objectText).parse());
+
         SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
-        subject.root = new Spin2Parser(text).parse();
-        subject.root.addObjectRoot("object", new Spin2Parser(objectText).parse());
+        subject.setRoot(root);
 
         Node context = subject.getRoot().getChild(1);
 
@@ -239,18 +244,20 @@ public class SourceTokenMarkerTest {
             + "    object : \"object\"\n"
             + "\n"
             + "PUB main()\n"
-            + "    \n"
+            + "\n"
             + "";
         String objectText = ""
             + "PUB null()\n"
-            + "    \n"
+            + "\n"
             + "PUB method()\n"
-            + "    \n"
+            + "\n"
             + "";
 
+        RootNode root = new Spin2Parser(text).parse();
+        root.addObjectRoot("object", new Spin2Parser(objectText).parse());
+
         SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
-        subject.root = new Spin2Parser(text).parse();
-        subject.root.addObjectRoot("object", new Spin2Parser(objectText).parse());
+        subject.setRoot(root);
 
         Node context = subject.getRoot().getChild(1);
 
@@ -275,25 +282,27 @@ public class SourceTokenMarkerTest {
             + "    object2   : \"object2\"\n"
             + "\n"
             + "PUB main()\n"
-            + "    \n"
+            + "\n"
             + "";
         String object1Text = ""
             + "PUB null()\n"
-            + "    \n"
+            + "\n"
             + "PUB method()\n"
-            + "    \n"
+            + "\n"
             + "";
         String object2Text = ""
             + "PUB null()\n"
-            + "    \n"
+            + "\n"
             + "PUB method2()\n"
-            + "    \n"
+            + "\n"
             + "";
 
+        RootNode root = new Spin2Parser(text).parse();
+        root.addObjectRoot("object", new Spin2Parser(object1Text).parse());
+        root.addObjectRoot("object2", new Spin2Parser(object2Text).parse());
+
         SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
-        subject.root = new Spin2Parser(text).parse();
-        subject.root.addObjectRoot("object", new Spin2Parser(object1Text).parse());
-        subject.root.addObjectRoot("object2", new Spin2Parser(object2Text).parse());
+        subject.setRoot(root);
 
         Node context = subject.getRoot().getChild(1);
 
@@ -318,25 +327,27 @@ public class SourceTokenMarkerTest {
             + "    object2   : \"object2\"\n"
             + "\n"
             + "PUB main()\n"
-            + "    \n"
+            + "\n"
             + "";
         String object1Text = ""
             + "PUB null()\n"
             + "    \n"
             + "PUB method()\n"
-            + "    \n"
+            + "\n"
             + "";
         String object2Text = ""
             + "PUB null()\n"
-            + "    \n"
+            + "\n"
             + "PUB method2()\n"
-            + "    \n"
+            + "\n"
             + "";
 
+        RootNode root = new Spin2Parser(text).parse();
+        root.addObjectRoot("object", new Spin2Parser(object1Text).parse());
+        root.addObjectRoot("object2", new Spin2Parser(object2Text).parse());
+
         SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
-        subject.root = new Spin2Parser(text).parse();
-        subject.root.addObjectRoot("object", new Spin2Parser(object1Text).parse());
-        subject.root.addObjectRoot("object2", new Spin2Parser(object2Text).parse());
+        subject.setRoot(root);
 
         Node context = subject.getRoot().getChild(1);
 
@@ -359,19 +370,23 @@ public class SourceTokenMarkerTest {
             + "OBJ\n"
             + "    object : \"object\"\n"
             + "\n"
-            + "PUB main()\n"
-            + "    \n"
+            + "PUB main\n"
+            + "\n"
             + "";
         String objectText = ""
             + "CON\n"
             + "\n"
             + "    PIN_RX = 1\n"
             + "    PIN_TX = 2\n"
+            + "\n"
+            + "PUB method\n"
             + "";
 
+        RootNode root = new Spin1Parser(text).parse();
+        root.addObjectRoot("object", new Spin1Parser(objectText).parse());
+
         SourceTokenMarker subject = new Spin1TokenMarker(SourceProvider.NULL);
-        subject.root = new Spin1Parser(text).parse();
-        subject.root.addObjectRoot("object", new Spin1Parser(objectText).parse());
+        subject.setRoot(root);
 
         List<IContentProposal> result = subject.getConstantsProposals("object#");
 
@@ -393,20 +408,24 @@ public class SourceTokenMarkerTest {
             + "    object : \"object\"\n"
             + "\n"
             + "PUB main()\n"
-            + "    \n"
+            + "\n"
             + "";
         String objectText = ""
             + "CON\n"
             + "\n"
             + "    PIN_RX = 1\n"
             + "    PIN_TX = 2\n"
+            + "\n"
+            + "PUB method()\n"
             + "";
 
-        SourceTokenMarker subject = new Spin1TokenMarker(SourceProvider.NULL);
-        subject.root = new Spin1Parser(text).parse();
-        subject.root.addObjectRoot("object", new Spin1Parser(objectText).parse());
+        RootNode root = new Spin2Parser(text).parse();
+        root.addObjectRoot("object", new Spin2Parser(objectText).parse());
 
-        List<IContentProposal> result = subject.getConstantsProposals("object#");
+        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
+        subject.setRoot(root);
+
+        List<IContentProposal> result = subject.getConstantsProposals("object.");
 
         Assertions.assertEquals(2, result.size());
 

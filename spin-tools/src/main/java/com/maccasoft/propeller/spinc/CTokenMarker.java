@@ -825,6 +825,9 @@ public class CTokenMarker extends SourceTokenMarker {
         }
         this.root = root;
 
+        rootNodes.clear();
+        rootNodes.putAll(root.getObjectRoots());
+
         collectTokens(root);
     }
 
