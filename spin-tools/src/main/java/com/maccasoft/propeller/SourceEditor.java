@@ -343,7 +343,14 @@ public class SourceEditor {
         overwriteCaret = new Caret(styledText, SWT.NULL);
         alignCaret = new Caret(styledText, SWT.NULL);
 
-        overview = new OverviewRuler(container);
+        overview = new OverviewRuler(container) {
+
+            @Override
+            protected void goToLine(int line) {
+                fireNavigateToEvent(new SourceElement(line, 0));
+            }
+
+        };
         overview.setStyledText(styledText);
 
         Font textFont = JFaceResources.getTextFont();
@@ -2372,7 +2379,7 @@ public class SourceEditor {
         int halfPageSize = (bottomLine - topLine - 1) / 2;
 
         if (line < topLine || line > bottomLine) {
-            styledText.setTopIndex((line - halfPageSize) >= 0 ? line - halfPageSize : 0);
+            styledText.setTopIndex(Math.max(line - halfPageSize, 0));
         }
 
         styledText.setCaretOffset(styledText.getOffsetAtLine(line) + column);
@@ -2567,7 +2574,7 @@ public class SourceEditor {
         int stop;
 
         public NavigationTarget(int line, int column) {
-            super(null, line, column);
+            super(line, column);
         }
 
         public NavigationTarget(Token token, Token target) {

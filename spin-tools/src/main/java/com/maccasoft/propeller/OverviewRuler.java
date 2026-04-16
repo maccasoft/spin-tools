@@ -231,26 +231,8 @@ public class OverviewRuler {
         canvas.redraw();
     }
 
-    void goToLine(int line) {
-        if (line >= styledText.getLineCount()) {
-            return;
-        }
+    protected void goToLine(int line) {
 
-        Rectangle rect = styledText.getClientArea();
-        int topLine = styledText.getLineIndex(0);
-        int bottomLine = styledText.getLineIndex(rect.height);
-        int pageSize = bottomLine - topLine;
-        while (line < topLine) {
-            topLine -= pageSize;
-            bottomLine -= pageSize;
-        }
-        while (line > bottomLine) {
-            topLine += pageSize;
-            bottomLine += pageSize;
-        }
-
-        styledText.setCaretOffset(styledText.getOffsetAtLine(line));
-        styledText.setTopIndex(topLine);
     }
 
     boolean isOnAnnotation(int ey) {
