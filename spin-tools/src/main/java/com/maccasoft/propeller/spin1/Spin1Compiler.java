@@ -34,8 +34,6 @@ public class Spin1Compiler extends Compiler {
     boolean foldConstants;
     boolean optimizeStrings;
 
-    protected List<ObjectInfo> childObjects = new ArrayList<>();
-
     Spin1ObjectCompiler objectCompiler;
 
     public Spin1Compiler() {
@@ -86,7 +84,12 @@ public class Spin1Compiler extends Compiler {
     public Spin1Object compile(File file, String text) {
         Spin1Object obj = compileObject(file, text);
 
-        Spin1Object object = new Spin1Object();
+        Spin1Object object = new Spin1Object(file);
+        for (SpinObject child : obj.getChildObjects()) {
+            object.addChildObject(child);
+        }
+        object.setVarSize(obj.getVarSize());
+
         object.setClkFreq(obj.getClkFreq());
         object.setClkMode(obj.getClkMode());
 
@@ -151,26 +154,28 @@ public class Spin1Compiler extends Compiler {
 
         for (ObjectInfo info : childObjects) {
             info.offset = object.getSize();
-            SpinObject linkedObject = info.compiler.generateObject(memoryOffset);
-            object.writeObject(linkedObject);
-            memoryOffset += linkedObject.getSize();
+            info.object = info.compiler.generateObject(memoryOffset);
+            object.writeObject(info.object);
+            memoryOffset += info.object.getSize();
         }
 
         for (ObjectInfo info : childObjects) {
-            for (LinkDataObject linkData : info.compiler.getObjectLinks()) {
+            for (LinkDataObject linkData : info.object.getObjectLinks()) {
                 for (ObjectInfo info2 : childObjects) {
                     if (linkData.isObjectCompiler(info2.compiler)) {
                         linkData.setOffset(info2.offset - info.offset);
+                        info.object.addChildObject(info2.object);
                         break;
                     }
                 }
             }
         }
 
-        for (LinkDataObject linkData : objectCompiler.getObjectLinks()) {
+        for (LinkDataObject linkData : object.getObjectLinks()) {
             for (ObjectInfo info : childObjects) {
                 if (linkData.isObjectCompiler(info.compiler)) {
                     linkData.setOffset(info.offset);
+                    object.addChildObject(info.object);
                     break;
                 }
             }
@@ -203,8 +208,6 @@ public class Spin1Compiler extends Compiler {
                 logMessage(new CompilerException(file, "program exceeds runtime memory limit by " + ((requiredSize - 0x8000) >> 2) + " longs.", null));
             }
         }
-
-        tree = buildFrom(objectCompiler);
 
         return object;
 

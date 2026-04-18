@@ -475,7 +475,8 @@ public class SpinCompiler {
             }
             target = object instanceof Spin2Object ? P2 : P1;
 
-            print(compiler.getObjectTree().toString());
+            printObjectTree(0, object);
+
             for (CompilerException e : compiler.getMessages()) {
                 if (e.type == CompilerException.WARNING && noWarnings) {
                     continue;
@@ -532,6 +533,20 @@ public class SpinCompiler {
         }
 
         return null;
+    }
+
+    void printObjectTree(int indent, SpinObject object) {
+        if (indent != 0) {
+            for (int i = 1; i < indent; i++) {
+                print("     ");
+            }
+            print(" +-- ");
+        }
+        println(object.getFile().getName());
+
+        for (SpinObject child : object.getChildObjects()) {
+            printObjectTree(indent + 1, child);
+        }
     }
 
     ComPort getSerialPort() throws Exception {

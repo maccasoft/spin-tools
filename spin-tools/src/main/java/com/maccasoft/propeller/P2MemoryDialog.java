@@ -81,7 +81,6 @@ public class P2MemoryDialog extends Dialog {
     Color stackFreeBackground;
 
     Spin2Object object;
-    ObjectTree tree;
     boolean topObject;
 
     byte[] data;
@@ -290,7 +289,7 @@ public class P2MemoryDialog extends Dialog {
         objectTree.setLayoutData(gridData);
         objectTree.setBackground(listBackground);
         objectTree.setForeground(listForeground);
-        objectTree.setInput(tree, topObject);
+        objectTree.setInput(object, topObject);
 
         Composite group = new Composite(container, SWT.NONE);
         group.setLayout(new GridLayout(3, false));
@@ -783,8 +782,9 @@ public class P2MemoryDialog extends Dialog {
         return object;
     }
 
-    public void setObject(Spin2Object object, ObjectTree tree, boolean topObject) {
+    public void setObject(Spin2Object object, boolean topObject) {
         this.object = object;
+        this.topObject = topObject;
 
         try {
             data = object.getRAM();
@@ -804,10 +804,6 @@ public class P2MemoryDialog extends Dialog {
             else {
                 vbase = dbase = object.getSize();
             }
-
-            this.tree = tree;
-            this.topObject = topObject;
-
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -902,15 +898,15 @@ public class P2MemoryDialog extends Dialog {
         dlg.setFilterNames(filterNames);
         dlg.setFilterExtensions(filterExtensions);
 
-        String name = tree.getName();
+        String name = object.getFile().getName();
         int i = name.lastIndexOf('.');
         dlg.setFileName(name.substring(0, i) + defaultExtension);
 
         List<File> lru = Preferences.getInstance().getLru();
 
-        File filterPath = tree.getFile();
+        File filterPath = object.getFile();
         if (filterPath == null && !lru.isEmpty()) {
-            filterPath = lru.get(0);
+            filterPath = lru.getFirst();
         }
         if (filterPath != null) {
             dlg.setFilterPath(filterPath.getParent());
@@ -936,7 +932,7 @@ public class P2MemoryDialog extends Dialog {
         };
         Preferences preferences = Preferences.getInstance();
 
-        String baseName = tree.getName();
+        String baseName = object.getFile().getName();
         baseName = baseName.substring(0, baseName.lastIndexOf('.'));
 
         FileDialog dlg = new FileDialog(getShell(), SWT.SAVE);
@@ -950,11 +946,11 @@ public class P2MemoryDialog extends Dialog {
         List<PackageFile> lru = preferences.getPackageLru();
 
         File filterPath = null;
-        if (lru.size() != 0) {
-            filterPath = lru.get(0).getFile();
+        if (!lru.isEmpty()) {
+            filterPath = lru.getFirst().getFile();
         }
         if (filterPath == null) {
-            filterPath = tree.getFile();
+            filterPath = object.getFile();
         }
         if (filterPath != null) {
             dlg.setFilterPath(filterPath.getParent());

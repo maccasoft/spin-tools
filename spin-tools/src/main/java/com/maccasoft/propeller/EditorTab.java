@@ -109,7 +109,6 @@ public class EditorTab implements FindReplaceTarget {
     List<CompilerException> messages = new ArrayList<>();
 
     SpinObject object;
-    ObjectTree objectTree;
 
     Preferences preferences;
 
@@ -586,7 +585,6 @@ public class EditorTab implements FindReplaceTarget {
                         if (compiler != null) {
                             try {
                                 object = compiler.compile(localFile, text);
-                                objectTree = compiler.getObjectTree();
                                 errors = compiler.hasErrors();
                             } catch (Exception e) {
                                 errors = true;
@@ -606,7 +604,7 @@ public class EditorTab implements FindReplaceTarget {
                                     if (editor == null || editor.isDisposed() || tabItem.isDisposed()) {
                                         return;
                                     }
-                                    changeSupport.firePropertyChange(OBJECT_TREE, null, objectTree);
+                                    changeSupport.firePropertyChange(OBJECT_TREE, null, object);
 
                                     tokenMarker.setRoot(compiler.getRoot());
                                     tokenMarker.setContext(compiler.getContext());
@@ -1216,10 +1214,6 @@ public class EditorTab implements FindReplaceTarget {
 
     public Set<File> getDependencies() {
         return new HashSet<>(dependencies.keySet());
-    }
-
-    public ObjectTree getObjectTree() {
-        return objectTree;
     }
 
     public void waitCompile() {

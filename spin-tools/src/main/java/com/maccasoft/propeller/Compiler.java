@@ -35,10 +35,10 @@ public abstract class Compiler {
 
         public String text;
         public int offset;
-        public int size;
         public Expression count;
 
         public RootNode root;
+        public SpinObject object;
 
         public ObjectInfo(File file, ObjectCompiler compiler, Map<String, Expression> parameters) {
             this.file = file;
@@ -132,7 +132,7 @@ public abstract class Compiler {
     protected List<CompilerException> messages = new ArrayList<CompilerException>();
 
     protected RootNode root;
-    protected ObjectTree tree;
+    protected List<ObjectInfo> childObjects = new ArrayList<>();
 
     public Compiler() {
 
@@ -303,18 +303,6 @@ public abstract class Compiler {
             }
         }
         return null;
-    }
-
-    public ObjectTree getObjectTree() {
-        return tree;
-    }
-
-    protected ObjectTree buildFrom(ObjectCompiler root) {
-        ObjectTree tree = new ObjectTree(root.getFile(), root.getFile().getName());
-        for (ObjectCompiler child : root.childs) {
-            tree.add(buildFrom(child));
-        }
-        return tree;
     }
 
     public boolean isCaseSensitive() {

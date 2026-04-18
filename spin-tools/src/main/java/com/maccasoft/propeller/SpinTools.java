@@ -198,8 +198,8 @@ public class SpinTools {
                     Program.launch(fileToOpen.getAbsolutePath());
                 }
             }
-            else if (selection.getFirstElement() instanceof ObjectTree objectTree) {
-                File fileToOpen = objectTree.getFile();
+            else if (selection.getFirstElement() instanceof ObjectBrowser.Element element) {
+                File fileToOpen = element.getFile();
                 if (fileToOpen.isDirectory()) {
                     return;
                 }
@@ -283,7 +283,7 @@ public class SpinTools {
             OutlineView outlineView = editorTab.getOutlineView();
             EditorTab targetEditorTab = getTargetObjectEditorTab();
             if (targetEditorTab == null || targetEditorTab == editorTab) {
-                objectBrowser.setInput(null, false);
+                objectBrowser.clear();
                 topObjectItem.setSelection(false);
                 topObjectToolItem.setSelection(false);
                 topObjectTabItem.setSelection(false);
@@ -1948,7 +1948,7 @@ public class SpinTools {
             switch (evt.getPropertyName()) {
                 case EditorTab.OBJECT_TREE:
                     if (evt.getSource() == topEditorTab) {
-                        objectBrowser.setInput((ObjectTree) evt.getNewValue(), topEditorTab.isTopObject());
+                        objectBrowser.setInput((SpinObject) evt.getNewValue(), topEditorTab.isTopObject());
                     }
                     break;
             }
@@ -2305,7 +2305,7 @@ public class SpinTools {
         hookListeners(editorTab);
 
         blockSelectionItem.setSelection(editorTab.isBlockSelection());
-        objectBrowser.setInput(null, false);
+        objectBrowser.clear();
 
         tabFolder.getDisplay().asyncExec(new Runnable() {
 
@@ -2551,7 +2551,7 @@ public class SpinTools {
                     + "Archived : " + dateTimeFormat.format(now) + System.lineSeparator()
                     + "    Tool : " + APP_TITLE + " version " + APP_VERSION + System.lineSeparator()
                     + System.lineSeparator()
-                    + editorTab.getObjectTree();
+                    + buildObjectTree(0, editorTab.getObject());
 
                 archiveStream.putNextEntry(new ZipEntry("_README_.txt"));
                 archiveStream.write(text.getBytes());
@@ -2562,6 +2562,24 @@ public class SpinTools {
                 e.printStackTrace();
             }
         }
+    }
+
+    String buildObjectTree(int indent, SpinObject object) {
+        StringBuilder sb = new StringBuilder();
+
+        if (indent != 0) {
+            for (int i = 1; i < indent; i++) {
+                sb.append("     ");
+            }
+            sb.append(" +-- ");
+        }
+        sb.append(object.getFile().getName()).append("\r\n");
+
+        for (SpinObject child : object.getChildObjects()) {
+            sb.append(buildObjectTree(indent + 1, child));
+        }
+
+        return sb.toString();
     }
 
     EditorTab openOrSwitchToTab(File fileToOpen) {
@@ -3381,13 +3399,13 @@ public class SpinTools {
         if (obj instanceof Spin1Object) {
             P1MemoryDialog dlg = new P1MemoryDialog(shell);
             dlg.setTheme(preferences.getTheme());
-            dlg.setObject((Spin1Object) obj, editorTab.getObjectTree(), editorTab.isTopObject());
+            dlg.setObject((Spin1Object) obj, editorTab.isTopObject());
             dlg.open();
         }
         else if (obj instanceof Spin2Object) {
             P2MemoryDialog dlg = new P2MemoryDialog(shell);
             dlg.setTheme(preferences.getTheme());
-            dlg.setObject((Spin2Object) obj, editorTab.getObjectTree(), editorTab.isTopObject());
+            dlg.setObject((Spin2Object) obj, editorTab.isTopObject());
             dlg.open();
         }
     }
@@ -3991,7 +4009,7 @@ public class SpinTools {
         if (tabItem != null) {
             EditorTab editorTab = (EditorTab) tabItem.getData();
             editorTab.toggleTopObject();
-            objectBrowser.setInput(editorTab.getObjectTree(), editorTab.isTopObject());
+            objectBrowser.setInput(editorTab.getObject(), editorTab.isTopObject());
             topObjectItem.setSelection(editorTab.isTopObject());
             topObjectTabItem.setSelection(editorTab.isTopObject());
             topObjectToolItem.setSelection(editorTab.isTopObject());
@@ -4116,7 +4134,7 @@ public class SpinTools {
             EditorTab editorTab = (EditorTab) tabItem.getData();
 
             if (getTargetObjectEditorTab() == editorTab) {
-                objectBrowser.setInput(editorTab.getObjectTree(), editorTab.isTopObject());
+                objectBrowser.setInput(editorTab.getObject(), editorTab.isTopObject());
             }
             outlineViewStack.setTopView(editorTab.getOutlineView());
             if (findReplaceDialog != null) {
@@ -4131,7 +4149,7 @@ public class SpinTools {
         }
         else {
             if (getTargetObjectEditorTab() == null) {
-                objectBrowser.setInput(null, false);
+                objectBrowser.clear();
             }
             outlineViewStack.setTopView(null);
             if (findReplaceDialog != null) {

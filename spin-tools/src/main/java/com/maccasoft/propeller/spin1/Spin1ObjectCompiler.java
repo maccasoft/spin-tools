@@ -21,8 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.commons.collections4.map.ListOrderedMap;
-
 import com.maccasoft.propeller.Compiler.ObjectInfo;
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.ObjectCompiler;
@@ -69,7 +67,6 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
     List<Variable> variables = new ArrayList<>();
     List<Spin1Method> methods = new ArrayList<>();
-    Map<String, ObjectInfo> objects = ListOrderedMap.listOrderedMap(new HashMap<>());
 
     int clkMode;
     int xinFreq;
@@ -491,13 +488,8 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
     }
 
     @Override
-    public List<LinkDataObject> getObjectLinks() {
-        return objectLinks;
-    }
-
-    @Override
     public Spin1Object generateObject(int memoryOffset) {
-        Spin1Object object = new Spin1Object();
+        Spin1Object object = new Spin1Object(getFile());
 
         object.setClkFreq(clkFreq);
         object.setClkMode(clkMode);

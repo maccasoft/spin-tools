@@ -10,6 +10,7 @@
 package com.maccasoft.propeller.spin2;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -92,6 +93,10 @@ public class Spin2Object extends SpinObject {
 
     public Spin2Object() {
 
+    }
+
+    public Spin2Object(File file) {
+        super(file);
     }
 
     public void setClockSetter(boolean clockSetter) {

@@ -25,7 +25,6 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
-import org.apache.commons.collections4.map.ListOrderedMap;
 
 import com.maccasoft.propeller.Compiler.ObjectInfo;
 import com.maccasoft.propeller.CompilerException;
@@ -81,7 +80,6 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
     List<Variable> variables = new ArrayList<>();
     List<Spin2Method> methods = new ArrayList<>();
-    Map<String, ObjectInfo> objects = ListOrderedMap.listOrderedMap(new HashMap<>());
 
     int objectVarSize;
 
@@ -575,13 +573,8 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
     }
 
     @Override
-    public List<LinkDataObject> getObjectLinks() {
-        return objectLinks;
-    }
-
-    @Override
     public Spin2Object generateObject(int memoryOffset) {
-        Spin2Object object = new Spin2Object();
+        Spin2Object object = new Spin2Object(getFile());
 
         Expression exp = scope.getSystemSymbol("CLKFREQ_");
         if (exp != null) {
@@ -1346,7 +1339,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
         }
 
         try {
-            ObjectInfo info = compiler.getObjectInfo(Spin2ObjectCompiler.this, file, parameters);
+            ObjectInfo info = compiler.getObjectInfo(this, file, parameters);
             if (info == null) {
                 logMessage(new CompilerException("object " + fileName + " not found", fileToken));
                 return;

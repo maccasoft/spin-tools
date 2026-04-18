@@ -18,7 +18,6 @@ import java.util.Map.Entry;
 import com.maccasoft.propeller.Compiler;
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.ObjectCompiler;
-import com.maccasoft.propeller.SpinObject;
 import com.maccasoft.propeller.SpinObject.CommentDataObject;
 import com.maccasoft.propeller.SpinObject.DataObject;
 import com.maccasoft.propeller.SpinObject.LinkDataObject;
@@ -38,8 +37,6 @@ public class Spin2Compiler extends Compiler {
 
     protected Spin2Interpreter interpreter;
     protected Spin2Debugger debugger;
-
-    protected List<ObjectInfo> childObjects = new ArrayList<>();
 
     boolean compress;
     Spin2ObjectCompiler objectCompiler;
@@ -110,26 +107,28 @@ public class Spin2Compiler extends Compiler {
 
         for (ObjectInfo info : childObjects) {
             info.offset = object.getSize();
-            SpinObject linkedObject = info.compiler.generateObject(memoryOffset);
-            object.writeObject(linkedObject);
-            memoryOffset += linkedObject.getSize();
+            info.object = info.compiler.generateObject(memoryOffset);
+            object.writeObject(info.object);
+            memoryOffset += info.object.getSize();
         }
 
         for (ObjectInfo info : childObjects) {
-            for (LinkDataObject linkData : info.compiler.getObjectLinks()) {
+            for (LinkDataObject linkData : info.object.getObjectLinks()) {
                 for (ObjectInfo info2 : childObjects) {
                     if (linkData.isObjectCompiler(info2.compiler)) {
                         linkData.setOffset(info2.offset - info.offset);
+                        info.object.addChildObject(info2.object);
                         break;
                     }
                 }
             }
         }
 
-        for (LinkDataObject linkData : objectCompiler.getObjectLinks()) {
+        for (LinkDataObject linkData : object.getObjectLinks()) {
             for (ObjectInfo info : childObjects) {
                 if (linkData.isObjectCompiler(info.compiler)) {
                     linkData.setOffset(info.offset);
+                    object.addChildObject(info.object);
                     break;
                 }
             }
@@ -148,7 +147,7 @@ public class Spin2Compiler extends Compiler {
         int stackFree = 512 * 1024;
 
         if (interpreter != null) {
-            interpreter.setVBase((interpreter.getPBase() + object.getSize()) | (objectCompiler.getObjectLinks().size() << 21));
+            interpreter.setVBase((interpreter.getPBase() + object.getSize()) | (object.getObjectLinks().size() << 21));
             interpreter.setDBase(interpreter.getPBase() + object.getSize() + object.getVarSize());
             interpreter.setClearLongs(255 + ((object.getVarSize() + 3) / 4));
             stackFree -= interpreter.getDBase();
@@ -168,8 +167,6 @@ public class Spin2Compiler extends Compiler {
         if (stackFree < 0) {
             logMessage(new CompilerException(file, "program exceeds runtime memory limit by " + Math.abs(stackFree) + " bytes.", null));
         }
-
-        tree = buildFrom(objectCompiler);
 
         return object;
 

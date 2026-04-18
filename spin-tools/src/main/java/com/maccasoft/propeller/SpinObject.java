@@ -10,6 +10,7 @@
 package com.maccasoft.propeller;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -360,6 +361,8 @@ public abstract class SpinObject {
 
     }
 
+    File file;
+
     int clkfreq;
     int clkmode;
     int varSize;
@@ -371,6 +374,31 @@ public abstract class SpinObject {
 
     public SpinObject() {
 
+    }
+
+    public SpinObject(File file) {
+        this.file = file;
+    }
+
+    public String getName() {
+        return file != null ? file.getName() : null;
+    }
+
+    public File getFile() {
+        return file;
+    }
+
+    public void addChildObject(SpinObject object) {
+        for (SpinObject child : childObjects) {
+            if (child == object) {
+                return;
+            }
+        }
+        childObjects.add(object);
+    }
+
+    public List<SpinObject> getChildObjects() {
+        return childObjects;
     }
 
     public LongDataObject writeLong(int value) {
@@ -597,6 +625,18 @@ public abstract class SpinObject {
         }
         SpinObject other = (SpinObject) obj;
         return Objects.equals(data, other.data) && varSize == other.varSize;
+    }
+
+    public List<LinkDataObject> getObjectLinks() {
+        List<LinkDataObject> list = new ArrayList<>();
+
+        for (DataObject obj : data) {
+            if (obj instanceof LinkDataObject linkDataObjects) {
+                list.add(linkDataObjects);
+            }
+        }
+
+        return list;
     }
 
 }

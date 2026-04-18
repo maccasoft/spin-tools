@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -42,6 +42,32 @@ import com.maccasoft.propeller.internal.ImageRegistry;
 
 public class ObjectBrowser {
 
+    static class Element {
+
+        Element parent;
+        SpinObject object;
+
+        Element[] childs = new Element[0];
+
+        public Element(SpinObject object) {
+            this.object = object;
+        }
+
+        public Element(Element parent, SpinObject object) {
+            this.parent = parent;
+            this.object = object;
+        }
+
+        public String getName() {
+            return object.getFile().getName();
+        }
+
+        public File getFile() {
+            return object.getFile();
+        }
+
+    }
+
     Display display;
     TreeViewer viewer;
 
@@ -67,11 +93,11 @@ public class ObjectBrowser {
 
             @Override
             public void update(ViewerCell cell) {
-                ObjectTree element = (ObjectTree) cell.getElement();
+                Element element = (Element) cell.getElement();
                 String text = element.getName();
 
                 cell.setText(text);
-                if (element.getParent() == null && topObject) {
+                if (element.parent == null && topObject) {
                     StyleRange range = new StyleRange(topObjectStyle);
                     range.start = 0;
                     range.length = text.length();
@@ -100,22 +126,22 @@ public class ObjectBrowser {
 
             @Override
             public Object[] getElements(Object inputElement) {
-                return (ObjectTree[]) inputElement;
+                return (Element[]) inputElement;
             }
 
             @Override
             public Object[] getChildren(Object parentElement) {
-                return ((ObjectTree) parentElement).getChilds();
+                return ((Element) parentElement).childs;
             }
 
             @Override
             public Object getParent(Object element) {
-                return ((ObjectTree) element).getParent();
+                return ((Element) element).parent;
             }
 
             @Override
             public boolean hasChildren(Object element) {
-                return ((ObjectTree) element).hasChildren();
+                return ((Element) element).childs.length != 0;
             }
 
         });
@@ -129,8 +155,8 @@ public class ObjectBrowser {
                 if (item == lastItem) {
                     return;
                 }
-                if (item != null && (item.getData() instanceof ObjectTree)) {
-                    viewer.getTree().setToolTipText(((ObjectTree) item.getData()).getFile().getAbsolutePath());
+                if (item != null && (item.getData() instanceof Element element)) {
+                    viewer.getTree().setToolTipText(element.getFile().getAbsolutePath());
                 }
                 else {
                     viewer.getTree().setToolTipText(null);
@@ -147,7 +173,7 @@ public class ObjectBrowser {
                 if (selection.isEmpty()) {
                     return;
                 }
-                ObjectTree object = (ObjectTree) selection.getFirstElement();
+                Element object = (Element) selection.getFirstElement();
                 if (object != null) {
                     viewer.getTree().setToolTipText(object.getFile().getAbsolutePath());
                 }
@@ -163,6 +189,7 @@ public class ObjectBrowser {
             public void widgetDisposed(DisposeEvent e) {
                 fontBold.dispose();
             }
+
         });
 
         Preferences preferences = Preferences.getInstance();
@@ -210,17 +237,20 @@ public class ObjectBrowser {
         viewer.getControl().setFocus();
     }
 
-    public void setInput(ObjectTree input, boolean topObject) {
+    public void setInput(SpinObject object, boolean topObject) {
         viewer.getControl().setRedraw(false);
         try {
             this.topObject = topObject;
-            if (input == null) {
+            if (object == null) {
                 topObjectFolder = null;
-                viewer.setInput(new ObjectTree[0]);
+                viewer.setInput(new Element[0]);
             }
             else {
-                topObjectFolder = input.getFile().getAbsoluteFile().getParent() + File.separator;
-                viewer.setInput(new ObjectTree[] {
+                Element input = new Element(object);
+                buildElementTree(input, object);
+
+                topObjectFolder = object.getFile().getAbsoluteFile().getParent() + File.separator;
+                viewer.setInput(new Element[] {
                     input
                 });
                 viewer.expandAll();
@@ -228,6 +258,21 @@ public class ObjectBrowser {
         } finally {
             viewer.getControl().setRedraw(true);
         }
+    }
+
+    void buildElementTree(Element parent, SpinObject object) {
+        int index = 0;
+        parent.childs = new Element[object.getChildObjects().size()];
+        for (SpinObject child : object.getChildObjects()) {
+            parent.childs[index] = new Element(parent, child);
+            buildElementTree(parent.childs[index], child);
+            index++;
+        }
+    }
+
+    public void clear() {
+        topObject = false;
+        viewer.setInput(new Element[0]);
     }
 
     public boolean getVisible() {

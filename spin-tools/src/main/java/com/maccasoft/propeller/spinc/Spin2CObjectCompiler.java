@@ -20,8 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.commons.collections4.map.ListOrderedMap;
-
 import com.maccasoft.propeller.Compiler.ObjectInfo;
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.ObjectCompiler;
@@ -86,7 +84,6 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
     List<Variable> variables = new ArrayList<>();
     List<Spin2MethodLine> setupLines = new ArrayList<>();
     List<Spin2Method> methods = new ArrayList<>();
-    Map<String, ObjectInfo> objects = ListOrderedMap.listOrderedMap(new HashMap<>());
 
     Map<String, Expression> publicSymbols = new HashMap<String, Expression>();
     List<LinkDataObject> objectLinks = new ArrayList<>();
@@ -1673,13 +1670,8 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
     }
 
     @Override
-    public List<LinkDataObject> getObjectLinks() {
-        return objectLinks;
-    }
-
-    @Override
     public Spin2Object generateObject(int memoryOffset) {
-        Spin2Object object = new Spin2Object();
+        Spin2Object object = new Spin2Object(getFile());
 
         Expression exp = scope.getSystemSymbol("CLKFREQ_");
         if (exp != null) {

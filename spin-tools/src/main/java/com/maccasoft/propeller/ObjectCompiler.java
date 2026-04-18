@@ -11,11 +11,15 @@ package com.maccasoft.propeller;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
-import com.maccasoft.propeller.SpinObject.LinkDataObject;
+import org.apache.commons.collections4.map.ListOrderedMap;
+
+import com.maccasoft.propeller.Compiler.ObjectInfo;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.model.DirectiveNode;
@@ -28,9 +32,9 @@ public abstract class ObjectCompiler {
 
     ObjectCompiler parent;
     File file;
-    protected Context scope;
 
-    List<ObjectCompiler> childs = new ArrayList<>();
+    protected Context scope;
+    protected Map<String, ObjectInfo> objects = ListOrderedMap.listOrderedMap(new HashMap<>());
 
     boolean errors;
     List<CompilerException> messages = new ArrayList<>();
@@ -45,13 +49,14 @@ public abstract class ObjectCompiler {
         this.parent = parent;
         this.file = file;
         this.scope = new Context(scope);
-        if (parent != null) {
-            parent.childs.add(this);
-        }
     }
 
     public ObjectCompiler getParent() {
         return parent;
+    }
+
+    public Collection<ObjectInfo> getObjects() {
+        return objects.values();
     }
 
     public File getFile() {
@@ -73,8 +78,6 @@ public abstract class ObjectCompiler {
     public abstract int getVarSize();
 
     public abstract SpinObject generateObject(int memoryOffset);
-
-    public abstract List<LinkDataObject> getObjectLinks();
 
     public static class Condition {
 

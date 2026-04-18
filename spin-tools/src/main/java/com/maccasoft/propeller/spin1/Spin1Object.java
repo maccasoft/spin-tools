@@ -10,6 +10,7 @@
 package com.maccasoft.propeller.spin1;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 
@@ -59,6 +60,10 @@ public class Spin1Object extends SpinObject {
 
     public Spin1Object() {
 
+    }
+
+    public Spin1Object(File file) {
+        super(file);
     }
 
     public int getDcurr() {
