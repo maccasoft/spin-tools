@@ -20,6 +20,8 @@ import java.util.List;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.resource.JFaceResources;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
@@ -74,6 +76,13 @@ public class P2MemoryDialog extends Dialog {
     Canvas canvas;
     StyledText styledText;
 
+    Label codeData;
+    Label codeDataValue;
+    Label variables;
+    Label variablesValue;
+    Label stackFree;
+    Label stackFreeValue;
+
     Font font;
     FontMetrics fontMetrics;
     Color codeBackground;
@@ -84,6 +93,7 @@ public class P2MemoryDialog extends Dialog {
     boolean topObject;
 
     byte[] data;
+    SpinObject selectedObject;
 
     int clkfreq;
     int clkmode;
@@ -97,11 +107,10 @@ public class P2MemoryDialog extends Dialog {
 
     public P2MemoryDialog(Shell parentShell) {
         super(parentShell);
+        this.display = parentShell.getDisplay();
     }
 
     public void setTheme(String id) {
-        Display display = Display.getDefault();
-
         if ("win32".equals(SWT.getPlatform()) && id == null) {
             if (Display.isSystemDarkTheme()) {
                 id = "dark";
@@ -250,6 +259,8 @@ public class P2MemoryDialog extends Dialog {
             }
         });
 
+        updateView();
+
         return content;
     }
 
@@ -290,6 +301,17 @@ public class P2MemoryDialog extends Dialog {
         objectTree.setBackground(listBackground);
         objectTree.setForeground(listForeground);
         objectTree.setInput(object, topObject);
+
+        objectTree.addSelectionChangedListener(new ISelectionChangedListener() {
+
+            @Override
+            public void selectionChanged(SelectionChangedEvent event) {
+                ObjectBrowser.Element element = (ObjectBrowser.Element) event.getStructuredSelection().getFirstElement();
+                selectedObject = element != null ? element.object : null;
+                updateView();
+            }
+
+        });
 
         Composite group = new Composite(container, SWT.NONE);
         group.setLayout(new GridLayout(3, false));
@@ -343,12 +365,12 @@ public class P2MemoryDialog extends Dialog {
 
         if (dbgsize != 0) {
             label = new Label(group, SWT.NONE);
-            label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+            label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
             label.setText("Debugger");
             label.setForeground(labelForeground);
             label.setLayoutData(new GridData(convertWidthInCharsToPixels(30), SWT.DEFAULT));
-            label = new Label(group, SWT.NONE);
-            label.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
+            label = new Label(group, SWT.RIGHT);
+            label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
             label.setText(String.format("%d bytes", dbgsize));
             label.setForeground(labelForeground);
             label = new Label(group, SWT.BORDER);
@@ -357,50 +379,47 @@ public class P2MemoryDialog extends Dialog {
         }
 
         label = new Label(group, SWT.NONE);
-        label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
         label.setText("Interpreter");
         label.setForeground(labelForeground);
         label.setLayoutData(new GridData(convertWidthInCharsToPixels(30), SWT.DEFAULT));
-        label = new Label(group, SWT.NONE);
-        label.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
+        label = new Label(group, SWT.RIGHT);
+        label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         label.setText(String.format("%d bytes", pbase));
         label.setForeground(labelForeground);
         label = new Label(group, SWT.BORDER);
         label.setBackground(listBackground);
         label.setLayoutData(new GridData(convertWidthInCharsToPixels(5), SWT.DEFAULT));
 
-        label = new Label(group, SWT.NONE);
-        label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-        label.setText("Code / Data");
-        label.setForeground(labelForeground);
-        label = new Label(group, SWT.NONE);
-        label.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
-        label.setText(String.format("%d bytes", vbase - pbase));
-        label.setForeground(labelForeground);
+        codeData = new Label(group, SWT.NONE);
+        codeData.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
+        codeData.setText("Code / Data");
+        codeData.setForeground(labelForeground);
+        codeDataValue = new Label(group, SWT.RIGHT);
+        codeDataValue.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        codeDataValue.setForeground(labelForeground);
         label = new Label(group, SWT.BORDER);
         label.setBackground(codeBackground);
         label.setLayoutData(new GridData(convertWidthInCharsToPixels(5), SWT.DEFAULT));
 
-        label = new Label(group, SWT.NONE);
-        label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-        label.setText("Variables");
-        label.setForeground(labelForeground);
-        label = new Label(group, SWT.NONE);
-        label.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
-        label.setText(String.format("%d bytes", dbase - vbase));
-        label.setForeground(labelForeground);
+        variables = new Label(group, SWT.NONE);
+        variables.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
+        variables.setText("Variables");
+        variables.setForeground(labelForeground);
+        variablesValue = new Label(group, SWT.RIGHT);
+        variablesValue.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        variablesValue.setForeground(labelForeground);
         label = new Label(group, SWT.BORDER);
         label.setLayoutData(new GridData(convertWidthInCharsToPixels(5), SWT.DEFAULT));
         label.setBackground(variablesBackground);
 
-        label = new Label(group, SWT.NONE);
-        label.setText("Stack / Free");
-        label.setForeground(labelForeground);
-        label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-        label = new Label(group, SWT.NONE);
-        label.setText(String.format("%d bytes", data.length - dbase));
-        label.setForeground(labelForeground);
-        label.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
+        stackFree = new Label(group, SWT.NONE);
+        stackFree.setText("Stack / Free");
+        stackFree.setForeground(labelForeground);
+        stackFree.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
+        stackFreeValue = new Label(group, SWT.RIGHT);
+        stackFreeValue.setForeground(labelForeground);
+        stackFreeValue.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         label = new Label(group, SWT.BORDER);
         label.setBackground(stackFreeBackground);
         label.setLayoutData(new GridData(convertWidthInCharsToPixels(5), SWT.DEFAULT));
@@ -428,12 +447,12 @@ public class P2MemoryDialog extends Dialog {
                 sb.append("RCSLOW");
                 break;
             case 0b10:
-                sb.append("XTAL" + Spin2Object.cm_cc.getValue(clkmode));
+                sb.append("XTAL").append(Spin2Object.cm_cc.getValue(clkmode));
                 break;
             case 0b11:
-                sb.append("XTAL" + Spin2Object.cm_cc.getValue(clkmode));
+                sb.append("XTAL").append(Spin2Object.cm_cc.getValue(clkmode));
                 if (Spin2Object.cm_pll.isSet(clkmode)) {
-                    sb.append("+PLL" + ((Spin2Object.cm_vco_mul.getValue(clkmode) + 1) / (Spin2Object.cm_xi_div.getValue(clkmode) + 1)) + "X");
+                    sb.append("+PLL").append((Spin2Object.cm_vco_mul.getValue(clkmode) + 1) / (Spin2Object.cm_xi_div.getValue(clkmode) + 1)).append("X");
                 }
                 break;
         }
@@ -513,74 +532,84 @@ public class P2MemoryDialog extends Dialog {
             }
         });
 
-        canvas.addListener(SWT.Paint, new Listener() {
+        Color unselecrtedForeground = new Color(128, 128, 128);
 
-            @Override
-            public void handleEvent(Event e) {
-                if (data == null) {
-                    return;
-                }
-
-                int byteWidth = (int) (fontMetrics.getAverageCharacterWidth() * 3);
-                int characterWidth = (int) fontMetrics.getAverageCharacterWidth();
-                int halfWidth = (int) (fontMetrics.getAverageCharacterWidth() / 2);
-
-                Rectangle rect = canvas.getClientArea();
-
-                int y = 0;
-                int addr = canvas.getVerticalBar().getSelection();
-                while (addr < data.length && y < rect.height) {
-                    e.gc.drawString(String.format("%05X", addr), 0, y, true);
-
-                    int x1 = 6 * characterWidth - halfWidth;
-                    int x2 = x1 + BYTES_PER_ROW * byteWidth + halfWidth;
-
-                    int addr1 = addr;
-                    for (int i = 0; i < BYTES_PER_ROW && addr1 < data.length; i++) {
-                        if (addr1 >= dbase + dbgsize) {
-                            e.gc.setBackground(stackFreeBackground);
-                        }
-                        else if (addr1 >= vbase + dbgsize) {
-                            e.gc.setBackground(variablesBackground);
-                        }
-                        else if (addr1 >= pbase + dbgsize) {
-                            e.gc.setBackground(codeBackground);
-                        }
-                        else if (addr1 >= dbgsize) {
-                            e.gc.setBackground(listBackground);
-                        }
-                        else {
-                            e.gc.setBackground(widgetBackground);
-                        }
-                        e.gc.fillRectangle(x1, y, byteWidth, fontMetrics.getHeight());
-                        e.gc.fillRectangle(x2, y, characterWidth, fontMetrics.getHeight());
-
-                        x1 += byteWidth;
-                        x2 += characterWidth;
-                        addr1++;
-                    }
-
-                    x1 = 6 * characterWidth;
-                    x2 = x1 + BYTES_PER_ROW * byteWidth;
-
-                    for (int i = 0; i < BYTES_PER_ROW && addr < data.length; i++) {
-                        e.gc.drawString(String.format("%02X", data[addr] & 0xFF), x1, y, true);
-                        if (data[addr] >= 0x20 && data[addr] < 0x7F) {
-                            e.gc.drawString(String.format("%c", data[addr] & 0xFF), x2, y, true);
-                        }
-                        else {
-                            e.gc.drawString(".", x2, y, true);
-                        }
-
-                        x1 += byteWidth;
-                        x2 += characterWidth;
-                        addr++;
-                    }
-
-                    y += fontMetrics.getHeight();
-                }
+        canvas.addListener(SWT.Paint, e -> {
+            if (data == null) {
+                return;
             }
 
+            int codeBegin = dbgsize + (selectedObject != null ? selectedObject.getAddress() : pbase);
+            int codeEnd = selectedObject != null ? codeBegin + selectedObject.getSize() : dbase;
+
+            int byteWidth = (int) (fontMetrics.getAverageCharacterWidth() * 3);
+            int characterWidth = (int) fontMetrics.getAverageCharacterWidth();
+            int halfWidth = (int) (fontMetrics.getAverageCharacterWidth() / 2);
+
+            Rectangle rect = canvas.getClientArea();
+
+            int y = 0;
+            int addr = canvas.getVerticalBar().getSelection();
+            while (addr < data.length && y < rect.height) {
+                e.gc.setForeground(listForeground);
+                e.gc.setBackground(listBackground);
+                e.gc.drawString(String.format("%05X", addr), 0, y, true);
+
+                int x1 = 6 * characterWidth - halfWidth;
+                int x2 = x1 + BYTES_PER_ROW * byteWidth + halfWidth;
+
+                int addr1 = addr;
+                for (int i = 0; i < BYTES_PER_ROW && addr1 < data.length; i++) {
+                    if (addr1 >= dbase + dbgsize) {
+                        e.gc.setBackground(stackFreeBackground);
+                    }
+                    else if (addr1 >= vbase + dbgsize) {
+                        e.gc.setBackground(variablesBackground);
+                    }
+                    else {
+                        if (addr1 < pbase + dbgsize) {
+                            e.gc.setBackground(listBackground);
+                        }
+                        else if (addr1 >= codeBegin && addr1 < codeEnd) {
+                            e.gc.setBackground(codeBackground);
+                        }
+                        else {
+                            e.gc.setBackground(listBackground);
+                        }
+                    }
+                    e.gc.fillRectangle(x1, y, byteWidth, fontMetrics.getHeight());
+                    e.gc.fillRectangle(x2, y, characterWidth, fontMetrics.getHeight());
+
+                    x1 += byteWidth;
+                    x2 += characterWidth;
+                    addr1++;
+                }
+
+                x1 = 6 * characterWidth;
+                x2 = x1 + BYTES_PER_ROW * byteWidth;
+
+                for (int i = 0; i < BYTES_PER_ROW && addr < data.length; i++) {
+                    if (addr >= pbase + dbgsize && (addr < codeBegin || addr >= codeEnd) && addr < vbase + dbgsize) {
+                        e.gc.setForeground(unselecrtedForeground);
+                    }
+                    else {
+                        e.gc.setForeground(listForeground);
+                    }
+                    e.gc.drawString(String.format("%02X", data[addr] & 0xFF), x1, y, true);
+                    if (data[addr] >= 0x20 && data[addr] < 0x7F) {
+                        e.gc.drawString(String.format("%c", data[addr] & 0xFF), x2, y, true);
+                    }
+                    else {
+                        e.gc.drawString(".", x2, y, true);
+                    }
+
+                    x1 += byteWidth;
+                    x2 += characterWidth;
+                    addr++;
+                }
+
+                y += fontMetrics.getHeight();
+            }
         });
 
         canvas.addControlListener(new ControlListener() {
@@ -598,6 +627,7 @@ public class P2MemoryDialog extends Dialog {
             @Override
             public void controlMoved(ControlEvent e) {
             }
+
         });
 
         canvas.addKeyListener(new KeyListener() {
@@ -648,32 +678,29 @@ public class P2MemoryDialog extends Dialog {
             @Override
             public void keyReleased(KeyEvent e) {
             }
+
         });
 
-        canvas.addTraverseListener(new TraverseListener() {
+        canvas.addTraverseListener(e -> {
+            e.doit = false;
+            if ((e.stateMask & SWT.CTRL) != 0) {
+                Event event = new Event();
+                event.character = e.character;
+                event.stateMask = e.stateMask;
+                event.detail = e.detail;
+                e.display.asyncExec(new Runnable() {
 
-            @Override
-            public void keyTraversed(TraverseEvent e) {
-                e.doit = false;
-                if ((e.stateMask & SWT.CTRL) != 0) {
-                    Event event = new Event();
-                    event.character = e.character;
-                    event.stateMask = e.stateMask;
-                    event.detail = e.detail;
-                    e.display.asyncExec(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            if (!canvas.isDisposed()) {
-                                Control control = canvas.getParent();
-                                while (!(control instanceof CTabFolder) && control.getParent() != null) {
-                                    control = control.getParent();
-                                }
-                                control.notifyListeners(SWT.Traverse, event);
+                    @Override
+                    public void run() {
+                        if (!canvas.isDisposed()) {
+                            Control control = canvas.getParent();
+                            while (!(control instanceof CTabFolder) && control.getParent() != null) {
+                                control = control.getParent();
                             }
+                            control.notifyListeners(SWT.Traverse, event);
                         }
-                    });
-                }
+                    }
+                });
             }
         });
 
@@ -725,55 +752,28 @@ public class P2MemoryDialog extends Dialog {
             public void keyReleased(KeyEvent e) {
             }
         });
-        styledText.addTraverseListener(new TraverseListener() {
+        styledText.addTraverseListener(e -> {
+            e.doit = false;
+            if ((e.stateMask & SWT.CTRL) != 0) {
+                Event event = new Event();
+                event.character = e.character;
+                event.stateMask = e.stateMask;
+                event.detail = e.detail;
+                e.display.asyncExec(new Runnable() {
 
-            @Override
-            public void keyTraversed(TraverseEvent e) {
-                e.doit = false;
-                if ((e.stateMask & SWT.CTRL) != 0) {
-                    Event event = new Event();
-                    event.character = e.character;
-                    event.stateMask = e.stateMask;
-                    event.detail = e.detail;
-                    e.display.asyncExec(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            if (!styledText.isDisposed()) {
-                                Control control = styledText.getParent();
-                                while (!(control instanceof CTabFolder) && control.getParent() != null) {
-                                    control = control.getParent();
-                                }
-                                control.notifyListeners(SWT.Traverse, event);
+                    @Override
+                    public void run() {
+                        if (!styledText.isDisposed()) {
+                            Control control = styledText.getParent();
+                            while (!(control instanceof CTabFolder) && control.getParent() != null) {
+                                control = control.getParent();
                             }
+                            control.notifyListeners(SWT.Traverse, event);
                         }
-                    });
-                }
+                    }
+                });
             }
         });
-
-        Thread thread = new Thread(new Runnable() {
-
-            @Override
-            public void run() {
-                ByteArrayOutputStream os = new ByteArrayOutputStream();
-                try {
-                    object.generateListing(new PrintStream(os));
-                    display.asyncExec(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            if (!styledText.isDisposed()) {
-                                styledText.setText(os.toString());
-                            }
-                        }
-                    });
-                } catch (Exception e) {
-                    // Do nothing
-                }
-            }
-        });
-        thread.start();
 
         return container;
     }
@@ -785,6 +785,7 @@ public class P2MemoryDialog extends Dialog {
     public void setObject(Spin2Object object, boolean topObject) {
         this.object = object;
         this.topObject = topObject;
+        this.selectedObject = null;
 
         try {
             data = object.getRAM();
@@ -807,6 +808,54 @@ public class P2MemoryDialog extends Dialog {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    void updateView() {
+        if (selectedObject == null || selectedObject == object) {
+            codeDataValue.setText(String.format("%d bytes", vbase - pbase));
+            variablesValue.setText(String.format("%d bytes", dbase - vbase));
+        }
+        else {
+            codeDataValue.setText(String.format("%d longs", selectedObject.getSize() / 4));
+            variablesValue.setText(String.format("%d longs", selectedObject.getVarSize() / 4));
+        }
+        stackFreeValue.setText(String.format("%d bytes", data.length - dbase));
+
+        if (selectedObject != null) {
+            ScrollBar verticalBar = canvas.getVerticalBar();
+            int targetAddress = dbgsize + selectedObject.getAddress();
+            if (targetAddress < verticalBar.getSelection() || targetAddress > verticalBar.getSelection() + verticalBar.getPageIncrement()) {
+                int pageIncrement = ((verticalBar.getPageIncrement() / BYTES_PER_ROW) / 2) * BYTES_PER_ROW;
+
+                int pageBegin = 0;
+                while (pageBegin + pageIncrement < targetAddress) {
+                    pageBegin += pageIncrement;
+                }
+                verticalBar.setSelection(pageBegin);
+            }
+        }
+
+        canvas.redraw();
+
+        Thread thread = new Thread(() -> {
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            try {
+                if (selectedObject == null) {
+                    object.generateListing(new PrintStream(os));
+                }
+                else {
+                    selectedObject.generateListing(selectedObject.getAddress(), new PrintStream(os));
+                }
+                display.asyncExec(() -> {
+                    if (!styledText.isDisposed()) {
+                        styledText.setText(os.toString());
+                    }
+                });
+            } catch (Exception e) {
+                // Do nothing
+            }
+        });
+        thread.start();
     }
 
     int readWord(int index) {

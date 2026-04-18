@@ -84,7 +84,7 @@ public class Spin1Compiler extends Compiler {
     public Spin1Object compile(File file, String text) {
         Spin1Object obj = compileObject(file, text);
 
-        Spin1Object object = new Spin1Object(file);
+        Spin1Object object = new Spin1Object(file, 0);
         for (SpinObject child : obj.getChildObjects()) {
             object.addChildObject(child);
         }

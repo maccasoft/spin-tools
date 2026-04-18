@@ -95,8 +95,8 @@ public class Spin2Object extends SpinObject {
 
     }
 
-    public Spin2Object(File file) {
-        super(file);
+    public Spin2Object(File file, int address) {
+        super(file, address);
     }
 
     public void setClockSetter(boolean clockSetter) {

@@ -191,8 +191,8 @@ public class SpinCompiler {
         binaryOptions.addOption(new Option("e", false, "output flash binary file (P2 only)"));
         binaryOptions.addOption(new Option("c", false, "output only DAT sections"));
         options.addOptionGroup(binaryOptions);
-        options.addOption(new Option("l", false, "output listing file"));
-        options.addOption(new Option("d", false, "enable debug (P2 only)"));
+        options.addOption(new Option("l", "list", false, "output listing file"));
+        options.addOption(new Option("d", "debug", false, "enable debug (P2 only)"));
         options.addOption(new Option("z", false, "compress binary (P2 only)"));
 
         OptionGroup targetOptions = new OptionGroup();

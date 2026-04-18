@@ -1406,7 +1406,7 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
     @Override
     public Spin1Object generateObject(int memoryOffset) {
         int address = 0, hubAddress = 0;
-        Spin1Object object = new Spin1Object(getFile());
+        Spin1Object object = new Spin1Object(getFile(), memoryOffset);
 
         if (scope.hasSymbol("CLKFREQ")) {
             object.setClkFreq(scope.getLocalSymbol("CLKFREQ").getNumber().intValue());

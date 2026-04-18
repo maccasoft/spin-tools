@@ -489,7 +489,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
     @Override
     public Spin1Object generateObject(int memoryOffset) {
-        Spin1Object object = new Spin1Object(getFile());
+        Spin1Object object = new Spin1Object(getFile(), memoryOffset);
 
         object.setClkFreq(clkFreq);
         object.setClkMode(clkMode);

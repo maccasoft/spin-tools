@@ -62,8 +62,8 @@ public class Spin1Object extends SpinObject {
 
     }
 
-    public Spin1Object(File file) {
-        super(file);
+    public Spin1Object(File file, int address) {
+        super(file, address);
     }
 
     public int getDcurr() {

@@ -103,13 +103,11 @@ public class Spin2Compiler extends Compiler {
         }
 
         Spin2Object object = objectCompiler.generateObject(memoryOffset);
-        memoryOffset += object.getSize();
 
         for (ObjectInfo info : childObjects) {
             info.offset = object.getSize();
-            info.object = info.compiler.generateObject(memoryOffset);
+            info.object = info.compiler.generateObject(memoryOffset + object.getSize());
             object.writeObject(info.object);
-            memoryOffset += info.object.getSize();
         }
 
         for (ObjectInfo info : childObjects) {

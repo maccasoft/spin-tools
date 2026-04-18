@@ -362,6 +362,7 @@ public abstract class SpinObject {
     }
 
     File file;
+    int address;
 
     int clkfreq;
     int clkmode;
@@ -376,16 +377,17 @@ public abstract class SpinObject {
 
     }
 
-    public SpinObject(File file) {
+    public SpinObject(File file, int address) {
         this.file = file;
-    }
-
-    public String getName() {
-        return file != null ? file.getName() : null;
+        this.address = address;
     }
 
     public File getFile() {
         return file;
+    }
+
+    public int getAddress() {
+        return address;
     }
 
     public void addChildObject(SpinObject object) {

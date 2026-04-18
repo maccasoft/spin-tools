@@ -323,4 +323,8 @@ public abstract class Compiler {
         return defines;
     }
 
+    protected void linkObjects(int memoryOffset, ObjectCompiler objectCompiler) {
+
+    }
+
 }
