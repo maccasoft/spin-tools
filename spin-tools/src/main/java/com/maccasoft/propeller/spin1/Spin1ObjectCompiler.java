@@ -865,6 +865,10 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
             logMessage(new CompilerException("expecting identifier", nameToken));
             return;
         }
+        if (objects.containsKey(nameToken.getText())) {
+            logMessage(new CompilerException("expecting unique object name", nameToken));
+            return;
+        }
 
         String name = nameToken.getText();
         Expression count = new NumberLiteral(1);
@@ -890,6 +894,14 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                     }
                     builder.addToken(token);
                 }
+                if (!"]".equals(token.getText())) {
+                    logMessage(new CompilerException("expecting ']'", token));
+                    return;
+                }
+                if (builder.getTokenCount() == 0) {
+                    logMessage(new CompilerException("expecting expression", sourceLine.getLastToken()));
+                    return;
+                }
                 count = builder.getExpression();
                 count.setData(builder.getTokens());
             } catch (CompilerException e) {
@@ -898,10 +910,6 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                 logMessage(new CompilerException(e, builder.getTokens()));
             }
 
-            if (!"]".equals(token.getText())) {
-                logMessage(new CompilerException("expecting ']'", token));
-                return;
-            }
             if (!sourceLine.hasMoreTokens()) {
                 logMessage(new CompilerException("expecting ':'", token.stop + 1));
                 return;
@@ -914,7 +922,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
             return;
         }
         if (!sourceLine.hasMoreTokens()) {
-            logMessage(new CompilerException("expecting object file name '" + token.getText() + "'", token));
+            logMessage(new CompilerException("expecting object file name", token.stop + 1));
             return;
         }
         Token fileToken = sourceLine.skipCommentsAndGetNextToken();
@@ -939,14 +947,14 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
         File file = compiler.getFile(fileName, ".spin");
         if (file == null) {
-            logMessage(new CompilerException("object " + fileName + " not found", fileToken));
+            logMessage(new CompilerException("object '" + fileName + "' not found", fileToken));
             return;
         }
 
         try {
             ObjectInfo info = compiler.getObjectInfo(Spin1ObjectCompiler.this, file, Collections.emptyMap());
             if (info == null) {
-                logMessage(new CompilerException("object " + fileName + " not found", fileToken));
+                logMessage(new CompilerException("object '" + fileName + "' not found", fileToken));
                 return;
             }
             objects.put(name, new ObjectInfo(info, count));
@@ -965,7 +973,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                         return;
                     }
                 }
-                logMessage(new CompilerException("object " + fileName + " has errors", fileToken));
+                logMessage(new CompilerException("object '" + fileName + "' has errors", fileToken));
             }
         } catch (CompilerException e) {
             logMessage(e);

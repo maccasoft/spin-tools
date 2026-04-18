@@ -1180,46 +1180,46 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
     void compileObject(SourceLine sourceLine) {
         Token token;
 
-        List<Token> list = new ArrayList<>();
-        while ((token = sourceLine.getNextToken()) != null) {
-            if (token.type == Token.NL) {
-                break;
-            }
-            if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT && token.type != Token.NEXT_LINE) {
-                list.add(token);
-            }
-        }
-
-        TokenIterator iter = new TokenIterator(list);
-
-        Token nameToken = iter.next();
+        Token nameToken = sourceLine.skipCommentsAndGetNextToken();
         if (nameToken.type != Token.KEYWORD) {
             logMessage(new CompilerException("expecting identifier", nameToken));
+            return;
+        }
+        if (objects.containsKey(nameToken.getText())) {
+            logMessage(new CompilerException("expecting unique object name", nameToken));
             return;
         }
 
         String name = nameToken.getText();
         Expression count = new NumberLiteral(1);
 
-        if (!iter.hasNext()) {
+        if (!sourceLine.hasMoreTokens()) {
             logMessage(new CompilerException("expecting ':' or '['", nameToken.stop + 1));
             return;
         }
-        token = iter.next();
+        token = sourceLine.skipCommentsAndGetNextToken();
 
         if ("[".equals(token.getText())) {
-            if (!iter.hasNext()) {
+            if (!sourceLine.hasMoreTokens()) {
                 logMessage(new CompilerException("expecting expression", token.stop + 1));
                 return;
             }
             Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope);
             try {
-                while (iter.hasNext()) {
-                    token = iter.next();
+                while (sourceLine.hasMoreTokens()) {
+                    token = sourceLine.skipCommentsAndGetNextToken();
                     if ("]".equals(token.getText())) {
                         break;
                     }
                     builder.addToken(token);
+                }
+                if (!"]".equals(token.getText())) {
+                    logMessage(new CompilerException("expecting ']'", token));
+                    return;
+                }
+                if (builder.getTokenCount() == 0) {
+                    logMessage(new CompilerException("expecting expression", sourceLine.getLastToken()));
+                    return;
                 }
                 count = builder.getExpression();
                 count.setData(builder.getTokens());
@@ -1228,26 +1228,22 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
             } catch (Exception e) {
                 logMessage(new CompilerException(e, builder.getTokens()));
             }
-            if (!"]".equals(token.getText())) {
-                logMessage(new CompilerException("expecting ']'", token));
-                return;
-            }
-            if (!iter.hasNext()) {
+            if (!sourceLine.hasMoreTokens()) {
                 logMessage(new CompilerException("expecting ':'", token.stop + 1));
                 return;
             }
-            token = iter.next();
+            token = sourceLine.skipCommentsAndGetNextToken();
         }
 
         if (!":".equals(token.getText())) {
             logMessage(new CompilerException("expecting ':'", token));
             return;
         }
-        if (!iter.hasNext()) {
-            logMessage(new CompilerException("expecting object file name '" + token.getText() + "'", token));
+        if (!sourceLine.hasMoreTokens()) {
+            logMessage(new CompilerException("expecting object file name", token.stop + 1));
             return;
         }
-        Token fileToken = iter.next();
+        Token fileToken = sourceLine.skipCommentsAndGetNextToken();
         if (fileToken.type != Token.STRING) {
             logMessage(new CompilerException("expecting object file name", fileToken));
             return;
@@ -1255,28 +1251,28 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
         Map<String, Expression> parameters = compiler.isCaseSensitive() ? new HashMap<>() : new CaseInsensitiveMap<>();
 
-        if (iter.hasNext()) {
-            token = iter.next();
+        if (sourceLine.hasMoreTokens()) {
+            token = sourceLine.skipCommentsAndGetNextToken();
             if (!"|".equals(token.getText())) {
                 logMessage(new CompilerException("expecting '|' or end of line", token));
                 return;
             }
-            if (!iter.hasNext()) {
-                logMessage(new CompilerException("expecting parameter name after '" + iter.current() + "'", iter.current()));
+            if (!sourceLine.hasMoreTokens()) {
+                logMessage(new CompilerException("expecting parameter name", token.stop + 1));
             }
-            while (iter.hasNext()) {
-                token = iter.next();
+            while (sourceLine.hasMoreTokens()) {
+                token = sourceLine.skipCommentsAndGetNextToken();
                 if (token.type != Token.KEYWORD) {
                     logMessage(new CompilerException("expecting parameter name", token));
                     break;
                 }
 
                 String identifier = token.getText();
-                if (!iter.hasNext()) {
-                    logMessage(new CompilerException("expecting '=' after '" + iter.current() + "'", iter.current()));
+                if (!sourceLine.hasMoreTokens()) {
+                    logMessage(new CompilerException("expecting '='", token.stop + 1));
                     break;
                 }
-                token = iter.next();
+                token = sourceLine.skipCommentsAndGetNextToken();
                 if (!"=".equals(token.getText())) {
                     logMessage(new CompilerException("expecting '='", token));
                     break;
@@ -1284,13 +1280,15 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
                 Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope);
                 try {
-                    while (iter.hasNext()) {
-                        token = iter.peekNext();
-                        if (",".equals(token.getText())) {
+                    while (sourceLine.hasMoreTokens()) {
+                        if (",".equals(sourceLine.skipCommentsAndPeekNextToken().getText())) {
                             break;
                         }
-                        builder.addToken(token);
-                        iter.next();
+                        builder.addToken(sourceLine.skipCommentsAndGetNextToken());
+                    }
+                    if (builder.getTokenCount() == 0) {
+                        logMessage(new CompilerException("expecting expression", token.stop + 1));
+                        return;
                     }
                     Expression expression = builder.getExpression();
                     parameters.put(identifier, expression);
@@ -1300,26 +1298,22 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     logMessage(new CompilerException(e, builder.getTokens()));
                 }
 
-                if (iter.hasNext()) {
-                    token = iter.next();
+                if (sourceLine.hasMoreTokens()) {
+                    token = sourceLine.skipCommentsAndGetNextToken();
                     if (",".equals(token.getText())) {
-                        if (!iter.hasNext()) {
-                            logMessage(new CompilerException("expecting parameter name after '" + iter.current() + "'", iter.current()));
+                        if (!sourceLine.hasMoreTokens()) {
+                            logMessage(new CompilerException("expecting parameter name", token.stop + 1));
                         }
                     }
                     else {
-                        logMessage(new CompilerException("expecting ','", token));
+                        logMessage(new CompilerException("expecting ',' or end of line", token));
                     }
                 }
             }
         }
 
-        if (iter.hasNext()) {
-            logMessage(new CompilerException("expecting end of line", iter.next()));
-        }
-
-        if (iter.hasNext()) {
-            logMessage(new CompilerException("expecting end of line", iter.next()));
+        if (sourceLine.hasMoreTokens()) {
+            logMessage(new CompilerException("expecting end of line", sourceLine.skipCommentsAndGetNextToken()));
         }
 
         String fileName = fileToken.getText();
@@ -1334,14 +1328,14 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
         File file = compiler.getFile(fileName, ".spin2");
         if (file == null) {
-            logMessage(new CompilerException("object " + fileName + " not found", fileToken));
+            logMessage(new CompilerException("object '" + fileName + "' not found", fileToken));
             return;
         }
 
         try {
             ObjectInfo info = compiler.getObjectInfo(this, file, parameters);
             if (info == null) {
-                logMessage(new CompilerException("object " + fileName + " not found", fileToken));
+                logMessage(new CompilerException("object '" + fileName + "' not found", fileToken));
                 return;
             }
             objects.put(name, new ObjectInfo(info, count));
@@ -1367,7 +1361,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         return;
                     }
                 }
-                logMessage(new CompilerException("object " + fileName + " has errors", fileToken));
+                logMessage(new CompilerException("object '" + fileName + "' has errors", fileToken));
             }
         } catch (CompilerException e) {
             logMessage(e);

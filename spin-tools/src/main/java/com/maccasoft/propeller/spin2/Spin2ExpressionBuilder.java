@@ -286,7 +286,7 @@ public class Spin2ExpressionBuilder {
 
         Token token = peek();
         if (token != null) {
-            throw new CompilerException("unexpected " + token.getText(), token);
+            throw new CompilerException("unexpected '" + token.getText() + "'", token);
         }
 
         return node;
@@ -470,7 +470,7 @@ public class Spin2ExpressionBuilder {
 
                 case "?":
                     if (!(right instanceof IfElse)) {
-                        throw new CompilerException("unsupported operator " + token.getText(), token);
+                        throw new CompilerException("unsupported operator '" + token.getText() + "'", token);
                     }
                     left = new IfElse(left, ((IfElse) right).getTrueTerm(), ((IfElse) right).getFalseTerm());
                     break;
@@ -479,7 +479,7 @@ public class Spin2ExpressionBuilder {
                     break;
 
                 default:
-                    throw new CompilerException("unsupported operator " + token.getText(), token);
+                    throw new CompilerException("unsupported operator '" + token.getText() + "'", token);
             }
         }
     }
@@ -528,7 +528,7 @@ public class Spin2ExpressionBuilder {
                 case "EXP":
                     return new Exp(parseAtom());
                 default:
-                    throw new CompilerException("invalid unary operator " + token.getText(), token);
+                    throw new CompilerException("invalid unary operator '" + token.getText() + "'", token);
             }
         }
 
@@ -546,7 +546,7 @@ public class Spin2ExpressionBuilder {
             Group expression = new Group(parseLevel(parseAtom(), 0));
             token = next();
             if (token == null || !")".equals(token.getText())) {
-                throw new CompilerException("expecting )", token == null ? tokens.getLast() : token);
+                throw new CompilerException("expecting ')'", token == null ? tokens.getLast() : token);
             }
             return expression;
         }
@@ -564,7 +564,7 @@ public class Spin2ExpressionBuilder {
             return compilePseudoFunction(token);
         }
 
-        throw new CompilerException("unexpected " + token.getText(), token);
+        throw new CompilerException("unexpected '" + token.getText() + "'", token);
     }
 
     protected Expression compilePseudoFunction(Token token) {
@@ -573,7 +573,7 @@ public class Spin2ExpressionBuilder {
             case "DEFINED": {
                 token = next();
                 if (token == null || !"(".equals(token.getText())) {
-                    throw new CompilerException("expecting (", token == null ? tokens.getLast() : token);
+                    throw new CompilerException("expecting '('", token == null ? tokens.getLast() : token);
                 }
                 token = next();
                 if (token == null) {
@@ -582,43 +582,43 @@ public class Spin2ExpressionBuilder {
                 Expression expression = new Defined(token.getText(), context);
                 token = next();
                 if (token == null || !")".equals(token.getText())) {
-                    throw new CompilerException("expecting )", token == null ? tokens.getLast() : token);
+                    throw new CompilerException("expecting ')'", token == null ? tokens.getLast() : token);
                 }
                 return expression;
             }
             case "FLOAT": {
                 token = next();
                 if (token == null || !"(".equals(token.getText())) {
-                    throw new CompilerException("expecting (", token == null ? tokens.getLast() : token);
+                    throw new CompilerException("expecting '('", token == null ? tokens.getLast() : token);
                 }
                 Expression expression = new com.maccasoft.propeller.expressions.Float(parseLevel(parseAtom(), 0));
                 token = next();
                 if (token == null || !")".equals(token.getText())) {
-                    throw new CompilerException("expecting )", token == null ? tokens.getLast() : token);
+                    throw new CompilerException("expecting ')'", token == null ? tokens.getLast() : token);
                 }
                 return expression;
             }
             case "TRUNC": {
                 token = next();
                 if (token == null || !"(".equals(token.getText())) {
-                    throw new CompilerException("expecting (", token == null ? tokens.getLast() : token);
+                    throw new CompilerException("expecting '('", token == null ? tokens.getLast() : token);
                 }
                 Expression expression = new Trunc(parseLevel(parseAtom(), 0));
                 token = next();
                 if (token == null || !")".equals(token.getText())) {
-                    throw new CompilerException("expecting )", token == null ? tokens.getLast() : token);
+                    throw new CompilerException("expecting ')'", token == null ? tokens.getLast() : token);
                 }
                 return expression;
             }
             case "ROUND": {
                 token = next();
                 if (token == null || !"(".equals(token.getText())) {
-                    throw new CompilerException("expecting (", token == null ? tokens.getLast() : token);
+                    throw new CompilerException("expecting '('", token == null ? tokens.getLast() : token);
                 }
                 Expression expression = new Round(parseLevel(parseAtom(), 0));
                 token = next();
                 if (token == null || !")".equals(token.getText())) {
-                    throw new CompilerException("expecting )", token == null ? tokens.getLast() : token);
+                    throw new CompilerException("expecting ')'", token == null ? tokens.getLast() : token);
                 }
                 return expression;
             }
@@ -626,12 +626,12 @@ public class Spin2ExpressionBuilder {
             case "FSQRT": {
                 token = next();
                 if (token == null || !"(".equals(token.getText())) {
-                    throw new CompilerException("expecting (", token == null ? tokens.getLast() : token);
+                    throw new CompilerException("expecting '('", token == null ? tokens.getLast() : token);
                 }
                 Expression expression = new Sqrt(parseLevel(parseAtom(), 0));
                 token = next();
                 if (token == null || !")".equals(token.getText())) {
-                    throw new CompilerException("expecting )", token == null ? tokens.getLast() : token);
+                    throw new CompilerException("expecting ')'", token == null ? tokens.getLast() : token);
                 }
                 return expression;
             }
@@ -639,31 +639,31 @@ public class Spin2ExpressionBuilder {
             case "FABS": {
                 token = next();
                 if (token == null || !"(".equals(token.getText())) {
-                    throw new CompilerException("expecting (", token == null ? tokens.getLast() : token);
+                    throw new CompilerException("expecting '('", token == null ? tokens.getLast() : token);
                 }
                 Expression expression = new Abs(parseLevel(parseAtom(), 0));
                 token = next();
                 if (token == null || !")".equals(token.getText())) {
-                    throw new CompilerException("expecting )", token == null ? tokens.getLast() : token);
+                    throw new CompilerException("expecting ')", token == null ? tokens.getLast() : token);
                 }
                 return expression;
             }
             case "NAN": {
                 token = next();
                 if (token == null || !"(".equals(token.getText())) {
-                    throw new CompilerException("expecting (", token == null ? tokens.getLast() : token);
+                    throw new CompilerException("expecting '('", token == null ? tokens.getLast() : token);
                 }
                 Expression expression = new Nan(parseLevel(parseAtom(), 0));
                 token = next();
                 if (token == null || !")".equals(token.getText())) {
-                    throw new CompilerException("expecting )", token == null ? tokens.getLast() : token);
+                    throw new CompilerException("expecting ')'", token == null ? tokens.getLast() : token);
                 }
                 return expression;
             }
             case "SIZEOF": {
                 token = next();
                 if (token == null || !"(".equals(token.getText())) {
-                    throw new CompilerException("expecting (", token == null ? tokens.getLast() : token);
+                    throw new CompilerException("expecting '('", token == null ? tokens.getLast() : token);
                 }
                 token = next();
                 if (token == null || token.type != Token.KEYWORD) {
@@ -672,14 +672,14 @@ public class Spin2ExpressionBuilder {
                 Expression expression = new SizeOf(token, context);
                 token = next();
                 if (token == null || !")".equals(token.getText())) {
-                    throw new CompilerException("expecting )", token == null ? tokens.getLast() : token);
+                    throw new CompilerException("expecting ')'", token == null ? tokens.getLast() : token);
                 }
                 return expression;
             }
             case "OFFSETOF": {
                 token = next();
                 if (token == null || !"(".equals(token.getText())) {
-                    throw new CompilerException("expecting (", token == null ? tokens.getLast() : token);
+                    throw new CompilerException("expecting '('", token == null ? tokens.getLast() : token);
                 }
                 token = next();
                 if (token == null || token.type != Token.KEYWORD) {
@@ -688,7 +688,7 @@ public class Spin2ExpressionBuilder {
                 Expression expression = new OffsetOf(token, context);
                 token = next();
                 if (token == null || !")".equals(token.getText())) {
-                    throw new CompilerException("expecting )", token == null ? tokens.getLast() : token);
+                    throw new CompilerException("expecting ')'", token == null ? tokens.getLast() : token);
                 }
                 return expression;
             }
