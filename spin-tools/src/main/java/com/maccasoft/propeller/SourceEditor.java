@@ -558,38 +558,36 @@ public class SourceEditor {
                 tokenMarker.adjustTokens(event.start, event.newCharCount, event.replaceCharCount);
 
                 for (CompilerException msg : compilerMessages) {
-                    if (msg.startToken != null && msg.stopToken != null) {
-                        if (event.newCharCount != 0) {
-                            if (event.start < msg.startToken.start) {
-                                msg.startToken.start += event.newCharCount;
-                                msg.stopToken.stop += event.newCharCount;
+                    if (event.newCharCount != 0) {
+                        if (event.start < msg.start) {
+                            msg.start += event.newCharCount;
+                            msg.stop += event.newCharCount;
+                        }
+                        else if (event.start <= msg.stop + 1) {
+                            msg.stop += event.newCharCount;
+                        }
+                    }
+                    if (event.replaceCharCount != 0) {
+                        if (event.start + event.replaceCharCount <= msg.start) {
+                            msg.start -= event.replaceCharCount;
+                            msg.stop -= event.replaceCharCount;
+                        }
+                        else if (event.start >= msg.start && event.start <= msg.stop) {
+                            if (event.start + event.replaceCharCount > msg.stop) {
+                                msg.stop -= msg.stop - event.start;
                             }
-                            else if (event.start <= msg.stopToken.stop + 1) {
-                                msg.stopToken.stop += event.newCharCount;
+                            else {
+                                msg.stop -= event.replaceCharCount;
                             }
                         }
-                        if (event.replaceCharCount != 0) {
-                            if (event.start + event.replaceCharCount <= msg.startToken.start) {
-                                msg.startToken.start -= event.replaceCharCount;
-                                msg.stopToken.stop -= event.replaceCharCount;
+                        else if (event.start < msg.start) {
+                            if (event.start + event.replaceCharCount <= msg.stop) {
+                                msg.stop -= (event.start + event.replaceCharCount) - msg.start;
+                                msg.stop -= msg.start - event.start;
+                                msg.start -= msg.start - event.start;
                             }
-                            else if (event.start >= msg.startToken.start && event.start <= msg.stopToken.stop) {
-                                if (event.start + event.replaceCharCount > msg.stopToken.stop) {
-                                    msg.stopToken.stop -= msg.stopToken.stop - event.start;
-                                }
-                                else {
-                                    msg.stopToken.stop -= event.replaceCharCount;
-                                }
-                            }
-                            else if (event.start < msg.startToken.start) {
-                                if (event.start + event.replaceCharCount <= msg.stopToken.stop) {
-                                    msg.stopToken.stop -= (event.start + event.replaceCharCount) - msg.startToken.start;
-                                    msg.stopToken.stop -= msg.startToken.start - event.start;
-                                    msg.startToken.start -= msg.startToken.start - event.start;
-                                }
-                                else {
-                                    msg.stopToken.stop = msg.startToken.start;
-                                }
+                            else {
+                                msg.stop = msg.start;
                             }
                         }
                     }
@@ -783,11 +781,9 @@ public class SourceEditor {
                     return;
                 }
 
-                int offset = styledText.getOffsetAtPoint(new Point(e.x, e.y));
-
-                CompilerException message = getCompilerMessageAtOffset(offset);
+                CompilerException message = getCompilerMessageAtOffset(new Point(e.x, e.y));
                 if (message != null) {
-                    Rectangle textBounds = styledText.getTextBounds(message.startToken.start, message.stopToken.stop);
+                    Rectangle textBounds = styledText.getTextBounds(message.start, message.stop);
 
                     popupMouseBounds = textBounds;
                     popupMouseBounds.x -= 5;
@@ -816,6 +812,10 @@ public class SourceEditor {
                     return;
                 }
 
+                int offset = styledText.getOffsetAtPoint(new Point(e.x, e.y));
+                if (offset == -1) {
+                    return;
+                }
                 Token token = tokenMarker.getTokenAt(offset);
                 if (token == null || token.type == Token.EOF) {
                     return;
@@ -910,10 +910,23 @@ public class SourceEditor {
                 }
             }
 
-            CompilerException getCompilerMessageAtOffset(int offset) {
+            CompilerException getCompilerMessageAtOffset(Point pt) {
+                Rectangle clientArea = styledText.getClientArea();
+                clientArea.x += styledText.getRightMargin();
+                clientArea.y += styledText.getTopMargin();
+                clientArea.width -= styledText.getRightMargin() + styledText.getLeftMargin();
+                clientArea.height -= styledText.getTopMargin() + styledText.getBottomMargin();
+
+                int rightOffset = styledText.getHorizontalPixel();
+                int lineHeight = styledText.getLineHeight();
+
                 for (CompilerException msg : compilerMessages) {
-                    if (msg.startToken != null && msg.stopToken != null) {
-                        if (offset >= msg.startToken.start && offset <= msg.stopToken.stop) {
+                    int line = styledText.getLineAtOffset(msg.start);
+                    int y = styledText.getLinePixel(line);
+                    int x = clientArea.x + (msg.start - styledText.getOffsetAtLine(line)) * charSize.x - rightOffset;
+                    int width = (msg.stop - msg.start + 1) * charSize.x;
+                    if (pt.y >= y && pt.y < y + lineHeight) {
+                        if (pt.x >= x && pt.x < x + width) {
                             return msg;
                         }
                     }
@@ -1116,33 +1129,37 @@ public class SourceEditor {
                     int lineHeight = styledText.getLineHeight();
 
                     for (CompilerException msg : compilerMessages) {
-                        int line = styledText.getLineAtOffset(msg.startToken.start);
-                        if (msg.type == CompilerException.WARNING && line >= topIndex && line <= bottomIndex) {
-                            try {
-                                int y = styledText.getLinePixel(line);
-                                int x = clientArea.x + (msg.startToken.start - styledText.getOffsetAtLine(line)) * charSize.x - rightOffset;
-                                int width = (msg.stopToken.stop - msg.startToken.start + 1) * charSize.x;
-                                int[] polyline = computePolyline(x, y, width, lineHeight);
-                                gc.setForeground(warningColor);
-                                gc.drawPolyline(polyline);
-                            } catch (Exception ignore) {
-                                // Ignore
+                        if (msg.type == CompilerException.WARNING) {
+                            int line = styledText.getLineAtOffset(msg.start);
+                            if (line >= topIndex && line <= bottomIndex) {
+                                try {
+                                    int y = styledText.getLinePixel(line);
+                                    int x = clientArea.x + (msg.start - styledText.getOffsetAtLine(line)) * charSize.x - rightOffset;
+                                    int width = (msg.stop - msg.start + 1) * charSize.x;
+                                    int[] polyline = computePolyline(x, y, width, lineHeight);
+                                    gc.setForeground(warningColor);
+                                    gc.drawPolyline(polyline);
+                                } catch (Exception ignore) {
+                                    // Ignore
+                                }
                             }
                         }
                     }
 
                     for (CompilerException msg : compilerMessages) {
-                        int line = styledText.getLineAtOffset(msg.startToken.start);
-                        if (msg.type == CompilerException.ERROR && msg.line >= topIndex && msg.line <= bottomIndex) {
-                            try {
-                                int y = styledText.getLinePixel(line);
-                                int x = clientArea.x + (msg.startToken.start - styledText.getOffsetAtLine(line)) * charSize.x - rightOffset;
-                                int width = (msg.stopToken.stop - msg.startToken.start + 1) * charSize.x;
-                                int[] polyline = computePolyline(x, y, width, lineHeight);
-                                gc.setForeground(errorColor);
-                                gc.drawPolyline(polyline);
-                            } catch (Exception ignore) {
-                                // Ignore
+                        if (msg.type == CompilerException.ERROR) {
+                            int line = styledText.getLineAtOffset(msg.start);
+                            if (msg.line >= topIndex && msg.line <= bottomIndex) {
+                                try {
+                                    int y = styledText.getLinePixel(line);
+                                    int x = clientArea.x + (msg.start - styledText.getOffsetAtLine(line)) * charSize.x - rightOffset;
+                                    int width = (msg.stop - msg.start + 1) * charSize.x;
+                                    int[] polyline = computePolyline(x, y, width, lineHeight);
+                                    gc.setForeground(errorColor);
+                                    gc.drawPolyline(polyline);
+                                } catch (Exception ignore) {
+                                    // Ignore
+                                }
                             }
                         }
                     }
@@ -2450,6 +2467,9 @@ public class SourceEditor {
         compilerMessages.clear();
 
         for (CompilerException msg : messages) {
+            if (msg.line == 0) {
+                msg.line = styledText.getLineAtOffset(msg.start) + 1;
+            }
             if (msg.type == CompilerException.ERROR) {
                 ruler.setHighlight(msg.line);
                 overview.setErrorHighlight(msg.line, msg.getMessage());

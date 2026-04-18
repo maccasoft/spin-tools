@@ -944,7 +944,7 @@ public class EditorTab implements FindReplaceTarget {
         int offset = editor.getStyledText().getCaretOffset();
 
         for (CompilerException msg : messages) {
-            if (msg.type == type && msg.startToken.start > offset) {
+            if (msg.type == type && msg.start > offset) {
                 return msg;
             }
         }
@@ -975,7 +975,7 @@ public class EditorTab implements FindReplaceTarget {
         int offset = editor.getStyledText().getCaretOffset();
 
         for (CompilerException msg : messages.reversed()) {
-            if (msg.type == type && msg.startToken.start < offset) {
+            if (msg.type == type && msg.start < offset) {
                 return msg;
             }
         }

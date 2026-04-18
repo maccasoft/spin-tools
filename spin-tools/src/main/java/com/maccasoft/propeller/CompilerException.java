@@ -33,8 +33,8 @@ public class CompilerException extends RuntimeException {
     public int line;
     public int column;
 
-    Token startToken;
-    Token stopToken;
+    int start;
+    int stop;
 
     List<CompilerException> childs = new ArrayList<>();
 
@@ -75,33 +75,37 @@ public class CompilerException extends RuntimeException {
 
         this.file = file;
         this.type = type;
-        this.line = 1;
 
         if (data instanceof Node node) {
             this.line = node.getStartToken().line + 1;
             this.column = node.getStartToken().column;
-            this.startToken = node.getStartToken();
-            this.stopToken = node.getStopToken();
+            this.start = node.getStartToken().start;
+            this.stop = node.getStopToken().stop;
         }
         else if (data instanceof Token token) {
             this.line = token.line + 1;
             this.column = token.column;
-            this.startToken = token;
-            this.stopToken = token;
+            this.start = token.start;
+            this.stop = token.stop;
         }
         else if (data instanceof List<?> c) {
+            this.start = Integer.MAX_VALUE;
+            this.stop = Integer.MIN_VALUE;
             for (Object o : c) {
                 if (o instanceof Token token) {
-                    if (this.startToken == null || token.start < this.startToken.start) {
-                        this.startToken = token;
+                    if (token.start < this.start) {
+                        this.start = token.start;
                         this.line = token.line + 1;
                         this.column = token.column;
                     }
-                    if (this.stopToken == null || token.start > this.stopToken.start) {
-                        this.stopToken = token;
+                    if (token.stop > this.stop) {
+                        this.stop = token.stop;
                     }
                 }
             }
+        }
+        else if (data instanceof Number number) {
+            this.start = this.stop = number.intValue();
         }
     }
 
@@ -119,14 +123,6 @@ public class CompilerException extends RuntimeException {
 
     public int getColumn() {
         return column;
-    }
-
-    public Token getStartToken() {
-        return startToken;
-    }
-
-    public Token getStopToken() {
-        return stopToken;
     }
 
     public void addMessage(CompilerException msg) {
