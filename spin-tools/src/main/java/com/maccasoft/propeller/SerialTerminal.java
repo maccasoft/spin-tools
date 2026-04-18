@@ -15,7 +15,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
 import org.eclipse.core.databinding.observable.Realm;
@@ -99,6 +98,55 @@ public class SerialTerminal {
 
     public static final int BACKBUFFER_LINES = 500;
 
+    static class Cell {
+        char character;
+        Color foreground;
+        Color background;
+
+        Cell(Color foreground, Color background) {
+            this.character = ' ';
+            this.foreground = foreground;
+            this.background = background;
+        }
+
+        void set(char character, Color foreground, Color background) {
+            this.character = character;
+            this.foreground = foreground;
+            this.background = background;
+        }
+
+        void set(Cell cell) {
+            this.character = cell.character;
+            this.foreground = cell.foreground;
+            this.background = cell.background;
+        }
+
+    }
+
+    static List<Integer> baudRates = Arrays.asList(new Integer[] {
+        300, 600, 1200, 2400, 4800, 9600, 19200, 31250, 38400, 57600, 115200,
+        230400, 250000, 460800, 921600, 1000000, 1500000, 1843200, 2000000, 3000000
+    });
+
+    static Color[] colors = new Color[] {
+        new Color(0, 0, 0),
+        new Color(170, 0, 0),
+        new Color(0, 170, 0),
+        new Color(170, 170, 0),
+        new Color(0, 0, 170),
+        new Color(170, 0, 170),
+        new Color(0, 170, 170),
+        new Color(170, 170, 170),
+        new Color(85, 85, 85),
+        new Color(255, 0, 0),
+        new Color(0, 255, 0),
+        new Color(255, 255, 0),
+        new Color(0, 0, 255),
+        new Color(255, 0, 255),
+        new Color(0, 255, 255),
+        new Color(255, 255, 255),
+    };
+
     Display display;
     Shell shell;
 
@@ -132,58 +180,17 @@ public class SerialTerminal {
     boolean localEcho;
     int historyIndex;
 
+    boolean backspaceClears;
+    boolean implicitCRLF;
+
     Preferences preferences;
 
-    static List<Integer> baudRates = Arrays.asList(new Integer[] {
-        300, 600, 1200, 2400, 4800, 9600, 19200, 31250, 38400, 57600, 115200,
-        230400, 250000, 460800, 921600, 1000000, 1500000, 1843200, 2000000, 3000000
-    });
-
-    Color[] colors = new Color[] {
-        new Color(0, 0, 0),
-        new Color(170, 0, 0),
-        new Color(0, 170, 0),
-        new Color(170, 170, 0),
-        new Color(0, 0, 170),
-        new Color(170, 0, 170),
-        new Color(0, 170, 170),
-        new Color(170, 170, 170),
-        new Color(85, 85, 85),
-        new Color(255, 0, 0),
-        new Color(0, 255, 0),
-        new Color(255, 255, 0),
-        new Color(0, 0, 255),
-        new Color(255, 0, 255),
-        new Color(0, 255, 255),
-        new Color(255, 255, 255),
-    };
-
-    TerminalEmulation emulation;
-
-    static class Cell {
-        char character;
-        Color foreground;
-        Color background;
-
-        Cell(Color foreground, Color background) {
-            this.character = ' ';
-            this.foreground = foreground;
-            this.background = background;
-        }
-
-        void set(char character, Color foreground, Color background) {
-            this.character = character;
-            this.foreground = foreground;
-            this.background = background;
-        }
-
-        void set(Cell cell) {
-            this.character = cell.character;
-            this.foreground = cell.foreground;
-            this.background = cell.background;
-        }
-
-    }
+    int state = 0;
+    int idx, argc, fg = 7, bg = 0;
+    int[] args = new int[16];
+    char prefix;
+    int savedCx, savedCy;
+    char lastCh;
 
     int topRow;
     Cell[][] screen = new Cell[0][0];
@@ -227,12 +234,13 @@ public class SerialTerminal {
             }
             display.timerExec(FRAME_TIMER, this);
         }
+
     };
 
     ComPortEventListener serialEventListener = new ComPortEventListener() {
 
         int index = 0, max = 0;
-        byte[] buf = new byte[4];
+        final byte[] buf = new byte[4];
 
         @Override
         public void serialEvent(ComPortEvent comPortEvent) {
@@ -275,534 +283,6 @@ public class SerialTerminal {
 
     };
 
-    abstract class TerminalEmulation {
-
-        void write(String s) {
-            for (int i = 0; i < s.length(); i++) {
-                write(s.charAt(i));
-            }
-        }
-
-        abstract void write(char c);
-    }
-
-    class ANSI extends TerminalEmulation {
-
-        static final String KEY = "ansi";
-
-        int state = 0;
-        int idx, argc, fg = 7, bg = 0;
-        int[] args = new int[16];
-        char prefix;
-        int savedCx, savedCy;
-
-        public ANSI() {
-            foreground = colors[7];
-            background = colors[0];
-        }
-
-        @Override
-        public void write(char c) {
-            if (c == 0x1B) {
-                argc = idx = 0;
-                args[0] = 0;
-                prefix = 0;
-                state = 1;
-                return;
-            }
-            switch (state) {
-                case 0:
-                    writeChar(c);
-                    break;
-
-                case 1:
-                    switch (c) {
-                        case '[':
-                            state = 2;
-                            break;
-                        case 'A':
-                            if (cy > screen.length) {
-                                cy--;
-                            }
-                            state = 0;
-                            break;
-                        case 'B':
-                            if (cy < (screen.length - screenHeight)) {
-                                cy++;
-                            }
-                            state = 0;
-                            break;
-                        case 'C':
-                            if (cx < screenWidth) {
-                                cy++;
-                            }
-                            state = 0;
-                            break;
-                        case 'D':
-                            if (cx > 0) {
-                                cx--;
-                            }
-                            state = 0;
-                            break;
-                        default:
-                            writeChar(c);
-                            break;
-                    }
-                    break;
-
-                case 2:
-                    switch (c) {
-                        case '0':
-                        case '1':
-                        case '2':
-                        case '3':
-                        case '4':
-                        case '5':
-                        case '6':
-                        case '7':
-                        case '8':
-                        case '9':
-                            if (idx == argc) {
-                                argc++;
-                                args[idx] = 0;
-                            }
-                            args[idx] = args[idx] * 10 + (c - '0');
-                            break;
-                        case ';':
-                            argc++;
-                            idx++;
-                            args[idx] = 0;
-                            break;
-                        case '?':
-                            prefix = c;
-                            break;
-
-                        case 'A':
-                            cy = screen.length - Math.max(cy - (argc == 0 || args[0] == 0 ? 1 : args[0]), 0);
-                            state = 0;
-                            break;
-                        case 'B':
-                            cy = screen.length - Math.min(cy + (argc == 0 || args[0] == 0 ? 1 : args[0]), screenHeight - 1);
-                            state = 0;
-                            break;
-                        case 'C':
-                            cx = Math.min(cx + (argc == 0 || args[0] == 0 ? 1 : args[0]), screenWidth - 1);
-                            state = 0;
-                            break;
-                        case 'D':
-                            cx = Math.max(cx - (argc == 0 || args[0] == 0 ? 1 : args[0]), 0);
-                            state = 0;
-                            break;
-
-                        case 'H':
-                        case 'f':
-                            redraw(cx, cy, 1, 1);
-                            if (argc == 0) {
-                                cx = 0;
-                                cy = screen.length - screenHeight;
-                            }
-                            else if (argc >= 2) {
-                                cy = (screen.length - screenHeight) + Math.min(args[0] > 0 ? (args[0] - 1) : 0, screenHeight - 1);
-                                cx = Math.min(args[1] > 0 ? (args[1] - 1) : 0, screenWidth - 1);
-                            }
-                            redraw(cx, cy, 1, 1);
-                            state = 0;
-                            break;
-
-                        case 'J': {
-                            redraw(cx, cy, 1, 1);
-                            if (argc == 0 || args[0] == 0) { // Erase from cursor until end of screen
-                                for (int x = cx; x < screenWidth; x++) {
-                                    screen[cy][x].set(' ', foreground, background);
-                                }
-                                for (int y = cy + 1; y < screen.length; y++) {
-                                    for (int x = cx; x < screenWidth; x++) {
-                                        screen[y][x].set(' ', foreground, background);
-                                    }
-                                }
-                                redraw(0, cy, screenWidth, screen.length - cy);
-                            }
-                            else if (args[0] == 1) { // Erase from cursor to beginning of screen
-                                for (int y = screen.length - screenHeight; y < cy; y++) {
-                                    for (int x = 0; x < screenWidth; x++) {
-                                        screen[y][x].set(' ', foreground, background);
-                                    }
-                                }
-                                for (int x = 0; x <= cx; x++) {
-                                    screen[cy][x].set(' ', foreground, background);
-                                }
-                                redraw(0, screen.length - screenHeight, screenWidth, cy - (screen.length - screenHeight) + 1);
-                            }
-                            else if (args[0] == 2) { // Erase entire screen
-                                for (int y = screen.length - screenHeight; y < screen.length; y++) {
-                                    for (int x = 0; x < screenWidth; x++) {
-                                        screen[y][x].set(' ', foreground, background);
-                                    }
-                                }
-                                redraw(0, screen.length - screenHeight, screenWidth, screenHeight);
-                            }
-                            state = 0;
-                            break;
-                        }
-
-                        case 'K': {
-                            cursorState &= ~CURSOR_DISPLAY;
-                            frameCounter = 0;
-                            redraw(cx, cy, 1, 1);
-                            if (argc == 0 || args[0] == 0) { // Erase from cursor to end of line
-                                for (int x = cx; x < screenWidth; x++) {
-                                    screen[cy][x].set(' ', foreground, background);
-                                }
-                            }
-                            else if (args[0] == 1) { // Erase from start of line to cursor
-                                for (int x = 0; x <= cx; x++) {
-                                    screen[cy][x].set(' ', foreground, background);
-                                }
-                            }
-                            else if (args[0] == 2) { // Erase entire line
-                                for (int x = 0; x < screenWidth; x++) {
-                                    screen[cy][x].set(' ', foreground, background);
-                                }
-                            }
-                            redraw(0, cy, screenWidth, 1);
-                            state = 0;
-                            break;
-                        }
-
-                        case 'm':
-                            for (int i = 0; i < argc; i++) {
-                                if (args[i] == 0) {
-                                    bg = 0;
-                                    fg = 7;
-                                }
-                                else if (args[i] == 1) {
-                                    fg |= 8;
-                                }
-                                else if (args[i] == 2) {
-                                    fg &= 7;
-                                }
-                                else if (args[i] == 5) {
-                                    cursorState |= CURSOR_FLASH;
-                                }
-                                else if (args[i] == 7) {
-                                    int t = fg;
-                                    fg = bg;
-                                    bg = t & 0x07;
-                                }
-                                else if (args[i] == 25) {
-                                    cursorState &= ~CURSOR_FLASH;
-                                }
-                                else if (args[i] >= 30 && args[i] <= 37) {
-                                    fg = (fg & 0x08) | (args[i] - 30);
-                                }
-                                else if (args[i] >= 40 && args[i] <= 47) {
-                                    bg = args[i] - 40;
-                                }
-                                else if (args[i] >= 90 && args[i] <= 97) {
-                                    fg = (args[i] - 90) | 8;
-                                }
-                                else if (args[i] >= 100 && args[i] <= 107) {
-                                    bg = (args[i] - 100) | 8;
-                                }
-                            }
-                            if (argc == 0) {
-                                bg = 0;
-                                fg = 7;
-                            }
-                            foreground = colors[fg];
-                            background = colors[bg];
-                            state = 0;
-                            break;
-
-                        case 's':
-                            savedCx = cx;
-                            savedCy = cy;
-                            state = 0;
-                            break;
-                        case 'u':
-                            cx = savedCx;
-                            cy = savedCy;
-                            state = 0;
-                            break;
-
-                        case 'h':
-                            if (prefix == '?') {
-                                if (args[0] == 25) {
-                                    cursorState |= CURSOR_ON;
-                                }
-                                break;
-                            }
-                            break;
-
-                        case 'l':
-                            if (prefix == '?') {
-                                if (args[0] == 25) {
-                                    cursorState &= ~CURSOR_ON;
-                                }
-                                break;
-                            }
-                            break;
-
-                        case 'n':
-                            if (args[0] == 6) {
-                                try {
-                                    comPort.writeBytes(String.format("\033[%d;%dR", cy - screenHeight, cx).getBytes());
-                                } catch (ComPortException e) {
-                                    // Do nothing
-                                }
-                                break;
-                            }
-                            break;
-
-                        default:
-                            state = 0;
-                            break;
-                    }
-                    break;
-            }
-        }
-
-        void writeChar(char c) {
-            redraw(cx, cy, 1, 1);
-
-            switch (c) {
-                case 7:
-                    display.asyncExec(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            display.beep();
-                        }
-                    });
-                    break;
-
-                case 0x08:
-                    if (cx > 0) {
-                        cx--;
-                    }
-                    break;
-
-                case 0x09:
-                    cx = ((cx / 8) + 1) * 8;
-                    if (cx > screenWidth) {
-                        cx = 0;
-                    }
-                    break;
-
-                case 0x0A:
-                    cy++;
-                    if (cy >= screen.length) {
-                        scrollUp(1);
-                        cy--;
-                        redraw();
-                    }
-                    break;
-
-                case 0x0C:
-                    scrollUp(screenHeight);
-                    redraw();
-                    cx = 0;
-                    cy = screen.length - screenHeight;
-                    break;
-
-                case 0x0D:
-                    cx = 0;
-                    break;
-
-                default:
-                    if (cx >= screenWidth) {
-                        cx = 0;
-                        cy++;
-                        if (cy >= screen.length) {
-                            scrollUp(1);
-                            cy--;
-                            redraw();
-                        }
-                    }
-                    screen[cy][cx].set(c, foreground, background);
-                    redraw(cx, cy, 1, 1);
-                    cx++;
-                    break;
-            }
-
-            redraw(cx, cy, 1, 1);
-        }
-
-    }
-
-    class ParallaxSerialTerminal extends TerminalEmulation {
-
-        static final String KEY = "pst";
-
-        int state = 0;
-        int cmd, p0, p1;
-
-        public ParallaxSerialTerminal() {
-            foreground = colors[7];
-            background = colors[0];
-        }
-
-        @Override
-        public void write(char c) {
-            redraw(cx, cy, 1, 1);
-
-            if (cmd == 2) { // PC: Position Cursor in x,y
-                if (state == 0) {
-                    p0 = Math.min(c, screenWidth - 1);
-                    state++;
-                    return;
-                }
-                cy = (screen.length - screenHeight) + Math.min(c, screenHeight - 1);
-                cx = p0;
-                cmd = 0;
-                return;
-            }
-            else if (cmd == 14) { // PX: Position cursor in X
-                cx = Math.min(c, screenWidth - 1);
-                cmd = 0;
-                return;
-            }
-            else if (cmd == 15) { // PY: Position cursor in Y
-                cy = (screen.length - screenHeight) + Math.min(c, screenHeight - 1);
-                cmd = 0;
-                return;
-            }
-
-            switch (c) {
-                case 1: // HM: HoMe cursor
-                    cx = 0;
-                    cy = screen.length - screenHeight;
-                    break;
-
-                case 2: // PC: Position Cursor in x,y
-                case 14: // PX: Position cursor in X
-                case 15: // PY: Position cursor in Y
-                    cmd = c;
-                    state = 0;
-                    break;
-
-                case 3: // ML: Move cursor Left
-                    if (cx > 0) {
-                        cx--;
-                    }
-                    break;
-
-                case 4: // MR: Move cursor Right
-                    if (cx < screenWidth - 1) {
-                        cx++;
-                    }
-                    break;
-
-                case 5: // MU: Move cursor Up
-                    if (cy > 0) {
-                        cy--;
-                    }
-                    break;
-
-                case 6: // MR: Move cursor Down
-                    if (cy < screen.length) {
-                        cy++;
-                    }
-                    break;
-
-                case 7: // BP: BeeP speaker
-                    display.asyncExec(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            display.beep();
-                        }
-                    });
-                    break;
-
-                case 8: // BS: BackSpace
-                    if (cx > 0) {
-                        cx--;
-                        screen[cy][cx].character = ' ';
-                    }
-                    break;
-
-                case 9: // TB: TaB
-                    cx = ((cx / 8) + 1) * 8;
-                    if (cx > screenWidth) {
-                        cx = 0;
-                    }
-                    break;
-
-                case 13: // NL: New Line
-                    cx = 0;
-                    // Fall-through
-                case 10: // LF: Line Feed
-                    cy++;
-                    if (cy >= screen.length) {
-                        scrollUp(1);
-                        cy--;
-                        redraw();
-                    }
-                    break;
-
-                case 11: // CE: Clear To End of Line
-                    for (int x = cx; x < screenWidth; x++) {
-                        screen[cy][x].set(' ', foreground, background);
-                    }
-                    redraw(cx, cy, screenWidth - cx, 1);
-                    break;
-
-                case 12: // CB: Clear Lines Below
-                    for (int y = cy; y < screen.length; y++) {
-                        for (int x = 0; x < screenWidth; x++) {
-                            screen[y][x].set(' ', foreground, background);
-                        }
-                    }
-                    redraw(0, cy, screenWidth, screen.length - cy + 1);
-                    break;
-
-                case 16: // CS: Clear Screen
-                    scrollUp(screenHeight);
-                    cx = 0;
-                    cy = screen.length - screenHeight;
-                    redraw();
-                    break;
-
-                default:
-                    if (cx >= screenWidth) {
-                        cx = 0;
-                        cy++;
-                        if (cy >= screen.length) {
-                            scrollUp(1);
-                            cy--;
-                            redraw();
-                        }
-                    }
-                    screen[cy][cx].set(c, foreground, background);
-                    redraw(cx, cy, 1, 1);
-                    cx++;
-                    break;
-            }
-
-            redraw(cx, cy, 1, 1);
-        }
-    }
-
-    SelectionAdapter terminalTypeSelectionListener = new SelectionAdapter() {
-
-        @Override
-        public void widgetSelected(SelectionEvent e) {
-            String type = "";
-            switch (terminalType.getSelectionIndex()) {
-                case 0:
-                    type = ANSI.KEY;
-                    break;
-                case 1:
-                    type = ParallaxSerialTerminal.KEY;
-                    break;
-            }
-            setTerminalType(type);
-            preferences.setTerminalType(type);
-            setFocus();
-        }
-    };
-
     SelectionAdapter baudRateSelectionListener = new SelectionAdapter() {
 
         @Override
@@ -816,6 +296,7 @@ public class SerialTerminal {
             }
             setFocus();
         }
+
     };
 
     final PropertyChangeListener preferencesChangeListener = new PropertyChangeListener() {
@@ -873,11 +354,20 @@ public class SerialTerminal {
                     redraw(cx, cy, 1, 1);
                     break;
 
+                case Preferences.PROP_TERMINAL_BACKSPACE_CLEARS:
+                    backspaceClears = (Boolean) evt.getNewValue();
+                    break;
+
+                case Preferences.PROP_TERMINAL_IMPLICIT_CRLF:
+                    implicitCRLF = (Boolean) evt.getNewValue();
+                    break;
+
                 case Preferences.PROP_THEME:
                     applyTheme((String) evt.getNewValue());
                     break;
             }
         }
+
     };
 
     public SerialTerminal(Display display, Preferences preferences) {
@@ -887,20 +377,10 @@ public class SerialTerminal {
         serialBaudRate = preferences.getTerminalBaudRate();
         localEcho = preferences.getTerminalLocalEcho();
 
-        switch (preferences.getTerminalType()) {
-            case ParallaxSerialTerminal.KEY:
-                if (!(emulation instanceof ParallaxSerialTerminal)) {
-                    emulation = new ParallaxSerialTerminal();
-                }
-                break;
-            default:
-                if (!(emulation instanceof ANSI)) {
-                    emulation = new ANSI();
-                }
-                break;
-        }
-
         cursorState = CURSOR_DISPLAY | preferences.getTerminalCursor();
+
+        backspaceClears = preferences.getTerminalBackspaceClears();
+        implicitCRLF = preferences.getTerminalImplicitCRLF();
     }
 
     public void open() {
@@ -1357,30 +837,70 @@ public class SerialTerminal {
     }
 
     void createBottomControls(Composite parent) {
+        Label label;
+        GridData gridData;
+
+        GC gc = new GC(parent);
+        FontMetrics fontMetrics = gc.getFontMetrics();
+        gc.dispose();
+
         Composite container = new Composite(parent, SWT.NONE);
         container.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
-        terminalType = new Combo(container, SWT.DROP_DOWN | SWT.READ_ONLY);
-        terminalType.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
-        terminalType.setItems(new String[] {
-            "ANSI / VT100",
-            "Parallax Serial Terminal"
+        monitor = new Button(container, SWT.PUSH);
+        monitor.setText("Monitor");
+        gridData = new GridData(GridData.HORIZONTAL_ALIGN_FILL);
+        gridData.widthHint = Math.max(Dialog.convertHorizontalDLUsToPixels(fontMetrics, 50), monitor.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
+        monitor.setLayoutData(gridData);
+        monitor.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                try {
+                    clear();
+                    startMonitor();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+                setFocus();
+            }
         });
+
+        taqoz = new Button(container, SWT.PUSH);
+        taqoz.setText("TAQOZ");
+        gridData = new GridData(GridData.HORIZONTAL_ALIGN_FILL);
+        gridData.widthHint = Math.max(Dialog.convertHorizontalDLUsToPixels(fontMetrics, 50), taqoz.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
+        taqoz.setLayoutData(gridData);
+        taqoz.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                try {
+                    clear();
+                    startTAQOZ();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+                setFocus();
+            }
+        });
+
+        label = new Label(container, SWT.NONE);
+        label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
+        label = new Label(container, SWT.NONE);
+        label.setText("Baud Rate");
 
         baudRate = new Combo(container, SWT.DROP_DOWN | SWT.READ_ONLY);
         baudRate.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
         String[] items = new String[baudRates.size()];
         for (int i = 0; i < items.length; i++) {
-            items[i] = String.valueOf(baudRates.get(i));
+            items[i] = baudRates.get(i) + " ";
         }
         baudRate.setItems(items);
 
-        Label label = new Label(container, SWT.NONE);
+        label = new Label(container, SWT.NONE);
         label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-
-        GC gc = new GC(container);
-        FontMetrics fontMetrics = gc.getFontMetrics();
-        gc.dispose();
 
         clear = new Button(container, SWT.PUSH);
         clear.setText("Clear");
@@ -1409,49 +929,10 @@ public class SerialTerminal {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
-                setTerminalType(preferences.getTerminalType());
                 try {
                     if (comPort != null) {
                         comPort.hwreset(ComPort.Control.DtrRts, 0);
                     }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-                setFocus();
-            }
-        });
-
-        monitor = new Button(container, SWT.PUSH);
-        monitor.setText("Monitor");
-        data = new GridData(GridData.HORIZONTAL_ALIGN_FILL);
-        data.widthHint = Math.max(Dialog.convertHorizontalDLUsToPixels(fontMetrics, 50), monitor.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
-        monitor.setLayoutData(data);
-        monitor.addSelectionListener(new SelectionAdapter() {
-
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                try {
-                    clear();
-                    startMonitor();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-                setFocus();
-            }
-        });
-
-        taqoz = new Button(container, SWT.PUSH);
-        taqoz.setText("TAQOZ");
-        data = new GridData(GridData.HORIZONTAL_ALIGN_FILL);
-        data.widthHint = Math.max(Dialog.convertHorizontalDLUsToPixels(fontMetrics, 50), taqoz.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
-        taqoz.setLayoutData(data);
-        taqoz.addSelectionListener(new SelectionAdapter() {
-
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                try {
-                    clear();
-                    startTAQOZ();
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -1467,36 +948,6 @@ public class SerialTerminal {
 
         baudRate.select(baudRates.indexOf(serialBaudRate));
         baudRate.addSelectionListener(baudRateSelectionListener);
-
-        if (emulation instanceof ParallaxSerialTerminal) {
-            terminalType.select(2);
-        }
-        else if (emulation instanceof ANSI) {
-            terminalType.select(0);
-        }
-        terminalType.addSelectionListener(terminalTypeSelectionListener);
-    }
-
-    void setTerminalType(String type) {
-        terminalType.removeSelectionListener(terminalTypeSelectionListener);
-        try {
-            switch (type) {
-                case ParallaxSerialTerminal.KEY:
-                    if (!(emulation instanceof ParallaxSerialTerminal)) {
-                        emulation = new ParallaxSerialTerminal();
-                    }
-                    terminalType.select(1);
-                    break;
-                default:
-                    if (!(emulation instanceof ANSI)) {
-                        emulation = new ANSI();
-                    }
-                    terminalType.select(0);
-                    break;
-            }
-        } finally {
-            terminalType.addSelectionListener(terminalTypeSelectionListener);
-        }
     }
 
     public void setFocus() {
@@ -1512,16 +963,424 @@ public class SerialTerminal {
         shell.dispose();
     }
 
-    public void write(char c) {
-        if (!canvas.isDisposed()) {
-            emulation.write(c);
+    public void write(char ch) {
+        if (canvas.isDisposed()) {
+            return;
         }
+
+        redraw(cx, cy, 1, 1);
+
+        switch (state) {
+            case 0:
+                writeChar(ch);
+                lastCh = ch;
+                break;
+
+            case 1: // PC: Position Cursor in x,y
+                args[0] = Math.min(ch, screenWidth - 1);
+                state = 2;
+                break;
+            case 2: // PC: Position Cursor in x,y
+                cy = (screen.length - screenHeight) + Math.min(ch, screenHeight - 1);
+                cx = args[0];
+                state = 0;
+                break;
+
+            case 3: // PX: Position cursor in X
+                cx = Math.min(ch, screenWidth - 1);
+                state = 0;
+                break;
+
+            case 4: // PY: Position cursor in Y
+                cy = (screen.length - screenHeight) + Math.min(ch, screenHeight - 1);
+                state = 0;
+                break;
+
+            case 5: // ANSI-VT52
+                switch (ch) {
+                    case '[':
+                        state = 6;
+                        break;
+                    case 'A':
+                        if (cy > screen.length) {
+                            cy--;
+                        }
+                        state = 0;
+                        break;
+                    case 'B':
+                        if (cy < (screen.length - screenHeight)) {
+                            cy++;
+                        }
+                        state = 0;
+                        break;
+                    case 'C':
+                        if (cx < screenWidth) {
+                            cy++;
+                        }
+                        state = 0;
+                        break;
+                    case 'D':
+                        if (cx > 0) {
+                            cx--;
+                        }
+                        state = 0;
+                        break;
+                    default:
+                        state = 0;
+                        break;
+                }
+                break;
+
+            case 6: // ANSI
+                switch (ch) {
+                    case '0':
+                    case '1':
+                    case '2':
+                    case '3':
+                    case '4':
+                    case '5':
+                    case '6':
+                    case '7':
+                    case '8':
+                    case '9':
+                        if (idx == argc) {
+                            argc++;
+                            args[idx] = 0;
+                        }
+                        args[idx] = args[idx] * 10 + (ch - '0');
+                        break;
+                    case ';':
+                        argc++;
+                        idx++;
+                        args[idx] = 0;
+                        break;
+                    case '?':
+                        prefix = ch;
+                        break;
+
+                    case 'A':
+                        cy = screen.length - Math.max(cy - (argc == 0 || args[0] == 0 ? 1 : args[0]), 0);
+                        state = 0;
+                        break;
+                    case 'B':
+                        cy = screen.length - Math.min(cy + (argc == 0 || args[0] == 0 ? 1 : args[0]), screenHeight - 1);
+                        state = 0;
+                        break;
+                    case 'C':
+                        cx = Math.min(cx + (argc == 0 || args[0] == 0 ? 1 : args[0]), screenWidth - 1);
+                        state = 0;
+                        break;
+                    case 'D':
+                        cx = Math.max(cx - (argc == 0 || args[0] == 0 ? 1 : args[0]), 0);
+                        state = 0;
+                        break;
+
+                    case 'H':
+                    case 'f':
+                        redraw(cx, cy, 1, 1);
+                        if (argc == 0) {
+                            cx = 0;
+                            cy = screen.length - screenHeight;
+                        }
+                        else if (argc >= 2) {
+                            cy = (screen.length - screenHeight) + Math.min(args[0] > 0 ? (args[0] - 1) : 0, screenHeight - 1);
+                            cx = Math.min(args[1] > 0 ? (args[1] - 1) : 0, screenWidth - 1);
+                        }
+                        redraw(cx, cy, 1, 1);
+                        state = 0;
+                        break;
+
+                    case 'J': {
+                        redraw(cx, cy, 1, 1);
+                        if (argc == 0 || args[0] == 0) { // Erase from cursor until end of screen
+                            for (int x = cx; x < screenWidth; x++) {
+                                screen[cy][x].set(' ', foreground, background);
+                            }
+                            for (int y = cy + 1; y < screen.length; y++) {
+                                for (int x = cx; x < screenWidth; x++) {
+                                    screen[y][x].set(' ', foreground, background);
+                                }
+                            }
+                            redraw(0, cy, screenWidth, screen.length - cy);
+                        }
+                        else if (args[0] == 1) { // Erase from cursor to beginning of screen
+                            for (int y = screen.length - screenHeight; y < cy; y++) {
+                                for (int x = 0; x < screenWidth; x++) {
+                                    screen[y][x].set(' ', foreground, background);
+                                }
+                            }
+                            for (int x = 0; x <= cx; x++) {
+                                screen[cy][x].set(' ', foreground, background);
+                            }
+                            redraw(0, screen.length - screenHeight, screenWidth, cy - (screen.length - screenHeight) + 1);
+                        }
+                        else if (args[0] == 2) { // Erase entire screen
+                            for (int y = screen.length - screenHeight; y < screen.length; y++) {
+                                for (int x = 0; x < screenWidth; x++) {
+                                    screen[y][x].set(' ', foreground, background);
+                                }
+                            }
+                            redraw(0, screen.length - screenHeight, screenWidth, screenHeight);
+                        }
+                        state = 0;
+                        break;
+                    }
+
+                    case 'K': {
+                        cursorState &= ~CURSOR_DISPLAY;
+                        frameCounter = 0;
+                        redraw(cx, cy, 1, 1);
+                        if (argc == 0 || args[0] == 0) { // Erase from cursor to end of line
+                            for (int x = cx; x < screenWidth; x++) {
+                                screen[cy][x].set(' ', foreground, background);
+                            }
+                        }
+                        else if (args[0] == 1) { // Erase from start of line to cursor
+                            for (int x = 0; x <= cx; x++) {
+                                screen[cy][x].set(' ', foreground, background);
+                            }
+                        }
+                        else if (args[0] == 2) { // Erase entire line
+                            for (int x = 0; x < screenWidth; x++) {
+                                screen[cy][x].set(' ', foreground, background);
+                            }
+                        }
+                        redraw(0, cy, screenWidth, 1);
+                        state = 0;
+                        break;
+                    }
+
+                    case 'm':
+                        for (int i = 0; i < argc; i++) {
+                            if (args[i] == 0) {
+                                bg = 0;
+                                fg = 7;
+                            }
+                            else if (args[i] == 1) {
+                                fg |= 8;
+                            }
+                            else if (args[i] == 2) {
+                                fg &= 7;
+                            }
+                            else if (args[i] == 5) {
+                                cursorState |= CURSOR_FLASH;
+                            }
+                            else if (args[i] == 7) {
+                                int t = fg;
+                                fg = bg;
+                                bg = t & 0x07;
+                            }
+                            else if (args[i] == 25) {
+                                cursorState &= ~CURSOR_FLASH;
+                            }
+                            else if (args[i] >= 30 && args[i] <= 37) {
+                                fg = (fg & 0x08) | (args[i] - 30);
+                            }
+                            else if (args[i] >= 40 && args[i] <= 47) {
+                                bg = args[i] - 40;
+                            }
+                            else if (args[i] >= 90 && args[i] <= 97) {
+                                fg = (args[i] - 90) | 8;
+                            }
+                            else if (args[i] >= 100 && args[i] <= 107) {
+                                bg = (args[i] - 100) | 8;
+                            }
+                        }
+                        if (argc == 0) {
+                            bg = 0;
+                            fg = 7;
+                        }
+                        foreground = colors[fg];
+                        background = colors[bg];
+                        state = 0;
+                        break;
+
+                    case 's':
+                        savedCx = cx;
+                        savedCy = cy;
+                        state = 0;
+                        break;
+                    case 'u':
+                        cx = savedCx;
+                        cy = savedCy;
+                        state = 0;
+                        break;
+
+                    case 'h':
+                        if (prefix == '?') {
+                            if (args[0] == 25) {
+                                cursorState |= CURSOR_ON;
+                            }
+                            break;
+                        }
+                        break;
+
+                    case 'l':
+                        if (prefix == '?') {
+                            if (args[0] == 25) {
+                                cursorState &= ~CURSOR_ON;
+                            }
+                            break;
+                        }
+                        break;
+
+                    case 'n':
+                        if (args[0] == 6) {
+                            try {
+                                comPort.writeBytes(String.format("\033[%d;%dR", cy - screenHeight, cx).getBytes());
+                            } catch (ComPortException e) {
+                                // Do nothing
+                            }
+                            break;
+                        }
+                        break;
+
+                    default:
+                        state = 0;
+                        break;
+                }
+                break;
+        }
+
+        redraw(cx, cy, 1, 1);
+    }
+
+    void writeChar(char ch) {
+        switch (ch) {
+            case 0x01: // HM: HoMe cursor
+                cx = 0;
+                cy = screen.length - screenHeight;
+                return;
+
+            case 0x02: // PC: Position Cursor in x,y
+                state = 1;
+                return;
+
+            case 0x03: // ML: Move cursor Left
+                if (cx > 0) {
+                    cx--;
+                }
+                return;
+
+            case 0x04: // MR: Move cursor Right
+                if (cx < screenWidth - 1) {
+                    cx++;
+                }
+                return;
+
+            case 0x05: // MU: Move cursor Up
+                if (cy > 0) {
+                    cy--;
+                }
+                return;
+
+            case 0x06: // MR: Move cursor Down
+                if (cy < screen.length) {
+                    cy++;
+                }
+                return;
+
+            case 0x07: // BP: BeeP speaker
+                display.asyncExec(() -> display.beep());
+                return;
+
+            case 0x08: // BS: BackSpace
+                if (cx > 0) {
+                    cx--;
+                    if (backspaceClears) {
+                        screen[cy][cx].character = ' ';
+                    }
+                }
+                return;
+
+            case 0x09: // TB: TaB
+                cx = ((cx / 8) + 1) * 8;
+                if (cx > screenWidth) {
+                    cx = 0;
+                }
+                return;
+
+            case 0x0A: // LF: Line Feed
+                if (lastCh == 0x0D && implicitCRLF) {
+                    return;
+                }
+                cy++;
+                if (cy >= screen.length) {
+                    scrollUp(1);
+                    cy--;
+                    redraw();
+                }
+                return;
+
+            case 0x0B: // CE: Clear To End of Line
+                for (int x = cx; x < screenWidth; x++) {
+                    screen[cy][x].set(' ', foreground, background);
+                }
+                redraw(cx, cy, screenWidth - cx, 1);
+                return;
+
+            case 0x0C:  // CB: Clear Lines Below
+                for (int y = cy; y < screen.length; y++) {
+                    for (int x = 0; x < screenWidth; x++) {
+                        screen[y][x].set(' ', foreground, background);
+                    }
+                }
+                redraw(0, cy, screenWidth, screen.length - cy + 1);
+                return;
+
+            case 0x0D: // NL: New Line
+                cx = 0;
+                if (implicitCRLF) {
+                    cy++;
+                    if (cy >= screen.length) {
+                        scrollUp(1);
+                        cy--;
+                        redraw();
+                    }
+                }
+                return;
+
+            case 0x0E: // PX: Position cursor in X
+                state = 3;
+                return;
+
+            case 0x0F: // PY: Position cursor in Y
+                state = 4;
+                return;
+
+            case 0x10: // CS: Clear Screen
+                scrollUp(screenHeight);
+                cx = 0;
+                cy = screen.length - screenHeight;
+                redraw();
+                return;
+
+            case 0x1B:
+                argc = idx = 0;
+                args[0] = 0;
+                prefix = 0;
+                state = 5;
+                return;
+        }
+
+        if (cx >= screenWidth) {
+            cx = 0;
+            cy++;
+            if (cy >= screen.length) {
+                scrollUp(1);
+                cy--;
+                redraw();
+            }
+        }
+        screen[cy][cx].set(ch, foreground, background);
+        redraw(cx, cy, 1, 1);
+        cx++;
     }
 
     public void write(String s) {
         if (!canvas.isDisposed()) {
             for (int i = 0; i < s.length(); i++) {
-                emulation.write(s.charAt(i));
+                write(s.charAt(i));
             }
         }
     }
@@ -1600,14 +1459,12 @@ public class SerialTerminal {
 
         this.comPort = serialPort;
 
-        setTerminalType(preferences.getTerminalType());
         updateButtonsEnablement();
     }
 
     void updateButtonsEnablement() {
         lineInputGroup.setEnabled(comPort != null && comPort.isOpened());
 
-        terminalType.setEnabled(comPort != null && comPort.isOpened());
         baudRate.setEnabled(comPort != null && comPort.isOpened());
 
         clear.setEnabled(comPort != null && comPort.isOpened());
@@ -1660,9 +1517,6 @@ public class SerialTerminal {
     }
 
     public void startMonitor() {
-        setTerminalType(ANSI.KEY);
-        terminalType.select(0);
-
         try {
             comPort.hwreset(preferences.getP2ResetControl(), ComPort.P2_RESET_DELAY);
             comPort.writeBytes(new byte[] {
@@ -1674,9 +1528,6 @@ public class SerialTerminal {
     }
 
     public void startTAQOZ() {
-        setTerminalType(ANSI.KEY);
-        terminalType.select(0);
-
         try {
             comPort.hwreset(preferences.getP2ResetControl(), ComPort.P2_RESET_DELAY);
             comPort.writeBytes(new byte[] {
@@ -1757,8 +1608,6 @@ public class SerialTerminal {
         lineInput.setBackground(listBackground);
         lineInput.setForeground(listForeground);
 
-        terminalType.setForeground(listForeground);
-        terminalType.setBackground(listBackground);
         baudRate.setBackground(listBackground);
         baudRate.setForeground(listForeground);
 
@@ -1771,81 +1620,65 @@ public class SerialTerminal {
     public static void main(String[] args) {
         final Display display = new Display();
 
-        display.setErrorHandler(new Consumer<Error>() {
+        display.setErrorHandler(t -> t.printStackTrace());
+        display.setRuntimeExceptionHandler(t -> t.printStackTrace());
 
-            @Override
-            public void accept(Error t) {
-                t.printStackTrace();
-            }
+        Realm.runWithDefault(DisplayRealm.getRealm(display), () -> {
+            try {
+                SerialTerminal serialTerminal = new SerialTerminal(display, new Preferences());
+                serialTerminal.open();
 
-        });
-        display.setRuntimeExceptionHandler(new Consumer<RuntimeException>() {
+                serialTerminal.setLineInputGroupVisible(false);
 
-            @Override
-            public void accept(RuntimeException t) {
-                t.printStackTrace();
-            }
+                new Thread(() -> {
+                    try {
+                        serialTerminal.write("P2 SD Card Filesystem Shell\r\n");
+                        serialTerminal.write("- type 'help' for commands\r\n");
+                        serialTerminal.write("\r\n");
+                        serialTerminal.write("SD:(unmounted)> \r");
+                        /*serialTerminal.write("\033[2J\033[H");
 
-        });
+                        serialTerminal.write("\033[0;37;40mABCDEFGHIJ");
+                        serialTerminal.write("\033[0;37;41mABCDEFGHIJ");
+                        serialTerminal.write("\033[0;37;42mABCDEFGHIJ");
+                        serialTerminal.write("\033[0;30;43mABCDEFGHIJ");
+                        serialTerminal.write("\033[0;37;44mABCDEFGHIJ");
+                        serialTerminal.write("\033[0;37;45mABCDEFGHIJ");
+                        serialTerminal.write("\033[0;37;46mABCDEFGHIJ");
+                        serialTerminal.write("\033[0;30;47mABCDEFGHIJ");
 
-        Realm.runWithDefault(DisplayRealm.getRealm(display), new Runnable() {
+                        serialTerminal.write("\r\n");
 
-            @Override
-            public void run() {
-                try {
-                    SerialTerminal serialTerminal = new SerialTerminal(display, new Preferences());
-                    serialTerminal.open();
+                        serialTerminal.write("\033[0;30;47mABCDEFGHIJ");
+                        serialTerminal.write("\033[0;37;46mABCDEFGHIJ");
+                        serialTerminal.write("\033[0;37;45mABCDEFGHIJ");
+                        serialTerminal.write("\033[0;37;44mABCDEFGHIJ");
+                        serialTerminal.write("\033[0;30;43mABCDEFGHIJ");
+                        serialTerminal.write("\033[0;37;42mABCDEFGHIJ");
+                        serialTerminal.write("\033[0;37;41mABCDEFGHIJ");
+                        serialTerminal.write("\033[0;37;40mABCDEFGHIJ");
 
-                    serialTerminal.setLineInputGroupVisible(false);
-                    serialTerminal.setTerminalType(ANSI.KEY);
+                        Thread.sleep(2000);
 
-                    new Thread(() -> {
-                        try {
-                            serialTerminal.write("\033[2J\033[H");
+                        serialTerminal.write(String.format("\033[%d;1HABCDEFGHIJ", serialTerminal.screenHeight));
+                        serialTerminal.write(String.format("\033[%d;%dHA", serialTerminal.screenHeight, serialTerminal.screenWidth));*/
 
-                            serialTerminal.write("\033[0;37;40mABCDEFGHIJ");
-                            serialTerminal.write("\033[0;37;41mABCDEFGHIJ");
-                            serialTerminal.write("\033[0;37;42mABCDEFGHIJ");
-                            serialTerminal.write("\033[0;30;43mABCDEFGHIJ");
-                            serialTerminal.write("\033[0;37;44mABCDEFGHIJ");
-                            serialTerminal.write("\033[0;37;45mABCDEFGHIJ");
-                            serialTerminal.write("\033[0;37;46mABCDEFGHIJ");
-                            serialTerminal.write("\033[0;30;47mABCDEFGHIJ");
-
-                            serialTerminal.write("\r\n");
-
-                            serialTerminal.write("\033[0;30;47mABCDEFGHIJ");
-                            serialTerminal.write("\033[0;37;46mABCDEFGHIJ");
-                            serialTerminal.write("\033[0;37;45mABCDEFGHIJ");
-                            serialTerminal.write("\033[0;37;44mABCDEFGHIJ");
-                            serialTerminal.write("\033[0;30;43mABCDEFGHIJ");
-                            serialTerminal.write("\033[0;37;42mABCDEFGHIJ");
-                            serialTerminal.write("\033[0;37;41mABCDEFGHIJ");
-                            serialTerminal.write("\033[0;37;40mABCDEFGHIJ");
-
-                            Thread.sleep(2000);
-
-                            serialTerminal.write(String.format("\033[%d;1HABCDEFGHIJ", serialTerminal.screenHeight));
-                            serialTerminal.write(String.format("\033[%d;%dHA", serialTerminal.screenHeight, serialTerminal.screenWidth));
-
-                            //serialTerminal.write("\033[30;1HABCDEFGHIJ");
-                            //serialTerminal.write("\033[31;1HABCDEFGHIJ");
-                            //serialTerminal.write("\033[32;1H0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZab");
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }).start();
-
-                    while (display.getShells().length != 0) {
-                        if (!display.readAndDispatch()) {
-                            display.sleep();
-                        }
+                        //serialTerminal.write("\033[30;1HABCDEFGHIJ");
+                        //serialTerminal.write("\033[31;1HABCDEFGHIJ");
+                        //serialTerminal.write("\033[32;1H0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZab");
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
+                }).start();
 
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return;
+                while (display.getShells().length != 0) {
+                    if (!display.readAndDispatch()) {
+                        display.sleep();
+                    }
                 }
+
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         });
 

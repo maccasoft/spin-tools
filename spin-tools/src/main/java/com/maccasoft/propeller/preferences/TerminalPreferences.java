@@ -23,17 +23,19 @@ public class TerminalPreferences {
     public boolean lineInput;
     public boolean localEcho;
     public String[] history;
-    public String type;
     public String font;
     public int baudRate;
     public int cursor;
+    public boolean backspaceClears;
+    public boolean implicitCRLF;
 
     public TerminalPreferences() {
         lineInput = true;
         localEcho = false;
-        type = "pst";
         baudRate = 115200;
         cursor = Preferences.CURSOR_ON | Preferences.CURSOR_FLASH | Preferences.CURSOR_ULINE;
+        backspaceClears = true;
+        implicitCRLF = true;
     }
 
     @Override
@@ -41,7 +43,7 @@ public class TerminalPreferences {
         final int prime = 31;
         int result = 1;
         result = prime * result + Arrays.hashCode(history);
-        result = prime * result + Objects.hash(baudRate, font, lineInput, localEcho, type, window, cursor);
+        result = prime * result + Objects.hash(baudRate, font, lineInput, localEcho, window, cursor, backspaceClears, implicitCRLF);
         return result;
     }
 
@@ -58,7 +60,7 @@ public class TerminalPreferences {
         }
         TerminalPreferences other = (TerminalPreferences) obj;
         return baudRate == other.baudRate && Objects.equals(font, other.font) && Arrays.equals(history, other.history) && lineInput == other.lineInput && localEcho == other.localEcho
-            && type == other.type && Objects.equals(window, other.window);
+            && backspaceClears == other.backspaceClears && implicitCRLF == other.implicitCRLF && Objects.equals(window, other.window);
     }
 
 }

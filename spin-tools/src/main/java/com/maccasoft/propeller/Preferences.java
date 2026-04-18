@@ -71,6 +71,8 @@ public class Preferences {
     public static final String PROP_TERMINAL_LINE_INPUT = "terminalLineInput";
     public static final String PROP_TERMINAL_LOCAL_ECHO = "terminalLocalEcho";
     public static final String PROP_TERMINAL_CURSOR = "terminalCursor";
+    public static final String PROP_TERMINAL_BACKSPACE_CLEARS = "terminalBackspaceClears";
+    public static final String PROP_TERMINAL_IMPLICIT_CRLF = "terminalImplicitCRLF";
     public static final String PROP_CONSOLE_FONT = "consoleFont";
     public static final String PROP_CONSOLE_MAX_LINES = "consoleMaxLines";
     public static final String PROP_CONSOLE_WRITE_LOG_FILE = "consoleWriteLogFile";
@@ -780,14 +782,6 @@ public class Preferences {
         preferences.terminal.history = terminalHistory;
     }
 
-    public void setTerminalType(String type) {
-        preferences.terminal.type = type;
-    }
-
-    public String getTerminalType() {
-        return preferences.terminal.type;
-    }
-
     public String getTerminalFont() {
         return preferences.terminal.font;
     }
@@ -810,16 +804,32 @@ public class Preferences {
         return preferences.terminal.localEcho;
     }
 
-    public void setTerminalLocalEcho(boolean terminalLocalEcho) {
-        changeSupport.firePropertyChange(PROP_TERMINAL_LOCAL_ECHO, preferences.terminal.localEcho, preferences.terminal.localEcho = terminalLocalEcho);
+    public void setTerminalLocalEcho(boolean localEcho) {
+        changeSupport.firePropertyChange(PROP_TERMINAL_LOCAL_ECHO, preferences.terminal.localEcho, preferences.terminal.localEcho = localEcho);
     }
 
     public int getTerminalCursor() {
         return preferences.terminal.cursor;
     }
 
-    public void setTerminalCursor(int terminalCursor) {
-        changeSupport.firePropertyChange(PROP_TERMINAL_CURSOR, preferences.terminal.cursor, preferences.terminal.cursor = terminalCursor);
+    public void setTerminalCursor(int cursor) {
+        changeSupport.firePropertyChange(PROP_TERMINAL_CURSOR, preferences.terminal.cursor, preferences.terminal.cursor = cursor);
+    }
+
+    public boolean getTerminalBackspaceClears() {
+        return preferences.terminal.backspaceClears;
+    }
+
+    public void setTerminalBackspaceClears(boolean backspaceClears) {
+        changeSupport.firePropertyChange(PROP_TERMINAL_BACKSPACE_CLEARS, preferences.terminal.backspaceClears, preferences.terminal.backspaceClears = backspaceClears);
+    }
+
+    public boolean getTerminalImplicitCRLF() {
+        return preferences.terminal.implicitCRLF;
+    }
+
+    public void setTerminalImplicitCRLF(boolean implicitCRLF) {
+        changeSupport.firePropertyChange(PROP_TERMINAL_IMPLICIT_CRLF, preferences.terminal.implicitCRLF, preferences.terminal.implicitCRLF = implicitCRLF);
     }
 
     public String getConsoleFont() {

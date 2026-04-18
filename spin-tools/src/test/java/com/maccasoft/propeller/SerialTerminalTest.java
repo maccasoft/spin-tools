@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller;
@@ -68,34 +67,88 @@ class SerialTerminalTest {
     }
 
     @Test
-    void testTTYWrite() {
-        SerialTerminal.ANSI subject = instance.new ANSI();
+    void testWrite() {
         Assertions.assertEquals(0, instance.cx);
         Assertions.assertEquals(instance.topRow, instance.cy);
 
-        subject.write('X');
+        instance.write('X');
 
         Assertions.assertEquals(1, instance.cx);
         Assertions.assertEquals(screenStart, instance.cy);
-        Assertions.assertEquals('X', instance.screen[instance.cy][instance.cx - 1].character);
+        Assertions.assertEquals('X', instance.screen[instance.cy][0].character);
     }
 
     @Test
-    void testANSICursorPosition() {
-        SerialTerminal.ANSI subject = instance.new ANSI();
-        subject.write("\033[12;20H");
+    void testANSICodes() {
+        instance.write("\033[12;20H");
+
         Assertions.assertEquals(screenStart + 12 - 1, instance.cy);
-        Assertions.assertEquals(19, instance.cx);
+        Assertions.assertEquals(20 - 1, instance.cx);
     }
 
     @Test
     void testANSIColor() {
-        SerialTerminal.ANSI subject = instance.new ANSI();
-        subject.write("\033[31;42mA");
-        SerialTerminal.Cell cell = instance.screen[instance.cy][instance.cx - 1];
+        instance.write("\033[31;42mA");
+        SerialTerminal.Cell cell = instance.screen[instance.cy][0];
         Assertions.assertEquals('A', cell.character);
-        Assertions.assertEquals(instance.colors[1], cell.foreground);
-        Assertions.assertEquals(instance.colors[2], cell.background);
+        Assertions.assertEquals(SerialTerminal.colors[1], cell.foreground);
+        Assertions.assertEquals(SerialTerminal.colors[2], cell.background);
+    }
+
+    @Test
+    void testBackspace() {
+        instance.backspaceClears = false;
+        instance.write("ABC\010");
+
+        Assertions.assertEquals(3 - 1, instance.cx);
+        Assertions.assertEquals(screenStart, instance.cy);
+        Assertions.assertEquals('A', instance.screen[instance.cy][0].character);
+        Assertions.assertEquals('B', instance.screen[instance.cy][1].character);
+        Assertions.assertEquals('C', instance.screen[instance.cy][2].character);
+    }
+
+    @Test
+    void testBackspaceClears() {
+        instance.backspaceClears = true;
+        instance.write("ABC\010");
+
+        Assertions.assertEquals(3 - 1, instance.cx);
+        Assertions.assertEquals(screenStart, instance.cy);
+        Assertions.assertEquals('A', instance.screen[instance.cy][0].character);
+        Assertions.assertEquals('B', instance.screen[instance.cy][1].character);
+        Assertions.assertEquals(' ', instance.screen[instance.cy][2].character);
+    }
+
+    @Test
+    void testImplicitCRLF() {
+        instance.implicitCRLF = true;
+        instance.write("ABC\r");
+
+        Assertions.assertEquals(0, instance.cx);
+        Assertions.assertEquals(screenStart + 1, instance.cy);
+    }
+
+    @Test
+    void testImplicitCRLFDisabled() {
+        instance.implicitCRLF = false;
+        instance.write("ABC\r");
+
+        Assertions.assertEquals(0, instance.cx);
+        Assertions.assertEquals(screenStart, instance.cy);
+    }
+
+    @Test
+    void testImplicitCRLFSkipsLF() {
+        instance.implicitCRLF = true;
+        instance.write("ABC\r\n");
+
+        Assertions.assertEquals(0, instance.cx);
+        Assertions.assertEquals(screenStart + 1, instance.cy);
+
+        instance.write("\n");
+
+        Assertions.assertEquals(0, instance.cx);
+        Assertions.assertEquals(screenStart + 2, instance.cy);
     }
 
 }
