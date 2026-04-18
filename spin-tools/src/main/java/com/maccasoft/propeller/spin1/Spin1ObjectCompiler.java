@@ -502,7 +502,8 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
         object.setClkFreq(clkFreq);
         object.setClkMode(clkMode);
 
-        object.writeComment("Object \"" + getFile().getName() + "\" header (var size " + objectVarSize + ")");
+        object.setVarSize(getVarSize());
+        object.writeComment(String.format("Object \"%s\" header (var size %d)", getFile().getName(), object.getVarSize()));
 
         WordDataObject objectSize = object.writeWord(0, "Object size");
         object.writeByte(methods.size() + 1, "Method count + 1");
@@ -525,7 +526,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                 object.write(dataObject);
                 methodData.add(dataObject);
             }
-            object.setDcurr(methods.get(0).getStackSize());
+            object.setDcurr(methods.getFirst().getStackSize());
         }
 
         int linkedVarOffset = objectVarSize;
@@ -534,7 +535,6 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
             object.write(linkData);
             linkedVarOffset += linkData.getVarSize();
         }
-        object.setVarSize(linkedVarOffset);
 
         writeDatBinary(memoryOffset, object);
 

@@ -1423,7 +1423,8 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
             object.setClkMode(scope.getLocalSymbol("CLKMODE").getNumber().intValue());
         }
 
-        object.writeComment("Object header (var size " + objectVarSize + ")");
+        object.setVarSize(getVarSize());
+        object.writeComment(String.format("Object \"%s\" header (var size %d)", getFile().getName(), object.getVarSize()));
 
         WordDataObject objectSize = object.writeWord(0, "Object size");
         object.writeByte(methods.size() + 1, "Method count + 1");
@@ -1440,15 +1441,13 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
         object.writeByte(count, "Object count");
 
         List<LongDataObject> methodData = new ArrayList<>();
-        if (methods.size() != 0) {
-            Iterator<Spin1Method> methodsIterator = methods.iterator();
-            while (methodsIterator.hasNext()) {
-                Spin1Method method = methodsIterator.next();
+        if (!methods.isEmpty()) {
+            for (Spin1Method method : methods) {
                 LongDataObject dataObject = new LongDataObject(0, "Function " + method.getLabel());
                 object.write(dataObject);
                 methodData.add(dataObject);
             }
-            object.setDcurr(methods.get(0).getStackSize());
+            object.setDcurr(methods.getFirst().getStackSize());
         }
 
         int linkedVarOffset = objectVarSize;
@@ -1457,7 +1456,6 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
             object.write(linkData);
             linkedVarOffset += linkData.getVarSize();
         }
-        object.setVarSize(linkedVarOffset);
 
         hubAddress = object.getSize();
 

@@ -43,7 +43,7 @@ class Spin1CCompilerTest {
             + "");
 
         Assertions.assertEquals(""
-            + "' Object header (var size 0)\n"
+            + "' Object \"main.c\" header (var size 0)\n"
             + "00000 00000       10 00          Object size\n"
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       01             Object count\n"
@@ -95,7 +95,7 @@ class Spin1CCompilerTest {
             + "");
 
         Assertions.assertEquals(""
-            + "' Object header (var size 0)\n"
+            + "' Object \"main.c\" header (var size 0)\n"
             + "00000 00000       0C 00          Object size\n"
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       00             Object count\n"
@@ -130,7 +130,7 @@ class Spin1CCompilerTest {
             + "");
 
         Assertions.assertEquals(""
-            + "' Object header (var size 0)\n"
+            + "' Object \"main.c\" header (var size 0)\n"
             + "00000 00000       14 00          Object size\n"
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       01             Object count\n"
@@ -181,7 +181,7 @@ class Spin1CCompilerTest {
             + "");
 
         Assertions.assertEquals(""
-            + "' Object header (var size 0)\n"
+            + "' Object \"main.c\" header (var size 0)\n"
             + "00000 00000       20 00          Object size\n"
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       02             Object count\n"
@@ -236,7 +236,7 @@ class Spin1CCompilerTest {
             + "");
 
         Assertions.assertEquals(""
-            + "' Object header (var size 0)\n"
+            + "' Object \"main.c\" header (var size 0)\n"
             + "00000 00000       14 00          Object size\n"
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       02             Object count\n"
@@ -283,7 +283,7 @@ class Spin1CCompilerTest {
             + "");
 
         Assertions.assertEquals(""
-            + "' Object header (var size 0)\n"
+            + "' Object \"main.c\" header (var size 0)\n"
             + "00000 00000       24 00          Object size\n"
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       02             Object count\n"

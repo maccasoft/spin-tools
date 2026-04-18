@@ -73,13 +73,11 @@ public class Spin2CCompiler extends Spin2Compiler {
         }
 
         Spin2Object object = objectCompiler.generateObject(memoryOffset);
-        object.getObject(0).setText("Object \"" + file.getName() + "\" header (var size " + object.getVarSize() + ")");
         memoryOffset += object.getSize();
 
         for (ObjectInfo info : childObjects) {
             info.offset = object.getSize();
             SpinObject linkedObject = info.compiler.generateObject(memoryOffset);
-            linkedObject.getObject(0).setText("Object \"" + info.file.getName() + "\" header (var size " + linkedObject.getVarSize() + ")");
             object.writeObject(linkedObject);
             memoryOffset += linkedObject.getSize();
         }
@@ -89,7 +87,6 @@ public class Spin2CCompiler extends Spin2Compiler {
                 for (ObjectInfo info2 : childObjects) {
                     if (linkData.isObjectCompiler(info2.compiler)) {
                         linkData.setOffset(info2.offset - info.offset);
-                        linkData.setText(String.format("Object \"%s\" @ $%05X", info2.file.getName(), linkData.getOffset()));
                         break;
                     }
                 }
@@ -100,7 +97,6 @@ public class Spin2CCompiler extends Spin2Compiler {
             for (ObjectInfo info : childObjects) {
                 if (linkData.isObjectCompiler(info.compiler)) {
                     linkData.setOffset(info.offset);
-                    linkData.setText(String.format("Object \"%s\" @ $%05X", info.file.getName(), linkData.getOffset()));
                     break;
                 }
             }

@@ -109,7 +109,6 @@ public class Spin1CCompiler extends Spin1Compiler {
             info.offset = object.getSize();
             SpinObject linkedObject = info.compiler.generateObject(memoryOffset);
             memoryOffset += linkedObject.getSize();
-            linkedObject.getObject(0).setText("Object \"" + info.file.getName() + "\" header (var size " + linkedObject.getVarSize() + ")");
             object.writeObject(linkedObject);
         }
 
@@ -118,7 +117,6 @@ public class Spin1CCompiler extends Spin1Compiler {
                 for (ObjectInfo info2 : childObjects) {
                     if (linkData.isObjectCompiler(info2.compiler)) {
                         linkData.setOffset(info2.offset - info.offset);
-                        linkData.setText(String.format("Object \"%s\" @ $%04X (variables @ $%04X)", info2.file.getName(), linkData.getOffset(), linkData.getVarOffset()));
                         break;
                     }
                 }
@@ -129,7 +127,6 @@ public class Spin1CCompiler extends Spin1Compiler {
             for (ObjectInfo info : childObjects) {
                 if (linkData.isObjectCompiler(info.compiler)) {
                     linkData.setOffset(info.offset);
-                    linkData.setText(String.format("Object \"%s\" @ $%04X (variables @ $%04X)", info.file.getName(), linkData.getOffset(), linkData.getVarOffset()));
                     break;
                 }
             }

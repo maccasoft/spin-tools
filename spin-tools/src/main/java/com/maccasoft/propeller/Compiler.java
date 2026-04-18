@@ -34,7 +34,8 @@ public abstract class Compiler {
         public Map<String, Expression> parameters;
 
         public String text;
-        public long offset;
+        public int offset;
+        public int size;
         public Expression count;
 
         public RootNode root;

@@ -1707,21 +1707,19 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
             object.setDebugBaud(exp.getNumber().intValue());
         }
 
-        object.writeComment("Object header (var size " + objectVarSize + ")");
+        object.setVarSize(getVarSize());
+        object.writeComment(String.format("Object \"%s\" header (var size %d)", getFile().getName(), object.getVarSize()));
 
         int linkedVarOffset = objectVarSize;
         for (LinkDataObject linkData : objectLinks) {
+            linkData.setVarOffset(linkedVarOffset);
             object.write(linkData);
-            object.writeLong(linkedVarOffset, String.format("Variables @ $%05X", linkedVarOffset));
             linkedVarOffset += linkData.getVarSize();
         }
-        object.setVarSize(linkedVarOffset);
 
         List<LongDataObject> methodData = new ArrayList<>();
-        if (methods.size() != 0) {
-            Iterator<Spin2Method> methodsIterator = methods.iterator();
-            while (methodsIterator.hasNext()) {
-                Spin2Method method = methodsIterator.next();
+        if (!methods.isEmpty()) {
+            for (Spin2Method method : methods) {
                 LongDataObject dataObject = new LongDataObject(0, "Method " + method.getLabel());
                 object.write(dataObject);
                 methodData.add(dataObject);
@@ -1853,13 +1851,13 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
 
             int index = 0;
             for (Spin2Method method : methods) {
-                int value = 0;
+                int value = 0x80000000;
 
                 value = Spin2Method.address_bit.setValue(value, object.getSize());
                 value = Spin2Method.returns_bit.setValue(value, method.getReturnLongs());
                 value = Spin2Method.parameters_bit.setValue(value, method.getParameterLongs());
 
-                methodData.get(index).setValue(value | 0x80000000L);
+                methodData.get(index).setValue(value);
                 methodData.get(index).setText(
                     String.format("Method %s @ $%05X (%d parameters, %d returns)", method.getLabel(), object.getSize(), method.getParameterLongs(), method.getReturnLongs()));
                 try {

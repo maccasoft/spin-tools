@@ -34,19 +34,43 @@ public class Spin2Object extends SpinObject {
 
     public static class Spin2LinkDataObject extends LinkDataObject {
 
-        public Spin2LinkDataObject(ObjectCompiler objectCompiler, long varSize) {
+        public Spin2LinkDataObject(ObjectCompiler objectCompiler, int varSize) {
             super(objectCompiler, varSize);
+            this.text = objectCompiler.getFile().getName();
+            this.bytes = new byte[] {
+                0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00
+            };
         }
 
         @Override
-        public void setOffset(long offset) {
+        public void setOffset(int offset) {
             this.bytes = new byte[] {
                 (byte) offset,
                 (byte) (offset >> 8),
                 (byte) (offset >> 16),
-                (byte) (offset >> 24)
+                (byte) (offset >> 24),
+                this.bytes[4], this.bytes[5], this.bytes[6], this.bytes[7]
             };
             super.setOffset(offset);
+        }
+
+        @Override
+        public void setVarOffset(int varOffset) {
+            this.bytes = new byte[] {
+                this.bytes[0], this.bytes[1], this.bytes[2], this.bytes[3],
+                (byte) varOffset,
+                (byte) (varOffset >> 8),
+                (byte) (varOffset >> 16),
+                (byte) (varOffset >> 24)
+            };
+            super.setVarOffset(varOffset);
+        }
+
+        @Override
+        public void generateListing(int address, int offset, PrintStream ps) {
+            ps.printf("%05X %05X       %02X %02X %02X %02X    Object \"%s\" @ $%05X%n", address + offset, address, bytes[0], bytes[1], bytes[2], bytes[3], text, getOffset());
+            ps.printf("%05X %05X       %02X %02X %02X %02X    Variables @ $%05X%n", address + offset + 4, address + 4, bytes[4], bytes[5], bytes[6], bytes[7], getVarOffset());
         }
 
     }
