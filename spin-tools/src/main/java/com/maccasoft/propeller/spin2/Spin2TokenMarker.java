@@ -1188,13 +1188,68 @@ public class Spin2TokenMarker extends SourceTokenMarker {
             }
 
             TokenId id = null;
-            if (state == 1) {
-                if (token.type == Token.KEYWORD) {
+
+            switch (state) {
+                case 1:
                     id = TokenId.OBJECT;
-                }
-                state = 0;
+                    state = 2;
+                    break;
+                case 2:
+                    if ("[".equals(token.getText())) {
+                        state = 5;
+                        break;
+                    }
+                    // fall-through
+                case 3:
+                    if (":".equals(token.getText())) {
+                        state = 4;
+                        break;
+                    }
+                    break;
+                case 4:
+                    state = 6;
+                    break;
+
+                case 5:
+                    if ("]".equals(token.getText())) {
+                        state = 3;
+                        break;
+                    }
+                    break;
+
+                case 6:
+                    if ("|".equals(token.getText())) {
+                        state = 7;
+                        break;
+                    }
+                    state = 10;
+                    break;
+
+                case 7:
+                    id = TokenId.CONSTANT;
+                    state = 8;
+                    break;
+
+                case 8:
+                    if ("=".equals(token.getText())) {
+                        state = 9;
+                        break;
+                    }
+                    state = 10;
+                    break;
+
+                case 9:
+                    if (",".equals(token.getText())) {
+                        state = 7;
+                        break;
+                    }
+                    break;
+
+                case 10:
+                    break;
             }
-            else {
+
+            if (id == null) {
                 if (token.type == Token.NUMBER) {
                     id = TokenId.NUMBER;
                 }
