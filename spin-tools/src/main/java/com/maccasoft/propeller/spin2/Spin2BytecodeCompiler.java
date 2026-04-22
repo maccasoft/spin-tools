@@ -3079,7 +3079,10 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             }
         }
         else {
-            Expression expression = context.getLocalSymbol(ar[0]);
+            Expression expression = context.getLocalSymbol(node.getText());
+            if (expression == null) {
+                expression = context.getLocalSymbol(ar[0]);
+            }
             if (expression == null) {
                 throw new CompilerException("undefined symbol " + node.getText(), node.getToken());
             }

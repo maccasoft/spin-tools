@@ -1520,6 +1520,42 @@ class Spin2PAsmCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testNamespaceVar() throws Exception {
+        String text = ""
+            + "PUB main() | b\n"
+            + "\n"
+            + "    b := prog.a\n"
+            + "    prog.a := b\n"
+            + "\n"
+            + "DAT\n"
+            + "\n"
+            + "                org $000\n"
+            + "                namesp  prog\n"
+            + "\n"
+            + "a               long    0\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object \"test.spin2\" header (var size 4)\n"
+            + "00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
+            + "00004 00004       16 00 00 00    End\n"
+            + "00008 00008   000                                    org     $000\n"
+            + "00008 00008   000                                    namesp  prog\n"
+            + "00008 00008   000 00 00 00 00    a                   long    0\n"
+            + "' PUB main() | b\n"
+            + "0000C 0000C       01             (stack size)\n"
+            + "'     b := prog.a\n"
+            + "0000D 0000D       5B 08 80       MEM_READ LONG PBASE+$00008\n"
+            + "00010 00010       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     prog.a := b\n"
+            + "00011 00011       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00012 00012       5B 08 81       MEM_WRITE LONG PBASE+$00008\n"
+            + "00015 00015       04             RETURN\n"
+            + "00016 00016       00 00          Padding\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }
