@@ -20,13 +20,13 @@ import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.ObjectCompiler;
 import com.maccasoft.propeller.expressions.Add;
 import com.maccasoft.propeller.expressions.And;
+import com.maccasoft.propeller.expressions.BitwiseDecode;
+import com.maccasoft.propeller.expressions.BitwiseEncode;
 import com.maccasoft.propeller.expressions.CharacterLiteral;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.DataVariable;
-import com.maccasoft.propeller.expressions.Decod;
 import com.maccasoft.propeller.expressions.Divide;
-import com.maccasoft.propeller.expressions.Encod;
 import com.maccasoft.propeller.expressions.Equals;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.GreaterOrEquals;
@@ -1253,12 +1253,12 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 throw new RuntimeException("unary operator with " + node.getChildCount() + " arguments");
             case "|<":
                 if (node.getChildCount() == 1) {
-                    return new Decod(buildConstantExpression(context, node.getChild(0), force), false);
+                    return new BitwiseDecode(buildConstantExpression(context, node.getChild(0), force));
                 }
                 throw new RuntimeException("unary operator with " + node.getChildCount() + " arguments");
             case ">|":
                 if (node.getChildCount() == 1) {
-                    return new Encod(buildConstantExpression(context, node.getChild(0), force), false);
+                    return new BitwiseEncode(buildConstantExpression(context, node.getChild(0), force));
                 }
                 throw new RuntimeException("unary operator with " + node.getChildCount() + " arguments");
 

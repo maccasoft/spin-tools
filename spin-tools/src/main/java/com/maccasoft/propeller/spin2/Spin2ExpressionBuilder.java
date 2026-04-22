@@ -505,9 +505,9 @@ public class Spin2ExpressionBuilder {
                 case "ABS":
                     return new Abs(parseAtom());
                 case "ENCOD":
-                    return new Encod(parseAtom(), true);
+                    return new Encod(parseAtom());
                 case "DECOD":
-                    return new Decod(parseAtom(), true);
+                    return new Decod(parseAtom());
                 case "BMASK":
                     return new Bmask(parseAtom());
                 case "ONES":

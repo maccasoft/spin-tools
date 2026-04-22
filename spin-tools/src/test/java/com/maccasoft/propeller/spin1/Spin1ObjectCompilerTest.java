@@ -2381,7 +2381,7 @@ class Spin1ObjectCompilerTest {
             + "0000A 0000A       37 00          CONSTANT (|<VAL)\n"
             + "0000C 0000C       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
             + "'     a := DEFC\n"
-            + "0000D 0000D       35             CONSTANT (>|VAL)\n"
+            + "0000D 0000D       36             CONSTANT (>|VAL)\n"
             + "0000E 0000E       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
             + "0000F 0000F       32             RETURN\n"
             + "", compile(text));

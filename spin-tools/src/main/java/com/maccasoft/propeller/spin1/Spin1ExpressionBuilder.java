@@ -20,12 +20,12 @@ import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.Abs;
 import com.maccasoft.propeller.expressions.Add;
 import com.maccasoft.propeller.expressions.And;
+import com.maccasoft.propeller.expressions.BitwiseDecode;
+import com.maccasoft.propeller.expressions.BitwiseEncode;
 import com.maccasoft.propeller.expressions.CharacterLiteral;
 import com.maccasoft.propeller.expressions.Context;
-import com.maccasoft.propeller.expressions.Decod;
 import com.maccasoft.propeller.expressions.Defined;
 import com.maccasoft.propeller.expressions.Divide;
-import com.maccasoft.propeller.expressions.Encod;
 import com.maccasoft.propeller.expressions.Equals;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.GreaterOrEquals;
@@ -366,9 +366,9 @@ public class Spin1ExpressionBuilder {
                 case "!":
                     return new Not(parseAtom());
                 case "|<":
-                    return new Decod(parseAtom(), false);
+                    return new BitwiseDecode(parseAtom());
                 case ">|":
-                    return new Encod(parseAtom(), false);
+                    return new BitwiseEncode(parseAtom());
                 case "||":
                     return new Abs(parseAtom());
                 case "^^":
