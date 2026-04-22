@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin1;
@@ -19,7 +18,7 @@ public class Spin1Model {
     static Set<String> pasmInstructions = new HashSet<>(Arrays.asList(new String[] {
         "ORG", "FIT", "RES", "FILE", "INCLUDE", "NAMESP", "DITTO",
         "ABS", "ABSNEG", "ADD", "ADDABS", "ADDS", "ADDSX", "ADDX", "AND", "ANDN", "CALL", "CLKSET", "CMP", "CMPS", "CMPSUB",
-        "CMPSX", "CMPX", "COGID", "COGINIT", "COGSTOP", "DEC", "DJNZ", "ENC", "HUBOP", "JMP", "JMPRET", "LOCKCLR", "LOCKNEW",
+        "CMPSX", "CMPX", "COGID", "COGINIT", "COGSTOP", "DJNZ", "ENC", "HUBOP", "JMP", "JMPRET", "LOCKCLR", "LOCKNEW",
         "LOCKRET", "LOCKSET", "MAX", "MAXS", "MIN", "MINS", "MOV", "MOVD", "MOVI", "MOVS", "MUL", "MULS", "MUXC", "MUXNC", "MUXNZ",
         "MUXZ", "NEG", "NEGC", "NEGNC", "NEGNZ", "NEGZ", "NOP", "ONES", "OR", "RCL", "RCR", "RDBYTE", "RDLONG", "RDWORD", "RET",
         "REV", "ROL", "ROR", "SAR", "SHL", "SHR", "SUB", "SUBABS", "SUBS", "SUBSX", "SUBX", "SUMC", "SUMNC", "SUMNZ", "SUMZ",
