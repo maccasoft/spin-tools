@@ -918,7 +918,7 @@ public class Spin1Parser extends Parser {
                 }
                 continue;
             }
-            if (state == 4 || state == 5) {
+            if (state == 4 || state == 5 || state == 7) {
                 if ("@".equals(token.getText()) || "@@".equals(token.getText()) || "@@@".equals(token.getText())) {
                     Token nextToken = sourceLine.peekNextToken();
                     if (":".equals(nextToken.getText()) && token.isAdjacent(nextToken)) {
@@ -930,7 +930,7 @@ public class Spin1Parser extends Parser {
                     }
                 }
             }
-            if (state == 1 || state == 4 || state == 5) {
+            if (state == 1 || state == 4 || state == 5 || state == 7) {
                 if (":".equals(token.getText())) {
                     Token nextToken = sourceLine.peekNextToken();
                     if (nextToken.type != Token.OPERATOR && token.isAdjacent(nextToken)) {
