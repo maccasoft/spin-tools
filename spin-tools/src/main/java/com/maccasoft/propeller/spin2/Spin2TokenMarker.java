@@ -765,6 +765,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 case StructNode node -> {
                     if (node.identifier != null) {
                         symbols.put(node.identifier.getText(), TokenId.TYPE);
+                        symbols.put("^" + node.identifier.getText(), TokenId.TYPE);
                     }
                 }
                 case VariablesNode node -> {
@@ -832,6 +833,12 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 case ConstantNode node -> {
                     if (node.identifier != null) {
                         symbols.put(qualifier + "." + node.identifier.getText(), TokenId.CONSTANT);
+                    }
+                }
+                case StructNode node -> {
+                    if (node.identifier != null) {
+                        symbols.put(qualifier + "." + node.identifier.getText(), TokenId.CONSTANT);
+                        symbols.put("^" + qualifier + "." + node.identifier.getText(), TokenId.CONSTANT);
                     }
                 }
                 case MethodNode node -> {
@@ -1134,8 +1141,22 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 continue;
             }
 
+            if (state == 1) {
+                if ("^".equals(token.getText())) {
+                    Token nextToken = stream.peekNext();
+                    if (nextToken != null && token.isAdjacent(nextToken) && nextToken.type == Token.KEYWORD) {
+                        token = token.merge(stream.nextToken());
+                        token.type = Token.KEYWORD;
+                    }
+                }
+            }
+
             switch (state) {
                 case 1:
+                    if ("alignw".equalsIgnoreCase(token.getText()) || "alignl".equalsIgnoreCase(token.getText())) {
+                        markers.add(new TokenMarker(token, TokenId.TYPE));
+                        break;
+                    }
                     TokenId id = symbols.get(token.getText());
                     if (id != TokenId.TYPE) {
                         id = keywords.get(token.getText());
@@ -1381,7 +1402,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
 
                 case 9:
                     if ("alignw".equalsIgnoreCase(token.getText()) || "alignl".equalsIgnoreCase(token.getText())) {
-                        id = TokenId.KEYWORD;
+                        id = TokenId.TYPE;
                         break;
                     }
                     if (Spin2Model.isType(token.getText())) {
@@ -1691,7 +1712,12 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                         if (id == null) {
                             id = spinKeywords.get(tokenText);
                             if (id == null && debug) {
-                                id = debugKeywords.get(tokenText);
+                                if (tokenText.startsWith("`")) {
+                                    id = debugKeywords.get(tokenText.substring(1));
+                                }
+                                else {
+                                    id = debugKeywords.get(tokenText);
+                                }
                             }
                         }
                     }

@@ -62,8 +62,6 @@ public class Spin1TokenMarker extends SourceTokenMarker {
         keywords.put("CASE", TokenId.KEYWORD);
         keywords.put("OTHER", TokenId.KEYWORD);
         keywords.put("CHIPVER", TokenId.FUNCTION);
-        keywords.put("CLKFREQ", TokenId.FUNCTION);
-        keywords.put("CLKMODE", TokenId.FUNCTION);
         keywords.put("CLKSET", TokenId.FUNCTION);
         keywords.put("COGID", TokenId.FUNCTION);
         keywords.put("COGINIT", TokenId.FUNCTION);
@@ -121,6 +119,8 @@ public class Spin1TokenMarker extends SourceTokenMarker {
         keywords.put("_XINFREQ", TokenId.CONSTANT);
         keywords.put("_FREE", TokenId.CONSTANT);
         keywords.put("_STACK", TokenId.CONSTANT);
+        keywords.put("CLKFREQ", TokenId.CONSTANT);
+        keywords.put("CLKMODE", TokenId.CONSTANT);
 
         keywords.put("RCFAST", TokenId.CONSTANT);
         keywords.put("RCSLOW", TokenId.CONSTANT);
@@ -140,22 +140,23 @@ public class Spin1TokenMarker extends SourceTokenMarker {
         keywords.put("NEGX", TokenId.CONSTANT);
         keywords.put("PI", TokenId.CONSTANT);
 
-        keywords.put("DIRA", TokenId.KEYWORD);
-        keywords.put("DIRB", TokenId.KEYWORD);
-        keywords.put("INA", TokenId.KEYWORD);
-        keywords.put("INB", TokenId.KEYWORD);
-        keywords.put("OUTA", TokenId.KEYWORD);
-        keywords.put("OUTB", TokenId.KEYWORD);
-        keywords.put("CNT", TokenId.KEYWORD);
-        keywords.put("CTRA", TokenId.KEYWORD);
-        keywords.put("CTRB", TokenId.KEYWORD);
-        keywords.put("FRQA", TokenId.KEYWORD);
-        keywords.put("FRQB", TokenId.KEYWORD);
-        keywords.put("PHSA", TokenId.KEYWORD);
-        keywords.put("PHSB", TokenId.KEYWORD);
-        keywords.put("VCFG", TokenId.KEYWORD);
-        keywords.put("VSCL", TokenId.KEYWORD);
-        keywords.put("PAR", TokenId.KEYWORD);
+        keywords.put("DIRA", TokenId.PASM_INSTRUCTION);
+        keywords.put("DIRB", TokenId.PASM_INSTRUCTION);
+        keywords.put("INA", TokenId.PASM_INSTRUCTION);
+        keywords.put("INB", TokenId.PASM_INSTRUCTION);
+        keywords.put("OUTA", TokenId.PASM_INSTRUCTION);
+        keywords.put("OUTB", TokenId.PASM_INSTRUCTION);
+        keywords.put("CNT", TokenId.PASM_INSTRUCTION);
+        keywords.put("CTRA", TokenId.PASM_INSTRUCTION);
+        keywords.put("CTRB", TokenId.PASM_INSTRUCTION);
+        keywords.put("FRQA", TokenId.PASM_INSTRUCTION);
+        keywords.put("FRQB", TokenId.PASM_INSTRUCTION);
+        keywords.put("PHSA", TokenId.PASM_INSTRUCTION);
+        keywords.put("PHSB", TokenId.PASM_INSTRUCTION);
+        keywords.put("VCFG", TokenId.PASM_INSTRUCTION);
+        keywords.put("VSCL", TokenId.PASM_INSTRUCTION);
+        keywords.put("PAR", TokenId.PASM_INSTRUCTION);
+
         keywords.put("SPR", TokenId.KEYWORD);
 
         keywords.put("defined", TokenId.DIRECTIVE);
