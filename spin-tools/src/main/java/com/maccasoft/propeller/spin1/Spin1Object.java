@@ -12,6 +12,7 @@ package com.maccasoft.propeller.spin1;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintStream;
 
 import com.maccasoft.propeller.ObjectCompiler;
@@ -57,6 +58,7 @@ public class Spin1Object extends SpinObject {
     }
 
     int dcurr;
+    Spin1ObjectHeader header;
 
     public Spin1Object() {
 
@@ -74,6 +76,30 @@ public class Spin1Object extends SpinObject {
         this.dcurr = dcurr;
     }
 
+    public Spin1ObjectHeader getHeader() {
+        return header;
+    }
+
+    public void setHeader(Spin1ObjectHeader header) {
+        this.header = header;
+    }
+
+    @Override
+    public void generateBinary(OutputStream os) throws IOException {
+        if (header != null) {
+            os.write(header.getBinary());
+        }
+        super.generateBinary(os);
+    }
+
+    @Override
+    public void generateListing(PrintStream ps) {
+        if (header != null) {
+            header.generateListing(ps);
+        }
+        super.generateListing(header != null ? header.getSize() : 0, ps);
+    }
+
     public byte[] getRAM() throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         generateBinary(os);
@@ -84,6 +110,14 @@ public class Spin1Object extends SpinObject {
         }
 
         return os.toByteArray();
+    }
+
+    @Override
+    public int setBytes(byte[] bytes, int index) {
+        if (header != null) {
+            index = header.setBytes(bytes, index);
+        }
+        return super.setBytes(bytes, index);
     }
 
 }

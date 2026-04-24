@@ -15,16 +15,14 @@ import java.util.Map;
 
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.ObjectCompiler;
-import com.maccasoft.propeller.SpinObject;
-import com.maccasoft.propeller.SpinObject.ByteDataObject;
 import com.maccasoft.propeller.SpinObject.LinkDataObject;
 import com.maccasoft.propeller.SpinObject.LongDataObject;
-import com.maccasoft.propeller.SpinObject.WordDataObject;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.spin1.Spin1Compiler;
 import com.maccasoft.propeller.spin1.Spin1Object;
 import com.maccasoft.propeller.spin1.Spin1ObjectCompiler;
+import com.maccasoft.propeller.spin1.Spin1ObjectHeader;
 
 public class Spin1CCompiler extends Spin1Compiler {
 
@@ -40,55 +38,29 @@ public class Spin1CCompiler extends Spin1Compiler {
 
     @Override
     public Spin1Object compile(File file, String text) {
-        Spin1Object obj = compileObject(file, text);
+        Spin1Object object = compileObject(file, text);
 
-        Spin1Object object = new Spin1Object(file, 0);
-        for (SpinObject child : obj.getChildObjects()) {
-            object.addChildObject(child);
-        }
-        object.setVarSize(obj.getVarSize());
-
-        object.setClkFreq(obj.getClkFreq());
-        object.setClkMode(obj.getClkMode());
-
-        object.writeLong(object.getClkFreq(), "CLKFREQ");
-        object.writeByte(object.getClkMode(), "CLKMODE");
-        ByteDataObject checksum = object.writeByte(0, "Checksum");
-
-        WordDataObject pbase = object.writeWord(0, "PBASE");
-        WordDataObject vbase = object.writeWord(0, "VBASE");
-        WordDataObject dbase = object.writeWord(0, "DBASE");
-
-        WordDataObject pcurr = object.writeWord(0, "PCURR");
-        WordDataObject dcurr = object.writeWord(0, "DCURR");
-
-        pbase.setValue(object.getSize());
-
-        object.writeObject(obj);
-
-        vbase.setValue(object.getSize());
-
-        int offset = obj.getVarSize() + 8;
-        dbase.setValue(object.getSize() + offset);
-
-        if (!(obj.getObject(4) instanceof LongDataObject)) {
+        if (!(object.getObject(4) instanceof LongDataObject)) {
             logMessage(new CompilerException(CompilerException.ERROR, file, "No PUB routines found", (Object) null));
             return null;
         }
-        pcurr.setValue((int) (pbase.getValue() + (((LongDataObject) obj.getObject(4)).getValue() & 0xFFFF)));
 
-        offset = 4 + obj.getDcurr();
-        dcurr.setValue(dbase.getValue() + offset);
+        Spin1ObjectHeader header = new Spin1ObjectHeader();
+        header.clkfreq.setValue(object.getClkFreq());
+        header.clkmode.setValue(object.getClkMode());
+        header.vbase.setValue(header.getSize() + object.getSize());
+        header.dbase.setValue(header.vbase.getValue() + object.getVarSize() + 8);
+        header.pcurr.setValue(header.pbase.getValue() + (((LongDataObject) object.getObject(4)).getValue() & 0xFFFF));
+        header.dcurr.setValue(header.dbase.getValue() + 4 + object.getDcurr());
+        object.setHeader(header);
 
         try {
-            byte[] data = object.getBinary();
-
             byte sum = 0;
+            byte[] data = object.getBinary();
             for (int i = 0; i < data.length; i++) {
                 sum += data[i];
             }
-            checksum.setValue(0x14 - sum);
-
+            header.checksum.setValue(0x14 - sum);
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -39,6 +39,10 @@ public abstract class SpinObject {
             this.text = text;
         }
 
+        public byte[] getBytes() {
+            return bytes;
+        }
+
         public int setBytes(byte[] bytes, int index) {
             if (this.bytes == null) {
                 return index;
