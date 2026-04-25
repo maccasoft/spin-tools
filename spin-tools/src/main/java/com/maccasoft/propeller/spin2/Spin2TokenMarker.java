@@ -925,7 +925,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 parseObject(stream, markers);
             }
             else if (contextNode instanceof MethodNode methodNode) {
-                Map<String, TokenId> localSymbols = locals.get(methodNode.getName().getText());
+                Map<String, TokenId> localSymbols = methodNode.name != null ? locals.get(methodNode.name.getText()) : Collections.emptyMap();
                 if (localSymbols == null) {
                     localSymbols = Collections.emptyMap();
                 }
@@ -1668,49 +1668,49 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 markers.add(new TokenMarker(token, token.getText().length() > 3 ? TokenId.STRING : TokenId.NUMBER));
             }
             else if (token.type != Token.OPERATOR) {
-                TokenId id = symbols.get(tokenText);
-                if (id == TokenId.OBJECT) {
-                    String qualifier = token.getText();
-                    markers.add(new TokenMarker(token, id));
-                    token = stream.nextToken();
-                    if ("[".equals(token.getText())) {
-                        markTokens(contextNode, stream, debug, markers, localSymbols, "]");
+                TokenId id = localSymbols.get(tokenText);
+                if (id == null) {
+                    id = symbols.get(tokenText);
+                    if (id == TokenId.OBJECT) {
+                        String qualifier = token.getText();
+                        markers.add(new TokenMarker(token, id));
                         token = stream.nextToken();
-                        if (".".equals(token.getText())) {
-                            Token nextToken = stream.peekNext();
-                            if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
-                                token = stream.nextToken();
-                                id = symbols.get(qualifier + "." + token.getText());
-                                if (id != null) {
-                                    markers.add(new TokenMarker(token, id));
+                        if ("[".equals(token.getText())) {
+                            markTokens(contextNode, stream, debug, markers, localSymbols, "]");
+                            token = stream.nextToken();
+                            if (".".equals(token.getText())) {
+                                Token nextToken = stream.peekNext();
+                                if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                                    token = stream.nextToken();
+                                    id = symbols.get(qualifier + "." + token.getText());
+                                    if (id != null) {
+                                        markers.add(new TokenMarker(token, id));
+                                    }
+                                    continue;
                                 }
-                                continue;
                             }
                         }
+                        id = null;
                     }
-                    id = null;
-                }
-                else if (id == TokenId.METHOD_PUB || id == TokenId.CONSTANT) {
-                    int dot = tokenText.indexOf('.');
-                    if (dot != -1) {
-                        markers.add(new TokenMarker(token.start, token.start + dot - 1, TokenId.OBJECT));
-                        markers.add(new TokenMarker(token.start + dot + 1, token.stop, id));
-                        continue;
+                    else if (id == TokenId.METHOD_PUB || id == TokenId.CONSTANT) {
+                        int dot = tokenText.indexOf('.');
+                        if (dot != -1) {
+                            markers.add(new TokenMarker(token.start, token.start + dot - 1, TokenId.OBJECT));
+                            markers.add(new TokenMarker(token.start + dot + 1, token.stop, id));
+                            continue;
+                        }
                     }
                 }
                 if (id == null) {
-                    id = localSymbols.get(tokenText);
+                    id = keywords.get(tokenText);
                     if (id == null) {
-                        id = keywords.get(tokenText);
-                        if (id == null) {
-                            id = spinKeywords.get(tokenText);
-                            if (id == null && debug) {
-                                if (tokenText.startsWith("`")) {
-                                    id = debugKeywords.get(tokenText.substring(1));
-                                }
-                                else {
-                                    id = debugKeywords.get(tokenText);
-                                }
+                        id = spinKeywords.get(tokenText);
+                        if (id == null && debug) {
+                            if (tokenText.startsWith("`")) {
+                                id = debugKeywords.get(tokenText.substring(1));
+                            }
+                            else {
+                                id = debugKeywords.get(tokenText);
                             }
                         }
                     }
