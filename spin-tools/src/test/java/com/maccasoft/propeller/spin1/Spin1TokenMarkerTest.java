@@ -18,6 +18,7 @@ import com.maccasoft.propeller.SourceTokenMarker.TokenId;
 import com.maccasoft.propeller.SourceTokenMarker.TokenMarker;
 import com.maccasoft.propeller.model.RootNode;
 import com.maccasoft.propeller.model.SourceProvider;
+import com.maccasoft.propeller.spin2.Spin2TokenMarker;
 
 class Spin1TokenMarkerTest {
 
@@ -41,23 +42,22 @@ class Spin1TokenMarkerTest {
     @Test
     void testLineStartsInBlockComment() {
         String text = ""
-            + "{\n"
+            + "CON {\n"
             + "  Constant declarations\n"
-            + "  } CON  EnableFlow = 8 ' Single assignments\n"
+            + "  } EnableFlow = 8 ' Single assignments\n"
             + "";
 
-        Spin1TokenMarker subject = new Spin1TokenMarker(SourceProvider.NULL);
+        Spin2TokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
         subject.refreshTokens(text);
 
-        Collection<TokenMarker> result = subject.getTokens(2, 26, text.substring(26, 70));
+        Collection<TokenMarker> result = subject.getTokens(2, 30, text.substring(30, 69));
 
         TokenMarker[] markers = result.toArray(new TokenMarker[0]);
-        Assertions.assertEquals(5, markers.length);
+        Assertions.assertEquals(4, markers.length);
         Assertions.assertEquals(TokenId.COMMENT, markers[0].getId());
-        Assertions.assertEquals(TokenId.SECTION, markers[1].getId());
-        Assertions.assertEquals(TokenId.CONSTANT, markers[2].getId());
-        Assertions.assertEquals(TokenId.NUMBER, markers[3].getId());
-        Assertions.assertEquals(TokenId.COMMENT, markers[4].getId());
+        Assertions.assertEquals(TokenId.CONSTANT, markers[1].getId());
+        Assertions.assertEquals(TokenId.NUMBER, markers[2].getId());
+        Assertions.assertEquals(TokenId.COMMENT, markers[3].getId());
     }
 
     @Test

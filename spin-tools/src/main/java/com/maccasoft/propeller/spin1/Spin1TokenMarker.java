@@ -42,13 +42,6 @@ public class Spin1TokenMarker extends SourceTokenMarker {
 
     static Map<String, TokenId> keywords = new CaseInsensitiveMap<>();
     static {
-        keywords.put("CON", TokenId.SECTION);
-        keywords.put("VAR", TokenId.SECTION);
-        keywords.put("OBJ", TokenId.SECTION);
-        keywords.put("PUB", TokenId.SECTION);
-        keywords.put("PRI", TokenId.SECTION);
-        keywords.put("DAT", TokenId.SECTION);
-
         keywords.put("BYTE", TokenId.TYPE);
         keywords.put("WORD", TokenId.TYPE);
         keywords.put("LONG", TokenId.TYPE);
@@ -380,71 +373,68 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                 }
                 stream.restore(pos);
             }
-            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
-                markers.add(new TokenMarker(stream.nextToken(), TokenId.COMMENT));
+            if (token.column == 0) {
+                if ("CON".equalsIgnoreCase(token.getText())) {
+                    markers.add(new TokenMarker(stream.nextToken(), TokenId.SECTION));
+                    parseConstant(stream, markers);
+                    continue;
+                }
+                else if ("VAR".equalsIgnoreCase(token.getText())) {
+                    markers.add(new TokenMarker(stream.nextToken(), TokenId.SECTION));
+                    parseVariable(stream, contextNode, markers);
+                    continue;
+                }
+                else if ("OBJ".equalsIgnoreCase(token.getText())) {
+                    markers.add(new TokenMarker(stream.nextToken(), TokenId.SECTION));
+                    parseObject(stream, markers);
+                    continue;
+                }
+                else if ("PUB".equalsIgnoreCase(token.getText())) {
+                    markers.add(new TokenMarker(stream.nextToken(), TokenId.METHOD_PUB));
+                    parseMethod(TokenId.METHOD_PUB, stream, markers);
+                    continue;
+                }
+                else if ("PRI".equalsIgnoreCase(token.getText())) {
+                    markers.add(new TokenMarker(stream.nextToken(), TokenId.METHOD_PRI));
+                    parseMethod(TokenId.METHOD_PRI, stream, markers);
+                    continue;
+                }
+                else if ("DAT".equalsIgnoreCase(token.getText())) {
+                    markers.add(new TokenMarker(stream.nextToken(), TokenId.SECTION));
+                    parseDatLine(stream, "-", markers);
+                    continue;
+                }
             }
-            else if (token.type == Token.NUMBER) {
-                markers.add(new TokenMarker(stream.nextToken(), TokenId.NUMBER));
-            }
-            else if (token.type == Token.STRING) {
-                markers.add(new TokenMarker(stream.nextToken(), TokenId.STRING));
-            }
-            else if ("CON".equalsIgnoreCase(token.getText())) {
-                markers.add(new TokenMarker(stream.nextToken(), TokenId.SECTION));
-                parseConstant(stream, markers);
-            }
-            else if ("VAR".equalsIgnoreCase(token.getText())) {
-                markers.add(new TokenMarker(stream.nextToken(), TokenId.SECTION));
+            if (contextNode instanceof VariablesNode) {
                 parseVariable(stream, contextNode, markers);
             }
-            else if ("OBJ".equalsIgnoreCase(token.getText())) {
-                markers.add(new TokenMarker(stream.nextToken(), TokenId.SECTION));
+            else if (contextNode instanceof ObjectsNode) {
                 parseObject(stream, markers);
             }
-            else if ("PUB".equalsIgnoreCase(token.getText())) {
-                markers.add(new TokenMarker(stream.nextToken(), TokenId.METHOD_PUB));
-                parseMethod(TokenId.METHOD_PUB, stream, markers);
+            else if (contextNode instanceof MethodNode methodNode) {
+                markTokens(contextNode, stream, markers, null);
             }
-            else if ("PRI".equalsIgnoreCase(token.getText())) {
-                markers.add(new TokenMarker(stream.nextToken(), TokenId.METHOD_PRI));
-                parseMethod(TokenId.METHOD_PRI, stream, markers);
-            }
-            else if ("DAT".equalsIgnoreCase(token.getText())) {
-                markers.add(new TokenMarker(stream.nextToken(), TokenId.SECTION));
-                parseDatLine(stream, "-", markers);
-            }
-            else {
-                if (contextNode instanceof VariablesNode) {
-                    parseVariable(stream, contextNode, markers);
-                }
-                else if (contextNode instanceof ObjectsNode) {
-                    parseObject(stream, markers);
-                }
-                else if (contextNode instanceof MethodNode methodNode) {
-                    markTokens(contextNode, stream, markers, null);
-                }
-                else if (contextNode instanceof DataNode) {
-                    String lastLabel = "-";
+            else if (contextNode instanceof DataNode) {
+                String lastLabel = "-";
 
-                    for (Node node : contextNode.getChilds()) {
-                        if (node.getStartIndex() > lineOffset + lineText.length()) {
-                            break;
-                        }
-                        if (node instanceof DataLineNode dataLineNode) {
-                            if (dataLineNode.label != null) {
-                                String s = dataLineNode.label.getText();
-                                if (!s.startsWith(":") && !s.startsWith(".")) {
-                                    lastLabel = s;
-                                }
+                for (Node node : contextNode.getChilds()) {
+                    if (node.getStartIndex() > lineOffset + lineText.length()) {
+                        break;
+                    }
+                    if (node instanceof DataLineNode dataLineNode) {
+                        if (dataLineNode.label != null) {
+                            String s = dataLineNode.label.getText();
+                            if (!s.startsWith(":") && !s.startsWith(".")) {
+                                lastLabel = s;
                             }
                         }
                     }
+                }
 
-                    parseDatLine(stream, lastLabel, markers);
-                }
-                else {
-                    parseConstant(stream, markers);
-                }
+                parseDatLine(stream, lastLabel, markers);
+            }
+            else {
+                parseConstant(stream, markers);
             }
         }
 

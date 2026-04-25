@@ -103,26 +103,34 @@ public class Spin2Parser extends Parser {
                 break;
             }
 
+            if (token.column == 0) {
+                if ("CON".equalsIgnoreCase(token.getText())) {
+                    parentNode = parseConBlock(new ConstantsNode(root, sourceLine.getNextToken()), sourceLine);
+                    continue;
+                }
+                else if ("VAR".equalsIgnoreCase(token.getText())) {
+                    parentNode = parseVarBlock(new VariablesNode(root, sourceLine.getNextToken()), sourceLine);
+                    continue;
+                }
+                else if ("OBJ".equalsIgnoreCase(token.getText())) {
+                    parentNode = parseObjBlock(new ObjectsNode(root, sourceLine.getNextToken()), sourceLine);
+                    continue;
+                }
+                else if ("PUB".equalsIgnoreCase(token.getText()) || "PRI".equalsIgnoreCase(token.getText())) {
+                    parentNode = parseMethodBlock(new MethodNode(root, sourceLine.getNextToken()), sourceLine);
+                    continue;
+                }
+                else if ("DAT".equalsIgnoreCase(token.getText())) {
+                    parentNode = parseDatBlock(new DataNode(root, sourceLine.getNextToken()), sourceLine);
+                    continue;
+                }
+            }
+
             if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
                 if (token.type == Token.BLOCK_COMMENT) {
                     root.addComment(token);
                 }
                 sourceLine.getNextToken();
-            }
-            else if ("CON".equalsIgnoreCase(token.getText())) {
-                parentNode = parseConBlock(new ConstantsNode(root, sourceLine.getNextToken()), sourceLine);
-            }
-            else if ("VAR".equalsIgnoreCase(token.getText())) {
-                parentNode = parseVarBlock(new VariablesNode(root, sourceLine.getNextToken()), sourceLine);
-            }
-            else if ("OBJ".equalsIgnoreCase(token.getText())) {
-                parentNode = parseObjBlock(new ObjectsNode(root, sourceLine.getNextToken()), sourceLine);
-            }
-            else if ("PUB".equalsIgnoreCase(token.getText()) || "PRI".equalsIgnoreCase(token.getText())) {
-                parentNode = parseMethodBlock(new MethodNode(root, sourceLine.getNextToken()), sourceLine);
-            }
-            else if ("DAT".equalsIgnoreCase(token.getText())) {
-                parentNode = parseDatBlock(new DataNode(root, sourceLine.getNextToken()), sourceLine);
             }
             else {
                 if (parentNode == null) {
