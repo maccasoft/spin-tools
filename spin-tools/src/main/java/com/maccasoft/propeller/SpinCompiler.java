@@ -35,6 +35,8 @@ import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
+import com.maccasoft.propeller.SpinObject.DataObject;
+import com.maccasoft.propeller.SpinObject.FileDataObject;
 import com.maccasoft.propeller.devices.ComPort;
 import com.maccasoft.propeller.devices.ComPortEvent;
 import com.maccasoft.propeller.devices.ComPortEventListener;
@@ -537,15 +539,17 @@ public class SpinCompiler {
 
     void printObjectTree(int indent, SpinObject object) {
         if (indent != 0) {
-            for (int i = 1; i < indent; i++) {
-                print("     ");
-            }
-            print(" +-- ");
+            print("     ".repeat(indent - 1) + " +-- ");
         }
         println(object.getFile().getName());
 
         for (SpinObject child : object.getChildObjects()) {
             printObjectTree(indent + 1, child);
+        }
+        for (DataObject data : object.getDataObjects()) {
+            if (data instanceof FileDataObject fileData) {
+                println("     ".repeat(indent) + " +-- " + fileData.getFile().getName());
+            }
         }
     }
 

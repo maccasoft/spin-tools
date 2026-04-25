@@ -365,6 +365,44 @@ public abstract class SpinObject {
 
     }
 
+    public static class FileDataObject extends PAsmDataObject {
+
+        File file;
+
+        int address;
+        int offset;
+
+        public FileDataObject(File file, int addr, boolean hubMode, byte[] bytes, String text) {
+            super(addr, hubMode, bytes, text);
+            this.file = file;
+        }
+
+        public File getFile() {
+            return file;
+        }
+
+        public int getAddress() {
+            return address;
+        }
+
+        public void setAddress(int address) {
+            this.address = address;
+        }
+
+        public int getOffset() {
+            return offset;
+        }
+
+        public void setOffset(int offset) {
+            this.offset = offset;
+        }
+
+        public void generateListing(int address, int offset, PrintStream ps) {
+            super.generateListing(this.offset, this.address - this.offset, ps);
+        }
+
+    }
+
     File file;
     int address;
 
@@ -421,6 +459,13 @@ public abstract class SpinObject {
         return rc;
     }
 
+    public LongDataObject writeLong(int index, int value, String text) {
+        LongDataObject rc = new LongDataObject(value, text);
+        data.add(index, rc);
+        size += 4;
+        return rc;
+    }
+
     public WordDataObject writeWord(int value) {
         WordDataObject rc = new WordDataObject(value);
         data.add(rc);
@@ -435,6 +480,13 @@ public abstract class SpinObject {
         return rc;
     }
 
+    public WordDataObject writeWord(int index, int value, String text) {
+        WordDataObject rc = new WordDataObject(value, text);
+        data.add(index, rc);
+        size += 2;
+        return rc;
+    }
+
     public ByteDataObject writeByte(int value) {
         ByteDataObject rc = new ByteDataObject(value);
         data.add(rc);
@@ -445,6 +497,13 @@ public abstract class SpinObject {
     public ByteDataObject writeByte(int value, String text) {
         ByteDataObject rc = new ByteDataObject(value, text);
         data.add(rc);
+        size += 1;
+        return rc;
+    }
+
+    public ByteDataObject writeByte(int index, int value, String text) {
+        ByteDataObject rc = new ByteDataObject(value, text);
+        data.add(index, rc);
         size += 1;
         return rc;
     }
@@ -476,6 +535,11 @@ public abstract class SpinObject {
 
     public void writeBytes(int addr, boolean hubMode, byte[] bytes, String text) {
         data.add(new PAsmDataObject(addr, hubMode, bytes.clone(), text));
+        size += bytes.length;
+    }
+
+    public void writeBinaryBlob(int addr, boolean hubMode, File file, byte[] bytes, String text) {
+        data.add(new FileDataObject(file, addr, hubMode, bytes.clone(), text));
         size += bytes.length;
     }
 
@@ -643,6 +707,10 @@ public abstract class SpinObject {
         }
 
         return list;
+    }
+
+    public List<DataObject> getDataObjects() {
+        return data;
     }
 
 }

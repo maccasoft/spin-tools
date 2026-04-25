@@ -38,32 +38,86 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 
+import com.maccasoft.propeller.SpinObject.DataObject;
+import com.maccasoft.propeller.SpinObject.FileDataObject;
 import com.maccasoft.propeller.internal.ImageRegistry;
 
 public class ObjectBrowser {
 
     static class Element {
 
+        String name;
+        File file;
+
+        int address;
+        int size;
+
+        Object object;
         Element parent;
-        SpinObject object;
 
         Element[] childs = new Element[0];
 
         public Element(SpinObject object) {
+            this.name = object.getFile().getName();
+            this.file = object.getFile();
+
+            this.address = object.getAddress();
+            this.size = object.getSize();
             this.object = object;
+
+            int count = object.getChildObjects().size();
+            for (DataObject child : object.getDataObjects()) {
+                if (child instanceof FileDataObject) {
+                    count++;
+                }
+            }
+            this.childs = new Element[count];
+
+            count = 0;
+            for (SpinObject child : object.getChildObjects()) {
+                this.childs[count++] = new Element(this, child);
+            }
+            for (DataObject child : object.getDataObjects()) {
+                if (child instanceof FileDataObject data) {
+                    this.childs[count++] = new Element(this, data);
+                }
+            }
         }
 
         public Element(Element parent, SpinObject object) {
+            this(object);
             this.parent = parent;
+        }
+
+        public Element(Element parent, FileDataObject object) {
+            this.name = object.getFile().getName();
+            this.file = object.getFile();
+            this.parent = parent;
+
+            this.address = object.getAddress();
+            this.size = object.size();
+
             this.object = object;
         }
 
         public String getName() {
-            return object.getFile().getName();
+            return name;
         }
 
         public File getFile() {
-            return object.getFile();
+            return file;
+        }
+
+        public int getAddress() {
+            return address;
+        }
+
+        public int getSize() {
+            return size;
+        }
+
+        public Object getObject() {
+            return object;
         }
 
     }
@@ -247,8 +301,6 @@ public class ObjectBrowser {
             }
             else {
                 Element input = new Element(object);
-                buildElementTree(input, object);
-
                 topObjectFolder = object.getFile().getAbsoluteFile().getParent() + File.separator;
                 viewer.setInput(new Element[] {
                     input
@@ -257,16 +309,6 @@ public class ObjectBrowser {
             }
         } finally {
             viewer.getControl().setRedraw(true);
-        }
-    }
-
-    void buildElementTree(Element parent, SpinObject object) {
-        int index = 0;
-        parent.childs = new Element[object.getChildObjects().size()];
-        for (SpinObject child : object.getChildObjects()) {
-            parent.childs[index] = new Element(parent, child);
-            buildElementTree(parent.childs[index], child);
-            index++;
         }
     }
 

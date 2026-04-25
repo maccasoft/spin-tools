@@ -20,8 +20,6 @@ import java.util.List;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.resource.JFaceResources;
-import org.eclipse.jface.viewers.ISelectionChangedListener;
-import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
@@ -50,10 +48,10 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.ScrollBar;
 import org.eclipse.swt.widgets.Shell;
 
+import com.maccasoft.propeller.SpinObject.FileDataObject;
 import com.maccasoft.propeller.internal.ColorRegistry;
 import com.maccasoft.propeller.preferences.PackageFile;
 import com.maccasoft.propeller.spin2.Spin2Object;
@@ -93,7 +91,6 @@ public class P2MemoryDialog extends Dialog {
     boolean topObject;
 
     byte[] data;
-    SpinObject selectedObject;
 
     int clkfreq;
     int clkmode;
@@ -102,6 +99,9 @@ public class P2MemoryDialog extends Dialog {
     int dbase;
 
     int dbgsize;
+
+    int codeBegin;
+    int codeEnd;
 
     NumberFormat format;
 
@@ -259,7 +259,7 @@ public class P2MemoryDialog extends Dialog {
             }
         });
 
-        updateView();
+        updateView(object);
 
         return content;
     }
@@ -302,15 +302,11 @@ public class P2MemoryDialog extends Dialog {
         objectTree.setForeground(listForeground);
         objectTree.setInput(object, topObject);
 
-        objectTree.addSelectionChangedListener(new ISelectionChangedListener() {
-
-            @Override
-            public void selectionChanged(SelectionChangedEvent event) {
-                ObjectBrowser.Element element = (ObjectBrowser.Element) event.getStructuredSelection().getFirstElement();
-                selectedObject = element != null ? element.object : null;
-                updateView();
-            }
-
+        objectTree.addSelectionChangedListener(event -> {
+            ObjectBrowser.Element element = (ObjectBrowser.Element) event.getStructuredSelection().getFirstElement();
+            codeBegin = dbgsize + (element != null ? element.getAddress() : pbase);
+            codeEnd = element != null ? codeBegin + element.getSize() : dbase;
+            updateView(element != null ? element.getObject() : null);
         });
 
         Composite group = new Composite(container, SWT.NONE);
@@ -333,30 +329,25 @@ public class P2MemoryDialog extends Dialog {
         gridData.heightHint = convertVerticalDLUsToPixels(16);
         gridData.widthHint = convertHorizontalDLUsToPixels(100);
         label.setLayoutData(gridData);
-        label.addListener(SWT.Paint, new Listener() {
+        label.addListener(SWT.Paint, e -> {
+            Rectangle bounds = ((Control) e.widget).getBounds();
 
-            @Override
-            public void handleEvent(Event e) {
-                Rectangle bounds = ((Control) e.widget).getBounds();
+            e.gc.setBackground(stackFreeBackground);
+            e.gc.fillRectangle(0, 0, bounds.width, bounds.height);
 
-                e.gc.setBackground(stackFreeBackground);
-                e.gc.fillRectangle(0, 0, bounds.width, bounds.height);
+            int interpreterPixels = (int) (bounds.width * pbase / (double) data.length);
+            int codePixels = (int) (bounds.width * (vbase - pbase) / (double) data.length);
+            int variablesPixels = (int) (bounds.width * (dbase - vbase) / (double) data.length);
 
-                int interpreterPixels = (int) (bounds.width * pbase / (double) data.length);
-                int codePixels = (int) (bounds.width * (vbase - pbase) / (double) data.length);
-                int variablesPixels = (int) (bounds.width * (dbase - vbase) / (double) data.length);
-
-                int x = 0;
-                e.gc.setBackground(listBackground);
-                e.gc.fillRectangle(x, 0, interpreterPixels, bounds.height);
-                x += interpreterPixels;
-                e.gc.setBackground(codeBackground);
-                e.gc.fillRectangle(x, 0, codePixels, bounds.height);
-                x += codePixels;
-                e.gc.setBackground(variablesBackground);
-                e.gc.fillRectangle(x, 0, variablesPixels, bounds.height);
-            }
-
+            int x = 0;
+            e.gc.setBackground(listBackground);
+            e.gc.fillRectangle(x, 0, interpreterPixels, bounds.height);
+            x += interpreterPixels;
+            e.gc.setBackground(codeBackground);
+            e.gc.fillRectangle(x, 0, codePixels, bounds.height);
+            x += codePixels;
+            e.gc.setBackground(variablesBackground);
+            e.gc.fillRectangle(x, 0, variablesPixels, bounds.height);
         });
 
         group = new Composite(container, SWT.NONE);
@@ -539,9 +530,6 @@ public class P2MemoryDialog extends Dialog {
                 return;
             }
 
-            int codeBegin = dbgsize + (selectedObject != null ? selectedObject.getAddress() : pbase);
-            int codeEnd = selectedObject != null ? codeBegin + selectedObject.getSize() : dbase;
-
             int byteWidth = (int) (fontMetrics.getAverageCharacterWidth() * 3);
             int characterWidth = (int) fontMetrics.getAverageCharacterWidth();
             int halfWidth = (int) (fontMetrics.getAverageCharacterWidth() / 2);
@@ -626,6 +614,7 @@ public class P2MemoryDialog extends Dialog {
 
             @Override
             public void controlMoved(ControlEvent e) {
+
             }
 
         });
@@ -785,7 +774,6 @@ public class P2MemoryDialog extends Dialog {
     public void setObject(Spin2Object object, boolean topObject) {
         this.object = object;
         this.topObject = topObject;
-        this.selectedObject = null;
 
         try {
             data = object.getRAM();
@@ -805,30 +793,31 @@ public class P2MemoryDialog extends Dialog {
             else {
                 vbase = dbase = object.getSize();
             }
+
+            codeBegin = dbgsize + pbase;
+            codeEnd = dbgsize + pbase + vbase;
+
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    void updateView() {
-        if (selectedObject == null || selectedObject == object) {
-            codeDataValue.setText(String.format("%d bytes", vbase - pbase));
-            variablesValue.setText(String.format("%d bytes", dbase - vbase));
+    void updateView(Object selectedObject) {
+        codeDataValue.setText(String.format("%d bytes", codeEnd - codeBegin));
+        if (selectedObject instanceof SpinObject spinObject) {
+            variablesValue.setText(String.format("%d longs", spinObject.getVarSize() / 4));
         }
         else {
-            codeDataValue.setText(String.format("%d longs", selectedObject.getSize() / 4));
-            variablesValue.setText(String.format("%d longs", selectedObject.getVarSize() / 4));
+            variablesValue.setText(String.format("%d longs", 0));
         }
         stackFreeValue.setText(String.format("%d bytes", data.length - dbase));
 
-        if (selectedObject != null) {
-            ScrollBar verticalBar = canvas.getVerticalBar();
-            int targetAddress = dbgsize + selectedObject.getAddress();
-            if (targetAddress < verticalBar.getSelection() || targetAddress > verticalBar.getSelection() + verticalBar.getPageIncrement()) {
-                int pageIncrement = ((verticalBar.getPageIncrement() / BYTES_PER_ROW) / 2) * BYTES_PER_ROW;
-
+        ScrollBar verticalBar = canvas.getVerticalBar();
+        if (codeBegin < verticalBar.getSelection() || codeBegin > verticalBar.getSelection() + verticalBar.getPageIncrement()) {
+            int pageIncrement = ((verticalBar.getPageIncrement() / BYTES_PER_ROW) / 2) * BYTES_PER_ROW;
+            if (pageIncrement > 0) {
                 int pageBegin = 0;
-                while (pageBegin + pageIncrement < targetAddress) {
+                while (pageBegin + pageIncrement < codeBegin && pageBegin + pageIncrement < data.length) {
                     pageBegin += pageIncrement;
                 }
                 verticalBar.setSelection(pageBegin);
@@ -840,11 +829,11 @@ public class P2MemoryDialog extends Dialog {
         Thread thread = new Thread(() -> {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             try {
-                if (selectedObject == null) {
-                    object.generateListing(new PrintStream(os));
+                if (selectedObject instanceof SpinObject spinObject) {
+                    spinObject.generateListing(spinObject.getAddress(), new PrintStream(os));
                 }
-                else {
-                    selectedObject.generateListing(selectedObject.getAddress(), new PrintStream(os));
+                else if (selectedObject instanceof FileDataObject fileDataObject) {
+                    fileDataObject.generateListing(fileDataObject.getOffset(), fileDataObject.getAddress(), new PrintStream(os));
                 }
                 display.asyncExec(() -> {
                     if (!styledText.isDisposed()) {

@@ -51,6 +51,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.ScrollBar;
 import org.eclipse.swt.widgets.Shell;
 
+import com.maccasoft.propeller.SpinObject.FileDataObject;
 import com.maccasoft.propeller.internal.ColorRegistry;
 import com.maccasoft.propeller.preferences.PackageFile;
 import com.maccasoft.propeller.spin1.Spin1Object;
@@ -90,13 +91,15 @@ public class P1MemoryDialog extends Dialog {
     boolean topObject;
 
     byte[] data;
-    SpinObject selectedObject;
 
     int clkfreq;
     int clkmode;
     int pbase;
     int vbase;
     int dbase;
+
+    int codeBegin;
+    int codeEnd;
 
     NumberFormat format;
 
@@ -254,7 +257,7 @@ public class P1MemoryDialog extends Dialog {
             }
         });
 
-        updateView();
+        updateView(object);
 
         return content;
     }
@@ -298,8 +301,9 @@ public class P1MemoryDialog extends Dialog {
 
         objectTree.addSelectionChangedListener(event -> {
             ObjectBrowser.Element element = (ObjectBrowser.Element) event.getStructuredSelection().getFirstElement();
-            selectedObject = element != null ? element.object : null;
-            updateView();
+            codeBegin = element != null ? element.getAddress() : pbase;
+            codeEnd = element != null ? codeBegin + element.getSize() : dbase;
+            updateView(element != null ? element.getObject() : null);
         });
 
         Composite group = new Composite(container, SWT.NONE);
@@ -508,9 +512,6 @@ public class P1MemoryDialog extends Dialog {
                 return;
             }
 
-            int codeBegin = (selectedObject != null ? selectedObject.getAddress() : pbase);
-            int codeEnd = selectedObject != null ? codeBegin + selectedObject.getSize() : dbase;
-
             int byteWidth = (int) (fontMetrics.getAverageCharacterWidth() * 3);
             int characterWidth = (int) fontMetrics.getAverageCharacterWidth();
             int halfWidth = (int) (fontMetrics.getAverageCharacterWidth() / 2);
@@ -595,6 +596,7 @@ public class P1MemoryDialog extends Dialog {
 
             @Override
             public void controlMoved(ControlEvent e) {
+
             }
 
         });
@@ -743,7 +745,6 @@ public class P1MemoryDialog extends Dialog {
     public void setObject(Spin1Object object, boolean topObject) {
         this.object = object;
         this.topObject = topObject;
-        this.selectedObject = null;
 
         try {
             data = object.getRAM();
@@ -754,30 +755,30 @@ public class P1MemoryDialog extends Dialog {
             pbase = readWord(6);
             vbase = readWord(8);
             dbase = readWord(10) - 8;
+
+            codeBegin = pbase;
+            codeEnd = pbase + vbase;
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    void updateView() {
-        if (selectedObject == null || selectedObject == object) {
-            codeDataValue.setText(String.format("%d longs", (vbase - pbase) / 4));
-            variablesValue.setText(String.format("%d longs", (dbase - vbase) / 4));
+    void updateView(Object selectedObject) {
+        codeDataValue.setText(String.format("%d longs", (codeEnd - codeBegin) / 4));
+        if (selectedObject instanceof SpinObject spinObject) {
+            variablesValue.setText(String.format("%d longs", spinObject.getVarSize() / 4));
         }
         else {
-            codeDataValue.setText(String.format("%d longs", selectedObject.getSize() / 4));
-            variablesValue.setText(String.format("%d longs", selectedObject.getVarSize() / 4));
+            variablesValue.setText(String.format("%d longs", 0));
         }
         stackFreeValue.setText(String.format("%d longs", (data.length - dbase) / 4));
 
-        if (selectedObject != null) {
-            ScrollBar verticalBar = canvas.getVerticalBar();
-            int targetAddress = selectedObject.getAddress();
-            if (targetAddress < verticalBar.getSelection() || targetAddress > verticalBar.getSelection() + verticalBar.getPageIncrement()) {
-                int pageIncrement = ((verticalBar.getPageIncrement() / BYTES_PER_ROW) / 2) * BYTES_PER_ROW;
-
+        ScrollBar verticalBar = canvas.getVerticalBar();
+        if (codeBegin < verticalBar.getSelection() || codeBegin > verticalBar.getSelection() + verticalBar.getPageIncrement()) {
+            int pageIncrement = ((verticalBar.getPageIncrement() / BYTES_PER_ROW) / 2) * BYTES_PER_ROW;
+            if (pageIncrement > 0) {
                 int pageBegin = 0;
-                while (pageBegin + pageIncrement < targetAddress) {
+                while (pageBegin + pageIncrement < codeBegin && pageBegin + pageIncrement < data.length) {
                     pageBegin += pageIncrement;
                 }
                 verticalBar.setSelection(pageBegin);
@@ -789,11 +790,11 @@ public class P1MemoryDialog extends Dialog {
         Thread thread = new Thread(() -> {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             try {
-                if (selectedObject == null) {
-                    object.generateListing(new PrintStream(os));
+                if (selectedObject instanceof SpinObject spinObject) {
+                    spinObject.generateListing(spinObject.getAddress(), new PrintStream(os));
                 }
-                else {
-                    selectedObject.generateListing(selectedObject.getAddress(), new PrintStream(os));
+                else if (selectedObject instanceof FileDataObject fileDataObject) {
+                    fileDataObject.generateListing(fileDataObject.getOffset(), fileDataObject.getAddress(), new PrintStream(os));
                 }
                 display.asyncExec(() -> {
                     if (!styledText.isDisposed()) {

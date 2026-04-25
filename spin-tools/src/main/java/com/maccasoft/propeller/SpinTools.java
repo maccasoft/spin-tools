@@ -96,6 +96,8 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 
+import com.maccasoft.propeller.SpinObject.DataObject;
+import com.maccasoft.propeller.SpinObject.FileDataObject;
 import com.maccasoft.propeller.devices.ComPort;
 import com.maccasoft.propeller.devices.ComPortException;
 import com.maccasoft.propeller.devices.ComPortList;
@@ -2568,15 +2570,17 @@ public class SpinTools {
         StringBuilder sb = new StringBuilder();
 
         if (indent != 0) {
-            for (int i = 1; i < indent; i++) {
-                sb.append("     ");
-            }
-            sb.append(" +-- ");
+            sb.repeat("     ", indent - 1).append(" +-- ");
         }
         sb.append(object.getFile().getName()).append("\r\n");
 
         for (SpinObject child : object.getChildObjects()) {
             sb.append(buildObjectTree(indent + 1, child));
+        }
+        for (DataObject data : object.getDataObjects()) {
+            if (data instanceof FileDataObject fileData) {
+                sb.repeat("     ", indent).append(" +-- ").append(fileData.getFile().getName()).append("\r\n");
+            }
         }
 
         return sb.toString();

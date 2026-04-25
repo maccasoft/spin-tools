@@ -19,6 +19,7 @@ import java.util.Map.Entry;
 
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.ObjectCompiler;
+import com.maccasoft.propeller.SpinObject.FileDataObject;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.DataVariable;
 import com.maccasoft.propeller.expressions.Expression;
@@ -26,6 +27,7 @@ import com.maccasoft.propeller.expressions.MemoryContextLiteral;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.expressions.ObjectContextLiteral;
 import com.maccasoft.propeller.expressions.RegisterAddress;
+import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.Node;
@@ -283,12 +285,17 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
                     logMessage(new CompilerException("not allowed", node.condition));
                 }
 
-                String fileName = parameters.get(0).getString();
-                byte[] data = compiler.getBinaryFile(fileName);
-                if (data == null) {
-                    throw new CompilerException("file \"" + fileName + "\" not found", node.parameters.get(0));
+                String fileName = parameters.getFirst().getString();
+                File file = compiler.getFile(fileName);
+                if (file == null) {
+                    throw new CompilerException("file \"" + fileName + "\" not found", node.parameters.getFirst());
                 }
-                pasmLine.setInstructionObject(new FileInc(pasmLine.getScope(), data));
+                try {
+                    byte[] data = FileUtils.loadBinaryFromFile(file);
+                    pasmLine.setInstructionObject(new FileInc(pasmLine.getScope(), data, file));
+                } catch (Exception e) {
+                    logMessage(new CompilerException("file \"" + fileName + "\" not found", node.parameters.getFirst()));
+                }
 
                 if (node.modifier != null) {
                     logMessage(new CompilerException("not allowed", node.modifier));
@@ -773,10 +780,18 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
                     hubMode = false;
                 }
                 byte[] code = line.getInstructionObject().getBytes();
-                if (!isDebugEnabled() && (line.getInstructionFactory() instanceof Debug)) {
-                    code = new byte[0];
+                if (line.getInstructionObject() instanceof FileInc fileInc) {
+                    FileDataObject data = new FileDataObject(fileInc.getFile(), line.getScope().getAddress(), hubMode, code, line.toString());
+                    data.setAddress(line.getScope().getMemoryAddress());
+                    data.setOffset(line.getScope().getObjectAddress());
+                    object.write(data);
                 }
-                object.writeBytes(line.getScope().getAddress(), hubMode, code, line.toString());
+                else {
+                    if (!isDebugEnabled() && (line.getInstructionFactory() instanceof Debug)) {
+                        code = new byte[0];
+                    }
+                    object.writeBytes(line.getScope().getAddress(), hubMode, code, line.toString());
+                }
             } catch (CompilerException e) {
                 logMessage(e);
             } catch (Exception e) {
