@@ -160,6 +160,8 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 int index = sourceLine.getIndex();
                 try {
                     compileConstant(sourceLine);
+                } catch (CompilerException e) {
+                    logMessage(e);
                 } finally {
                     sourceLine.setIndex(index);
                 }
@@ -171,6 +173,8 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 int index = sourceLine.getIndex();
                 try {
                     compileObject(sourceLine);
+                } catch (CompilerException e) {
+                    logMessage(e);
                 } finally {
                     sourceLine.setIndex(index);
                 }
@@ -700,6 +704,10 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
         do {
             token = sourceLine.skipCommentsAndGetNextToken();
             if ("#".equals(token.getText())) {
+                if (!sourceLine.hasMoreTokens()) {
+                    logMessage(new CompilerException("expecting expression", token.stop + 1));
+                    break;
+                }
                 Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope, true);
                 try {
                     while (sourceLine.hasMoreTokens()) {
@@ -708,6 +716,10 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                             break;
                         }
                         builder.addToken(token);
+                    }
+                    if (builder.getTokenCount() == 0) {
+                        logMessage(new CompilerException("expecting expression", token));
+                        break;
                     }
                     enumValue = builder.getExpression();
                 } catch (CompilerException e) {
@@ -718,6 +730,10 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 enumIncrement = new NumberLiteral(1);
 
                 if ("[".equals(token.getText())) {
+                    if (!sourceLine.hasMoreTokens()) {
+                        logMessage(new CompilerException("expecting expression", token.stop + 1));
+                        break;
+                    }
                     builder = new Spin2ExpressionBuilder(scope, true);
                     try {
                         while (sourceLine.hasMoreTokens()) {
@@ -727,15 +743,19 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                             }
                             builder.addToken(token);
                         }
+                        if (builder.getTokenCount() == 0) {
+                            logMessage(new CompilerException("expecting expression", token));
+                            break;
+                        }
                         enumIncrement = builder.getExpression();
                     } catch (CompilerException e) {
                         logMessage(e);
                     } catch (Exception e) {
                         logMessage(new CompilerException(e, builder.getTokens()));
                     }
-
                     if (!"]".equals(token.getText())) {
-                        logMessage(new CompilerException("expecting '['", token));
+                        logMessage(new CompilerException("expecting ']'", token));
+                        break;
                     }
                 }
 
@@ -749,7 +769,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
             }
             else if ("struct".equalsIgnoreCase(token.getText())) {
                 if (!sourceLine.hasMoreTokens()) {
-                    logMessage(new CompilerException("expecting identifier", token.nextPosition()));
+                    logMessage(new CompilerException("expecting identifier", token.stop + 1));
                     break;
                 }
                 Token identifier = sourceLine.skipCommentsAndGetNextToken();
@@ -903,11 +923,16 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
     }
 
     void compileStruct(Token identifier, SourceLine sourceLine) {
-        Token token = sourceLine.skipCommentsAndGetNextToken();
+        if (!sourceLine.hasMoreTokens()) {
+            logMessage(new CompilerException("expecting '(' or '='", identifier.stop + 1));
+            return;
+        }
 
+        Token token = sourceLine.skipCommentsAndGetNextToken();
         if ("(".equals(token.getText())) {
-            if (scope.hasStructureDefinition(identifier.getText())) {
-                logMessage(new CompilerException("structure " + identifier.getText() + " already defined", identifier));
+            if (!sourceLine.hasMoreTokens()) {
+                logMessage(new CompilerException("expecting identifier", token.stop + 1));
+                return;
             }
 
             Spin2Struct struct = new Spin2Struct(scope);
@@ -937,7 +962,12 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                             token = sourceLine.skipCommentsAndGetNextToken();
                             if ("]".equals(token.getText())) {
                                 try {
-                                    memberSize = builder.getExpression();
+                                    if (builder.getTokenCount() != 0) {
+                                        memberSize = builder.getExpression();
+                                    }
+                                    else {
+                                        logMessage(new CompilerException("expecting expression", token));
+                                    }
                                 } catch (CompilerException e) {
                                     logMessage(e);
                                 } catch (Exception e) {
@@ -948,7 +978,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                             builder.addToken(token);
                         }
                         if (!"]".equals(token.getText())) {
-                            throw new CompilerException("expecting ']'", token);
+                            logMessage(new CompilerException("expecting ']'", token));
                         }
                         if (sourceLine.hasMoreTokens()) {
                             token = sourceLine.skipCommentsAndGetNextToken();
@@ -962,12 +992,17 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     break;
                 }
                 if (!",".equals(token.getText())) {
-                    logMessage(new CompilerException("expecting ',' or ')'", token));
+                    logMessage(new CompilerException("expecting ',' or ')'", token.stop + 1));
                     break;
                 }
             }
-            objectStructures.add(struct);
-            scope.addStructureDefinition(identifier.getText(), struct);
+            if (scope.hasStructureDefinition(identifier.getText())) {
+                logMessage(new CompilerException("structure " + identifier.getText() + " already defined", identifier));
+            }
+            else {
+                objectStructures.add(struct);
+                scope.addStructureDefinition(identifier.getText(), struct);
+            }
         }
         else if ("=".equals(token.getText())) {
             if (!sourceLine.hasMoreTokens()) {
@@ -1046,7 +1081,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     if (valid) {
                         type = token;
                         if (!iter.hasNext()) {
-                            logMessage(new CompilerException("expecting identifier after type", token));
+                            logMessage(new CompilerException("expecting identifier", token.stop + 1));
                             return;
                         }
                         token = iter.next();
@@ -1069,18 +1104,23 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                                 logMessage(new CompilerException("syntax error", token));
                             }
                             if (!iter.hasNext()) {
-                                throw new CompilerException("expecting expression after '['", token);
+                                throw new CompilerException("expecting expression", token.stop + 1);
                             }
                             Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope);
                             while (iter.hasNext()) {
                                 token = iter.next();
                                 if ("]".equals(token.getText())) {
                                     try {
-                                        Expression expression = builder.getExpression();
-                                        if (!expression.isConstant()) {
-                                            throw new CompilerException("not a constant expression", expression.getData());
+                                        if (builder.getTokenCount() != 0) {
+                                            Expression expression = builder.getExpression();
+                                            if (!expression.isConstant()) {
+                                                throw new CompilerException("not a constant expression", expression.getData());
+                                            }
+                                            varSize = expression.getNumber().intValue();
                                         }
-                                        varSize = expression.getNumber().intValue();
+                                        else {
+                                            logMessage(new CompilerException("expecting expression", token));
+                                        }
                                     } catch (CompilerException e) {
                                         logMessage(e);
                                     } catch (Exception e) {
@@ -1123,7 +1163,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         throw new CompilerException("expecting ',' or end of line", token);
                     }
                     if (!iter.hasNext()) {
-                        throw new CompilerException("expecting identifier after ','", token);
+                        throw new CompilerException("expecting identifier", token.stop + 1);
                     }
                     token = iter.next();
 
