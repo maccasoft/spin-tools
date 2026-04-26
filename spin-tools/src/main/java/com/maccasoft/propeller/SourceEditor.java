@@ -1576,11 +1576,10 @@ public class SourceEditor {
             if (caretPosition >= styledText.getCharCount()) {
                 caretPosition = styledText.getCharCount() - 1;
             }
-            if (caretPosition < styledText.getCharCount()) {
-                String s = styledText.getTextRange(caretPosition, 1);
-                while (("\r".equals(s) || "\n".equals(s)) && caretPosition > 0) {
+            if (caretPosition > 0) {
+                String s = styledText.getTextRange(caretPosition - 1, 2);
+                if ("\r\n".equals(s)) {
                     caretPosition--;
-                    s = styledText.getTextRange(caretPosition, 1);
                 }
             }
             styledText.setCaretOffset(caretPosition);
