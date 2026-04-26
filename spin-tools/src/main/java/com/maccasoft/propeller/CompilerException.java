@@ -12,6 +12,7 @@ package com.maccasoft.propeller;
 import java.io.File;
 import java.io.Serial;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
@@ -89,17 +90,26 @@ public class CompilerException extends RuntimeException {
             this.stop = token.stop;
         }
         else if (data instanceof List<?> c) {
-            this.start = Integer.MAX_VALUE;
-            this.stop = Integer.MIN_VALUE;
-            for (Object o : c) {
+            Iterator<?> iter = c.iterator();
+            if (iter.hasNext()) {
+                Object o = iter.next();
                 if (o instanceof Token token) {
-                    if (token.start < this.start) {
-                        this.start = token.start;
-                        this.line = token.line + 1;
-                        this.column = token.column;
-                    }
-                    if (token.stop > this.stop) {
-                        this.stop = token.stop;
+                    this.start = token.start;
+                    this.stop = token.stop;
+                    this.line = token.line + 1;
+                    this.column = token.column;
+                }
+                while (iter.hasNext()) {
+                    o = iter.next();
+                    if (o instanceof Token token) {
+                        if (token.start < this.start) {
+                            this.start = token.start;
+                            this.line = token.line + 1;
+                            this.column = token.column;
+                        }
+                        if (token.stop > this.stop) {
+                            this.stop = token.stop;
+                        }
                     }
                 }
             }
