@@ -14,6 +14,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -557,9 +558,11 @@ public class SourceEditor {
             public void textChanging(TextChangingEvent event) {
                 tokenMarker.adjustTokens(event.start, event.newCharCount, event.replaceCharCount);
 
-                for (CompilerException msg : compilerMessages) {
+                Iterator<CompilerException> iter = compilerMessages.iterator();
+                while (iter.hasNext()) {
+                    CompilerException msg = iter.next();
                     if (event.newCharCount != 0) {
-                        if (event.start < msg.start) {
+                        if (event.start <= msg.start) {
                             msg.start += event.newCharCount;
                             msg.stop += event.newCharCount;
                         }
@@ -574,7 +577,7 @@ public class SourceEditor {
                         }
                         else if (event.start >= msg.start && event.start <= msg.stop) {
                             if (event.start + event.replaceCharCount > msg.stop) {
-                                msg.stop -= msg.stop - event.start;
+                                msg.stop -= msg.stop - event.start + 1;
                             }
                             else {
                                 msg.stop -= event.replaceCharCount;
@@ -587,7 +590,7 @@ public class SourceEditor {
                                 msg.start -= msg.start - event.start;
                             }
                             else {
-                                msg.stop = msg.start;
+                                iter.remove();
                             }
                         }
                     }
