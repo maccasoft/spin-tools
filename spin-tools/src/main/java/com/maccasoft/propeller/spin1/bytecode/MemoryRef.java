@@ -1,24 +1,26 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin1.bytecode;
 
 import org.apache.commons.lang3.BitField;
 
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.DataVariable;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.spin1.Spin1Bytecode;
-import com.maccasoft.propeller.expressions.Context;
+import com.maccasoft.propeller.spin1.bytecode.Bytecode.Base;
+import com.maccasoft.propeller.spin1.bytecode.Bytecode.Op;
+import com.maccasoft.propeller.spin1.bytecode.Bytecode.Size;
 
 public class MemoryRef extends Spin1Bytecode {
 
@@ -26,18 +28,6 @@ public class MemoryRef extends Spin1Bytecode {
     static final BitField op_i = new BitField(0b0_00_1_00_00);
     static final BitField op_bb = new BitField(0b0_00_0_11_00);
     static final BitField op_oo = new BitField(0b0_00_0_00_11);
-
-    public enum Size {
-        Byte, Word, Long
-    };
-
-    public enum Base {
-        Pop, PBase, VBase, DBase
-    };
-
-    public enum Op {
-        Read, Write, Assign, Address
-    };
 
     public Size ss;
     public boolean i;
@@ -56,27 +46,27 @@ public class MemoryRef extends Spin1Bytecode {
         if (expression instanceof DataVariable) {
             switch (((DataVariable) expression).getType()) {
                 case "BYTE":
-                    this.ss = Size.Byte;
+                    this.ss = Bytecode.Size.Byte;
                     break;
                 case "WORD":
-                    this.ss = Size.Word;
+                    this.ss = Bytecode.Size.Word;
                     break;
                 case "LONG":
-                    this.ss = Size.Long;
+                    this.ss = Bytecode.Size.Long;
                     break;
             }
         }
         if (expression instanceof Variable) {
-            this.bb = expression instanceof LocalVariable ? Base.DBase : Base.VBase;
+            this.bb = expression instanceof LocalVariable ? Bytecode.Base.DBase : Bytecode.Base.VBase;
             String type = ((Variable) expression).getType();
             if ("LONG".equalsIgnoreCase(type)) {
-                this.ss = Size.Long;
+                this.ss = Bytecode.Size.Long;
             }
             else if ("WORD".equalsIgnoreCase(type)) {
-                this.ss = Size.Word;
+                this.ss = Bytecode.Size.Word;
             }
             else if ("BYTE".equalsIgnoreCase(type)) {
-                this.ss = Size.Byte;
+                this.ss = Bytecode.Size.Byte;
             }
         }
     }
@@ -112,13 +102,13 @@ public class MemoryRef extends Spin1Bytecode {
         b0 = op_bb.setValue(b0, bb.ordinal());
         b0 = op_oo.setValue(b0, oo.ordinal());
 
-        if (bb == Base.Pop) {
+        if (bb == Bytecode.Base.Pop) {
             return new byte[] {
                 (byte) b0,
             };
         }
 
-        if (bb == Base.PBase && (expression instanceof ContextLiteral)) {
+        if (bb == Bytecode.Base.PBase && (expression instanceof ContextLiteral)) {
             value = ((ContextLiteral) expression).getContext().getObjectAddress();
         }
 
@@ -176,7 +166,7 @@ public class MemoryRef extends Spin1Bytecode {
                 sb.append("DBASE");
                 break;
         }
-        if (bb != Base.Pop) {
+        if (bb != Bytecode.Base.Pop) {
             sb.append("+");
             int value = 0;
             if (expression != null) {
@@ -190,7 +180,7 @@ public class MemoryRef extends Spin1Bytecode {
                     value = expression.getNumber().intValue();
                 }
             }
-            if (bb == Base.PBase && (expression instanceof ContextLiteral)) {
+            if (bb == Bytecode.Base.PBase && (expression instanceof ContextLiteral)) {
                 value = ((ContextLiteral) expression).getContext().getObjectAddress();
             }
             sb.append(String.format("$%04X", value));

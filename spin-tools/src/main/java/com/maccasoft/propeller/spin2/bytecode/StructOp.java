@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2.bytecode;
@@ -20,12 +19,15 @@ import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
 import com.maccasoft.propeller.spin2.Spin2Struct;
+import com.maccasoft.propeller.spin2.bytecode.Bytecode.Base;
+import com.maccasoft.propeller.spin2.bytecode.Bytecode.Op;
+import com.maccasoft.propeller.spin2.bytecode.Bytecode.Size;
 
 public class StructOp extends Spin2Bytecode {
 
-    MemoryOp.Op op;
-    MemoryOp.Base base;
-    MemoryOp.Size size;
+    Op op;
+    Base base;
+    Size size;
     Spin2Struct struct;
     Expression expression;
     int offset;
@@ -34,7 +36,7 @@ public class StructOp extends Spin2Bytecode {
 
     int packedOffset;
 
-    public StructOp(Context context, MemoryOp.Op op, MemoryOp.Base base, MemoryOp.Size ss, Spin2Struct struct, Expression expression, int offset, List<Integer> multipliers, boolean push) {
+    public StructOp(Context context, Op op, Base base, Size ss, Spin2Struct struct, Expression expression, int offset, List<Integer> multipliers, boolean push) {
         super(context);
         this.op = op;
         this.base = base;
@@ -74,16 +76,16 @@ public class StructOp extends Spin2Bytecode {
                 os.write(Spin2Bytecode.bc_setup_struct_pop);
             }
             else {
-                if (base == MemoryOp.Base.Pop) {
+                if (base == Bytecode.Base.Pop) {
                     os.write(Spin2Bytecode.bc_setup_struct_pop);
                 }
-                else if (base == MemoryOp.Base.VBase) {
+                else if (base == Bytecode.Base.VBase) {
                     os.write(Spin2Bytecode.bc_setup_struct_vbase);
                 }
-                else if (base == MemoryOp.Base.DBase) {
+                else if (base == Bytecode.Base.DBase) {
                     os.write(Spin2Bytecode.bc_setup_struct_dbase);
                 }
-                else if (base == MemoryOp.Base.PBase) {
+                else if (base == Bytecode.Base.PBase) {
                     os.write(Spin2Bytecode.bc_setup_struct_pbase);
                 }
 
@@ -106,23 +108,23 @@ public class StructOp extends Spin2Bytecode {
             for (Integer multiplier : multipliers) {
                 os.write(Constant.wrVar(multiplier.intValue()));
             }
-            if (op == MemoryOp.Op.Address) {
+            if (op == Bytecode.Op.Address) {
                 os.write(Constant.wrVar(0));
             }
 
             if (struct == null) {
-                if (op == MemoryOp.Op.Read) {
+                if (op == Bytecode.Op.Read) {
                     os.write(Spin2Bytecode.bc_read);
                 }
-                else if (op == MemoryOp.Op.Write) {
+                else if (op == Bytecode.Op.Write) {
                     os.write(push ? Spin2Bytecode.bc_write_push : Spin2Bytecode.bc_write);
                 }
             }
             else {
-                if (op == MemoryOp.Op.Read) {
+                if (op == Bytecode.Op.Read) {
                     os.write(0x80 | struct.getTypeSize());
                 }
-                else if (op == MemoryOp.Op.Write) {
+                else if (op == Bytecode.Op.Write) {
                     os.write(struct.getTypeSize());
                 }
             }
@@ -137,16 +139,16 @@ public class StructOp extends Spin2Bytecode {
     public String toString() {
         StringBuilder sb = new StringBuilder("STRUCT_");
 
-        if (op == MemoryOp.Op.Read) {
+        if (op == Bytecode.Op.Read) {
             sb.append("READ");
         }
-        else if (op == MemoryOp.Op.Write) {
+        else if (op == Bytecode.Op.Write) {
             sb.append("WRITE");
         }
-        else if (op == MemoryOp.Op.Setup) {
+        else if (op == Bytecode.Op.Setup) {
             sb.append("SETUP");
         }
-        else if (op == MemoryOp.Op.Address) {
+        else if (op == Bytecode.Op.Address) {
             sb.append("ADDRESS");
         }
 
@@ -177,7 +179,7 @@ public class StructOp extends Spin2Bytecode {
         }
         sb.append(String.format("+$%05X (indexed)", packedOffset >> 4));
 
-        if (op == MemoryOp.Op.Write && push) {
+        if (op == Bytecode.Op.Write && push) {
             sb.append(" (push)");
         }
 

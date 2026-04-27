@@ -100,11 +100,13 @@ import com.maccasoft.propeller.spin2.Spin2Struct.Spin2StructMember;
 import com.maccasoft.propeller.spin2.bytecode.Address;
 import com.maccasoft.propeller.spin2.bytecode.BitField;
 import com.maccasoft.propeller.spin2.bytecode.Bytecode;
+import com.maccasoft.propeller.spin2.bytecode.Bytecode.Base;
+import com.maccasoft.propeller.spin2.bytecode.Bytecode.Op;
+import com.maccasoft.propeller.spin2.bytecode.Bytecode.Size;
 import com.maccasoft.propeller.spin2.bytecode.CallSub;
 import com.maccasoft.propeller.spin2.bytecode.Constant;
 import com.maccasoft.propeller.spin2.bytecode.MathOp;
 import com.maccasoft.propeller.spin2.bytecode.MemoryOp;
-import com.maccasoft.propeller.spin2.bytecode.MemoryOp.Op;
 import com.maccasoft.propeller.spin2.bytecode.RegisterOp;
 import com.maccasoft.propeller.spin2.bytecode.StructOp;
 import com.maccasoft.propeller.spin2.bytecode.SubAddress;
@@ -291,20 +293,20 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         throw new CompilerException("syntax error", node.getChild(n).getToken());
                     }
 
-                    MemoryOp.Size ss = MemoryOp.Size.Long;
+                    Size ss = Bytecode.Size.Long;
                     if ("BYTE".equalsIgnoreCase(ar[ar.length - 1])) {
-                        ss = MemoryOp.Size.Byte;
+                        ss = Bytecode.Size.Byte;
                     }
                     else if ("WORD".equalsIgnoreCase(ar[ar.length - 1])) {
-                        ss = MemoryOp.Size.Word;
+                        ss = Bytecode.Size.Word;
                     }
-                    MemoryOp.Base bb = MemoryOp.Base.PBase;
+                    Base bb = Bytecode.Base.PBase;
                     if (expression instanceof Variable) {
-                        bb = expression instanceof LocalVariable ? MemoryOp.Base.DBase : MemoryOp.Base.VBase;
+                        bb = expression instanceof LocalVariable ? Bytecode.Base.DBase : Bytecode.Base.VBase;
                         ((Variable) expression).setCalledBy(method);
                     }
                     else if (expression instanceof NumberLiteral) {
-                        bb = MemoryOp.Base.Pop;
+                        bb = Bytecode.Base.Pop;
                     }
 
                     int bitfield = -1;
@@ -313,7 +315,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     }
 
                     if (isPointer(expression)) {
-                        source.add(new VariableOp(context, VariableOp.Op.Read, false, (Variable) expression, false, 0));
+                        source.add(new VariableOp(context, Bytecode.Op.Read, false, (Variable) expression, false, 0));
                     }
 
                     if (indexNode != null) {
@@ -333,7 +335,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     }
 
                     if (ar[0].startsWith("@")) {
-                        source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Address, popIndex, expression, index));
+                        source.add(new MemoryOp(context, ss, bb, Bytecode.Op.Address, popIndex, expression, index));
                     }
                     else if (isPointer(expression)) {
                         if (indexNode != null && !popIndex) {
@@ -341,10 +343,10 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                             popIndex = true;
                         }
                         if (bitfieldNode != null) {
-                            source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, MemoryOp.Op.Setup, popIndex, expression, 0));
+                            source.add(new MemoryOp(context, ss, Bytecode.Base.Pop, Bytecode.Op.Setup, popIndex, expression, 0));
                         }
                         else {
-                            source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, push ? MemoryOp.Op.Read : MemoryOp.Op.Setup, popIndex, expression, 0));
+                            source.add(new MemoryOp(context, ss, Bytecode.Base.Pop, push ? Bytecode.Op.Read : Bytecode.Op.Setup, popIndex, expression, 0));
                         }
                     }
                     else if (expression instanceof NumberLiteral) {
@@ -353,16 +355,16 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                             source.addAll(compileBytecodeExpression(context, method, indexNode, true));
                             popIndex = true;
                         }
-                        MemoryOp.Op op = bitfieldNode == null && postEffectNode == null ? (push ? MemoryOp.Op.Read : MemoryOp.Op.Write) : MemoryOp.Op.Setup;
+                        Op op = bitfieldNode == null && postEffectNode == null ? (push ? Bytecode.Op.Read : Bytecode.Op.Write) : Bytecode.Op.Setup;
                         source.add(new MemoryOp(context, ss, bb, op, popIndex));
                     }
                     else {
-                        MemoryOp.Op op = bitfieldNode == null && postEffectNode == null ? (push ? MemoryOp.Op.Read : MemoryOp.Op.Write) : MemoryOp.Op.Setup;
+                        Op op = bitfieldNode == null && postEffectNode == null ? (push ? Bytecode.Op.Read : Bytecode.Op.Write) : Bytecode.Op.Setup;
                         source.add(new MemoryOp(context, ss, bb, op, popIndex, expression, index));
                     }
 
                     if (bitfieldNode != null) {
-                        source.add(new BitField(context, postEffectNode == null ? BitField.Op.Read : BitField.Op.Setup, bitfield));
+                        source.add(new BitField(context, postEffectNode == null ? Bytecode.Op.Read : Bytecode.Op.Setup, bitfield));
                     }
 
                     if (postEffectNode != null) {
@@ -408,7 +410,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 }
 
                 if (expression != null && isStructure(context, expression)) {
-                    source.addAll(compileStructure(context, method, node, expression, null, MemoryOp.Op.Read, push));
+                    source.addAll(compileStructure(context, method, node, expression, null, Bytecode.Op.Read, push));
                     return source;
                 }
                 if (expression == null && ar.length > 1) {
@@ -417,7 +419,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         structureExpression = context.getLocalSymbol(ar[0].substring(1));
                     }
                     if (structureExpression != null && isStructure(context, structureExpression)) {
-                        source.addAll(compileStructure(context, method, node, structureExpression, null, MemoryOp.Op.Read, push));
+                        source.addAll(compileStructure(context, method, node, structureExpression, null, Bytecode.Op.Read, push));
                         return source;
                     }
                 }
@@ -455,11 +457,11 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                                     throw new CompilerException("unexpected " + node.getChild(n).getText(), node.getChild(n).getToken());
                                 }
                                 if (node.getText().startsWith("@@")) {
-                                    source.add(new VariableOp(context, VariableOp.Op.Read, popIndex, (Variable) expression, hasIndex, index));
+                                    source.add(new VariableOp(context, Bytecode.Op.Read, popIndex, (Variable) expression, hasIndex, index));
                                     source.add(new Bytecode(context, new byte[] { Spin2Bytecode.bc_add_pbase }, "ADD PBASE"));
                                 }
                                 else {
-                                    source.add(new VariableOp(context, VariableOp.Op.Address, popIndex, (Variable) expression, hasIndex, index));
+                                    source.add(new VariableOp(context, Bytecode.Op.Address, popIndex, (Variable) expression, hasIndex, index));
                                 }
                             }
                             else {
@@ -473,19 +475,19 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                                 if (isPointer(expression)) {
                                     Variable var = (Variable) expression;
 
-                                    MemoryOp.Size ss = MemoryOp.Size.Long;
+                                    Size ss = Bytecode.Size.Long;
                                     if ("^BYTE".equalsIgnoreCase(var.getType())) {
-                                        ss = MemoryOp.Size.Byte;
+                                        ss = Bytecode.Size.Byte;
                                     }
                                     else if ("^WORD".equalsIgnoreCase(var.getType())) {
-                                        ss = MemoryOp.Size.Word;
+                                        ss = Bytecode.Size.Word;
                                     }
 
-                                    source.add(new VariableOp(context, VariableOp.Op.Read, false, var, false, 0));
+                                    source.add(new VariableOp(context, Bytecode.Op.Read, false, var, false, 0));
                                     if (indexNode != null) {
                                         source.addAll(compileBytecodeExpression(context, method, indexNode, true));
                                     }
-                                    source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, MemoryOp.Op.Address, indexNode != null));
+                                    source.add(new MemoryOp(context, ss, Bytecode.Base.Pop, Bytecode.Op.Address, indexNode != null));
                                 }
                                 else {
                                     if (indexNode != null) {
@@ -506,15 +508,15 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                                     }
 
                                     if (node.getText().startsWith("@@@")) {
-                                        source.add(new VariableOp(context, VariableOp.Op.Address, popIndex, (Variable) expression, hasIndex, index));
+                                        source.add(new VariableOp(context, Bytecode.Op.Address, popIndex, (Variable) expression, hasIndex, index));
                                         source.add(new Bytecode(context, new byte[] { Spin2Bytecode.bc_add_pbase }, "ADD PBASE"));
                                     }
                                     else if (node.getText().startsWith("@@")) {
-                                        source.add(new VariableOp(context, VariableOp.Op.Read, popIndex, (Variable) expression, hasIndex, index));
+                                        source.add(new VariableOp(context, Bytecode.Op.Read, popIndex, (Variable) expression, hasIndex, index));
                                         source.add(new Bytecode(context, new byte[] { Spin2Bytecode.bc_add_pbase }, "ADD PBASE"));
                                     }
                                     else {
-                                        source.add(new VariableOp(context, VariableOp.Op.Address, popIndex, (Variable) expression, hasIndex, index));
+                                        source.add(new VariableOp(context, Bytecode.Op.Address, popIndex, (Variable) expression, hasIndex, index));
                                     }
                                 }
                             }
@@ -574,35 +576,35 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                                 }
                             }
 
-                            MemoryOp.Size ss = MemoryOp.Size.Long;
-                            MemoryOp.Base bb = MemoryOp.Base.PBase;
+                            Size ss = Bytecode.Size.Long;
+                            Base bb = Bytecode.Base.PBase;
 
                             if (expression instanceof DataVariable) {
                                 switch (((DataVariable) expression).getType()) {
                                     case "BYTE":
-                                        ss = MemoryOp.Size.Byte;
+                                        ss = Bytecode.Size.Byte;
                                         break;
                                     case "WORD":
-                                        ss = MemoryOp.Size.Word;
+                                        ss = Bytecode.Size.Word;
                                         break;
                                 }
                             }
                             else if (expression instanceof ObjectContextLiteral) {
                                 switch (((ObjectContextLiteral) expression).getType()) {
                                     case "BYTE":
-                                        ss = MemoryOp.Size.Byte;
+                                        ss = Bytecode.Size.Byte;
                                         break;
                                     case "WORD":
-                                        ss = MemoryOp.Size.Word;
+                                        ss = Bytecode.Size.Word;
                                         break;
                                 }
                             }
                             if (isAbsoluteAddress(node.getText())) {
-                                source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Read, popIndex, expression, index));
+                                source.add(new MemoryOp(context, ss, bb, Bytecode.Op.Read, popIndex, expression, index));
                                 source.add(new Bytecode(context, Spin2Bytecode.bc_add_pbase, "ADD_PBASE"));
                             }
                             else {
-                                source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Address, popIndex, expression, index));
+                                source.add(new MemoryOp(context, ss, bb, Bytecode.Op.Address, popIndex, expression, index));
                             }
 
                             if (!push) {
@@ -628,7 +630,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                             if (node.getChildCount() != 0) {
                                 throw new RuntimeException("syntax error");
                             }
-                            source.add(new MemoryOp(context, MemoryOp.Size.Long, MemoryOp.Base.PBase, MemoryOp.Op.Read, expression));
+                            source.add(new MemoryOp(context, Bytecode.Size.Long, Bytecode.Base.PBase, Bytecode.Op.Read, expression));
                             if (!push) {
                                 logMessage(new CompilerException("expecting assignment", node.getTokens()));
                             }
@@ -920,7 +922,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                             source.addAll(compileBytecodeExpression(context, method, indexNode, true));
                         }
 
-                        source.add(new MemoryOp(context, MemoryOp.Size.Long, MemoryOp.Base.Pop, MemoryOp.Op.Read, indexNode != null));
+                        source.add(new MemoryOp(context, Bytecode.Size.Long, Bytecode.Base.Pop, Bytecode.Op.Read, indexNode != null));
                         source.add(new Bytecode(context, new byte[] {
                             (byte) Spin2Bytecode.bc_call_ptr,
                         }, "CALL_PTR"));
@@ -1174,12 +1176,12 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     source.addAll(compileBytecodeExpression(context, method, indexNode, true));
                 }
 
-                MemoryOp.Size ss = MemoryOp.Size.Long;
-                MemoryOp.Op op = bitfieldNode == null && postEffectNode == null ? (push ? (field ? MemoryOp.Op.Field : MemoryOp.Op.Read) : MemoryOp.Op.Write) : MemoryOp.Op.Setup;
-                source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, op, indexNode != null));
+                Size ss = Bytecode.Size.Long;
+                Op op = bitfieldNode == null && postEffectNode == null ? (push ? (field ? Bytecode.Op.Field : Bytecode.Op.Read) : Bytecode.Op.Write) : Bytecode.Op.Setup;
+                source.add(new MemoryOp(context, ss, Bytecode.Base.Pop, op, indexNode != null));
 
                 if (bitfieldNode != null) {
-                    source.add(new BitField(context, postEffectNode == null ? (field ? BitField.Op.Field : BitField.Op.Read) : BitField.Op.Setup, bitfield));
+                    source.add(new BitField(context, postEffectNode == null ? (field ? Bytecode.Op.Field : Bytecode.Op.Read) : Bytecode.Op.Setup, bitfield));
                 }
 
                 if (postEffectNode != null) {
@@ -1284,13 +1286,13 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         Spin2Struct leftStruct = null;
                         Spin2Struct rightStruct = null;
 
-                        List<Spin2Bytecode> leftSource = compileStructure(context, method, node.getChild(0), left, null, MemoryOp.Op.Address, true);
+                        List<Spin2Bytecode> leftSource = compileStructure(context, method, node.getChild(0), left, null, Bytecode.Op.Address, true);
                         if (leftSource.size() != 0 && leftSource.get(leftSource.size() - 1) instanceof StructOp) {
                             StructOp op = (StructOp) leftSource.get(leftSource.size() - 1);
                             leftStruct = op.getStruct();
                         }
 
-                        List<Spin2Bytecode> rightSource = compileStructure(context, method, node.getChild(1), right, null, MemoryOp.Op.Address, true);
+                        List<Spin2Bytecode> rightSource = compileStructure(context, method, node.getChild(1), right, null, Bytecode.Op.Address, true);
                         if (rightSource.size() != 0 && rightSource.get(rightSource.size() - 1) instanceof StructOp) {
                             StructOp op = (StructOp) rightSource.get(rightSource.size() - 1);
                             rightStruct = op.getStruct();
@@ -1342,7 +1344,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     Spin2Struct leftStruct = null;
                     Spin2Struct rightStruct = null;
 
-                    List<Spin2Bytecode> leftSource = compileStructure(context, method, node.getChild(0), left, null, MemoryOp.Op.Address, true);
+                    List<Spin2Bytecode> leftSource = compileStructure(context, method, node.getChild(0), left, null, Bytecode.Op.Address, true);
                     if (leftSource.size() != 0 && leftSource.get(leftSource.size() - 1) instanceof StructOp) {
                         StructOp op = (StructOp) leftSource.get(leftSource.size() - 1);
                         leftStruct = op.getStruct();
@@ -1351,7 +1353,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         logMessage(new CompilerException("not a structure", node.getChild(0).getTokens()));
                     }
 
-                    List<Spin2Bytecode> rightSource = compileStructure(context, method, node.getChild(1), right, null, MemoryOp.Op.Address, true);
+                    List<Spin2Bytecode> rightSource = compileStructure(context, method, node.getChild(1), right, null, Bytecode.Op.Address, true);
                     if (rightSource.size() != 0 && rightSource.get(rightSource.size() - 1) instanceof StructOp) {
                         StructOp op = (StructOp) rightSource.get(rightSource.size() - 1);
                         rightStruct = op.getStruct();
@@ -1400,13 +1402,13 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     Spin2Struct leftStruct = null;
                     Spin2Struct rightStruct = null;
 
-                    List<Spin2Bytecode> leftSource = compileStructure(context, method, node.getChild(0), left, null, MemoryOp.Op.Address, true);
+                    List<Spin2Bytecode> leftSource = compileStructure(context, method, node.getChild(0), left, null, Bytecode.Op.Address, true);
                     if (leftSource.size() != 0 && leftSource.get(leftSource.size() - 1) instanceof StructOp) {
                         StructOp op = (StructOp) leftSource.get(leftSource.size() - 1);
                         leftStruct = op.getStruct();
                     }
 
-                    List<Spin2Bytecode> rightSource = compileStructure(context, method, node.getChild(1), right, null, MemoryOp.Op.Address, true);
+                    List<Spin2Bytecode> rightSource = compileStructure(context, method, node.getChild(1), right, null, Bytecode.Op.Address, true);
                     if (rightSource.size() != 0 && rightSource.get(rightSource.size() - 1) instanceof StructOp) {
                         StructOp op = (StructOp) rightSource.get(rightSource.size() - 1);
                         rightStruct = op.getStruct();
@@ -1594,7 +1596,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 }
 
                 if (isStructure(context, expression)) {
-                    source.addAll(compileStructure(context, method, childNode, expression, node, Op.Read, push));
+                    source.addAll(compileStructure(context, method, childNode, expression, node, Bytecode.Op.Read, push));
                     node.setReturnLongs(childNode.getReturnLongs());
                 }
                 else {
@@ -1647,22 +1649,22 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         bitfield = compileBitfield(context, method, bitfieldNode, source);
                     }
 
-                    MemoryOp.Size ss = MemoryOp.Size.Long;
+                    Size ss = Bytecode.Size.Long;
                     if ("BYTE".equalsIgnoreCase(s[1])) {
-                        ss = MemoryOp.Size.Byte;
+                        ss = Bytecode.Size.Byte;
                     }
                     else if ("WORD".equalsIgnoreCase(s[1])) {
-                        ss = MemoryOp.Size.Word;
+                        ss = Bytecode.Size.Word;
                     }
-                    MemoryOp.Base bb = MemoryOp.Base.PBase;
+                    Base bb = Bytecode.Base.PBase;
                     if (expression instanceof Variable) {
-                        bb = expression instanceof LocalVariable ? MemoryOp.Base.DBase : MemoryOp.Base.VBase;
+                        bb = expression instanceof LocalVariable ? Bytecode.Base.DBase : Bytecode.Base.VBase;
                         ((Variable) expression).setCalledBy(method);
                     }
-                    source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Setup, indexNode != null, expression, 0));
+                    source.add(new MemoryOp(context, ss, bb, Bytecode.Op.Setup, indexNode != null, expression, 0));
 
                     if (bitfieldNode != null) {
-                        source.add(new BitField(context, BitField.Op.Setup, bitfield));
+                        source.add(new BitField(context, Bytecode.Op.Setup, bitfield));
                     }
                 }
                 else if ("BYTE".equalsIgnoreCase(childNode.getText()) || "WORD".equalsIgnoreCase(childNode.getText()) || "LONG".equalsIgnoreCase(childNode.getText())) {
@@ -1698,17 +1700,17 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         bitfield = compileBitfield(context, method, bitfieldNode, source);
                     }
 
-                    MemoryOp.Size ss = MemoryOp.Size.Long;
+                    Size ss = Bytecode.Size.Long;
                     if ("BYTE".equalsIgnoreCase(childNode.getText())) {
-                        ss = MemoryOp.Size.Byte;
+                        ss = Bytecode.Size.Byte;
                     }
                     else if ("WORD".equalsIgnoreCase(childNode.getText())) {
-                        ss = MemoryOp.Size.Word;
+                        ss = Bytecode.Size.Word;
                     }
-                    source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, MemoryOp.Op.Setup, indexNode != null));
+                    source.add(new MemoryOp(context, ss, Bytecode.Base.Pop, Bytecode.Op.Setup, indexNode != null));
 
                     if (bitfieldNode != null) {
-                        source.add(new BitField(context, BitField.Op.Setup, bitfield));
+                        source.add(new BitField(context, Bytecode.Op.Setup, bitfield));
                     }
                 }
                 else {
@@ -1734,7 +1736,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     }
 
                     if (isStructure(context, expression)) {
-                        source.addAll(compileStructure(context, method, expressionNode, expression, pointerPreEffectNode, MemoryOp.Op.Setup, true));
+                        source.addAll(compileStructure(context, method, expressionNode, expression, pointerPreEffectNode, Bytecode.Op.Setup, true));
                         if (expressionNode.getReturnLongs() != 1) {
                             logMessage(new CompilerException("invalid expression", node.getTokens()));
                         }
@@ -1848,28 +1850,28 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     source.addAll(compileBytecodeExpression(context, method, indexNode, true));
                 }
 
-                MemoryOp.Size ss = MemoryOp.Size.Long;
+                Size ss = Bytecode.Size.Long;
                 if ("BYTE".equalsIgnoreCase(node.getText()) || "@BYTE".equalsIgnoreCase(node.getText()) || "@@BYTE".equalsIgnoreCase(node.getText())) {
-                    ss = MemoryOp.Size.Byte;
+                    ss = Bytecode.Size.Byte;
                 }
                 else if ("WORD".equalsIgnoreCase(node.getText()) || "@WORD".equalsIgnoreCase(node.getText()) || "@@WORD".equalsIgnoreCase(node.getText())) {
-                    ss = MemoryOp.Size.Word;
+                    ss = Bytecode.Size.Word;
                 }
 
                 if (node.getText().startsWith("@@")) {
-                    source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, MemoryOp.Op.Read, indexNode != null));
+                    source.add(new MemoryOp(context, ss, Bytecode.Base.Pop, Bytecode.Op.Read, indexNode != null));
                     source.add(new Bytecode(context, Spin2Bytecode.bc_add_pbase, "ADD_PBASE"));
                 }
                 else if (node.getText().startsWith("@")) {
-                    source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, MemoryOp.Op.Address, indexNode != null));
+                    source.add(new MemoryOp(context, ss, Bytecode.Base.Pop, Bytecode.Op.Address, indexNode != null));
                 }
                 else {
-                    MemoryOp.Op op = bitfieldNode == null && postEffectNode == null ? (push ? MemoryOp.Op.Read : MemoryOp.Op.Write) : MemoryOp.Op.Setup;
-                    source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, op, indexNode != null));
+                    Op op = bitfieldNode == null && postEffectNode == null ? (push ? Bytecode.Op.Read : Bytecode.Op.Write) : Bytecode.Op.Setup;
+                    source.add(new MemoryOp(context, ss, Bytecode.Base.Pop, op, indexNode != null));
                 }
 
                 if (bitfieldNode != null) {
-                    source.add(new BitField(context, postEffectNode == null ? BitField.Op.Read : BitField.Op.Setup, bitfield));
+                    source.add(new BitField(context, postEffectNode == null ? Bytecode.Op.Read : Bytecode.Op.Setup, bitfield));
                 }
 
                 if (postEffectNode != null) {
@@ -1944,11 +1946,11 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     }
                 }
 
-                RegisterOp.Op op = bitfieldNode == null && postEffectNode == null ? (push ? RegisterOp.Op.Read : RegisterOp.Op.Write) : RegisterOp.Op.Setup;
+                Bytecode.Op op = bitfieldNode == null && postEffectNode == null ? (push ? Bytecode.Op.Read : Bytecode.Op.Write) : Bytecode.Op.Setup;
                 source.add(new RegisterOp(context, op, popIndex, expression, index));
 
                 if (bitfieldNode != null) {
-                    source.add(new BitField(context, postEffectNode == null ? BitField.Op.Read : BitField.Op.Setup, bitfield));
+                    source.add(new BitField(context, postEffectNode == null ? Bytecode.Op.Read : Bytecode.Op.Setup, bitfield));
                 }
 
                 if (postEffectNode != null) {
@@ -2605,32 +2607,32 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 }
             }
 
-            MemoryOp.Size ss = MemoryOp.Size.Long;
+            Size ss = Bytecode.Size.Long;
             if ("BYTE".equalsIgnoreCase(ar[ar.length - 1])) {
-                ss = MemoryOp.Size.Byte;
+                ss = Bytecode.Size.Byte;
             }
             else if ("WORD".equalsIgnoreCase(ar[ar.length - 1])) {
-                ss = MemoryOp.Size.Word;
+                ss = Bytecode.Size.Word;
             }
-            MemoryOp.Base bb = MemoryOp.Base.PBase;
+            Base bb = Bytecode.Base.PBase;
             if (expression instanceof Variable) {
-                bb = expression instanceof LocalVariable ? MemoryOp.Base.DBase : MemoryOp.Base.VBase;
+                bb = expression instanceof LocalVariable ? Bytecode.Base.DBase : Bytecode.Base.VBase;
                 ((Variable) expression).setCalledBy(method);
             }
             else if (expression instanceof NumberLiteral) {
-                bb = MemoryOp.Base.Pop;
+                bb = Bytecode.Base.Pop;
             }
 
             if (isPointer(expression)) {
-                source.add(new VariableOp(context, VariableOp.Op.Read, false, (Variable) expression, false, 0));
+                source.add(new VariableOp(context, Bytecode.Op.Read, false, (Variable) expression, false, 0));
                 if (indexNode != null) {
                     source.addAll(compileConstantExpression(context, method, indexNode));
                 }
-                MemoryOp.Op op = push ? MemoryOp.Op.WritePush : MemoryOp.Op.Write;
+                Op op = push ? Bytecode.Op.WritePush : Bytecode.Op.Write;
                 if (bitfieldNode != null) {
-                    op = MemoryOp.Op.Setup;
+                    op = Bytecode.Op.Setup;
                 }
-                source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, op, indexNode != null, expression, 0));
+                source.add(new MemoryOp(context, ss, Bytecode.Base.Pop, op, indexNode != null, expression, 0));
             }
             else {
                 if (popIndex) {
@@ -2642,17 +2644,17 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         source.addAll(compileBytecodeExpression(context, method, indexNode, true));
                         popIndex = true;
                     }
-                    MemoryOp.Op op = push ? MemoryOp.Op.WritePush : MemoryOp.Op.Write;
+                    Op op = push ? Bytecode.Op.WritePush : Bytecode.Op.Write;
                     source.add(new MemoryOp(context, ss, bb, op, popIndex));
                 }
                 else {
-                    MemoryOp.Op op = push || bitfieldNode != null ? MemoryOp.Op.Setup : MemoryOp.Op.Write;
+                    Op op = push || bitfieldNode != null ? Bytecode.Op.Setup : Bytecode.Op.Write;
                     source.add(new MemoryOp(context, ss, bb, op, popIndex, expression, index));
                 }
             }
 
             if (bitfieldNode != null) {
-                source.add(new BitField(context, postEffectNode == null ? BitField.Op.Write : BitField.Op.Setup, push, bitfield));
+                source.add(new BitField(context, postEffectNode == null ? Bytecode.Op.Write : Bytecode.Op.Setup, push, bitfield));
             }
 
             if (postEffectNode != null) {
@@ -2720,7 +2722,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             }
 
             if (isStructure(context, expression)) {
-                source.addAll(compileStructure(context, method, node.getChild(0), expression, node, push ? MemoryOp.Op.Setup : MemoryOp.Op.Write, push));
+                source.addAll(compileStructure(context, method, node.getChild(0), expression, node, push ? Bytecode.Op.Setup : Bytecode.Op.Write, push));
                 node.setReturnLongs(node.getChild(0).getReturnLongs());
                 if (write) {
                     if (node.getReturnLongs() != 1) {
@@ -2759,14 +2761,14 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     bitfield = compileBitfield(context, method, bitfieldNode, source);
                 }
 
-                MemoryOp.Size ss = MemoryOp.Size.Long;
+                Size ss = Bytecode.Size.Long;
                 int typeSize = 4;
                 if ("^BYTE".equalsIgnoreCase(var.getType())) {
-                    ss = MemoryOp.Size.Byte;
+                    ss = Bytecode.Size.Byte;
                     typeSize = 1;
                 }
                 else if ("^WORD".equalsIgnoreCase(var.getType())) {
-                    ss = MemoryOp.Size.Word;
+                    ss = Bytecode.Size.Word;
                     typeSize = 2;
                 }
                 else if (!"^LONG".equalsIgnoreCase(var.getType())) {
@@ -2778,15 +2780,15 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 }
                 if (s.length >= 2) {
                     if ("BYTE".equalsIgnoreCase(s[1])) {
-                        ss = MemoryOp.Size.Byte;
+                        ss = Bytecode.Size.Byte;
                         typeSize = 1;
                     }
                     else if ("WORD".equalsIgnoreCase(s[1])) {
-                        ss = MemoryOp.Size.Word;
+                        ss = Bytecode.Size.Word;
                         typeSize = 2;
                     }
                     else if ("LONG".equalsIgnoreCase(s[1])) {
-                        ss = MemoryOp.Size.Long;
+                        ss = Bytecode.Size.Long;
                         typeSize = 4;
                     }
                     else {
@@ -2804,7 +2806,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     // Do nothing
                 }
 
-                source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, var, hasIndex, index));
+                source.add(new VariableOp(context, Bytecode.Op.Setup, popIndex, var, hasIndex, index));
                 if ("[++]".equals(node.getText())) {
                     os.write(Spin2Bytecode.bc_var_preinc_push);
                     source.add(new Bytecode(context, os.toByteArray(), String.format("PRE_INC (%d)%s", typeSize, " (push)")));
@@ -2822,11 +2824,11 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 }
 
                 if (bitfieldNode != null) {
-                    source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, MemoryOp.Op.Setup, indexNode != null));
-                    source.add(new BitField(context, postEffectNode == null ? BitField.Op.Write : BitField.Op.Setup, push, bitfield));
+                    source.add(new MemoryOp(context, ss, Bytecode.Base.Pop, Bytecode.Op.Setup, indexNode != null));
+                    source.add(new BitField(context, postEffectNode == null ? Bytecode.Op.Write : Bytecode.Op.Setup, push, bitfield));
                 }
                 else {
-                    source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, push ? MemoryOp.Op.WritePush : MemoryOp.Op.Write, indexNode != null));
+                    source.add(new MemoryOp(context, ss, Bytecode.Base.Pop, push ? Bytecode.Op.WritePush : Bytecode.Op.Write, indexNode != null));
                 }
 
                 var.setCalledBy(method);
@@ -2883,18 +2885,18 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 source.addAll(compileBytecodeExpression(context, method, indexNode, true));
             }
 
-            MemoryOp.Size ss = MemoryOp.Size.Long;
+            Size ss = Bytecode.Size.Long;
             if ("BYTE".equalsIgnoreCase(node.getText())) {
-                ss = MemoryOp.Size.Byte;
+                ss = Bytecode.Size.Byte;
             }
             else if ("WORD".equalsIgnoreCase(node.getText())) {
-                ss = MemoryOp.Size.Word;
+                ss = Bytecode.Size.Word;
             }
-            MemoryOp.Op op = push || bitfieldNode != null ? MemoryOp.Op.Setup : MemoryOp.Op.Write;
-            source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, op, indexNode != null));
+            Op op = push || bitfieldNode != null ? Bytecode.Op.Setup : Bytecode.Op.Write;
+            source.add(new MemoryOp(context, ss, Bytecode.Base.Pop, op, indexNode != null));
 
             if (bitfieldNode != null) {
-                source.add(new BitField(context, push && !write ? BitField.Op.Setup : BitField.Op.Write, push, bitfield));
+                source.add(new BitField(context, push && !write ? Bytecode.Op.Setup : Bytecode.Op.Write, push, bitfield));
             }
             else if (write) {
                 source.add(new Bytecode(context, Spin2Bytecode.bc_write_push, "WRITE"));
@@ -2969,10 +2971,10 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 }
             }
 
-            source.add(new RegisterOp(context, bitfieldNode != null || push ? RegisterOp.Op.Setup : RegisterOp.Op.Write, popIndex, expression, index));
+            source.add(new RegisterOp(context, bitfieldNode != null || push ? Bytecode.Op.Setup : Bytecode.Op.Write, popIndex, expression, index));
 
             if (bitfieldNode != null) {
-                source.add(new BitField(context, push && !write ? BitField.Op.Setup : BitField.Op.Write, push, bitfield));
+                source.add(new BitField(context, push && !write ? Bytecode.Op.Setup : Bytecode.Op.Write, push, bitfield));
             }
             else if (write) {
                 source.add(new Bytecode(context, Spin2Bytecode.bc_write_push, "WRITE"));
@@ -3061,18 +3063,18 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 source.addAll(compileBytecodeExpression(context, method, indexNode, true));
             }
 
-            MemoryOp.Size ss = MemoryOp.Size.Long;
+            Size ss = Bytecode.Size.Long;
             if ("BYTE".equalsIgnoreCase(node.getText())) {
-                ss = MemoryOp.Size.Byte;
+                ss = Bytecode.Size.Byte;
             }
             else if ("WORD".equalsIgnoreCase(node.getText())) {
-                ss = MemoryOp.Size.Word;
+                ss = Bytecode.Size.Word;
             }
-            MemoryOp.Op op = push || bitfieldNode != null ? MemoryOp.Op.Setup : MemoryOp.Op.Write;
-            source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, op, indexNode != null));
+            Op op = push || bitfieldNode != null ? Bytecode.Op.Setup : Bytecode.Op.Write;
+            source.add(new MemoryOp(context, ss, Bytecode.Base.Pop, op, indexNode != null));
 
             if (bitfieldNode != null) {
-                source.add(new BitField(context, push && !write ? BitField.Op.Setup : BitField.Op.Write, push, bitfield));
+                source.add(new BitField(context, push && !write ? Bytecode.Op.Setup : Bytecode.Op.Write, push, bitfield));
             }
             else if (write) {
                 source.add(new Bytecode(context, Spin2Bytecode.bc_write_push, "WRITE"));
@@ -3088,7 +3090,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             }
 
             if (isStructure(context, expression)) {
-                source.addAll(compileStructure(context, method, node, expression, null, push ? MemoryOp.Op.Setup : MemoryOp.Op.Write, push));
+                source.addAll(compileStructure(context, method, node, expression, null, push ? Bytecode.Op.Setup : Bytecode.Op.Write, push));
                 if (write) {
                     if (node.getReturnLongs() != 1) {
                         logMessage(new CompilerException("invalid operation", node.getTokens()));
@@ -3112,14 +3114,14 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     }
 
                     if (postEffectNode != null) {
-                        source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, var, hasIndex, index));
+                        source.add(new VariableOp(context, Bytecode.Op.Setup, popIndex, var, hasIndex, index));
                         compilePostEffect(context, postEffectNode, source, push);
                         if (!push) {
                             node.setReturnLongs(0);
                         }
                     }
                     else {
-                        source.add(new VariableOp(context, push ? VariableOp.Op.Setup : VariableOp.Op.Write, popIndex, var, hasIndex, index));
+                        source.add(new VariableOp(context, push ? Bytecode.Op.Setup : Bytecode.Op.Write, popIndex, var, hasIndex, index));
                     }
                     if (write) {
                         source.add(new Bytecode(context, Spin2Bytecode.bc_write_push, "WRITE"));
@@ -3148,14 +3150,14 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         throw new CompilerException("unexpected: " + node.getChild(n).getText(), node.getChild(n).getTokens());
                     }
 
-                    MemoryOp.Size ss = MemoryOp.Size.Long;
+                    Size ss = Bytecode.Size.Long;
                     int typeSize = 4;
                     if ("^BYTE".equalsIgnoreCase(var.getType())) {
-                        ss = MemoryOp.Size.Byte;
+                        ss = Bytecode.Size.Byte;
                         typeSize = 1;
                     }
                     else if ("^WORD".equalsIgnoreCase(var.getType())) {
-                        ss = MemoryOp.Size.Word;
+                        ss = Bytecode.Size.Word;
                         typeSize = 2;
                     }
                     else if (!"^LONG".equalsIgnoreCase(var.getType())) {
@@ -3167,15 +3169,15 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     }
                     if (typeOverrideNode != null) {
                         if (".BYTE".equalsIgnoreCase(typeOverrideNode.getText())) {
-                            ss = MemoryOp.Size.Byte;
+                            ss = Bytecode.Size.Byte;
                             typeSize = 1;
                         }
                         else if (".WORD".equalsIgnoreCase(typeOverrideNode.getText())) {
-                            ss = MemoryOp.Size.Word;
+                            ss = Bytecode.Size.Word;
                             typeSize = 2;
                         }
                         else if (".LONG".equalsIgnoreCase(typeOverrideNode.getText())) {
-                            ss = MemoryOp.Size.Long;
+                            ss = Bytecode.Size.Long;
                             typeSize = 4;
                         }
                         else {
@@ -3194,7 +3196,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                             // Do nothing
                         }
 
-                        source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, var, hasIndex, index));
+                        source.add(new VariableOp(context, Bytecode.Op.Setup, popIndex, var, hasIndex, index));
                         if ("[++]".equalsIgnoreCase(pointerPostEffectNode.getText())) {
                             os.write(Spin2Bytecode.bc_var_postinc_push);
                             source.add(new Bytecode(context, os.toByteArray(), String.format("POST_INC (%d)%s", typeSize, " (push)")));
@@ -3206,29 +3208,29 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         else {
                             throw new CompilerException("invalid post effect " + pointerPostEffectNode.getText(), pointerPostEffectNode.getTokens());
                         }
-                        source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, write ? MemoryOp.Op.WritePush : MemoryOp.Op.Write, indexNode != null));
+                        source.add(new MemoryOp(context, ss, Bytecode.Base.Pop, write ? Bytecode.Op.WritePush : Bytecode.Op.Write, indexNode != null));
                     }
                     else {
-                        source.add(new VariableOp(context, VariableOp.Op.Read, popIndex, var, hasIndex, index));
+                        source.add(new VariableOp(context, Bytecode.Op.Read, popIndex, var, hasIndex, index));
                         if (indexNode != null) {
                             source.addAll(compileConstantExpression(context, method, indexNode));
                         }
                         if (postEffectNode != null) {
-                            source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, MemoryOp.Op.Setup, indexNode != null));
+                            source.add(new MemoryOp(context, ss, Bytecode.Base.Pop, Bytecode.Op.Setup, indexNode != null));
                             compilePostEffect(context, postEffectNode, source, push);
                             if (!push) {
                                 node.setReturnLongs(0);
                             }
                         }
                         else {
-                            MemoryOp.Op op;
+                            Op op;
                             if (push && !write) {
-                                op = MemoryOp.Op.Setup;
+                                op = Bytecode.Op.Setup;
                             }
                             else {
-                                op = push ? MemoryOp.Op.WritePush : MemoryOp.Op.Write;
+                                op = push ? Bytecode.Op.WritePush : Bytecode.Op.Write;
                             }
-                            source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, op, indexNode != null));
+                            source.add(new MemoryOp(context, ss, Bytecode.Base.Pop, op, indexNode != null));
                         }
                     }
                 }
@@ -3284,30 +3286,30 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 }
 
                 if (expression instanceof Register) {
-                    source.add(new RegisterOp(context, bitfieldNode != null || push ? RegisterOp.Op.Setup : RegisterOp.Op.Write, popIndex, expression, index));
+                    source.add(new RegisterOp(context, bitfieldNode != null || push ? Bytecode.Op.Setup : Bytecode.Op.Write, popIndex, expression, index));
                 }
                 else if (expression instanceof ContextLiteral) {
-                    MemoryOp.Size ss = MemoryOp.Size.Long;
-                    MemoryOp.Base bb = MemoryOp.Base.PBase;
+                    Size ss = Bytecode.Size.Long;
+                    Base bb = Bytecode.Base.PBase;
                     if (expression instanceof Variable) {
-                        bb = expression instanceof LocalVariable ? MemoryOp.Base.DBase : MemoryOp.Base.VBase;
+                        bb = expression instanceof LocalVariable ? Bytecode.Base.DBase : Bytecode.Base.VBase;
                         ((Variable) expression).setCalledBy(method);
                     }
                     if (expression instanceof DataVariable) {
                         switch (((DataVariable) expression).getType()) {
                             case "BYTE":
-                                ss = MemoryOp.Size.Byte;
+                                ss = Bytecode.Size.Byte;
                                 break;
                             case "WORD":
-                                ss = MemoryOp.Size.Word;
+                                ss = Bytecode.Size.Word;
                                 break;
                         }
                     }
 
-                    source.add(new MemoryOp(context, ss, bb, bitfieldNode != null || push ? MemoryOp.Op.Setup : MemoryOp.Op.Write, popIndex, expression, index));
+                    source.add(new MemoryOp(context, ss, bb, bitfieldNode != null || push ? Bytecode.Op.Setup : Bytecode.Op.Write, popIndex, expression, index));
                 }
                 else if (expression instanceof Variable) {
-                    source.add(new VariableOp(context, bitfieldNode != null || push ? VariableOp.Op.Setup : VariableOp.Op.Write, popIndex, (Variable) expression, hasIndex, index));
+                    source.add(new VariableOp(context, bitfieldNode != null || push ? Bytecode.Op.Setup : Bytecode.Op.Write, popIndex, (Variable) expression, hasIndex, index));
                     ((Variable) expression).setCalledBy(method);
                 }
                 else {
@@ -3315,7 +3317,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 }
 
                 if (bitfieldNode != null) {
-                    source.add(new BitField(context, push && !write ? BitField.Op.Setup : BitField.Op.Write, push, bitfield));
+                    source.add(new BitField(context, push && !write ? Bytecode.Op.Setup : Bytecode.Op.Write, push, bitfield));
                 }
                 else if (write) {
                     source.add(new Bytecode(context, Spin2Bytecode.bc_write_push, "WRITE"));
@@ -3570,7 +3572,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
 
                 if (isStructure(context, symbol)) {
                     int rc = node.getReturnLongs();
-                    source.addAll(compileStructure(context, method, node, symbol, null, MemoryOp.Op.Read, true));
+                    source.addAll(compileStructure(context, method, node, symbol, null, Bytecode.Op.Read, true));
                     node.setReturnLongs(rc);
                 }
                 else if (symbol instanceof Variable) {
@@ -3579,7 +3581,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         case "WORD":
                             throw new RuntimeException("method pointers must be long");
                     }
-                    source.add(new VariableOp(context, VariableOp.Op.Read, popIndex, (Variable) symbol, hasIndex, index));
+                    source.add(new VariableOp(context, Bytecode.Op.Read, popIndex, (Variable) symbol, hasIndex, index));
                     ((Variable) symbol).setCalledBy(method);
                 }
                 else if (symbol instanceof DataVariable) {
@@ -3588,7 +3590,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         case "WORD":
                             throw new RuntimeException("method pointers must be long");
                     }
-                    source.add(new MemoryOp(context, MemoryOp.Size.Long, MemoryOp.Base.PBase, MemoryOp.Op.Read, popIndex, symbol, index));
+                    source.add(new MemoryOp(context, Bytecode.Size.Long, Bytecode.Base.PBase, Bytecode.Op.Read, popIndex, symbol, index));
                 }
                 else {
                     throw new CompilerException("unsupported operation on " + node.getText(), node.getToken());
@@ -3705,20 +3707,20 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             Variable var = (Variable) expression;
 
             if (node.getText().startsWith("[")) {
-                source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, var, hasIndex, index));
+                source.add(new VariableOp(context, Bytecode.Op.Setup, popIndex, var, hasIndex, index));
                 if (pointerPostEffectNode != null) {
                     logMessage(new CompilerException("syntax error", pointerPostEffectNode.getTokens()));
                 }
             }
             else {
-                MemoryOp.Size ss = MemoryOp.Size.Long;
+                Size ss = Bytecode.Size.Long;
                 int typeSize = 4;
                 if ("^BYTE".equalsIgnoreCase(var.getType())) {
-                    ss = MemoryOp.Size.Byte;
+                    ss = Bytecode.Size.Byte;
                     typeSize = 1;
                 }
                 else if ("^WORD".equalsIgnoreCase(var.getType())) {
-                    ss = MemoryOp.Size.Word;
+                    ss = Bytecode.Size.Word;
                     typeSize = 2;
                 }
                 else if (!"^LONG".equalsIgnoreCase(var.getType())) {
@@ -3739,7 +3741,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         // Do nothing
                     }
 
-                    source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, var, hasIndex, index));
+                    source.add(new VariableOp(context, Bytecode.Op.Setup, popIndex, var, hasIndex, index));
 
                     if ("[++]".equalsIgnoreCase(pointerPreEffectNode.getText())) {
                         os.write(Spin2Bytecode.bc_var_preinc_push);
@@ -3752,7 +3754,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     else {
                         throw new CompilerException("invalid pointer pre effect " + pointerPreEffectNode.getText(), pointerPreEffectNode.getTokens());
                     }
-                    source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, MemoryOp.Op.Setup, indexNode != null));
+                    source.add(new MemoryOp(context, ss, Bytecode.Base.Pop, Bytecode.Op.Setup, indexNode != null));
                 }
                 else if (pointerPostEffectNode != null) {
                     ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -3765,7 +3767,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         // Do nothing
                     }
 
-                    source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, var, hasIndex, index));
+                    source.add(new VariableOp(context, Bytecode.Op.Setup, popIndex, var, hasIndex, index));
                     if ("[++]".equalsIgnoreCase(pointerPostEffectNode.getText())) {
                         os.write(Spin2Bytecode.bc_var_postinc_push);
                         source.add(new Bytecode(context, os.toByteArray(), String.format("POST_INC (%d)%s", typeSize, " (push)")));
@@ -3777,26 +3779,26 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     else {
                         throw new CompilerException("invalid pointer post effect " + pointerPostEffectNode.getText(), pointerPostEffectNode.getTokens());
                     }
-                    source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, MemoryOp.Op.Setup, indexNode != null));
+                    source.add(new MemoryOp(context, ss, Bytecode.Base.Pop, Bytecode.Op.Setup, indexNode != null));
                 }
                 else {
-                    source.add(new VariableOp(context, VariableOp.Op.Read, popIndex, var, hasIndex, index));
-                    source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, MemoryOp.Op.Setup, indexNode != null));
+                    source.add(new VariableOp(context, Bytecode.Op.Read, popIndex, var, hasIndex, index));
+                    source.add(new MemoryOp(context, ss, Bytecode.Base.Pop, Bytecode.Op.Setup, indexNode != null));
                 }
             }
 
             var.setCalledBy(method);
         }
         else {
-            MemoryOp.Size ss = MemoryOp.Size.Long;
-            MemoryOp.Base bb = MemoryOp.Base.PBase;
+            Size ss = Bytecode.Size.Long;
+            Base bb = Bytecode.Base.PBase;
             if (expression instanceof DataVariable) {
                 switch (((DataVariable) expression).getType()) {
                     case "BYTE":
-                        ss = MemoryOp.Size.Byte;
+                        ss = Bytecode.Size.Byte;
                         break;
                     case "WORD":
-                        ss = MemoryOp.Size.Word;
+                        ss = Bytecode.Size.Word;
                         break;
                 }
             }
@@ -3849,30 +3851,30 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 }
 
                 if (expression instanceof Register) {
-                    source.add(new RegisterOp(context, RegisterOp.Op.Setup, popIndex, expression, index));
+                    source.add(new RegisterOp(context, Bytecode.Op.Setup, popIndex, expression, index));
                 }
                 else if (expression instanceof ContextLiteral) {
-                    source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Setup, popIndex, expression, index));
+                    source.add(new MemoryOp(context, ss, bb, Bytecode.Op.Setup, popIndex, expression, index));
                 }
                 else {
-                    source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, (Variable) expression, hasIndex, index));
+                    source.add(new VariableOp(context, Bytecode.Op.Setup, popIndex, (Variable) expression, hasIndex, index));
                     ((Variable) expression).setCalledBy(method);
                 }
 
-                source.add(new BitField(context, BitField.Op.Setup, bitfield));
+                source.add(new BitField(context, Bytecode.Op.Setup, bitfield));
             }
             else {
                 if (popIndex) {
                     source.addAll(compileBytecodeExpression(context, method, indexNode, true));
                 }
                 if (expression instanceof Register) {
-                    source.add(new RegisterOp(context, RegisterOp.Op.Setup, popIndex, expression, index));
+                    source.add(new RegisterOp(context, Bytecode.Op.Setup, popIndex, expression, index));
                 }
                 else if (expression instanceof ContextLiteral) {
-                    source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Setup, popIndex, expression, index));
+                    source.add(new MemoryOp(context, ss, bb, Bytecode.Op.Setup, popIndex, expression, index));
                 }
                 else {
-                    source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, (Variable) expression, hasIndex, index));
+                    source.add(new VariableOp(context, Bytecode.Op.Setup, popIndex, (Variable) expression, hasIndex, index));
                     ((Variable) expression).setCalledBy(method);
                 }
             }
@@ -3901,7 +3903,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
         node.setReturnLongs(1);
 
         if (isStructure(context, expression)) {
-            source.addAll(compileStructure(context, method, node, expression, pointerPreEffectNode, MemoryOp.Op.Read, push));
+            source.addAll(compileStructure(context, method, node, expression, pointerPreEffectNode, Bytecode.Op.Read, push));
         }
         else if (isPointer(expression)) {
             int n = 0;
@@ -3945,40 +3947,40 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
 
             Variable var = (Variable) expression;
 
-            MemoryOp.Size ss = MemoryOp.Size.Long;
+            Size ss = Bytecode.Size.Long;
             int typeSize = 4;
             if ("^BYTE".equalsIgnoreCase(var.getType())) {
-                ss = MemoryOp.Size.Byte;
+                ss = Bytecode.Size.Byte;
                 typeSize = 1;
             }
             else if ("^WORD".equalsIgnoreCase(var.getType())) {
-                ss = MemoryOp.Size.Word;
+                ss = Bytecode.Size.Word;
                 typeSize = 2;
             }
             String typeOverride = node.getText().toLowerCase();
             if (typeOverride.endsWith(".byte")) {
-                ss = MemoryOp.Size.Byte;
+                ss = Bytecode.Size.Byte;
                 typeSize = 1;
             }
             else if (typeOverride.endsWith(".word")) {
-                ss = MemoryOp.Size.Word;
+                ss = Bytecode.Size.Word;
                 typeSize = 2;
             }
             else if (typeOverride.endsWith(".long")) {
-                ss = MemoryOp.Size.Long;
+                ss = Bytecode.Size.Long;
                 typeSize = 4;
             }
             else if (typeOverrideNode != null) {
                 if (".BYTE".equalsIgnoreCase(typeOverrideNode.getText())) {
-                    ss = MemoryOp.Size.Byte;
+                    ss = Bytecode.Size.Byte;
                     typeSize = 1;
                 }
                 else if (".WORD".equalsIgnoreCase(typeOverrideNode.getText())) {
-                    ss = MemoryOp.Size.Word;
+                    ss = Bytecode.Size.Word;
                     typeSize = 2;
                 }
                 else if (".LONG".equalsIgnoreCase(typeOverrideNode.getText())) {
-                    ss = MemoryOp.Size.Long;
+                    ss = Bytecode.Size.Long;
                     typeSize = 4;
                 }
                 else {
@@ -3989,7 +3991,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             if (node.getText().startsWith("[") && node.getText().endsWith("]")) {
                 if (postEffectNode != null) {
                     if ("++".equalsIgnoreCase(postEffectNode.getText()) || "--".equalsIgnoreCase(postEffectNode.getText())) {
-                        source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, var, hasIndex, index));
+                        source.add(new VariableOp(context, Bytecode.Op.Setup, popIndex, var, hasIndex, index));
                         ByteArrayOutputStream os = new ByteArrayOutputStream();
                         try {
                             if (typeSize != 1) {
@@ -4011,7 +4013,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     else if ("~".equalsIgnoreCase(postEffectNode.getText())) {
                         source.add(0, new Constant(context, new NumberLiteral(0)));
                         if (!push) {
-                            source.add(new VariableOp(context, VariableOp.Op.Write, false, (Variable) expression, false, 0));
+                            source.add(new VariableOp(context, Bytecode.Op.Write, false, (Variable) expression, false, 0));
                         }
                         else {
                             source.add(new Bytecode(context, push ? Spin2Bytecode.bc_var_swap : Spin2Bytecode.bc_write, push ? "SWAP" : "WRITE"));
@@ -4020,7 +4022,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     else if ("~~".equalsIgnoreCase(postEffectNode.getText())) {
                         source.add(0, new Constant(context, new NumberLiteral(-1)));
                         if (!push) {
-                            source.add(new VariableOp(context, VariableOp.Op.Write, false, (Variable) expression, false, 0));
+                            source.add(new VariableOp(context, Bytecode.Op.Write, false, (Variable) expression, false, 0));
                         }
                         else {
                             source.add(new Bytecode(context, push ? Spin2Bytecode.bc_var_swap : Spin2Bytecode.bc_write, push ? "SWAP" : "WRITE"));
@@ -4038,7 +4040,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     node.setReturnLongs(push ? 1 : 0);
                 }
                 else {
-                    source.add(new VariableOp(context, VariableOp.Op.Read, popIndex, var, hasIndex, index));
+                    source.add(new VariableOp(context, Bytecode.Op.Read, popIndex, var, hasIndex, index));
                     if (!push) {
                         logMessage(new CompilerException("expecting assignment", node.getTokens()));
                     }
@@ -4060,7 +4062,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         // Do nothing
                     }
 
-                    source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, var, hasIndex, index));
+                    source.add(new VariableOp(context, Bytecode.Op.Setup, popIndex, var, hasIndex, index));
 
                     if ("[++]".equalsIgnoreCase(pointerPreEffectNode.getText())) {
                         os.write(Spin2Bytecode.bc_var_preinc_push);
@@ -4079,14 +4081,14 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     }
 
                     if (bitfieldNode != null) {
-                        source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, MemoryOp.Op.Setup, indexNode != null));
+                        source.add(new MemoryOp(context, ss, Bytecode.Base.Pop, Bytecode.Op.Setup, indexNode != null));
 
                         int bitfield = compileBitfield(context, method, bitfieldNode, source);
-                        BitField.Op op = field ? BitField.Op.Field : (postEffectNode == null ? BitField.Op.Read : BitField.Op.Setup);
+                        Op op = field ? Bytecode.Op.Field : (postEffectNode == null ? Bytecode.Op.Read : Bytecode.Op.Setup);
                         source.add(new BitField(context, op, bitfield));
                     }
                     else if (push && postEffectNode == null) {
-                        source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, MemoryOp.Op.Read, indexNode != null));
+                        source.add(new MemoryOp(context, ss, Bytecode.Base.Pop, Bytecode.Op.Read, indexNode != null));
                     }
                 }
                 else if (pointerPostEffectNode != null) {
@@ -4100,7 +4102,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         // Do nothing
                     }
 
-                    source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, var, hasIndex, index));
+                    source.add(new VariableOp(context, Bytecode.Op.Setup, popIndex, var, hasIndex, index));
 
                     if ("[++]".equalsIgnoreCase(pointerPostEffectNode.getText())) {
                         os.write(push ? Spin2Bytecode.bc_var_postinc_push : Spin2Bytecode.bc_var_inc);
@@ -4114,28 +4116,28 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         throw new CompilerException("invalid post effect " + pointerPostEffectNode.getText(), pointerPostEffectNode.getTokens());
                     }
                     if (push && postEffectNode == null) {
-                        source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, MemoryOp.Op.Read, indexNode != null));
+                        source.add(new MemoryOp(context, ss, Bytecode.Base.Pop, Bytecode.Op.Read, indexNode != null));
                     }
                 }
                 else {
-                    source.add(new VariableOp(context, VariableOp.Op.Read, popIndex, var, hasIndex, index));
+                    source.add(new VariableOp(context, Bytecode.Op.Read, popIndex, var, hasIndex, index));
                     if (indexNode != null) {
                         source.addAll(compileConstantExpression(context, method, indexNode));
                     }
                     if (bitfieldNode != null) {
-                        source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, MemoryOp.Op.Setup, indexNode != null));
+                        source.add(new MemoryOp(context, ss, Bytecode.Base.Pop, Bytecode.Op.Setup, indexNode != null));
 
                         int bitfield = compileBitfield(context, method, bitfieldNode, source);
-                        BitField.Op op = field ? BitField.Op.Field : (postEffectNode == null ? BitField.Op.Read : BitField.Op.Setup);
+                        Op op = field ? Bytecode.Op.Field : (postEffectNode == null ? Bytecode.Op.Read : Bytecode.Op.Setup);
                         source.add(new BitField(context, op, bitfield));
                     }
                     else if (postEffectNode == null) {
-                        source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, MemoryOp.Op.Read, indexNode != null));
+                        source.add(new MemoryOp(context, ss, Bytecode.Base.Pop, Bytecode.Op.Read, indexNode != null));
                     }
                 }
                 if (postEffectNode != null) {
                     if (bitfieldNode == null) {
-                        source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, MemoryOp.Op.Setup, indexNode != null));
+                        source.add(new MemoryOp(context, ss, Bytecode.Base.Pop, Bytecode.Op.Setup, indexNode != null));
                     }
                     compilePostEffect(context, postEffectNode, source, push);
                     if (!push) {
@@ -4182,15 +4184,15 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 }
             }
 
-            MemoryOp.Size ss = MemoryOp.Size.Long;
-            MemoryOp.Base bb = MemoryOp.Base.PBase;
+            Size ss = Bytecode.Size.Long;
+            Base bb = Bytecode.Base.PBase;
             if (expression instanceof DataVariable) {
                 switch (((DataVariable) expression).getType()) {
                     case "BYTE":
-                        ss = MemoryOp.Size.Byte;
+                        ss = Bytecode.Size.Byte;
                         break;
                     case "WORD":
-                        ss = MemoryOp.Size.Word;
+                        ss = Bytecode.Size.Word;
                         break;
                 }
             }
@@ -4203,17 +4205,17 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 }
 
                 if (expression instanceof Register) {
-                    source.add(new RegisterOp(context, RegisterOp.Op.Setup, popIndex, expression, index));
+                    source.add(new RegisterOp(context, Bytecode.Op.Setup, popIndex, expression, index));
                 }
                 else if (expression instanceof ContextLiteral) {
-                    source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Setup, popIndex, expression, index));
+                    source.add(new MemoryOp(context, ss, bb, Bytecode.Op.Setup, popIndex, expression, index));
                 }
                 else {
-                    source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, (Variable) expression, hasIndex, index));
+                    source.add(new VariableOp(context, Bytecode.Op.Setup, popIndex, (Variable) expression, hasIndex, index));
                     ((Variable) expression).setCalledBy(method);
                 }
 
-                BitField.Op op = field ? BitField.Op.Field : (postEffectNode == null ? BitField.Op.Read : BitField.Op.Setup);
+                Op op = field ? Bytecode.Op.Field : (postEffectNode == null ? Bytecode.Op.Read : Bytecode.Op.Setup);
                 source.add(new BitField(context, op, bitfield));
 
                 if (postEffectNode != null) {
@@ -4238,13 +4240,13 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 if (postEffectNode != null) {
                     if ("~".equalsIgnoreCase(postEffectNode.getText()) || "~~".equalsIgnoreCase(postEffectNode.getText())) {
                         if (expression instanceof Register) {
-                            source.add(new RegisterOp(context, push ? RegisterOp.Op.Setup : RegisterOp.Op.Write, popIndex, expression, index));
+                            source.add(new RegisterOp(context, push ? Bytecode.Op.Setup : Bytecode.Op.Write, popIndex, expression, index));
                         }
                         else if (expression instanceof ContextLiteral) {
-                            source.add(new MemoryOp(context, ss, bb, push ? MemoryOp.Op.Setup : MemoryOp.Op.Write, popIndex, expression, index));
+                            source.add(new MemoryOp(context, ss, bb, push ? Bytecode.Op.Setup : Bytecode.Op.Write, popIndex, expression, index));
                         }
                         else {
-                            source.add(new VariableOp(context, push ? VariableOp.Op.Setup : VariableOp.Op.Write, popIndex, (Variable) expression, hasIndex, index));
+                            source.add(new VariableOp(context, push ? Bytecode.Op.Setup : Bytecode.Op.Write, popIndex, (Variable) expression, hasIndex, index));
                             ((Variable) expression).setCalledBy(method);
                         }
                         if (push) {
@@ -4253,13 +4255,13 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     }
                     else {
                         if (expression instanceof Register) {
-                            source.add(new RegisterOp(context, RegisterOp.Op.Setup, popIndex, expression, index));
+                            source.add(new RegisterOp(context, Bytecode.Op.Setup, popIndex, expression, index));
                         }
                         else if (expression instanceof ContextLiteral) {
-                            source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Setup, popIndex, expression, index));
+                            source.add(new MemoryOp(context, ss, bb, Bytecode.Op.Setup, popIndex, expression, index));
                         }
                         else {
-                            source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, (Variable) expression, hasIndex, index));
+                            source.add(new VariableOp(context, Bytecode.Op.Setup, popIndex, (Variable) expression, hasIndex, index));
                             ((Variable) expression).setCalledBy(method);
                         }
                         if ("++".equalsIgnoreCase(postEffectNode.getText())) {
@@ -4284,13 +4286,13 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 }
                 else {
                     if (expression instanceof Register) {
-                        source.add(new RegisterOp(context, field ? RegisterOp.Op.Field : RegisterOp.Op.Read, popIndex, expression, index));
+                        source.add(new RegisterOp(context, field ? Bytecode.Op.Field : Bytecode.Op.Read, popIndex, expression, index));
                     }
                     else if (expression instanceof ContextLiteral) {
-                        source.add(new MemoryOp(context, ss, bb, field ? MemoryOp.Op.Field : MemoryOp.Op.Read, popIndex, expression, index));
+                        source.add(new MemoryOp(context, ss, bb, field ? Bytecode.Op.Field : Bytecode.Op.Read, popIndex, expression, index));
                     }
                     else {
-                        source.add(new VariableOp(context, field ? VariableOp.Op.Field : VariableOp.Op.Read, popIndex, (Variable) expression, hasIndex, index));
+                        source.add(new VariableOp(context, field ? Bytecode.Op.Field : Bytecode.Op.Read, popIndex, (Variable) expression, hasIndex, index));
                         ((Variable) expression).setCalledBy(method);
                     }
                 }
@@ -4428,7 +4430,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
         return os.toByteArray();
     }
 
-    List<Spin2Bytecode> compileStructure(Context context, Spin2Method method, Spin2StatementNode node, Expression expression, Spin2StatementNode pointerPreEffectNode, MemoryOp.Op op, Boolean push) {
+    List<Spin2Bytecode> compileStructure(Context context, Spin2Method method, Spin2StatementNode node, Expression expression, Spin2StatementNode pointerPreEffectNode, Op op, Boolean push) {
         int offset = 0;
         int index = 0;
         int lastMemberSize = 0;
@@ -4446,23 +4448,23 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
         List<Spin2Bytecode> source = new ArrayList<>();
 
         if (isAddress(node.getText())) {
-            op = MemoryOp.Op.Address;
+            op = Bytecode.Op.Address;
         }
 
-        MemoryOp.Base bb;
+        Base bb;
         if (expression instanceof Variable) {
             pointer = ((Variable) expression).isPointer();
             if (pointer) {
-                bb = MemoryOp.Base.Pop;
+                bb = Bytecode.Base.Pop;
             }
             else {
-                bb = expression instanceof LocalVariable ? MemoryOp.Base.DBase : MemoryOp.Base.VBase;
+                bb = expression instanceof LocalVariable ? Bytecode.Base.DBase : Bytecode.Base.VBase;
             }
             varType = ((Variable) expression).getType();
         }
         else {
             pointer = false;
-            bb = MemoryOp.Base.PBase;
+            bb = Bytecode.Base.PBase;
             varType = ((DataVariable) expression).getType();
         }
 
@@ -4478,11 +4480,11 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 logMessage(new CompilerException("syntax error", node.getChild(n).getTokens()));
             }
             if (node.getText().startsWith("@@")) {
-                source.add(new VariableOp(context, VariableOp.Op.Read, false, (Variable) expression, false, 0));
+                source.add(new VariableOp(context, Bytecode.Op.Read, false, (Variable) expression, false, 0));
                 source.add(new Bytecode(context, new byte[] { Spin2Bytecode.bc_add_pbase }, "ADD PBASE"));
             }
             else {
-                source.add(new VariableOp(context, VariableOp.Op.Address, false, (Variable) expression, false, 0));
+                source.add(new VariableOp(context, Bytecode.Op.Address, false, (Variable) expression, false, 0));
             }
             node.setReturnLongs(1);
             if (!push) {
@@ -4502,11 +4504,11 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             }
 
             if (pointerPostEffectNode != null) {
-                if (op == MemoryOp.Op.Setup) {
+                if (op == Bytecode.Op.Setup) {
                     logMessage(new CompilerException("syntax error", pointerPostEffectNode.getToken()));
                 }
                 if ("++".equalsIgnoreCase(pointerPostEffectNode.getText()) || "--".equalsIgnoreCase(pointerPostEffectNode.getText())) {
-                    source.add(new VariableOp(context, VariableOp.Op.Setup, false, (Variable) expression, false, 0));
+                    source.add(new VariableOp(context, Bytecode.Op.Setup, false, (Variable) expression, false, 0));
                     ByteArrayOutputStream os = new ByteArrayOutputStream();
                     try {
                         if (structSize > 1) {
@@ -4528,29 +4530,29 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 else if ("~".equalsIgnoreCase(pointerPostEffectNode.getText())) {
                     source.add(0, new Constant(context, new NumberLiteral(0)));
                     if (!push) {
-                        source.add(new VariableOp(context, VariableOp.Op.Write, false, (Variable) expression, false, 0));
+                        source.add(new VariableOp(context, Bytecode.Op.Write, false, (Variable) expression, false, 0));
                     }
                     else {
-                        source.add(new VariableOp(context, VariableOp.Op.Setup, false, (Variable) expression, false, 0));
+                        source.add(new VariableOp(context, Bytecode.Op.Setup, false, (Variable) expression, false, 0));
                         source.add(new Bytecode(context, push ? Spin2Bytecode.bc_var_swap : Spin2Bytecode.bc_write, push ? "SWAP" : "WRITE"));
                     }
                 }
                 else if ("~~".equalsIgnoreCase(pointerPostEffectNode.getText())) {
                     source.add(0, new Constant(context, new NumberLiteral(-1)));
                     if (!push) {
-                        source.add(new VariableOp(context, VariableOp.Op.Write, false, (Variable) expression, false, 0));
+                        source.add(new VariableOp(context, Bytecode.Op.Write, false, (Variable) expression, false, 0));
                     }
                     else {
-                        source.add(new VariableOp(context, VariableOp.Op.Setup, false, (Variable) expression, false, 0));
+                        source.add(new VariableOp(context, Bytecode.Op.Setup, false, (Variable) expression, false, 0));
                         source.add(new Bytecode(context, push ? Spin2Bytecode.bc_var_swap : Spin2Bytecode.bc_write, push ? "SWAP" : "WRITE"));
                     }
                 }
                 else if ("!!".equalsIgnoreCase(pointerPostEffectNode.getText())) {
-                    source.add(new VariableOp(context, VariableOp.Op.Setup, false, (Variable) expression, false, 0));
+                    source.add(new VariableOp(context, Bytecode.Op.Setup, false, (Variable) expression, false, 0));
                     source.add(new Bytecode(context, push ? Spin2Bytecode.bc_var_lognot_push : Spin2Bytecode.bc_var_lognot, "POST_LOGICAL_NOT" + (push ? " (push)" : "")));
                 }
                 else if ("!".equalsIgnoreCase(pointerPostEffectNode.getText())) {
-                    source.add(new VariableOp(context, VariableOp.Op.Setup, false, (Variable) expression, false, 0));
+                    source.add(new VariableOp(context, Bytecode.Op.Setup, false, (Variable) expression, false, 0));
                     source.add(new Bytecode(context, push ? Spin2Bytecode.bc_var_bitnot_push : Spin2Bytecode.bc_var_bitnot, "POST_NOT" + (push ? " (push)" : "")));
                 }
                 else {
@@ -4559,22 +4561,9 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 node.setReturnLongs(push ? 1 : 0);
             }
             else {
-                VariableOp.Op varOp;
-                if (op == MemoryOp.Op.Read) {
-                    varOp = VariableOp.Op.Read;
-                }
-                else if (op == MemoryOp.Op.Write) {
-                    varOp = VariableOp.Op.Write;
-                }
-                else if (op == MemoryOp.Op.Address) {
-                    varOp = VariableOp.Op.Address;
-                }
-                else {
-                    varOp = VariableOp.Op.Setup;
-                }
-                source.add(new VariableOp(context, varOp, false, (Variable) expression, false, 0));
+                source.add(new VariableOp(context, op, false, (Variable) expression, false, 0));
                 node.setReturnLongs(1);
-                if (!push && op == MemoryOp.Op.Read) {
+                if (!push && op == Bytecode.Op.Read) {
                     logMessage(new CompilerException("expecting assignment", node.getTokens()));
                 }
             }
@@ -4707,16 +4696,16 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             bitfield = compileBitfield(context, method, bitfieldNode, source);
         }
 
-        MemoryOp.Size ss;
+        Size ss;
         switch (varType.toUpperCase()) {
             case "BYTE":
-                ss = MemoryOp.Size.Byte;
+                ss = Bytecode.Size.Byte;
                 break;
             case "WORD":
-                ss = MemoryOp.Size.Word;
+                ss = Bytecode.Size.Word;
                 break;
             default:
-                ss = MemoryOp.Size.Long;
+                ss = Bytecode.Size.Long;
                 break;
         }
 
@@ -4728,13 +4717,13 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             node.setReturnLongs(struct != null ? (struct.getTypeSize() + 3) / 4 : 1);
         }
 
-        if (struct != null || indexNodes.size() > 0 || postEffectNode != null || pointerPostEffectNode != null || bb == MemoryOp.Base.Pop) {
+        if (struct != null || indexNodes.size() > 0 || postEffectNode != null || pointerPostEffectNode != null || bb == Bytecode.Base.Pop) {
             for (Spin2StatementNode idxNode : indexNodes) {
                 source.addAll(compileBytecodeExpression(context, method, idxNode, true));
             }
 
             if (pointerPreEffectNode != null) {
-                source.add(new VariableOp(context, VariableOp.Op.Setup, false, (Variable) expression, false, 0));
+                source.add(new VariableOp(context, Bytecode.Op.Setup, false, (Variable) expression, false, 0));
 
                 ByteArrayOutputStream os = new ByteArrayOutputStream();
                 try {
@@ -4758,7 +4747,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 }
             }
             else if (pointerPostEffectNode != null) {
-                source.add(new VariableOp(context, VariableOp.Op.Setup, false, (Variable) expression, false, 0));
+                source.add(new VariableOp(context, Bytecode.Op.Setup, false, (Variable) expression, false, 0));
 
                 ByteArrayOutputStream os = new ByteArrayOutputStream();
                 try {
@@ -4781,33 +4770,33 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     // Do nothing
                 }
             }
-            else if (bb == MemoryOp.Base.Pop) {
-                source.add(new VariableOp(context, VariableOp.Op.Read, false, (Variable) expression, false, 0));
+            else if (bb == Bytecode.Base.Pop) {
+                source.add(new VariableOp(context, Bytecode.Op.Read, false, (Variable) expression, false, 0));
             }
 
-            if (push || (pointerPostEffectNode == null && pointerPostEffectNode == null) || op == MemoryOp.Op.Write) {
-                MemoryOp.Op sOp = (bitfieldNode != null || postEffectNode != null) ? MemoryOp.Op.Setup : op;
-                if (op == MemoryOp.Op.Address) {
+            if (push || (pointerPostEffectNode == null && pointerPostEffectNode == null) || op == Bytecode.Op.Write) {
+                Op sOp = (bitfieldNode != null || postEffectNode != null) ? Bytecode.Op.Setup : op;
+                if (op == Bytecode.Op.Address) {
                     switch (varType.toUpperCase()) {
                         case "BYTE":
                         case "WORD":
                         case "LONG":
-                            sOp = MemoryOp.Op.Setup;
+                            sOp = Bytecode.Op.Setup;
                             break;
                         default:
-                            sOp = MemoryOp.Op.Address;
+                            sOp = Bytecode.Op.Address;
                             break;
                     }
                 }
                 source.add(new StructOp(context, sOp, bb, ss, struct, expression, index + offset, indexMultipliers, push));
 
                 if (bitfieldNode != null) {
-                    BitField.Op bfOp = op == MemoryOp.Op.Read ? BitField.Op.Read : BitField.Op.Write;
-                    source.add(new BitField(context, postEffectNode == null ? bfOp : BitField.Op.Setup, bitfield));
+                    Op bfOp = op == Bytecode.Op.Read ? Bytecode.Op.Read : Bytecode.Op.Write;
+                    source.add(new BitField(context, postEffectNode == null ? bfOp : Bytecode.Op.Setup, bitfield));
                 }
 
-                if (op == MemoryOp.Op.Address) {
-                    if (sOp == MemoryOp.Op.Setup) {
+                if (op == Bytecode.Op.Address) {
+                    if (sOp == Bytecode.Op.Setup) {
                         source.add(new Bytecode(context, Spin2Bytecode.bc_get_addr, "ADDRESS"));
                     }
                     node.setReturnLongs(1);
@@ -4816,34 +4805,21 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
         }
         else if (expression instanceof Variable) {
             if ("LONG".equalsIgnoreCase(varType) && ((index + offset) % 4) == 0) {
-                VariableOp.Op varOp;
-                if (op == MemoryOp.Op.Read) {
-                    varOp = VariableOp.Op.Read;
-                }
-                else if (op == MemoryOp.Op.Write) {
-                    varOp = VariableOp.Op.Write;
-                }
-                else if (op == MemoryOp.Op.Address) {
-                    varOp = VariableOp.Op.Address;
-                }
-                else {
-                    varOp = VariableOp.Op.Setup;
-                }
-                source.add(new VariableOp(context, (bitfieldNode != null || postEffectNode != null) ? VariableOp.Op.Setup : varOp, false, (Variable) expression, false, (index + offset) / 4));
+                source.add(new VariableOp(context, (bitfieldNode != null || postEffectNode != null) ? Bytecode.Op.Setup : op, false, (Variable) expression, false, (index + offset) / 4));
             }
             else {
-                source.add(new MemoryOp(context, ss, bb, (bitfieldNode != null || postEffectNode != null) ? MemoryOp.Op.Setup : op, expression, index + offset));
+                source.add(new MemoryOp(context, ss, bb, (bitfieldNode != null || postEffectNode != null) ? Bytecode.Op.Setup : op, expression, index + offset));
             }
             if (bitfieldNode != null) {
-                BitField.Op bfOp = op == MemoryOp.Op.Read ? BitField.Op.Read : BitField.Op.Write;
-                source.add(new BitField(context, postEffectNode == null ? bfOp : BitField.Op.Setup, bitfield));
+                Op bfOp = op == Bytecode.Op.Read ? Bytecode.Op.Read : Bytecode.Op.Write;
+                source.add(new BitField(context, bfOp, bitfield));
             }
         }
         else {
-            source.add(new MemoryOp(context, ss, bb, (bitfieldNode != null || postEffectNode != null) ? MemoryOp.Op.Setup : op, expression, index + offset));
+            source.add(new MemoryOp(context, ss, bb, (bitfieldNode != null || postEffectNode != null) ? Bytecode.Op.Setup : op, expression, index + offset));
             if (bitfieldNode != null) {
-                BitField.Op bfOp = op == MemoryOp.Op.Read ? BitField.Op.Read : BitField.Op.Write;
-                source.add(new BitField(context, postEffectNode == null ? bfOp : BitField.Op.Setup, bitfield));
+                Op bfOp = op == Bytecode.Op.Read ? Bytecode.Op.Read : Bytecode.Op.Write;
+                source.add(new BitField(context, bfOp, bitfield));
             }
         }
 
@@ -4889,7 +4865,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     node.setReturnLongs(push ? 1 : 0);
                 }
             }
-            else if (op == MemoryOp.Op.Read && !push && pointerPostEffectNode == null && pointerPostEffectNode == null) {
+            else if (op == Bytecode.Op.Read && !push && pointerPostEffectNode == null && pointerPostEffectNode == null) {
                 logMessage(new CompilerException("expecting assignment", node.getTokens()));
             }
         }

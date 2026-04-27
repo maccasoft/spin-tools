@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin1.bytecode;
@@ -19,7 +18,7 @@ class MemoryOpTest {
 
     @Test
     void testByteMemoryOp() {
-        MemoryOp op = new MemoryOp(new Context(), MemoryOp.Size.Byte, true, MemoryOp.Base.Pop, MemoryOp.Op.Read, null);
+        MemoryOp op = new MemoryOp(new Context(), Bytecode.Size.Byte, true, Bytecode.Base.Pop, Bytecode.Op.Read, null);
 
         Assertions.assertEquals("90", toString(op.getBytes()));
         Assertions.assertEquals("MEM_READ_INDEXED BYTE POP", op.toString());
@@ -27,7 +26,7 @@ class MemoryOpTest {
 
     @Test
     void testWordMemoryOp() {
-        MemoryOp op = new MemoryOp(new Context(), MemoryOp.Size.Word, true, MemoryOp.Base.Pop, MemoryOp.Op.Read, null);
+        MemoryOp op = new MemoryOp(new Context(), Bytecode.Size.Word, true, Bytecode.Base.Pop, Bytecode.Op.Read, null);
 
         Assertions.assertEquals("B0", toString(op.getBytes()));
         Assertions.assertEquals("MEM_READ_INDEXED WORD POP", op.toString());
@@ -35,7 +34,7 @@ class MemoryOpTest {
 
     @Test
     void testLongMemoryOp() {
-        MemoryOp op = new MemoryOp(new Context(), MemoryOp.Size.Long, true, MemoryOp.Base.Pop, MemoryOp.Op.Read, null);
+        MemoryOp op = new MemoryOp(new Context(), Bytecode.Size.Long, true, Bytecode.Base.Pop, Bytecode.Op.Read, null);
 
         Assertions.assertEquals("D0", toString(op.getBytes()));
         Assertions.assertEquals("MEM_READ_INDEXED LONG POP", op.toString());

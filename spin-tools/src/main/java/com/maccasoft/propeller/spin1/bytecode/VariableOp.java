@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin1.bytecode;
@@ -16,6 +15,9 @@ import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.spin1.Spin1Bytecode;
+import com.maccasoft.propeller.spin1.bytecode.Bytecode.Base;
+import com.maccasoft.propeller.spin1.bytecode.Bytecode.Op;
+import com.maccasoft.propeller.spin1.bytecode.Bytecode.Size;
 
 public class VariableOp extends Spin1Bytecode {
 
@@ -27,18 +29,6 @@ public class VariableOp extends Spin1Bytecode {
     static final BitField mop_i = new BitField(0b0_00_1_00_00);
     static final BitField mop_bb = new BitField(0b0_00_0_11_00);
     static final BitField mop_oo = new BitField(0b0_00_0_00_11);
-
-    public enum Size {
-        Byte, Word, Long
-    };
-
-    public static enum Base {
-        VBase, DBase
-    };
-
-    public static enum Op {
-        Read, Write, Assign, Address
-    };
 
     public Size ss;
     public Base b;
@@ -52,18 +42,18 @@ public class VariableOp extends Spin1Bytecode {
 
     public VariableOp(Context context, Op oo, boolean i, Variable value) {
         super(context);
-        this.b = value instanceof LocalVariable ? Base.DBase : Base.VBase;
+        this.b = value instanceof LocalVariable ? Bytecode.Base.DBase : Bytecode.Base.VBase;
         this.i = i;
         this.oo = oo;
         this.value = value;
 
-        this.ss = Size.Long;
+        this.ss = Bytecode.Size.Long;
         if (!value.isPointer()) {
             if ("BYTE".equalsIgnoreCase(value.getType())) {
-                this.ss = Size.Byte;
+                this.ss = Bytecode.Size.Byte;
             }
             else if ("WORD".equalsIgnoreCase(value.getType())) {
-                this.ss = Size.Word;
+                this.ss = Bytecode.Size.Word;
             }
         }
     }
@@ -80,9 +70,12 @@ public class VariableOp extends Spin1Bytecode {
 
     @Override
     public byte[] getBytes() {
-        if (ss == Size.Long && (value.getOffset() / 4) < 8 && !i) {
+        if (ss == Bytecode.Size.Long && (value.getOffset() / 4) < 8 && !i) {
             int b0 = 0b01_0_000_00;
-            b0 = vop_b.setValue(b0, b.ordinal());
+            switch (b) {
+                case VBase -> b0 = vop_b.setValue(b0, 0);
+                case DBase -> b0 = vop_b.setValue(b0, 1);
+            }
             b0 = vop_oo.setValue(b0, oo.ordinal());
             b0 = vop_xxx.setValue(b0, value.getOffset() / 4);
 
@@ -94,7 +87,10 @@ public class VariableOp extends Spin1Bytecode {
             int b0 = 0b1_00_0_00_00;
             b0 = mop_ss.setValue(b0, ss.ordinal());
             b0 = mop_i.setBoolean(b0, i);
-            b0 = mop_bb.setValue(b0, b.ordinal() + 2);
+            switch (b) {
+                case VBase -> b0 = mop_bb.setValue(b0, 2);
+                case DBase -> b0 = mop_bb.setValue(b0, 3);
+            }
             b0 = mop_oo.setValue(b0, oo.ordinal());
 
             if (value.getOffset() <= 127) {
@@ -133,7 +129,7 @@ public class VariableOp extends Spin1Bytecode {
         if (i) {
             sb.append("_INDEXED");
         }
-        if (oo != Op.Address) {
+        if (oo != Bytecode.Op.Address) {
             sb.append(" ");
             sb.append(value.getType().toUpperCase());
         }
@@ -150,7 +146,7 @@ public class VariableOp extends Spin1Bytecode {
         }
         sb.append("+");
         sb.append(String.format("$%04X", value.getOffset()));
-        if (ss == Size.Long && (value.getOffset() / 4) < 8) {
+        if (ss == Bytecode.Size.Long && (value.getOffset() / 4) < 8) {
             sb.append(" (short)");
         }
         return sb.toString();

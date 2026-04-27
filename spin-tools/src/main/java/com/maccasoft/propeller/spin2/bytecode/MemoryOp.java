@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2.bytecode;
@@ -18,20 +17,11 @@ import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
+import com.maccasoft.propeller.spin2.bytecode.Bytecode.Base;
+import com.maccasoft.propeller.spin2.bytecode.Bytecode.Op;
+import com.maccasoft.propeller.spin2.bytecode.Bytecode.Size;
 
 public class MemoryOp extends Spin2Bytecode {
-
-    public enum Size {
-        Byte, Word, Long
-    };
-
-    public static enum Base {
-        PBase, VBase, DBase, Pop
-    }
-
-    public static enum Op {
-        Read, Write, Setup, Address, Field, WritePush
-    }
 
     public Size ss;
     public Base base;
@@ -88,10 +78,10 @@ public class MemoryOp extends Spin2Bytecode {
         this.op = op;
         this.pop = pop;
         this.expression = expression;
-        if (this.ss == Size.Long) {
+        if (this.ss == Bytecode.Size.Long) {
             this.index = index * 4;
         }
-        else if (this.ss == Size.Word) {
+        else if (this.ss == Bytecode.Size.Word) {
             this.index = index * 2;
         }
         else {
@@ -115,10 +105,10 @@ public class MemoryOp extends Spin2Bytecode {
         try {
             switch (base) {
                 case PBase:
-                    if (ss == Size.Byte) {
+                    if (ss == Bytecode.Size.Byte) {
                         os.write(pop ? Spin2Bytecode.bc_setup_byte_pbase_pi : Spin2Bytecode.bc_setup_byte_pbase);
                     }
-                    else if (ss == Size.Word) {
+                    else if (ss == Bytecode.Size.Word) {
                         os.write(pop ? Spin2Bytecode.bc_setup_word_pbase_pi : Spin2Bytecode.bc_setup_word_pbase);
                     }
                     else {
@@ -126,10 +116,10 @@ public class MemoryOp extends Spin2Bytecode {
                     }
                     break;
                 case VBase:
-                    if (ss == Size.Byte) {
+                    if (ss == Bytecode.Size.Byte) {
                         os.write(pop ? Spin2Bytecode.bc_setup_byte_vbase_pi : Spin2Bytecode.bc_setup_byte_vbase);
                     }
-                    else if (ss == Size.Word) {
+                    else if (ss == Bytecode.Size.Word) {
                         os.write(pop ? Spin2Bytecode.bc_setup_word_vbase_pi : Spin2Bytecode.bc_setup_word_vbase);
                     }
                     else {
@@ -137,10 +127,10 @@ public class MemoryOp extends Spin2Bytecode {
                     }
                     break;
                 case DBase:
-                    if (ss == Size.Byte) {
+                    if (ss == Bytecode.Size.Byte) {
                         os.write(pop ? Spin2Bytecode.bc_setup_byte_dbase_pi : Spin2Bytecode.bc_setup_byte_dbase);
                     }
-                    else if (ss == Size.Word) {
+                    else if (ss == Bytecode.Size.Word) {
                         os.write(pop ? Spin2Bytecode.bc_setup_word_dbase_pi : Spin2Bytecode.bc_setup_word_dbase);
                     }
                     else {
@@ -148,10 +138,10 @@ public class MemoryOp extends Spin2Bytecode {
                     }
                     break;
                 case Pop:
-                    if (ss == Size.Byte) {
+                    if (ss == Bytecode.Size.Byte) {
                         os.write(pop ? Spin2Bytecode.bc_setup_byte_pb_pi : Spin2Bytecode.bc_setup_byte_pa);
                     }
-                    else if (ss == Size.Word) {
+                    else if (ss == Bytecode.Size.Word) {
                         os.write(pop ? Spin2Bytecode.bc_setup_word_pb_pi : Spin2Bytecode.bc_setup_word_pa);
                     }
                     else {
@@ -160,7 +150,7 @@ public class MemoryOp extends Spin2Bytecode {
                     break;
             }
 
-            if (base != Base.Pop) {
+            if (base != Bytecode.Base.Pop) {
                 int offset;
                 if (expression instanceof ContextLiteral) {
                     offset = ((ContextLiteral) expression).getContext().getObjectAddress();
@@ -174,19 +164,19 @@ public class MemoryOp extends Spin2Bytecode {
                 os.write(Constant.wrVar(offset + index));
             }
 
-            if (op == Op.Field) {
+            if (op == Bytecode.Op.Field) {
                 os.write(Spin2Bytecode.bc_get_field);
             }
-            else if (op == Op.Address) {
+            else if (op == Bytecode.Op.Address) {
                 os.write(Spin2Bytecode.bc_get_addr);
             }
-            else if (op == Op.Read) {
+            else if (op == Bytecode.Op.Read) {
                 os.write(Spin2Bytecode.bc_read);
             }
-            else if (op == Op.Write) {
+            else if (op == Bytecode.Op.Write) {
                 os.write(Spin2Bytecode.bc_write);
             }
-            else if (op == Op.WritePush) {
+            else if (op == Bytecode.Op.WritePush) {
                 os.write(Spin2Bytecode.bc_write_push);
             }
         } catch (IOException e) {
@@ -200,23 +190,23 @@ public class MemoryOp extends Spin2Bytecode {
     public String toString() {
         StringBuilder sb = new StringBuilder("MEM_");
 
-        if (op == Op.Read) {
+        if (op == Bytecode.Op.Read) {
             sb.append("READ");
         }
-        else if (op == Op.Write || op == Op.WritePush) {
+        else if (op == Bytecode.Op.Write || op == Bytecode.Op.WritePush) {
             sb.append("WRITE");
         }
-        else if (op == Op.Setup) {
+        else if (op == Bytecode.Op.Setup) {
             sb.append("SETUP");
         }
-        else if (op == Op.Address) {
+        else if (op == Bytecode.Op.Address) {
             sb.append("ADDRESS");
         }
-        else if (op == Op.Field) {
+        else if (op == Bytecode.Op.Field) {
             sb.append("BITFIELD_PTR");
         }
 
-        if (op != Op.Address) {
+        if (op != Bytecode.Op.Address) {
             switch (ss) {
                 case Byte:
                     sb.append(" BYTE");
@@ -248,7 +238,7 @@ public class MemoryOp extends Spin2Bytecode {
                 break;
         }
 
-        if (base != Base.Pop) {
+        if (base != Bytecode.Base.Pop) {
             int offset;
             if (expression instanceof ContextLiteral) {
                 offset = ((ContextLiteral) expression).getContext().getObjectAddress();
@@ -262,7 +252,7 @@ public class MemoryOp extends Spin2Bytecode {
             sb.append(String.format("+$%05X", offset + index));
         }
 
-        if (op == Op.WritePush) {
+        if (op == Bytecode.Op.WritePush) {
             sb.append(" (push)");
         }
 

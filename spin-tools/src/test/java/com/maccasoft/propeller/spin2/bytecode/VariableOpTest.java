@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2.bytecode;
@@ -23,7 +22,7 @@ class VariableOpTest {
     void testReadLocalVarLongShort() {
         Variable var = new LocalVariable("LONG", "a", 1, 4);
 
-        VariableOp op = new VariableOp(new Context(), VariableOp.Op.Read, false, var);
+        VariableOp op = new VariableOp(new Context(), Bytecode.Op.Read, false, var);
         byte[] code = op.getBytes();
 
         Assertions.assertEquals("E1", toString(code));
@@ -35,7 +34,7 @@ class VariableOpTest {
     void testReadLocalVarLong() {
         Variable var = new LocalVariable("LONG", "a", 1, 0x40);
 
-        VariableOp op = new VariableOp(new Context(), VariableOp.Op.Read, false, var);
+        VariableOp op = new VariableOp(new Context(), Bytecode.Op.Read, false, var);
         byte[] code = op.getBytes();
 
         Assertions.assertEquals("5D 40 80", toString(code));
@@ -47,7 +46,7 @@ class VariableOpTest {
     void testWriteLocalVarLongShort() {
         Variable var = new LocalVariable("LONG", "a", 1, 4);
 
-        VariableOp op = new VariableOp(new Context(), VariableOp.Op.Write, false, var);
+        VariableOp op = new VariableOp(new Context(), Bytecode.Op.Write, false, var);
         byte[] code = op.getBytes();
 
         Assertions.assertEquals("F1", toString(code));
@@ -59,7 +58,7 @@ class VariableOpTest {
     void testWriteLocalVarLong() {
         Variable var = new LocalVariable("LONG", "a", 1, 0x40);
 
-        VariableOp op = new VariableOp(new Context(), VariableOp.Op.Write, false, var);
+        VariableOp op = new VariableOp(new Context(), Bytecode.Op.Write, false, var);
         byte[] code = op.getBytes();
 
         Assertions.assertEquals("5D 40 81", toString(code));
@@ -71,7 +70,7 @@ class VariableOpTest {
     void testReadLocalVarByteShort() {
         Variable var = new LocalVariable("BYTE", "a", 1, 4);
 
-        VariableOp op = new VariableOp(new Context(), VariableOp.Op.Read, false, var);
+        VariableOp op = new VariableOp(new Context(), Bytecode.Op.Read, false, var);
         byte[] code = op.getBytes();
 
         Assertions.assertEquals("51 04 80", toString(code));
@@ -83,7 +82,7 @@ class VariableOpTest {
     void testReadLocalVarWordShort() {
         Variable var = new LocalVariable("WORD", "a", 1, 4);
 
-        VariableOp op = new VariableOp(new Context(), VariableOp.Op.Read, false, var);
+        VariableOp op = new VariableOp(new Context(), Bytecode.Op.Read, false, var);
         byte[] code = op.getBytes();
 
         Assertions.assertEquals("57 04 80", toString(code));
@@ -95,7 +94,7 @@ class VariableOpTest {
     void testSetupLocalVarLongShort() {
         Variable var = new LocalVariable("LONG", "a", 1, 4);
 
-        VariableOp op = new VariableOp(new Context(), VariableOp.Op.Setup, false, var);
+        VariableOp op = new VariableOp(new Context(), Bytecode.Op.Setup, false, var);
         byte[] code = op.getBytes();
 
         Assertions.assertEquals("D1", toString(code));
@@ -107,7 +106,7 @@ class VariableOpTest {
     void testSetupLocalVarLong() {
         Variable var = new LocalVariable("LONG", "a", 1, 0x40);
 
-        VariableOp op = new VariableOp(new Context(), VariableOp.Op.Setup, false, var);
+        VariableOp op = new VariableOp(new Context(), Bytecode.Op.Setup, false, var);
         byte[] code = op.getBytes();
 
         Assertions.assertEquals("5D 40", toString(code));
@@ -119,7 +118,7 @@ class VariableOpTest {
     void testSetupLocalVarByteShort() {
         Variable var = new LocalVariable("BYTE", "a", 1, 4);
 
-        VariableOp op = new VariableOp(new Context(), VariableOp.Op.Setup, false, var);
+        VariableOp op = new VariableOp(new Context(), Bytecode.Op.Setup, false, var);
         byte[] code = op.getBytes();
 
         Assertions.assertEquals("51 04", toString(code));
@@ -131,7 +130,7 @@ class VariableOpTest {
     void testSetupLocalVarWordShort() {
         Variable var = new LocalVariable("WORD", "a", 1, 4);
 
-        VariableOp op = new VariableOp(new Context(), VariableOp.Op.Setup, false, var);
+        VariableOp op = new VariableOp(new Context(), Bytecode.Op.Setup, false, var);
         byte[] code = op.getBytes();
 
         Assertions.assertEquals("57 04", toString(code));
@@ -143,7 +142,7 @@ class VariableOpTest {
     void testReadLocalVarLongIndexed() {
         Variable var = new LocalVariable("LONG", "a", 1, 0x4);
 
-        VariableOp op = new VariableOp(new Context(), VariableOp.Op.Read, true, var);
+        VariableOp op = new VariableOp(new Context(), Bytecode.Op.Read, true, var);
         byte[] code = op.getBytes();
 
         Assertions.assertEquals("60 04 80", toString(code));
@@ -155,7 +154,7 @@ class VariableOpTest {
     void testReadLocalVarWordIndexed() {
         Variable var = new LocalVariable("WORD", "a", 1, 0x4);
 
-        VariableOp op = new VariableOp(new Context(), VariableOp.Op.Read, true, var);
+        VariableOp op = new VariableOp(new Context(), Bytecode.Op.Read, true, var);
         byte[] code = op.getBytes();
 
         Assertions.assertEquals("5A 04 80", toString(code));
@@ -167,7 +166,7 @@ class VariableOpTest {
     void testReadLocalVarByteIndexed() {
         Variable var = new LocalVariable("BYTE", "a", 1, 0x4);
 
-        VariableOp op = new VariableOp(new Context(), VariableOp.Op.Read, true, var);
+        VariableOp op = new VariableOp(new Context(), Bytecode.Op.Read, true, var);
         byte[] code = op.getBytes();
 
         Assertions.assertEquals("54 04 80", toString(code));
@@ -179,7 +178,7 @@ class VariableOpTest {
     void testReadVarLongShort() {
         Variable var = new Variable("LONG", "a", 1, 4);
 
-        VariableOp op = new VariableOp(new Context(), VariableOp.Op.Read, false, var);
+        VariableOp op = new VariableOp(new Context(), Bytecode.Op.Read, false, var);
         byte[] code = op.getBytes();
 
         Assertions.assertEquals("C1 80", toString(code));
@@ -191,7 +190,7 @@ class VariableOpTest {
     void testReadVarLong() {
         Variable var = new Variable("LONG", "a", 1, 0x40);
 
-        VariableOp op = new VariableOp(new Context(), VariableOp.Op.Read, false, var);
+        VariableOp op = new VariableOp(new Context(), Bytecode.Op.Read, false, var);
         byte[] code = op.getBytes();
 
         Assertions.assertEquals("5C 40 80", toString(code));
@@ -203,7 +202,7 @@ class VariableOpTest {
     void testWriteVarLongShort() {
         Variable var = new Variable("LONG", "a", 1, 4);
 
-        VariableOp op = new VariableOp(new Context(), VariableOp.Op.Write, false, var);
+        VariableOp op = new VariableOp(new Context(), Bytecode.Op.Write, false, var);
         byte[] code = op.getBytes();
 
         Assertions.assertEquals("C1 81", toString(code));
@@ -215,7 +214,7 @@ class VariableOpTest {
     void testWriteVarLong() {
         Variable var = new Variable("LONG", "a", 1, 0x40);
 
-        VariableOp op = new VariableOp(new Context(), VariableOp.Op.Write, false, var);
+        VariableOp op = new VariableOp(new Context(), Bytecode.Op.Write, false, var);
         byte[] code = op.getBytes();
 
         Assertions.assertEquals("5C 40 81", toString(code));
@@ -227,7 +226,7 @@ class VariableOpTest {
     void testAddressVarLongShort() {
         Variable var = new Variable("LONG", "a", 1, 4);
 
-        VariableOp op = new VariableOp(new Context(), VariableOp.Op.Address, false, var);
+        VariableOp op = new VariableOp(new Context(), Bytecode.Op.Address, false, var);
         byte[] code = op.getBytes();
 
         Assertions.assertEquals("C1 7F", toString(code));
@@ -239,7 +238,7 @@ class VariableOpTest {
     void testAddressVarLong() {
         Variable var = new Variable("LONG", "a", 1, 0x40);
 
-        VariableOp op = new VariableOp(new Context(), VariableOp.Op.Address, false, var);
+        VariableOp op = new VariableOp(new Context(), Bytecode.Op.Address, false, var);
         byte[] code = op.getBytes();
 
         Assertions.assertEquals("5C 40 7F", toString(code));
@@ -251,7 +250,7 @@ class VariableOpTest {
     void testAddressLocalVarLongShort() {
         Variable var = new LocalVariable("LONG", "a", 1, 4);
 
-        VariableOp op = new VariableOp(new Context(), VariableOp.Op.Address, false, var);
+        VariableOp op = new VariableOp(new Context(), Bytecode.Op.Address, false, var);
         byte[] code = op.getBytes();
 
         Assertions.assertEquals("D1 7F", toString(code));
@@ -263,7 +262,7 @@ class VariableOpTest {
     void testAddressLocalVarLong() {
         Variable var = new LocalVariable("LONG", "a", 1, 0x40);
 
-        VariableOp op = new VariableOp(new Context(), VariableOp.Op.Address, false, var);
+        VariableOp op = new VariableOp(new Context(), Bytecode.Op.Address, false, var);
         byte[] code = op.getBytes();
 
         Assertions.assertEquals("5D 40 7F", toString(code));
@@ -275,7 +274,7 @@ class VariableOpTest {
     void testReadUnalignedVarLong() {
         Variable var = new Variable("LONG", "a", 1, 0x02);
 
-        VariableOp op = new VariableOp(new Context(), VariableOp.Op.Read, false, var);
+        VariableOp op = new VariableOp(new Context(), Bytecode.Op.Read, false, var);
         byte[] code = op.getBytes();
 
         Assertions.assertEquals("5C 02 80", toString(code));

@@ -68,6 +68,9 @@ import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.spin1.Spin1Bytecode.Descriptor;
 import com.maccasoft.propeller.spin1.bytecode.Address;
 import com.maccasoft.propeller.spin1.bytecode.Bytecode;
+import com.maccasoft.propeller.spin1.bytecode.Bytecode.Base;
+import com.maccasoft.propeller.spin1.bytecode.Bytecode.Op;
+import com.maccasoft.propeller.spin1.bytecode.Bytecode.Size;
 import com.maccasoft.propeller.spin1.bytecode.CallSub;
 import com.maccasoft.propeller.spin1.bytecode.Constant;
 import com.maccasoft.propeller.spin1.bytecode.Jmp;
@@ -110,7 +113,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                         }
                         os.write(0x00);
                         Spin1Bytecode target = addStringData(new Bytecode(context, os.toByteArray(), "STRING".toUpperCase()));
-                        return Collections.singletonList(new MemoryRef(context, MemoryRef.Size.Byte, false, MemoryRef.Base.PBase, MemoryRef.Op.Address, new ContextLiteral(target.getContext())));
+                        return Collections.singletonList(new MemoryRef(context, Bytecode.Size.Byte, false, Bytecode.Base.PBase, Bytecode.Op.Address, new ContextLiteral(target.getContext())));
                     }
                     return Collections.singletonList(new Constant(context, expression, compiler.isFastByteConstants()));
                 }
@@ -246,14 +249,14 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
             }
             else if ("CLKFREQ".equalsIgnoreCase(node.getText())) {
                 source.add(new Constant(context, new NumberLiteral(0), compiler.isFastByteConstants()));
-                source.add(new MemoryOp(context, MemoryOp.Size.Long, false, MemoryOp.Base.Pop, MemoryOp.Op.Read, null));
+                source.add(new MemoryOp(context, Bytecode.Size.Long, false, Bytecode.Base.Pop, Bytecode.Op.Read, null));
                 if (!push) {
                     logMessage(new CompilerException("expecting assignment", node.getTokens()));
                 }
             }
             else if ("CLKMODE".equalsIgnoreCase(node.getText())) {
                 source.add(new Address(context, new NumberLiteral(4)));
-                source.add(new MemoryOp(context, MemoryOp.Size.Byte, false, MemoryOp.Base.Pop, MemoryOp.Op.Read, null));
+                source.add(new MemoryOp(context, Bytecode.Size.Byte, false, Bytecode.Base.Pop, Bytecode.Op.Read, null));
                 if (!push) {
                     logMessage(new CompilerException("expecting assignment", node.getTokens()));
                 }
@@ -268,7 +271,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 if (node.getChildCount() != 0) {
                     throw new RuntimeException("expected " + 0 + " argument(s), found " + node.getChildCount());
                 }
-                source.add(new RegisterOp(context, RegisterOp.Op.Read, 0x1E9));
+                source.add(new RegisterOp(context, Bytecode.Op.Read, 0x1E9));
                 if (!push) {
                     logMessage(new CompilerException("expecting assignment", node.getTokens()));
                 }
@@ -407,7 +410,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 }
                 os.write(0x00);
                 Spin1Bytecode target = addStringData(new Bytecode(context, os.toByteArray(), "STRING".toUpperCase()));
-                source.add(new MemoryRef(context, MemoryRef.Size.Byte, false, MemoryRef.Base.PBase, MemoryRef.Op.Address, new ContextLiteral(target.getContext())));
+                source.add(new MemoryRef(context, Bytecode.Size.Byte, false, Bytecode.Base.PBase, Bytecode.Op.Address, new ContextLiteral(target.getContext())));
                 if (!push) {
                     logMessage(new CompilerException("expecting assignment", node.getTokens()));
                 }
@@ -460,7 +463,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                     os.write(s.substring(2, s.length() - 1).getBytes());
                     os.write(0x00);
                     Spin1Bytecode target = addStringData(new Bytecode(context, os.toByteArray(), "STRING".toUpperCase()));
-                    source.add(new MemoryRef(context, MemoryRef.Size.Byte, false, MemoryRef.Base.PBase, MemoryRef.Op.Address, new ContextLiteral(target.getContext())));
+                    source.add(new MemoryRef(context, Bytecode.Size.Byte, false, Bytecode.Base.PBase, Bytecode.Op.Address, new ContextLiteral(target.getContext())));
                 }
                 else {
                     s = s.substring(1, s.length() - 1);
@@ -473,7 +476,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                         os.write(s.getBytes());
                         os.write(0x00);
                         Spin1Bytecode target = addStringData(new Bytecode(context, os.toByteArray(), "STRING".toUpperCase()));
-                        source.add(new MemoryRef(context, MemoryRef.Size.Byte, false, MemoryRef.Base.PBase, MemoryRef.Op.Address, new ContextLiteral(target.getContext())));
+                        source.add(new MemoryRef(context, Bytecode.Size.Byte, false, Bytecode.Base.PBase, Bytecode.Op.Address, new ContextLiteral(target.getContext())));
                     }
                 }
                 if (!push) {
@@ -717,18 +720,18 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                     throw new RuntimeException("unexpected expression");
                 }
 
-                MemoryOp.Op op = push ? MemoryOp.Op.Read : MemoryOp.Op.Write;
+                Op op = push ? Bytecode.Op.Read : Bytecode.Op.Write;
                 if (postEffectNode != null) {
-                    op = MemoryOp.Op.Assign;
+                    op = Bytecode.Op.Assign;
                 }
                 if ("BYTE".equalsIgnoreCase(node.getText())) {
-                    source.add(new MemoryOp(context, MemoryOp.Size.Byte, popIndex, MemoryOp.Base.Pop, op, null));
+                    source.add(new MemoryOp(context, Bytecode.Size.Byte, popIndex, Bytecode.Base.Pop, op, null));
                 }
                 else if ("WORD".equalsIgnoreCase(node.getText())) {
-                    source.add(new MemoryOp(context, MemoryOp.Size.Word, popIndex, MemoryOp.Base.Pop, op, null));
+                    source.add(new MemoryOp(context, Bytecode.Size.Word, popIndex, Bytecode.Base.Pop, op, null));
                 }
                 else if ("LONG".equalsIgnoreCase(node.getText())) {
-                    source.add(new MemoryOp(context, MemoryOp.Size.Long, popIndex, MemoryOp.Base.Pop, op, null));
+                    source.add(new MemoryOp(context, Bytecode.Size.Long, popIndex, Bytecode.Base.Pop, op, null));
                 }
 
                 if (postEffectNode != null) {
@@ -756,14 +759,14 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                     throw new RuntimeException("unexpected expression");
                 }
 
-                MemoryOp.Size ss = MemoryOp.Size.Byte;
+                Size ss = Bytecode.Size.Byte;
                 if ("@WORD".equalsIgnoreCase(node.getText())) {
-                    ss = MemoryOp.Size.Word;
+                    ss = Bytecode.Size.Word;
                 }
                 else if ("@LONG".equalsIgnoreCase(node.getText())) {
-                    ss = MemoryOp.Size.Long;
+                    ss = Bytecode.Size.Long;
                 }
-                source.add(new MemoryOp(context, ss, popIndex, MemoryOp.Base.Pop, MemoryOp.Op.Address, new NumberLiteral(0)));
+                source.add(new MemoryOp(context, ss, popIndex, Bytecode.Base.Pop, Bytecode.Op.Address, new NumberLiteral(0)));
 
                 if (!push) {
                     logMessage(new CompilerException("expecting assignment", node.getTokens()));
@@ -785,15 +788,15 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                     throw new RuntimeException("unexpected expression");
                 }
 
-                MemoryOp.Size ss = MemoryOp.Size.Byte;
+                Size ss = Bytecode.Size.Byte;
                 if ("@@WORD".equalsIgnoreCase(node.getText())) {
-                    ss = MemoryOp.Size.Word;
+                    ss = Bytecode.Size.Word;
                 }
                 else if ("@@LONG".equalsIgnoreCase(node.getText())) {
-                    ss = MemoryOp.Size.Long;
+                    ss = Bytecode.Size.Long;
                 }
-                source.add(new MemoryOp(context, ss, popIndex, MemoryOp.Base.Pop, MemoryOp.Op.Read, new NumberLiteral(0)));
-                source.add(new MemoryOp(context, MemoryOp.Size.Byte, true, MemoryOp.Base.PBase, MemoryOp.Op.Address, new NumberLiteral(0)));
+                source.add(new MemoryOp(context, ss, popIndex, Bytecode.Base.Pop, Bytecode.Op.Read, new NumberLiteral(0)));
+                source.add(new MemoryOp(context, Bytecode.Size.Byte, true, Bytecode.Base.PBase, Bytecode.Op.Address, new NumberLiteral(0)));
 
                 if (!push) {
                     logMessage(new CompilerException("expecting assignment", node.getTokens()));
@@ -826,27 +829,27 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                         }
                     }
 
-                    MemoryOp.Base bb = MemoryOp.Base.PBase;
+                    Base bb = Bytecode.Base.PBase;
                     if (expression instanceof Variable) {
-                        bb = (expression instanceof LocalVariable) ? MemoryOp.Base.DBase : MemoryOp.Base.VBase;
+                        bb = (expression instanceof LocalVariable) ? Bytecode.Base.DBase : Bytecode.Base.VBase;
                         ((Variable) expression).setCalledBy(method);
                     }
 
-                    MemoryOp.Op op = push ? MemoryOp.Op.Read : MemoryOp.Op.Write;
+                    Op op = push ? Bytecode.Op.Read : Bytecode.Op.Write;
                     if (postEffectNode != null) {
-                        op = MemoryOp.Op.Assign;
+                        op = Bytecode.Op.Assign;
                     }
                     if (isAddress(s[0])) {
-                        op = MemoryOp.Op.Address;
+                        op = Bytecode.Op.Address;
                     }
                     if ("BYTE".equalsIgnoreCase(s[1])) {
-                        source.add(new MemoryOp(context, MemoryOp.Size.Byte, indexed, bb, op, expression));
+                        source.add(new MemoryOp(context, Bytecode.Size.Byte, indexed, bb, op, expression));
                     }
                     else if ("WORD".equalsIgnoreCase(s[1])) {
-                        source.add(new MemoryOp(context, MemoryOp.Size.Word, indexed, bb, op, expression));
+                        source.add(new MemoryOp(context, Bytecode.Size.Word, indexed, bb, op, expression));
                     }
                     else if ("LONG".equalsIgnoreCase(s[1])) {
-                        source.add(new MemoryOp(context, MemoryOp.Size.Long, indexed, bb, op, expression));
+                        source.add(new MemoryOp(context, Bytecode.Size.Long, indexed, bb, op, expression));
                     }
 
                     if (postEffectNode != null) {
@@ -909,20 +912,20 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                         }
                         if (expression instanceof Variable) {
                             if (postEffectNode != null) {
-                                source.add(new VariableOp(context, VariableOp.Op.Assign, popIndex, (Variable) expression));
+                                source.add(new VariableOp(context, Bytecode.Op.Assign, popIndex, (Variable) expression));
                                 source.add(compilePostEffect(context, postEffectNode, ((Variable) expression).getType(), push));
                             }
                             else {
                                 if (isAbsoluteHubAddress(node.getText())) {
-                                    source.add(new VariableOp(context, VariableOp.Op.Address, popIndex, (Variable) expression));
-                                    source.add(new MemoryOp(context, MemoryOp.Size.Byte, true, MemoryOp.Base.PBase, MemoryOp.Op.Address, new NumberLiteral(0)));
+                                    source.add(new VariableOp(context, Bytecode.Op.Address, popIndex, (Variable) expression));
+                                    source.add(new MemoryOp(context, Bytecode.Size.Byte, true, Bytecode.Base.PBase, Bytecode.Op.Address, new NumberLiteral(0)));
                                 }
                                 else if (isAbsoluteAddress(node.getText())) {
-                                    source.add(new VariableOp(context, VariableOp.Op.Read, popIndex, (Variable) expression));
-                                    source.add(new MemoryOp(context, MemoryOp.Size.Byte, true, MemoryOp.Base.PBase, MemoryOp.Op.Address, new NumberLiteral(0)));
+                                    source.add(new VariableOp(context, Bytecode.Op.Read, popIndex, (Variable) expression));
+                                    source.add(new MemoryOp(context, Bytecode.Size.Byte, true, Bytecode.Base.PBase, Bytecode.Op.Address, new NumberLiteral(0)));
                                 }
                                 else {
-                                    source.add(new VariableOp(context, VariableOp.Op.Address, popIndex, (Variable) expression));
+                                    source.add(new VariableOp(context, Bytecode.Op.Address, popIndex, (Variable) expression));
                                 }
                                 if (!push) {
                                     logMessage(new CompilerException("expecting assignment", node.getTokens()));
@@ -931,41 +934,41 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                             ((Variable) expression).setCalledBy(method);
                         }
                         else if (expression instanceof ObjectContextLiteral) {
-                            MemoryOp.Size ss = MemoryOp.Size.Long;
+                            Size ss = Bytecode.Size.Long;
                             switch (((ObjectContextLiteral) expression).getType()) {
                                 case "BYTE":
-                                    ss = MemoryOp.Size.Byte;
+                                    ss = Bytecode.Size.Byte;
                                     break;
                                 case "WORD":
-                                    ss = MemoryOp.Size.Word;
+                                    ss = Bytecode.Size.Word;
                                     break;
                             }
-                            source.add(new MemoryOp(context, ss, popIndex, MemoryOp.Base.PBase, MemoryOp.Op.Read, expression));
-                            source.add(new MemoryOp(context, MemoryOp.Size.Byte, true, MemoryOp.Base.PBase, MemoryOp.Op.Address, new NumberLiteral(0)));
+                            source.add(new MemoryOp(context, ss, popIndex, Bytecode.Base.PBase, Bytecode.Op.Read, expression));
+                            source.add(new MemoryOp(context, Bytecode.Size.Byte, true, Bytecode.Base.PBase, Bytecode.Op.Address, new NumberLiteral(0)));
                             if (!push) {
                                 logMessage(new CompilerException("expecting assignment", node.getTokens()));
                             }
                         }
                         else if (expression instanceof ContextLiteral) {
                             String type = "LONG";
-                            MemoryOp.Size ss = MemoryOp.Size.Long;
+                            Size ss = Bytecode.Size.Long;
                             if (expression instanceof DataVariable) {
                                 type = ((DataVariable) expression).getType();
                                 switch (type) {
                                     case "BYTE":
-                                        ss = MemoryOp.Size.Byte;
+                                        ss = Bytecode.Size.Byte;
                                         break;
                                     case "WORD":
-                                        ss = MemoryOp.Size.Word;
+                                        ss = Bytecode.Size.Word;
                                         break;
                                 }
                             }
                             if (postEffectNode != null) {
-                                source.add(new MemoryOp(context, ss, popIndex, MemoryOp.Base.PBase, MemoryOp.Op.Assign, expression));
+                                source.add(new MemoryOp(context, ss, popIndex, Bytecode.Base.PBase, Bytecode.Op.Assign, expression));
                                 source.add(compilePostEffect(context, postEffectNode, type, push));
                             }
                             else {
-                                source.add(new MemoryOp(context, ss, popIndex, MemoryOp.Base.PBase, MemoryOp.Op.Address, expression));
+                                source.add(new MemoryOp(context, ss, popIndex, Bytecode.Base.PBase, Bytecode.Op.Address, expression));
                                 if (!push) {
                                     logMessage(new CompilerException("expecting assignment", node.getTokens()));
                                 }
@@ -1017,13 +1020,13 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                         }
 
                         if (range || popIndex) {
-                            source.add(new RegisterBitOp(context, push ? RegisterBitOp.Op.Read : RegisterBitOp.Op.Assign, range, expression.getNumber().intValue()));
+                            source.add(new RegisterBitOp(context, push ? Bytecode.Op.Read : Bytecode.Op.Assign, range, expression.getNumber().intValue()));
                         }
                         else if (postEffectNode != null) {
-                            source.add(new RegisterOp(context, RegisterOp.Op.Assign, expression.getNumber().intValue()));
+                            source.add(new RegisterOp(context, Bytecode.Op.Assign, expression.getNumber().intValue()));
                         }
                         else {
-                            source.add(new RegisterOp(context, RegisterOp.Op.Read, expression.getNumber().intValue()));
+                            source.add(new RegisterOp(context, Bytecode.Op.Read, expression.getNumber().intValue()));
                         }
 
                         if (postEffectNode != null) {
@@ -1050,11 +1053,11 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                         }
 
                         if (postEffectNode != null) {
-                            source.add(new VariableOp(context, VariableOp.Op.Assign, popIndex, (Variable) expression));
+                            source.add(new VariableOp(context, Bytecode.Op.Assign, popIndex, (Variable) expression));
                             source.add(compilePostEffect(context, postEffectNode, ((Variable) expression).getType(), push));
                         }
                         else {
-                            source.add(new VariableOp(context, VariableOp.Op.Read, popIndex, (Variable) expression));
+                            source.add(new VariableOp(context, Bytecode.Op.Read, popIndex, (Variable) expression));
                             if (!push) {
                                 logMessage(new CompilerException("expecting assignment", node.getTokens()));
                             }
@@ -1078,25 +1081,25 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                         }
 
                         String type = "LONG";
-                        MemoryOp.Size ss = MemoryOp.Size.Long;
+                        Size ss = Bytecode.Size.Long;
                         if (expression instanceof DataVariable) {
                             type = ((DataVariable) expression).getType();
                             switch (type) {
                                 case "BYTE":
-                                    ss = MemoryOp.Size.Byte;
+                                    ss = Bytecode.Size.Byte;
                                     break;
                                 case "WORD":
-                                    ss = MemoryOp.Size.Word;
+                                    ss = Bytecode.Size.Word;
                                     break;
                             }
                         }
 
                         if (postEffectNode != null) {
-                            source.add(new MemoryOp(context, ss, popIndex, MemoryOp.Base.PBase, MemoryOp.Op.Assign, expression));
+                            source.add(new MemoryOp(context, ss, popIndex, Bytecode.Base.PBase, Bytecode.Op.Assign, expression));
                             source.add(compilePostEffect(context, postEffectNode, type, push));
                         }
                         else {
-                            source.add(new MemoryOp(context, ss, popIndex, MemoryOp.Base.PBase, MemoryOp.Op.Read, expression));
+                            source.add(new MemoryOp(context, ss, popIndex, Bytecode.Base.PBase, Bytecode.Op.Read, expression));
                             if (!push) {
                                 logMessage(new CompilerException("expecting assignment", node.getTokens()));
                             }
@@ -1346,21 +1349,21 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 throw new CompilerException("unexpected " + node.getChild(n).getText(), node.getChild(n).getToken());
             }
 
-            MemoryOp.Base bb = MemoryOp.Base.PBase;
+            Base bb = Bytecode.Base.PBase;
             if (expression instanceof Variable) {
-                bb = (expression instanceof LocalVariable) ? MemoryOp.Base.DBase : MemoryOp.Base.VBase;
+                bb = (expression instanceof LocalVariable) ? Bytecode.Base.DBase : Bytecode.Base.VBase;
                 ((Variable) expression).setCalledBy(method);
             }
 
-            MemoryOp.Op op = push ? MemoryOp.Op.Assign : MemoryOp.Op.Write;
+            Op op = push ? Bytecode.Op.Assign : Bytecode.Op.Write;
             if ("BYTE".equalsIgnoreCase(s[1])) {
-                source.add(new MemoryOp(context, MemoryOp.Size.Byte, indexed, bb, op, expression));
+                source.add(new MemoryOp(context, Bytecode.Size.Byte, indexed, bb, op, expression));
             }
             else if ("WORD".equalsIgnoreCase(s[1])) {
-                source.add(new MemoryOp(context, MemoryOp.Size.Word, indexed, bb, op, expression));
+                source.add(new MemoryOp(context, Bytecode.Size.Word, indexed, bb, op, expression));
             }
             else if ("LONG".equalsIgnoreCase(s[1])) {
-                source.add(new MemoryOp(context, MemoryOp.Size.Long, indexed, bb, op, expression));
+                source.add(new MemoryOp(context, Bytecode.Size.Long, indexed, bb, op, expression));
             }
 
             if (postEffectNode != null) {
@@ -1376,15 +1379,15 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 source.addAll(compileBytecodeExpression(context, method, node.getChild(1), true));
             }
 
-            MemoryOp.Op op = push ? MemoryOp.Op.Assign : MemoryOp.Op.Write;
+            Op op = push ? Bytecode.Op.Assign : Bytecode.Op.Write;
             if ("BYTE".equalsIgnoreCase(node.getText())) {
-                source.add(new MemoryOp(context, MemoryOp.Size.Byte, node.getChildCount() > 1, MemoryOp.Base.Pop, op, null));
+                source.add(new MemoryOp(context, Bytecode.Size.Byte, node.getChildCount() > 1, Bytecode.Base.Pop, op, null));
             }
             else if ("WORD".equalsIgnoreCase(node.getText())) {
-                source.add(new MemoryOp(context, MemoryOp.Size.Word, node.getChildCount() > 1, MemoryOp.Base.Pop, op, null));
+                source.add(new MemoryOp(context, Bytecode.Size.Word, node.getChildCount() > 1, Bytecode.Base.Pop, op, null));
             }
             else if ("LONG".equalsIgnoreCase(node.getText())) {
-                source.add(new MemoryOp(context, MemoryOp.Size.Long, node.getChildCount() > 1, MemoryOp.Base.Pop, op, null));
+                source.add(new MemoryOp(context, Bytecode.Size.Long, node.getChildCount() > 1, Bytecode.Base.Pop, op, null));
             }
         }
         else {
@@ -1426,13 +1429,13 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 }
 
                 if (range || popIndex) {
-                    source.add(new RegisterBitOp(context, push ? RegisterBitOp.Op.Assign : RegisterBitOp.Op.Write, range, expression.getNumber().intValue()));
+                    source.add(new RegisterBitOp(context, push ? Bytecode.Op.Assign : Bytecode.Op.Write, range, expression.getNumber().intValue()));
                 }
                 else if (postEffectNode != null) {
-                    source.add(new RegisterOp(context, push ? RegisterOp.Op.Assign : RegisterOp.Op.Write, expression.getNumber().intValue()));
+                    source.add(new RegisterOp(context, push ? Bytecode.Op.Assign : Bytecode.Op.Write, expression.getNumber().intValue()));
                 }
                 else {
-                    source.add(new RegisterOp(context, push ? RegisterOp.Op.Assign : RegisterOp.Op.Write, expression.getNumber().intValue()));
+                    source.add(new RegisterOp(context, push ? Bytecode.Op.Assign : Bytecode.Op.Write, expression.getNumber().intValue()));
                 }
 
                 if (postEffectNode != null) {
@@ -1440,11 +1443,11 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 }
             }
             else if (expression instanceof ContextLiteral) {
-                MemoryOp.Size ss = MemoryOp.Size.Long;
+                Size ss = Bytecode.Size.Long;
                 if (expression instanceof DataVariable dataVariable) {
                     ss = switch (dataVariable.getType()) {
-                        case "BYTE" -> MemoryOp.Size.Byte;
-                        case "WORD" -> MemoryOp.Size.Word;
+                        case "BYTE" -> Bytecode.Size.Byte;
+                        case "WORD" -> Bytecode.Size.Word;
                         default -> ss;
                     };
                 }
@@ -1454,7 +1457,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                     source.addAll(compileBytecodeExpression(context, method, node.getChild(0), true));
                     indexed = true;
                 }
-                source.add(new MemoryOp(context, ss, indexed, MemoryOp.Base.PBase, push ? MemoryOp.Op.Assign : MemoryOp.Op.Write, expression));
+                source.add(new MemoryOp(context, ss, indexed, Bytecode.Base.PBase, push ? Bytecode.Op.Assign : Bytecode.Op.Write, expression));
             }
             else if (expression instanceof Variable variable) {
                 boolean indexed = false;
@@ -1462,7 +1465,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                     source.addAll(compileBytecodeExpression(context, method, node.getChild(0), true));
                     indexed = true;
                 }
-                source.add(new VariableOp(context, push ? VariableOp.Op.Assign : VariableOp.Op.Write, indexed, variable));
+                source.add(new VariableOp(context, push ? Bytecode.Op.Assign : Bytecode.Op.Write, indexed, variable));
                 variable.setCalledBy(method);
             }
             else {
