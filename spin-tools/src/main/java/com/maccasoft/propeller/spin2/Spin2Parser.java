@@ -390,6 +390,7 @@ public class Spin2Parser extends Parser {
                         }
                         structNode.identifier = token;
                         structNode.addToken(token);
+                        root.addStruct(structNode);
                         if ((nextToken = sourceLine.peekNextToken()) != null) {
                             if ("(".equals(nextToken.getText())) {
                                 structNode.addToken(sourceLine.getNextToken());
@@ -414,6 +415,7 @@ public class Spin2Parser extends Parser {
                     if ((nextToken = sourceLine.peekNextToken()) != null && "(".equals(nextToken.getText())) {
                         structNode = new StructNode(parent, token);
                         structNode.addToken(sourceLine.getNextToken());
+                        root.addStruct(structNode);
                         state = 7;
                         break;
                     }

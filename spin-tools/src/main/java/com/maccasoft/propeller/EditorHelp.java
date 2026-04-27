@@ -10,14 +10,9 @@
 package com.maccasoft.propeller;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -84,65 +79,49 @@ public class EditorHelp {
         return null;
     }
 
-    public List<IContentProposal> fillProposals(String context, String token) {
+    public List<IContentProposal> fillProposals(String context, String filterText, boolean startsOnly) {
         List<IContentProposal> proposals = new ArrayList<IContentProposal>();
 
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        try {
-            InputStream is = EditorHelp.class.getResourceAsStream(helpFile);
-            try {
-                DocumentBuilder db = dbf.newDocumentBuilder();
-                Document doc = db.parse(is);
+        try (InputStream is = EditorHelp.class.getResourceAsStream(helpFile)) {
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            Document doc = db.parse(is);
 
-                NodeList rootNodeList = doc.getChildNodes().item(0).getChildNodes();
-                for (int i = 0; i < rootNodeList.getLength(); i++) {
-                    if (!(rootNodeList.item(i) instanceof Element)) {
-                        continue;
-                    }
-                    Element node = (Element) rootNodeList.item(i);
-                    if ("section".equals(node.getTagName())) {
-                        if (context != null && node.getAttribute("class").contains(context)) {
-                            List<IContentProposal> list = new ArrayList<>();
+            NodeList rootNodeList = doc.getChildNodes().item(0).getChildNodes();
+            for (int i = 0; i < rootNodeList.getLength(); i++) {
+                if (!(rootNodeList.item(i) instanceof Element node)) {
+                    continue;
+                }
+                if ("section".equals(node.getTagName())) {
+                    if (context != null && node.getAttribute("class").contains(context)) {
+                        List<IContentProposal> list = new ArrayList<>();
 
-                            NodeList childList = node.getChildNodes();
-                            for (int ii = 0; ii < childList.getLength(); ii++) {
-                                if (!(childList.item(ii) instanceof Element)) {
-                                    continue;
-                                }
-                                Element element = (Element) childList.item(ii);
-                                if ("entry".equals(element.getTagName())) {
-                                    String[] key = element.getAttribute("name").split(",");
-                                    for (int n = 0; n < key.length; n++) {
-                                        if (Strings.CI.startsWith(key[n], token)) {
-                                            String insert = element.getAttribute("insert");
-                                            if (insert != null && !"".equals(insert)) {
-                                                list.add(new ContentProposal(insert, key[n], element.getTextContent()));
-                                                break;
-                                            }
-                                            else {
-                                                list.add(new ContentProposal(key[n], key[n], element.getTextContent()));
-                                            }
+                        NodeList childList = node.getChildNodes();
+                        for (int ii = 0; ii < childList.getLength(); ii++) {
+                            if (!(childList.item(ii) instanceof Element element)) {
+                                continue;
+                            }
+                            if ("entry".equals(element.getTagName())) {
+                                for (String text : element.getAttribute("name").split(",")) {
+                                    int foundAt = Strings.CI.indexOf(text, filterText);
+                                    if ((startsOnly && foundAt == 0) || (!startsOnly && foundAt > 0)) {
+                                        String insert = element.getAttribute("insert");
+                                        if (!insert.isEmpty()) {
+                                            list.add(new ContentProposal(insert, text, element.getTextContent()));
+                                            break;
+                                        }
+                                        else {
+                                            list.add(new ContentProposal(text, text, element.getTextContent()));
                                         }
                                     }
                                 }
                             }
-
-                            Collections.sort(list, new Comparator<IContentProposal>() {
-
-                                @Override
-                                public int compare(IContentProposal o1, IContentProposal o2) {
-                                    return o1.getLabel().compareToIgnoreCase(o2.getLabel());
-                                }
-
-                            });
-                            proposals.addAll(list);
                         }
+                        list.sort((o1, o2) -> o1.getLabel().compareToIgnoreCase(o2.getLabel()));
+                        proposals.addAll(list);
                     }
                 }
-            } finally {
-                is.close();
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -150,73 +129,32 @@ public class EditorHelp {
         return proposals;
     }
 
-    public List<IContentProposal> fillSourceProposals(String prefix) {
-        List<IContentProposal> proposals = new ArrayList<IContentProposal>();
-        proposals.addAll(getSourceProposals(sourceFolder, prefix));
+    public List<IContentProposal> fillSourceProposals(String prefix, boolean startsOnly) {
+        List<IContentProposal> proposals = new ArrayList<>(getSourceProposals(sourceFolder, prefix, startsOnly));
 
         File[] searchPaths = ".spin2".equals(sourceFilter) ? Preferences.getInstance().getSpin2LibraryPath() : Preferences.getInstance().getSpin1LibraryPath();
-        for (int i = 0; i < searchPaths.length; i++) {
-            proposals.addAll(getSourceProposals(searchPaths[i], prefix));
+        for (File searchPath : searchPaths) {
+            proposals.addAll(getSourceProposals(searchPath, prefix, startsOnly));
         }
 
         return proposals;
     }
 
-    List<IContentProposal> getSourceProposals(File folder, String prefix) {
-        List<IContentProposal> proposals = new ArrayList<IContentProposal>();
-        List<IContentProposal> prefixProposals = new ArrayList<IContentProposal>();
-        List<IContentProposal> containsProposal = new ArrayList<IContentProposal>();
-        Set<File> included = new HashSet<File>();
+    List<IContentProposal> getSourceProposals(File folder, String filterText, boolean startsOnly) {
+        List<IContentProposal> proposals = new ArrayList<>();
 
-        File[] list = folder.listFiles(new FilenameFilter() {
-
-            @Override
-            public boolean accept(File dir, String name) {
-                return Strings.CI.endsWith(name, sourceFilter);
-            }
-
-        });
+        File[] list = folder.listFiles((dir, name) -> Strings.CI.endsWith(name, sourceFilter));
         if (list != null) {
-            for (int i = 0; i < list.length; i++) {
-                String name = list[i].getName();
-                name = name.substring(0, name.indexOf(sourceFilter));
-                if (Strings.CI.startsWith(name, prefix)) {
-                    prefixProposals.add(new ContentProposal(name, name, null));
-                    included.add(list[i]);
+            for (File file : list) {
+                String fileName = file.getName();
+                String text = fileName.substring(0, Strings.CI.lastIndexOf(fileName, sourceFilter));
+                int foundAt = Strings.CI.indexOf(text, filterText);
+                if ((startsOnly && foundAt == 0) || (!startsOnly && foundAt > 0)) {
+                    proposals.add(new ContentProposal(text, text, null));
                 }
             }
-            for (int i = 0; i < list.length; i++) {
-                String name = list[i].getName();
-                name = name.substring(0, name.indexOf(sourceFilter));
-                if (Strings.CI.contains(name, prefix) && !included.contains(list[i])) {
-                    containsProposal.add(new ContentProposal(name, name, null));
-                    included.add(list[i]);
-                }
-            }
+            proposals.sort((o1, o2) -> o1.getLabel().compareToIgnoreCase(o2.getLabel()));
         }
-        else {
-            System.err.println(folder);
-        }
-
-        Collections.sort(prefixProposals, new Comparator<IContentProposal>() {
-
-            @Override
-            public int compare(IContentProposal o1, IContentProposal o2) {
-                return o1.getLabel().compareToIgnoreCase(o2.getLabel());
-            }
-
-        });
-        Collections.sort(containsProposal, new Comparator<IContentProposal>() {
-
-            @Override
-            public int compare(IContentProposal o1, IContentProposal o2) {
-                return o1.getLabel().compareToIgnoreCase(o2.getLabel());
-            }
-
-        });
-
-        proposals.addAll(prefixProposals);
-        proposals.addAll(containsProposal);
 
         return proposals;
     }

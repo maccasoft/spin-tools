@@ -127,7 +127,7 @@ For CASE_FAST to compile, the match values/ranges must be unique constants which
         <entry name="akpin" insert="akpin(pinfield)"><![CDATA[<b>AKPIN(PinField)</b><br/><br/>Acknowledge PinField smart pin(s)]]></entry>
         <entry name="rdpin" insert="rdpin(pin)"><![CDATA[<b>RDPIN(Pin) : Zval</b><br/><br/>Read Pin smart pin and acknowledge, Zval[31] = C flag from RDPIN, other bits are RDPIN data]]></entry>
         <entry name="rqpin" insert="rqpin(pin)"><![CDATA[<b>RQPIN(Pin) : Zval</b><br/><br/>Read Pin smart pin without acknowledge, Zval[31] = C flag from RQPIN, other bits are RQPIN data]]></entry>
-    
+
         <entry name="pinwrite" insert="pinwrite(pinfield, data)"><![CDATA[<b>PINW | PINWRITE(PinField, Data)</b><br/><br/>Drive PinField pin(s) with Data]]></entry>
         <entry name="pinlow" insert="pinlow(pinfield)"><![CDATA[<b>PINL | PINLOW(PinField)</b><br/><br/>Drive PinField pin(s) low]]></entry>
         <entry name="pinhigh" insert="pinhigh(pinfield)"><![CDATA[<b>PINH | PINHIGH(PinField)</b><br/><br/>Drive PinField pin(s) high]]></entry>
@@ -142,11 +142,11 @@ For CASE_FAST to compile, the match values/ranges must be unique constants which
         <entry name="waitms" insert="waitms(milliseconds)"><![CDATA[<b>WAITMS(Milliseconds)</b><br/><br/>Wait Milliseconds, uses CLKFREQ]]></entry>
         <entry name="getsec" insert="getsec()"><![CDATA[<b>GETSEC() : Seconds</b><br/><br/>Get seconds since booting, uses 64-bit system counter and CLKFREQ, rolls over every 136 years.]]></entry>
         <entry name="getms" insert="getms()"><![CDATA[<b>GETMS() : Milliseconds</b><br/><br/>Get milliseconds since booting, uses 64-bit system counter and CLKFREQ, rolls over every 49.7 days.]]></entry>
-    
+
         <entry name="call" insert="call(regorhubaddr)"><![CDATA[<b>CALL(RegOrHubAddr)</b><br/><br/>CALL PASM code at Addr, PASM code should avoid registers $130..$1D7 and LUT]]></entry>
         <entry name="regexec" insert="regexec(hubaddr)"><![CDATA[<b>REGEXEC(HubAddr)</b><br/><br/>Load a self-defined chunk of PASM code at HubAddr into registers and CALL it. See REGEXEC description.]]></entry>
         <entry name="regload" insert="regload(hubaddr)"><![CDATA[<b>REGLOAD(HubAddr)</b><br/><br/>Load a self-defined chunk of PASM code or data at HubAddr into registers. See REGLOAD description.]]></entry>
-    
+
         <entry name="rotxy" insert="rotxy(x, y, angle32bit)"><![CDATA[<b>ROTXY(x, y, angle32bit) : rotx, roty</b><br/><br/>Rotate (x,y) by angle32bit and return rotated (x,y)]]></entry>
         <entry name="polxy" insert="polxy(length, angle32bit)"><![CDATA[<b>POLXY(length, angle32bit) : x, y</b><br/><br/>Convert (length,angle32bit) to (x,y)]]></entry>
         <entry name="xypol" insert="xypol(x, y)"><![CDATA[<b>XYPOL(x, y) : length, angle32bit</b><br/><br/>Convert (x,y) to (length,angle32bit)]]></entry>
@@ -154,7 +154,7 @@ For CASE_FAST to compile, the match values/ranges must be unique constants which
         <entry name="qcos" insert="qcos(length, angle, twopi)"><![CDATA[<b>QCOS(length, angle, twopi) : x</b><br/><br/>Rotate (length,0) by (angle / twopi) * 2Pi and return x. Use 0 for twopi = $1_0000_0000. Twopi is unsigned.]]></entry>
         <entry name="muldiv64" insert="muldiv64(mult1, mult2, divisor)"><![CDATA[<b>MULDIV64(mult1, mult2, divisor) : quotient</b><br/><br/>Divide the 64-bit product of 'mult1' and 'mult2' by 'divisor', return quotient (unsigned operation)]]></entry>
         <entry name="getrnd" insert="getrnd()"><![CDATA[<b>GETRND() : Rnd</b><br/><br/>Get random long (from xoroshiro128** PRNG, seeded on boot with thermal noise from ADC)]]></entry>
-    
+
         <entry name="getregs" insert="getregs(hubaddr, cogaddr, count)"><![CDATA[<b>GETREGS(HubAddr, CogAddr, Count)</b><br/><br/>Move Count registers at CogAddr to longs at HubAddr]]></entry>
         <entry name="setregs" insert="setregs(hubaddr, cogaddr, count)"><![CDATA[<b>SETREGS(HubAddr, CogAddr, Count)</b><br/><br/>Move Count longs at HubAddr to registers at CogAddr]]></entry>
         <entry name="bytemove" insert="bytemove(dest, source, count)"><![CDATA[<b>BYTEMOVE(Dest, Source, Count)</b><br/><br/>Move Count bytes from Source to Dest]]></entry>
@@ -169,7 +169,7 @@ For CASE_FAST to compile, the match values/ranges must be unique constants which
         <entry name="bytecomp" insert="bytecomp(dest, src, count)"><![CDATA[<b>BYTESCOMP(Dest, Src, Count)</b><br/><br/>Compare Count bytes at Dest with Src]]></entry>
         <entry name="wordcomp" insert="wordcomp(dest, src, count)"><![CDATA[<b>WORDSCOMP(Dest, Src, Count)</b><br/><br/>Compare Count words at Dest with Src]]></entry>
         <entry name="longcomp" insert="longcomp(dest, src, count)"><![CDATA[<b>LONGSCOMP(Dest, Src, Count)</b><br/><br/>Compare Count longs at Dest with Src]]></entry>
-    
+
         <entry name="strsize" insert="strsize(addr)"><![CDATA[<b>STRSIZE(Addr) : Size</b><br/><br/>Count bytes in zero-terminated string at Addr, return string size, not including zero terminator]]></entry>
         <entry name="strcomp" insert="strcomp(addra, addrb)"><![CDATA[<b>STRCOMP(AddrA, AddrB) : Match</b><br/><br/>Compare zero-terminated strings at AddrA and AddrB, return -1 if match or 0 if mismatch]]></entry>
         <entry name="strcopy" insert="STRCOPY(destination, source, max)"><![CDATA[<b>STRCOPY(Destination, Source, Max)</b><br/><br/>Copy a zero-terminated string of up to Max characters from Source to Destination. The copied string will occupy up to Max+1 bytes, including the zero terminator.]]></entry>
@@ -178,7 +178,7 @@ For CASE_FAST to compile, the match values/ranges must be unique constants which
         <entry name="byte" insert="bytes()"><![CDATA[<b>BYTE($80,$09,$77,WORD $1234,LONG -1)</b><br/><br/>Compose a string of bytes, return address of string. WORD/LONG size overrides allowed.]]></entry>
         <entry name="word" insert="words()"><![CDATA[<b>WORD(1_000,10_000,50_000,LONG $12345678)</b><br/><br/>Compose a string of words, return address of string. BYTE/LONG size overrides allowed.]]></entry>
         <entry name="long" insert="longs()"><![CDATA[<b>LONG(1e-6,1e-3,1.0,1e3,1e6,-50,BYTE $FF)</b><br/><br/>Compose a string of longs, return address of string. BYTE/WORD size overrides allowed.]]></entry>
-    
+
         <entry name="lookup" insert="lookup(index: v1, v2..v3, etc)"><![CDATA[<b>LOOKUP(Index: v1, v2..v3, etc) : Value</b><br/><br/>Lookup value (values and ranges allowed) using 1-based index, return value (0 if index out of range)]]></entry>
         <entry name="lookupz" insert="lookupz(index: v1, v2..v3, etc)"><![CDATA[<b>LOOKUPZ(Index: v1, v2..v3, etc) : Value</b><br/><br/>Lookup value (values and ranges allowed) using 0-based index, return value (0 if index out of range)]]></entry>
         <entry name="lookdown" insert="lookdown(value: v1, v2..v3, etc)"><![CDATA[<b>LOOKDOWN(Value: v1, v2..v3, etc) : Index</b><br/><br/>Determine 1-based index of matching value (values and ranges allowed), return index (0 if no match)]]></entry>
@@ -193,7 +193,7 @@ For CASE_FAST to compile, the match values/ranges must be unique constants which
         <entry name="taskid" insert="taskid()"><![CDATA[<b>TASKID() : Id</b><br/><br/>Returns the ID of the current task (0..31).]]></entry>
     </section>
 
-    <section class="ConstantsNode,ExpressionNode,StatementNode,DataLineNode">
+    <section class="Constants,ConstantsNode,ExpressionNode,StatementNode,DataLineNode">
         <entry name="CLKFREQ"><![CDATA[<b>CLKFREQ | _CLKFREQ</b><p>Clock frequency value</p>]]></entry>
         <entry name="CLKMODE"><![CDATA[<b>CLKMODE | _CLKMODE</b><p>Clock mode value</p>]]></entry>
 
@@ -460,7 +460,21 @@ For CASE_FAST to compile, the match values/ranges must be unique constants which
         <entry name="THISTASK"><![CDATA[<b>NEWTASK</b><p>For use in <b>TASKSTOP</b> and <b>TASKHALT</b>.</p>]]></entry>
     </section>
 
-    <section class="DatNode,DataLineNode,Instruction">
+    <section class="DataNode,DataLineNode,Instruction">
+        <entry name="org"><![CDATA[<b>ORG</b><p></p>]]></entry>
+        <entry name="orgh"><![CDATA[<b>ORGH</b><p></p>]]></entry>
+        <entry name="orgf"><![CDATA[<b>ORGG</b><p></p>]]></entry>
+        <entry name="res"><![CDATA[<b>RES</b><p></p>]]></entry>
+        <entry name="byte"><![CDATA[<b>BYTE</b><p></p>]]></entry>
+        <entry name="word"><![CDATA[<b>WORD</b><p></p>]]></entry>
+        <entry name="long"><![CDATA[<b>LONG</b><p></p>]]></entry>
+        <entry name="bytefit"><![CDATA[<b>BYTEFIT</b><p></p>]]></entry>
+        <entry name="wordfit"><![CDATA[<b>WORDFIT</b><p></p>]]></entry>
+        <entry name="fit"><![CDATA[<b>FIT</b><p></p>]]></entry>
+
+        <entry name="file"><![CDATA[<b>FILE</b><p></p>]]></entry>
+        <entry name="namesp"><![CDATA[<b>NAMESP</b><p></p>]]></entry>
+
         <entry name="nop"><![CDATA[<b>NOP</b><p>No operation.</p>]]></entry>
         <entry name="ror"><![CDATA[<b>ROR     D,{#}S   {WC/WZ/WCZ}</b><p>Rotate right.           D = [31:0]  of ({D[31:0], D[31:0]}     >> S[4:0]). C = last bit shifted out if S[4:0] > 0, else D[0].  *</p>]]></entry>
         <entry name="rol"><![CDATA[<b>ROL     D,{#}S   {WC/WZ/WCZ}</b><p>Rotate left.            D = [63:32] of ({D[31:0], D[31:0]}     << S[4:0]). C = last bit shifted out if S[4:0] > 0, else D[31]. *</p>]]></entry>
@@ -654,7 +668,7 @@ For CASE_FAST to compile, the match values/ranges must be unique constants which
         <entry name="xstop"><![CDATA[<b>XSTOP</b><p>Stop streamer immediately.</p>]]></entry>
         <entry name="xzero"><![CDATA[<b>XZERO   {#}D,{#}S</b><p>Buffer new streamer command to be issued on final NCO rollover of current command, zeroing phase.</p>]]></entry>
         <entry name="xcont"><![CDATA[<b>XCONT   {#}D,{#}S</b><p>Buffer new streamer command to be issued on final NCO rollover of current command, continuing phase.</p>]]></entry>
-        <entry name="rep"><![CDATA[<b>REP     {#}D,{#}S</b><p>Execute next D[8:0] instructions S times. If S = 0, repeat instructions infinitely. If D[8:0] = 0, nothing repeats.</p>]]></entry>
+        <entry name="rep"><![CDATA[<b>REP     {#}D,{#}S</b><p>Executenext D[8:0] instructions S times. If S = 0, repeat instructions infinitely. If D[8:0] = 0, nothing repeats.</p>]]></entry>
         <entry name="coginit"><![CDATA[<b>COGINIT {#}D,{#}S       {WC}</b><p>Start cog selected by D. S[19:0] sets hub startup address and PTRB of cog. Prior SETQ sets PTRA of cog.</p>]]></entry>
         <entry name="qmul"><![CDATA[<b>QMUL    {#}D,{#}S</b><p>Begin CORDIC unsigned multiplication of D * S. GETQX/GETQY retrieves lower/upper product.</p>]]></entry>
         <entry name="qdiv"><![CDATA[<b>QDIV    {#}D,{#}S</b><p>Begin CORDIC unsigned division of {SETQ value or 32'b0, D} / S. GETQX/GETQY retrieves quotient/remainder.</p>]]></entry>
@@ -682,7 +696,7 @@ For CASE_FAST to compile, the match values/ranges must be unique constants which
         <entry name="getqx"><![CDATA[<b>GETQX   D        {WC/WZ/WCZ}</b><p>Retrieve CORDIC result X into D. Waits, in case result not ready. C = X[31]. *</p>]]></entry>
         <entry name="getqy"><![CDATA[<b>GETQY   D        {WC/WZ/WCZ}</b><p>Retrieve CORDIC result Y into D. Waits, in case result not ready. C = Y[31]. *</p>]]></entry>
         <entry name="getct"><![CDATA[<b>GETCT   D               {WC}</b><p>Get CT[31:0] or CT[63:32] if WC into D. GETCT WC + GETCT gets full CT. CT=0 on reset, CT++ on every clock. C = same.</p>]]></entry>
-        <entry name="getrnd"><![CDATA[<b>GETRND  D        {WC/WZ/WCZ}</b><p>Get RND into D/C/Z. RND is the PRNG that updates on every clock. D = RND[31:0], C = RND[31], Z = RND[30], unique per cog.</p><b>GETRND            WC/WZ/WCZ</b><p>Get RND into C/Z. C = RND[31], Z = RND[30], unique per cog.</p>]]></entry>
+        <entry name="getrnd"><![CDATA[<b>GETRND D  {WC/WZ/WCZ}</b><p>Get RND into D/C/Z. RND is the PRNG that updates on every clock. D = RND[31:0], C = RND[31], Z = RND[30], unique per cog.</p><b>GETRND  WC/WZ/WCZ</b><p>Get RNDinto C/Z.C = RND[31], Z = RND[30], unique per cog.</p>]]></entry>
         <entry name="setdacs"><![CDATA[<b>SETDACS {#}D</b><p>DAC3 = D[31:24], DAC2 = D[23:16], DAC1 = D[15:8], DAC0 = D[7:0].</p>]]></entry>
         <entry name="setxfrq"><![CDATA[<b>SETXFRQ {#}D</b><p>Set streamer NCO frequency to D.</p>]]></entry>
         <entry name="getxacc"><![CDATA[<b>GETXACC D</b><p>Get the streamer's Goertzel X accumulator into D and the Y accumulator into the next instruction's S, clear accumulators.</p>]]></entry>
@@ -745,14 +759,14 @@ For CASE_FAST to compile, the match values/ranges must be unique constants which
         <entry name="callb"><![CDATA[<b>CALLB   #{\}A</b><p>Call to A by writing {C, Z, 10'b0, PC[19:0]} to hub long at PTRB++.         If R = 1 then PC += A, else PC = A. "\" forces R = 0.</p><b>CALLB   D        {WC/WZ/WCZ}</b><p>Call to D by writing {C, Z, 10'b0, PC[19:0]} to hub long at PTRB++.     C = D[31], Z = D[30], PC = D[19:0].</p>]]></entry>
         <entry name="retb"><![CDATA[<b>RETB             {WC/WZ/WCZ}</b><p>Return by reading hub long (L) at --PTRB.                               C = L[31], Z = L[30], PC = L[19:0].</p>]]></entry>
         <entry name="jmprel"><![CDATA[<b>JMPREL  {#}D</b><p>Jump ahead/back by D instructions. For cogex, PC += D[19:0]. For hubex, PC += D[17:0] << 2.</p>]]></entry>
-        <entry name="skip"><![CDATA[<b>SKIP    {#}D</b><p>Skip instructions per D. Subsequent instructions 0..31 get cancelled for each '1' bit in D[0]..D[31].</p>]]></entry>
-        <entry name="skipf"><![CDATA[<b>SKIPF   {#}D</b><p>Skip cog/LUT instructions fast per D. Like SKIP, but instead of cancelling instructions, the PC leaps over them.</p>]]></entry>
-        <entry name="execf"><![CDATA[<b>EXECF   {#}D</b><p>Jump to D[9:0] in cog/LUT and set SKIPF pattern to D[31:10]. PC = {10'b0, D[9:0]}.</p>]]></entry>
+        <entry name="skip"><![CDATA[<b>SKIP  {#}D</b><p>Skip instructions per D. Subsequent instructions0..31 get cancelledfor each '1' bit in D[0]..D[31].</p>]]></entry>
+        <entry name="skipf"><![CDATA[<b>SKIPF {#}D</b><p>Skip cog/LUT instructions fast per D. Like SKIP, but instead of cancelling instructions, the PC leaps over them.</p>]]></entry>
+        <entry name="execf"><![CDATA[<b>EXECF {#}D</b><p>Jump to D[9:0] in cog/LUT and set SKIPF pattern toD[31:10]. PC = {10'b0, D[9:0]}.</p>]]></entry>
         <entry name="getptr"><![CDATA[<b>GETPTR  D</b><p>Get current FIFO hub pointer into D.</p>]]></entry>
         <entry name="getbrk"><![CDATA[<b>GETBRK  D          WC/WZ/WCZ</b><p>Get breakpoint/cog status into D according to WC/WZ/WCZ. See documentation for details.</p>]]></entry>
         <entry name="cogbrk"><![CDATA[<b>COGBRK  {#}D</b><p>If in debug ISR, trigger asynchronous breakpoint in cog D[3:0]. Cog D[3:0] must have asynchronous breakpoint enabled.</p>]]></entry>
         <entry name="brk"><![CDATA[<b>BRK     {#}D</b><p>If in debug ISR, set next break condition to D. Else, set BRK code to D[7:0] and unconditionally trigger BRK interrupt, if enabled.</p>]]></entry>
-        <entry name="setluts"><![CDATA[<b>SETLUTS {#}D</b><p>If D[0] = 1 then enable LUT sharing, where LUT writes within the adjacent odd/even companion cog are copied to this cog's LUT.</p>]]></entry>
+        <entry name="setluts"><![CDATA[<b>SETLUTS {#}D</b><p>If D[0] = 1 then enable LUT sharing, where LUT writes within the adjacent odd/even companion cogare copied tothiscog's LUT.</p>]]></entry>
         <entry name="setcy"><![CDATA[<b>SETCY   {#}D</b><p>Set the colorspace converter "CY" parameter to D[31:0].</p>]]></entry>
         <entry name="setci"><![CDATA[<b>SETCI   {#}D</b><p>Set the colorspace converter "CI" parameter to D[31:0].</p>]]></entry>
         <entry name="setcq"><![CDATA[<b>SETCQ   {#}D</b><p>Set the colorspace converter "CQ" parameter to D[31:0].</p>]]></entry>
@@ -819,61 +833,79 @@ For CASE_FAST to compile, the match values/ranges must be unique constants which
         <entry name="jmp"><![CDATA[<b>JMP     #{\}A</b><p>Jump to A.                                                                  If R = 1 then PC += A, else PC = A. "\" forces R = 0.</p>]]></entry>
         <entry name="loc"><![CDATA[<b>LOC     PA/PB/PTRA/PTRB,#{\}A</b><p>Get {12'b0, address[19:0]} into PA/PB/PTRA/PTRB (per W).          If R = 1, address = PC + A, else address = A. "\" forces R = 0.</p>]]></entry>
         <entry name="augs"><![CDATA[<b>AUGS    #n</b><p>Queue #n to be used as upper 23 bits for next #S occurrence, so that the next 9-bit #S will be augmented to 32 bits.</p>]]></entry>
-        <entry name="augd"><![CDATA[<b>AUGD    #n</b><p>Queue #n to be used as upper 23 bits for next #D occurrence, so that the next 9-bit #D will be augmented to 32 bits.</p>]]></entry>
+        <entry name="augd"><![CDATA[<b>AUGD    #n</b><p>Queue #n to be used as upper 23 bits for next #D occurrence, so that thenext 9-bit #D will be augmented to 32 bits.</p>]]></entry>
         <entry name="asmclk"><![CDATA[<b>ASMCLK</b><p>For PASM-only programs, set the clock mode specified by the clock setup symbols.</p>]]></entry>
     </section>
-    <section class="DatNode,DataLineNode,Condition">
-        <entry name="_ret_"><![CDATA[<b>_RET_         <inst>  <ops></b><p>Execute <inst> always and return if no branch. If <inst> is not branching then return by popping stack[19:0] into PC.</p>]]></entry>
-        <entry name="if_nc_and_nz"><![CDATA[<b>IF_NC_AND_NZ  <inst>  <ops></b><p>Execute <inst> if C = 0 and Z = 0.</p>]]></entry>
-        <entry name="if_nz_and_nc"><![CDATA[<b>IF_NZ_AND_NC  <inst>  <ops></b><p>Execute <inst> if C = 0 and Z = 0.</p>]]></entry>
-        <entry name="if_gt"><![CDATA[<b>IF_GT         <inst>  <ops></b><p>Execute <inst> if C = 0 and Z = 0, or if 'greater than' after a comparison/subtraction.</p>]]></entry>
-        <entry name="if_a"><![CDATA[<b>IF_A          <inst>  <ops></b><p>Execute <inst> if C = 0 and Z = 0, or if 'above' after a comparison/subtraction.</p>]]></entry>
-        <entry name="if_00"><![CDATA[<b>IF_00         <inst>  <ops></b><p>Execute <inst> if C = 0 and Z = 0.</p>]]></entry>
-        <entry name="if_nc_and_z"><![CDATA[<b>IF_NC_AND_Z   <inst>  <ops></b><p>Execute <inst> if C = 0 and Z = 1.</p>]]></entry>
-        <entry name="if_z_and_nc"><![CDATA[<b>IF_Z_AND_NC   <inst>  <ops></b><p>Execute <inst> if C = 0 and Z = 1.</p>]]></entry>
-        <entry name="if_01"><![CDATA[<b>IF_01         <inst>  <ops></b><p>Execute <inst> if C = 0 and Z = 1.</p>]]></entry>
-        <entry name="if_nc"><![CDATA[<b>IF_NC         <inst>  <ops></b><p>Execute <inst> if C = 0.</p>]]></entry>
-        <entry name="if_ge"><![CDATA[<b>IF_GE         <inst>  <ops></b><p>Execute <inst> if C = 0, or if 'greater than or equal' after a comparison/subtraction.</p>]]></entry>
-        <entry name="if_ae"><![CDATA[<b>IF_AE         <inst>  <ops></b><p>Execute <inst> if C = 0, or if 'above or equal' after a comparison/subtraction.</p>]]></entry>
-        <entry name="if_0x"><![CDATA[<b>IF_0X         <inst>  <ops></b><p>Execute <inst> if C = 0.</p>]]></entry>
-        <entry name="if_c_and_nz"><![CDATA[<b>IF_C_AND_NZ   <inst>  <ops></b><p>Execute <inst> if C = 1 and Z = 0.</p>]]></entry>
-        <entry name="if_nz_and_c"><![CDATA[<b>IF_NZ_AND_C   <inst>  <ops></b><p>Execute <inst> if C = 1 and Z = 0.</p>]]></entry>
-        <entry name="if_10"><![CDATA[<b>IF_10         <inst>  <ops></b><p>Execute <inst> if C = 1 and Z = 0.</p>]]></entry>
-        <entry name="if_nz"><![CDATA[<b>IF_NZ         <inst>  <ops></b><p>Execute <inst> if Z = 0.</p>]]></entry>
-        <entry name="if_ne"><![CDATA[<b>IF_NE         <inst>  <ops></b><p>Execute <inst> if Z = 0, or if 'not equal' after a comparison/subtraction.</p>]]></entry>
-        <entry name="if_x0"><![CDATA[<b>IF_X0         <inst>  <ops></b><p>Execute <inst> if Z = 0.</p>]]></entry>
-        <entry name="if_c_ne_z"><![CDATA[<b>IF_C_NE_Z     <inst>  <ops></b><p>Execute <inst> if C != Z.</p>]]></entry>
-        <entry name="if_z_ne_c"><![CDATA[<b>IF_Z_NE_C     <inst>  <ops></b><p>Execute <inst> if C != Z.</p>]]></entry>
-        <entry name="if_diff"><![CDATA[<b>IF_DIFF       <inst>  <ops></b><p>Execute <inst> if C != Z.</p>]]></entry>
-        <entry name="if_nc_or_nz"><![CDATA[<b>IF_NC_OR_NZ   <inst>  <ops></b><p>Execute <inst> if C = 0 or Z = 0.</p>]]></entry>
-        <entry name="if_nz_or_nc"><![CDATA[<b>IF_NZ_OR_NC   <inst>  <ops></b><p>Execute <inst> if C = 0 or Z = 0.</p>]]></entry>
-        <entry name="if_not_11"><![CDATA[<b>IF_NOT_11     <inst>  <ops></b><p>Execute <inst> if C = 0 or Z = 0.</p>]]></entry>
-        <entry name="if_c_and_z"><![CDATA[<b>IF_C_AND_Z    <inst>  <ops></b><p>Execute <inst> if C = 1 and Z = 1.</p>]]></entry>
-        <entry name="if_z_and_c"><![CDATA[<b>IF_Z_AND_C    <inst>  <ops></b><p>Execute <inst> if C = 1 and Z = 1.</p>]]></entry>
-        <entry name="if_11"><![CDATA[<b>IF_11         <inst>  <ops></b><p>Execute <inst> if C = 1 and Z = 1.</p>]]></entry>
-        <entry name="if_c_eq_z"><![CDATA[<b>IF_C_EQ_Z     <inst>  <ops></b><p>Execute <inst> if C = Z.</p>]]></entry>
-        <entry name="if_z_eq_c"><![CDATA[<b>IF_Z_EQ_C     <inst>  <ops></b><p>Execute <inst> if C = Z.</p>]]></entry>
-        <entry name="if_same"><![CDATA[<b>IF_SAME       <inst>  <ops></b><p>Execute <inst> if C = Z.</p>]]></entry>
-        <entry name="if_z"><![CDATA[<b>IF_Z          <inst>  <ops></b><p>Execute <inst> if Z = 1.</p>]]></entry>
-        <entry name="if_e"><![CDATA[<b>IF_E          <inst>  <ops></b><p>Execute <inst> if Z = 1, or if 'equal' after a comparison/subtraction.</p>]]></entry>
-        <entry name="if_x1"><![CDATA[<b>IF_X1         <inst>  <ops></b><p>Execute <inst> if Z = 1.</p>]]></entry>
-        <entry name="if_nc_or_z"><![CDATA[<b>IF_NC_OR_Z    <inst>  <ops></b><p>Execute <inst> if C = 0 or Z = 1.</p>]]></entry>
-        <entry name="if_z_or_nc"><![CDATA[<b>IF_Z_OR_NC    <inst>  <ops></b><p>Execute <inst> if C = 0 or Z = 1.</p>]]></entry>
-        <entry name="if_not_10"><![CDATA[<b>IF_NOT_10     <inst>  <ops></b><p>Execute <inst> if C = 0 or Z = 1.</p>]]></entry>
-        <entry name="if_c"><![CDATA[<b>IF_C          <inst>  <ops></b><p>Execute <inst> if C = 1.</p>]]></entry>
-        <entry name="if_lt"><![CDATA[<b>IF_LT         <inst>  <ops></b><p>Execute <inst> if C = 1, or if 'less than' after a comparison/subtraction.</p>]]></entry>
-        <entry name="if_b"><![CDATA[<b>IF_B          <inst>  <ops></b><p>Execute <inst> if C = 1, or if 'below' after a comparison/subtraction.</p>]]></entry>
-        <entry name="if_1x"><![CDATA[<b>IF_1X         <inst>  <ops></b><p>Execute <inst> if C = 1.</p>]]></entry>
-        <entry name="if_c_or_nz"><![CDATA[<b>IF_C_OR_NZ    <inst>  <ops></b><p>Execute <inst> if C = 1 or Z = 0.</p>]]></entry>
-        <entry name="if_nz_or_c"><![CDATA[<b>IF_NZ_OR_C    <inst>  <ops></b><p>Execute <inst> if C = 1 or Z = 0.</p>]]></entry>
-        <entry name="if_not_01"><![CDATA[<b>IF_NOT_01     <inst>  <ops></b><p>Execute <inst> if C = 1 or Z = 0.</p>]]></entry>
-        <entry name="if_c_or_z"><![CDATA[<b>IF_C_OR_Z     <inst>  <ops></b><p>Execute <inst> if C = 1 or Z = 1.</p>]]></entry>
-        <entry name="if_z_or_c"><![CDATA[<b>IF_Z_OR_C     <inst>  <ops></b><p>Execute <inst> if C = 1 or Z = 1.</p>]]></entry>
-        <entry name="if_le"><![CDATA[<b>IF_LE         <inst>  <ops></b><p>Execute <inst> if C = 1 or Z = 1, or if 'less than or equal' after a comparison/subtraction.</p>]]></entry>
-        <entry name="if_be"><![CDATA[<b>IF_BE         <inst>  <ops></b><p>Execute <inst> if C = 1 or Z = 1, or if 'below or equal' after a comparison/subtraction.</p>]]></entry>
-        <entry name="if_not_00"><![CDATA[<b>IF_NOT_00     <inst>  <ops></b><p>Execute <inst> if C = 1 or Z = 1.</p>]]></entry>
+    <section class="DataNode,DataLineNode,Condition">
+        <entry name="_ret_"><![CDATA[<b>_RET_</b><p>Execute always and return if no branch. If<inst> is notbranching then returnby popping stack[19:0] into PC.</p>]]></entry>
+        <entry name="if_nc_and_nz"><![CDATA[<b>IF_NC_AND_NZ</b><p>Execute if C = 0 and Z = 0.</p>]]></entry>
+        <entry name="if_nz_and_nc"><![CDATA[<b>IF_NZ_AND_NC</b><p>Execute if C = 0 and Z = 0.</p>]]></entry>
+        <entry name="if_gt"><![CDATA[<b>IF_GT </b><p>Execute if C = 0 and Z = 0, or if 'greater than' after a comparison/subtraction.</p>]]></entry>
+        <entry name="if_a"><![CDATA[<b>IF_A </b><p>Execute if C = 0 and Z = 0, or if 'above' after a comparison/subtraction.</p>]]></entry>
+        <entry name="if_00"><![CDATA[<b>IF_00</b><p>Execute if C = 0 and Z = 0.</p>]]></entry>
+        <entry name="if_nc_and_z"><![CDATA[<b>IF_NC_AND_Z</b><p>Execute if C = 0 and Z = 1.</p>]]></entry>
+        <entry name="if_z_and_nc"><![CDATA[<b>IF_Z_AND_NC</b><p>Execute if C = 0 and Z = 1.</p>]]></entry>
+        <entry name="if_01"><![CDATA[<b>IF_01</b><p>Execute if C = 0 and Z = 1.</p>]]></entry>
+        <entry name="if_nc"><![CDATA[<b>IF_NC</b><p>Execute if C = 0.</p>]]></entry>
+        <entry name="if_ge"><![CDATA[<b>IF_GE</b><p>Execute if C = 0, or if 'greater than or equal' after a comparison/subtraction.</p>]]></entry>
+        <entry name="if_ae"><![CDATA[<b>IF_AE</b><p>Execute if C = 0, or if 'above or equal' after a comparison/subtraction.</p>]]></entry>
+        <entry name="if_0x"><![CDATA[<b>IF_0X</b><p>Execute if C = 0.</p>]]></entry>
+        <entry name="if_c_and_nz"><![CDATA[<b>IF_C_AND_NZ</b><p>Execute if C = 1 and Z = 0.</p>]]></entry>
+        <entry name="if_nz_and_c"><![CDATA[<b>IF_NZ_AND_C</b><p>Execute if C = 1 and Z = 0.</p>]]></entry>
+        <entry name="if_10"><![CDATA[<b>IF_10</b><p>Execute if C = 1 and Z = 0.</p>]]></entry>
+        <entry name="if_nz"><![CDATA[<b>IF_NZ</b><p>Execute if Z = 0.</p>]]></entry>
+        <entry name="if_ne"><![CDATA[<b>IF_NE</b><p>Execute if Z = 0, or if 'not equal' after a comparison/subtraction.</p>]]></entry>
+        <entry name="if_x0"><![CDATA[<b>IF_X0</b><p>Execute if Z = 0.</p>]]></entry>
+        <entry name="if_c_ne_z"><![CDATA[<b>IF_C_NE_Z</b><p>Execute if C != Z.</p>]]></entry>
+        <entry name="if_z_ne_c"><![CDATA[<b>IF_Z_NE_C</b><p>Execute if C != Z.</p>]]></entry>
+        <entry name="if_diff"><![CDATA[<b>IF_DIFF</b><p>Execute if C != Z.</p>]]></entry>
+        <entry name="if_nc_or_nz"><![CDATA[<b>IF_NC_OR_NZ</b><p>Execute if C = 0 or Z = 0.</p>]]></entry>
+        <entry name="if_nz_or_nc"><![CDATA[<b>IF_NZ_OR_NC</b><p>Execute if C = 0 or Z = 0.</p>]]></entry>
+        <entry name="if_not_11"><![CDATA[<b>IF_NOT_11</b><p>Execute if C = 0 or Z = 0.</p>]]></entry>
+        <entry name="if_c_and_z"><![CDATA[<b>IF_C_AND_Z</b><p>Execute if C = 1 and Z = 1.</p>]]></entry>
+        <entry name="if_z_and_c"><![CDATA[<b>IF_Z_AND_C</b><p>Execute if C = 1 and Z = 1.</p>]]></entry>
+        <entry name="if_11"><![CDATA[<b>IF_11</b><p>Execute if C = 1 and Z = 1.</p>]]></entry>
+        <entry name="if_c_eq_z"><![CDATA[<b>IF_C_EQ_Z</b><p>Execute if C = Z.</p>]]></entry>
+        <entry name="if_z_eq_c"><![CDATA[<b>IF_Z_EQ_C </b><p>Execute if C = Z.</p>]]></entry>
+        <entry name="if_same"><![CDATA[<b>IF_SAME</b><p>Execute if C = Z.</p>]]></entry>
+        <entry name="if_z"><![CDATA[<b>IF_Z </b><p>Execute if Z = 1.</p>]]></entry>
+        <entry name="if_e"><![CDATA[<b>IF_E </b><p>Execute if Z = 1, or if 'equal' after a comparison/subtraction.</p>]]></entry>
+        <entry name="if_x1"><![CDATA[<b>IF_X1</b><p>Execute if Z = 1.</p>]]></entry>
+        <entry name="if_nc_or_z"><![CDATA[<b>IF_NC_OR_Z</b><p>Execute if C = 0 or Z = 1.</p>]]></entry>
+        <entry name="if_z_or_nc"><![CDATA[<b>IF_Z_OR_NC</b><p>Execute if C = 0 or Z = 1.</p>]]></entry>
+        <entry name="if_not_10"><![CDATA[<b>IF_NOT_10</b><p>Execute if C = 0 or Z = 1.</p>]]></entry>
+        <entry name="if_c"><![CDATA[<b>IF_C </b><p>Execute if C = 1.</p>]]></entry>
+        <entry name="if_lt"><![CDATA[<b>IF_LT </b><p>Execute if C = 1, or if 'less than' after a comparison/subtraction.</p>]]></entry>
+        <entry name="if_b"><![CDATA[<b>IF_B </b><p>Execute if C = 1, or if 'below' after a comparison/subtraction.</p>]]></entry>
+        <entry name="if_1x"><![CDATA[<b>IF_1X</b><p>Execute if C = 1.</p>]]></entry>
+        <entry name="if_c_or_nz"><![CDATA[<b>IF_C_OR_NZ</b><p>Execute if C = 1 or Z = 0.</p>]]></entry>
+        <entry name="if_nz_or_c"><![CDATA[<b>IF_NZ_OR_C</b><p>Execute if C = 1 or Z = 0.</p>]]></entry>
+        <entry name="if_not_01"><![CDATA[<b>IF_NOT_01</b><p>Execute if C = 1 or Z = 0.</p>]]></entry>
+        <entry name="if_c_or_z"><![CDATA[<b>IF_C_OR_Z</b><p>Execute if C = 1 or Z = 1.</p>]]></entry>
+        <entry name="if_z_or_c"><![CDATA[<b>IF_Z_OR_C </b><p>Execute if C = 1 or Z = 1.</p>]]></entry>
+        <entry name="if_le"><![CDATA[<b>IF_LE </b><p>Execute if C = 1 or Z = 1, or if 'less than or equal' after a comparison/subtraction.</p>]]></entry>
+        <entry name="if_be"><![CDATA[<b>IF_BE </b><p>Execute if C = 1 or Z = 1, or if 'below or equal' after a comparison/subtraction.</p>]]></entry>
+        <entry name="if_not_00"><![CDATA[<b>IF_NOT_00</b><p>Execute if C = 1 or Z = 1.</p>]]></entry>
     </section>
-    <section class="DatNode,DataLineNode,MODC,MODZ,MODCZ">
+    <section class="DataNode,DataLineNode,Registers">
+        <entry name="ijmp3"></entry>
+        <entry name="iret3"></entry>
+        <entry name="ijmp2"></entry>
+        <entry name="iret2"></entry>
+        <entry name="ijmp1"></entry>
+        <entry name="iret1"></entry>
+        <entry name="pa"></entry>
+        <entry name="pb"></entry>
+        <entry name="ptra"></entry>
+        <entry name="ptrb"></entry>
+        <entry name="dira"></entry>
+        <entry name="dirb"></entry>
+        <entry name="outa"></entry>
+        <entry name="outb"></entry>
+        <entry name="ina"></entry>
+        <entry name="inb"></entry>
+    </section>
+    <section class="DataNode,DataLineNode,MODC,MODZ,MODCZ">
         <entry name="_clr"><![CDATA[<b>_CLR</b><p>C/Z = 0</p>]]></entry>
         <entry name="_nc_and_nz"><![CDATA[<b>_NC_AND_NZ</b><p>C/Z = !C AND !Z</p>]]></entry>
         <entry name="_nz_and_nc"><![CDATA[<b>_NZ_AND_NC</b><p>C/Z = !C AND !Z</p>]]></entry>

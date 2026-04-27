@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Stack;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.jface.bindings.keys.KeyStroke;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -2281,93 +2282,133 @@ public class SourceEditor {
     }
 
     public IContentProposal[] computeProposals(String contents, int position) {
-        List<IContentProposal> proposals = new ArrayList<IContentProposal>();
+        List<IContentProposal> proposals = new ArrayList<>();
+        List<IContentProposal> containsProposals = new ArrayList<>();
 
-        int lineIndex = styledText.getLineAtOffset(styledText.getCaretOffset());
+        int caretOffset = styledText.getCaretOffset();
+        int lineIndex = styledText.getLineAtOffset(caretOffset);
         Node node = tokenMarker.getContextAtLine(lineIndex);
 
         String filterText = getFilterText(node, contents, position);
 
-        if (position == 0) {
-            proposals.addAll(helpProvider.fillProposals("Root", filterText));
-            if (tokenMarker instanceof CTokenMarker) {
-                if (node == null) {
-                    proposals.addAll(helpProvider.fillSourceProposals(filterText));
-                }
+        if (node instanceof DirectiveNode.IncludeNode includeNode) {
+            if (includeNode.file != null && caretOffset > includeNode.file.start && caretOffset <= includeNode.file.stop) {
+                proposals.addAll(helpProvider.fillSourceProposals(filterText, true));
+                containsProposals.addAll(helpProvider.fillSourceProposals(filterText, false));
             }
         }
-
-        if (node instanceof DirectiveNode.IncludeNode) {
-            proposals.addAll(helpProvider.fillSourceProposals(filterText));
-        }
-        else if (node instanceof ObjectNode) {
-            proposals.addAll(helpProvider.fillSourceProposals(filterText));
+        else if (node instanceof ObjectNode objectNode) {
+            if (objectNode.file != null && caretOffset > objectNode.file.start && caretOffset <= objectNode.file.stop) {
+                proposals.addAll(helpProvider.fillSourceProposals(filterText, true));
+                containsProposals.addAll(helpProvider.fillSourceProposals(filterText, false));
+            }
+            else {
+                for (ObjectNode.ParameterNode param : objectNode.parameters.reversed()) {
+                    if (param.identifier == null) {
+                        continue;
+                    }
+                    if (param.getTokenCount() >= 2 && "=".equals(param.getToken(1).getText())) {
+                        int start = param.getToken(1).stop + 1;
+                        int stop = param.getToken(param.getTokenCount() - 1).stop + 1;
+                        if (caretOffset >= start && caretOffset <= stop) {
+                            proposals.addAll(tokenMarker.getConstantsProposals(filterText, true));
+                            proposals.addAll(helpProvider.fillProposals("Constants", filterText, true));
+                            containsProposals.addAll(tokenMarker.getConstantsProposals(filterText, false));
+                            containsProposals.addAll(helpProvider.fillProposals("Constants", filterText, false));
+                            break;
+                        }
+                    }
+                }
+            }
         }
         else if (node instanceof VariablesNode) {
             proposals.addAll(tokenMarker.getTypeProposals(node, filterText));
         }
         else if (node instanceof VariableNode variableNode) {
-            position = styledText.getCaretOffset();
-            if (variableNode.type != null && position >= variableNode.type.start && position <= variableNode.type.stop + 1) {
-                proposals.addAll(helpProvider.fillSourceProposals(filterText));
+            if (variableNode.type != null && caretOffset >= variableNode.type.start && caretOffset <= variableNode.type.stop + 1) {
+                if (tokenMarker instanceof CTokenMarker) {
+                    proposals.addAll(helpProvider.fillSourceProposals(filterText, true));
+                    containsProposals.addAll(helpProvider.fillSourceProposals(filterText, false));
+                }
+                else {
+                    proposals.addAll(tokenMarker.getTypeProposals(node, filterText));
+                }
             }
         }
         else if (node instanceof DataLineNode dataLineNode) {
-            position = styledText.getCaretOffset();
-
             if (node.getStartToken().line != lineIndex || (dataLineNode.condition == null && dataLineNode.instruction == null)) {
-                proposals.addAll(helpProvider.fillProposals("Condition", filterText));
-                proposals.addAll(helpProvider.fillProposals("Instruction", filterText));
+                proposals.addAll(helpProvider.fillProposals("Condition", filterText, true));
+                proposals.addAll(helpProvider.fillProposals("Instruction", filterText, true));
+                containsProposals.addAll(helpProvider.fillProposals("Condition", filterText, false));
+                containsProposals.addAll(helpProvider.fillProposals("Instruction", filterText, false));
             }
-            else if (dataLineNode.condition != null && position >= dataLineNode.condition.start && position <= dataLineNode.condition.stop + 1) {
-                proposals.addAll(helpProvider.fillProposals("Condition", filterText));
+            else if (dataLineNode.condition != null && caretOffset >= dataLineNode.condition.start && caretOffset <= dataLineNode.condition.stop + 1) {
+                proposals.addAll(helpProvider.fillProposals("Condition", filterText, true));
+                containsProposals.addAll(helpProvider.fillProposals("Condition", filterText, false));
             }
-            else if (dataLineNode.condition != null && dataLineNode.instruction == null && position > dataLineNode.condition.stop) {
-                proposals.addAll(helpProvider.fillProposals("Instruction", filterText));
+            else if (dataLineNode.condition != null && dataLineNode.instruction == null && caretOffset > dataLineNode.condition.stop) {
+                proposals.addAll(helpProvider.fillProposals("Instruction", filterText, true));
+                containsProposals.addAll(helpProvider.fillProposals("Instruction", filterText, false));
             }
-            else if (dataLineNode.instruction != null && position >= dataLineNode.instruction.start && position <= dataLineNode.instruction.stop + 1) {
-                proposals.addAll(helpProvider.fillProposals("Instruction", filterText));
+            else if (dataLineNode.instruction != null && caretOffset >= dataLineNode.instruction.start && caretOffset <= dataLineNode.instruction.stop + 1) {
+                proposals.addAll(helpProvider.fillProposals("Instruction", filterText, true));
+                containsProposals.addAll(helpProvider.fillProposals("Instruction", filterText, false));
             }
-            else if (dataLineNode.instruction != null && dataLineNode.condition == null && position < dataLineNode.instruction.start) {
-                proposals.addAll(helpProvider.fillProposals("Condition", filterText));
+            else if (dataLineNode.instruction != null && dataLineNode.condition == null && caretOffset < dataLineNode.instruction.start) {
+                proposals.addAll(helpProvider.fillProposals("Condition", filterText, true));
+                containsProposals.addAll(helpProvider.fillProposals("Condition", filterText, false));
             }
-            else if (dataLineNode.instruction != null && position > dataLineNode.instruction.stop + 1) {
+            else if (dataLineNode.instruction != null && caretOffset > dataLineNode.instruction.stop + 1) {
+                if (Strings.CI.startsWith(dataLineNode.getText(), "mod")) {
+                    proposals.addAll(helpProvider.fillProposals(dataLineNode.getText().toUpperCase(), filterText, true));
+                }
                 if (node.getParent() instanceof StatementNode || node.getParent() instanceof MethodNode) {
                     proposals.addAll(tokenMarker.getInlinePAsmProposals(node, filterText));
-                    proposals.addAll(tokenMarker.getConstantsProposals(filterText));
                 }
                 else {
-                    proposals.addAll(tokenMarker.getPAsmProposals(node, filterText));
+                    proposals.addAll(tokenMarker.getPAsmProposals(node, filterText, true));
                 }
-                proposals.addAll(helpProvider.fillProposals(node.getClass().getSimpleName(), filterText));
+                proposals.addAll(helpProvider.fillProposals("Registers", filterText, true));
+                proposals.addAll(tokenMarker.getConstantsProposals(filterText, true));
+                proposals.addAll(helpProvider.fillProposals("Constants", filterText, true));
+
+                if (node.getParent() instanceof StatementNode || node.getParent() instanceof MethodNode) {
+                    proposals.addAll(tokenMarker.getInlinePAsmProposals(node, filterText));
+                }
+                else {
+                    containsProposals.addAll(tokenMarker.getPAsmProposals(node, filterText, false));
+                }
+                containsProposals.addAll(helpProvider.fillProposals("Registers", filterText, false));
+                containsProposals.addAll(tokenMarker.getConstantsProposals(filterText, false));
+                containsProposals.addAll(helpProvider.fillProposals("Constants", filterText, false));
             }
         }
         else if (node instanceof MethodNode methodNode) {
             boolean found = false;
             for (MethodNode.ParameterNode child : methodNode.getParameters()) {
-                if (child.type != null && position >= child.type.start && position <= child.type.stop + 1) {
+                if (child.type != null && caretOffset >= child.type.start && caretOffset <= child.type.stop + 1) {
                     proposals.addAll(tokenMarker.getTypeProposals(node, filterText));
                     found = true;
                 }
-                if (child.identifier != null && position >= child.identifier.start && position <= child.identifier.stop + 1) {
+                if (child.identifier != null && caretOffset >= child.identifier.start && caretOffset <= child.identifier.stop + 1) {
                     found = true;
                 }
             }
             for (MethodNode.LocalVariableNode child : methodNode.getLocalVariables()) {
-                if (child.type != null && position >= child.type.start && position <= child.type.stop + 1) {
+                if (child.type != null && caretOffset >= child.type.start && caretOffset <= child.type.stop + 1) {
                     proposals.addAll(tokenMarker.getTypeProposals(node, filterText));
                     found = true;
                 }
-                if (child.identifier != null && position >= child.identifier.start && position <= child.identifier.stop + 1) {
+                if (child.identifier != null && caretOffset >= child.identifier.start && caretOffset <= child.identifier.stop + 1) {
                     found = true;
                 }
             }
             for (MethodNode.ReturnNode child : methodNode.getReturnVariables()) {
-                if (child.type != null && position >= child.type.start && position <= child.type.stop + 1) {
+                if (child.type != null && caretOffset >= child.type.start && caretOffset <= child.type.stop + 1) {
                     proposals.addAll(tokenMarker.getTypeProposals(node, filterText));
                     found = true;
                 }
-                if (child.identifier != null && position >= child.identifier.start && position <= child.identifier.stop + 1) {
+                if (child.identifier != null && caretOffset >= child.identifier.start && caretOffset <= child.identifier.stop + 1) {
                     found = true;
                 }
             }
@@ -2377,14 +2418,36 @@ public class SourceEditor {
         }
         else if (node != null) {
             if (node instanceof StatementNode || node instanceof FunctionNode) {
-                proposals.addAll(tokenMarker.getMethodProposals(node, filterText));
-                proposals.addAll(tokenMarker.getPAsmLabelProposals(node, filterText));
+                proposals.addAll(tokenMarker.getMethodProposals(node, filterText, true));
+                proposals.addAll(tokenMarker.getPAsmLabelProposals(node, filterText, true));
             }
-            proposals.addAll(tokenMarker.getConstantsProposals(filterText));
-            proposals.addAll(helpProvider.fillProposals(node.getClass().getSimpleName(), filterText));
+            proposals.addAll(tokenMarker.getConstantsProposals(filterText, true));
+            proposals.addAll(helpProvider.fillProposals(node.getClass().getSimpleName(), filterText, true));
+
+            if (node instanceof StatementNode || node instanceof FunctionNode) {
+                containsProposals.addAll(tokenMarker.getMethodProposals(node, filterText, false));
+                containsProposals.addAll(tokenMarker.getPAsmLabelProposals(node, filterText, false));
+            }
+            containsProposals.addAll(tokenMarker.getConstantsProposals(filterText, false));
         }
 
-        return proposals.toArray(new IContentProposal[proposals.size()]);
+        if (position == 0) {
+            proposals.addAll(helpProvider.fillProposals("Root", filterText, true));
+            if (tokenMarker instanceof CTokenMarker) {
+                if (node == null) {
+                    proposals.addAll(helpProvider.fillSourceProposals(filterText, true));
+                    containsProposals.addAll(helpProvider.fillSourceProposals(filterText, false));
+                }
+            }
+        }
+
+        for (IContentProposal p : containsProposals) {
+            if (!proposals.contains(p)) {
+                proposals.add(p);
+            }
+        }
+
+        return proposals.toArray(new IContentProposal[0]);
     }
 
     public void goToLineColumn(int line, int column) {

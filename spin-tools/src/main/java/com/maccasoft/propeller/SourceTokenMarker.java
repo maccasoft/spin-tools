@@ -16,6 +16,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -30,7 +31,6 @@ import com.maccasoft.propeller.model.ConstantNode;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
-import com.maccasoft.propeller.model.DirectiveNode;
 import com.maccasoft.propeller.model.FunctionNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
@@ -129,6 +129,32 @@ public abstract class SourceTokenMarker {
         @Override
         public String toString() {
             return "TokenMarker [start=" + start + ", stop=" + stop + ", id=" + id;
+        }
+
+    }
+
+    public static class SourceContentProposal extends ContentProposal {
+
+        public SourceContentProposal(String content, String label, String description) {
+            super(content, label, description);
+        }
+
+        public SourceContentProposal(String content, String label, String description, int cursorPosition) {
+            super(content, label, description, cursorPosition);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            SourceContentProposal that = (SourceContentProposal) o;
+            return getLabel().equals(that.getLabel());
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(getLabel());
         }
 
     }
@@ -279,7 +305,7 @@ public abstract class SourceTokenMarker {
                 if (lineIndex >= node.getStartToken().line) {
                     result.set(node);
                 }
-                return false;
+                return true;
             }
 
             @Override
@@ -463,7 +489,7 @@ public abstract class SourceTokenMarker {
         }
     }
 
-    public List<IContentProposal> getMethodProposals(Node context, String textToken) {
+    public List<IContentProposal> getMethodProposals(Node context, String filterText, boolean startsOnly) {
         List<IContentProposal> proposals = new ArrayList<>();
         if (root == null) {
             return proposals;
@@ -484,224 +510,198 @@ public abstract class SourceTokenMarker {
             contextMethodName = "";
         }
 
-        boolean address = textToken.startsWith("@");
-        String filterText = address ? textToken.substring(1) : textToken;
-
-        int dot = filterText.indexOf('.');
-        String objectName = "";
-        if (dot != -1) {
-            objectName = filterText.substring(0, dot);
-            if (objectName.indexOf('[') != -1) {
-                objectName = objectName.substring(0, objectName.indexOf('['));
-            }
+        boolean address = filterText.startsWith("@");
+        if (address) {
+            filterText = filterText.substring(1);
         }
-        String refName = dot != -1 ? filterText.substring(dot + 1) : filterText;
-        String refObject = objectName;
 
-        Map<String, StructNode> structs = new HashMap<>();
+        Map<String, StructNode> structs = new CaseInsensitiveMap<>();
         for (StructNode node : root.getStructs()) {
             structs.put(node.identifier.getText(), node);
             structs.put("^" + node.identifier.getText(), node);
         }
 
-        if (context instanceof MethodNode node) {
-            for (MethodNode.ParameterNode child : node.getParameters()) {
-                String text = child.getIdentifier().getText();
-                if (dot == -1) {
-                    if (Strings.CI.contains(text, filterText)) {
-                        proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
-                    }
-                }
-                else if (child.getType() != null) {
-                    if (refObject.equalsIgnoreCase(child.getIdentifier().getText())) {
-                        StructNode typeNode = structs.get(child.getType().getText());
-                        if (typeNode != null) {
-                            proposals.addAll(getMembersProposals(structs, typeNode, refName));
-                        }
-                    }
-                }
+        int dot = filterText.indexOf('.');
+        if (dot > 0) {
+            String objectName = filterText.substring(0, dot);
+            if (objectName.indexOf('[') != -1) {
+                objectName = objectName.substring(0, objectName.indexOf('['));
             }
+            String memberName = filterText.substring(dot + 1);
 
-            for (MethodNode.LocalVariableNode child : node.getLocalVariables()) {
-                String text = child.getIdentifier().getText();
-                if (dot == -1) {
-                    if (Strings.CI.contains(text, filterText)) {
-                        proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
-                    }
-                }
-                else if (child.getType() != null) {
-                    if (refObject.equalsIgnoreCase(child.getIdentifier().getText())) {
-                        StructNode typeNode = structs.get(child.getType().getText());
-                        if (typeNode != null) {
-                            proposals.addAll(getMembersProposals(structs, typeNode, refName));
-                        }
-                    }
-                }
-            }
-
-            for (MethodNode.ReturnNode child : node.getReturnVariables()) {
-                String text = child.getIdentifier().getText();
-                if (dot == -1) {
-                    if (Strings.CI.contains(text, filterText)) {
-                        proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
-                    }
-                }
-                else if (child.getType() != null) {
-                    if (refObject.equalsIgnoreCase(child.getIdentifier().getText())) {
-                        StructNode typeNode = structs.get(child.getType().getText());
-                        if (typeNode != null) {
-                            proposals.addAll(getMembersProposals(structs, typeNode, refName));
-                        }
-                    }
-                }
-            }
-        }
-
-        for (MethodNode node : root.getMethods()) {
-            String text = node.getName().getText();
-            if (!contextMethodName.equals(text) && Strings.CI.contains(text, filterText)) {
-                String content = getMethodInsert(node);
-                int cursorPosition = content.endsWith("()") ? content.length() : (content.indexOf('(') + 1);
-                proposals.add(new ContentProposal(content, text, getMethodDocument(node), cursorPosition));
-            }
-        }
-        for (FunctionNode node : root.getFunctions()) {
-            String text = node.getIdentifier().getText();
-            if (!contextMethodName.equals(text) && Strings.CI.contains(text, filterText)) {
-                String content = getMethodInsert(node);
-                int cursorPosition = content.endsWith("()") ? content.length() : (content.indexOf('(') + 1);
-                proposals.add(new ContentProposal(content, text, "", cursorPosition));
-            }
-        }
-
-        for (ObjectNode node : root.getObjects()) {
-            String text = node.name.getText();
-            if (Strings.CI.contains(text, filterText)) {
-                proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
-            }
-        }
-
-        for (VariableNode node : root.getVariables()) {
-            String text = node.getIdentifier().getText();
-            if (dot == -1) {
-                if (Strings.CI.contains(text, filterText)) {
-                    proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
-                }
-            }
-            else if (node.getType() != null) {
-                if (refObject.equalsIgnoreCase(node.getIdentifier().getText())) {
-                    StructNode typeNode = structs.get(node.getType().getText());
-                    if (typeNode != null) {
-                        proposals.addAll(getMembersProposals(structs, typeNode, refName));
-                    }
-                }
-            }
-        }
-
-        root.accept(new NodeVisitor() {
-
-            @Override
-            public void visitDirective(DirectiveNode node) {
-                Iterator<Token> iter = node.getTokens().iterator();
-                if (iter.hasNext()) {
-                    iter.next();
-                }
-                if (iter.hasNext()) {
-                    Token directive = iter.next();
-                    if ("include".equals(directive.getText())) {
-                        if (iter.hasNext()) {
-                            Token file = iter.next();
-                            String name = file.getText().substring(1, file.getText().length() - 1);
-                            if (Strings.CI.contains(name, filterText)) {
-                                proposals.add(new ContentProposal(name, name, ""));
-                            }
-                        }
-                    }
-                }
-            }
-
-        });
-
-        if (dot != -1) {
-            boolean first = true;
-            List<IContentProposal> secondary = new ArrayList<>();
-
-            RootNode objectRoot = rootNodes.get(refObject);
-            if (objectRoot != null) {
-                for (MethodNode node : objectRoot.getMethods()) {
-                    String text = node.getName().getText();
-                    if (first && "null".equalsIgnoreCase(text)) {
+            if (context instanceof MethodNode methodNode) {
+                for (MethodNode.ParameterNode var : methodNode.getParameters()) {
+                    if (var.getType() == null) {
                         continue;
                     }
-                    if (node.isPublic() && Strings.CI.contains(text, refName)) {
-                        String content = getMethodInsert(node);
-                        int cursorPosition = content.endsWith("()") ? content.length() : (content.indexOf('(') + 1);
-                        proposals.add(new ContentProposal(content, text, getMethodDocument(node), cursorPosition));
+                    if (objectName.equalsIgnoreCase(var.getIdentifier().getText())) {
+                        StructNode structNode = structs.get(var.getType().getText());
+                        if (structNode != null) {
+                            proposals.addAll(getMembersProposals(structs, structNode, memberName, startsOnly));
+                            return proposals;
+                        }
+                        break;
                     }
-                    first = false;
+                }
+                for (MethodNode.LocalVariableNode var : methodNode.getLocalVariables()) {
+                    if (var.getType() == null) {
+                        continue;
+                    }
+                    if (objectName.equalsIgnoreCase(var.getIdentifier().getText())) {
+                        StructNode structNode = structs.get(var.getType().getText());
+                        if (structNode != null) {
+                            proposals.addAll(getMembersProposals(structs, structNode, memberName, startsOnly));
+                            return proposals;
+                        }
+                        break;
+                    }
+                }
+                for (MethodNode.ReturnNode var : methodNode.getReturnVariables()) {
+                    if (var.getType() == null) {
+                        continue;
+                    }
+                    if (objectName.equalsIgnoreCase(var.getIdentifier().getText())) {
+                        StructNode structNode = structs.get(var.getType().getText());
+                        if (structNode != null) {
+                            proposals.addAll(getMembersProposals(structs, structNode, memberName, startsOnly));
+                            return proposals;
+                        }
+                        break;
+                    }
+                }
+            }
+
+            for (VariableNode variableNode : root.getVariables()) {
+                if (variableNode.getType() == null) {
+                    continue;
+                }
+                if (objectName.equalsIgnoreCase(variableNode.getIdentifier().getText())) {
+                    StructNode structNode = structs.get(variableNode.getType().getText());
+                    if (structNode != null) {
+                        proposals.addAll(getMembersProposals(structs, structNode, memberName, startsOnly));
+                        return proposals;
+                    }
+                    break;
+                }
+            }
+
+            RootNode objectRoot = rootNodes.get(objectName);
+            if (objectRoot != null) {
+                boolean first = true;
+                for (MethodNode node : objectRoot.getMethods()) {
+                    if (node.isPublic()) {
+                        String text = node.getName().getText();
+                        if (first && "null".equalsIgnoreCase(text)) {
+                            continue;
+                        }
+                        int foundAt = Strings.CI.indexOf(text, memberName);
+                        if ((startsOnly && foundAt == 0) || (!startsOnly && foundAt > 0)) {
+                            String content = getMethodInsert(node);
+                            int cursorPosition = content.endsWith("()") ? content.length() : (content.indexOf('(') + 1);
+                            proposals.add(new SourceContentProposal(content, text, getMethodDocument(node), cursorPosition));
+                        }
+                        first = false;
+                    }
                 }
                 for (FunctionNode node : objectRoot.getFunctions()) {
-                    String text = node.getIdentifier().getText();
-                    if (node.isPublic() && Strings.CI.contains(text, refName)) {
+                    if (node.isPublic()) {
+                        String text = node.getIdentifier().getText();
+                        int foundAt = Strings.CI.indexOf(text, memberName);
+                        if ((startsOnly && foundAt == 0) || (!startsOnly && foundAt > 0)) {
+                            String content = getMethodInsert(node);
+                            int cursorPosition = content.endsWith("()") ? content.length() : (content.indexOf('(') + 1);
+                            proposals.add(new SourceContentProposal(content, text, "", cursorPosition));
+                        }
+                    }
+                }
+            }
+        }
+        else {
+            if (context instanceof MethodNode node) {
+                for (MethodNode.ParameterNode child : node.getParameters()) {
+                    String text = child.getIdentifier().getText();
+                    int foundAt = Strings.CI.indexOf(text, filterText);
+                    if ((startsOnly && foundAt == 0) || (!startsOnly && foundAt > 0)) {
+                        proposals.add(new SourceContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                    }
+                }
+
+                for (MethodNode.LocalVariableNode child : node.getLocalVariables()) {
+                    String text = child.getIdentifier().getText();
+                    int foundAt = Strings.CI.indexOf(text, filterText);
+                    if ((startsOnly && foundAt == 0) || (!startsOnly && foundAt > 0)) {
+                        proposals.add(new SourceContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                    }
+                }
+
+                for (MethodNode.ReturnNode child : node.getReturnVariables()) {
+                    String text = child.getIdentifier().getText();
+                    int foundAt = Strings.CI.indexOf(text, filterText);
+                    if ((startsOnly && foundAt == 0) || (!startsOnly && foundAt > 0)) {
+                        proposals.add(new SourceContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                    }
+                }
+            }
+
+            for (VariableNode node : root.getVariables()) {
+                String text = node.getIdentifier().getText();
+                int foundAt = Strings.CI.indexOf(text, filterText);
+                if ((startsOnly && foundAt == 0) || (!startsOnly && foundAt > 0)) {
+                    proposals.add(new SourceContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                }
+            }
+
+            for (MethodNode node : root.getMethods()) {
+                String text = node.getName().getText();
+                if (!contextMethodName.equals(text)) {
+                    int foundAt = Strings.CI.indexOf(text, filterText);
+                    if ((startsOnly && foundAt == 0) || (!startsOnly && foundAt > 0)) {
                         String content = getMethodInsert(node);
                         int cursorPosition = content.endsWith("()") ? content.length() : (content.indexOf('(') + 1);
-                        proposals.add(new ContentProposal(content, text, "", cursorPosition));
+                        proposals.add(new SourceContentProposal(content, text, getMethodDocument(node), cursorPosition));
+                    }
+                }
+            }
+            for (FunctionNode node : root.getFunctions()) {
+                String text = node.getIdentifier().getText();
+                if (!contextMethodName.equals(text)) {
+                    int foundAt = Strings.CI.indexOf(text, filterText);
+                    if ((startsOnly && foundAt == 0) || (!startsOnly && foundAt > 0)) {
+                        String content = getMethodInsert(node);
+                        int cursorPosition = content.endsWith("()") ? content.length() : (content.indexOf('(') + 1);
+                        proposals.add(new SourceContentProposal(content, text, "", cursorPosition));
                     }
                 }
             }
 
-            for (VariableNode varNode : root.getVariables()) {
-                String name = varNode.getIdentifier().getText();
-                if (refObject.equalsIgnoreCase(name)) {
-                    RootNode varObjectRoot = rootNodes.get(varNode.getType().getText());
-                    if (varObjectRoot != null) {
-                        for (MethodNode node : varObjectRoot.getMethods()) {
-                            if (node.isPublic()) {
-                                String text = node.getName().getText();
-                                if (Strings.CI.startsWith(text, refName)) {
-                                    proposals.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
-                                }
-                                else if (Strings.CI.contains(text, refName)) {
-                                    secondary.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
-                                }
-                            }
-                        }
-                        for (FunctionNode node : varObjectRoot.getFunctions()) {
-                            if (node.isPublic()) {
-                                String text = node.getIdentifier().getText();
-                                if (Strings.CI.startsWith(text, refName)) {
-                                    proposals.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
-                                }
-                                else if (Strings.CI.contains(text, refName)) {
-                                    secondary.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
-                                }
-                            }
-                        }
-                    }
+            for (ObjectNode node : root.getObjects()) {
+                String text = node.name.getText();
+                int foundAt = Strings.CI.indexOf(text, filterText);
+                if ((startsOnly && foundAt == 0) || (!startsOnly && foundAt > 0)) {
+                    proposals.add(new SourceContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                 }
             }
-
-            proposals.addAll(secondary);
         }
 
         return proposals;
     }
 
-    List<IContentProposal> getMembersProposals(Map<String, StructNode> structs, StructNode typeNode, String refName) {
+    List<IContentProposal> getMembersProposals(Map<String, StructNode> structs, StructNode typeNode, String refName, boolean startsOnly) {
         List<IContentProposal> proposals = new ArrayList<>();
 
         if (refName.contains(".")) {
             String[] ar = refName.split("[.]");
             for (Node n : typeNode.getChilds()) {
-                if (!(n instanceof Member member)) {
+                if (!(n instanceof StructNode.Member member)) {
                     continue;
                 }
                 if (ar[0].equalsIgnoreCase(member.getIdentifier().getText())) {
                     if (member.getType() != null) {
                         typeNode = structs.get(member.getType().getText());
-                        if (typeNode != null) {
-                            return getMembersProposals(structs, typeNode, refName.substring(refName.indexOf(".") + 1));
+                        if (typeNode == null) {
+                            return proposals;
                         }
+                        return getMembersProposals(structs, typeNode, refName.substring(refName.indexOf(".") + 1), startsOnly);
                     }
                 }
             }
@@ -711,8 +711,9 @@ public abstract class SourceTokenMarker {
                 continue;
             }
             String text = member.getIdentifier().getText();
-            if (Strings.CI.contains(text, refName)) {
-                proposals.add(new ContentProposal(text, text, "<b>" + typeNode.getText() + "</b>"));
+            int foundAt = Strings.CI.indexOf(text, refName);
+            if ((startsOnly && foundAt == 0) || (!startsOnly && foundAt > 0)) {
+                proposals.add(new SourceContentProposal(text, text, "<b>" + typeNode.getText() + "</b>"));
             }
         }
 
@@ -733,19 +734,19 @@ public abstract class SourceTokenMarker {
             if (node instanceof MethodNode.ParameterNode child) {
                 String text = child.getIdentifier().getText();
                 if (Strings.CI.contains(text, filterText)) {
-                    proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                    proposals.add(new SourceContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                 }
             }
             else if (node instanceof MethodNode.LocalVariableNode child) {
                 String text = child.getIdentifier().getText();
                 if (Strings.CI.contains(text, filterText)) {
-                    proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                    proposals.add(new SourceContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                 }
             }
             else if (node instanceof MethodNode.ReturnNode child) {
                 String text = child.getIdentifier().getText();
                 if (Strings.CI.contains(text, filterText)) {
-                    proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                    proposals.add(new SourceContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                 }
             }
         }
@@ -787,7 +788,7 @@ public abstract class SourceTokenMarker {
                         if (Strings.CI.contains(s.substring(s1.length() - 1), filterText)) {
                             String text = s.substring(s1.length() - 1);
                             if (Strings.CI.contains(text, filterText)) {
-                                proposals.add(new ContentProposal(text, text, null));
+                                proposals.add(new SourceContentProposal(text, text, null));
                             }
                         }
                     }
@@ -803,7 +804,7 @@ public abstract class SourceTokenMarker {
             if (lineNode.label != null) {
                 String text = lineNode.label.getText();
                 if (!text.startsWith(localLabelPrefix) && Strings.CI.contains(text, filterText)) {
-                    proposals.add(new ContentProposal(text, text, null));
+                    proposals.add(new SourceContentProposal(text, text, null));
                 }
             }
         }
@@ -854,17 +855,17 @@ public abstract class SourceTokenMarker {
     public List<IContentProposal> getTypeProposals(Node context, String filterText) {
         List<IContentProposal> proposals = new ArrayList<>();
 
-        String typeText = "LONG";
+        String typeText = "long";
         if (Strings.CI.contains(typeText, filterText)) {
-            proposals.add(new ContentProposal(typeText, typeText, "<b>" + typeText + "</b>"));
+            proposals.add(new SourceContentProposal(typeText, typeText, "<b>" + typeText + "</b>"));
         }
-        typeText = "WORD";
+        typeText = "word";
         if (Strings.CI.contains(typeText, filterText)) {
-            proposals.add(new ContentProposal(typeText, typeText, "<b>" + typeText + "</b>"));
+            proposals.add(new SourceContentProposal(typeText, typeText, "<b>" + typeText + "</b>"));
         }
-        typeText = "BYTE";
+        typeText = "byte";
         if (Strings.CI.contains(typeText, filterText)) {
-            proposals.add(new ContentProposal(typeText, typeText, "<b>" + typeText + "</b>"));
+            proposals.add(new SourceContentProposal(typeText, typeText, "<b>" + typeText + "</b>"));
         }
 
         if (root != null) {
@@ -872,7 +873,7 @@ public abstract class SourceTokenMarker {
             for (StructNode node : root.getStructs()) {
                 String text = node.getIdentifier().getText();
                 if (Strings.CI.contains(text, filterText)) {
-                    localProposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                    localProposals.add(new SourceContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                 }
             }
             localProposals.sort((o1, o2) -> o1.getLabel().compareToIgnoreCase(o2.getLabel()));
@@ -885,7 +886,7 @@ public abstract class SourceTokenMarker {
                     for (StructNode node : objectRoot.getStructs()) {
                         String text = objectNode.name.getText() + "." + node.getIdentifier().getText();
                         if (Strings.CI.contains(text, filterText)) {
-                            objectProposals.add(new ContentProposal(node.getIdentifier().getText(), text, "<b>" + node.getText() + "</b>"));
+                            objectProposals.add(new SourceContentProposal(node.getIdentifier().getText(), text, "<b>" + node.getText() + "</b>"));
                         }
                     }
                 }
@@ -897,42 +898,43 @@ public abstract class SourceTokenMarker {
         return proposals;
     }
 
-    public List<IContentProposal> getConstantsProposals(String filterText) {
+    public List<IContentProposal> getConstantsProposals(String filterText, boolean startsOnly) {
         List<IContentProposal> proposals = new ArrayList<>();
 
         if (root != null) {
-            if (!constantSeparator.isBlank()) {
-                int dot = filterText.indexOf(constantSeparator);
-                if (dot > 0) {
-                    String refObject = filterText.substring(0, dot);
-                    String refName = filterText.substring(dot + 1);
+            int dot = constantSeparator.isBlank() ? -1 : filterText.indexOf(constantSeparator);
+            if (dot > 0) {
+                String objectName = filterText.substring(0, dot);
+                String memberName = filterText.substring(dot + 1);
 
-                    RootNode objectRoot = rootNodes.get(refObject);
-                    if (objectRoot != null) {
-                        for (ConstantNode node : objectRoot.getConstants()) {
-                            String text = node.getIdentifier().getText();
-                            if (Strings.CI.startsWith(text, refName) || Strings.CI.contains(text, refName)) {
-                                StringBuilder sb = new StringBuilder();
-                                sb.append("<b><code>").append(getHtmlSafeString(node.getText())).append("</code></b>");
-                                if (context != null) {
-                                    appendValue(sb, filterText.substring(0, dot + 1) + node.getIdentifier().getText());
-                                }
-                                proposals.add(new ContentProposal(node.identifier.getText(), text, sb.toString()));
+                RootNode objectRoot = rootNodes.get(objectName);
+                if (objectRoot != null) {
+                    for (ConstantNode node : objectRoot.getConstants()) {
+                        String text = node.getIdentifier().getText();
+                        int foundAt = Strings.CI.indexOf(text, memberName);
+                        if ((startsOnly && foundAt == 0) || (!startsOnly && foundAt > 0)) {
+                            StringBuilder sb = new StringBuilder();
+                            sb.append("<b><code>").append(getHtmlSafeString(node.getText())).append("</code></b>");
+                            if (context != null) {
+                                appendValue(sb, objectName + constantSeparator + node.getIdentifier().getText());
                             }
+                            proposals.add(new SourceContentProposal(text, text, sb.toString()));
                         }
                     }
                 }
             }
-
-            for (ConstantNode node : root.getConstants()) {
-                String text = node.getIdentifier().getText();
-                if (Strings.CI.contains(text, filterText)) {
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("<b><code>").append(getHtmlSafeString(node.getText())).append("</code></b>");
-                    if (context != null) {
-                        appendValue(sb, node.getIdentifier().getText());
+            else {
+                for (ConstantNode node : root.getConstants()) {
+                    String text = node.getIdentifier().getText();
+                    int foundAt = Strings.CI.indexOf(text, filterText);
+                    if ((startsOnly && foundAt == 0) || (!startsOnly && foundAt > 0)) {
+                        StringBuilder sb = new StringBuilder();
+                        sb.append("<b><code>").append(getHtmlSafeString(node.getText())).append("</code></b>");
+                        if (context != null) {
+                            appendValue(sb, node.getIdentifier().getText());
+                        }
+                        proposals.add(new SourceContentProposal(text, text, sb.toString()));
                     }
-                    proposals.add(new ContentProposal(text, text, sb.toString()));
                 }
             }
         }
@@ -1092,13 +1094,15 @@ public abstract class SourceTokenMarker {
     }
 
     String getHtmlSafeString(String s) {
-        s = s.replaceAll("&", "&amp;");
-        s = s.replaceAll("<", "&lt;");
-        s = s.replaceAll(">", "&gt;");
+        s = s.replace("&", "&amp;");
+        s = s.replace("<", "&lt;");
+        s = s.replace(">", "&gt;");
         return s;
     }
 
-    public List<IContentProposal> getPAsmProposals(Node ref, String filterText) {
+    public List<IContentProposal> getPAsmProposals(Node ref, String filterText, boolean startsOnly) {
+        int index;
+
         List<IContentProposal> proposals = new ArrayList<>();
         if (root == null) {
             return proposals;
@@ -1109,43 +1113,6 @@ public abstract class SourceTokenMarker {
             parent = ref.getParent();
         }
 
-        List<IContentProposal> list = new ArrayList<>();
-        int index = parent.getChilds().indexOf(ref);
-        while (index >= 0) {
-            if (parent.getChild(index) instanceof DataLineNode lineNode) {
-                if (lineNode.instruction != null && "NAMESP".equalsIgnoreCase(lineNode.instruction.getText())) {
-                    break;
-                }
-                if (lineNode.label != null) {
-                    if (!lineNode.label.getText().startsWith(localLabelPrefix)) {
-                        break;
-                    }
-                    if (Strings.CI.contains(lineNode.label.getText(), filterText)) {
-                        list.addFirst(new ContentProposal(lineNode.label.getText(), lineNode.label.getText(), null));
-                    }
-                }
-            }
-            index--;
-        }
-        index = parent.getChilds().indexOf(ref) + 1;
-        while (index < parent.getChildCount()) {
-            if (parent.getChild(index) instanceof DataLineNode lineNode) {
-                if (lineNode.instruction != null && "NAMESP".equalsIgnoreCase(lineNode.instruction.getText())) {
-                    break;
-                }
-                if (lineNode.label != null) {
-                    if (!lineNode.label.getText().startsWith(localLabelPrefix)) {
-                        break;
-                    }
-                    if (Strings.CI.contains(lineNode.label.getText(), filterText)) {
-                        list.add(new ContentProposal(lineNode.label.getText(), lineNode.label.getText(), null));
-                    }
-                }
-            }
-            index++;
-        }
-        proposals.addAll(list);
-
         List<Node> dataLineNodes = new ArrayList<>();
         for (Node node : root.getChilds()) {
             if (node instanceof DataNode) {
@@ -1153,51 +1120,41 @@ public abstract class SourceTokenMarker {
             }
         }
 
-        String refNamespace = "";
+        String currentNamespace = "";
 
         index = dataLineNodes.indexOf(ref);
         while (index >= 0) {
             if (dataLineNodes.get(index) instanceof DataLineNode lineNode) {
                 if (lineNode.instruction != null && "NAMESP".equalsIgnoreCase(lineNode.instruction.getText())) {
-                    refNamespace = !lineNode.parameters.isEmpty() ? lineNode.parameters.getFirst().getText() + "." : "";
+                    currentNamespace = !lineNode.parameters.isEmpty() ? lineNode.parameters.getFirst().getText() : "";
                     break;
                 }
             }
             index--;
         }
 
-        String namespace = "";
-
         int dot = filterText.indexOf('.');
-        if (dot == -1) {
-            for (Node child : dataLineNodes) {
-                if (!(child instanceof DataLineNode lineNode)) {
-                    continue;
-                }
-                if (lineNode.instruction != null && "NAMESP".equalsIgnoreCase(lineNode.instruction.getText())) {
-                    namespace = !lineNode.parameters.isEmpty() ? lineNode.parameters.getFirst().getText() + "." : "";
-                }
-                if (lineNode.label != null && !lineNode.label.getText().startsWith(localLabelPrefix)) {
-                    if (namespace.isBlank() || namespace.equalsIgnoreCase(refNamespace)) {
-                        if (Strings.CI.contains(lineNode.label.getText(), filterText)) {
-                            proposals.add(new ContentProposal(lineNode.label.getText(), lineNode.label.getText(), null));
-                        }
-                    }
-                }
-            }
+        if (dot > 0) {
+            String objectName = filterText.substring(0, dot);
+            String refName = filterText.substring(dot + 1);
+            String namespace = "";
 
-            Set<String> ns = new HashSet<>();
-            for (Node child : dataLineNodes) {
-                if (!(child instanceof DataLineNode lineNode)) {
-                    continue;
-                }
-                if (lineNode.instruction != null && "NAMESP".equalsIgnoreCase(lineNode.instruction.getText())) {
-                    if (!lineNode.parameters.isEmpty()) {
-                        namespace = lineNode.parameters.getFirst().getText() + ".";
-                        if (!namespace.equalsIgnoreCase(refNamespace) && ns.add(namespace.toLowerCase())) {
-                            String text = lineNode.parameters.getFirst().getText();
-                            if (Strings.CI.contains(text, filterText)) {
-                                proposals.add(new ContentProposal(text, text, null));
+            for (Node node : root.getChilds()) {
+                if (node instanceof DataNode) {
+                    for (Node child : node.getChilds()) {
+                        if (child instanceof DataLineNode dataLine) {
+                            if (namespace.equalsIgnoreCase(currentNamespace)) {
+                                continue;
+                            }
+                            if (dataLine.instruction != null && "NAMESP".equalsIgnoreCase(dataLine.instruction.getText())) {
+                                namespace = !dataLine.parameters.isEmpty() ? dataLine.parameters.getFirst().getText() : "";
+                            }
+                            else if (dataLine.label != null && !dataLine.label.getText().startsWith(localLabelPrefix) && objectName.equalsIgnoreCase(namespace)) {
+                                String text = dataLine.label.getText();
+                                int foundAt = Strings.CI.indexOf(text, refName);
+                                if ((startsOnly && foundAt == 0) || (!startsOnly && foundAt > 0)) {
+                                    proposals.add(new SourceContentProposal(text, text, null));
+                                }
                             }
                         }
                     }
@@ -1205,122 +1162,202 @@ public abstract class SourceTokenMarker {
             }
         }
         else {
-            for (Node child : dataLineNodes) {
-                if (!(child instanceof DataLineNode lineNode)) {
-                    continue;
-                }
-                if (lineNode.instruction != null && "NAMESP".equalsIgnoreCase(lineNode.instruction.getText())) {
-                    namespace = !lineNode.parameters.isEmpty() ? lineNode.parameters.getFirst().getText() + "." : "";
-                }
-                if (namespace.equalsIgnoreCase(refNamespace)) {
-                    continue;
-                }
-                if (lineNode.label != null && !lineNode.label.getText().startsWith(localLabelPrefix)) {
-                    String text = namespace + lineNode.label.getText();
-                    if (Strings.CI.contains(text, filterText)) {
-                        proposals.add(new ContentProposal(lineNode.label.getText(), lineNode.label.getText(), null));
+            List<IContentProposal> localProposals = new ArrayList<>();
+
+            index = parent.getChilds().indexOf(ref);
+            while (index >= 0) {
+                if (parent.getChild(index) instanceof DataLineNode lineNode) {
+                    if (lineNode.instruction != null && "NAMESP".equalsIgnoreCase(lineNode.instruction.getText())) {
+                        break;
+                    }
+                    if (lineNode.label != null) {
+                        if (!lineNode.label.getText().startsWith(localLabelPrefix)) {
+                            break;
+                        }
+                        String text = lineNode.label.getText();
+                        int foundAt = Strings.CI.indexOf(text, filterText);
+                        if ((startsOnly && foundAt == 0) || (!startsOnly && foundAt > 0)) {
+                            localProposals.addFirst(new SourceContentProposal(text, text, null));
+                        }
                     }
                 }
+                index--;
             }
-        }
 
-        for (ConstantNode node : root.getConstants()) {
-            String text = node.identifier.getText();
-            if (Strings.CI.contains(text, filterText)) {
-                proposals.add(new ContentProposal(text, text, null));
-            }
-        }
-
-        if (dot != -1) {
-            String refObject = filterText.substring(0, dot - 1);
-            String refName = filterText.substring(dot + 1);
-
-            for (ObjectNode objNode : root.getObjects()) {
-                if (!refObject.equalsIgnoreCase(objNode.name.getText())) {
-                    continue;
+            index = parent.getChilds().indexOf(ref) + 1;
+            while (index < parent.getChildCount()) {
+                if (parent.getChild(index) instanceof DataLineNode lineNode) {
+                    if (lineNode.instruction != null && "NAMESP".equalsIgnoreCase(lineNode.instruction.getText())) {
+                        break;
+                    }
+                    if (lineNode.label != null) {
+                        if (!lineNode.label.getText().startsWith(localLabelPrefix)) {
+                            break;
+                        }
+                        String text = lineNode.label.getText();
+                        int foundAt = Strings.CI.indexOf(text, filterText);
+                        if ((startsOnly && foundAt == 0) || (!startsOnly && foundAt > 0)) {
+                            localProposals.addFirst(new SourceContentProposal(text, text, null));
+                        }
+                    }
                 }
+                index++;
+            }
 
-                RootNode objectRoot = rootNodes.get(refObject);
-                if (objectRoot != null) {
-                    for (ConstantNode node : root.getConstants()) {
-                        String text = node.identifier.getText();
-                        if (Strings.CI.contains(text, refName)) {
-                            proposals.add(new ContentProposal(text, refObject + constantSeparator + text, null));
+            localProposals.sort((o1, o2) -> o1.getLabel().compareToIgnoreCase(o2.getLabel()));
+            proposals.addAll(localProposals);
+
+            String namespace = "";
+            List<IContentProposal> labelProposals = new ArrayList<>();
+
+            for (Node node : dataLineNodes) {
+                if (node instanceof DataLineNode dataLine) {
+                    if (dataLine.instruction != null && "NAMESP".equalsIgnoreCase(dataLine.instruction.getText())) {
+                        namespace = !dataLine.parameters.isEmpty() ? dataLine.parameters.getFirst().getText() : "";
+                    }
+                    else if (dataLine.label != null && !dataLine.label.getText().startsWith(localLabelPrefix) && namespace.equalsIgnoreCase(currentNamespace)) {
+                        String text = dataLine.label.getText();
+                        int foundAt = Strings.CI.indexOf(text, filterText);
+                        if ((startsOnly && foundAt == 0) || (!startsOnly && foundAt > 0)) {
+                            labelProposals.addFirst(new SourceContentProposal(text, text, null));
                         }
                     }
                 }
             }
-        }
-        else {
-            for (ObjectNode node : root.getObjects()) {
-                String name = node.name.getText();
-                if (Strings.CI.contains(name, filterText)) {
-                    proposals.add(new ContentProposal(name, name, ""));
+
+            labelProposals.sort((o1, o2) -> o1.getLabel().compareToIgnoreCase(o2.getLabel()));
+            proposals.addAll(labelProposals);
+
+            Set<String> ns = new HashSet<>();
+            List<IContentProposal> namespaceProposals = new ArrayList<>();
+
+            for (Node node : dataLineNodes) {
+                if (node instanceof DataLineNode dataLine) {
+                    if (dataLine.instruction != null && "NAMESP".equalsIgnoreCase(dataLine.instruction.getText())) {
+                        if (!dataLine.parameters.isEmpty()) {
+                            String text = dataLine.parameters.getFirst().getText();
+                            if (ns.add(text.toLowerCase()) && !text.equalsIgnoreCase(currentNamespace)) {
+                                int foundAt = Strings.CI.indexOf(text, filterText);
+                                if ((startsOnly && foundAt == 0) || (!startsOnly && foundAt > 0)) {
+                                    namespaceProposals.add(new SourceContentProposal(text, text, null));
+                                }
+                            }
+                        }
+                    }
                 }
             }
+
+            namespaceProposals.sort((o1, o2) -> o1.getLabel().compareToIgnoreCase(o2.getLabel()));
+            proposals.addAll(namespaceProposals);
         }
 
         return proposals;
     }
 
-    public List<IContentProposal> getPAsmLabelProposals(Node ref, String filterText) {
+    public List<IContentProposal> getPAsmLabelProposals(Node ref, String filterText, boolean startsOnly) {
         List<IContentProposal> proposals = new ArrayList<>();
         if (root == null) {
             return proposals;
         }
 
-        String namespace = "";
-        int dot = filterText.indexOf('.');
-
-        Map<String, StructNode> structs = new HashMap<>();
+        Map<String, StructNode> structs = new CaseInsensitiveMap<>();
         for (StructNode node : root.getStructs()) {
             structs.put(node.identifier.getText(), node);
             structs.put("^" + node.identifier.getText(), node);
         }
 
-        for (Node node : root.getChilds()) {
-            if (node instanceof DataNode) {
-                for (Node child : node.getChilds()) {
-                    if (!(child instanceof DataLineNode lineNode)) {
-                        continue;
-                    }
-                    if (lineNode.instruction != null && "NAMESP".equalsIgnoreCase(lineNode.instruction.getText())) {
-                        if (lineNode.parameters.size() == 1) {
-                            String text = lineNode.parameters.getFirst().getText();
-                            if (Strings.CI.contains(text, filterText)) {
-                                proposals.add(new ContentProposal(text, text, ""));
+        String namespace = "";
+
+        int dot = filterText.indexOf('.');
+        if (dot > 0) {
+            String objectName = filterText.substring(0, dot);
+            String memberName = filterText.substring(dot + 1);
+
+            for (Node mainNode : root.getChilds()) {
+                if (mainNode instanceof DataNode dataNode) {
+                    for (Node childNode : dataNode.getChilds()) {
+                        if (!(childNode instanceof DataLineNode node)) {
+                            continue;
+                        }
+                        if (node.instruction != null && "NAMESP".equalsIgnoreCase(node.instruction.getText())) {
+                            namespace = !node.parameters.isEmpty() ? node.parameters.getFirst().getText() : "";
+                        }
+                        if (node.label != null && objectName.equalsIgnoreCase(namespace)) {
+                            if (!node.label.getText().startsWith(".") && !node.label.getText().startsWith(":")) {
+                                String text = node.label.getText();
+                                int foundAt = Strings.CI.indexOf(text, memberName);
+                                if ((startsOnly && foundAt == 0) || (!startsOnly && foundAt > 0)) {
+                                    proposals.add(new SourceContentProposal(text, text, null));
+                                }
                             }
                         }
-                        namespace = !lineNode.parameters.isEmpty() ? lineNode.parameters.getFirst().getText() + "." : "";
                     }
-                    if (lineNode.label != null && !lineNode.label.getText().startsWith(localLabelPrefix)) {
-                        if (dot != -1 || namespace.isBlank()) {
-                            String text = namespace + lineNode.label.getText();
-                            if (Strings.CI.contains(text, filterText)) {
-                                String content = dot == -1 ? text : lineNode.label.getText();
-                                String description = "";
-                                if (lineNode.instruction != null) {
-                                    StructNode typeNode = structs.get(lineNode.instruction.getText());
-                                    if (typeNode != null) {
-                                        description = "<b>" + typeNode.getText() + "</b>";
+                }
+            }
+
+            for (Node mainNode : root.getChilds()) {
+                if (mainNode instanceof DataNode dataNode) {
+                    for (Node childNode : dataNode.getChilds()) {
+                        if (!(childNode instanceof DataLineNode node)) {
+                            continue;
+                        }
+                        if (node.instruction != null) {
+                            if ("NAMESP".equalsIgnoreCase(node.instruction.getText())) {
+                                namespace = !node.parameters.isEmpty() ? node.parameters.getFirst().getText() : "";
+                            }
+                            if (node.label != null && namespace.isEmpty()) {
+                                StructNode structNode = structs.get(node.instruction.getText());
+                                if (structNode != null) {
+                                    for (Node child : structNode.getChilds()) {
+                                        if (child instanceof StructNode.Member member && member.getIdentifier() != null) {
+                                            String text = member.getIdentifier().getText();
+                                            int foundAt = Strings.CI.indexOf(text, memberName);
+                                            if ((startsOnly && foundAt == 0) || (!startsOnly && foundAt > 0)) {
+                                                proposals.add(new SourceContentProposal(text, text, null));
+                                            }
+                                        }
                                     }
                                 }
-                                proposals.add(new ContentProposal(content, text, description));
                             }
                         }
-                        if (dot != -1 && lineNode.instruction != null) {
-                            StructNode typeNode = structs.get(lineNode.instruction.getText());
-                            if (typeNode != null) {
-                                String identifier = namespace + lineNode.label.getText();
-                                for (Node n : typeNode.getChilds()) {
-                                    if (!(n instanceof Member member)) {
-                                        continue;
-                                    }
-                                    String text = identifier + "." + member.getIdentifier().getText();
-                                    if (Strings.CI.contains(text, filterText)) {
-                                        proposals.add(new ContentProposal(member.getIdentifier().getText(), member.getIdentifier().getText(), "<b>" + typeNode.getText() + "</b>"));
-                                    }
+                    }
+                }
+            }
+        }
+        else {
+            for (Node mainNode : root.getChilds()) {
+                if (mainNode instanceof DataNode dataNode) {
+                    for (Node childNode : dataNode.getChilds()) {
+                        if (!(childNode instanceof DataLineNode node)) {
+                            continue;
+                        }
+                        if (node.instruction != null && "NAMESP".equalsIgnoreCase(node.instruction.getText())) {
+                            namespace = !node.parameters.isEmpty() ? node.parameters.getFirst().getText() : "";
+                        }
+                        if (node.label != null && namespace.isEmpty()) {
+                            if (!node.label.getText().startsWith(".") && !node.label.getText().startsWith(":")) {
+                                String text = node.label.getText();
+                                int foundAt = Strings.CI.indexOf(text, filterText);
+                                if ((startsOnly && foundAt == 0) || (!startsOnly && foundAt > 0)) {
+                                    proposals.add(new SourceContentProposal(text, text, null));
                                 }
+                            }
+                        }
+                    }
+                }
+            }
+
+            for (Node mainNode : root.getChilds()) {
+                if (mainNode instanceof DataNode dataNode) {
+                    for (Node childNode : dataNode.getChilds()) {
+                        if (!(childNode instanceof DataLineNode node)) {
+                            continue;
+                        }
+                        if (node.instruction != null && "NAMESP".equalsIgnoreCase(node.instruction.getText()) && !node.parameters.isEmpty()) {
+                            String text = node.parameters.getFirst().getText();
+                            int foundAt = Strings.CI.indexOf(text, filterText);
+                            if ((startsOnly && foundAt == 0) || (!startsOnly && foundAt > 0)) {
+                                proposals.add(new SourceContentProposal(text, text, null));
                             }
                         }
                     }
@@ -1332,7 +1369,7 @@ public abstract class SourceTokenMarker {
     }
 
     public SourceTokenMarker.TokenId getLineBackgroundId(Node root, int lineOffset) {
-        TokenId color = getSectionBackgroundId(null);
+        SourceTokenMarker.TokenId color = getSectionBackgroundId(null);
 
         if (root != null) {
             for (Node child : root.getChilds()) {
