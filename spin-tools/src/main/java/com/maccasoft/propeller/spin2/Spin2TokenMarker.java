@@ -865,7 +865,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         }
 
         Node contextNode = getSectionAtLine(lineIndex);
-        Spin2TokenStream stream = new Spin2TokenStream(lineText, startIndex);
+        TokenStream stream = new Spin2TokenStream(lineText, startIndex);
 
         while ((token = stream.peekNext()).type != Token.EOF) {
             if ("#".equals(token.getText())) {
@@ -936,7 +936,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 }
                 else {
                     boolean debug = "debug".equalsIgnoreCase(token.getText());
-                    markTokens(methodNode, stream, debug, markers, localSymbols, null);
+                    markTokens(stream, debug, markers, localSymbols, null);
                 }
             }
             else if (contextNode instanceof DataNode) {
@@ -1100,19 +1100,31 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                     state = 10;
                     break;
                 case 10:
-                    if (")".equals(token.getText())) {
+                    if (identifier != null) {
+                        if (token.type == Token.KEYWORD) {
+                            markers.add(new TokenMarker(identifier, TokenId.TYPE));
+                            identifier = token;
+                        }
                         markers.add(new TokenMarker(identifier, TokenId.VARIABLE));
+                        identifier = null;
+                    }
+                    if (")".equals(token.getText())) {
                         state = 0;
                         break;
                     }
                     if (",".equals(token.getText())) {
-                        markers.add(new TokenMarker(identifier, TokenId.VARIABLE));
                         state = 9;
                         break;
                     }
-                    if (token.type == Token.KEYWORD) {
-                        markers.add(new TokenMarker(identifier, TokenId.TYPE));
-                        identifier = token;
+                    if ("[".equals(token.getText())) {
+                        state = 12;
+                        break;
+                    }
+                    markConstantToken(token, markers);
+                    break;
+                case 12:
+                    if ("]".equals(token.getText())) {
+                        state = 10;
                         break;
                     }
                     markConstantToken(token, markers);
@@ -1180,7 +1192,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                         break;
                     }
                     if ("[".equals(token.getText())) {
-                        markTokens(contextNode, stream, false, markers, Collections.emptyMap(), "]");
+                        markTokens(stream, false, markers, Collections.emptyMap(), "]");
                         break;
                     }
                     break;
@@ -1268,7 +1280,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                     id = TokenId.NUMBER;
                 }
                 else if (token.type == Token.STRING) {
-                    id = token.getText().length() > 3 ? TokenId.STRING : TokenId.NUMBER;
+                    id = token.getText().length() == 3 && token.getText().endsWith("\"") ? TokenId.NUMBER : TokenId.STRING;
                 }
                 else {
                     id = symbols.get(token.getText());
@@ -1442,7 +1454,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 id = TokenId.NUMBER;
             }
             else if (token.type == Token.STRING) {
-                id = token.getText().length() > 3 ? TokenId.STRING : TokenId.NUMBER;
+                id = token.getText().length() == 3 && token.getText().endsWith("\"") ? TokenId.NUMBER : TokenId.STRING;
             }
             else if (id == null) {
                 id = symbols.get(token.getText());
@@ -1540,6 +1552,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 case 4:
                     if (Spin2Model.isPAsmModifier(token.getText())) {
                         id = TokenId.PASM_MODIFIER;
+                        state = 6;
                         break;
                     }
                     if (modcX) {
@@ -1549,14 +1562,20 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 case 5:
                     id = debugKeywords.get(token.getText());
                     break;
+                case 6:
+                    if (Spin2Model.isPAsmModifier(token.getText())) {
+                        id = TokenId.PASM_MODIFIER;
+                        break;
+                    }
+                    break;
             }
 
-            if (id == null) {
+            if (id == null && state != 6) {
                 if (token.type == Token.NUMBER) {
                     id = TokenId.NUMBER;
                 }
                 else if (token.type == Token.STRING) {
-                    id = token.getText().length() > 3 ? TokenId.STRING : TokenId.NUMBER;
+                    id = token.getText().length() == 3 && token.getText().endsWith("\"") ? TokenId.NUMBER : TokenId.STRING;
                 }
                 else if (token.getText().startsWith(":") || token.getText().startsWith(".")) {
                     id = TokenId.PASM_LOCAL_LABEL;
@@ -1596,7 +1615,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
             markers.add(new TokenMarker(token, TokenId.NUMBER));
         }
         else if (token.type == Token.STRING) {
-            markers.add(new TokenMarker(token, token.getText().length() > 3 ? TokenId.STRING : TokenId.NUMBER));
+            markers.add(new TokenMarker(token, token.getText().length() == 3 && token.getText().endsWith("\"") ? TokenId.NUMBER : TokenId.STRING));
         }
         else {
             TokenId id = symbols.get(token.getText());
@@ -1650,7 +1669,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         return false;
     }
 
-    void markTokens(Node contextNode, TokenStream stream, boolean debug, List<TokenMarker> markers, Map<String, TokenId> localSymbols, String endMarker) {
+    void markTokens(TokenStream stream, boolean debug, List<TokenMarker> markers, Map<String, TokenId> localSymbols, String endMarker) {
         Token token;
 
         while ((token = stream.nextToken()).type != Token.EOF) {
@@ -1665,41 +1684,45 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 markers.add(new TokenMarker(token, TokenId.NUMBER));
             }
             else if (token.type == Token.STRING) {
-                markers.add(new TokenMarker(token, token.getText().length() > 3 ? TokenId.STRING : TokenId.NUMBER));
+                markers.add(new TokenMarker(token, token.getText().length() == 3 && token.getText().endsWith("\"") ? TokenId.NUMBER : TokenId.STRING));
             }
             else if (token.type != Token.OPERATOR) {
                 TokenId id = localSymbols.get(tokenText);
                 if (id == null) {
                     id = symbols.get(tokenText);
-                    if (id == TokenId.OBJECT) {
-                        String qualifier = token.getText();
-                        markers.add(new TokenMarker(token, id));
-                        token = stream.nextToken();
-                        if ("[".equals(token.getText())) {
-                            markTokens(contextNode, stream, debug, markers, localSymbols, "]");
+                }
+                if (id == TokenId.OBJECT) {
+                    String qualifier = token.getText();
+                    markers.add(new TokenMarker(token, id));
+                    if ("[".equals(stream.peekNext().getText())) {
+                        stream.nextToken();
+                        markTokens(stream, false, markers, localSymbols, "]");
+                        if (".".equals(stream.peekNext().getText())) {
                             token = stream.nextToken();
-                            if (".".equals(token.getText())) {
-                                Token nextToken = stream.peekNext();
-                                if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
-                                    token = stream.nextToken();
-                                    id = symbols.get(qualifier + "." + token.getText());
-                                    if (id != null) {
-                                        markers.add(new TokenMarker(token, id));
-                                    }
-                                    continue;
+                            Token nextToken = stream.peekNext();
+                            if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                                token = stream.nextToken();
+                                id = symbols.get(qualifier + "." + token.getText());
+                                if (id != null) {
+                                    markers.add(new TokenMarker(token, id));
                                 }
                             }
                         }
-                        id = null;
                     }
-                    else if (id == TokenId.METHOD_PUB || id == TokenId.CONSTANT) {
-                        int dot = tokenText.indexOf('.');
-                        if (dot != -1) {
-                            markers.add(new TokenMarker(token.start, token.start + dot - 1, TokenId.OBJECT));
-                            markers.add(new TokenMarker(token.start + dot + 1, token.stop, id));
-                            continue;
-                        }
+                    continue;
+                }
+                else if (id == TokenId.METHOD_PUB || id == TokenId.CONSTANT) {
+                    int dot = tokenText.indexOf('.');
+                    if (dot != -1) {
+                        markers.add(new TokenMarker(token.start, token.start + dot - 1, TokenId.OBJECT));
+                        markers.add(new TokenMarker(token.start + dot + 1, token.stop, id));
+                        continue;
                     }
+                }
+                else if (id == TokenId.VARIABLE || id == TokenId.METHOD_LOCAL) {
+                    markers.add(new TokenMarker(token, id));
+                    markStructTokens(stream, markers, localSymbols);
+                    continue;
                 }
                 if (id == null) {
                     id = keywords.get(tokenText);
@@ -1715,12 +1738,73 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                         }
                     }
                 }
+                if (id == null) {
+                    int dot = tokenText.indexOf('.');
+                    if (dot > 0) {
+                        TokenId leftId = localSymbols.get(tokenText.substring(0, dot));
+                        if (leftId == null) {
+                            leftId = symbols.get(tokenText.substring(0, dot));
+                        }
+                        if (leftId == TokenId.VARIABLE || leftId == TokenId.METHOD_LOCAL) {
+                            markers.add(new TokenMarker(token.start, token.start + dot - 1, leftId));
+                            int nextDot = tokenText.indexOf('.', dot + 1);
+                            while (nextDot != -1) {
+                                markers.add(new TokenMarker(token.start + dot + 1, token.start + nextDot - 1, TokenId.VARIABLE));
+                                dot = nextDot;
+                                nextDot = tokenText.indexOf('.', dot + 1);
+                            }
+                            markers.add(new TokenMarker(token.start + dot + 1, token.stop, TokenId.VARIABLE));
+                            markStructTokens(stream, markers, localSymbols);
+                            continue;
+                        }
+                    }
+                }
                 if (id != null) {
                     markers.add(new TokenMarker(token, id));
                 }
             }
             else if ("[".equals(tokenText)) {
-                markTokens(contextNode, stream, debug, markers, localSymbols, "]");
+                markTokens(stream, debug, markers, localSymbols, "]");
+            }
+        }
+    }
+
+    void markStructTokens(TokenStream stream, List<TokenMarker> markers, Map<String, TokenId> localSymbols) {
+        Token token;
+        Token nextToken;
+
+        while ((token = stream.peekNext()).type != Token.EOF) {
+            if (".".equals(token.getText())) {
+                token = stream.nextToken();
+                nextToken = stream.peekNext();
+                if (!token.isAdjacent(nextToken) || nextToken.type != Token.KEYWORD) {
+                    break;
+                }
+                token = stream.nextToken();
+                int dot = token.getText().indexOf('.');
+                if (dot > 0) {
+                    markers.add(new TokenMarker(token.start, token.start + dot - 1, TokenId.VARIABLE));
+                    int nextDot = token.getText().indexOf('.', dot + 1);
+                    while (nextDot != -1) {
+                        markers.add(new TokenMarker(token.start + dot + 1, token.start + nextDot - 1, TokenId.VARIABLE));
+                        dot = nextDot;
+                        nextDot = token.getText().indexOf('.', dot + 1);
+                    }
+                    markers.add(new TokenMarker(token.start + dot + 1, token.stop, TokenId.VARIABLE));
+                }
+                else {
+                    markers.add(new TokenMarker(token.start, token.stop, TokenId.VARIABLE));
+                }
+            }
+            else if ("[".equals(token.getText())) {
+                stream.nextToken();
+                markTokens(stream, false, markers, localSymbols, "]");
+            }
+            else if (token.type != Token.OPERATOR) {
+                break;
+            }
+            else {
+                stream.nextToken();
             }
         }
     }

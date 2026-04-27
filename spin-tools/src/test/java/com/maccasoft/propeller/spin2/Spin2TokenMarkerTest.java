@@ -78,4 +78,67 @@ class Spin2TokenMarkerTest {
         Assertions.assertEquals(TokenId.NUMBER, markers[2].getId());
     }
 
+    @Test
+    void testStructureMembers() {
+        String lineText;
+        TokenMarker[] markers;
+
+        String text = ""
+            + "VAR\n"
+            + "    sLine line\n"
+            + "\n"
+            + "PUB main() | a, local, idx\n"
+            + "\n"
+            + "    a := line.x\n"
+            + "    a := line[idx + 1].x\n"
+            + "\n"
+            + "    a := local.x\n"
+            + "    a := local[idx + 1].x\n"
+            + "\n"
+            + "    a := line.x[idx].a.b\n"
+            + "";
+
+        Spin2TokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
+        subject.refreshTokens(text);
+
+        lineText = "    a := line.x";
+        markers = subject.getTokens(5, text.indexOf(lineText), lineText).toArray(new TokenMarker[0]);
+        Assertions.assertEquals(3, markers.length);
+        Assertions.assertEquals(TokenId.METHOD_LOCAL, markers[0].getId());
+        Assertions.assertEquals(TokenId.VARIABLE, markers[1].getId());
+        Assertions.assertEquals(TokenId.VARIABLE, markers[2].getId());
+
+        lineText = "    a := line[0].x";
+        markers = subject.getTokens(6, text.indexOf(lineText), lineText).toArray(new TokenMarker[0]);
+        Assertions.assertEquals(4, markers.length);
+        Assertions.assertEquals(TokenId.METHOD_LOCAL, markers[0].getId());
+        Assertions.assertEquals(TokenId.VARIABLE, markers[1].getId());
+        Assertions.assertEquals(TokenId.NUMBER, markers[2].getId());
+        Assertions.assertEquals(TokenId.VARIABLE, markers[3].getId());
+
+        lineText = "    a := local.x";
+        markers = subject.getTokens(8, text.indexOf(lineText), lineText).toArray(new TokenMarker[0]);
+        Assertions.assertEquals(3, markers.length);
+        Assertions.assertEquals(TokenId.METHOD_LOCAL, markers[0].getId());
+        Assertions.assertEquals(TokenId.METHOD_LOCAL, markers[1].getId());
+        Assertions.assertEquals(TokenId.VARIABLE, markers[2].getId());
+
+        lineText = "    a := local[0].x";
+        markers = subject.getTokens(9, text.indexOf(lineText), lineText).toArray(new TokenMarker[0]);
+        Assertions.assertEquals(4, markers.length);
+        Assertions.assertEquals(TokenId.METHOD_LOCAL, markers[0].getId());
+        Assertions.assertEquals(TokenId.METHOD_LOCAL, markers[1].getId());
+        Assertions.assertEquals(TokenId.NUMBER, markers[2].getId());
+        Assertions.assertEquals(TokenId.VARIABLE, markers[3].getId());
+
+        lineText = "    line.x[idx].a.b";
+        markers = subject.getTokens(9, text.indexOf(lineText), lineText).toArray(new TokenMarker[0]);
+        Assertions.assertEquals(5, markers.length);
+        Assertions.assertEquals(TokenId.VARIABLE, markers[0].getId());
+        Assertions.assertEquals(TokenId.VARIABLE, markers[1].getId());
+        Assertions.assertEquals(TokenId.METHOD_LOCAL, markers[2].getId());
+        Assertions.assertEquals(TokenId.VARIABLE, markers[3].getId());
+        Assertions.assertEquals(TokenId.VARIABLE, markers[4].getId());
+    }
+
 }

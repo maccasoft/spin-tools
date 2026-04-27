@@ -356,7 +356,7 @@ public class Spin1TokenMarker extends SourceTokenMarker {
         }
 
         Node contextNode = getSectionAtLine(lineIndex);
-        Spin1TokenStream stream = new Spin1TokenStream(lineText, startIndex);
+        TokenStream stream = new Spin1TokenStream(lineText, startIndex);
 
         while ((token = stream.peekNext()).type != Token.EOF) {
             if ("#".equals(token.getText())) {
@@ -572,7 +572,7 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                     id = TokenId.NUMBER;
                 }
                 else if (token.type == Token.STRING) {
-                    id = token.getText().length() > 3 ? TokenId.STRING : TokenId.NUMBER;
+                    id = token.getText().length() == 3 && token.getText().endsWith("\"") ? TokenId.NUMBER : TokenId.STRING;
                 }
                 else {
                     id = symbols.get(token.getText());
@@ -746,7 +746,7 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                 id = TokenId.NUMBER;
             }
             else if (token.type == Token.STRING) {
-                id = token.getText().length() > 3 ? TokenId.STRING : TokenId.NUMBER;
+                id = token.getText().length() == 3 && token.getText().endsWith("\"") ? TokenId.NUMBER : TokenId.STRING;
             }
             else if (id == null) {
                 id = symbols.get(token.getText());
@@ -834,14 +834,20 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                         break;
                     }
                     break;
+                case 6:
+                    if (Spin1Model.isPAsmModifier(token.getText())) {
+                        id = TokenId.PASM_MODIFIER;
+                        break;
+                    }
+                    break;
             }
 
-            if (id == null) {
+            if (id == null && state != 6) {
                 if (token.type == Token.NUMBER) {
                     id = TokenId.NUMBER;
                 }
                 else if (token.type == Token.STRING) {
-                    id = token.getText().length() > 3 ? TokenId.STRING : TokenId.NUMBER;
+                    id = token.getText().length() == 3 && token.getText().endsWith("\"") ? TokenId.NUMBER : TokenId.STRING;
                 }
                 else if (token.getText().startsWith(":")) {
                     id = TokenId.PASM_LOCAL_LABEL;
@@ -878,7 +884,7 @@ public class Spin1TokenMarker extends SourceTokenMarker {
             markers.add(new TokenMarker(token, TokenId.NUMBER));
         }
         else if (token.type == Token.STRING) {
-            markers.add(new TokenMarker(token, token.getText().length() > 3 ? TokenId.STRING : TokenId.NUMBER));
+            markers.add(new TokenMarker(token, token.getText().length() == 3 && token.getText().endsWith("\"") ? TokenId.NUMBER : TokenId.STRING));
         }
         else {
             TokenId id = symbols.get(token.getText());
@@ -941,7 +947,7 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                 markers.add(new TokenMarker(token, TokenId.NUMBER));
             }
             else if (token.type == Token.STRING) {
-                markers.add(new TokenMarker(token, token.getText().length() > 3 ? TokenId.STRING : TokenId.NUMBER));
+                markers.add(new TokenMarker(token, token.getText().length() == 3 && token.getText().endsWith("\"") ? TokenId.NUMBER : TokenId.STRING));
             }
             else if (token.type != Token.OPERATOR) {
                 TokenId id = localSymbols.get(tokenText);
