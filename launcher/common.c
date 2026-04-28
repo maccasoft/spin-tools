@@ -18,7 +18,7 @@ static const char * classpath_separator = ":";
 #endif
 
 static const char * common_jar_files[] = {
-    "spin-tools-0.54.1.jar",
+    "spin-tools-0.55.0.jar",
     "commons-cli-1.9.0.jar",
     "commons-codec-1.19.0.jar",
     "commons-collections4-4.5.0.jar",

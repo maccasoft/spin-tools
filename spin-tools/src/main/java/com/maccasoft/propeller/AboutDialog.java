@@ -117,7 +117,7 @@ public class AboutDialog extends Dialog {
         final String forumLink = "https://forums.parallax.com/discussion/174436/spin-tools-ide";
         final String message = title + "\r\n" + "Copyright \u00A9 2021-26 " + our + " and others. All rights reserved.\r\n"
             + "\r\n"
-            + "Java VM: " + System.getProperty("java.vm.vendor") + " " + System.getProperty("java.vm.version") + "\r\n"
+            + "Java Runtime: " + System.getProperty("java.vm.vendor") + " " + System.getProperty("java.vm.version") + "\r\n"
             + "Spin2 Interpreter: v52 - 2025.10.08\r\n"
             + "\r\n"
             + "This program and the accompanying materials, unless otherwise specified,\r\n"
