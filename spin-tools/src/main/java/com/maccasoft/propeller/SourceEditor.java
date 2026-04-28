@@ -997,7 +997,7 @@ public class SourceEditor {
                             case SWT.ARROW_LEFT:
                             case SWT.ARROW_RIGHT:
                                 e.doit = false;
-                                return;
+                                break;
                         }
                     }
                     else {
@@ -1021,7 +1021,6 @@ public class SourceEditor {
                                 styledText.redraw();
                                 break;
                             case SWT.BS:
-                            case SWT.DEL:
                                 if (styledText.getCaret() == alignCaret) {
                                     int caretOffset = styledText.getCaretOffset();
                                     int lineNumber = styledText.getLineAtOffset(caretOffset);
@@ -1037,6 +1036,23 @@ public class SourceEditor {
                                             styledText.setCaretOffset(lineStart + currentColumn - 1);
                                             e.doit = false;
                                         }
+                                    }
+                                }
+                                break;
+                            case SWT.DEL:
+                                if (styledText.getCaret() == alignCaret) {
+                                    int caretOffset = styledText.getCaretOffset();
+                                    int lineNumber = styledText.getLineAtOffset(caretOffset);
+                                    int lineStart = styledText.getOffsetAtLine(lineNumber);
+                                    int currentColumn = caretOffset - lineStart;
+                                    StringBuilder sb = new StringBuilder(styledText.getLine(lineNumber));
+                                    int i = sb.indexOf("  ", currentColumn);
+                                    if (i != -1) {
+                                        sb.insert(i, ' ');
+                                        sb.replace(currentColumn, currentColumn + 1, "");
+                                        styledText.replaceTextRange(lineStart, styledText.getLine(lineNumber).length(), sb.toString());
+                                        styledText.setCaretOffset(lineStart + currentColumn);
+                                        e.doit = false;
                                     }
                                 }
                                 break;
