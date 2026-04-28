@@ -2293,14 +2293,14 @@ public class SourceEditor {
 
         if (node instanceof DirectiveNode.IncludeNode includeNode) {
             if (includeNode.file != null && caretOffset > includeNode.file.start && caretOffset <= includeNode.file.stop) {
-                proposals.addAll(helpProvider.fillSourceProposals(filterText, true));
-                containsProposals.addAll(helpProvider.fillSourceProposals(filterText, false));
+                proposals.addAll(helpProvider.getSourceProposals(filterText, true));
+                containsProposals.addAll(helpProvider.getSourceProposals(filterText, false));
             }
         }
         else if (node instanceof ObjectNode objectNode) {
             if (objectNode.file != null && caretOffset > objectNode.file.start && caretOffset <= objectNode.file.stop) {
-                proposals.addAll(helpProvider.fillSourceProposals(filterText, true));
-                containsProposals.addAll(helpProvider.fillSourceProposals(filterText, false));
+                proposals.addAll(helpProvider.getSourceProposals(filterText, true));
+                containsProposals.addAll(helpProvider.getSourceProposals(filterText, false));
             }
             else {
                 for (ObjectNode.ParameterNode param : objectNode.parameters.reversed()) {
@@ -2312,9 +2312,9 @@ public class SourceEditor {
                         int stop = param.getToken(param.getTokenCount() - 1).stop + 1;
                         if (caretOffset >= start && caretOffset <= stop) {
                             proposals.addAll(tokenMarker.getConstantsProposals(filterText, true));
-                            proposals.addAll(helpProvider.fillProposals("Constants", filterText, true));
+                            proposals.addAll(helpProvider.getProposals("Constants", filterText, true));
                             containsProposals.addAll(tokenMarker.getConstantsProposals(filterText, false));
-                            containsProposals.addAll(helpProvider.fillProposals("Constants", filterText, false));
+                            containsProposals.addAll(helpProvider.getProposals("Constants", filterText, false));
                             break;
                         }
                     }
@@ -2327,8 +2327,8 @@ public class SourceEditor {
         else if (node instanceof VariableNode variableNode) {
             if (variableNode.type != null && caretOffset >= variableNode.type.start && caretOffset <= variableNode.type.stop + 1) {
                 if (tokenMarker instanceof CTokenMarker) {
-                    proposals.addAll(helpProvider.fillSourceProposals(filterText, true));
-                    containsProposals.addAll(helpProvider.fillSourceProposals(filterText, false));
+                    proposals.addAll(helpProvider.getSourceProposals(filterText, true));
+                    containsProposals.addAll(helpProvider.getSourceProposals(filterText, false));
                 }
                 else {
                     proposals.addAll(tokenMarker.getTypeProposals(node, filterText));
@@ -2337,50 +2337,61 @@ public class SourceEditor {
         }
         else if (node instanceof DataLineNode dataLineNode) {
             if (node.getStartToken().line != lineIndex || (dataLineNode.condition == null && dataLineNode.instruction == null)) {
-                proposals.addAll(helpProvider.fillProposals("Condition", filterText, true));
-                proposals.addAll(helpProvider.fillProposals("Instruction", filterText, true));
-                containsProposals.addAll(helpProvider.fillProposals("Condition", filterText, false));
-                containsProposals.addAll(helpProvider.fillProposals("Instruction", filterText, false));
+                proposals.addAll(helpProvider.getProposals("Condition", filterText, true));
+                proposals.addAll(helpProvider.getProposals("Instruction", filterText, true));
+                containsProposals.addAll(helpProvider.getProposals("Condition", filterText, false));
+                containsProposals.addAll(helpProvider.getProposals("Instruction", filterText, false));
             }
             else if (dataLineNode.condition != null && caretOffset >= dataLineNode.condition.start && caretOffset <= dataLineNode.condition.stop + 1) {
-                proposals.addAll(helpProvider.fillProposals("Condition", filterText, true));
-                containsProposals.addAll(helpProvider.fillProposals("Condition", filterText, false));
+                proposals.addAll(helpProvider.getProposals("Condition", filterText, true));
+                containsProposals.addAll(helpProvider.getProposals("Condition", filterText, false));
             }
             else if (dataLineNode.condition != null && dataLineNode.instruction == null && caretOffset > dataLineNode.condition.stop) {
-                proposals.addAll(helpProvider.fillProposals("Instruction", filterText, true));
-                containsProposals.addAll(helpProvider.fillProposals("Instruction", filterText, false));
+                proposals.addAll(helpProvider.getProposals("Instruction", filterText, true));
+                containsProposals.addAll(helpProvider.getProposals("Instruction", filterText, false));
             }
             else if (dataLineNode.instruction != null && caretOffset >= dataLineNode.instruction.start && caretOffset <= dataLineNode.instruction.stop + 1) {
-                proposals.addAll(helpProvider.fillProposals("Instruction", filterText, true));
-                containsProposals.addAll(helpProvider.fillProposals("Instruction", filterText, false));
+                proposals.addAll(helpProvider.getProposals("Instruction", filterText, true));
+                containsProposals.addAll(helpProvider.getProposals("Instruction", filterText, false));
             }
             else if (dataLineNode.instruction != null && dataLineNode.condition == null && caretOffset < dataLineNode.instruction.start) {
-                proposals.addAll(helpProvider.fillProposals("Condition", filterText, true));
-                containsProposals.addAll(helpProvider.fillProposals("Condition", filterText, false));
+                proposals.addAll(helpProvider.getProposals("Condition", filterText, true));
+                containsProposals.addAll(helpProvider.getProposals("Condition", filterText, false));
             }
             else if (dataLineNode.instruction != null && caretOffset > dataLineNode.instruction.stop + 1) {
-                if (Strings.CI.startsWith(dataLineNode.getText(), "mod")) {
-                    proposals.addAll(helpProvider.fillProposals(dataLineNode.getText().toUpperCase(), filterText, true));
-                }
-                if (node.getParent() instanceof StatementNode || node.getParent() instanceof MethodNode) {
-                    proposals.addAll(tokenMarker.getInlinePAsmProposals(node, filterText));
+                if ("FILE".equalsIgnoreCase(dataLineNode.instruction.getText())) {
+                    for (DataLineNode.ParameterNode param : dataLineNode.parameters) {
+                        if (caretOffset > param.getStartIndex() && caretOffset <= param.getStopIndex() + 1) {
+                            proposals.addAll(helpProvider.getFileProposals(filterText, true));
+                            containsProposals.addAll(helpProvider.getFileProposals(filterText, false));
+                            break;
+                        }
+                    }
                 }
                 else {
-                    proposals.addAll(tokenMarker.getPAsmProposals(node, filterText, true));
-                }
-                proposals.addAll(helpProvider.fillProposals("Registers", filterText, true));
-                proposals.addAll(tokenMarker.getConstantsProposals(filterText, true));
-                proposals.addAll(helpProvider.fillProposals("Constants", filterText, true));
+                    if (Strings.CI.startsWith(dataLineNode.getText(), "mod")) {
+                        proposals.addAll(helpProvider.getProposals(dataLineNode.getText().toUpperCase(), filterText, true));
+                    }
+                    if (node.getParent() instanceof StatementNode || node.getParent() instanceof MethodNode) {
+                        proposals.addAll(tokenMarker.getInlinePAsmProposals(node, filterText));
+                    }
+                    else {
+                        proposals.addAll(tokenMarker.getPAsmProposals(node, filterText, true));
+                    }
+                    proposals.addAll(helpProvider.getProposals("Registers", filterText, true));
+                    proposals.addAll(tokenMarker.getConstantsProposals(filterText, true));
+                    proposals.addAll(helpProvider.getProposals("Constants", filterText, true));
 
-                if (node.getParent() instanceof StatementNode || node.getParent() instanceof MethodNode) {
-                    proposals.addAll(tokenMarker.getInlinePAsmProposals(node, filterText));
+                    if (node.getParent() instanceof StatementNode || node.getParent() instanceof MethodNode) {
+                        proposals.addAll(tokenMarker.getInlinePAsmProposals(node, filterText));
+                    }
+                    else {
+                        containsProposals.addAll(tokenMarker.getPAsmProposals(node, filterText, false));
+                    }
+                    containsProposals.addAll(helpProvider.getProposals("Registers", filterText, false));
+                    containsProposals.addAll(tokenMarker.getConstantsProposals(filterText, false));
+                    containsProposals.addAll(helpProvider.getProposals("Constants", filterText, false));
                 }
-                else {
-                    containsProposals.addAll(tokenMarker.getPAsmProposals(node, filterText, false));
-                }
-                containsProposals.addAll(helpProvider.fillProposals("Registers", filterText, false));
-                containsProposals.addAll(tokenMarker.getConstantsProposals(filterText, false));
-                containsProposals.addAll(helpProvider.fillProposals("Constants", filterText, false));
             }
         }
         else if (node instanceof MethodNode methodNode) {
@@ -2422,7 +2433,7 @@ public class SourceEditor {
                 proposals.addAll(tokenMarker.getPAsmLabelProposals(node, filterText, true));
             }
             proposals.addAll(tokenMarker.getConstantsProposals(filterText, true));
-            proposals.addAll(helpProvider.fillProposals(node.getClass().getSimpleName(), filterText, true));
+            proposals.addAll(helpProvider.getProposals(node.getClass().getSimpleName(), filterText, true));
 
             if (node instanceof StatementNode || node instanceof FunctionNode) {
                 containsProposals.addAll(tokenMarker.getMethodProposals(node, filterText, false));
@@ -2432,11 +2443,11 @@ public class SourceEditor {
         }
 
         if (position == 0) {
-            proposals.addAll(helpProvider.fillProposals("Root", filterText, true));
+            proposals.addAll(helpProvider.getProposals("Root", filterText, true));
             if (tokenMarker instanceof CTokenMarker) {
                 if (node == null) {
-                    proposals.addAll(helpProvider.fillSourceProposals(filterText, true));
-                    containsProposals.addAll(helpProvider.fillSourceProposals(filterText, false));
+                    proposals.addAll(helpProvider.getSourceProposals(filterText, true));
+                    containsProposals.addAll(helpProvider.getSourceProposals(filterText, false));
                 }
             }
         }

@@ -72,9 +72,7 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
         Context localScope;
 
         for (Node n1 : root.getChilds()) {
-            if (!n1.isExclude() && (n1 instanceof DataNode)) {
-                DataNode node = (DataNode) n1;
-
+            if (!n1.isExclude() && (n1 instanceof DataNode node)) {
                 localScope = datScope;
 
                 TokenIterator iter = node.tokenIterator();
@@ -91,8 +89,7 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
                 Iterator<Node> nodeIterator = node.getChilds().iterator();
                 while (nodeIterator.hasNext()) {
                     Node n2 = nodeIterator.next();
-                    if (!n2.isExclude() && (n2 instanceof DataLineNode)) {
-                        DataLineNode lineNode = (DataLineNode) n2;
+                    if (!n2.isExclude() && (n2 instanceof DataLineNode lineNode)) {
                         try {
                             if (lineNode.instruction != null && "DITTO".equalsIgnoreCase(lineNode.instruction.getText())) {
                                 DataLineNode beginLineNode = lineNode;
@@ -104,7 +101,7 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
                                     if (!n2.isExclude() && (n2 instanceof DataLineNode)) {
                                         lineNode = (DataLineNode) n2;
                                         if ("DITTO".equalsIgnoreCase(lineNode.instruction.getText())) {
-                                            if (lineNode.parameters.size() != 0 && "END".equalsIgnoreCase(lineNode.parameters.get(0).getText())) {
+                                            if (!lineNode.parameters.isEmpty() && "END".equalsIgnoreCase(lineNode.parameters.getFirst().getText())) {
                                                 endLineNode = lineNode;
                                                 break;
                                             }
@@ -285,16 +282,25 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
                     logMessage(new CompilerException("not allowed", node.condition));
                 }
 
-                String fileName = parameters.getFirst().getString();
-                File file = compiler.getFile(fileName);
-                if (file == null) {
-                    throw new CompilerException("file \"" + fileName + "\" not found", node.parameters.getFirst());
+                Iterator<Spin2PAsmExpression> args = parameters.iterator();
+                if (args.hasNext()) {
+                    String fileName = args.next().getString();
+                    File file = compiler.getFile(fileName);
+                    if (file == null) {
+                        throw new CompilerException("file \"" + fileName + "\" not found", node.parameters.getFirst());
+                    }
+                    try {
+                        byte[] data = FileUtils.loadBinaryFromFile(file);
+                        pasmLine.setInstructionObject(new FileInc(pasmLine.getScope(), data, file));
+                    } catch (Exception e) {
+                        logMessage(new CompilerException("file \"" + fileName + "\" not found", node.parameters.getFirst()));
+                    }
+                    if (args.hasNext()) {
+                        logMessage(new CompilerException("expected one file", args.next().getData()));
+                    }
                 }
-                try {
-                    byte[] data = FileUtils.loadBinaryFromFile(file);
-                    pasmLine.setInstructionObject(new FileInc(pasmLine.getScope(), data, file));
-                } catch (Exception e) {
-                    logMessage(new CompilerException("file \"" + fileName + "\" not found", node.parameters.getFirst()));
+                else {
+                    logMessage(new CompilerException("expecting file name", node.instruction));
                 }
 
                 if (node.modifier != null) {
@@ -341,7 +347,7 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
                 if (args.hasNext()) {
                     namespace = args.next().toString() + ".";
                     if (args.hasNext()) {
-                        logMessage(new CompilerException("expected one argument", args.next()));
+                        logMessage(new CompilerException("expected one argument", args.next().getData()));
                     }
                 }
                 else {

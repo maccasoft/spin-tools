@@ -60,9 +60,7 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
         Context lineScope;
 
         for (Node n1 : root.getChilds()) {
-            if (!n1.isExclude() && (n1 instanceof DataNode)) {
-                DataNode node = (DataNode) n1;
-
+            if (!n1.isExclude() && (n1 instanceof DataNode node)) {
                 lineScope = datScope;
 
                 TokenIterator iter = node.tokenIterator();
@@ -235,16 +233,25 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
                     logMessage(new CompilerException("not allowed", node.condition));
                 }
 
-                String fileName = parameters.getFirst().getString();
-                File file = compiler.getFile(fileName);
-                if (file == null) {
-                    throw new CompilerException("file \"" + fileName + "\" not found", node.parameters.getFirst());
+                Iterator<Spin1PAsmExpression> args = parameters.iterator();
+                if (args.hasNext()) {
+                    String fileName = args.next().getString();
+                    File file = compiler.getFile(fileName);
+                    if (file == null) {
+                        throw new CompilerException("file \"" + fileName + "\" not found", node.parameters.getFirst());
+                    }
+                    try {
+                        byte[] data = FileUtils.loadBinaryFromFile(file);
+                        pasmLine.setInstructionObject(new FileInc(pasmLine.getScope(), data, file));
+                    } catch (Exception e) {
+                        logMessage(new CompilerException("file \"" + fileName + "\" not found", node.parameters.getFirst()));
+                    }
+                    if (args.hasNext()) {
+                        logMessage(new CompilerException("expected one file", args.next().getData()));
+                    }
                 }
-                try {
-                    byte[] data = FileUtils.loadBinaryFromFile(file);
-                    pasmLine.setInstructionObject(new FileInc(pasmLine.getScope(), data, file));
-                } catch (Exception e) {
-                    logMessage(new CompilerException("file \"" + fileName + "\" not found", node.parameters.getFirst()));
+                else {
+                    logMessage(new CompilerException("expecting file name", node.instruction));
                 }
 
                 if (node.modifier != null) {
@@ -260,7 +267,7 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
                 if (args.hasNext()) {
                     namespace = args.next().toString() + ".";
                     if (args.hasNext()) {
-                        logMessage(new CompilerException("expected one argument", args.next()));
+                        logMessage(new CompilerException("expected one argument", args.next().getData()));
                     }
                 }
                 else {

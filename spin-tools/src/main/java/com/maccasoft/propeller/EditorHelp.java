@@ -38,29 +38,26 @@ public class EditorHelp {
     public String getString(String context, String key) {
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         try {
-            InputStream is = EditorHelp.class.getResourceAsStream(helpFile);
-            try {
+            try (InputStream is = EditorHelp.class.getResourceAsStream(helpFile)) {
                 DocumentBuilder db = dbf.newDocumentBuilder();
                 Document doc = db.parse(is);
 
                 NodeList rootNodeList = doc.getChildNodes().item(0).getChildNodes();
                 for (int i = 0; i < rootNodeList.getLength(); i++) {
-                    if (!(rootNodeList.item(i) instanceof Element)) {
+                    if (!(rootNodeList.item(i) instanceof Element node)) {
                         continue;
                     }
-                    Element node = (Element) rootNodeList.item(i);
                     if ("section".equals(node.getTagName())) {
                         if (context != null && node.getAttribute("class").contains(context)) {
                             NodeList childList = node.getChildNodes();
                             for (int ii = 0; ii < childList.getLength(); ii++) {
-                                if (!(childList.item(ii) instanceof Element)) {
+                                if (!(childList.item(ii) instanceof Element element)) {
                                     continue;
                                 }
-                                Element element = (Element) childList.item(ii);
                                 if ("entry".equals(element.getTagName())) {
                                     String[] s = element.getAttribute("name").split(",");
-                                    for (int n = 0; n < s.length; n++) {
-                                        if (key.equalsIgnoreCase(s[n])) {
+                                    for (String string : s) {
+                                        if (key.equalsIgnoreCase(string)) {
                                             return element.getTextContent();
                                         }
                                     }
@@ -69,8 +66,6 @@ public class EditorHelp {
                         }
                     }
                 }
-            } finally {
-                is.close();
             }
 
         } catch (Exception e) {
@@ -79,7 +74,7 @@ public class EditorHelp {
         return null;
     }
 
-    public List<IContentProposal> fillProposals(String context, String filterText, boolean startsOnly) {
+    public List<IContentProposal> getProposals(String context, String filterText, boolean startsOnly) {
         List<IContentProposal> proposals = new ArrayList<IContentProposal>();
 
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -129,7 +124,7 @@ public class EditorHelp {
         return proposals;
     }
 
-    public List<IContentProposal> fillSourceProposals(String prefix, boolean startsOnly) {
+    public List<IContentProposal> getSourceProposals(String prefix, boolean startsOnly) {
         List<IContentProposal> proposals = new ArrayList<>(getSourceProposals(sourceFolder, prefix, startsOnly));
 
         File[] searchPaths = ".spin2".equals(sourceFilter) ? Preferences.getInstance().getSpin2LibraryPath() : Preferences.getInstance().getSpin1LibraryPath();
@@ -148,6 +143,35 @@ public class EditorHelp {
             for (File file : list) {
                 String fileName = file.getName();
                 String text = fileName.substring(0, Strings.CI.lastIndexOf(fileName, sourceFilter));
+                int foundAt = Strings.CI.indexOf(text, filterText);
+                if ((startsOnly && foundAt == 0) || (!startsOnly && foundAt > 0)) {
+                    proposals.add(new ContentProposal(text, text, null));
+                }
+            }
+            proposals.sort((o1, o2) -> o1.getLabel().compareToIgnoreCase(o2.getLabel()));
+        }
+
+        return proposals;
+    }
+
+    public List<IContentProposal> getFileProposals(String filterText, boolean startsOnly) {
+        List<IContentProposal> proposals = new ArrayList<>(getFileProposals(sourceFolder, filterText, startsOnly));
+
+        File[] searchPaths = ".spin2".equals(sourceFilter) ? Preferences.getInstance().getSpin2LibraryPath() : Preferences.getInstance().getSpin1LibraryPath();
+        for (File searchPath : searchPaths) {
+            proposals.addAll(getFileProposals(searchPath, filterText, startsOnly));
+        }
+
+        return proposals;
+    }
+
+    List<IContentProposal> getFileProposals(File folder, String filterText, boolean startsOnly) {
+        List<IContentProposal> proposals = new ArrayList<>();
+
+        File[] list = folder.listFiles();
+        if (list != null) {
+            for (File file : list) {
+                String text = file.getName();
                 int foundAt = Strings.CI.indexOf(text, filterText);
                 if ((startsOnly && foundAt == 0) || (!startsOnly && foundAt > 0)) {
                     proposals.add(new ContentProposal(text, text, null));
