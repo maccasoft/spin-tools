@@ -1305,7 +1305,7 @@ public abstract class SourceTokenMarker {
                             if ("NAMESP".equalsIgnoreCase(node.instruction.getText())) {
                                 namespace = !node.parameters.isEmpty() ? node.parameters.getFirst().getText() : "";
                             }
-                            if (node.label != null && namespace.isEmpty()) {
+                            if (node.label != null && namespace.isEmpty() && objectName.equalsIgnoreCase(node.label.getText())) {
                                 StructNode structNode = structs.get(node.instruction.getText());
                                 if (structNode != null) {
                                     for (Node child : structNode.getChilds()) {
