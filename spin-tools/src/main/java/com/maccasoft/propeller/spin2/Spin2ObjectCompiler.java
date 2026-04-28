@@ -400,7 +400,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
         structureStack.add(struct);
 
-        for (Member member : struct.getMembers()) {
+        for (Spin2Struct.Member member : struct.getMembers()) {
             Token type = member.getType();
             String typeText = type != null ? type.getText() : "LONG";
 
@@ -944,49 +944,73 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 }
 
                 Token type = null;
-                if (sourceLine.hasMoreTokens() && sourceLine.skipCommentsAndPeekNextToken().type == Token.KEYWORD) {
-                    type = token;
-                    token = sourceLine.skipCommentsAndGetNextToken();
+                if (".".equals(token.getText())) {
+                    Spin2Struct.Member member = struct.addMember(type, null, null);
+                    if (!sourceLine.hasMoreTokens()) {
+                        logMessage(new CompilerException("expecting identifier", token));
+                        break;
+                    }
+                    compileStructBitfieldMember(member, sourceLine);
+                    if (sourceLine.hasMoreTokens()) {
+                        token = sourceLine.skipCommentsAndGetNextToken();
+                        if (!")".equals(token.getText())) {
+                            logMessage(new CompilerException("expecting ')'", token));
+                        }
+                    }
+                    break;
                 }
-                Token memberIdentifier = token;
+                else {
+                    if (sourceLine.hasMoreTokens() && sourceLine.skipCommentsAndPeekNextToken().type == Token.KEYWORD) {
+                        type = token;
+                        token = sourceLine.skipCommentsAndGetNextToken();
+                    }
+                    Token memberIdentifier = token;
 
-                Expression memberSize = new NumberLiteral(1);
-                if (sourceLine.hasMoreTokens()) {
-                    token = sourceLine.skipCommentsAndGetNextToken();
-                    if ("[".equals(token.getText())) {
-                        if (!sourceLine.hasMoreTokens()) {
-                            throw new CompilerException("expecting expression", token);
-                        }
-                        Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope);
-                        while (sourceLine.hasMoreTokens()) {
-                            token = sourceLine.skipCommentsAndGetNextToken();
-                            if ("]".equals(token.getText())) {
-                                try {
-                                    if (builder.getTokenCount() != 0) {
-                                        memberSize = builder.getExpression();
-                                    }
-                                    else {
-                                        logMessage(new CompilerException("expecting expression", token));
-                                    }
-                                } catch (CompilerException e) {
-                                    logMessage(e);
-                                } catch (Exception e) {
-                                    logMessage(new CompilerException(e, builder.getTokens()));
-                                }
-                                break;
+                    Expression memberSize = new NumberLiteral(1);
+                    if (sourceLine.hasMoreTokens()) {
+                        token = sourceLine.skipCommentsAndGetNextToken();
+                        if ("[".equals(token.getText())) {
+                            if (!sourceLine.hasMoreTokens()) {
+                                throw new CompilerException("expecting expression", token);
                             }
-                            builder.addToken(token);
+                            Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope);
+                            while (sourceLine.hasMoreTokens()) {
+                                token = sourceLine.skipCommentsAndGetNextToken();
+                                if ("]".equals(token.getText())) {
+                                    try {
+                                        if (builder.getTokenCount() != 0) {
+                                            memberSize = builder.getExpression();
+                                        }
+                                        else {
+                                            logMessage(new CompilerException("expecting expression", token));
+                                        }
+                                    } catch (CompilerException e) {
+                                        logMessage(e);
+                                    } catch (Exception e) {
+                                        logMessage(new CompilerException(e, builder.getTokens()));
+                                    }
+                                    break;
+                                }
+                                builder.addToken(token);
+                            }
+                            if (!"]".equals(token.getText())) {
+                                logMessage(new CompilerException("expecting ']'", token));
+                            }
+                            if (sourceLine.hasMoreTokens()) {
+                                token = sourceLine.skipCommentsAndGetNextToken();
+                            }
                         }
-                        if (!"]".equals(token.getText())) {
-                            logMessage(new CompilerException("expecting ']'", token));
-                        }
+                    }
+
+                    Spin2Struct.Member member = struct.addMember(type, memberIdentifier, memberSize);
+
+                    if (".".equals(token.getText())) {
+                        compileStructBitfieldMember(member, sourceLine);
                         if (sourceLine.hasMoreTokens()) {
                             token = sourceLine.skipCommentsAndGetNextToken();
                         }
                     }
                 }
-
-                struct.addMember(type, memberIdentifier, memberSize);
 
                 if (")".equals(token.getText())) {
                     break;
@@ -1028,6 +1052,47 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
         }
         else {
             logMessage(new CompilerException("expecting '(' or '='", token));
+        }
+    }
+
+    void compileStructBitfieldMember(Member member, SourceLine sourceLine) {
+        Token token;
+
+        while (true) {
+            Token memberIdentifier = sourceLine.getNextToken();
+
+            if (!sourceLine.hasMoreTokens()) {
+                throw new CompilerException("expecting bitfield expression", memberIdentifier);
+            }
+            token = sourceLine.skipCommentsAndGetNextToken();
+            if (!"[".equals(token.getText())) {
+                throw new CompilerException("expecting '['", token);
+            }
+            if (!sourceLine.hasMoreTokens()) {
+                throw new CompilerException("expecting expression", token);
+            }
+            Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope);
+            while (sourceLine.hasMoreTokens()) {
+                token = sourceLine.skipCommentsAndGetNextToken();
+                if ("]".equals(token.getText())) {
+                    break;
+                }
+                builder.addToken(token);
+            }
+            try {
+                member.addMember(memberIdentifier, builder.getExpression());
+            } catch (CompilerException e) {
+                logMessage(e);
+            } catch (Exception e) {
+                logMessage(new CompilerException(e, builder.getTokens()));
+            }
+            if (!"]".equals(token.getText())) {
+                throw new CompilerException("expecting ']'", token);
+            }
+            if (!sourceLine.hasMoreTokens() || !".".equals(sourceLine.skipCommentsAndPeekNextToken().getText())) {
+                break;
+            }
+            sourceLine.skipCommentsAndGetNextToken();
         }
     }
 
@@ -1178,7 +1243,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
     }
 
     void compileStructureVariable(Variable target, Spin2Struct struct) {
-        for (Member member : struct.getMembers()) {
+        for (Spin2Struct.Member member : struct.getMembers()) {
             String memberType = "LONG";
             Spin2Struct memberStruct = null;
 

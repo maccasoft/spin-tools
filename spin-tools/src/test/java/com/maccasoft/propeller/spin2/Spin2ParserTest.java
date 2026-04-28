@@ -778,6 +778,7 @@ class Spin2ParserTest {
             + "CON\n"
             + "    sPoint(x, y)\n"
             + "    sLine(sPoint a, sPoint b, BYTE color)\n"
+            + "    sPolygon(sPoint points[10], BYTE color)\n"
             + "");
 
         Node root = subject.parse();
@@ -791,28 +792,29 @@ class Spin2ParserTest {
             + "        +-- Member type=sPoint identifier=a [sPoint a]\n"
             + "        +-- Member type=sPoint identifier=b [sPoint b]\n"
             + "        +-- Member type=BYTE identifier=color [BYTE color]\n"
+            + "    +-- StructNode identifier=sPolygon [sPolygon(sPoint points[10], BYTE color)]\n"
+            + "        +-- Member type=sPoint identifier=points [sPoint points[10]]\n"
+            + "            +-- size = ExpressionNode [10]\n"
+            + "        +-- Member type=BYTE identifier=color [BYTE color]\n"
             + "", tree(root));
     }
 
     @Test
-    void testStructureDeclaration() throws Exception {
+    void testStructureMemberBitfield() throws Exception {
         Spin2Parser subject = new Spin2Parser(""
             + "CON\n"
-            + "    struct sPoint(x, y)\n"
-            + "    struct sLine(sPoint a, sPoint b, BYTE color)\n"
+            + "    sPoint(long .x[9..0] .y[19..10)\n"
             + "");
 
         Node root = subject.parse();
         Assertions.assertEquals(""
             + "RootNode []\n"
             + "+-- ConstantsNode [CON]\n"
-            + "    +-- StructNode type=struct identifier=sPoint [struct sPoint(x, y)]\n"
-            + "        +-- Member identifier=x [x]\n"
-            + "        +-- Member identifier=y [y]\n"
-            + "    +-- StructNode type=struct identifier=sLine [struct sLine(sPoint a, sPoint b, BYTE color)]\n"
-            + "        +-- Member type=sPoint identifier=a [sPoint a]\n"
-            + "        +-- Member type=sPoint identifier=b [sPoint b]\n"
-            + "        +-- Member type=BYTE identifier=color [BYTE color]\n"
+            + "    +-- StructNode identifier=sPoint [sPoint(long .x[9..0] .y[19..10)]\n"
+            + "        +-- Member type=long identifier=.x [long .x[9..0]]\n"
+            + "            +-- size = ExpressionNode [9..0]\n"
+            + "        +-- Member identifier=.y [.y[19..10)]\n"
+            + "            +-- size = ExpressionNode [19..10)]\n"
             + "", tree(root));
     }
 

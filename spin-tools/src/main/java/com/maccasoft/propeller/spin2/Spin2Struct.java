@@ -12,8 +12,10 @@ package com.maccasoft.propeller.spin2;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.maccasoft.propeller.expressions.AddpinsRange;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.Expression;
+import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.model.Token;
 
 public class Spin2Struct {
@@ -25,11 +27,13 @@ public class Spin2Struct {
         Expression size;
 
         int offset;
+        List<Member> members;
 
         public Member(Token type, Token identifier, Expression size) {
             this.type = type;
             this.identifier = identifier;
             this.size = size;
+            this.members = new ArrayList<>();
         }
 
         public Token getType() {
@@ -41,7 +45,16 @@ public class Spin2Struct {
         }
 
         public Expression getSize() {
-            return size;
+            return size instanceof AddpinsRange ? new NumberLiteral(1) : size;
+        }
+
+        public int getBitfield() {
+            if (size instanceof AddpinsRange addPins) {
+                int arg0 = addPins.getTerm1().getNumber().intValue();
+                int arg1 = addPins.getTerm2().getNumber().intValue();
+                return ((arg0 - arg1) & 0x1F) << 5 | arg1;
+            }
+            return -1;
         }
 
         public int getOffset() {
@@ -63,6 +76,41 @@ public class Spin2Struct {
             return struct;
         }
 
+        public boolean hasBitfields() {
+            return !members.isEmpty();
+        }
+
+        public void addMember(Token identifier, Expression size) {
+            members.add(new Member(type, identifier, size));
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+
+            if (type != null) {
+                sb.append(type.getText()).append(" ");
+            }
+            if (identifier != null) {
+                if (size instanceof AddpinsRange) {
+                    sb.append(".");
+                }
+                sb.append(identifier.getText());
+            }
+            if (size != null) {
+                sb.append("[").append(size).append("]");
+            }
+
+            for (Member member : members) {
+                if (!sb.isEmpty()) {
+                    sb.append(" ");
+                }
+                sb.append(member);
+            }
+
+            return sb.toString();
+        }
+
     }
 
     Context scope;
@@ -80,17 +128,10 @@ public class Spin2Struct {
         this.members = new ArrayList<>(orig.getMembers());
     }
 
-    public boolean containsMember(Token identifier) {
-        for (Member m : members) {
-            if (m.identifier.getText().equalsIgnoreCase(identifier.getText())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public void addMember(Token type, Token identifier, Expression size) {
-        members.add(new Member(type, identifier, size));
+    public Member addMember(Token type, Token identifier, Expression size) {
+        Member member = new Member(type, identifier, size);
+        members.add(member);
+        return member;
     }
 
     public List<Member> getMembers() {
@@ -106,12 +147,31 @@ public class Spin2Struct {
     }
 
     public Member getMember(String identifier) {
-        for (Member m : members) {
-            if (m.identifier.getText().equalsIgnoreCase(identifier)) {
-                return m;
+        for (Member top : members) {
+            if (top.identifier != null && top.identifier.getText().equalsIgnoreCase(identifier)) {
+                return top;
+            }
+            for (Member bitfield : top.members) {
+                if (bitfield.identifier != null && bitfield.identifier.getText().equalsIgnoreCase(identifier)) {
+                    return bitfield;
+                }
             }
         }
         return null;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+
+        for (Member member : members) {
+            if (!sb.isEmpty()) {
+                sb.append(", ");
+            }
+            sb.append(member);
+        }
+
+        return sb.toString();
     }
 
 }

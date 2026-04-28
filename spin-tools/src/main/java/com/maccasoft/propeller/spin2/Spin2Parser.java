@@ -351,6 +351,7 @@ public class Spin2Parser extends Parser {
 
     protected void parseConstant(Node parent, SourceLine sourceLine) {
         int state = 1;
+        Token identifier = null;
         ConstantNode node = null;
         StructNode structNode = null;
         Member member = null;
@@ -365,6 +366,15 @@ public class Spin2Parser extends Parser {
                     root.addComment(token);
                 }
                 continue;
+            }
+            if (state != 1) {
+                if (".".equals(token.getText())) {
+                    if ((nextToken = sourceLine.peekNextToken()) != null) {
+                        if (nextToken.type != Token.OPERATOR && token.isAdjacent(nextToken)) {
+                            token = token.merge(sourceLine.getNextToken());
+                        }
+                    }
+                }
             }
             switch (state) {
                 case 0:
@@ -384,25 +394,7 @@ public class Spin2Parser extends Parser {
                 case 1:
                     if ("struct".equalsIgnoreCase(token.getText())) {
                         structNode = new StructNode(parent, token, null);
-                        token = sourceLine.getNextToken();
-                        if (token == null || token.type == Token.NL) {
-                            break;
-                        }
-                        structNode.identifier = token;
-                        structNode.addToken(token);
-                        root.addStruct(structNode);
-                        if ((nextToken = sourceLine.peekNextToken()) != null) {
-                            if ("(".equals(nextToken.getText())) {
-                                structNode.addToken(sourceLine.getNextToken());
-                                state = 7;
-                                break;
-                            }
-                            if ("=".equals(nextToken.getText())) {
-                                structNode.addToken(sourceLine.getNextToken());
-                                state = 9;
-                                break;
-                            }
-                        }
+                        state = 12;
                         break;
                     }
                     if ("#".equals(token.getText())) {
@@ -412,17 +404,7 @@ public class Spin2Parser extends Parser {
                         state = 2;
                         break;
                     }
-                    if ((nextToken = sourceLine.peekNextToken()) != null && "(".equals(nextToken.getText())) {
-                        structNode = new StructNode(parent, token);
-                        structNode.addToken(sourceLine.getNextToken());
-                        root.addStruct(structNode);
-                        state = 7;
-                        break;
-                    }
-                    node = new ConstantNode(parent);
-                    node.identifier = token;
-                    node.addToken(token);
-                    root.addConstant(node);
+                    identifier = token;
                     state = 4;
                     break;
                 case 2:
@@ -448,6 +430,17 @@ public class Spin2Parser extends Parser {
                     node.step.addToken(token);
                     break;
                 case 4:
+                    if ("(".equalsIgnoreCase(token.getText())) {
+                        structNode = new StructNode(parent, identifier);
+                        structNode.addToken(token);
+                        root.addStruct(structNode);
+                        identifier = null;
+                        state = 7;
+                        break;
+                    }
+                    node = new ConstantNode(parent, identifier);
+                    root.addConstant(node);
+                    identifier = null;
                     if (",".equals(token.getText())) {
                         node = null;
                         state = 1;
@@ -480,16 +473,19 @@ public class Spin2Parser extends Parser {
                     }
                     node.multiplier.addToken(token);
                     break;
+
                 case 7:
                     if (")".equals(token.getText())) {
                         structNode.addToken(token);
                         state = 0;
                         break;
                     }
-                    member = new StructNode.Member(structNode);
-                    member.identifier = token;
-                    member.addToken(token);
-                    state = 8;
+                    if (token.type == Token.KEYWORD) {
+                        member = new StructNode.Member(structNode, token);
+                        state = 8;
+                        break;
+                    }
+                    structNode.addToken(token);
                     break;
                 case 8:
                     if (")".equals(token.getText())) {
@@ -502,13 +498,85 @@ public class Spin2Parser extends Parser {
                         state = 7;
                         break;
                     }
-                    if (member.type == null) {
+                    member.addToken(token);
+                    if (token.type == Token.KEYWORD && member.type == null) {
                         member.type = member.identifier;
                         member.identifier = token;
+                        state = 9;
+                        break;
                     }
-                    member.addToken(token);
+                    if ("[".equals(token.getText())) {
+                        member.size = new ExpressionNode(member);
+                        state = 10;
+                        break;
+                    }
                     break;
                 case 9:
+                    if (")".equals(token.getText())) {
+                        structNode.addToken(token);
+                        state = 0;
+                        break;
+                    }
+                    if (",".equals(token.getText())) {
+                        structNode.addToken(token);
+                        state = 7;
+                        break;
+                    }
+                    member.addToken(token);
+                    if ("[".equals(token.getText())) {
+                        member.size = new ExpressionNode(member);
+                        state = 10;
+                        break;
+                    }
+                    break;
+                case 10:
+                    if ("]".equals(token.getText())) {
+                        member.addToken(token);
+                        state = 11;
+                        break;
+                    }
+                    member.size.addToken(token);
+                    break;
+                case 11:
+                    if (token.type == Token.KEYWORD) {
+                        member = new StructNode.Member(structNode, token);
+                        state = 8;
+                        break;
+                    }
+                    if (")".equals(token.getText())) {
+                        structNode.addToken(token);
+                        state = 0;
+                        break;
+                    }
+                    if (",".equals(token.getText())) {
+                        structNode.addToken(token);
+                        state = 7;
+                        break;
+                    }
+                    member.size.addToken(token);
+                    break;
+
+                case 12:
+                    structNode.addToken(token);
+                    if (token.type == Token.KEYWORD) {
+                        structNode.identifier = token;
+                        root.addStruct(structNode);
+                        state = 13;
+                        break;
+                    }
+                    break;
+                case 13:
+                    structNode.addToken(token);
+                    if ("(".equalsIgnoreCase(token.getText())) {
+                        state = 7;
+                        break;
+                    }
+                    if ("=".equalsIgnoreCase(token.getText())) {
+                        state = 14;
+                        break;
+                    }
+                    break;
+                case 14:
                     if (",".equals(token.getText())) {
                         structNode = null;
                         node = null;
@@ -518,6 +586,11 @@ public class Spin2Parser extends Parser {
                     structNode.addToken(token);
                     break;
             }
+        }
+
+        if (identifier != null) {
+            node = new ConstantNode(parent, identifier);
+            root.addConstant(node);
         }
 
         while ((token = sourceLine.getNextToken()) != null) {

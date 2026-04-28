@@ -22,6 +22,14 @@ public class StructNode extends Node {
             super(parent);
         }
 
+        public Member(Node parent, Token identifier) {
+            super(parent);
+            this.identifier = identifier;
+            if (identifier != null) {
+                addToken(identifier);
+            }
+        }
+
         public Token getModifier() {
             return modifier;
         }

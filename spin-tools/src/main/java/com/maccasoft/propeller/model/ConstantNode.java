@@ -22,6 +22,14 @@ public class ConstantNode extends Node {
         super(parent);
     }
 
+    public ConstantNode(Node parent, Token identifier) {
+        super(parent);
+        this.identifier = identifier;
+        if (identifier != null) {
+            tokens.add(identifier);
+        }
+    }
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visitConstant(this);
