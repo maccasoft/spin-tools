@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.internal;
@@ -115,6 +114,7 @@ class StyledTextContentAdapterTest {
         control.setText(text.replace("|", ""));
         control.setCaretOffset(caretOffset);
 
+        String content = "short";
         String expectedText = ""
             + "PUB start\n"
             + "\n"
@@ -125,7 +125,7 @@ class StyledTextContentAdapterTest {
         int expectedCaretOffset = expectedText.indexOf("|");
 
         StyledTextContentAdapter subject = new StyledTextContentAdapter();
-        subject.setControlContents(control, "short", subject.getCursorPosition(control));
+        subject.setControlContents(control, content, content.length());
 
         Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
         Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
@@ -146,6 +146,7 @@ class StyledTextContentAdapterTest {
         control.setText(text.replace("|", ""));
         control.setCaretOffset(caretOffset);
 
+        String content = "longmethod";
         String expectedText = ""
             + "PUB start\n"
             + "\n"
@@ -156,7 +157,7 @@ class StyledTextContentAdapterTest {
         int expectedCaretOffset = expectedText.indexOf("|");
 
         StyledTextContentAdapter subject = new StyledTextContentAdapter();
-        subject.setControlContents(control, "longmethod", subject.getCursorPosition(control));
+        subject.setControlContents(control, content, content.length());
 
         Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
         Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
@@ -177,9 +178,7 @@ class StyledTextContentAdapterTest {
         control.setText(text.replace("|", ""));
         control.setCaretOffset(caretOffset);
 
-        StyledTextContentAdapter subject = new StyledTextContentAdapter();
-        subject.setControlContents(control, "method(arg0,arg1)", subject.getCursorPosition(control));
-
+        String content = "method(arg0,arg1)";
         String expectedText = ""
             + "PUB start\n"
             + "\n"
@@ -188,6 +187,9 @@ class StyledTextContentAdapterTest {
             + "        method2(arg0)\n"
             + "\n";
         int expectedCaretOffset = expectedText.indexOf("|");
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
+        subject.setControlContents(control, content, content.indexOf('(') + 1);
 
         Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
         Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
@@ -208,9 +210,7 @@ class StyledTextContentAdapterTest {
         control.setText(text.replace("|", ""));
         control.setCaretOffset(caretOffset);
 
-        StyledTextContentAdapter subject = new StyledTextContentAdapter();
-        subject.setControlContents(control, "method(arg0,arg1)", subject.getCursorPosition(control));
-
+        String content = "method(arg0,arg1)";
         String expectedText = ""
             + "PUB start\n"
             + "\n"
@@ -219,6 +219,9 @@ class StyledTextContentAdapterTest {
             + "        method(|arg0)\n"
             + "\n";
         int expectedCaretOffset = expectedText.indexOf("|");
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
+        subject.setControlContents(control, content, content.indexOf('(') + 1);
 
         Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
         Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
@@ -239,9 +242,7 @@ class StyledTextContentAdapterTest {
         control.setText(text.replace("|", ""));
         control.setCaretOffset(caretOffset);
 
-        StyledTextContentAdapter subject = new StyledTextContentAdapter();
-        subject.setControlContents(control, "array[0]", subject.getCursorPosition(control));
-
+        String content = "array[0]";
         String expectedText = ""
             + "PUB start\n"
             + "\n"
@@ -250,6 +251,9 @@ class StyledTextContentAdapterTest {
             + "        method2(arg0)\n"
             + "\n";
         int expectedCaretOffset = expectedText.indexOf("|");
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
+        subject.setControlContents(control, content, content.indexOf('[') + 1);
 
         Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
         Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
@@ -270,9 +274,7 @@ class StyledTextContentAdapterTest {
         control.setText(text.replace("|", ""));
         control.setCaretOffset(caretOffset);
 
-        StyledTextContentAdapter subject = new StyledTextContentAdapter();
-        subject.setControlContents(control, "method(arg0,arg1)", subject.getCursorPosition(control));
-
+        String content = "method(arg0,arg1)";
         String expectedText = ""
             + "PUB start\n"
             + "\n"
@@ -281,6 +283,9 @@ class StyledTextContentAdapterTest {
             + "        method2(arg0)\n"
             + "\n";
         int expectedCaretOffset = expectedText.indexOf("|");
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
+        subject.setControlContents(control, content, content.indexOf('(') + 1);
 
         Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
         Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
@@ -301,9 +306,7 @@ class StyledTextContentAdapterTest {
         control.setText(text.replace("|", ""));
         control.setCaretOffset(caretOffset);
 
-        StyledTextContentAdapter subject = new StyledTextContentAdapter();
-        subject.setControlContents(control, "object2", subject.getCursorPosition(control));
-
+        String content = "object2";
         String expectedText = ""
             + "PUB start\n"
             + "\n"
@@ -312,6 +315,9 @@ class StyledTextContentAdapterTest {
             + "        method2(arg0)\n"
             + "\n";
         int expectedCaretOffset = expectedText.indexOf("|");
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
+        subject.setControlContents(control, content, content.length());
 
         Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
         Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
@@ -332,9 +338,7 @@ class StyledTextContentAdapterTest {
         control.setText(text.replace("|", ""));
         control.setCaretOffset(caretOffset);
 
-        StyledTextContentAdapter subject = new StyledTextContentAdapter();
-        subject.setControlContents(control, "CONSTANT", subject.getCursorPosition(control));
-
+        String content = "CONSTANT";
         String expectedText = ""
             + "PUB start\n"
             + "\n"
@@ -343,6 +347,9 @@ class StyledTextContentAdapterTest {
             + "        method2(arg0)\n"
             + "\n";
         int expectedCaretOffset = expectedText.indexOf("|");
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
+        subject.setControlContents(control, content, content.length());
 
         Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
         Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
@@ -363,9 +370,7 @@ class StyledTextContentAdapterTest {
         control.setText(text.replace("|", ""));
         control.setCaretOffset(caretOffset);
 
-        StyledTextContentAdapter subject = new StyledTextContentAdapter();
-        subject.setControlContents(control, "object.method(arg0,arg1)", subject.getCursorPosition(control));
-
+        String content = "object.method(arg0,arg1)";
         String expectedText = ""
             + "PUB start\n"
             + "\n"
@@ -374,6 +379,9 @@ class StyledTextContentAdapterTest {
             + "        method2(arg0)\n"
             + "\n";
         int expectedCaretOffset = expectedText.indexOf("|");
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
+        subject.setControlContents(control, content, content.indexOf('(') + 1);
 
         Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
         Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
@@ -394,9 +402,7 @@ class StyledTextContentAdapterTest {
         control.setText(text.replace("|", ""));
         control.setCaretOffset(caretOffset);
 
-        StyledTextContentAdapter subject = new StyledTextContentAdapter();
-        subject.setControlContents(control, "object#CONSTANT", subject.getCursorPosition(control));
-
+        String content = "object#CONSTANT";
         String expectedText = ""
             + "PUB start\n"
             + "\n"
@@ -405,6 +411,9 @@ class StyledTextContentAdapterTest {
             + "        method2(arg0)\n"
             + "\n";
         int expectedCaretOffset = expectedText.indexOf("|");
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
+        subject.setControlContents(control, content, content.length());
 
         Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
         Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
@@ -425,9 +434,7 @@ class StyledTextContentAdapterTest {
         control.setText(text.replace("|", ""));
         control.setCaretOffset(caretOffset);
 
-        StyledTextContentAdapter subject = new StyledTextContentAdapter();
-        subject.setControlContents(control, "method(arg0,arg1)", subject.getCursorPosition(control));
-
+        String content = "method(arg0,arg1)";
         String expectedText = ""
             + "PUB start\n"
             + "\n"
@@ -436,6 +443,9 @@ class StyledTextContentAdapterTest {
             + "        method2(arg0)\n"
             + "\n";
         int expectedCaretOffset = expectedText.indexOf("|");
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
+        subject.setControlContents(control, content, content.indexOf('(') + 1);
 
         Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
         Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
@@ -456,9 +466,7 @@ class StyledTextContentAdapterTest {
         control.setText(text.replace("|", ""));
         control.setCaretOffset(caretOffset);
 
-        StyledTextContentAdapter subject = new StyledTextContentAdapter();
-        subject.setControlContents(control, "object[0].method(arg0,arg1)", subject.getCursorPosition(control));
-
+        String content = "object[0].method(arg0,arg1)";
         String expectedText = ""
             + "PUB start\n"
             + "\n"
@@ -467,6 +475,9 @@ class StyledTextContentAdapterTest {
             + "        method2(arg0)\n"
             + "\n";
         int expectedCaretOffset = expectedText.indexOf("|");
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
+        subject.setControlContents(control, content, content.indexOf('(') + 1);
 
         Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
         Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
@@ -487,9 +498,7 @@ class StyledTextContentAdapterTest {
         control.setText(text.replace("|", ""));
         control.setCaretOffset(caretOffset);
 
-        StyledTextContentAdapter subject = new StyledTextContentAdapter();
-        subject.setControlContents(control, "object2", subject.getCursorPosition(control));
-
+        String content = "object2";
         String expectedText = ""
             + "PUB start\n"
             + "\n"
@@ -498,6 +507,9 @@ class StyledTextContentAdapterTest {
             + "    method2(arg0)\n"
             + "\n";
         int expectedCaretOffset = expectedText.indexOf("|");
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
+        subject.setControlContents(control, content, content.length());
 
         Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
         Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
@@ -519,9 +531,7 @@ class StyledTextContentAdapterTest {
         control.setText(text.replace("|", ""));
         control.setCaretOffset(caretOffset);
 
-        StyledTextContentAdapter subject = new StyledTextContentAdapter();
-        subject.setControlContents(control, ":local", subject.getCursorPosition(control));
-
+        String content = ":local";
         String expectedText = ""
             + "DAT\n"
             + "\n"
@@ -531,6 +541,9 @@ class StyledTextContentAdapterTest {
             + "    ret\n"
             + "\n";
         int expectedCaretOffset = expectedText.indexOf("|");
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
+        subject.setControlContents(control, content, content.length());
 
         Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
         Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
@@ -552,9 +565,7 @@ class StyledTextContentAdapterTest {
         control.setText(text.replace("|", ""));
         control.setCaretOffset(caretOffset);
 
-        StyledTextContentAdapter subject = new StyledTextContentAdapter();
-        subject.setControlContents(control, ".local", subject.getCursorPosition(control));
-
+        String content = ".local";
         String expectedText = ""
             + "DAT\n"
             + "\n"
@@ -564,6 +575,9 @@ class StyledTextContentAdapterTest {
             + "    ret\n"
             + "\n";
         int expectedCaretOffset = expectedText.indexOf("|");
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
+        subject.setControlContents(control, content, content.length());
 
         Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
         Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
@@ -583,9 +597,7 @@ class StyledTextContentAdapterTest {
         control.setText(text.replace("|", ""));
         control.setCaretOffset(caretOffset);
 
-        StyledTextContentAdapter subject = new StyledTextContentAdapter();
-        subject.setControlContents(control, "proga.start", subject.getCursorPosition(control));
-
+        String content = "proga.start";
         String expectedText = ""
             + "PUB start\n"
             + "\n"
@@ -593,6 +605,9 @@ class StyledTextContentAdapterTest {
             + "    repeat\n"
             + "\n";
         int expectedCaretOffset = expectedText.indexOf("|");
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
+        subject.setControlContents(control, content, content.length());
 
         Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
         Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
@@ -612,9 +627,7 @@ class StyledTextContentAdapterTest {
         control.setText(text.replace("|", ""));
         control.setCaretOffset(caretOffset);
 
-        StyledTextContentAdapter subject = new StyledTextContentAdapter();
-        subject.setControlContents(control, "proga.start", subject.getCursorPosition(control));
-
+        String content = "proga.start";
         String expectedText = ""
             + "PUB start\n"
             + "\n"
@@ -622,6 +635,9 @@ class StyledTextContentAdapterTest {
             + "    repeat\n"
             + "\n";
         int expectedCaretOffset = expectedText.indexOf("|");
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
+        subject.setControlContents(control, content, content.length());
 
         Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
         Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
@@ -641,9 +657,7 @@ class StyledTextContentAdapterTest {
         control.setText(text.replace("|", ""));
         control.setCaretOffset(caretOffset);
 
-        StyledTextContentAdapter subject = new StyledTextContentAdapter();
-        subject.setControlContents(control, "proga.start", subject.getCursorPosition(control));
-
+        String content = "proga.start";
         String expectedText = ""
             + "PUB start\n"
             + "\n"
@@ -651,6 +665,9 @@ class StyledTextContentAdapterTest {
             + "    repeat\n"
             + "\n";
         int expectedCaretOffset = expectedText.indexOf("|");
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
+        subject.setControlContents(control, content, content.length());
 
         Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
         Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
