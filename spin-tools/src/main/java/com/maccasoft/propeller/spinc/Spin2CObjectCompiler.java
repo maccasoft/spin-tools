@@ -60,7 +60,7 @@ import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
 import com.maccasoft.propeller.spin2.Spin2PAsmLine;
 import com.maccasoft.propeller.spin2.Spin2StatementNode;
 import com.maccasoft.propeller.spin2.Spin2Struct;
-import com.maccasoft.propeller.spin2.Spin2Struct.Spin2StructMember;
+import com.maccasoft.propeller.spin2.Spin2Struct.Member;
 import com.maccasoft.propeller.spin2.bytecode.Address;
 import com.maccasoft.propeller.spin2.bytecode.Bytecode;
 import com.maccasoft.propeller.spin2.bytecode.CaseJmp;
@@ -202,7 +202,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
         for (Spin2Struct struct : objectStructures) {
             int offset = 0;
 
-            for (Spin2StructMember member : struct.getMembers()) {
+            for (Member member : struct.getMembers()) {
                 Token type = member.getType();
                 String typeText = type != null ? type.getText() : "LONG";
 
@@ -761,7 +761,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
     }
 
     void compileStructureVariable(Variable target, Spin2Struct struct) {
-        for (Spin2StructMember member : struct.getMembers()) {
+        for (Member member : struct.getMembers()) {
             String memberType = "LONG";
 
             if (member.getType() != null) {

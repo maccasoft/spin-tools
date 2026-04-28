@@ -59,7 +59,7 @@ import com.maccasoft.propeller.model.TokenIterator;
 import com.maccasoft.propeller.model.VariablesNode;
 import com.maccasoft.propeller.spin2.Spin2Debug.DebugDataObject;
 import com.maccasoft.propeller.spin2.Spin2Object.Spin2LinkDataObject;
-import com.maccasoft.propeller.spin2.Spin2Struct.Spin2StructMember;
+import com.maccasoft.propeller.spin2.Spin2Struct.Member;
 import com.maccasoft.propeller.spin2.bytecode.Address;
 import com.maccasoft.propeller.spin2.bytecode.Bytecode;
 import com.maccasoft.propeller.spin2.bytecode.CaseFastJmp;
@@ -400,7 +400,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
         structureStack.add(struct);
 
-        for (Spin2StructMember member : struct.getMembers()) {
+        for (Member member : struct.getMembers()) {
             Token type = member.getType();
             String typeText = type != null ? type.getText() : "LONG";
 
@@ -1178,7 +1178,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
     }
 
     void compileStructureVariable(Variable target, Spin2Struct struct) {
-        for (Spin2StructMember member : struct.getMembers()) {
+        for (Member member : struct.getMembers()) {
             String memberType = "LONG";
             Spin2Struct memberStruct = null;
 

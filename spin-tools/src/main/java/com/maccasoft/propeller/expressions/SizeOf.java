@@ -12,7 +12,7 @@ package com.maccasoft.propeller.expressions;
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.spin2.Spin2Struct;
-import com.maccasoft.propeller.spin2.Spin2Struct.Spin2StructMember;
+import com.maccasoft.propeller.spin2.Spin2Struct.Member;
 
 public class SizeOf extends Expression {
 
@@ -54,7 +54,7 @@ public class SizeOf extends Expression {
 
             int index = 1;
             while (index < identifier.length) {
-                Spin2StructMember member = struct.getMember(identifier[index++]);
+                Member member = struct.getMember(identifier[index++]);
                 if (member == null) {
                     throw new CompilerException("expecting structure member", name);
                 }

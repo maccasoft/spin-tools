@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2;
@@ -19,20 +18,15 @@ import com.maccasoft.propeller.model.Token;
 
 public class Spin2Struct {
 
-    int typeSize;
-    List<Spin2StructMember> members;
+    public class Member {
 
-    Context scope;
+        Token type;
+        Token identifier;
+        Expression size;
 
-    public class Spin2StructMember {
+        int offset;
 
-        private Token type;
-        private Token identifier;
-        private Expression size;
-
-        private int offset;
-
-        public Spin2StructMember(Token type, Token identifier, Expression size) {
+        public Member(Token type, Token identifier, Expression size) {
             this.type = type;
             this.identifier = identifier;
             this.size = size;
@@ -71,6 +65,11 @@ public class Spin2Struct {
 
     }
 
+    Context scope;
+
+    int typeSize;
+    List<Member> members;
+
     public Spin2Struct(Context context) {
         this.scope = context;
         this.members = new ArrayList<>();
@@ -82,7 +81,7 @@ public class Spin2Struct {
     }
 
     public boolean containsMember(Token identifier) {
-        for (Spin2StructMember m : members) {
+        for (Member m : members) {
             if (m.identifier.getText().equalsIgnoreCase(identifier.getText())) {
                 return true;
             }
@@ -91,10 +90,10 @@ public class Spin2Struct {
     }
 
     public void addMember(Token type, Token identifier, Expression size) {
-        members.add(new Spin2StructMember(type, identifier, size));
+        members.add(new Member(type, identifier, size));
     }
 
-    public List<Spin2StructMember> getMembers() {
+    public List<Member> getMembers() {
         return members;
     }
 
@@ -106,8 +105,8 @@ public class Spin2Struct {
         this.typeSize = typeSize;
     }
 
-    public Spin2StructMember getMember(String identifier) {
-        for (Spin2StructMember m : members) {
+    public Member getMember(String identifier) {
+        for (Member m : members) {
             if (m.identifier.getText().equalsIgnoreCase(identifier)) {
                 return m;
             }

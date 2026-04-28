@@ -78,7 +78,7 @@ import com.maccasoft.propeller.spin2.Spin2Model;
 import com.maccasoft.propeller.spin2.Spin2PasmCompiler;
 import com.maccasoft.propeller.spin2.Spin2StatementNode;
 import com.maccasoft.propeller.spin2.Spin2Struct;
-import com.maccasoft.propeller.spin2.Spin2Struct.Spin2StructMember;
+import com.maccasoft.propeller.spin2.Spin2Struct.Member;
 import com.maccasoft.propeller.spin2.bytecode.Address;
 import com.maccasoft.propeller.spin2.bytecode.BitField;
 import com.maccasoft.propeller.spin2.bytecode.Bytecode;
@@ -3018,7 +3018,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
 
             String[] ar = varNode.getText().split("[\\.]");
             for (int i = 1; i < ar.length; i++) {
-                Spin2StructMember member = struct.getMember(ar[i]);
+                Member member = struct.getMember(ar[i]);
                 if (member == null) {
                     throw new CompilerException("undefined symbol " + varNode.getText(), varNode.getToken());
                 }
