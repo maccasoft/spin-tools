@@ -481,7 +481,21 @@ public class Spin2Parser extends Parser {
                         break;
                     }
                     if (token.type == Token.KEYWORD) {
-                        member = new StructNode.Member(structNode, token);
+                        int dot = token.getText().indexOf('.');
+                        if (dot > 0) {
+                            Token type = new Token(token.getStream(), token.start, token.line, token.column, Token.KEYWORD, token.getText().substring(0, dot));
+                            Token bitfieldIdentifier = new Token(token.getStream(), token.start + dot, token.line, token.column + dot, Token.KEYWORD, token.getText().substring(dot));
+                            if (Spin2Model.isType(type.getText())) {
+                                new StructNode.Member(structNode, type, null);
+                            }
+                            else {
+                                new StructNode.Member(structNode, null, type);
+                            }
+                            member = new StructNode.Member(structNode, null, bitfieldIdentifier);
+                        }
+                        else {
+                            member = new StructNode.Member(structNode, token);
+                        }
                         state = 8;
                         break;
                     }
@@ -498,13 +512,23 @@ public class Spin2Parser extends Parser {
                         state = 7;
                         break;
                     }
-                    member.addToken(token);
                     if (token.type == Token.KEYWORD && member.type == null) {
                         member.type = member.identifier;
-                        member.identifier = token;
+                        int dot = token.getText().indexOf('.');
+                        if (dot > 0) {
+                            member.identifier = new Token(token.getStream(), token.start, token.line, token.column, Token.KEYWORD, token.getText().substring(0, dot));
+                            member.addToken(member.identifier);
+                            Token bitfieldIdentifier = new Token(token.getStream(), token.start + dot, token.line, token.column + dot, Token.KEYWORD, token.getText().substring(dot));
+                            member = new StructNode.Member(structNode, null, bitfieldIdentifier);
+                        }
+                        else {
+                            member.identifier = token;
+                            member.addToken(token);
+                        }
                         state = 9;
                         break;
                     }
+                    member.addToken(token);
                     if ("[".equals(token.getText())) {
                         member.size = new ExpressionNode(member);
                         state = 10;

@@ -4731,9 +4731,9 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 bitfield = compileBitfield(context, method, bitfieldNode, source);
             }
 
-            Size ss = switch (varType.toUpperCase()) {
-                case "BYTE" -> Size.Byte;
-                case "WORD" -> Size.Word;
+            Size ss = switch (lastMemberSize) {
+                case 1 -> Size.Byte;
+                case 2 -> Size.Word;
                 default -> Size.Long;
             };
 

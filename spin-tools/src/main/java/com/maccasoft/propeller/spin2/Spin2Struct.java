@@ -27,7 +27,7 @@ public class Spin2Struct {
         Expression size;
 
         int offset;
-        List<Member> members;
+        List<BitfieldMember> members;
 
         public Member(Token type, Token identifier, Expression size) {
             this.type = type;
@@ -45,15 +45,10 @@ public class Spin2Struct {
         }
 
         public Expression getSize() {
-            return size instanceof AddpinsRange ? new NumberLiteral(1) : size;
+            return size;
         }
 
         public int getBitfield() {
-            if (size instanceof AddpinsRange addPins) {
-                int arg0 = addPins.getTerm1().getNumber().intValue();
-                int arg1 = addPins.getTerm2().getNumber().intValue();
-                return ((arg0 - arg1) & 0x1F) << 5 | arg1;
-            }
             return -1;
         }
 
@@ -81,7 +76,7 @@ public class Spin2Struct {
         }
 
         public void addMember(Token identifier, Expression size) {
-            members.add(new Member(type, identifier, size));
+            members.add(new BitfieldMember(type, identifier, size));
         }
 
         @Override
@@ -109,6 +104,26 @@ public class Spin2Struct {
             }
 
             return sb.toString();
+        }
+
+    }
+
+    public class BitfieldMember extends Member {
+
+        Expression bitfield;
+
+        public BitfieldMember(Token type, Token identifier, Expression bitfield) {
+            super(type, identifier, new NumberLiteral(0));
+            this.bitfield = bitfield;
+        }
+
+        public int getBitfield() {
+            if (bitfield instanceof AddpinsRange addPins) {
+                int arg0 = addPins.getTerm1().getNumber().intValue();
+                int arg1 = addPins.getTerm2().getNumber().intValue();
+                return ((arg0 - arg1) & 0x1F) << 5 | arg1;
+            }
+            return bitfield.getNumber().intValue();
         }
 
     }

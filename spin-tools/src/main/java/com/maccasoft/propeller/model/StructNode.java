@@ -30,6 +30,18 @@ public class StructNode extends Node {
             }
         }
 
+        public Member(Node parent, Token type, Token identifier) {
+            super(parent);
+            this.type = type;
+            if (type != null) {
+                addToken(type);
+            }
+            this.identifier = identifier;
+            if (identifier != null) {
+                addToken(identifier);
+            }
+        }
+
         public Token getModifier() {
             return modifier;
         }
