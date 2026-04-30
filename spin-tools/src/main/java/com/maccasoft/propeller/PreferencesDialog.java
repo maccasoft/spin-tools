@@ -221,6 +221,7 @@ public class PreferencesDialog extends Dialog {
     int oldTerminalCursor;
     boolean oldTerminalBackspaceClears;
     boolean oldTerminalImplicitCRLF;
+    Point oldTerminalSize;
 
     static int lastPage;
 
@@ -566,6 +567,7 @@ public class PreferencesDialog extends Dialog {
         oldTerminalCursor = preferences.getTerminalCursor();
         oldTerminalBackspaceClears = preferences.getTerminalBackspaceClears();
         oldTerminalImplicitCRLF = preferences.getTerminalImplicitCRLF();
+        oldTerminalSize = preferences.getTerminalSize();
 
         return composite;
     }
@@ -1519,9 +1521,41 @@ public class PreferencesDialog extends Dialog {
         terminalFontSize.setSelection(fontData.getHeight());
 
         label = new Label(composite, SWT.NONE);
-        label.setText("Cursor");
+        label.setText("Size");
 
         Composite group = new Composite(composite, SWT.NONE);
+        layout = new GridLayout(4, false);
+        layout.marginHeight = layout.marginWidth = 0;
+        group.setLayout(layout);
+        group.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+
+        Point size = preferences.getTerminalSize();
+
+        Spinner terminalWidth = new Spinner(group, SWT.NONE);
+        terminalWidth.setValues(size.x, 80, 999, 0, 1, 1);
+        label = new Label(group, SWT.NONE);
+        label.setText("columns");
+
+        Spinner terminalHeight = new Spinner(group, SWT.NONE);
+        terminalHeight.setValues(size.y, 10, 99, 0, 1, 1);
+        label = new Label(group, SWT.NONE);
+        label.setText("rows");
+
+        SelectionAdapter sizeSelectionListener = new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                preferences.setTerminalSize(terminalWidth.getSelection(), terminalHeight.getSelection());
+            }
+
+        };
+        terminalWidth.addSelectionListener(sizeSelectionListener);
+        terminalHeight.addSelectionListener(sizeSelectionListener);
+
+        label = new Label(composite, SWT.NONE);
+        label.setText("Cursor");
+
+        group = new Composite(composite, SWT.NONE);
         layout = new GridLayout(4, false);
         layout.marginHeight = layout.marginWidth = 0;
         group.setLayout(layout);
@@ -2372,6 +2406,7 @@ public class PreferencesDialog extends Dialog {
         preferences.setTerminalCursor(oldTerminalCursor);
         preferences.setTerminalBackspaceClears(oldTerminalBackspaceClears);
         preferences.setTerminalImplicitCRLF(oldTerminalImplicitCRLF);
+        preferences.setTerminalSize(oldTerminalSize.x, oldTerminalSize.y);
 
         preferences.setConsoleFont(oldConsoleFont);
 

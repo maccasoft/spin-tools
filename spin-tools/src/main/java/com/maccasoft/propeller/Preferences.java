@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -73,6 +74,7 @@ public class Preferences {
     public static final String PROP_TERMINAL_CURSOR = "terminalCursor";
     public static final String PROP_TERMINAL_BACKSPACE_CLEARS = "terminalBackspaceClears";
     public static final String PROP_TERMINAL_IMPLICIT_CRLF = "terminalImplicitCRLF";
+    public static final String PROP_TERMINAL_SIZE = "terminalSize";
     public static final String PROP_CONSOLE_FONT = "consoleFont";
     public static final String PROP_CONSOLE_MAX_LINES = "consoleMaxLines";
     public static final String PROP_CONSOLE_WRITE_LOG_FILE = "consoleWriteLogFile";
@@ -757,13 +759,27 @@ public class Preferences {
 
     public Rectangle getTerminalWindow() {
         if (preferences.terminal.window == null) {
-            return null;
+            return new Rectangle(-1, -1, 100, 30);
         }
         return new Rectangle(preferences.terminal.window.x, preferences.terminal.window.y, preferences.terminal.window.width, preferences.terminal.window.height);
     }
 
     public void setTerminalWindow(Rectangle rect) {
         preferences.terminal.window = new Bounds(rect.x, rect.y, rect.width, rect.height);
+    }
+
+    public Point getTerminalSize() {
+        Rectangle rect = getTerminalWindow();
+        return new Point(rect.width, rect.height);
+
+    }
+
+    public void setTerminalSize(int width, int height) {
+        Rectangle rect = getTerminalWindow();
+        rect.width = width;
+        rect.height = height;
+        setTerminalWindow(rect);
+        changeSupport.firePropertyChange(PROP_TERMINAL_SIZE, null, new Point(width, height));
     }
 
     public boolean getTerminalLineInput() {

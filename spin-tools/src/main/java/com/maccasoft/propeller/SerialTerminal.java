@@ -27,8 +27,6 @@ import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.ImageTransfer;
 import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
-import org.eclipse.swt.events.ControlAdapter;
-import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.KeyAdapter;
@@ -304,7 +302,7 @@ public class SerialTerminal {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             switch (evt.getPropertyName()) {
-                case Preferences.PROP_TERMINAL_FONT:
+                case Preferences.PROP_TERMINAL_FONT: {
                     Font textFont = JFaceResources.getTextFont();
                     FontData fontData = textFont.getFontData()[0];
                     if (evt.getNewValue() != null) {
@@ -325,20 +323,15 @@ public class SerialTerminal {
                         gc.dispose();
                     }
 
-                    GridData gridData = (GridData) canvas.getLayoutData();
                     Rectangle rect = preferences.getTerminalWindow();
-                    if (rect != null) {
-                        gridData.widthHint = rect.width * characterWidth;
-                        gridData.heightHint = rect.height * characterHeight;
-                    }
-                    else {
-                        gridData.widthHint = 80 * characterWidth;
-                        gridData.heightHint = 30 * characterHeight;
-                    }
+                    GridData gridData = (GridData) canvas.getLayoutData();
+                    gridData.widthHint = rect.width * characterWidth;
+                    gridData.heightHint = rect.height * characterHeight;
 
                     shell.pack();
                     redraw();
                     break;
+                }
 
                 case Preferences.PROP_TERMINAL_LINE_INPUT:
                     cy = 0;
@@ -361,6 +354,18 @@ public class SerialTerminal {
                 case Preferences.PROP_TERMINAL_IMPLICIT_CRLF:
                     implicitCRLF = (Boolean) evt.getNewValue();
                     break;
+
+                case Preferences.PROP_TERMINAL_SIZE: {
+                    Point size = (Point) evt.getNewValue();
+                    resizeScreen(size.x, size.y);
+                    GridData gridData = (GridData) canvas.getLayoutData();
+                    gridData.widthHint = size.x * characterWidth;
+                    gridData.heightHint = size.y * characterHeight;
+                    canvas.setLayoutData(gridData);
+                    shell.pack();
+                    redraw();
+                    break;
+                }
 
                 case Preferences.PROP_THEME:
                     applyTheme((String) evt.getNewValue());
@@ -401,7 +406,7 @@ public class SerialTerminal {
     }
 
     void create() {
-        shell = new Shell(display);
+        shell = new Shell(display, SWT.CLOSE | SWT.TITLE | SWT.MIN);
         shell.setText(WINDOW_TITLE);
         shell.setData(this);
 
@@ -430,7 +435,7 @@ public class SerialTerminal {
         applyTheme(preferences.getTheme());
 
         Rectangle rect = preferences.getTerminalWindow();
-        if (rect != null) {
+        if (rect.x != -1 && rect.y != -1) {
             shell.setLocation(rect.x, rect.y);
         }
 
@@ -458,6 +463,12 @@ public class SerialTerminal {
                 } catch (Exception ex) {
 
                 }
+
+                Rectangle rect = shell.getBounds();
+                rect.width = screenWidth;
+                rect.height = screenHeight;
+                preferences.setTerminalWindow(rect);
+
                 font.dispose();
             }
         });
@@ -478,16 +489,10 @@ public class SerialTerminal {
 
         canvas = new Canvas(container, SWT.DOUBLE_BUFFERED | SWT.V_SCROLL);
 
-        GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
         Rectangle rect = preferences.getTerminalWindow();
-        if (rect != null) {
-            gridData.widthHint = rect.width * characterWidth;
-            gridData.heightHint = rect.height * characterHeight;
-        }
-        else {
-            gridData.widthHint = 100 * characterWidth;
-            gridData.heightHint = 30 * characterHeight;
-        }
+        GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
+        gridData.widthHint = rect.width * characterWidth;
+        gridData.heightHint = rect.height * characterHeight;
         canvas.setLayoutData(gridData);
 
         createBottomControls(container);
@@ -495,54 +500,7 @@ public class SerialTerminal {
         foreground = colors[7];
         background = colors[0];
         canvas.setBackground(background);
-
-        canvas.addDisposeListener(new DisposeListener() {
-
-            @Override
-            public void widgetDisposed(DisposeEvent e) {
-                Rectangle rect = shell.getBounds();
-                rect.width = screenWidth;
-                rect.height = screenHeight;
-                preferences.setTerminalWindow(rect);
-            }
-
-        });
-
-        canvas.addControlListener(new ControlAdapter() {
-
-            @Override
-            public void controlResized(ControlEvent e) {
-                Point size = canvas.getSize();
-                int width = (size.x - canvas.getVerticalBar().getSize().x) / characterWidth;
-                int height = size.y / characterHeight;
-
-                Cell[][] newScreen = new Cell[BACKBUFFER_LINES][width];
-
-                int y = 0;
-                while (y < newScreen.length) {
-                    int x = 0;
-                    while (x < Math.min(screenWidth, width)) {
-                        newScreen[y][x] = screen[y][x];
-                        x++;
-                    }
-                    while (x < width) {
-                        newScreen[y][x] = new Cell(foreground, background);
-                        x++;
-                    }
-                    y++;
-                }
-
-                screenWidth = width;
-                screenHeight = height;
-                screen = newScreen;
-
-                topRow = screen.length - screenHeight;
-                if (cy == 0) {
-                    cy = topRow;
-                }
-                canvas.getVerticalBar().setValues(topRow, 0, screen.length, screenHeight, 1, screenHeight);
-            }
-        });
+        resizeScreen(rect.width, rect.height);
 
         canvas.getVerticalBar().addSelectionListener(new SelectionAdapter() {
 
@@ -728,6 +686,34 @@ public class SerialTerminal {
                 }
             }
         });
+    }
+
+    void resizeScreen(int width, int height) {
+        Cell[][] newScreen = new Cell[BACKBUFFER_LINES][width];
+
+        int y = 0;
+        while (y < newScreen.length) {
+            int x = 0;
+            while (x < Math.min(screenWidth, width)) {
+                newScreen[y][x] = screen[y][x];
+                x++;
+            }
+            while (x < width) {
+                newScreen[y][x] = new Cell(foreground, background);
+                x++;
+            }
+            y++;
+        }
+
+        screenWidth = width;
+        screenHeight = height;
+        screen = newScreen;
+
+        topRow = screen.length - screenHeight;
+        if (cy == 0) {
+            cy = topRow;
+        }
+        canvas.getVerticalBar().setValues(topRow, 0, screen.length, screenHeight, 1, screenHeight);
     }
 
     void createLineInputGroup(Composite parent) {
