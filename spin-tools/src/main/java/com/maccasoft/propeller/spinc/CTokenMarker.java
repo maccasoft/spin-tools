@@ -1063,7 +1063,8 @@ public class CTokenMarker extends SourceTokenMarker {
         }
     }
 
-    public TokenId getLineBackgroundId(Node root, int lineOffset) {
+    @Override
+    public SourceTokenMarker.TokenId getLineBackgroundId(int lineOffset) {
         return null;
     }
 

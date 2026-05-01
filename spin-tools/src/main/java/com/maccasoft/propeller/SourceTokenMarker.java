@@ -159,9 +159,22 @@ public abstract class SourceTokenMarker {
 
     }
 
+    protected static class SectionBackground {
+
+        int lineOffset;
+        final TokenId backgroundId;
+
+        public SectionBackground(int lineStart, TokenId backgroundId) {
+            this.lineOffset = lineStart;
+            this.backgroundId = backgroundId;
+        }
+
+    }
+
     protected SourceProvider sourceProvider;
 
     protected RootNode root;
+    protected List<SectionBackground> sectionBackgrounds = new ArrayList<>();
 
     protected boolean caseSensitive;
     protected String constantSeparator;
@@ -200,6 +213,7 @@ public abstract class SourceTokenMarker {
 
     public void setRoot(RootNode root) {
         this.root = root;
+        refreshBackgrounds(root);
     }
 
     public void refreshCompilerTokens(List<CompilerException> messages) {
@@ -237,6 +251,18 @@ public abstract class SourceTokenMarker {
                     else {
                         token.stop = token.start;
                     }
+                }
+            }
+        }
+        for (SectionBackground background : sectionBackgrounds) {
+            if (newCharCount != 0) {
+                if (start < background.lineOffset) {
+                    background.lineOffset += newCharCount;
+                }
+            }
+            if (replaceCharCount != 0) {
+                if (start < background.lineOffset) {
+                    background.lineOffset -= Math.min(replaceCharCount, background.lineOffset - start);
                 }
             }
         }
@@ -1368,76 +1394,74 @@ public abstract class SourceTokenMarker {
         return proposals;
     }
 
-    public SourceTokenMarker.TokenId getLineBackgroundId(Node root, int lineOffset) {
-        SourceTokenMarker.TokenId color = getSectionBackgroundId(null);
+    public SourceTokenMarker.TokenId getLineBackgroundId(int lineOffset) {
+        SourceTokenMarker.TokenId color = TokenId.CON_ALT;
 
-        if (root != null) {
-            for (Node child : root.getChilds()) {
-                if (lineOffset < child.getStartIndex()) {
-                    break;
-                }
-                color = getSectionBackgroundId(child);
+        for (SectionBackground background : sectionBackgrounds) {
+            if (lineOffset < background.lineOffset) {
+                break;
             }
+            color = background.backgroundId;
         }
 
         return color;
     }
 
-    boolean[] blockToggle = new boolean[6];
+    protected void refreshBackgrounds(RootNode root) {
+        boolean[] blockToggle = new boolean[6];
 
-    TokenId getSectionBackgroundId(Node node) {
-        TokenId result = null;
+        sectionBackgrounds.clear();
 
-        if (node == null) {
-            blockToggle[0] = blockToggle[1] = blockToggle[2] = blockToggle[3] = blockToggle[4] = blockToggle[5] = false;
-        }
-
-        if (node instanceof VariablesNode) {
-            result = blockToggle[1] ? TokenId.VAR_ALT : TokenId.VAR;
-            blockToggle[1] = !blockToggle[1];
-            blockToggle[0] = blockToggle[2] = blockToggle[3] = blockToggle[4] = blockToggle[5] = false;
-        }
-        else if (node instanceof ObjectsNode) {
-            result = blockToggle[2] ? TokenId.OBJ_ALT : TokenId.OBJ;
-            blockToggle[2] = !blockToggle[2];
-            blockToggle[0] = blockToggle[1] = blockToggle[3] = blockToggle[4] = blockToggle[5] = false;
-        }
-        else if (node instanceof MethodNode) {
-            if (((MethodNode) node).isPublic()) {
-                result = blockToggle[3] ? TokenId.PUB_ALT : TokenId.PUB;
-                blockToggle[3] = !blockToggle[3];
-                blockToggle[0] = blockToggle[1] = blockToggle[2] = blockToggle[4] = blockToggle[5] = false;
+        for (Node node : root.getChilds()) {
+            Token startToken = node.getStartToken();
+            int lineOffset = startToken != null ? startToken.start - startToken.column : 0;
+            switch (node) {
+                case VariablesNode ignored -> {
+                    sectionBackgrounds.add(new SectionBackground(lineOffset, blockToggle[1] ? TokenId.VAR_ALT : TokenId.VAR));
+                    blockToggle[1] = !blockToggle[1];
+                    blockToggle[0] = blockToggle[2] = blockToggle[3] = blockToggle[4] = blockToggle[5] = false;
+                }
+                case ObjectsNode ignored -> {
+                    sectionBackgrounds.add(new SectionBackground(lineOffset, blockToggle[2] ? TokenId.OBJ_ALT : TokenId.OBJ));
+                    blockToggle[2] = !blockToggle[2];
+                    blockToggle[0] = blockToggle[1] = blockToggle[3] = blockToggle[4] = blockToggle[5] = false;
+                }
+                case MethodNode methodNode -> {
+                    if (methodNode.isPublic()) {
+                        sectionBackgrounds.add(new SectionBackground(lineOffset, blockToggle[3] ? TokenId.PUB_ALT : TokenId.PUB));
+                        blockToggle[3] = !blockToggle[3];
+                        blockToggle[0] = blockToggle[1] = blockToggle[2] = blockToggle[4] = blockToggle[5] = false;
+                    }
+                    else {
+                        sectionBackgrounds.add(new SectionBackground(lineOffset, blockToggle[4] ? TokenId.PRI_ALT : TokenId.PRI));
+                        blockToggle[4] = !blockToggle[4];
+                        blockToggle[0] = blockToggle[1] = blockToggle[2] = blockToggle[3] = blockToggle[5] = false;
+                    }
+                }
+                case FunctionNode functionNode -> {
+                    if (functionNode.isPublic()) {
+                        sectionBackgrounds.add(new SectionBackground(lineOffset, blockToggle[3] ? TokenId.PUB_ALT : TokenId.PUB));
+                        blockToggle[3] = !blockToggle[3];
+                        blockToggle[0] = blockToggle[1] = blockToggle[2] = blockToggle[4] = blockToggle[5] = false;
+                    }
+                    else {
+                        sectionBackgrounds.add(new SectionBackground(lineOffset, blockToggle[4] ? TokenId.PRI_ALT : TokenId.PRI));
+                        blockToggle[4] = !blockToggle[4];
+                        blockToggle[0] = blockToggle[1] = blockToggle[2] = blockToggle[3] = blockToggle[5] = false;
+                    }
+                }
+                case DataNode ignored -> {
+                    sectionBackgrounds.add(new SectionBackground(lineOffset, blockToggle[5] ? TokenId.DAT_ALT : TokenId.DAT));
+                    blockToggle[5] = !blockToggle[5];
+                    blockToggle[0] = blockToggle[1] = blockToggle[2] = blockToggle[3] = blockToggle[4] = false;
+                }
+                default -> {
+                    sectionBackgrounds.add(new SectionBackground(lineOffset, blockToggle[0] ? TokenId.CON_ALT : TokenId.CON));
+                    blockToggle[0] = !blockToggle[0];
+                    blockToggle[1] = blockToggle[2] = blockToggle[3] = blockToggle[4] = blockToggle[5] = false;
+                }
             }
-            else {
-                result = blockToggle[4] ? TokenId.PRI_ALT : TokenId.PRI;
-                blockToggle[4] = !blockToggle[4];
-                blockToggle[0] = blockToggle[1] = blockToggle[2] = blockToggle[3] = blockToggle[5] = false;
-            }
         }
-        else if (node instanceof FunctionNode) {
-            if (((FunctionNode) node).isPublic()) {
-                result = blockToggle[3] ? TokenId.PUB_ALT : TokenId.PUB;
-                blockToggle[3] = !blockToggle[3];
-                blockToggle[0] = blockToggle[1] = blockToggle[2] = blockToggle[4] = blockToggle[5] = false;
-            }
-            else {
-                result = blockToggle[4] ? TokenId.PRI_ALT : TokenId.PRI;
-                blockToggle[4] = !blockToggle[4];
-                blockToggle[0] = blockToggle[1] = blockToggle[2] = blockToggle[3] = blockToggle[5] = false;
-            }
-        }
-        else if (node instanceof DataNode) {
-            result = blockToggle[5] ? TokenId.DAT_ALT : TokenId.DAT;
-            blockToggle[5] = !blockToggle[5];
-            blockToggle[0] = blockToggle[1] = blockToggle[2] = blockToggle[3] = blockToggle[4] = false;
-        }
-        else {
-            result = blockToggle[0] ? TokenId.CON_ALT : TokenId.CON;
-            blockToggle[0] = !blockToggle[0];
-            blockToggle[1] = blockToggle[2] = blockToggle[3] = blockToggle[4] = blockToggle[5] = false;
-        }
-
-        return result;
     }
 
     public Collection<SourceTokenMarker.TokenMarker> getTokens(int lineIndex, int lineOffset, String lineText) {

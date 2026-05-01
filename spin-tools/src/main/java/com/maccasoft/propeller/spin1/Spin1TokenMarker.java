@@ -220,6 +220,7 @@ public class Spin1TokenMarker extends SourceTokenMarker {
         RootNode root = parser.parse();
         if (this.root == null || this.root.getChildCount() == 0) {
             comments.addAll(root.getComments());
+            refreshBackgrounds(root);
         }
         this.root = root;
 

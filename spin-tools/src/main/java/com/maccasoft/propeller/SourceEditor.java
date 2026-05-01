@@ -674,16 +674,22 @@ public class SourceEditor {
             @Override
             public void lineGetBackground(LineBackgroundEvent event) {
                 if (preferences.getShowSectionsBackground()) {
-                    event.lineBackground = getLineBackground(tokenMarker.getRoot(), event.lineOffset);
+                    if (tokenMarker != null) {
+                        TokenId id = tokenMarker.getLineBackgroundId(event.lineOffset);
+                        if (id != null) {
+                            TextStyle style = styleMap.get(id);
+                            if (style != null) {
+                                event.lineBackground = style.background;
+                            }
+                        }
+                    }
                 }
-                if (highlightCurrentLine) {
-                    if (styledText.getLineAtOffset(event.lineOffset) == currentLine) {
-                        if (event.lineBackground != null) {
-                            event.lineBackground = ColorRegistry.getDimColor(event.lineBackground, -12);
-                        }
-                        else {
-                            event.lineBackground = currentLineBackground;
-                        }
+                if (highlightCurrentLine && styledText.getLineAtOffset(event.lineOffset) == currentLine) {
+                    if (event.lineBackground != null) {
+                        event.lineBackground = ColorRegistry.getDimColor(event.lineBackground, -12);
+                    }
+                    else {
+                        event.lineBackground = currentLineBackground;
                     }
                 }
             }
@@ -2578,19 +2584,6 @@ public class SourceEditor {
         styledText.redraw();
         ruler.redraw();
         overview.redraw();
-    }
-
-    public Color getLineBackground(Node root, int lineOffset) {
-        if (tokenMarker != null) {
-            TokenId id = tokenMarker.getLineBackgroundId(root, lineOffset);
-            if (id != null) {
-                TextStyle style = styleMap.get(id);
-                if (style != null) {
-                    return style.background;
-                }
-            }
-        }
-        return null;
     }
 
     public void addSourceListener(SourceListener listener) {
