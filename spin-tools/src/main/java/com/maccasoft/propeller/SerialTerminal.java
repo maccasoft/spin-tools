@@ -436,7 +436,9 @@ public class SerialTerminal {
 
         Rectangle rect = preferences.getTerminalWindow();
         if (rect.x != -1 && rect.y != -1) {
-            shell.setLocation(rect.x, rect.y);
+            if (display.getBounds().contains(rect.x, rect.y)) {
+                shell.setLocation(rect.x, rect.y);
+            }
         }
 
         preferences.addPropertyChangeListener(preferencesChangeListener);

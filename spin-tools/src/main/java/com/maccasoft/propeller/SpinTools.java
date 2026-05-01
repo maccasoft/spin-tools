@@ -323,7 +323,10 @@ public class SpinTools {
 
         Rectangle bounds = preferences.getWindowBounds();
         if (bounds != null) {
-            shell.setBounds(bounds);
+            if (display.getBounds().contains(bounds.x, bounds.y)) {
+                shell.setLocation(bounds.x, bounds.y);
+            }
+            shell.setSize(bounds.width, bounds.height);
         }
 
         Menu menu = new Menu(shell, SWT.BAR);
