@@ -47,7 +47,6 @@ import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
 
 import com.maccasoft.propeller.internal.FileUtils;
@@ -76,7 +75,7 @@ import com.maccasoft.propeller.spinc.CTokenMarker;
 import com.maccasoft.propeller.spinc.Spin1CCompiler;
 import com.maccasoft.propeller.spinc.Spin2CCompiler;
 
-public class EditorTab implements FindReplaceTarget {
+public class EditorTab {
 
     public static final String OBJECT_TREE = "objectTree";
 
@@ -93,6 +92,7 @@ public class EditorTab implements FindReplaceTarget {
     Font boldFont;
     Font boldBusyFont;
 
+    FindReplaceTarget findReplaceTarget;
     SourceTokenMarker tokenMarker;
 
     String tabItemText;
@@ -666,6 +666,7 @@ public class EditorTab implements FindReplaceTarget {
         boldBusyFont = new Font(tabItem.getDisplay(), fontData[0].getName(), fontData[0].getHeight(), SWT.BOLD | SWT.ITALIC);
 
         editor = new SourceEditor(folder);
+        findReplaceTarget = new FindReplaceTarget(editor.getStyledText());
 
         File localFile = this.file != null ? this.file : new File(tabItemText).getAbsoluteFile();
         if (localFile.equals(preferences.getTopObject())) {
@@ -993,163 +994,32 @@ public class EditorTab implements FindReplaceTarget {
         return editor;
     }
 
-    @Override
-    public int findAndSelect(int widgetOffset, String findString, boolean searchForward, boolean caseSensitive, boolean wholeWord, boolean regExSearch) {
-        int patternFlags = 0;
-        StyledText styledText = editor.getStyledText();
-        String text = styledText.getText();
-
-        if (!regExSearch) {
-            findString = asRegPattern(findString);
-            if (wholeWord) {
-                findString = "\\b" + findString + "\\b";
-            }
-        }
-
-        if (!caseSensitive) {
-            patternFlags |= Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE;
-        }
-
-        Pattern pattern = Pattern.compile(findString, patternFlags);
-        Matcher matcher = pattern.matcher(text);
-
-        if (searchForward) {
-            if (widgetOffset == -1) {
-                widgetOffset = 0;
-            }
-            if (matcher.find(widgetOffset)) {
-                styledText.setSelectionRange(matcher.start(), matcher.group().length());
-                revealCaret(styledText);
-                return matcher.start();
-            }
-        }
-        else {
-            if (widgetOffset == -1) {
-                widgetOffset = text.length();
-            }
-            boolean found = matcher.find(0);
-            int index = -1;
-            while (found && matcher.start() + matcher.group().length() <= widgetOffset) {
-                index = matcher.start();
-                found = matcher.find(index + 1);
-            }
-            if (index > -1) {
-                matcher.find(index);
-                styledText.setSelectionRange(matcher.start(), matcher.group().length());
-                revealCaret(styledText);
-                return index;
-            }
-
-        }
-
-        return -1;
-    }
-
-    @Override
-    public Point getSelection() {
-        StyledText styledText = editor.getStyledText();
-        return styledText.getSelectionRange();
-    }
-
-    @Override
-    public String getSelectionText() {
-        StyledText styledText = editor.getStyledText();
-        return styledText.getSelectionText();
-    }
-
-    @Override
-    public void replaceSelection(String text) {
-        StyledText styledText = editor.getStyledText();
-        Point selection = styledText.getSelectionRange();
-        if (selection.y != 0) {
-            styledText.replaceTextRange(selection.x, selection.y, text);
-        }
-    }
-
-    void revealCaret(StyledText styledText) {
-        Rectangle rect = styledText.getClientArea();
-        int offset = styledText.getCaretOffset();
-        int topLine = styledText.getLineIndex(0);
-        int bottomLine = styledText.getLineIndex(rect.height);
-        int pageSize = bottomLine - topLine;
-        int lineCount = styledText.getLineCount();
-
-        while (offset < styledText.getOffsetAtLine(topLine)) {
-            if (topLine - pageSize < 0) {
-                topLine = 0;
-                bottomLine = Math.min(pageSize, lineCount - 1);
-                break;
-            }
-            topLine -= pageSize;
-            bottomLine -= pageSize;
-        }
-
-        while (offset > styledText.getOffsetAtLine(bottomLine)) {
-            if (bottomLine + pageSize >= lineCount) {
-                topLine = lineCount - pageSize;
-                if (topLine < 0) {
-                    topLine = 0;
-                }
-                break;
-            }
-            topLine += pageSize;
-            bottomLine += pageSize;
-        }
-
-        if (styledText.getLineIndex(0) != topLine) {
-            styledText.setTopIndex(topLine);
-        }
-    }
-
-    private String asRegPattern(String string) {
-        StringBuilder out = new StringBuilder(string.length());
-        boolean quoting = false;
-
-        for (int i = 0, length = string.length(); i < length; i++) {
-            char ch = string.charAt(i);
-            if (ch == '\\') {
-                if (quoting) {
-                    out.append("\\E");
-                    quoting = false;
-                }
-                out.append("\\\\");
-                continue;
-            }
-            if (!quoting) {
-                out.append("\\Q");
-                quoting = true;
-            }
-            out.append(ch);
-        }
-        if (quoting) {
-            out.append("\\E");
-        }
-
-        return out.toString();
+    public FindReplaceTarget getFindReplaceTarget() {
+        return findReplaceTarget;
     }
 
     void searchNext(String findString, boolean caseSensitiveSearch, boolean wrapSearch, boolean wholeWordSearch, boolean regexSearch) {
-        Point r = getSelection();
+        Point r = findReplaceTarget.getSelection();
         int findReplacePosition = r.x + r.y;
 
-        int index = findAndSelect(findReplacePosition, findString, true, caseSensitiveSearch, wholeWordSearch, regexSearch);
+        int index = findReplaceTarget.findAndSelect(findReplacePosition, findString, true, caseSensitiveSearch, wholeWordSearch, regexSearch);
         if (index == -1) {
             editor.getControl().getDisplay().beep();
             if (wrapSearch) {
-                index = findAndSelect(-1, findString, true, caseSensitiveSearch, wholeWordSearch, regexSearch);
+                findReplaceTarget.findAndSelect(-1, findString, true, caseSensitiveSearch, wholeWordSearch, regexSearch);
             }
         }
     }
 
     void searchPrevious(String findString, boolean caseSensitiveSearch, boolean wrapSearch, boolean wholeWordSearch, boolean regexSearch) {
-        Point r = getSelection();
+        Point r = findReplaceTarget.getSelection();
         int findReplacePosition = r.x + r.y;
 
-        int index = findReplacePosition == 0 ? -1 : findAndSelect(findReplacePosition - 1, findString, false, caseSensitiveSearch, wholeWordSearch, regexSearch);
+        int index = findReplacePosition == 0 ? -1 : findReplaceTarget.findAndSelect(findReplacePosition - 1, findString, false, caseSensitiveSearch, wholeWordSearch, regexSearch);
         if (index == -1) {
             editor.getControl().getDisplay().beep();
             if (wrapSearch) {
-                index = findAndSelect(-1, findString, false, caseSensitiveSearch, wholeWordSearch, regexSearch);
+                findReplaceTarget.findAndSelect(-1, findString, false, caseSensitiveSearch, wholeWordSearch, regexSearch);
             }
         }
     }

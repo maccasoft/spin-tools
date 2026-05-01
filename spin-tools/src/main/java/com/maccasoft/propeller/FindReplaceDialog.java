@@ -86,8 +86,6 @@ public class FindReplaceDialog extends Dialog {
             if (searchPreferences == null) {
                 return;
             }
-            searchPreferences.findHistory = findCombo.getItems();
-            searchPreferences.replaceHistory = replaceCombo.getItems();
             searchPreferences.searchFromTop = searchFromTop.getSelection();
             searchPreferences.forwardSearch = searchForward.getSelection();
             searchPreferences.caseSensitiveSearch = caseSensitiveSearch.getSelection();
@@ -307,7 +305,7 @@ public class FindReplaceDialog extends Dialog {
                 }
                 statusLabel.setText("");
                 performSearch();
-                updateHistory(findCombo);
+                searchPreferences.findHistory = updateHistory(findCombo);
             }
 
         });
@@ -331,8 +329,8 @@ public class FindReplaceDialog extends Dialog {
                 }
                 performSearch();
 
-                updateHistory(findCombo);
-                updateHistory(replaceCombo);
+                searchPreferences.findHistory = updateHistory(findCombo);
+                searchPreferences.replaceHistory = updateHistory(replaceCombo);
             }
 
         });
@@ -352,8 +350,8 @@ public class FindReplaceDialog extends Dialog {
                     target.replaceSelection(replaceString);
                 }
 
-                updateHistory(findCombo);
-                updateHistory(replaceCombo);
+                searchPreferences.findHistory = updateHistory(findCombo);
+                searchPreferences.replaceHistory = updateHistory(replaceCombo);
             }
 
         });
@@ -367,14 +365,14 @@ public class FindReplaceDialog extends Dialog {
                 }
                 statusLabel.setText("");
                 performReplaceAll();
-                updateHistory(findCombo);
-                updateHistory(replaceCombo);
+                searchPreferences.findHistory = updateHistory(findCombo);
+                searchPreferences.replaceHistory = updateHistory(replaceCombo);
             }
 
         });
     }
 
-    private Button makeButton(Composite parent, String label, boolean defaultButton, SelectionListener listener) {
+    private void makeButton(Composite parent, String label, boolean defaultButton, SelectionListener listener) {
         Button button = new Button(parent, SWT.PUSH);
         button.setText(label);
         button.addSelectionListener(listener);
@@ -394,7 +392,6 @@ public class FindReplaceDialog extends Dialog {
             }
         }
 
-        return button;
     }
 
     void createStatusAndCloseButton(Composite parent) {
@@ -425,24 +422,23 @@ public class FindReplaceDialog extends Dialog {
         button.setLayoutData(gridData);
     }
 
-    void updateHistory(Combo combo) {
+    String[] updateHistory(Combo combo) {
         String findString = combo.getText();
         List<String> history = new ArrayList<>(Arrays.asList(combo.getItems()));
 
-        int index = history.indexOf(findString);
-        if (index != 0) {
-            if (index != -1) {
-                history.remove(index);
-            }
-            history.add(0, findString);
-            while (history.size() > 15) {
-                history.remove(history.size() - 1);
-            }
-            Point selection = combo.getSelection();
-            combo.setItems(history.toArray(new String[0]));
-            combo.setText(findString);
-            combo.setSelection(selection);
+        history.remove(findString);
+        history.addFirst(findString);
+        while (history.size() > 15) {
+            history.removeLast();
         }
+        String[] result = history.toArray(new String[0]);
+
+        Point selection = combo.getSelection();
+        combo.setItems(result);
+        combo.setText(findString);
+        combo.setSelection(selection);
+
+        return result;
     }
 
     private void initControlsFromPreferences() {

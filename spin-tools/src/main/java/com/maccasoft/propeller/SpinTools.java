@@ -1474,6 +1474,7 @@ public class SpinTools {
                 if (tabItem == null) {
                     return;
                 }
+                EditorTab editorTab = (EditorTab) tabItem.getData();
 
                 if (findReplaceDialog != null && !findReplaceDialog.isDisposed()) {
                     findReplaceDialog.getShell().setFocus();
@@ -1482,7 +1483,7 @@ public class SpinTools {
 
                 findReplaceDialog = new FindReplaceDialog(shell);
                 findReplaceDialog.setPreferences(preferences);
-                findReplaceDialog.setTarget((EditorTab) tabItem.getData());
+                findReplaceDialog.setTarget(editorTab.getFindReplaceTarget());
                 findReplaceDialog.open();
             }
         });
@@ -2163,6 +2164,7 @@ public class SpinTools {
                 if (tabItem == null) {
                     return;
                 }
+                EditorTab editorTab = (EditorTab) tabItem.getData();
 
                 if (findReplaceDialog != null && !findReplaceDialog.isDisposed()) {
                     findReplaceDialog.getShell().setFocus();
@@ -2171,7 +2173,7 @@ public class SpinTools {
 
                 findReplaceDialog = new FindReplaceDialog(shell);
                 findReplaceDialog.setPreferences(preferences);
-                findReplaceDialog.setTarget((EditorTab) tabItem.getData());
+                findReplaceDialog.setTarget(editorTab.getFindReplaceTarget());
                 findReplaceDialog.open();
             }
 
@@ -2726,6 +2728,7 @@ public class SpinTools {
                 if (tabItem == null) {
                     return;
                 }
+                EditorTab editorTab = (EditorTab) tabItem.getData();
 
                 if (findReplaceDialog != null && !findReplaceDialog.isDisposed()) {
                     findReplaceDialog.getShell().setFocus();
@@ -2734,7 +2737,7 @@ public class SpinTools {
 
                 findReplaceDialog = new FindReplaceDialog(shell);
                 findReplaceDialog.setPreferences(preferences);
-                findReplaceDialog.setTarget((EditorTab) tabItem.getData());
+                findReplaceDialog.setTarget(editorTab.getFindReplaceTarget());
                 findReplaceDialog.open();
             }
 
@@ -2760,7 +2763,7 @@ public class SpinTools {
 
                     findReplaceDialog = new FindReplaceDialog(shell);
                     findReplaceDialog.setPreferences(preferences);
-                    findReplaceDialog.setTarget((EditorTab) tabItem.getData());
+                    findReplaceDialog.setTarget(editorTab.getFindReplaceTarget());
                     findReplaceDialog.open();
                     return;
                 }
@@ -2789,7 +2792,7 @@ public class SpinTools {
 
                     findReplaceDialog = new FindReplaceDialog(shell);
                     findReplaceDialog.setPreferences(preferences);
-                    findReplaceDialog.setTarget((EditorTab) tabItem.getData());
+                    findReplaceDialog.setTarget(editorTab.getFindReplaceTarget());
                     findReplaceDialog.open();
                     return;
                 }
@@ -4145,7 +4148,7 @@ public class SpinTools {
             }
             outlineViewStack.setTopView(editorTab.getOutlineView());
             if (findReplaceDialog != null) {
-                findReplaceDialog.setTarget(editorTab);
+                findReplaceDialog.setTarget(editorTab.getFindReplaceTarget());
             }
             topObjectItem.setSelection(editorTab.isTopObject());
             topObjectTabItem.setSelection(editorTab.isTopObject());
