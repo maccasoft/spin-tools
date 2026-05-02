@@ -2320,7 +2320,13 @@ public class SourceEditor {
             }
         }
         else if (node instanceof ObjectNode objectNode) {
-            if (objectNode.file != null && caretOffset > objectNode.file.start && caretOffset <= objectNode.file.stop) {
+            int fileStart = -1;
+            int fileStop = -1;
+            if (objectNode.file != null) {
+                fileStart = objectNode.file.start;
+                fileStop = objectNode.file.getText().length() >= 2 && objectNode.file.getText().endsWith("\"") ? objectNode.file.stop : objectNode.file.stop + 1;
+            }
+            if (caretOffset > fileStart && caretOffset <= fileStop) {
                 proposals.addAll(helpProvider.getSourceProposals(filterText, true));
                 containsProposals.addAll(helpProvider.getSourceProposals(filterText, false));
             }
@@ -2347,7 +2353,13 @@ public class SourceEditor {
             proposals.addAll(tokenMarker.getTypeProposals(node, filterText));
         }
         else if (node instanceof VariableNode variableNode) {
-            if (variableNode.type != null && caretOffset >= variableNode.type.start && caretOffset <= variableNode.type.stop + 1) {
+            if (variableNode.size != null && caretOffset >= variableNode.size.getStartIndex()) {
+                proposals.addAll(tokenMarker.getConstantsProposals(filterText, true));
+                proposals.addAll(helpProvider.getProposals("Constants", filterText, true));
+                containsProposals.addAll(tokenMarker.getConstantsProposals(filterText, false));
+                containsProposals.addAll(helpProvider.getProposals("Constants", filterText, false));
+            }
+            else if (variableNode.type != null && caretOffset >= variableNode.type.start && caretOffset <= variableNode.type.stop + 1) {
                 if (tokenMarker instanceof CTokenMarker) {
                     proposals.addAll(helpProvider.getSourceProposals(filterText, true));
                     containsProposals.addAll(helpProvider.getSourceProposals(filterText, false));
