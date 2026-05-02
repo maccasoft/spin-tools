@@ -871,18 +871,8 @@ public class SourceEditor {
                     text = tokenMarker.getConstant(token.getText());
                 }
                 if (text == null && helpProvider != null) {
-                    int line = styledText.getLineAtOffset(offset);
-                    int lineOffset = styledText.getOffsetAtLine(line);
-                    String lineText = styledText.getLine(line);
-
-                    int index = token.stop - lineOffset + 1;
-                    while (index < lineText.length() && Character.isWhitespace(lineText.charAt(index))) {
-                        index++;
-                    }
-                    if (index < lineText.length() && lineText.charAt(index) != '[') {
-                        Node context = tokenMarker.getContextAtLine(styledText.getLineAtOffset(offset));
-                        text = helpProvider.getString(context != null ? context.getClass().getSimpleName() : null, token.getText().toLowerCase());
-                    }
+                    Node context = tokenMarker.getContextAtLine(styledText.getLineAtOffset(offset));
+                    text = helpProvider.getString(context != null ? context.getClass().getSimpleName() : null, token.getText().toLowerCase());
                 }
                 if (text != null && !text.isEmpty()) {
                     popupMouseBounds = styledText.getTextBounds(token.start, token.stop);
