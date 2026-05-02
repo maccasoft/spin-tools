@@ -404,14 +404,14 @@ public class SourceEditor {
                     if (currentChange == null || currentChange.isExpired()) {
                         undoStack.push(currentChange = new TextChange(topIndex, e.start, e.text.length(), replacedText, styledText.getCaretOffset()));
                         if (undoStack.size() > UNDO_LIMIT) {
-                            undoStack.remove(0);
+                            undoStack.removeFirst();
                         }
                     }
                     else {
                         if (e.start != currentChange.start + currentChange.length) {
                             undoStack.push(currentChange = new TextChange(topIndex, e.start, e.text.length(), replacedText, styledText.getCaretOffset()));
                             if (undoStack.size() > UNDO_LIMIT) {
-                                undoStack.remove(0);
+                                undoStack.removeFirst();
                             }
                         }
                         else {
@@ -422,7 +422,7 @@ public class SourceEditor {
                 else if (!ignoreRedo) {
                     redoStack.push(new TextChange(topIndex, e.start, e.text.length(), replacedText, styledText.getCaretOffset()));
                     if (redoStack.size() > UNDO_LIMIT) {
-                        redoStack.remove(0);
+                        redoStack.removeFirst();
                     }
                 }
             }
@@ -1005,7 +1005,6 @@ public class SourceEditor {
                             case SWT.TAB:
                                 if ((e.stateMask & SWT.MODIFIER_MASK) == SWT.MOD2) {
                                     doBacktab();
-
                                 }
                                 else if ((e.stateMask & SWT.MODIFIER_MASK) == 0) {
                                     doTab();
@@ -2195,6 +2194,7 @@ public class SourceEditor {
             int caretOffset = editorSelection.x;
             int lineNumber = styledText.getLineAtOffset(caretOffset);
             int lineStart = styledText.getOffsetAtLine(lineNumber);
+            String lineText = styledText.getLine(lineNumber);
 
             StringBuilder sb = new StringBuilder(styledText.getLine(lineNumber));
             if (editorSelection.x != editorSelection.y) {
@@ -2216,7 +2216,16 @@ public class SourceEditor {
                 }
             }
 
+            int leftmostColumn = caretOffset - lineStart;
+            while (leftmostColumn > 0 && Character.isWhitespace(lineText.charAt(leftmostColumn - 1))) {
+                leftmostColumn--;
+            }
+
             int currentColumn = caretOffset - lineStart;
+            while (currentColumn < lineText.length() && Character.isWhitespace(lineText.charAt(currentColumn))) {
+                currentColumn++;
+            }
+
             if (currentColumn != 0) {
                 boolean tabstopMatch = false;
                 int previousTabColumn = currentColumn - 1;
@@ -2254,6 +2263,15 @@ public class SourceEditor {
                     }
                 }
 
+                if (currentColumn != caretOffset - lineStart) {
+                    if (previousTabColumn < caretOffset - lineStart) {
+                        previousTabColumn = caretOffset - lineStart;
+                    }
+                }
+                else if (previousTabColumn < leftmostColumn) {
+                    previousTabColumn = leftmostColumn;
+                }
+
                 int start = caretOffset - lineStart;
                 while (start < sb.length() && sb.charAt(start) == ' ') {
                     start++;
@@ -2277,11 +2295,10 @@ public class SourceEditor {
             styledText.setRedraw(false);
             try {
                 int caretPosition = lineStart + currentColumn;
-                String lineText = styledText.getLine(lineNumber);
                 if (!sb.toString().equals(lineText) || caretPosition != styledText.getCaretOffset()) {
                     styledText.replaceTextRange(lineStart, lineText.length(), sb.toString());
                 }
-                styledText.setCaretOffset(lineStart + currentColumn);
+                styledText.setCaretOffset(Math.min(caretPosition, caretOffset));
                 styledText.showSelection();
             } finally {
                 styledText.setRedraw(true);

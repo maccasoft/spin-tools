@@ -468,7 +468,7 @@ public class SourceEditorTest {
     }
 
     @Test
-    public void testBacktabAlignEmptySpace() throws Exception {
+    public void testBacktabAlignEmptySpace() {
         String text = ""
             + "DAT\n"
             + "            nop             ' comment\n"
@@ -476,26 +476,39 @@ public class SourceEditorTest {
 
         SourceEditor subject = new SourceEditorMock(shell);
         subject.styledText.setText(text);
-        subject.styledText.setCaretOffset(4 + 8);
         subject.styledText.setCaret(subject.alignCaret);
 
+        subject.styledText.setCaretOffset(4 + 8);
         subject.doBacktab();
         Assertions.assertEquals(""
             + "DAT\n"
-            + "            nop             ' comment\n"
+            + "        nop                 ' comment\n"
             + "", subject.styledText.getText());
-        Assertions.assertEquals(4 + 4, subject.styledText.getCaretOffset());
+        Assertions.assertEquals(4 + 8, subject.styledText.getCaretOffset());
+    }
 
+    @Test
+    public void testBacktabAlignColumnZero() {
+        String text = ""
+            + "DAT\n"
+            + "            nop             ' comment\n"
+            + "";
+
+        SourceEditor subject = new SourceEditorMock(shell);
+        subject.styledText.setText(text);
+        subject.styledText.setCaret(subject.alignCaret);
+
+        subject.styledText.setCaretOffset(4);
         subject.doBacktab();
         Assertions.assertEquals(""
             + "DAT\n"
-            + "            nop             ' comment\n"
+            + "        nop                 ' comment\n"
             + "", subject.styledText.getText());
         Assertions.assertEquals(4, subject.styledText.getCaretOffset());
     }
 
     @Test
-    public void testBacktabAlignWord() throws Exception {
+    public void testBacktabAlignWord() {
         String text = ""
             + "DAT\n"
             + "            nop             ' comment\n"
