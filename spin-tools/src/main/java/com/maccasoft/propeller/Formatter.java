@@ -282,7 +282,7 @@ public abstract class Formatter {
                     state = 1;
                     // Fall-through
                 case 1:
-                    sb.alignToColumn(sb.tabspaces);
+                    sb.alignToColumn(sb.tabstops != null && sb.tabstops.length > 0 ? sb.tabstops[0] : sb.tabspaces);
                     if (token.type == Token.KEYWORD) {
                         if (sb.lastChar() != ' ') {
                             sb.append(" ");
@@ -418,7 +418,7 @@ public abstract class Formatter {
             }
             switch (state) {
                 case 1:
-                    sb.alignToColumn(sb.tabspaces);
+                    sb.alignToColumn(sb.tabstops != null && sb.tabstops.length > 0 ? sb.tabstops[0] : sb.tabspaces);
                     if (types.contains(token.getText().toUpperCase())) {
                         if (sb.lastChar() != ' ') {
                             sb.append(" ");
@@ -509,7 +509,7 @@ public abstract class Formatter {
             }
             switch (state) {
                 case 1:
-                    sb.alignToColumn(sb.tabspaces);
+                    sb.alignToColumn(sb.tabstops != null && sb.tabstops.length > 0 ? sb.tabstops[0] : sb.tabspaces);
                     sb.append(token);
                     state = 2;
                     break;
@@ -1014,7 +1014,6 @@ public abstract class Formatter {
                         sb.alignToColumn(modifiersColumn);
                         if (sb.lastChar() != ' ') {
                             sb.append(" ");
-                            sb.alignToTabStop();
                         }
                         sb.append(convertCase(token, pasmInstructionsCase));
                         state = 6;
@@ -1038,7 +1037,6 @@ public abstract class Formatter {
                         sb.alignToColumn(modifiersColumn);
                         if (sb.lastChar() != ' ') {
                             sb.append(" ");
-                            sb.alignToTabStop();
                         }
                         sb.append(convertCase(token, pasmInstructionsCase));
                         state = 6;
@@ -1199,14 +1197,21 @@ public abstract class Formatter {
             sb.append(alignBlockComment(token, sb.column));
         }
         else {
-            if (lineCommentAlign == Align.None) {
-                sb.alignToColumn(token.column);
-            }
-            else if (lineCommentAlign == Align.TabStop) {
-                sb.alignToTabStop();
-            }
-            else {
-                sb.alignToColumn(lineCommentColumn);
+            if (token.column > 0) {
+                if (sb.column == 0) {
+                    sb.alignToTabStop();
+                }
+                else {
+                    if (lineCommentAlign == Align.None) {
+                        sb.alignToColumn(token.column);
+                    }
+                    else if (lineCommentAlign == Align.TabStop) {
+                        sb.alignToTabStop();
+                    }
+                    else {
+                        sb.alignToColumn(lineCommentColumn);
+                    }
+                }
             }
             if (sb.column > 0 && sb.lastChar() != ' ') {
                 sb.append(" ");
