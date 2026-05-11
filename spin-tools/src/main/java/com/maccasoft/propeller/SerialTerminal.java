@@ -78,6 +78,7 @@ import com.maccasoft.propeller.devices.NetworkUtils;
 import com.maccasoft.propeller.internal.BusyIndicator;
 import com.maccasoft.propeller.internal.ColorRegistry;
 import com.maccasoft.propeller.internal.PngImageTransfer;
+import com.maccasoft.propeller.internal.Utils;
 
 import jssc.SerialPort;
 
@@ -439,7 +440,7 @@ public class SerialTerminal {
 
         Rectangle rect = preferences.getTerminalWindow();
         if (rect.x != -1 && rect.y != -1) {
-            if (display.getBounds().contains(rect.x, rect.y)) {
+            if (!Utils.offscreen(rect, display.getBounds())) {
                 shell.setLocation(rect.x, rect.y);
             }
         }

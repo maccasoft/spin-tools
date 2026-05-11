@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.internal;
@@ -14,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Rectangle;
 
 public class Utils {
 
@@ -136,6 +136,19 @@ public class Utils {
             return caseSensitive ? text1.equals(text2) : text1.equalsIgnoreCase(text2);
         }
         return (text1 == text2);
+    }
+
+    public static boolean offscreen(Rectangle window, Rectangle display) {
+        if (window.x >= display.x + display.width) {
+            return true;
+        }
+        if (window.x + window.width < display.x) {
+            return true;
+        }
+        if (window.y < display.y || window.y >= display.y + display.height) {
+            return true;
+        }
+        return false;
     }
 
 }

@@ -323,7 +323,7 @@ public class SpinTools {
 
         Rectangle bounds = preferences.getWindowBounds();
         if (bounds != null) {
-            if (display.getBounds().contains(bounds.x, bounds.y)) {
+            if (!Utils.offscreen(bounds, display.getBounds())) {
                 shell.setLocation(bounds.x, bounds.y);
             }
             shell.setSize(bounds.width, bounds.height);
