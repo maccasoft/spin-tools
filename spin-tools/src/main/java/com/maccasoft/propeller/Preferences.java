@@ -776,10 +776,12 @@ public class Preferences {
 
     public void setTerminalSize(int width, int height) {
         Rectangle rect = getTerminalWindow();
-        rect.width = width;
-        rect.height = height;
-        setTerminalWindow(rect);
-        changeSupport.firePropertyChange(PROP_TERMINAL_SIZE, null, new Point(width, height));
+        if (rect.width != width || rect.height != height) {
+            rect.width = width;
+            rect.height = height;
+            setTerminalWindow(rect);
+            changeSupport.firePropertyChange(PROP_TERMINAL_SIZE, null, new Point(width, height));
+        }
     }
 
     public boolean getTerminalLineInput() {

@@ -27,6 +27,8 @@ import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.ImageTransfer;
 import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
+import org.eclipse.swt.events.ControlAdapter;
+import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.KeyAdapter;
@@ -195,6 +197,7 @@ public class SerialTerminal {
     Rectangle selectionRectangle;
 
     int frameCounter;
+    long sizeDisplayTimer;
 
     final AtomicReference<Rectangle> redrawRectangle = new AtomicReference<Rectangle>();
 
@@ -406,7 +409,7 @@ public class SerialTerminal {
     }
 
     void create() {
-        shell = new Shell(display, SWT.CLOSE | SWT.TITLE | SWT.MIN);
+        shell = new Shell(display);
         shell.setText(WINDOW_TITLE);
         shell.setData(this);
 
@@ -489,9 +492,9 @@ public class SerialTerminal {
 
         createLineInputGroup(container);
 
-        canvas = new Canvas(container, SWT.DOUBLE_BUFFERED | SWT.V_SCROLL);
-
         Rectangle rect = preferences.getTerminalWindow();
+
+        canvas = new Canvas(container, SWT.DOUBLE_BUFFERED | SWT.V_SCROLL);
         GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
         gridData.widthHint = rect.width * characterWidth;
         gridData.heightHint = rect.height * characterHeight;
@@ -502,7 +505,47 @@ public class SerialTerminal {
         foreground = colors[7];
         background = colors[0];
         canvas.setBackground(background);
+
         resizeScreen(rect.width, rect.height);
+
+        canvas.addControlListener(new ControlAdapter() {
+
+            final Runnable timerRunnable = new Runnable() {
+
+                @Override
+                public void run() {
+                    if (sizeDisplayTimer != 0 && !canvas.isDisposed()) {
+                        if (System.currentTimeMillis() - sizeDisplayTimer > 2000) {
+                            sizeDisplayTimer = 0;
+                            canvas.redraw();
+                        }
+                        else {
+                            display.timerExec(100, this);
+                        }
+                    }
+                }
+
+            };
+
+            @Override
+            public void controlResized(ControlEvent e) {
+                Point size = canvas.getSize();
+                int width = (size.x - canvas.getVerticalBar().getSize().x) / characterWidth;
+                int height = size.y / characterHeight;
+                if (width != screenWidth || height != screenHeight) {
+                    resizeScreen(width, height);
+                    preferences.removePropertyChangeListener(preferencesChangeListener);
+                    try {
+                        preferences.setTerminalSize(width, height);
+                    } finally {
+                        preferences.addPropertyChangeListener(preferencesChangeListener);
+                    }
+                    sizeDisplayTimer = System.currentTimeMillis();
+                    display.timerExec(500, timerRunnable);
+                }
+            }
+
+        });
 
         canvas.getVerticalBar().addSelectionListener(new SelectionAdapter() {
 
@@ -590,7 +633,23 @@ public class SerialTerminal {
                     e.gc.setForeground(e.gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
                     e.gc.drawRectangle(selectionRectangle);
                 }
+
+                if (sizeDisplayTimer != 0) {
+                    String text = String.format("%dx%d", screenWidth, screenHeight);
+                    Point size = canvas.getSize();
+                    Point textSize = e.gc.textExtent(text);
+
+                    e.gc.setBackground(e.gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
+                    e.gc.setForeground(e.gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
+
+                    e.gc.setAlpha(128);
+                    e.gc.fillRectangle((size.x - textSize.x) / 2 - characterWidth, (size.y - textSize.y) / 2 - characterHeight / 2, textSize.x + characterWidth * 2, textSize.y + characterHeight);
+                    e.gc.setAlpha(255);
+                    e.gc.drawRectangle((size.x - textSize.x) / 2 - characterWidth, (size.y - textSize.y) / 2 - characterHeight / 2, textSize.x + characterWidth * 2, textSize.y + characterHeight);
+                    e.gc.drawString(text, (size.x - textSize.x) / 2, (size.y - textSize.y) / 2, true);
+                }
             }
+
         });
 
         canvas.addMouseListener(new MouseAdapter() {
@@ -609,12 +668,12 @@ public class SerialTerminal {
                         for (int x = x0; x < x1; x++) {
                             line.append(screen[topRow + y][x].character);
                         }
-                        if (text.length() != 0) {
+                        if (!text.isEmpty()) {
                             text.append(System.lineSeparator());
                         }
                         text.append(line.toString().replaceFirst("\\s++$", ""));
                     }
-                    if (text.length() == 0) {
+                    if (text.isEmpty()) {
                         text.append(" ");
                     }
 
