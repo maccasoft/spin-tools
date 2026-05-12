@@ -440,6 +440,8 @@ public class SerialTerminal {
 
         Rectangle rect = preferences.getTerminalWindow();
         if (rect.x != -1 && rect.y != -1) {
+            rect.width *= characterWidth;
+            rect.height *= characterHeight;
             if (!Utils.offscreen(rect, display.getBounds())) {
                 shell.setLocation(rect.x, rect.y);
             }
