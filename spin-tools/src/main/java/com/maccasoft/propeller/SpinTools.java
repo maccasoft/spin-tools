@@ -1670,6 +1670,20 @@ public class SpinTools {
             }
         });
 
+        new ToolItem(toolBar, SWT.SEPARATOR);
+
+        toolItem = new ToolItem(toolBar, SWT.PUSH);
+        toolItem.setImage(ImageRegistry.getImageFromResources("gear.png"));
+        toolItem.setToolTipText("Preferences");
+        toolItem.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                PreferencesDialog dlg = new PreferencesDialog(shell, preferences);
+                dlg.open();
+            }
+        });
+
         return toolBar;
     }
 
@@ -2870,7 +2884,8 @@ public class SpinTools {
             new MenuItem(menu, SWT.SEPARATOR);
 
             item = new MenuItem(menu, SWT.PUSH);
-            item.setText("Preferences");
+            item.setText("Preferences\tF5");
+            item.setAccelerator(SWT.F5);
         }
         item.addListener(SWT.Selection, new Listener() {
 
