@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2.bytecode;
@@ -120,7 +119,7 @@ public class Constant extends Spin2Bytecode {
 
         if (value >= -1 && value <= 14) {
             return new byte[] {
-                (byte) (Spin2Bytecode.bc_con_n + value + 1)
+                (byte) (Spin2Bytecode.bc_con_n1_14 + value + 1)
             };
         }
 

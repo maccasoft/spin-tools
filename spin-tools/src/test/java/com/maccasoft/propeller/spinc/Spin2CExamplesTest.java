@@ -112,7 +112,7 @@ class Spin2CExamplesTest {
             + "0000F 0000F       42 38          CONSTANT (56)\n"
             + "00011 00011       42 FA          CONSTANT (250)\n"
             + "00013 00013       11 01          SUB_ADDRESS (1)\n"
-            + "00015 00015       C1 7F          VAR_ADDRESS VBASE+$00001 (short)\n"
+            + "00015 00015       C1 1B          VAR_ADDRESS VBASE+$00001 (short)\n"
             + "00017 00017       19 58 02 26    COGSPIN\n"
             + "0001B 0001B       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
             + "'     for(;;) {\n"

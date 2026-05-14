@@ -108,9 +108,6 @@ public class StructOp extends Spin2Bytecode {
             for (Integer multiplier : multipliers) {
                 os.write(Constant.wrVar(multiplier.intValue()));
             }
-            if (op == Bytecode.Op.Address) {
-                os.write(Constant.wrVar(0));
-            }
 
             if (struct == null) {
                 if (op == Bytecode.Op.Read) {
@@ -119,6 +116,9 @@ public class StructOp extends Spin2Bytecode {
                 else if (op == Bytecode.Op.Write) {
                     os.write(push ? Spin2Bytecode.bc_write_push : Spin2Bytecode.bc_write);
                 }
+                else if (op == Bytecode.Op.Address) {
+                    os.write(Constant.wrVar(0x1B));
+                }
             }
             else {
                 if (op == Bytecode.Op.Read) {
@@ -126,6 +126,9 @@ public class StructOp extends Spin2Bytecode {
                 }
                 else if (op == Bytecode.Op.Write) {
                     os.write(struct.getTypeSize());
+                }
+                else if (op == Bytecode.Op.Address) {
+                    os.write(Constant.wrVar(0));
                 }
             }
 

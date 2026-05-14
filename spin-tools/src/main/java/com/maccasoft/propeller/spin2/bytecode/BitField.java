@@ -19,19 +19,11 @@ import com.maccasoft.propeller.spin2.bytecode.Bytecode.Op;
 public class BitField extends Spin2Bytecode {
 
     Op op;
-    boolean push;
     int bitfield = -1;
 
     public BitField(Context context, Op op, int bitfield) {
         super(context);
         this.op = op;
-        this.bitfield = bitfield;
-    }
-
-    public BitField(Context context, Op op, boolean push, int bitfield) {
-        super(context);
-        this.op = op;
-        this.push = push;
         this.bitfield = bitfield;
     }
 
@@ -50,26 +42,43 @@ public class BitField extends Spin2Bytecode {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         try {
             if (bitfield == -1) {
-                os.write(Spin2Bytecode.bc_setup_bfield_pop); // Read (pop)
+                if (op == Bytecode.Op.Read) {
+                    os.write(Spin2Bytecode.bc_read_bfield_pop);
+                }
+                else if (op == Bytecode.Op.Write) {
+                    os.write(Spin2Bytecode.bc_write_bfield_pop);
+                }
+                else {
+                    os.write(Spin2Bytecode.bc_setup_bfield_pop);
+                }
             }
             else {
                 if (bitfield >= 0 && bitfield <= 31) {
-                    os.write(Spin2Bytecode.bc_setup_bfield_0_31 + bitfield);
+                    if (op == Bytecode.Op.Read) {
+                        os.write(Spin2Bytecode.bc_read_bfield_0_31 + bitfield);
+                    }
+                    else if (op == Bytecode.Op.Write) {
+                        os.write(Spin2Bytecode.bc_write_bfield_0_31 + bitfield);
+                    }
+                    else {
+                        os.write(Spin2Bytecode.bc_setup_bfield_0_31 + bitfield);
+                    }
                 }
                 else {
-                    os.write(Spin2Bytecode.bc_setup_bfield_rfvar);
+                    if (op == Bytecode.Op.Read) {
+                        os.write(Spin2Bytecode.bc_read_bfield_rfvar);
+                    }
+                    else if (op == Bytecode.Op.Write) {
+                        os.write(Spin2Bytecode.bc_write_bfield_rfvar);
+                    }
+                    else {
+                        os.write(Spin2Bytecode.bc_setup_bfield_rfvar);
+                    }
                     os.write(Constant.wrVar(bitfield));
                 }
             }
-
             if (op == Bytecode.Op.Field) {
                 os.write(Spin2Bytecode.bc_get_field);
-            }
-            else if (op == Bytecode.Op.Read) {
-                os.write(Spin2Bytecode.bc_read);
-            }
-            else if (op == Bytecode.Op.Write) {
-                os.write(push ? Spin2Bytecode.bc_write_push : Spin2Bytecode.bc_write);
             }
         } catch (IOException e) {
             // Do nothing
@@ -104,10 +113,6 @@ public class BitField extends Spin2Bytecode {
             if (bitfield >= 0 && bitfield <= 31) {
                 sb.append(" (short)");
             }
-        }
-
-        if (op == Bytecode.Op.Write && push) {
-            sb.append(" (push)");
         }
 
         return sb.toString();

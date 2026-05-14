@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2;
@@ -215,131 +214,147 @@ public class Spin2Bytecode {
     public static final int bc_string = 0x9E;
     public static final int bc_bitrange = 0x9F;
 
-    public static final int bc_con_n = 0xA0;
+    // compressed bytecodes - main
+
+    public static final int bc_con_n1_14 = 0xA0;
     public static final int bc_setup_reg_1D8_1F8 = 0xB0;
     public static final int bc_setup_var_0_15 = 0xC0;
     public static final int bc_setup_local_0_15 = 0xD0;
     public static final int bc_read_local_0_15 = 0xE0;
     public static final int bc_write_local_0_15 = 0xF0;
 
+    // compressed bytecodes - variable operators
+    public static final int bc_set_incdec_2_33 = 0x80;
+    public static final int bc_setup_bfield_0_31 = 0xA0;
+    public static final int bc_read_bfield_0_31 = 0xC0;
+    public static final int bc_write_bfield_0_31 = 0xE0;
+
+    public static final int con_adj = bc_con_n1_14 + 1;              // yields -1..14
+    public static final int inc_adj = bc_set_incdec_2_33 - 2;        // yields 2..33
+
     // altcodes
 
-    public static final int bc_set_incdec = 0x79;
+    public static final int bc_set_incdec_rfvar = 0x15;
 
-    public static final int bc_repeat_var_init_n = 0x7A;
-    public static final int bc_repeat_var_init_1 = 0x7B;
-    public static final int bc_repeat_var_init = 0x7C;
-    public static final int bc_repeat_var_loop = 0x7D;
+    public static final int bc_repeat_var_init_n = 0x16;
+    public static final int bc_repeat_var_init_1 = 0x17;
+    public static final int bc_repeat_var_init = 0x18;
+    public static final int bc_repeat_var_loop = 0x19;
 
-    public static final int bc_get_field = 0x7E;
-    public static final int bc_get_addr = 0x7F;
-    public static final int bc_read = 0x80;
-    public static final int bc_write = 0x81;
-    public static final int bc_write_push = 0x82;
+    public static final int bc_get_field = 0x1A;
+    public static final int bc_get_addr = 0x1B;
 
-    public static final int bc_var_inc = 0x83;
-    public static final int bc_var_dec = 0x84;
-    public static final int bc_var_preinc_push = 0x85;
-    public static final int bc_var_predec_push = 0x86;
-    public static final int bc_var_postinc_push = 0x87;
-    public static final int bc_var_postdec_push = 0x88;
-    public static final int bc_var_lognot = 0x89;
-    public static final int bc_var_lognot_push = 0x8A;
-    public static final int bc_var_bitnot = 0x8B;
-    public static final int bc_var_bitnot_push = 0x8C;
-    public static final int bc_var_swap = 0x8D;
-    public static final int bc_var_rnd = 0x8E;
-    public static final int bc_var_rnd_push = 0x8F;
+    public static final int bc_read = 0x1C;
+    public static final int bc_write = 0x1D;
+    public static final int bc_write_push = 0x1E;
 
-    public static final int bc_lognot_write = 0x90;
-    public static final int bc_bitnot_write = 0x91;
-    public static final int bc_neg_write = 0x92;
-    public static final int bc_abs_write = 0x93;
-    public static final int bc_encod_write = 0x94;
-    public static final int bc_decod_write = 0x95;
-    public static final int bc_bmask_write = 0x96;
-    public static final int bc_ones_write = 0x97;
-    public static final int bc_sqrt_write = 0x98;
-    public static final int bc_qlog_write = 0x99;
-    public static final int bc_qexp_write = 0x9A;
+    public static final int bc_var_inc = 0x1F;
+    public static final int bc_var_dec = 0x20;
+    public static final int bc_var_preinc_push = 0x21;
+    public static final int bc_var_predec_push = 0x22;
+    public static final int bc_var_postinc_push = 0x23;
+    public static final int bc_var_postdec_push = 0x24;
+    public static final int bc_var_lognot = 0x25;
+    public static final int bc_var_lognot_push = 0x26;
+    public static final int bc_var_bitnot = 0x27;
+    public static final int bc_var_bitnot_push = 0x28;
+    public static final int bc_var_swap = 0x29;
+    public static final int bc_var_rnd = 0x2A;
+    public static final int bc_var_rnd_push = 0x2B;
 
-    public static final int bc_shr_write = 0x9B;
-    public static final int bc_shl_write = 0x9C;
-    public static final int bc_sar_write = 0x9D;
-    public static final int bc_ror_write = 0x9E;
-    public static final int bc_rol_write = 0x9F;
-    public static final int bc_rev_write = 0xA0;
-    public static final int bc_zerox_write = 0xA1;
-    public static final int bc_signx_write = 0xA2;
-    public static final int bc_add_write = 0xA3;
-    public static final int bc_sub_write = 0xA4;
+    public static final int bc_lognot_write = 0x2C;
+    public static final int bc_bitnot_write = 0x2D;
+    public static final int bc_neg_write = 0x2E;
+    public static final int bc_abs_write = 0x2F;
+    public static final int bc_encod_write = 0x30;
+    public static final int bc_decod_write = 0x31;
+    public static final int bc_bmask_write = 0x32;
+    public static final int bc_ones_write = 0x33;
+    public static final int bc_sqrt_write = 0x34;
+    public static final int bc_qlog_write = 0x35;
+    public static final int bc_qexp_write = 0x36;
 
-    public static final int bc_logand_write = 0xA5;
-    public static final int bc_logxor_write = 0xA6;
-    public static final int bc_logor_write = 0xA7;
-    public static final int bc_bitand_write = 0xA8;
-    public static final int bc_bitxor_write = 0xA9;
-    public static final int bc_bitor_write = 0xAA;
-    public static final int bc_fge_write = 0xAB;
-    public static final int bc_fle_write = 0xAC;
-    public static final int bc_addbits_write = 0xAD;
-    public static final int bc_addpins_write = 0xAE;
+    public static final int bc_shr_write = 0x37;
+    public static final int bc_shl_write = 0x38;
+    public static final int bc_sar_write = 0x39;
+    public static final int bc_ror_write = 0x3A;
+    public static final int bc_rol_write = 0x3B;
+    public static final int bc_rev_write = 0x3C;
+    public static final int bc_zerox_write = 0x3D;
+    public static final int bc_signx_write = 0x3E;
+    public static final int bc_add_write = 0x3F;
+    public static final int bc_sub_write = 0x40;
 
-    public static final int bc_mul_write = 0xAF;
-    public static final int bc_div_write = 0xB0;
-    public static final int bc_divu_write = 0xB1;
-    public static final int bc_rem_write = 0xB2;
-    public static final int bc_remu_write = 0xB3;
-    public static final int bc_sca_write = 0xB4;
-    public static final int bc_scas_write = 0xB5;
-    public static final int bc_frac_write = 0xB6;
+    public static final int bc_logand_write = 0x41;
+    public static final int bc_logxor_write = 0x42;
+    public static final int bc_logor_write = 0x43;
+    public static final int bc_bitand_write = 0x44;
+    public static final int bc_bitxor_write = 0x45;
+    public static final int bc_bitor_write = 0x46;
+    public static final int bc_fge_write = 0x47;
+    public static final int bc_fle_write = 0x48;
+    public static final int bc_addbits_write = 0x49;
+    public static final int bc_addpins_write = 0x4A;
 
-    public static final int bc_lognot_write_push = 0xB7;
-    public static final int bc_bitnot_write_push = 0xB8;
-    public static final int bc_neg_write_push = 0xB9;
-    public static final int bc_abs_write_push = 0xBA;
-    public static final int bc_encod_write_push = 0xBB;
-    public static final int bc_decod_write_push = 0xBC;
-    public static final int bc_bmask_write_push = 0xBD;
-    public static final int bc_ones_write_push = 0xBE;
-    public static final int bc_sqrt_write_push = 0xBF;
-    public static final int bc_qlog_write_push = 0xC0;
-    public static final int bc_qexp_write_push = 0xC1;
+    public static final int bc_mul_write = 0x4B;
+    public static final int bc_div_write = 0x4C;
+    public static final int bc_divu_write = 0x4D;
+    public static final int bc_rem_write = 0x4E;
+    public static final int bc_remu_write = 0x4F;
+    public static final int bc_sca_write = 0x50;
+    public static final int bc_scas_write = 0x51;
+    public static final int bc_frac_write = 0x52;
 
-    public static final int bc_shr_write_push = 0xC2;
-    public static final int bc_shl_write_push = 0xC3;
-    public static final int bc_sar_write_push = 0xC4;
-    public static final int bc_ror_write_push = 0xC5;
-    public static final int bc_rol_write_push = 0xC6;
-    public static final int bc_rev_write_push = 0xC7;
-    public static final int bc_zerox_write_push = 0xC8;
-    public static final int bc_signx_write_push = 0xC9;
-    public static final int bc_add_write_push = 0xCA;
-    public static final int bc_sub_write_push = 0xCB;
+    public static final int bc_lognot_write_push = 0x53;
+    public static final int bc_bitnot_write_push = 0x54;
+    public static final int bc_neg_write_push = 0x55;
+    public static final int bc_abs_write_push = 0x56;
+    public static final int bc_encod_write_push = 0x57;
+    public static final int bc_decod_write_push = 0x58;
+    public static final int bc_bmask_write_push = 0x59;
+    public static final int bc_ones_write_push = 0x5A;
+    public static final int bc_sqrt_write_push = 0x5B;
+    public static final int bc_qlog_write_push = 0x5C;
+    public static final int bc_qexp_write_push = 0x5D;
 
-    public static final int bc_logand_write_push = 0xCC;
-    public static final int bc_logxor_write_push = 0xCD;
-    public static final int bc_logor_write_push = 0xCE;
-    public static final int bc_bitand_write_push = 0xCF;
-    public static final int bc_bitxor_write_push = 0xD0;
-    public static final int bc_bitor_write_push = 0xD1;
-    public static final int bc_fge_write_push = 0xD2;
-    public static final int bc_fle_write_push = 0xD3;
-    public static final int bc_addbits_write_push = 0xD4;
-    public static final int bc_addpins_write_push = 0xD5;
+    public static final int bc_shr_write_push = 0x5E;
+    public static final int bc_shl_write_push = 0x5F;
+    public static final int bc_sar_write_push = 0x60;
+    public static final int bc_ror_write_push = 0x61;
+    public static final int bc_rol_write_push = 0x62;
+    public static final int bc_rev_write_push = 0x63;
+    public static final int bc_zerox_write_push = 0x64;
+    public static final int bc_signx_write_push = 0x65;
+    public static final int bc_add_write_push = 0x66;
+    public static final int bc_sub_write_push = 0x67;
 
-    public static final int bc_mul_write_push = 0xD6;
-    public static final int bc_div_write_push = 0xD7;
-    public static final int bc_divu_write_push = 0xD8;
-    public static final int bc_rem_write_push = 0xD9;
-    public static final int bc_remu_write_push = 0xDA;
-    public static final int bc_sca_write_push = 0xDB;
-    public static final int bc_scas_write_push = 0xDC;
-    public static final int bc_frac_write_push = 0xDD;
+    public static final int bc_logand_write_push = 0x68;
+    public static final int bc_logxor_write_push = 0x69;
+    public static final int bc_logor_write_push = 0x6A;
+    public static final int bc_bitand_write_push = 0x6B;
+    public static final int bc_bitxor_write_push = 0x6C;
+    public static final int bc_bitor_write_push = 0x6D;
+    public static final int bc_fge_write_push = 0x6E;
+    public static final int bc_fle_write_push = 0x6F;
+    public static final int bc_addbits_write_push = 0x70;
+    public static final int bc_addpins_write_push = 0x71;
 
-    public static final int bc_setup_bfield_pop = 0xDE;
-    public static final int bc_setup_bfield_rfvar = 0xDF;
-    public static final int bc_setup_bfield_0_31 = 0xE0;
+    public static final int bc_mul_write_push = 0x72;
+    public static final int bc_div_write_push = 0x73;
+    public static final int bc_divu_write_push = 0x74;
+    public static final int bc_rem_write_push = 0x75;
+    public static final int bc_remu_write_push = 0x76;
+    public static final int bc_sca_write_push = 0x77;
+    public static final int bc_scas_write_push = 0x78;
+    public static final int bc_frac_write_push = 0x79;
+
+    public static final int bc_setup_bfield_pop = 0x7A;
+    public static final int bc_read_bfield_pop = 0x7B;
+    public static final int bc_write_bfield_pop = 0x7C;
+
+    public static final int bc_setup_bfield_rfvar = 0x7D;
+    public static final int bc_read_bfield_rfvar = 0x7E;
+    public static final int bc_write_bfield_rfvar = 0x7F;
 
     // miscellaneous routines
 

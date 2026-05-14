@@ -98,10 +98,7 @@ class Spin2ExamplesTest {
             String name = files[i].getName();
             if (name.endsWith(".spin2")) {
                 name = name.substring(0, name.length() - 6);
-                File binaryFile = new File(dir, name + ".binary");
-                if (binaryFile.exists()) {
-                    result.add(new File(dir, name));
-                }
+                result.add(new File(dir, name));
             }
             else if (!".".equals(name) && !"..".equals(name)) {
                 if (files[i].isDirectory()) {
@@ -123,6 +120,7 @@ class Spin2ExamplesTest {
             new File(path),
             new File(libraryPath)
         }));
+
         Spin2Object obj = compiler.compile(source, text);
         for (CompilerException msg : compiler.getMessages()) {
             if (msg.type == CompilerException.ERROR) {

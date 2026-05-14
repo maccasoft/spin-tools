@@ -3,7 +3,7 @@
 ''   File....... jm_max7219_ez.spin2
 ''   Purpose.... Simple MAX7219/MAX7221 serial LED driver (one device)
 ''   Author..... Jon "JonnyMac" McPhalen
-''               Copyright (c) 2013-2020 Jon McPhalen
+''               Copyright (c) 2013-2021 Jon McPhalen
 ''               -- see below for terms of use
 ''   E-mail..... jon.mcphalen@gmail.com
 ''   Started....
@@ -14,8 +14,8 @@
 
 con { fixed io pins }
 
-  RX1    = 63  { I }                                            ' programming / debug
-  TX1    = 62  { O }
+  PGM_RX = 63  { I }                                            ' programming / debug
+  PGM_TX = 62  { O }
 
   SF_CS  = 61  { O }                                            ' serial flash
   SF_SCK = 60  { O }
@@ -45,7 +45,6 @@ con { max7219 registers }
 
   D_RAW  = 0                                                    ' decode as raw segments
   D_DEC  = 1                                                    ' decode as decimal digit (10 = dash)
-
 
 
 var
@@ -246,12 +245,10 @@ con { segments / character maps }
         '  *abcdefg
   _A    = %01110111
   _b2   = %00011111 { lowercase }
-  _C    = %00001100
   _C1   = %01001110
   _c2   = %00001101 { lc }
   _d2   = %00111101 { lc }
-  _E    = %00001010
-  _E1   = %01001111
+  _E1  = %01001111
   _F    = %01000111
   _G    = _6
   _H    = %00110111
@@ -277,7 +274,7 @@ con { segments / character maps }
   _DQt  = %00100010 { " }
   _SQt  = %00100000 { ' }
   _At   = %01101111 { @ }
-  _SBLf = %00001100 { [ }
+  _SBLf = _C1       { [ }
   _SBRt = %01111000 { ] }
   _UScr = %00001000 { _ }
   _Eq   = %00001001 { = }
@@ -289,7 +286,7 @@ dat { 7-segment maps }
                         ' convert non-printing control chars to Hex table
 
   HexDigits     byte       _0,    _1,    _2,    _3,    _4,    _5,    _6,    _7
-                byte       _8,    _9,    _A,   _b2,    _C,   _d2,    _E,    _F
+                byte       _8,    _9,    _A,   _b2,    _C1,  _d2,   _E1,    _F
 
                         ' 7-seg ASCII chars
 

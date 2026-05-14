@@ -118,7 +118,7 @@ public class AboutDialog extends Dialog {
         final String message = title + "\r\n" + "Copyright \u00A9 2021-26 " + our + " and others. All rights reserved.\r\n"
             + "\r\n"
             + "Java Runtime: " + System.getProperty("java.vm.vendor") + " " + System.getProperty("java.vm.version") + "\r\n"
-            + "Spin2 Interpreter: v52 - 2025.10.08\r\n"
+            + "Spin2 Interpreter: v55 - 2026.05.07\r\n"
             + "\r\n"
             + "This program and the accompanying materials, unless otherwise specified,\r\n"
             + "are made available under the terms of the " + epl + ".\r\n"
