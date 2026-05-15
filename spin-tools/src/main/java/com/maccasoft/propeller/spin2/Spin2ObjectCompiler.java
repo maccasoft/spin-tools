@@ -1305,7 +1305,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                                 builder.addToken(token);
                             }
                             if (!"]".equals(token.getText())) {
-                                throw new CompilerException("expecting ']'", token);
+                                throw new CompilerException("expecting ']'", token.stop + 1);
                             }
                         }
                     }
