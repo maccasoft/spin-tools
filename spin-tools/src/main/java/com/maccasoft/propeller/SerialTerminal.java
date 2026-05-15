@@ -36,8 +36,6 @@ import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseMoveListener;
-import org.eclipse.swt.events.PaintEvent;
-import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.ShellAdapter;
@@ -77,6 +75,7 @@ import com.maccasoft.propeller.devices.NetworkComPort;
 import com.maccasoft.propeller.devices.NetworkUtils;
 import com.maccasoft.propeller.internal.BusyIndicator;
 import com.maccasoft.propeller.internal.ColorRegistry;
+import com.maccasoft.propeller.internal.ImageRegistry;
 import com.maccasoft.propeller.internal.PngImageTransfer;
 import com.maccasoft.propeller.internal.Utils;
 
@@ -566,93 +565,100 @@ public class SerialTerminal {
 
             @Override
             public void keyPressed(KeyEvent e) {
-                if (e.keyCode == SWT.INSERT && (e.stateMask & SWT.MOD2) != 0) {
-                    pasteFromClipboard();
-                    return;
-                }
-                if (e.character != 0) {
-                    try {
-                        if (comPort != null && comPort.isOpened()) {
-                            comPort.writeByte((byte) e.character);
-                            if (localEcho) {
-                                write(e.character);
+                switch (e.keyCode) {
+                    case SWT.INSERT:
+                        if ((e.stateMask & SWT.MOD2) != 0) {
+                            pasteFromClipboard();
+                        }
+                        break;
+                    case SWT.F5:
+                        display.asyncExec(() -> {
+                            SerialTerminalPreferencesDialog dlg = new SerialTerminalPreferencesDialog(shell, preferences);
+                            dlg.open();
+                        });
+                        break;
+                    default:
+                        if (e.character != 0) {
+                            try {
+                                if (comPort != null && comPort.isOpened()) {
+                                    comPort.writeByte((byte) e.character);
+                                    if (localEcho) {
+                                        write(e.character);
+                                    }
+                                }
+                                else {
+                                    write(e.character);
+                                }
+                            } catch (Exception ex) {
+                                ex.printStackTrace();
                             }
                         }
-                        else {
-                            write(e.character);
-                        }
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
+                        break;
                 }
+                e.doit = false;
             }
         });
 
-        canvas.addPaintListener(new PaintListener() {
+        canvas.addPaintListener(e -> {
+            int y0 = e.y / characterHeight;
+            int y1 = Math.min((e.y + e.height + characterHeight - 1) / characterHeight, screenHeight - 1);
+            int x0 = e.x / characterWidth;
+            int x1 = Math.min((e.x + e.width + characterWidth - 1) / characterWidth, screenWidth - 1);
 
-            @Override
-            public void paintControl(PaintEvent e) {
-                int y0 = e.y / characterHeight;
-                int y1 = Math.min((e.y + e.height + characterHeight - 1) / characterHeight, screenHeight - 1);
-                int x0 = e.x / characterWidth;
-                int x1 = Math.min((e.x + e.width + characterWidth - 1) / characterWidth, screenWidth - 1);
+            e.gc.setFont(font);
 
-                e.gc.setFont(font);
-
-                for (int y = y0, cy = y * characterHeight; y <= y1; y++, cy += characterHeight) {
-                    for (int x = x0, cx = x * characterWidth; x <= x1; x++, cx += characterWidth) {
-                        try {
-                            Cell cell = screen[topRow + y][x];
-                            e.gc.setForeground(cell.foreground);
-                            e.gc.setBackground(cell.background);
-                            e.gc.fillRectangle(cx, cy, characterWidth, characterHeight);
-                            e.gc.drawString(String.valueOf(cell.character), cx, cy, true);
-                        } catch (Exception ex) {
-                            e.gc.setForeground(foreground);
-                            e.gc.setBackground(background);
-                            e.gc.fillRectangle(cx, cy, characterWidth, characterHeight);
-                        }
+            for (int y = y0, cy = y * characterHeight; y <= y1; y++, cy += characterHeight) {
+                for (int x = x0, cx = x * characterWidth; x <= x1; x++, cx += characterWidth) {
+                    try {
+                        Cell cell = screen[topRow + y][x];
+                        e.gc.setForeground(cell.foreground);
+                        e.gc.setBackground(cell.background);
+                        e.gc.fillRectangle(cx, cy, characterWidth, characterHeight);
+                        e.gc.drawString(String.valueOf(cell.character), cx, cy, true);
+                    } catch (Exception ex) {
+                        e.gc.setForeground(foreground);
+                        e.gc.setBackground(background);
+                        e.gc.fillRectangle(cx, cy, characterWidth, characterHeight);
                     }
-                }
-
-                if ((cursorState & CURSOR_ON) != 0) {
-                    if ((cursorState & CURSOR_FLASH) == 0 || (cursorState & (CURSOR_DISPLAY | CURSOR_FLASH)) == (CURSOR_DISPLAY | CURSOR_FLASH)) {
-                        int h = characterHeight;
-                        if ((cursorState & CURSOR_ULINE) != 0) {
-                            h = characterHeight / 4;
-                        }
-                        int y = ((cy - topRow) * characterHeight) + (characterHeight - h);
-                        int x = cx * characterWidth;
-                        e.gc.setBackground(e.gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
-                        e.gc.fillRectangle(x, y, characterWidth, h);
-                    }
-                }
-
-                if (selectionRectangle != null && selectionRectangle.width != 0 && selectionRectangle.height != 0) {
-                    e.gc.setAlpha(128);
-                    e.gc.setBackground(e.gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
-                    e.gc.fillRectangle(selectionRectangle);
-                    e.gc.setAlpha(255);
-                    e.gc.setForeground(e.gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
-                    e.gc.drawRectangle(selectionRectangle);
-                }
-
-                if (sizeDisplayTimer != 0) {
-                    String text = String.format("%dx%d", screenWidth, screenHeight);
-                    Point size = canvas.getSize();
-                    Point textSize = e.gc.textExtent(text);
-
-                    e.gc.setBackground(e.gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
-                    e.gc.setForeground(e.gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
-
-                    e.gc.setAlpha(128);
-                    e.gc.fillRectangle((size.x - textSize.x) / 2 - characterWidth, (size.y - textSize.y) / 2 - characterHeight / 2, textSize.x + characterWidth * 2, textSize.y + characterHeight);
-                    e.gc.setAlpha(255);
-                    e.gc.drawRectangle((size.x - textSize.x) / 2 - characterWidth, (size.y - textSize.y) / 2 - characterHeight / 2, textSize.x + characterWidth * 2, textSize.y + characterHeight);
-                    e.gc.drawString(text, (size.x - textSize.x) / 2, (size.y - textSize.y) / 2, true);
                 }
             }
 
+            if ((cursorState & CURSOR_ON) != 0) {
+                if ((cursorState & CURSOR_FLASH) == 0 || (cursorState & (CURSOR_DISPLAY | CURSOR_FLASH)) == (CURSOR_DISPLAY | CURSOR_FLASH)) {
+                    int h = characterHeight;
+                    if ((cursorState & CURSOR_ULINE) != 0) {
+                        h = characterHeight / 4;
+                    }
+                    int y = ((cy - topRow) * characterHeight) + (characterHeight - h);
+                    int x = cx * characterWidth;
+                    e.gc.setBackground(e.gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
+                    e.gc.fillRectangle(x, y, characterWidth, h);
+                }
+            }
+
+            if (selectionRectangle != null && selectionRectangle.width != 0 && selectionRectangle.height != 0) {
+                e.gc.setAlpha(128);
+                e.gc.setBackground(e.gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
+                e.gc.fillRectangle(selectionRectangle);
+                e.gc.setAlpha(255);
+                e.gc.setForeground(e.gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
+                e.gc.drawRectangle(selectionRectangle);
+            }
+
+            if (sizeDisplayTimer != 0) {
+                String text = String.format("%dx%d", screenWidth, screenHeight);
+                Point size = canvas.getSize();
+                Point textSize = e.gc.textExtent(text);
+
+                e.gc.setBackground(e.gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
+                e.gc.setForeground(e.gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
+
+                e.gc.setAlpha(128);
+                e.gc.fillRectangle((size.x - textSize.x) / 2 - characterWidth, (size.y - textSize.y) / 2 - characterHeight / 2, textSize.x + characterWidth * 2, textSize.y + characterHeight);
+                e.gc.setAlpha(255);
+                e.gc.drawRectangle((size.x - textSize.x) / 2 - characterWidth, (size.y - textSize.y) / 2 - characterHeight / 2, textSize.x + characterWidth * 2, textSize.y + characterHeight);
+                e.gc.drawString(text, (size.x - textSize.x) / 2, (size.y - textSize.y) / 2, true);
+            }
         });
 
         canvas.addMouseListener(new MouseAdapter() {
@@ -753,7 +759,7 @@ public class SerialTerminal {
     }
 
     void resizeScreen(int width, int height) {
-        Cell[][] newScreen = new Cell[BACKBUFFER_LINES][width];
+        SerialTerminal.Cell[][] newScreen = new Cell[BACKBUFFER_LINES][width];
 
         int y = 0;
         while (y < newScreen.length) {
@@ -834,6 +840,13 @@ public class SerialTerminal {
                         }
                         e.doit = false;
                         break;
+                    case SWT.F5:
+                        display.asyncExec(() -> {
+                            SerialTerminalPreferencesDialog dlg = new SerialTerminalPreferencesDialog(shell, preferences);
+                            dlg.open();
+                        });
+                        e.doit = false;
+                        break;
                 }
             }
         });
@@ -872,7 +885,15 @@ public class SerialTerminal {
                         setFocus();
                         e.doit = false;
                         break;
+                    case SWT.F5:
+                        display.asyncExec(() -> {
+                            SerialTerminalPreferencesDialog dlg = new SerialTerminalPreferencesDialog(shell, preferences);
+                            dlg.open();
+                        });
+                        e.doit = false;
+                        break;
                 }
+                e.doit = false;
             }
         });
 
@@ -988,6 +1009,19 @@ public class SerialTerminal {
                 }
                 setFocus();
             }
+        });
+
+        Button button = new Button(container, SWT.PUSH);
+        button.setImage(ImageRegistry.getImageFromResources("gear.png"));
+        button.setToolTipText("Preferences");
+        button.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                SerialTerminalPreferencesDialog dlg = new SerialTerminalPreferencesDialog(shell, preferences);
+                dlg.open();
+            }
+
         });
 
         GridLayout layout = new GridLayout(container.getChildren().length, false);
