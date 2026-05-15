@@ -96,8 +96,6 @@ public class KeyboardShortcutsDialog extends Dialog {
              Shift+Ctrl+S    Save all Files
             
              Ctrl+T          Pin as Top Object
-            
-             F5              Refresh File Explorer
             """);
     }
 
@@ -172,6 +170,8 @@ public class KeyboardShortcutsDialog extends Dialog {
              Shift+Ctrl+K    Find Previous
             
              Ctrl+[1..9]     Go To Bookmark 1..9
+            
+             F5              Preferences
             """);
 
         label = new Label(parent, SWT.NONE);
