@@ -112,6 +112,7 @@ import com.maccasoft.propeller.internal.Utils;
 import com.maccasoft.propeller.model.DirectiveNode;
 import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.VariableNode;
+import com.maccasoft.propeller.preferences.Bounds;
 import com.maccasoft.propeller.preferences.ExternalTool;
 import com.maccasoft.propeller.preferences.LruData;
 import com.maccasoft.propeller.preferences.PackageFile;
@@ -319,14 +320,6 @@ public class SpinTools {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }
-
-        Rectangle bounds = preferences.getWindowBounds();
-        if (bounds != null) {
-            if (!Utils.offscreen(bounds, display.getBounds())) {
-                shell.setLocation(bounds.x, bounds.y);
-            }
-            shell.setSize(bounds.width, bounds.height);
         }
 
         Menu menu = new Menu(shell, SWT.BAR);
@@ -593,74 +586,108 @@ public class SpinTools {
 
         preferences.addPropertyChangeListener(preferencesChangeListener);
 
-        shell.addListener(SWT.Activate, new Listener() {
+        Bounds bounds = preferences.getWindowBounds();
+        if (bounds != null) {
+            shell.setSize(bounds.width, bounds.height);
 
-            @Override
-            public void handleEvent(Event event) {
-                if (fileBrowser.getVisible()) {
-                    fileBrowser.refresh();
+            Rectangle clientArea = shell.getClientArea();
+            Rectangle displayBounds = display.getBounds();
+
+            boolean offscreen = false;
+            if (bounds.x >= displayBounds.x + displayBounds.width) {
+                offscreen = true;
+            }
+            else if (bounds.x + bounds.width < displayBounds.x) {
+                offscreen = true;
+            }
+            else if (bounds.y + (bounds.height - clientArea.height) < displayBounds.y || bounds.y >= displayBounds.y + displayBounds.height) {
+                offscreen = true;
+            }
+            if (!offscreen) {
+                shell.setLocation(bounds.x, bounds.y);
+            }
+
+            if (bounds.maximized) {
+                display.asyncExec(() -> {
+                    if (!shell.isDisposed()) {
+                        shell.setMaximized(bounds.maximized);
+                    }
+                });
+            }
+        }
+        else {
+            Rectangle rect = shell.getBounds();
+            preferences.setWindowBounds(new Bounds(rect.x, rect.y, rect.width, rect.height));
+        }
+
+        shell.addListener(SWT.Activate, event -> {
+            if (fileBrowser.getVisible()) {
+                fileBrowser.refresh();
+            }
+            for (CTabItem tabItem : tabFolder.getItems()) {
+                EditorTab editorTab = (EditorTab) tabItem.getData();
+                if (tabItem == tabFolder.getSelection()) {
+                    editorTab.checkExternalContentUpdate();
                 }
-                for (CTabItem tabItem : tabFolder.getItems()) {
+                editorTab.scheduleExternalUpdateCompile();
+            }
+        });
+        shell.addListener(SWT.Close, event -> {
+            event.doit = handleRunningProcess();
+            if (event.doit) {
+                event.doit = handleUnsavedContent();
+            }
+        });
+        shell.addDisposeListener(e -> {
+            try {
+                if (shell.getMaximized()) {
+                    Bounds bounds1 = preferences.getWindowBounds();
+                    if (bounds1 == null) {
+                        bounds1 = new Bounds(-1, -1, -1, -1);
+                    }
+                    bounds1.maximized = shell.getMaximized();
+                    preferences.setWindowBounds(bounds1);
+                }
+                else {
+                    Rectangle rect = shell.getBounds();
+                    preferences.setWindowBounds(new Bounds(rect.x, rect.y, rect.width, rect.height));
+                }
+
+                preferences.setWeights("sashForm", sashForm.getWeights());
+                preferences.setWeights("browserSashForm", browserSashForm.getWeights());
+                preferences.setWeights("editorSashForm", editorSashForm.getWeights());
+
+                List<File> openTabs = new ArrayList<>();
+                for (int i = 0; i < tabFolder.getItemCount(); i++) {
+                    EditorTab editorTab = (EditorTab) tabFolder.getItem(i).getData();
+                    File file = editorTab.getFile();
+                    if (file != null) {
+                        StyledText styledText = editorTab.getEditor().getStyledText();
+                        preferences.setLruData(file, styledText.getTopIndex(), styledText.getCaretOffset());
+                        openTabs.add(file);
+                    }
+                }
+                preferences.setOpenTabs(openTabs.toArray(new File[0]));
+
+                CTabItem tabItem = tabFolder.getSelection();
+                if (tabItem != null) {
                     EditorTab editorTab = (EditorTab) tabItem.getData();
-                    if (tabItem == tabFolder.getSelection()) {
-                        editorTab.checkExternalContentUpdate();
-                    }
-                    editorTab.scheduleExternalUpdateCompile();
+                    preferences.setCurrentTab(editorTab.getFile());
                 }
-            }
-        });
-        shell.addListener(SWT.Close, new Listener() {
-
-            @Override
-            public void handleEvent(Event event) {
-                event.doit = handleRunningProcess();
-                if (event.doit) {
-                    event.doit = handleUnsavedContent();
+                else {
+                    preferences.setCurrentTab(null);
                 }
-            }
-        });
-        shell.addDisposeListener(new DisposeListener() {
 
-            @Override
-            public void widgetDisposed(DisposeEvent e) {
-                try {
-                    preferences.setWindowBounds(shell.getBounds());
-                    preferences.setWeights("sashForm", sashForm.getWeights());
-                    preferences.setWeights("browserSashForm", browserSashForm.getWeights());
-                    preferences.setWeights("editorSashForm", editorSashForm.getWeights());
+                preferences.setExpandedPaths(fileBrowser.getExpandedPaths());
 
-                    List<File> openTabs = new ArrayList<>();
-                    for (int i = 0; i < tabFolder.getItemCount(); i++) {
-                        EditorTab editorTab = (EditorTab) tabFolder.getItem(i).getData();
-                        File file = editorTab.getFile();
-                        if (file != null) {
-                            StyledText styledText = editorTab.getEditor().getStyledText();
-                            preferences.setLruData(file, styledText.getTopIndex(), styledText.getCaretOffset());
-                            openTabs.add(file);
-                        }
-                    }
-                    preferences.setOpenTabs(openTabs.toArray(new File[0]));
-
-                    CTabItem tabItem = tabFolder.getSelection();
-                    if (tabItem != null) {
-                        EditorTab editorTab = (EditorTab) tabItem.getData();
-                        preferences.setCurrentTab(editorTab.getFile());
-                    }
-                    else {
-                        preferences.setCurrentTab(null);
-                    }
-
-                    preferences.setExpandedPaths(fileBrowser.getExpandedPaths());
-
-                    SerialTerminal serialTerminal = getSerialTerminal();
-                    if (serialTerminal != null) {
-                        serialTerminal.close();
-                    }
-
-                    preferences.save();
-                } catch (IOException e1) {
-                    e1.printStackTrace();
+                SerialTerminal serialTerminal = getSerialTerminal();
+                if (serialTerminal != null) {
+                    serialTerminal.close();
                 }
+
+                preferences.save();
+            } catch (IOException e1) {
+                e1.printStackTrace();
             }
         });
 

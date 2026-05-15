@@ -29,8 +29,6 @@ import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
-import org.eclipse.swt.events.DisposeEvent;
-import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.MouseAdapter;
@@ -60,9 +58,7 @@ import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.ScrollBar;
 import org.eclipse.swt.widgets.Shell;
 
@@ -77,7 +73,7 @@ import com.maccasoft.propeller.internal.BusyIndicator;
 import com.maccasoft.propeller.internal.ColorRegistry;
 import com.maccasoft.propeller.internal.ImageRegistry;
 import com.maccasoft.propeller.internal.PngImageTransfer;
-import com.maccasoft.propeller.internal.Utils;
+import com.maccasoft.propeller.preferences.Bounds;
 
 import jssc.SerialPort;
 
@@ -326,12 +322,14 @@ public class SerialTerminal {
                         gc.dispose();
                     }
 
-                    Rectangle rect = preferences.getTerminalWindow();
-                    GridData gridData = (GridData) canvas.getLayoutData();
-                    gridData.widthHint = rect.width * characterWidth;
-                    gridData.heightHint = rect.height * characterHeight;
+                    if (!shell.getMaximized()) {
+                        Bounds bounds = preferences.getTerminalWindow();
+                        GridData gridData = (GridData) canvas.getLayoutData();
+                        gridData.widthHint = bounds.width * characterWidth;
+                        gridData.heightHint = bounds.height * characterHeight;
+                        shell.pack();
+                    }
 
-                    shell.pack();
                     redraw();
                     break;
                 }
@@ -394,9 +392,7 @@ public class SerialTerminal {
     public void open() {
         create();
 
-        shell.pack();
         shell.open();
-
         shell.addShellListener(new ShellAdapter() {
 
             @Override
@@ -437,47 +433,71 @@ public class SerialTerminal {
         createContents(shell);
         applyTheme(preferences.getTheme());
 
-        Rectangle rect = preferences.getTerminalWindow();
-        if (rect.x != -1 && rect.y != -1) {
-            rect.width *= characterWidth;
-            rect.height *= characterHeight;
-            if (!Utils.offscreen(rect, display.getBounds())) {
-                shell.setLocation(rect.x, rect.y);
-            }
-        }
-
         preferences.addPropertyChangeListener(preferencesChangeListener);
 
-        shell.addListener(SWT.Traverse, new Listener() {
+        shell.pack();
 
-            @Override
-            public void handleEvent(Event e) {
-                if (e.detail == SWT.TRAVERSE_ESCAPE) {
-                    e.doit = false;
-                }
+        Bounds bounds = preferences.getTerminalWindow();
+        if (bounds.x != -1 && bounds.y != -1) {
+            Rectangle windowBounds = shell.getBounds();
+            Rectangle clientArea = shell.getClientArea();
+            Rectangle displayBounds = display.getBounds();
+
+            boolean offscreen = false;
+            if (bounds.x >= displayBounds.x + displayBounds.width) {
+                offscreen = true;
+            }
+            else if (bounds.x + windowBounds.width < displayBounds.x) {
+                offscreen = true;
+            }
+            else if (bounds.y + (windowBounds.height - clientArea.height) < displayBounds.y || bounds.y >= displayBounds.y + displayBounds.height) {
+                offscreen = true;
+            }
+            if (!offscreen) {
+                shell.setLocation(bounds.x, bounds.y);
+            }
+
+            if (bounds.maximized) {
+                display.asyncExec(() -> {
+                    if (!shell.isDisposed()) {
+                        shell.setMaximized(bounds.maximized);
+                    }
+                });
+            }
+        }
+        else {
+            Rectangle rect = shell.getBounds();
+            preferences.setTerminalWindow(new Bounds(rect.x, rect.y, screenWidth, screenHeight));
+        }
+
+        shell.addListener(SWT.Traverse, e -> {
+            if (e.detail == SWT.TRAVERSE_ESCAPE) {
+                e.doit = false;
             }
         });
 
-        shell.addDisposeListener(new DisposeListener() {
-
-            @Override
-            public void widgetDisposed(DisposeEvent e) {
-                preferences.removePropertyChangeListener(preferencesChangeListener);
-                try {
-                    if (comPort.isOpened()) {
-                        comPort.closePort();
-                    }
-                } catch (Exception ex) {
-
+        shell.addDisposeListener(e -> {
+            preferences.removePropertyChangeListener(preferencesChangeListener);
+            try {
+                if (comPort.isOpened()) {
+                    comPort.closePort();
                 }
+            } catch (Exception ex) {
 
-                Rectangle rect = shell.getBounds();
-                rect.width = screenWidth;
-                rect.height = screenHeight;
-                preferences.setTerminalWindow(rect);
-
-                font.dispose();
             }
+
+            if (shell.getMaximized()) {
+                Bounds currentBounds = preferences.getTerminalWindow();
+                Bounds bounds1 = new Bounds(currentBounds.x, currentBounds.y, currentBounds.width, currentBounds.height);
+                bounds1.maximized = shell.getMaximized();
+                preferences.setTerminalWindow(bounds1);
+            }
+            else {
+                Rectangle rect = shell.getBounds();
+                preferences.setTerminalWindow(new Bounds(rect.x, rect.y, screenWidth, screenHeight));
+            }
+
+            font.dispose();
         });
     }
 
@@ -494,12 +514,12 @@ public class SerialTerminal {
 
         createLineInputGroup(container);
 
-        Rectangle rect = preferences.getTerminalWindow();
+        Bounds bounds = preferences.getTerminalWindow();
 
         canvas = new Canvas(container, SWT.DOUBLE_BUFFERED | SWT.V_SCROLL);
         GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
-        gridData.widthHint = rect.width * characterWidth;
-        gridData.heightHint = rect.height * characterHeight;
+        gridData.widthHint = bounds.width * characterWidth;
+        gridData.heightHint = bounds.height * characterHeight;
         canvas.setLayoutData(gridData);
 
         createBottomControls(container);
@@ -508,7 +528,7 @@ public class SerialTerminal {
         background = colors[0];
         canvas.setBackground(background);
 
-        resizeScreen(rect.width, rect.height);
+        resizeScreen(bounds.width, bounds.height);
 
         canvas.addControlListener(new ControlAdapter() {
 
@@ -536,11 +556,9 @@ public class SerialTerminal {
                 int height = size.y / characterHeight;
                 if (width != screenWidth || height != screenHeight) {
                     resizeScreen(width, height);
-                    preferences.removePropertyChangeListener(preferencesChangeListener);
-                    try {
-                        preferences.setTerminalSize(width, height);
-                    } finally {
-                        preferences.addPropertyChangeListener(preferencesChangeListener);
+                    if (!shell.getMaximized()) {
+                        Bounds currentBounds = preferences.getTerminalWindow();
+                        preferences.setTerminalWindow(new Bounds(currentBounds.x, currentBounds.y, width, height));
                     }
                     sizeDisplayTimer = System.currentTimeMillis();
                     display.timerExec(500, timerRunnable);

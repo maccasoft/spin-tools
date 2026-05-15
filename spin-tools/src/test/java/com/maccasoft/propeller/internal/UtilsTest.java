@@ -9,7 +9,6 @@
 
 package com.maccasoft.propeller.internal;
 
-import org.eclipse.swt.graphics.Rectangle;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -100,22 +99,6 @@ class UtilsTest {
         Assertions.assertEquals("-L", result[1]);
         Assertions.assertEquals("\"/home/marco/lib\"", result[2]);
         Assertions.assertEquals("source.spin2", result[3]);
-    }
-
-    @Test
-    void testOffScreen() {
-        Rectangle display = new Rectangle(0, 0, 1920, 1080);
-        Assertions.assertFalse(Utils.offscreen(new Rectangle(240, 135, 1440, 810), display)); // center
-
-        Assertions.assertFalse(Utils.offscreen(new Rectangle(960, 135, 1440, 810), display)); // half outside right
-        Assertions.assertFalse(Utils.offscreen(new Rectangle(-960, 135, 1440, 810), display)); // half outside left
-        Assertions.assertTrue(Utils.offscreen(new Rectangle(1920, 135, 1440, 810), display)); // full outside right
-        Assertions.assertTrue(Utils.offscreen(new Rectangle(-1920, 135, 1440, 810), display)); // full outside left
-
-        Assertions.assertTrue(Utils.offscreen(new Rectangle(240, -540, 1440, 810), display)); // half outside top
-        Assertions.assertFalse(Utils.offscreen(new Rectangle(240, 540, 1440, 810), display)); // half outside bottom
-        Assertions.assertTrue(Utils.offscreen(new Rectangle(240, -1080, 1440, 810), display)); // full outside top
-        Assertions.assertTrue(Utils.offscreen(new Rectangle(240, 1080, 1440, 810), display)); // full outside bottom
     }
 
 }

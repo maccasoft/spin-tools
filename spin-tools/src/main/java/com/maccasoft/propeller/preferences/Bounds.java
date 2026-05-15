@@ -16,6 +16,7 @@ public class Bounds {
     public int y;
     public int width;
     public int height;
+    public boolean maximized;
 
     public Bounds() {
 
@@ -30,7 +31,7 @@ public class Bounds {
 
     @Override
     public int hashCode() {
-        return Objects.hash(height, width, x, y);
+        return Objects.hash(height, width, x, y, maximized);
     }
 
     @Override
@@ -45,7 +46,12 @@ public class Bounds {
             return false;
         }
         Bounds other = (Bounds) obj;
-        return height == other.height && width == other.width && x == other.x && y == other.y;
+        return height == other.height && width == other.width && x == other.x && y == other.y && maximized == other.maximized;
+    }
+
+    @Override
+    public String toString() {
+        return "Bounds { " + x + ", " + y + ", " + width + ", " + height + " }";
     }
 
 }

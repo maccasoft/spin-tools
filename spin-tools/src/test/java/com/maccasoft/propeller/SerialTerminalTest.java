@@ -10,7 +10,6 @@
 package com.maccasoft.propeller;
 
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.junit.jupiter.api.AfterAll;
@@ -21,6 +20,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
+
+import com.maccasoft.propeller.preferences.Bounds;
 
 @TestInstance(Lifecycle.PER_CLASS)
 class SerialTerminalTest {
@@ -37,7 +38,7 @@ class SerialTerminalTest {
     @BeforeEach
     void setUp() {
         Preferences preferences = new Preferences();
-        preferences.setTerminalWindow(new Rectangle(0, 0, 80, 25));
+        preferences.setTerminalWindow(new Bounds(0, 0, 80, 25));
 
         instance = new SerialTerminal(display, preferences);
         instance.create();

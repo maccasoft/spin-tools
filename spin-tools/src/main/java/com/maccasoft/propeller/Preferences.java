@@ -24,7 +24,6 @@ import java.util.Objects;
 import java.util.Set;
 
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.graphics.Rectangle;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -173,15 +172,12 @@ public class Preferences {
         changeSupport.removePropertyChangeListener(propertyName, listener);
     }
 
-    public Rectangle getWindowBounds() {
-        if (preferences.window == null) {
-            return null;
-        }
-        return new Rectangle(preferences.window.x, preferences.window.y, preferences.window.width, preferences.window.height);
+    public Bounds getWindowBounds() {
+        return preferences.window;
     }
 
-    public void setWindowBounds(Rectangle rect) {
-        preferences.window = new Bounds(rect.x, rect.y, rect.width, rect.height);
+    public void setWindowBounds(Bounds bounds) {
+        preferences.window = bounds;
     }
 
     public String getWindowFont() {
@@ -757,25 +753,25 @@ public class Preferences {
         }
     }
 
-    public Rectangle getTerminalWindow() {
+    public Bounds getTerminalWindow() {
         if (preferences.terminal.window == null) {
-            return new Rectangle(-1, -1, 100, 30);
+            return new Bounds(-1, -1, 100, 30);
         }
-        return new Rectangle(preferences.terminal.window.x, preferences.terminal.window.y, preferences.terminal.window.width, preferences.terminal.window.height);
+        return preferences.terminal.window;
     }
 
-    public void setTerminalWindow(Rectangle rect) {
-        preferences.terminal.window = new Bounds(rect.x, rect.y, rect.width, rect.height);
+    public void setTerminalWindow(Bounds bounds) {
+        preferences.terminal.window = bounds;
     }
 
     public Point getTerminalSize() {
-        Rectangle rect = getTerminalWindow();
+        Bounds rect = getTerminalWindow();
         return new Point(rect.width, rect.height);
 
     }
 
     public void setTerminalSize(int width, int height) {
-        Rectangle rect = getTerminalWindow();
+        Bounds rect = getTerminalWindow();
         if (rect.width != width || rect.height != height) {
             rect.width = width;
             rect.height = height;
