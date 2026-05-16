@@ -911,7 +911,6 @@ public class SerialTerminal {
                         e.doit = false;
                         break;
                 }
-                e.doit = false;
             }
         });
 
