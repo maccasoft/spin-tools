@@ -621,6 +621,10 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
         if (exp != null) {
             object.setDebugCogs(exp.getNumber().intValue());
         }
+        exp = scope.getSystemSymbol("DEBUG_TIMESTAMP");
+        if (exp != null) {
+            object.setDebugTimestamp(true);
+        }
 
         object.setVarSize(getVarSize());
         object.writeComment(String.format("Object \"%s\" header (var size %d)", getFile().getName(), object.getVarSize()));

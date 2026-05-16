@@ -90,6 +90,7 @@ public class Spin2Object extends SpinObject {
     public Integer debugCogs;
     public Integer debugBrkCond;
     public Integer debugDelay;
+    public boolean debugTimestamp;
 
     public Spin2Object() {
 
@@ -163,6 +164,10 @@ public class Spin2Object extends SpinObject {
         this.debugData = debugData;
     }
 
+    public void setDebugTimestamp(boolean debugTimestamp) {
+        this.debugTimestamp = debugTimestamp;
+    }
+
     @Override
     public void generateBinary(OutputStream os) throws IOException {
 
@@ -179,7 +184,7 @@ public class Spin2Object extends SpinObject {
 
             debugger.setDelay(debugDelay != null ? debugDelay : (getClkFreq() / 10));
 
-            debugger.setRxPin(debugRxPin);
+            debugger.setRxPin(debugRxPin | (debugTimestamp ? 0x80000000 : 0));
             debugger.setTxPin(debugTxPin);
             debugger.setBaud(debugBaud);
             if (debugBrkCond != null) {
