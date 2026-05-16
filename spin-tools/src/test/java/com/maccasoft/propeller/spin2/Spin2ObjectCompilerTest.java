@@ -527,7 +527,7 @@ class Spin2ObjectCompilerTest {
             '     if (a := b) == 0
             00009 00009       E1             VAR_READ LONG DBASE+$00001 (short)
             0000A 0000A       D0             VAR_SETUP LONG DBASE+$00000 (short)
-            0000B 0000B       1E             WRITE
+            0000B 0000B       1E             WRITE (push)
             0000C 0000C       A1             CONSTANT (0)
             0000D 0000D       70             EQUAL
             0000E 0000E       13 03          JZ $00012 (3)
@@ -4214,14 +4214,14 @@ class Spin2ObjectCompilerTest {
             '     a := b := 1
             00009 00009       A2             CONSTANT (1)
             0000A 0000A       D1             VAR_SETUP LONG DBASE+$00001 (short)
-            0000B 0000B       1E             WRITE
+            0000B 0000B       1E             WRITE (push)
             0000C 0000C       F0             VAR_WRITE LONG DBASE+$00000 (short)
             '     a := b := c := 1
             0000D 0000D       A2             CONSTANT (1)
             0000E 0000E       D2             VAR_SETUP LONG DBASE+$00002 (short)
-            0000F 0000F       1E             WRITE
+            0000F 0000F       1E             WRITE (push)
             00010 00010       D1             VAR_SETUP LONG DBASE+$00001 (short)
-            00011 00011       1E             WRITE
+            00011 00011       1E             WRITE (push)
             00012 00012       F0             VAR_WRITE LONG DBASE+$00000 (short)
             00013 00013       04             RETURN
             """, compile(text));
@@ -4252,14 +4252,14 @@ class Spin2ObjectCompilerTest {
             '     a := b := 1
             00009 00009       A2             CONSTANT (1)
             0000A 0000A       50 08          VAR_SETUP BYTE VBASE+$00008
-            0000C 0000C       1E             WRITE
+            0000C 0000C       1E             WRITE (push)
             0000D 0000D       C1 1D          VAR_WRITE LONG VBASE+$00001 (short)
             '     a := b := c := 1
             0000F 0000F       A2             CONSTANT (1)
             00010 00010       56 09          VAR_SETUP WORD VBASE+$00009
-            00012 00012       1E             WRITE
+            00012 00012       1E             WRITE (push)
             00013 00013       50 08          VAR_SETUP BYTE VBASE+$00008
-            00015 00015       1E             WRITE
+            00015 00015       1E             WRITE (push)
             00016 00016       C1 1D          VAR_WRITE LONG VBASE+$00001 (short)
             00018 00018       04             RETURN
             00019 00019       00 00 00       Padding
@@ -4355,33 +4355,36 @@ class Spin2ObjectCompilerTest {
         String text = """
             PUB main() | a, b, c
             
-                a.[1] := b.[2] := 1
-                a.[1] := b.[2] := c.[3] := 1
+                a.[5..0] := b.[5..0] := 3
+                a.[5..0] := b.[5..0] := c.[5..0] := 4
             
             """;
 
         Assertions.assertEquals("""
             ' Object "test.spin2" header (var size 4)
             00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)
-            00004 00004       16 00 00 00    End
+            00004 00004       23 00 00 00    End
             ' PUB main() | a, b, c
             00008 00008       03             (stack size)
-            '     a.[1] := b.[2] := 1
-            00009 00009       A2             CONSTANT (1)
+            '     a.[5..0] := b.[5..0] := 3
+            00009 00009       A4             CONSTANT (3)
             0000A 0000A       D1             VAR_SETUP LONG DBASE+$00001 (short)
-            0000B 0000B       E2             BITFIELD_WRITE (short)
-            0000C 0000C       D0             VAR_SETUP LONG DBASE+$00000 (short)
-            0000D 0000D       E1             BITFIELD_WRITE (short)
-            '     a.[1] := b.[2] := c.[3] := 1
-            0000E 0000E       A2             CONSTANT (1)
-            0000F 0000F       D2             VAR_SETUP LONG DBASE+$00002 (short)
-            00010 00010       E3             BITFIELD_WRITE (short)
-            00011 00011       D1             VAR_SETUP LONG DBASE+$00001 (short)
-            00012 00012       E2             BITFIELD_WRITE (short)
-            00013 00013       D0             VAR_SETUP LONG DBASE+$00000 (short)
-            00014 00014       E1             BITFIELD_WRITE (short)
-            00015 00015       04             RETURN
-            00016 00016       00 00          Padding
+            0000B 0000B       7D A0 01       BITFIELD_SETUP
+            0000E 0000E       1E             WRITE (push)
+            0000F 0000F       D0             VAR_SETUP LONG DBASE+$00000 (short)
+            00010 00010       7F A0 01       BITFIELD_WRITE
+            '     a.[5..0] := b.[5..0] := c.[5..0] := 4
+            00013 00013       A5             CONSTANT (4)
+            00014 00014       D2             VAR_SETUP LONG DBASE+$00002 (short)
+            00015 00015       7D A0 01       BITFIELD_SETUP
+            00018 00018       1E             WRITE (push)
+            00019 00019       D1             VAR_SETUP LONG DBASE+$00001 (short)
+            0001A 0001A       7D A0 01       BITFIELD_SETUP
+            0001D 0001D       1E             WRITE (push)
+            0001E 0001E       D0             VAR_SETUP LONG DBASE+$00000 (short)
+            0001F 0001F       7F A0 01       BITFIELD_WRITE
+            00022 00022       04             RETURN
+            00023 00023       00             Padding
             """, compile(text));
     }
 
@@ -6721,8 +6724,6 @@ class Spin2ObjectCompilerTest {
     @Test
     void testClkModeAndFreq() throws Exception {
         String text = """
-            _CLKFREQ = 250_000_000
-            
             PUB start() | a, b
             
                     a := CLKMODE
@@ -6820,53 +6821,56 @@ class Spin2ObjectCompilerTest {
         Assertions.assertEquals("""
             ' Object "test.spin2" header (var size 4)
             00000 00000       08 00 10 80    Method start @ $00008 (0 parameters, 1 returns)
-            00004 00004       36 00 00 00    End
+            00004 00004       39 00 00 00    End
             ' PUB start() : r | a, b
             00008 00008       02             (stack size)
             '     r := (a := b)
             00009 00009       E2             VAR_READ LONG DBASE+$00002 (short)
             0000A 0000A       D1             VAR_SETUP LONG DBASE+$00001 (short)
-            0000B 0000B       1E             WRITE
+            0000B 0000B       1E             WRITE (push)
             0000C 0000C       F0             VAR_WRITE LONG DBASE+$00000 (short)
             '     r := (byte[@a][0] := b)
             0000D 0000D       E2             VAR_READ LONG DBASE+$00002 (short)
             0000E 0000E       D1 1B          VAR_ADDRESS DBASE+$00001 (short)
             00010 00010       A1             CONSTANT (0)
             00011 00011       64             MEM_SETUP BYTE INDEXED
-            00012 00012       1E             WRITE
+            00012 00012       1E             WRITE (push)
             00013 00013       F0             VAR_WRITE LONG DBASE+$00000 (short)
             '     r := (a.byte[0] := b)
             00014 00014       E2             VAR_READ LONG DBASE+$00002 (short)
             00015 00015       51 04          MEM_SETUP BYTE DBASE+$00004
-            00017 00017       F0             VAR_WRITE LONG DBASE+$00000 (short)
+            00017 00017       1E             WRITE (push)
+            00018 00018       F0             VAR_WRITE LONG DBASE+$00000 (short)
             '     r := (a.[5..0] := b)
-            00018 00018       E2             VAR_READ LONG DBASE+$00002 (short)
-            00019 00019       D1             VAR_SETUP LONG DBASE+$00001 (short)
-            0001A 0001A       7F A0 01       BITFIELD_WRITE
-            0001D 0001D       F0             VAR_WRITE LONG DBASE+$00000 (short)
+            00019 00019       E2             VAR_READ LONG DBASE+$00002 (short)
+            0001A 0001A       D1             VAR_SETUP LONG DBASE+$00001 (short)
+            0001B 0001B       7D A0 01       BITFIELD_SETUP
+            0001E 0001E       1E             WRITE (push)
+            0001F 0001F       F0             VAR_WRITE LONG DBASE+$00000 (short)
             '     r := (REG[1] := a)
-            0001E 0001E       E1             VAR_READ LONG DBASE+$00001 (short)
-            0001F 0001F       4D 01          REG_SETUP +$001
-            00021 00021       1E             WRITE
-            00022 00022       F0             VAR_WRITE LONG DBASE+$00000 (short)
+            00020 00020       E1             VAR_READ LONG DBASE+$00001 (short)
+            00021 00021       4D 01          REG_SETUP +$001
+            00023 00023       1E             WRITE (push)
+            00024 00024       F0             VAR_WRITE LONG DBASE+$00000 (short)
             '     r := (REG[1].[5..0] := a)
-            00023 00023       E1             VAR_READ LONG DBASE+$00001 (short)
-            00024 00024       4D 01          REG_SETUP +$001
-            00026 00026       7F A0 01       BITFIELD_WRITE
-            00029 00029       F0             VAR_WRITE LONG DBASE+$00000 (short)
+            00025 00025       E1             VAR_READ LONG DBASE+$00001 (short)
+            00026 00026       4D 01          REG_SETUP +$001
+            00028 00028       7D A0 01       BITFIELD_SETUP
+            0002B 0002B       1E             WRITE (push)
+            0002C 0002C       F0             VAR_WRITE LONG DBASE+$00000 (short)
             '     r := (FIELD[a] := b)
-            0002A 0002A       E2             VAR_READ LONG DBASE+$00002 (short)
-            0002B 0002B       E1             VAR_READ LONG DBASE+$00001 (short)
-            0002C 0002C       4B 1E          FIELD_WRITE (push)
-            0002E 0002E       F0             VAR_WRITE LONG DBASE+$00000 (short)
+            0002D 0002D       E2             VAR_READ LONG DBASE+$00002 (short)
+            0002E 0002E       E1             VAR_READ LONG DBASE+$00001 (short)
+            0002F 0002F       4B 1E          FIELD_WRITE (push)
+            00031 00031       F0             VAR_WRITE LONG DBASE+$00000 (short)
             '     r := (FIELD[a][1] := b)
-            0002F 0002F       E2             VAR_READ LONG DBASE+$00002 (short)
-            00030 00030       E1             VAR_READ LONG DBASE+$00001 (short)
-            00031 00031       A2             CONSTANT (1)
-            00032 00032       4C 1E          FIELD_WRITE (push)
-            00034 00034       F0             VAR_WRITE LONG DBASE+$00000 (short)
-            00035 00035       04             RETURN
-            00036 00036       00 00          Padding
+            00032 00032       E2             VAR_READ LONG DBASE+$00002 (short)
+            00033 00033       E1             VAR_READ LONG DBASE+$00001 (short)
+            00034 00034       A2             CONSTANT (1)
+            00035 00035       4C 1E          FIELD_WRITE (push)
+            00037 00037       F0             VAR_WRITE LONG DBASE+$00000 (short)
+            00038 00038       04             RETURN
+            00039 00039       00 00 00       Padding
             """, compile(text));
     }
 
@@ -8316,7 +8320,7 @@ class Spin2ObjectCompilerTest {
             '     if [wptr] := a
             00013 00013       E0             VAR_READ LONG DBASE+$00000 (short)
             00014 00014       D2             VAR_SETUP LONG (^WORD) DBASE+$00002 (short)
-            00015 00015       1E             WRITE
+            00015 00015       1E             WRITE (push)
             00016 00016       13 01          JZ $00018 (1)
             '     if [wptr] += a
             00018 00018       E0             VAR_READ LONG DBASE+$00000 (short)
