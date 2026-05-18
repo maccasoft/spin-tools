@@ -2705,6 +2705,55 @@ class Spin2CompilerTest {
             """, compile("main.spin2", sources));
     }
 
+    @Test
+    void testChildObjectSizeof() throws Exception {
+        Map<String, String> sources = new HashMap<>();
+        sources.put("main.spin2", """
+            OBJ
+                o : "text2"
+            
+            PUB start() | a
+                a := sizeof(o.sPoint)
+                a := sizeof(o.sLine)
+                a := sizeof(o.sLine.a)
+            
+            DAT
+                    mov     ptr, #sizeof(o.sLine)
+                    mov     ptr, #sizeof(o.sLine.a)
+            
+            ptr     long    0
+            """);
+        sources.put("text2.spin2", """
+            CON
+                struct sPoint(word x, word y)
+                struct sLine(sPoint a, sPoint b, byte c)
+            """);
+
+        Assertions.assertEquals("""
+            ' Object "main.spin2" header (var size 8)
+            01888 00000       24 00 00 00    Object "text2.spin2" @ $00024
+            0188C 00004       04 00 00 00    Variables @ $00004
+            01890 00008       1C 00 00 80    Method start @ $0001C (0 parameters, 0 returns)
+            01894 0000C       24 00 00 00    End
+            01898 00010 00000 09 10 04 F6                        mov     ptr, #sizeof(o.sLine)
+            0189C 00014 00004 04 10 04 F6                        mov     ptr, #sizeof(o.sLine.a)
+            018A0 00018 00008 00 00 00 00    ptr                 long    0
+            ' PUB start() | a
+            018A4 0001C       01             (stack size)
+            '     a := sizeof(o.sPoint)
+            018A5 0001D       A5             CONSTANT (4)
+            018A6 0001E       F0             VAR_WRITE LONG DBASE+$00000 (short)
+            '     a := sizeof(o.sLine)
+            018A7 0001F       AA             CONSTANT (9)
+            018A8 00020       F0             VAR_WRITE LONG DBASE+$00000 (short)
+            '     a := sizeof(o.sLine.a)
+            018A9 00021       A5             CONSTANT (4)
+            018AA 00022       F0             VAR_WRITE LONG DBASE+$00000 (short)
+            018AB 00023       04             RETURN
+            ' Object "text2.spin2" header (var size 4)
+            """, compile("main.spin2", sources));
+    }
+
     String compile(String rootFile, Map<String, String> sources) throws Exception {
         return compile(rootFile, sources, false, false);
     }

@@ -36,11 +36,13 @@ public class SizeOf extends Expression {
 
     @Override
     public Number getNumber() {
-        String[] identifier = name.getText().split("[\\.]");
+        int index;
+        String qualifier = "";
+        String[] identifier = name.getText().split("[.]");
 
         Expression expression = context.getLocalSymbol(identifier[0]);
         if (expression instanceof Variable var) {
-            int index = 1;
+            index = 1;
             while (index < identifier.length) {
                 var = var.getMember(identifier[index++]);
                 if (var == null) {
@@ -49,10 +51,14 @@ public class SizeOf extends Expression {
             }
             return var.getTypeSize() * var.getSize();
         }
-        if (context.hasStructureDefinition(identifier[0])) {
-            Spin2Struct struct = context.getStructureDefinition(identifier[0]);
 
-            int index = 1;
+        index = 0;
+        if (expression instanceof ObjectIdentifier) {
+            qualifier = identifier[index++] + ".";
+        }
+        Spin2Struct struct = context.getStructureDefinition(qualifier + identifier[index]);
+        if (struct != null) {
+            index++;
             while (index < identifier.length) {
                 Member member = struct.getMember(identifier[index++]);
                 if (member == null) {
@@ -60,9 +66,9 @@ public class SizeOf extends Expression {
                 }
                 String type = member.getType().getText();
 
-                struct = context.getStructureDefinition(member.getType().getText());
+                struct = context.getStructureDefinition(qualifier + member.getType().getText());
                 if (struct == null && member.getType().getText().startsWith("^")) {
-                    struct = context.getStructureDefinition(member.getType().getText().substring(1));
+                    struct = context.getStructureDefinition(qualifier + member.getType().getText().substring(1));
                 }
 
                 if (struct == null) {
@@ -85,10 +91,6 @@ public class SizeOf extends Expression {
 
                     throw new CompilerException("expecting structure member", name);
                 }
-            }
-
-            if (struct == null) {
-                throw new CompilerException("expecting structure member", name);
             }
             return struct.getTypeSize();
         }
