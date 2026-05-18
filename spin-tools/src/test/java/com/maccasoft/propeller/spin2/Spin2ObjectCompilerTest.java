@@ -5030,14 +5030,14 @@ class Spin2ObjectCompilerTest {
             
                     org
                     mov     pr0, #0
-            l1      add     pr0, a
-                    djnz    a, #l1
+            .l1     add     pr0, a
+                    djnz    a, #.l1
                     end
             
                     orgh
                     mov     pr0, #0
-            l1      add     pr0, a
-                    djnz    a, #l1
+            .l1     add     pr0, a
+                    djnz    a, #.l1
                     end
             
             """;
@@ -5053,16 +5053,16 @@ class Spin2ObjectCompilerTest {
             0000E 0000E       00
             0000F 0000F   000                                    org
             0000F 0000F   000 00 B0 07 F6                        mov     pr0, #0
-            00013 00013   001 E0 B1 03 F1    l1                  add     pr0, a
-            00017 00017   002 FE C1 6F FB                        djnz    a, #l1
+            00013 00013   001 E0 B1 03 F1    .l1                 add     pr0, a
+            00017 00017   002 FE C1 6F FB                        djnz    a, #.l1
             0001B 0001B   003 2D 00 64 FD                        ret
             '         orgh
             0001F 0001F       19 5E 04 00    INLINE-EXEC ORGH 4
-            00023 00023   000                                    orgh
-            00023 00023   000 00 B0 07 F6                        mov     pr0, #0
-            00027 00027   004 E0 B1 03 F1    l1                  add     pr0, a
-            0002B 0002B   008 FB C1 6F FB                        djnz    a, #l1
-            0002F 0002F   00C 2D 00 64 FD                        ret
+            00023 00023   400                                    orgh
+            00023 00023   400 00 B0 07 F6                        mov     pr0, #0
+            00027 00027   404 E0 B1 03 F1    .l1                 add     pr0, a
+            0002B 0002B   408 FE C1 6F FB                        djnz    a, #.l1
+            0002F 0002F   40C 2D 00 64 FD                        ret
             00033 00033       04             RETURN
             """, compile(text));
     }

@@ -102,6 +102,7 @@ public class Spin2MethodLine {
             if (bc instanceof InlinePAsm) {
                 Spin2PAsmLine pasmLine = ((InlinePAsm) bc).getLine();
                 if (pasmLine.getInstructionFactory() instanceof Orgh) {
+                    pasmAddress = 0x400;
                     hubMode = true;
                 }
                 if (!hubMode && (pasmAddress >> 2) >= 0x120) {

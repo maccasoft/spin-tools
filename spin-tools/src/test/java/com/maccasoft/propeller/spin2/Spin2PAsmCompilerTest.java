@@ -1469,18 +1469,18 @@ class Spin2PAsmCompilerTest {
             0002F 0002F   008 2D 00 64 FD                        ret
             '         orgh
             00033 00033       19 5E 09 00    INLINE-EXEC ORGH 9
-            00037 00037   000                                    orgh
-            00037 00037   000                                    DITTO   8
-            00037 00037   000 08 00 24 FC                        wypin   pin_nco + $$, #pin_base + $$
-            0003B 0003B   004 09 02 24 FC                        wypin   pin_nco + $$, #pin_base + $$
-            0003F 0003F   008 0A 04 24 FC                        wypin   pin_nco + $$, #pin_base + $$
-            00043 00043   00C 0B 06 24 FC                        wypin   pin_nco + $$, #pin_base + $$
-            00047 00047   010 0C 08 24 FC                        wypin   pin_nco + $$, #pin_base + $$
-            0004B 0004B   014 0D 0A 24 FC                        wypin   pin_nco + $$, #pin_base + $$
-            0004F 0004F   018 0E 0C 24 FC                        wypin   pin_nco + $$, #pin_base + $$
-            00053 00053   01C 0F 0E 24 FC                        wypin   pin_nco + $$, #pin_base + $$
-            00057 00057   020                                    DITTO   END
-            00057 00057   020 2D 00 64 FD                        ret
+            00037 00037   400                                    orgh
+            00037 00037   400                                    DITTO   8
+            00037 00037   400 08 00 24 FC                        wypin   pin_nco + $$, #pin_base + $$
+            0003B 0003B   404 09 02 24 FC                        wypin   pin_nco + $$, #pin_base + $$
+            0003F 0003F   408 0A 04 24 FC                        wypin   pin_nco + $$, #pin_base + $$
+            00043 00043   40C 0B 06 24 FC                        wypin   pin_nco + $$, #pin_base + $$
+            00047 00047   410 0C 08 24 FC                        wypin   pin_nco + $$, #pin_base + $$
+            0004B 0004B   414 0D 0A 24 FC                        wypin   pin_nco + $$, #pin_base + $$
+            0004F 0004F   418 0E 0C 24 FC                        wypin   pin_nco + $$, #pin_base + $$
+            00053 00053   41C 0F 0E 24 FC                        wypin   pin_nco + $$, #pin_base + $$
+            00057 00057   420                                    DITTO   END
+            00057 00057   420 2D 00 64 FD                        ret
             0005B 0005B       04             RETURN
             """, compile(text));
     }

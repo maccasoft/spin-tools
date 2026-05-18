@@ -974,9 +974,9 @@ class Spin2CObjectCompilerTest {
             '     }
             '     asm {
             00025 00025       19 5E 02 00    INLINE-EXEC ORGH 2
-            00029 00029   000                                    orgh
-            00029 00029   000 00 00 00 00                        nop
-            0002D 0002D   004 2D 00 64 FD                        ret
+            00029 00029   400                                    orgh
+            00029 00029   400 00 00 00 00                        nop
+            0002D 0002D   404 2D 00 64 FD                        ret
             '     }
             ' }
             00031 00031       04             RETURN
