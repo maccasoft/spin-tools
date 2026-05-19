@@ -821,8 +821,8 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     for (int i = 1; i < argsNode.getChildCount(); i++) {
                         Spin2StatementNode arg = argsNode.getChild(i);
                         if ("..".equals(arg.getText())) {
-                            source.addAll(compileBytecodeExpression(context, method, arg.getChild(0), true));
-                            source.addAll(compileBytecodeExpression(context, method, arg.getChild(1), true));
+                            source.addAll(compileConstantExpression(context, method, arg.getChild(0)));
+                            source.addAll(compileConstantExpression(context, method, arg.getChild(1)));
                             source.add(new Bytecode(context, code_range, node.getText().toUpperCase()));
                         }
                         else if (arg.getType() == Token.STRING) {
@@ -838,7 +838,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                             }
                         }
                         else {
-                            source.addAll(compileBytecodeExpression(context, method, arg, true));
+                            source.addAll(compileConstantExpression(context, method, arg));
                             source.add(new Bytecode(context, code, node.getText().toUpperCase()));
                         }
                     }
