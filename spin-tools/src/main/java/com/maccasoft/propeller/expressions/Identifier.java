@@ -71,7 +71,14 @@ public class Identifier extends Expression {
         }
         try {
             evaluating = true;
-            return resolve().getNumber();
+            Expression resolvedExpression = resolve();
+            if (resolvedExpression instanceof DataVariable dataVariable) {
+                int addr = dataVariable.getNumber().intValue();
+                if (addr >= 0x400 && context.getOrgAddress() != 0 && context.getOrgAddress() < 0x400) {
+                    return (long) (0x400 + (dataVariable.getContext().getObjectAddress() - context.getOrgAddress()));
+                }
+            }
+            return resolvedExpression.getNumber();
         } finally {
             evaluating = false;
         }

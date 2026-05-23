@@ -659,6 +659,7 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
         int objectAddress = object.getSize();
         int hubAddress = -1;
         int fitAddress = 0x1F8 << 2;
+        int orgAddress = objectAddress;
         boolean hubMode = true;
         boolean cogCode = false;
 
@@ -679,8 +680,19 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
                 if (hubAddress == -1) {
                     hubAddress = 0x400;
                 }
+                orgAddress = objectAddress;
                 address = spinMode ? hubAddress : objectAddress;
             }
+            else if (line.getInstructionFactory() instanceof Org) {
+                hubMode = false;
+            }
+            else if (line.getInstructionFactory() instanceof Fit instruction) {
+                instruction.setDefaultLimit(hubMode ? 0x80000 : (cogCode ? 0x1F8 : 0x400));
+            }
+            if (spinMode) {
+                line.getScope().setOrgAddress(orgAddress);
+            }
+
             if (hubMode) {
                 if (line.getInstructionFactory() instanceof Res) {
                     logMessage(new CompilerException("res not allowed in orgh mode", line.getData()));
@@ -689,15 +701,8 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
                     logMessage(new CompilerException("orgf not allowed in orgh mode", line.getData()));
                 }
             }
-            if (line.getInstructionFactory() instanceof Org) {
-                hubMode = false;
-            }
-            if (line.getInstructionFactory() instanceof Fit) {
-                ((Fit) line.getInstructionFactory()).setDefaultLimit(hubMode ? 0x80000 : (cogCode ? 0x1F8 : 0x400));
-            }
-
-            if (line.getInstructionFactory() instanceof DataType) {
-                if (!hubMode) {
+            else {
+                if (line.getInstructionFactory() instanceof DataType) {
                     logMessage(new CompilerException("structures can only be declared in ORGH mode", ((DataLineNode) line.getData()).instruction));
                 }
             }

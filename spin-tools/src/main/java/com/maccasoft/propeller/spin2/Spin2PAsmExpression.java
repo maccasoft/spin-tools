@@ -19,12 +19,6 @@ import com.maccasoft.propeller.spin2.bytecode.Constant;
 
 public class Spin2PAsmExpression {
 
-    final String prefix;
-    final Expression expression;
-    final Expression count;
-
-    Object data;
-
     public static class PtrExpression extends Expression {
 
         String pre;
@@ -138,6 +132,12 @@ public class Spin2PAsmExpression {
         }
 
     }
+
+    final String prefix;
+    final Expression expression;
+    final Expression count;
+
+    Object data;
 
     public Spin2PAsmExpression(String prefix, Expression expression, Expression count) {
         this.prefix = prefix;

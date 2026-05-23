@@ -36,6 +36,8 @@ public class Context {
     Integer objectAddress;
     Integer memoryAddress;
 
+    int orgAddress;
+
     public Context() {
         this(null, false);
     }
@@ -247,6 +249,14 @@ public class Context {
 
     public void setMemoryAddress(int address) {
         this.memoryAddress = address;
+    }
+
+    public int getOrgAddress() {
+        return orgAddress;
+    }
+
+    public void setOrgAddress(int address) {
+        this.orgAddress = address;
     }
 
     public boolean hasStructureDefinition(String name) {
