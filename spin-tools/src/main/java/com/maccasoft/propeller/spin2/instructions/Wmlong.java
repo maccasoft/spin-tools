@@ -60,10 +60,7 @@ public class Wmlong extends Spin2PAsmInstructionFactory {
             CompilerException msgs = new CompilerException();
 
             try {
-                if (!dst.isLongLiteral() && dst.getInteger() > 0x1FF) {
-                    throw new Exception("destination register/constant cannot exceed $1FF");
-                }
-                value = d.setValue(value, dst.getInteger());
+                value = d.setValue(value, getDst(dst, false));
             } catch (CompilerException e) {
                 msgs.addMessage(e);
             } catch (Exception e) {
@@ -71,16 +68,8 @@ public class Wmlong extends Spin2PAsmInstructionFactory {
             }
 
             try {
-                if (src.isPtr()) {
-                    value = i.setValue(value, 1);
-                }
-                else {
-                    if ((src.isLiteral() && !src.isLongLiteral()) && src.getInteger() > 0xFF) {
-                        throw new Exception("source constant cannot exceed $FF");
-                    }
-                    value = i.setBoolean(value, src.isLiteral());
-                }
-                value = s.setValue(value, src.getInteger());
+                value = i.setBoolean(value, src.isPtr() || src.isLiteral());
+                value = s.setValue(value, getSrc(src));
             } catch (CompilerException e) {
                 msgs.addMessage(e);
             } catch (Exception e) {

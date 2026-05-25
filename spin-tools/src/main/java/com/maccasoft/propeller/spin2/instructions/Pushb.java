@@ -54,13 +54,10 @@ public class Pushb extends Spin2PAsmInstructionFactory {
             int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b1100011);
             value = c.setValue(value, 0);
-            value = l.setBoolean(value, dst.isLiteral());
             value = i.setValue(value, 1);
             try {
-                if (dst.getInteger() > 0x1FF && !dst.isLongLiteral()) {
-                    throw new Exception("destination register/constant cannot exceed $1FF");
-                }
-                value = d.setValue(value, dst.getInteger());
+                value = l.setBoolean(value, dst.isLiteral());
+                value = d.setValue(value, getDst(dst, true));
             } catch (CompilerException e) {
                 throw e;
             } catch (Exception e) {

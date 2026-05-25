@@ -262,19 +262,16 @@ public abstract class Spin2InstructionObject {
         return x.setValue(value, number >> 9);
     }
 
+    /*
+     * <ins>   D,{#}S   {WC/WZ/WCZ}
+     */
     protected int encodeInstructionParameters(String condition, Spin2PAsmExpression dst, Spin2PAsmExpression src, String effect) {
         CompilerException msgs = new CompilerException();
 
         int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
         value = cz.setValue(value, encodeEffect(effect));
-        if (dst.isLiteral()) {
-            msgs.addMessage(new CompilerException("immediate destination not allowed", dst.getData()));
-        }
         try {
-            if (dst.getInteger() > 0x1FF) {
-                throw new Exception("destination register cannot exceed $1FF");
-            }
-            value = d.setValue(value, dst.getInteger());
+            value = d.setValue(value, getDst(dst, false));
         } catch (CompilerException e) {
             msgs.addMessage(e);
         } catch (Exception e) {
@@ -282,10 +279,7 @@ public abstract class Spin2InstructionObject {
         }
         try {
             value = i.setBoolean(value, src.isLiteral());
-            if (!src.isLongLiteral() && src.getInteger() > 0x1FF) {
-                throw new Exception("source register/constant cannot exceed $1FF");
-            }
-            value = s.setValue(value, src.getInteger());
+            value = s.setValue(value, getSrc(src));
         } catch (CompilerException e) {
             msgs.addMessage(e);
         } catch (Exception e) {
@@ -299,25 +293,22 @@ public abstract class Spin2InstructionObject {
         return value;
     }
 
+    /*
+     * <ins>   {#}D,{#}S
+     */
     protected int encodeInstructionParameters(String condition, Spin2PAsmExpression dst, Spin2PAsmExpression src) {
         CompilerException msgs = new CompilerException();
 
         int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
         try {
             value = l.setBoolean(value, dst.isLiteral());
-            if (!dst.isLongLiteral() && dst.getInteger() > 0x1FF) {
-                throw new Exception("destination register cannot exceed $1FF");
-            }
-            value = d.setValue(value, dst.getInteger());
+            value = d.setValue(value, getDst(dst, true));
         } catch (Exception e) {
             msgs.addMessage(new CompilerException(e.getMessage(), dst.getData()));
         }
         try {
             value = i.setBoolean(value, src.isLiteral());
-            if (!src.isLongLiteral() && src.getInteger() > 0x1FF) {
-                throw new Exception("source register/constant cannot exceed $1FF");
-            }
-            value = s.setValue(value, src.getInteger());
+            value = s.setValue(value, getSrc(src));
         } catch (CompilerException e) {
             throw e;
         } catch (Exception e) {
@@ -328,6 +319,44 @@ public abstract class Spin2InstructionObject {
             throw msgs;
         }
 
+        return value;
+    }
+
+    protected int getDst(Spin2PAsmExpression expression, boolean allowImmediate) {
+        int value = expression.getInteger();
+        if (!allowImmediate) {
+            if (expression.isLiteral()) {
+                throw new CompilerException("immediate destination not allowed", expression.getData());
+            }
+            if (value < 0 || value > 0x1FF) {
+                throw new CompilerException("destination register cannot exceed $1FF", expression.getData());
+            }
+        }
+        else if (!expression.isLongLiteral()) {
+            if (expression.isLiteral()) {
+                if (value < 0 || value > 511) {
+                    throw new CompilerException("constants must be from 0 to 511", expression.getData());
+                }
+            }
+            else if (value < 0 || value > 0x1FF) {
+                throw new CompilerException("destination register cannot exceed $1FF", expression.getData());
+            }
+        }
+        return value;
+    }
+
+    protected int getSrc(Spin2PAsmExpression expression) {
+        int value = expression.getInteger();
+        if (!expression.isLongLiteral()) {
+            if (expression.isLiteral()) {
+                if (value < 0 || value > 511) {
+                    throw new CompilerException("constants must be from 0 to 511", expression.getData());
+                }
+            }
+            else if (value < 0 || value > 0x1FF) {
+                throw new CompilerException("source register cannot exceed $1FF", expression.getData());
+            }
+        }
         return value;
     }
 

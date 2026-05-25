@@ -53,10 +53,7 @@ public class Pop extends Spin2PAsmInstructionFactory {
             value = cz.setValue(value, encodeEffect(effect));
             value = i.setValue(value, 0);
             try {
-                if (dst.getInteger() > 0x1FF) {
-                    throw new Exception("destination register cannot exceed $1FF");
-                }
-                value = d.setValue(value, dst.getInteger());
+                value = d.setValue(value, getDst(dst, false));
             } catch (CompilerException e) {
                 throw e;
             } catch (Exception e) {

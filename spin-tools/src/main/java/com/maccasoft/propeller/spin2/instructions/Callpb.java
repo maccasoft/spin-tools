@@ -67,16 +67,13 @@ public class Callpb extends Spin2PAsmInstructionFactory {
             int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b1011010);
             value = c.setValue(value, 1);
-            value = l.setBoolean(value, dst.isLiteral());
             value = i.setBoolean(value, src.isLiteral());
 
             CompilerException msgs = new CompilerException();
 
             try {
-                if (!dst.isLongLiteral() && dst.getInteger() > 0x1FF) {
-                    throw new Exception("destination register cannot exceed $1FF");
-                }
-                value = d.setValue(value, dst.getInteger());
+                value = l.setBoolean(value, dst.isLiteral());
+                value = d.setValue(value, getDst(dst, true));
             } catch (CompilerException e) {
                 msgs.addMessage(e);
             } catch (Exception e) {
@@ -113,10 +110,7 @@ public class Callpb extends Spin2PAsmInstructionFactory {
             }
             else {
                 try {
-                    if (src.getInteger() > 0x1FF) {
-                        throw new Exception("source register cannot exceed $1FF");
-                    }
-                    value = s.setValue(value, src.getInteger());
+                    value = s.setValue(value, getSrc(src));
                 } catch (CompilerException e) {
                     msgs.addMessage(e);
                 } catch (Exception e) {

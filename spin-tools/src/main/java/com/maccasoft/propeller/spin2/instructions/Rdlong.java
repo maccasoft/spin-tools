@@ -62,10 +62,7 @@ public class Rdlong extends Spin2PAsmInstructionFactory {
             value = cz.setValue(value, encodeEffect(effect));
 
             try {
-                if (dst.getInteger() > 0x1FF) {
-                    throw new Exception("destination register/constant cannot exceed $1FF");
-                }
-                value = d.setValue(value, dst.getInteger());
+                value = d.setValue(value, getDst(dst, false));
             } catch (CompilerException e) {
                 msgs.addMessage(e);
             } catch (Exception e) {
@@ -77,8 +74,16 @@ public class Rdlong extends Spin2PAsmInstructionFactory {
                     value = i.setBoolean(value, true);
                 }
                 else {
-                    if ((src.isLiteral() && !src.isLongLiteral()) && src.getInteger() > 0xFF) {
-                        throw new Exception("source constant cannot exceed $FF");
+                    int addr = src.getInteger();
+                    if (!src.isLongLiteral()) {
+                        if (src.isLiteral()) {
+                            if (addr < 0 || addr > 511) {
+                                throw new Exception("constants must be from 0 to 511");
+                            }
+                        }
+                        else if (addr < 0 || addr > 0x1FF) {
+                            throw new Exception("source register cannot exceed $1FF");
+                        }
                     }
                     value = i.setBoolean(value, src.isLiteral());
                 }

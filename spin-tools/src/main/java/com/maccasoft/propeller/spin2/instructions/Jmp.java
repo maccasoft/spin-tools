@@ -103,7 +103,13 @@ public class Jmp extends Spin2PAsmInstructionFactory {
             int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b1101011);
             value = cz.setValue(value, encodeEffect(effect));
-            value = d.setValue(value, dst.getInteger());
+            try {
+                value = d.setValue(value, getDst(dst, false));
+            } catch (CompilerException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new CompilerException(e.getMessage(), dst.getData());
+            }
             value = s.setValue(value, 0b000101100);
             return getBytes(value);
         }

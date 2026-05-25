@@ -56,10 +56,7 @@ public class Push extends Spin2PAsmInstructionFactory {
             value = cz.setValue(value, 0b00);
             try {
                 value = i.setBoolean(value, dst.isLiteral());
-                if (dst.getInteger() > 0x1FF && !dst.isLongLiteral()) {
-                    throw new Exception("destination register/constant cannot exceed $1FF");
-                }
-                value = d.setValue(value, dst.getInteger());
+                value = d.setValue(value, getDst(dst, true));
             } catch (CompilerException e) {
                 throw e;
             } catch (Exception e) {

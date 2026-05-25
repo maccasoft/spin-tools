@@ -57,10 +57,7 @@ public class Rdpin extends Spin2PAsmInstructionFactory {
             value = c.setBoolean(value, "wc".equalsIgnoreCase(effect));
             value = z.setValue(value, 1);
             try {
-                if (dst.getInteger() > 0x1FF) {
-                    throw new Exception("destination register cannot exceed $1FF");
-                }
-                value = d.setValue(value, dst.getInteger());
+                value = d.setValue(value, getDst(dst, false));
             } catch (CompilerException e) {
                 msgs.addMessage(e);
             } catch (Exception e) {

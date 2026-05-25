@@ -63,10 +63,7 @@ public class Rolbyte extends Spin2PAsmInstructionFactory {
             int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b1001000);
             try {
-                if (dst.getInteger() > 0x1FF) {
-                    throw new Exception("destination register cannot exceed $1FF");
-                }
-                value = d.setValue(value, dst.getInteger());
+                value = d.setValue(value, getDst(dst, false));
             } catch (CompilerException e) {
                 msgs.addMessage(e);
             } catch (Exception e) {
@@ -74,20 +71,18 @@ public class Rolbyte extends Spin2PAsmInstructionFactory {
             }
             try {
                 value = i.setBoolean(value, src.isLiteral());
-                if (!src.isLongLiteral() && src.getInteger() > 0x1FF) {
-                    throw new Exception("source register/constant cannot exceed $1FF");
-                }
-                value = s.setValue(value, src.getInteger());
+                value = s.setValue(value, getSrc(src));
             } catch (CompilerException e) {
                 msgs.addMessage(e);
             } catch (Exception e) {
                 msgs.addMessage(new CompilerException(e.getMessage(), src.getData()));
             }
             try {
-                if (n.getInteger() < 0 || n.getInteger() > 3) {
+                int count = n.getInteger();
+                if (count < 0 || count > 3) {
                     throw new Exception("selector must be 0 to 3");
                 }
-                value = cz.setValue(value, n.getInteger());
+                value = cz.setValue(value, count);
             } catch (CompilerException e) {
                 msgs.addMessage(e);
             } catch (Exception e) {
@@ -123,10 +118,7 @@ public class Rolbyte extends Spin2PAsmInstructionFactory {
             int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b1001000);
             try {
-                if (dst.getInteger() > 0x1FF) {
-                    throw new Exception("destination register cannot exceed $1FF");
-                }
-                value = d.setValue(value, dst.getInteger());
+                value = d.setValue(value, getDst(dst, false));
             } catch (Exception e) {
                 throw new CompilerException(e.getMessage(), dst.getData());
             }

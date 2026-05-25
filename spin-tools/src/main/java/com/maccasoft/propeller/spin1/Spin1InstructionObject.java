@@ -156,21 +156,23 @@ public abstract class Spin1InstructionObject {
         int value = con.setValue(0, encodeCondition(condition));
         value = zcr.setValue(value, encodeEffect(effect));
         try {
-            if (dst.getInteger() < 0 || dst.getInteger() > 0x1FF) {
+            int addr = dst.getInteger();
+            if (addr < 0 || addr > 0x1FF) {
                 throw new Exception("destination register cannot exceed $1FF");
             }
-            value = d.setValue(value, dst.getInteger());
+            value = d.setValue(value, addr);
         } catch (CompilerException e) {
             msgs.addMessage(e);
         } catch (Exception e) {
             msgs.addMessage(new CompilerException(e.getMessage(), dst.getData()));
         }
         try {
-            value = i.setBoolean(value, src.isLiteral());
-            if (src.getInteger() < 0 || src.getInteger() > 0x1FF) {
-                throw new Exception("source register/constant cannot exceed $1FF");
+            int addr = src.getInteger();
+            if (addr < 0 || addr > 0x1FF) {
+                throw new Exception(src.isLiteral() ? "constants must be from 0 to 511" : "source register cannot exceed $1FF");
             }
-            value = s.setValue(value, src.getInteger());
+            value = i.setBoolean(value, src.isLiteral());
+            value = s.setValue(value, addr);
         } catch (CompilerException e) {
             msgs.addMessage(e);
         } catch (Exception e) {

@@ -64,15 +64,12 @@ public class Wrlut extends Spin2PAsmInstructionFactory {
             int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b1100001);
             value = c.setValue(value, 1);
-            value = l.setBoolean(value, dst.isLiteral());
 
             CompilerException msgs = new CompilerException();
 
             try {
-                if (!dst.isLongLiteral() && dst.getInteger() > 0x1FF) {
-                    throw new Exception("destination register cannot exceed $1FF");
-                }
-                value = d.setValue(value, dst.getInteger());
+                value = l.setBoolean(value, dst.isLiteral());
+                value = d.setValue(value, getDst(dst, true));
             } catch (CompilerException e) {
                 msgs.addMessage(e);
             } catch (Exception e) {
@@ -80,16 +77,8 @@ public class Wrlut extends Spin2PAsmInstructionFactory {
             }
 
             try {
-                if (src.isPtr()) {
-                    value = i.setBoolean(value, true);
-                }
-                else {
-                    if ((src.isLiteral() && !src.isLongLiteral()) && src.getInteger() > 0xFF) {
-                        throw new Exception("source register/constant cannot exceed $FF");
-                    }
-                    value = i.setBoolean(value, src.isLiteral());
-                }
-                value = s.setValue(value, src.getInteger());
+                value = i.setBoolean(value, src.isPtr() || src.isLiteral());
+                value = s.setValue(value, getSrc(src));
             } catch (CompilerException e) {
                 msgs.addMessage(e);
             } catch (Exception e) {

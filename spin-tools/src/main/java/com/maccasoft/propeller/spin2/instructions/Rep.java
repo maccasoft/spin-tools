@@ -1,17 +1,17 @@
 /*
- * Copyright (c) 2021-24 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2.instructions;
 
 import java.util.List;
 
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
@@ -54,30 +54,48 @@ public class Rep extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
+            CompilerException msgs = new CompilerException();
+
             int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b1100110);
             value = c.setValue(value, 1);
             value = i.setBoolean(value, src.isLiteral());
 
-            String symbol = dst.getExpression().toString();
-            if (symbol.startsWith("@")) {
-                int addr = context.getInteger(symbol.substring(1));
-                int offset = addr - context.getInteger("$");
-                if (addr >= 0x400) {
-                    offset /= 4;
+            try {
+                String symbol = dst.getExpression().toString();
+                if (symbol.startsWith("@")) {
+                    int addr = context.getInteger(symbol.substring(1));
+                    int offset = addr - context.getInteger("$");
+                    if (addr >= 0x400) {
+                        offset /= 4;
+                    }
+                    if (src.isLongLiteral()) {
+                        offset--;
+                    }
+                    value = l.setBoolean(value, true);
+                    value = d.setValue(value, dst.isLiteral() ? offset : offset - 1);
                 }
-                if (src.isLongLiteral()) {
-                    offset--;
+                else {
+                    value = l.setBoolean(value, dst.isLiteral());
+                    value = d.setValue(value, getDst(dst, true));
                 }
-                value = l.setBoolean(value, true);
-                value = d.setValue(value, dst.isLiteral() ? offset : offset - 1);
-            }
-            else {
-                value = l.setBoolean(value, dst.isLiteral());
-                value = d.setValue(value, dst.getInteger());
+            } catch (CompilerException e) {
+                msgs.addMessage(e);
+            } catch (Exception e) {
+                msgs.addMessage(new CompilerException(e.getMessage(), src.getData()));
             }
 
-            value = s.setValue(value, src.getInteger());
+            try {
+                value = s.setValue(value, getSrc(src));
+            } catch (CompilerException e) {
+                msgs.addMessage(e);
+            } catch (Exception e) {
+                msgs.addMessage(new CompilerException(e.getMessage(), src.getData()));
+            }
+
+            if (msgs.hasChilds()) {
+                throw msgs;
+            }
             return src.isLongLiteral() ? getBytes(encodeAugs(condition, src.getInteger()), value) : getBytes(value);
         }
 

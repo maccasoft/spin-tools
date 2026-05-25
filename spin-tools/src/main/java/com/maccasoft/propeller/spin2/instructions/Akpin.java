@@ -52,10 +52,7 @@ public class Akpin extends Spin2PAsmInstructionFactory {
             value = d.setValue(value, 0b000000001);
             try {
                 value = i.setBoolean(value, src.isLiteral());
-                if (src.getInteger() > 0x1FF) {
-                    throw new Exception("source register/constant cannot exceed $1FF");
-                }
-                value = s.setValue(value, src.getInteger());
+                value = s.setValue(value, getSrc(src));
             } catch (CompilerException e) {
                 throw e;
             } catch (Exception e) {

@@ -52,10 +52,7 @@ public class Getbrk extends Spin2PAsmInstructionFactory {
             value = o.setValue(value, 0b1101011);
             value = cz.setValue(value, encodeEffect(effect));
             try {
-                if (dst.getInteger() > 0x1FF) {
-                    throw new Exception("destination register cannot exceed $1FF");
-                }
-                value = d.setValue(value, dst.getInteger());
+                value = d.setValue(value, getDst(dst, false));
             } catch (CompilerException e) {
                 throw e;
             } catch (Exception e) {

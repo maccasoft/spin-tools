@@ -54,10 +54,7 @@ public class Hubset extends Spin2PAsmInstructionFactory {
             value = o.setValue(value, 0b1101011);
             try {
                 value = i.setBoolean(value, dst.isLiteral());
-                if (!dst.isLongLiteral() && dst.getInteger() > 0x1FF) {
-                    throw new Exception("destination register/constant cannot exceed $1FF");
-                }
-                value = d.setValue(value, dst.getInteger());
+                value = d.setValue(value, getDst(dst, true));
             } catch (CompilerException e) {
                 throw e;
             } catch (Exception e) {
