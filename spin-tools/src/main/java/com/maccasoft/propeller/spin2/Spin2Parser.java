@@ -450,12 +450,14 @@ public class Spin2Parser extends Parser {
                     if ("=".equals(token.getText())) {
                         node.expression = new ExpressionNode(node);
                         state = 5;
+                        break;
                     }
                     if ("[".equals(token.getText())) {
                         node.multiplier = new ExpressionNode(node);
                         state = 6;
                         break;
                     }
+                    state = 0;
                     break;
                 case 5:
                     if (",".equals(token.getText())) {
