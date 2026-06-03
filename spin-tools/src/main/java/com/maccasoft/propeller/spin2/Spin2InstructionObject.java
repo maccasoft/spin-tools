@@ -275,7 +275,7 @@ public abstract class Spin2InstructionObject {
         } catch (CompilerException e) {
             msgs.addMessage(e);
         } catch (Exception e) {
-            throw new CompilerException(e.getMessage(), dst.getData());
+            msgs.addMessage(new CompilerException(e.getMessage(), dst.getData()));
         }
         try {
             value = i.setBoolean(value, src.isLiteral());
@@ -283,7 +283,7 @@ public abstract class Spin2InstructionObject {
         } catch (CompilerException e) {
             msgs.addMessage(e);
         } catch (Exception e) {
-            throw new CompilerException(e.getMessage(), src.getData());
+            msgs.addMessage(new CompilerException(e.getMessage(), src.getData()));
         }
 
         if (msgs.hasChilds()) {
@@ -303,6 +303,8 @@ public abstract class Spin2InstructionObject {
         try {
             value = l.setBoolean(value, dst.isLiteral());
             value = d.setValue(value, getDst(dst, true));
+        } catch (CompilerException e) {
+            msgs.addMessage(e);
         } catch (Exception e) {
             msgs.addMessage(new CompilerException(e.getMessage(), dst.getData()));
         }
@@ -310,9 +312,9 @@ public abstract class Spin2InstructionObject {
             value = i.setBoolean(value, src.isLiteral());
             value = s.setValue(value, getSrc(src));
         } catch (CompilerException e) {
-            throw e;
+            msgs.addMessage(e);
         } catch (Exception e) {
-            throw new CompilerException(e.getMessage(), src.getData());
+            msgs.addMessage(new CompilerException(e.getMessage(), src.getData()));
         }
 
         if (msgs.hasChilds()) {
