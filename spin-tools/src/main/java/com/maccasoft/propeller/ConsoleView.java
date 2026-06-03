@@ -125,7 +125,7 @@ public class ConsoleView {
                     if (rx != null) {
                         synchronized (receiveBuffer) {
                             receiveBuffer.write(rx);
-                            receiveBuffer.notify();
+                            receiveBuffer.notifyAll();
                         }
                     }
                 } catch (Exception e) {
@@ -142,7 +142,7 @@ public class ConsoleView {
         public void write(int b) throws IOException {
             synchronized (receiveBuffer) {
                 receiveBuffer.write(b);
-                receiveBuffer.notify();
+                receiveBuffer.notifyAll();
             }
         }
 
@@ -150,7 +150,7 @@ public class ConsoleView {
         public void write(byte[] b) throws IOException {
             synchronized (receiveBuffer) {
                 receiveBuffer.write(b);
-                receiveBuffer.notify();
+                receiveBuffer.notifyAll();
             }
         }
 
@@ -158,7 +158,7 @@ public class ConsoleView {
         public void write(byte[] b, int off, int len) throws IOException {
             synchronized (receiveBuffer) {
                 receiveBuffer.write(b, off, len);
-                receiveBuffer.notify();
+                receiveBuffer.notifyAll();
             }
         }
 
@@ -431,7 +431,7 @@ public class ConsoleView {
         display = parent.getDisplay();
         preferences = Preferences.getInstance();
 
-        receiveBuffer = new CircularBuffer(1 * 1024 * 1024);
+        receiveBuffer = new CircularBuffer(1024 * 1024);
         transmitBuffer = new CircularBuffer(4096);
         pendingText = new StringBuilder();
 
@@ -458,12 +458,9 @@ public class ConsoleView {
             @Override
             public void keyPressed(KeyEvent event) {
                 if (event.character != 0) {
-                    try {
-                        if (serialPort != null && serialPort.isOpened()) {
-                            serialPort.writeByte((byte) event.character);
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                    synchronized (transmitBuffer) {
+                        transmitBuffer.write(event.character);
+                        transmitBuffer.notifyAll();
                     }
                 }
             }
@@ -490,10 +487,10 @@ public class ConsoleView {
 
                 consoleThreadRun = false;
                 synchronized (receiveBuffer) {
-                    receiveBuffer.notify();
+                    receiveBuffer.notifyAll();
                 }
                 synchronized (transmitBuffer) {
-                    transmitBuffer.notify();
+                    transmitBuffer.notifyAll();
                 }
 
                 preferences.removePropertyChangeListener(preferencesChangeListener);
@@ -697,14 +694,14 @@ public class ConsoleView {
     void write(byte[] b) throws IOException {
         synchronized (receiveBuffer) {
             receiveBuffer.write(b);
-            receiveBuffer.notify();
+            receiveBuffer.notifyAll();
         }
     }
 
-    void write(byte[] b, int off, int len) throws IOException {
+    void write(byte[] b, int len) throws IOException {
         synchronized (receiveBuffer) {
-            receiveBuffer.write(b, off, len);
-            receiveBuffer.notify();
+            receiveBuffer.write(b, 0, len);
+            receiveBuffer.notifyAll();
         }
     }
 
@@ -742,48 +739,57 @@ public class ConsoleView {
             }
             process = builder.start();
 
-            Thread ioThread = new Thread(() -> {
+            Thread consoleThread = new Thread(() -> {
+                int count;
+                byte[] buf = new byte[4096];
+
+                try {
+                    OutputStream in = process.getOutputStream();
+                    while (consoleThreadRun) {
+                        if (!process.isAlive()) {
+                            break;
+                        }
+                        synchronized (transmitBuffer) {
+                            transmitBuffer.wait();
+                            if ((count = transmitBuffer.read(buf)) > 0) {
+                                in.write(buf, 0, count);
+                                in.flush();
+                            }
+                        }
+                    }
+                } catch (InterruptedException ignored) {
+                    // Do nothing
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+
+            Thread processThread = new Thread(() -> {
                 int count;
                 byte[] buf = new byte[4096];
 
                 try {
                     InputStream out = process.getInputStream();
-                    OutputStream in = process.getOutputStream();
-
                     while (consoleThreadRun) {
-                        if (out.available() > 0) {
-                            if ((count = out.read(buf)) == -1) {
-                                break;
-                            }
-                            if (count > 0) {
-                                write(buf, 0, count);
-                            }
-                        }
-                        if ((count = read(buf)) == -1) {
+                        if ((count = out.read(buf)) == -1) {
                             break;
                         }
                         if (count > 0) {
-                            in.write(buf, 0, count);
-                            in.flush();
+                            write(buf, count);
                         }
                     }
-
-                    if (!consoleThreadRun) {
-                        process.destroy();
-                        if (process.isAlive()) {
-                            process.destroyForcibly();
-                        }
-                    }
-
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+                consoleThread.interrupt();
 
                 if (terminateRunnable != null) {
                     display.asyncExec(terminateRunnable);
                 }
             });
-            ioThread.start();
+
+            processThread.start();
+            consoleThread.start();
         }
     }
 
