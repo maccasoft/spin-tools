@@ -5576,17 +5576,19 @@ class Spin2ObjectCompilerTest {
             
                 a := byte("1234", 13, 10)
                 a := word("1234", 13, 10)
-                a := long("1234", 13, 10)
+                a := long("1234", -13, 10)
             
-                a := byte("1234", long 13, 10)
+                a := byte("1234", long -13, 10)
                 a := word("1234", byte 13, 10)
                 a := long("1234", word 13, 10)
+            
+                a := byte("1234", word(13, 10))
             
                 test(byte("1234", 13, 10))
                 test(word("1234", 13, 10))
                 test(long("1234", 13, 10))
             
-                a := long(1, 2, 3.0, 4)
+                test(byte("1234", word(13, 10)))
             
             PUB test(p)
             
@@ -5595,8 +5597,8 @@ class Spin2ObjectCompilerTest {
         Assertions.assertEquals("""
             ' Object "test.spin2" header (var size 4)
             00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)
-            00004 00004       C0 00 00 81    Method test @ $000C0 (1 parameters, 0 returns)
-            00008 00008       C2 00 00 00    End
+            00004 00004       C5 00 00 81    Method test @ $000C5 (1 parameters, 0 returns)
+            00008 00008       C7 00 00 00    End
             ' PUB main() | a
             0000C 0000C       01             (stack size)
             '     a := byte("1234", 13, 10)
@@ -5608,17 +5610,17 @@ class Spin2ObjectCompilerTest {
             0001B 0001B       00 33 00 34 00
             00020 00020       0D 00 0A 00
             00024 00024       F0             VAR_WRITE LONG DBASE+$00000 (short)
-            '     a := long("1234", 13, 10)
+            '     a := long("1234", -13, 10)
             00025 00025       9E 18 31 00 00 LONGS
             0002A 0002A       00 32 00 00 00
             0002F 0002F       33 00 00 00 34
-            00034 00034       00 00 00 0D 00
-            00039 00039       00 00 0A 00 00
+            00034 00034       00 00 00 F3 FF
+            00039 00039       FF FF 0A 00 00
             0003E 0003E       00
             0003F 0003F       F0             VAR_WRITE LONG DBASE+$00000 (short)
-            '     a := byte("1234", long 13, 10)
+            '     a := byte("1234", long -13, 10)
             00040 00040       9E 09 31 32 33 BYTES
-            00045 00045       34 0D 00 00 00
+            00045 00045       34 F3 FF FF FF
             0004A 0004A       0A
             0004B 0004B       F0             VAR_WRITE LONG DBASE+$00000 (short)
             '     a := word("1234", byte 13, 10)
@@ -5633,37 +5635,40 @@ class Spin2ObjectCompilerTest {
             00069 00069       00 00 00 0D 00
             0006E 0006E       0A 00 00 00
             00072 00072       F0             VAR_WRITE LONG DBASE+$00000 (short)
+            '     a := byte("1234", word(13, 10))
+            00073 00073       9E 08 31 32 33 BYTES
+            00078 00078       34 0D 00 0A 00
+            0007D 0007D       F0             VAR_WRITE LONG DBASE+$00000 (short)
             '     test(byte("1234", 13, 10))
-            00073 00073       00             ANCHOR
-            00074 00074       9E 06 31 32 33 BYTES
-            00079 00079       34 0D 0A
-            0007C 0007C       0A 01          CALL_SUB (1)
-            '     test(word("1234", 13, 10))
             0007E 0007E       00             ANCHOR
-            0007F 0007F       9E 0C 31 00 32 WORDS
-            00084 00084       00 33 00 34 00
-            00089 00089       0D 00 0A 00
-            0008D 0008D       0A 01          CALL_SUB (1)
+            0007F 0007F       9E 06 31 32 33 BYTES
+            00084 00084       34 0D 0A
+            00087 00087       0A 01          CALL_SUB (1)
+            '     test(word("1234", 13, 10))
+            00089 00089       00             ANCHOR
+            0008A 0008A       9E 0C 31 00 32 WORDS
+            0008F 0008F       00 33 00 34 00
+            00094 00094       0D 00 0A 00
+            00098 00098       0A 01          CALL_SUB (1)
             '     test(long("1234", 13, 10))
-            0008F 0008F       00             ANCHOR
-            00090 00090       9E 18 31 00 00 LONGS
-            00095 00095       00 32 00 00 00
-            0009A 0009A       33 00 00 00 34
-            0009F 0009F       00 00 00 0D 00
-            000A4 000A4       00 00 0A 00 00
-            000A9 000A9       00
-            000AA 000AA       0A 01          CALL_SUB (1)
-            '     a := long(1, 2, 3.0, 4)
-            000AC 000AC       9E 10 01 00 00 LONGS
-            000B1 000B1       00 02 00 00 00
-            000B6 000B6       00 00 40 40 04
-            000BB 000BB       00 00 00
-            000BE 000BE       F0             VAR_WRITE LONG DBASE+$00000 (short)
-            000BF 000BF       04             RETURN
+            0009A 0009A       00             ANCHOR
+            0009B 0009B       9E 18 31 00 00 LONGS
+            000A0 000A0       00 32 00 00 00
+            000A5 000A5       33 00 00 00 34
+            000AA 000AA       00 00 00 0D 00
+            000AF 000AF       00 00 0A 00 00
+            000B4 000B4       00
+            000B5 000B5       0A 01          CALL_SUB (1)
+            '     test(byte("1234", word(13, 10)))
+            000B7 000B7       00             ANCHOR
+            000B8 000B8       9E 08 31 32 33 BYTES
+            000BD 000BD       34 0D 00 0A 00
+            000C2 000C2       0A 01          CALL_SUB (1)
+            000C4 000C4       04             RETURN
             ' PUB test(p)
-            000C0 000C0       00             (stack size)
-            000C1 000C1       04             RETURN
-            000C2 000C2       00 00          Padding
+            000C5 000C5       00             (stack size)
+            000C6 000C6       04             RETURN
+            000C7 000C7       00             Padding
             """, compile(text));
     }
 

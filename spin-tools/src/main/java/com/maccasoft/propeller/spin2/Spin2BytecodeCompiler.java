@@ -13,7 +13,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 import com.maccasoft.propeller.CompilerException;
@@ -4643,17 +4642,14 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
     byte[] compileTypes(Context context, Spin2StatementNode node, String type) throws Exception {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
 
-        Iterator<Spin2StatementNode> iter = node.getChilds().iterator();
-        while (iter.hasNext()) {
-            Spin2StatementNode child = iter.next();
-
+        for (Spin2StatementNode child : node.getChilds()) {
             if (child.isMethod()) {
                 if ("BYTE".equalsIgnoreCase(child.getText()) || "WORD".equalsIgnoreCase(child.getText()) || "LONG".equalsIgnoreCase(child.getText())) {
-                    byte[] code = compileTypes(context, child, child.getText().substring(0, child.getText().length() - 1));
+                    byte[] code = compileTypes(context, child, child.getText());
                     os.write(code);
                 }
                 else {
-                    throw new CompilerException("expression is not constant", child.getTokens());
+                    logMessage(new CompilerException("expression is not constant", child.getTokens()));
                 }
             }
             else {
@@ -4661,16 +4657,16 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 if ("BYTE".equalsIgnoreCase(child.getText()) || "WORD".equalsIgnoreCase(child.getText()) || "LONG".equalsIgnoreCase(child.getText())) {
                     overrideType = child.getText();
                     if (child.getChildCount() != 1) {
-                        throw new CompilerException("syntax error", child.getToken());
+                        logMessage(new CompilerException("expecting constant expression", child.getToken()));
+                        continue;
                     }
                     child = child.getChild(0);
                 }
 
                 if (child.getType() == Token.STRING) {
                     if (child.getText().startsWith("\"")) {
-                        byte[] b = getString(child.getToken()).getBytes();
-                        for (int i = 0; i < b.length; i++) {
-                            os.write(b[i]);
+                        for (byte b : getString(child.getToken()).getBytes()) {
+                            os.write(b);
                             if ("WORD".equalsIgnoreCase(overrideType)) {
                                 os.write(0x00);
                             }
@@ -4686,42 +4682,38 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     }
                 }
                 else {
-                    Expression expression;
-                    if (child.getType() == Token.NUMBER) {
-                        expression = new NumberLiteral(child.getText());
-                    }
-                    else {
-                        try {
-                            expression = buildConstantExpression(context, child);
-                            if (!expression.isConstant()) {
-                                throw new CompilerException("expression is not constant", child.getTokens());
+                    try {
+                        Expression expression = buildConstantExpression(context, child);
+                        if (!expression.isConstant()) {
+                            logMessage(new CompilerException("expression is not constant", child.getTokens()));
+                        }
+                        else {
+                            if ("BYTE".equalsIgnoreCase(overrideType)) {
+                                if (expression.getNumber() instanceof Double) {
+                                    logMessage(new CompilerException(CompilerException.ERROR, "floating point not allowed in integer expression", child.getTokens()));
+                                }
+                                if (expression.getNumber().intValue() < -0x80 || expression.getNumber().intValue() > 0xFF) {
+                                    logMessage(new CompilerException(CompilerException.WARNING, "byte value range from -$80 to $FF", child.getTokens()));
+                                }
+                                os.write(expression.getByte());
                             }
-                        } catch (CompilerException e) {
-                            throw e;
-                        } catch (Exception e) {
-                            throw new CompilerException("expression is not constant", child.getTokens());
+                            else if ("WORD".equalsIgnoreCase(overrideType)) {
+                                if (expression.getNumber() instanceof Double) {
+                                    logMessage(new CompilerException(CompilerException.ERROR, "floating point not allowed in integer expression", child.getTokens()));
+                                }
+                                if (expression.getNumber().intValue() < -0x8000 || expression.getNumber().intValue() > 0xFFFF) {
+                                    logMessage(new CompilerException(CompilerException.WARNING, "word value range from -$8000 to $FFFF", child.getTokens()));
+                                }
+                                os.write(expression.getWord());
+                            }
+                            else if ("LONG".equalsIgnoreCase(overrideType)) {
+                                os.write(expression.getLong());
+                            }
                         }
-                    }
-                    if ("BYTE".equalsIgnoreCase(overrideType)) {
-                        if (expression.getNumber() instanceof Double) {
-                            logMessage(new CompilerException(CompilerException.ERROR, "floating point not allowed in integer expression", child.getTokens()));
-                        }
-                        if (expression.getNumber().intValue() < -0x80 || expression.getNumber().intValue() > 0xFF) {
-                            logMessage(new CompilerException(CompilerException.WARNING, "byte value range from -$80 to $FF", child.getTokens()));
-                        }
-                        os.write(expression.getByte());
-                    }
-                    else if ("WORD".equalsIgnoreCase(overrideType)) {
-                        if (expression.getNumber() instanceof Double) {
-                            logMessage(new CompilerException(CompilerException.ERROR, "floating point not allowed in integer expression", child.getTokens()));
-                        }
-                        if (expression.getNumber().intValue() < -0x8000 || expression.getNumber().intValue() > 0xFFFF) {
-                            logMessage(new CompilerException(CompilerException.WARNING, "word value range from -$8000 to $FFFF", child.getTokens()));
-                        }
-                        os.write(expression.getWord());
-                    }
-                    else if ("LONG".equalsIgnoreCase(overrideType)) {
-                        os.write(expression.getLong());
+                    } catch (CompilerException e) {
+                        logMessage(e);
+                    } catch (Exception e) {
+                        logMessage(new CompilerException("expression is not constant", child.getTokens()));
                     }
                 }
             }

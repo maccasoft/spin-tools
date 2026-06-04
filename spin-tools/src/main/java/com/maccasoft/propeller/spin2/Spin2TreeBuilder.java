@@ -579,9 +579,12 @@ public class Spin2TreeBuilder {
                         }
                     }
                 }
-                else if (typeFunctions.contains(node.getText().toLowerCase()) && peek() != null && peek().type != Token.OPERATOR) {
-                    node.addChild(parseLevel(parseAtom(), 0, false));
-                    return node;
+                else if (typeFunctions.contains(node.getText().toLowerCase())) {
+                    Token next = peek();
+                    if (next != null && !"(".equals(next.getText()) && !"[".equals(next.getText()) && !",".equals(next.getText())) {
+                        node.addChild(parseLevel(parseAtom(), 0, false));
+                        return node;
+                    }
                 }
                 if ("(".equals(peek().getText())) {
                     Token first = next();

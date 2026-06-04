@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-25 Marco Maccaferri and others.
+ * Copyright (c) 2021-26 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
 package com.maccasoft.propeller.spin2;
@@ -1003,6 +1002,42 @@ class Spin2TreeBuilderTest {
             + " +-- [[ptr]]\n"
             + " +-- [ptr.x]\n"
             + "", parse(context, "[ptr] and ptr.x"));
+    }
+
+    @Test
+    void testTypeExpression() {
+        String text = "a := byte(1, 2, word 3, long -1)";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + " +-- [byte]\n"
+            + "      +-- [1]\n"
+            + "      +-- [2]\n"
+            + "      +-- [word]\n"
+            + "           +-- [3]\n"
+            + "      +-- [long]\n"
+            + "           +-- [-]\n"
+            + "                +-- [1]\n"
+            + "", parse(text));
+    }
+
+    @Test
+    void testNestedTypeExpression() {
+        String text = "a := byte(1, 2, word (3, 4, 5), long -1)";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + " +-- [byte]\n"
+            + "      +-- [1]\n"
+            + "      +-- [2]\n"
+            + "      +-- [word]\n"
+            + "           +-- [3]\n"
+            + "           +-- [4]\n"
+            + "           +-- [5]\n"
+            + "      +-- [long]\n"
+            + "           +-- [-]\n"
+            + "                +-- [1]\n"
+            + "", parse(text));
     }
 
     String parse(String text) {
