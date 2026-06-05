@@ -1,40 +1,36 @@
 <content>
     <section class="Root">
-        <entry name="CON"><![CDATA[<b>CON</b><p>Constant declarations (CON is the initial/default block type)</p>]]></entry>
-        <entry name="VAR"><![CDATA[<b>VAR</b><p>Variable declarations</p>]]></entry>
-        <entry name="OBJ"><![CDATA[<b>OBJ</b><p>Child-object instantiations</p>]]></entry>
-        <entry name="PUB"><![CDATA[<b>PUB</b><p>Public method for use by the parent object and within this object</p>]]></entry>
-        <entry name="PRI"><![CDATA[<b>PRI</b><p>Private method for use within this object</p>]]></entry>
-        <entry name="DAT"><![CDATA[<b>DAT</b><p>Data declarations, including PASM code</p>]]></entry>
+        <entry name="CON"><![CDATA[<div class="header">CON</div><p>Constant declarations (CON is the initial/default block type)</p>]]></entry>
+        <entry name="VAR"><![CDATA[<div class="header">VAR</div><p>Variable declarations</p>]]></entry>
+        <entry name="OBJ"><![CDATA[<div class="header">OBJ</div><p>Child-object instantiations</p>]]></entry>
+        <entry name="PUB"><![CDATA[<div class="header">PUB</div><p>Public method for use by the parent object and within this object</p>]]></entry>
+        <entry name="PRI"><![CDATA[<div class="header">PRI</div><p>Private method for use within this object</p>]]></entry>
+        <entry name="DAT"><![CDATA[<div class="header">DAT</div><p>Data declarations, including PASM code</p>]]></entry>
     </section>
 
     <section class="MethodNode,StatementNode">
-        <entry name="abort"><![CDATA[<b>ABORT &lt;Value&gt;</b><p>Exit from PUB / PRI method using abort status with optional return Value.</p>]]></entry>
-        <entry name="if,ifnot,elseif,elseifnot,else"><![CDATA[<code><b>IF / IFNOT + ELSEIF / ELSEIFNOT + ELSE</b></code>
+        <entry name="abort"><![CDATA[<div class="header">ABORT &lt;Value&gt;</div><p>Exit from PUB / PRI method using abort status with optional return Value.</p>]]></entry>
+        <entry name="if,ifnot,elseif,elseifnot,else"><![CDATA[<div class="header">IF / IFNOT + ELSEIF / ELSEIFNOT + ELSE</div>
 <p>The IF construct begins with IF or IFNOT and optionally employs ELSEIF, ELSEIFNOT, and ELSE. To all be part of the same decision tree, these keywords must have the
-same level of indentation.<br />
-<br />
-The indented code under IF or ELSEIF executes if <condition> is not zero. The code under IFNOT or ELSEIFNOT executes if <condition> is zero. The code under ELSE
+same level of indentation.</p>
+<p>The indented code under IF or ELSEIF executes if <condition> is not zero. The code under IFNOT or ELSEIFNOT executes if <condition> is zero. The code under ELSE
 executes if no other indented code executed:</p>
 
-<pre>
-<code>
+<div class="code">
 <b>IF / IFNOT</b> &lt;condition&gt;         - Initial IF or IFNOT
     &lt;indented code&gt;
 <b>ELSEIF / ELSEIFNOT</b> &lt;condition&gt; - Optional ELSEIF or ELSEIFNOT
     &lt;indented code&gt;
 <b>ELSE</b>                           - Optional final ELSE
     &lt;indented code&gt;
-</code></pre>
-]]></entry>
-        <entry name="case,case_fast,other"><![CDATA[<code><b>CASE</b></code>
-<p>The CASE construct sequentially compares a target value to a list of possible matches. When a match is found, the related code executes.<br />
-<br />
-Match values/ranges must be indented past the CASE keyword. Multiple match values/ranges can be expressed with comma separators. Any additional lines of code related to
+</div>]]></entry>
+        <entry name="case,case_fast,other"><![CDATA[<div class="header">CASE</div>
+<p>The CASE construct sequentially compares a target value to a list of possible matches. When a match is found, the related code executes.</p>
+<p>Match values/ranges must be indented past the CASE keyword. Multiple match values/ranges can be expressed with comma separators. Any additional lines of code related to
 the match value/range must be indented past the match value/range:</p>
 
-<pre>
-<code><b>CASE</b> target                  - CASE with target value
+<div class="code">
+<b>CASE</b> target                  - CASE with target value
     <b>&lt;match&gt;</b> : &lt;code&gt;        - match value and code
         &lt;indented code&gt;
     <b>&lt;match..match&gt;</b> : &lt;code&gt;  - match range and code
@@ -43,128 +39,126 @@ the match value/range must be indented past the match value/range:</p>
         &lt;indented code&gt;
     <b>OTHER</b> : &lt;code&gt;         - optional OTHER case, in case no match found
         &lt;indented code&gt;
-</code></pre>
-]]></entry>
-        <entry name="repeat,from,to,step,while,until,next,quit"><![CDATA[<code><b>REPEAT</b></code>
+</div>]]></entry>
+        <entry name="repeat,from,to,step,while,until,next,quit"><![CDATA[<div class="header">REPEAT</div>
 <p>All looping is achieved through REPEAT constructs, which have several forms:</p>
-<pre>
-<code><b>REPEAT</b>
-    &lt;indented code&gt;</code>
-
-<code><b>REPEAT &lt;count&gt;</b>
-    &lt;indented code&gt;</code>
-
-<code><b>REPEAT &lt;variable> FROM &lt;first&gt; TO &lt;last&gt;</b>
-    &lt;indented code&gt;</code>
-
-<code><b>REPEAT WHILE &lt;condition></b>
-    &lt;indented code&gt;</code>
-
-<code><b>REPEAT UNTIL &lt;condition></b>
-    &lt;indented code&gt;</code>
-
-<code><b>REPEAT</b>
+<div class="code">
+<b>REPEAT</b>
     &lt;indented code&gt;
-<b>WHILE &lt;condition&gt;</b></code>
 
-<code><b>REPEAT</b>
+<b>REPEAT &lt;count&gt;</b>
     &lt;indented code&gt;
-<b>UNTIL &lt;condition&gt;</b></code>
 
-<code><b>REPEAT</b>
+<b>REPEAT &lt;variable> FROM &lt;first&gt; TO &lt;last&gt;</b>
     &lt;indented code&gt;
-    <b>IF</b> &lt;condition&gt;</code>
-<code>        <b>NEXT</b>
+
+<b>REPEAT WHILE &lt;condition></b>
     &lt;indented code&gt;
-    <b>IF</b> &lt;condition&gt;</code>
-<code>        <b>QUIT</b>
-    &lt;indented code&gt;</code>
-</pre>
-]]></entry>
 
-        <entry name="result"><![CDATA[<b>RESULT</b><p>Default result variable for PUB / PRI methods.</p>]]></entry>
+<b>REPEAT UNTIL &lt;condition></b>
+    &lt;indented code&gt;
 
-        <entry name="bytefill" insert="bytefill(dest, value, count)"><![CDATA[<b>BYTEFILL(Dest, Value, Count)</b><br/><br/>Fill Count bytes at Dest with Value]]></entry>
-        <entry name="wordfill" insert="wordfill(dest, value, count)"><![CDATA[<b>WORDFILL(Dest, Value, Count)</b><br/><br/>Fill Count words at Dest with Value]]></entry>
-        <entry name="longfill" insert="longfill(dest, value, count)"><![CDATA[<b>LONGFILL(Dest, Value, Count)</b><br/><br/>Fill Count longs at Dest with Value]]></entry>
-        <entry name="bytemove" insert="bytemove(dest, source, count)"><![CDATA[<b>BYTEMOVE(Dest, Source, Count)</b><br/><br/>Move Count bytes from Source to Dest]]></entry>
-        <entry name="wordmove" insert="wordmove(dest, source, count)"><![CDATA[<b>WORDMOVE(Dest, Source, Count)</b><br/><br/>Move Count words from Source to Dest]]></entry>
-        <entry name="longmove" insert="longmove(dest, source, count)"><![CDATA[<b>LONGMOVE(Dest, Source, Count)</b><br/><br/>Move Count longs from Source to Dest]]></entry>
+<b>REPEAT</b>
+    &lt;indented code&gt;
+<b>WHILE &lt;condition&gt;</b>
 
-        <entry name="lookup" insert="lookup(index: v1, v2..v3, etc)"><![CDATA[<b>LOOKUP(Index: v1, v2..v3, etc) : Value</b><br/><br/>Lookup value (values and ranges allowed) using 1-based index, return value (0 if index out of range)]]></entry>
-        <entry name="lookupz" insert="lookupz(index: v1, v2..v3, etc)"><![CDATA[<b>LOOKUPZ(Index: v1, v2..v3, etc) : Value</b><br/><br/>Lookup value (values and ranges allowed) using 0-based index, return value (0 if index out of range)]]></entry>
-        <entry name="lookdown" insert="lookdown(value: v1, v2..v3, etc)"><![CDATA[<b>LOOKDOWN(Value: v1, v2..v3, etc) : Index</b><br/><br/>Determine 1-based index of matching value (values and ranges allowed), return index (0 if no match)]]></entry>
-        <entry name="lookdownz" insert="lookdownz(value: v1, v2..v3, etc)"><![CDATA[<b>LOOKDOWNZ(Value: v1, v2..v3, etc) : Index</b><br/><br/>Determine 0-based index of matching value (values and ranges allowed), return index (0 if no match)]]></entry>
+<b>REPEAT</b>
+    &lt;indented code&gt;
+<b>UNTIL &lt;condition&gt;</b>
 
-        <entry name="strsize" insert="strsize(addr)"><![CDATA[<b>STRSIZE(Addr) : Size</b><br/><br/>Count bytes in zero-terminated string at Addr, return string size, not including zero terminator]]></entry>
-        <entry name="strcomp" insert="strcomp(addra, addrb)"><![CDATA[<b>STRCOMP(AddrA, AddrB) : Match</b><br/><br/>Compare zero-terminated strings at AddrA and AddrB, return -1 if match or 0 if mismatch]]></entry>
-        <entry name="string" insert="string(&quot;text&quot;,9)"><![CDATA[<b>STRING("Text",9) : StringAddress</b><br/><br/>Compose a zero-terminated string (quoted characters and values 1..255 allowed), return address of string]]></entry>
+<b>REPEAT</b>
+    &lt;indented code&gt;
+    <b>IF</b> &lt;condition&gt;
+        <b>NEXT</b>
+    &lt;indented code&gt;
+    <b>IF</b> &lt;condition&gt;
+        <b>QUIT</b>
+    &lt;indented code&gt;
+</div>]]></entry>
 
-        <entry name="cogid"><![CDATA[<b>COGID</b><p>The current cog’s ID (0-7).</p>]]></entry>
+        <entry name="result"><![CDATA[<div class="header">RESULT</div><p>Default result variable for PUB / PRI methods.</p>]]></entry>
+
+        <entry name="bytefill" insert="bytefill(dest, value, count)"><![CDATA[<div class="header">BYTEFILL(Dest, Value, Count)</div><p>Fill Count bytes at Dest with Value.</p>]]></entry>
+        <entry name="wordfill" insert="wordfill(dest, value, count)"><![CDATA[<div class="header">WORDFILL(Dest, Value, Count)</div><p>Fill Count words at Dest with Value.</p>]]></entry>
+        <entry name="longfill" insert="longfill(dest, value, count)"><![CDATA[<div class="header">LONGFILL(Dest, Value, Count)</div>p>Fill Count longs at Dest with Value.</p>]]></entry>
+        <entry name="bytemove" insert="bytemove(dest, source, count)"><![CDATA[<div class="header">BYTEMOVE(Dest, Source, Count)</div><p>Move Count bytes from Source to Dest.</p>]]></entry>
+        <entry name="wordmove" insert="wordmove(dest, source, count)"><![CDATA[<div class="header">WORDMOVE(Dest, Source, Count)</div><p>Move Count words from Source to Dest.</p>]]></entry>
+        <entry name="longmove" insert="longmove(dest, source, count)"><![CDATA[<div class="header">LONGMOVE(Dest, Source, Count)</div><p>Move Count longs from Source to Dest.</p>]]></entry>
+
+        <entry name="lookup" insert="lookup(index: v1, v2..v3, etc)"><![CDATA[<div class="header">LOOKUP(Index: v1, v2..v3, etc) : Value</div><p>Lookup value (values and ranges allowed) using 1-based index, return value (0 if index out of range).</p>]]></entry>
+        <entry name="lookupz" insert="lookupz(index: v1, v2..v3, etc)"><![CDATA[<div class="header">LOOKUPZ(Index: v1, v2..v3, etc) : Value</div><p>Lookup value (values and ranges allowed) using 0-based index, return value (0 if index out of range).</p>]]></entry>
+        <entry name="lookdown" insert="lookdown(value: v1, v2..v3, etc)"><![CDATA[<div class="header">LOOKDOWN(Value: v1, v2..v3, etc) : Index</div><p>Determine 1-based index of matching value (values and ranges allowed), return index (0 if no match).</p>]]></entry>
+        <entry name="lookdownz" insert="lookdownz(value: v1, v2..v3, etc)"><![CDATA[<div class="header">LOOKDOWNZ(Value: v1, v2..v3, etc) : Index</div><p>Determine 0-based index of matching value (values and ranges allowed), return index (0 if no match).</p>]]></entry>
+
+        <entry name="strsize" insert="strsize(addr)"><![CDATA[<div class="header">STRSIZE(Addr) : Size</div><p>Count bytes in zero-terminated string at Addr, return string size, not including zero terminator.</p>]]></entry>
+        <entry name="strcomp" insert="strcomp(addra, addrb)"><![CDATA[<div class="header">STRCOMP(AddrA, AddrB) : Match</div><p>Compare zero-terminated strings at AddrA and AddrB, return -1 if match or 0 if mismatch.</p>]]></entry>
+        <entry name="string" insert="string(&quot;text&quot;,9)"><![CDATA[<div class="header">STRING("Text",9) : StringAddress</div><p>Compose a zero-terminated string (quoted characters and values 1..255 allowed), return address of string.</p>]]></entry>
+
+        <entry name="cogid"><![CDATA[<div class="header">COGID</div><p>The current cog’s ID (0-7).</p>]]></entry>
     </section>
 
     <section class="Constants,ConstantsNode,ExpressionNode">
-        <entry name="CHIPVER">><![CDATA[<b>CHIPVER</b><p>Propeller chip version number</p>]]></entry>
-        <entry name="CLKMODE"><![CDATA[<b>CLKMODE</b><p>Current clock mode setting</p>]]></entry>
-        <entry name="_CLKMODE"><![CDATA[<b>_CLKMODE</b><p>Application-defined clock mode (read-only)</p>]]></entry>
-        <entry name="CLKFREQ"><![CDATA[<b>CLKFREQ</b><p>Current clock frequency</p>]]></entry>
-        <entry name="_CLKFREQ"><![CDATA[<b>_CLKFREQ</b><p>Application-defined clock frequency (read-only)</p>]]></entry>
-        <entry name="CLKSET"><![CDATA[<b>CLKSET</b><p>Set clock mode and clock frequency</p>]]></entry>
-        <entry name="_XINFREQ"><![CDATA[<b>_XINFREQ</b><p>Application-defined external clock frequency (read-only)</p>]]></entry>
-        <entry name="_STACK"><![CDATA[<b>_STACK</b><p>Application-defined stack space to reserve (read-only)</p>]]></entry>
-        <entry name="_FREE"><![CDATA[<b>_FREE</b><p>Application-defined free space to reserve (read-only)</p>]]></entry>
-        <entry name="RCFAST"><![CDATA[<b>RCFAST</b><p>Constant for _CLKMODE : internal fast oscillator</p>]]></entry>
-        <entry name="RCSLOW"><![CDATA[<b>RCSLOW</b><p>Constant for _CLKMODE : internal slow oscillator</p>]]></entry>
-        <entry name="XINPUT"><![CDATA[<b>XINPUT</b><p>Constant for _CLKMODE : external clock/osc (XI pin)</p>]]></entry>
-        <entry name="XTAL1"><![CDATA[<b>XTAL1</b><p>Constant for _CLKMODE : external low-speed crystal</p>]]></entry>
-        <entry name="XTAL2"><![CDATA[<b>XTAL2</b><p>Constant for _CLKMODE : external med-speed crystal</p>]]></entry>
-        <entry name="XTAL3"><![CDATA[<b>XTAL3</b><p>Constant for _CLKMODE : external high-speed crystal</p>]]></entry>
-        <entry name="PLL1X"><![CDATA[<b>PLL1X</b><p>Constant for _CLKMODE : external frequency times 1</p>]]></entry>
-        <entry name="PLL2X"><![CDATA[<b>PLL2X</b><p>Constant for _CLKMODE : external frequency times 2</p>]]></entry>
-        <entry name="PLL4X"><![CDATA[<b>PLL4X</b><p>Constant for _CLKMODE : external frequency times 4</p>]]></entry>
-        <entry name="PLL8X"><![CDATA[<b>PLL4X</b><p>Constant for _CLKMODE : external frequency times 8</p>]]></entry>
-        <entry name="PLL16X"><![CDATA[<b>PLL4X</b><p>Constant for _CLKMODE : external frequency times 16</p>]]></entry>
+        <entry name="CHIPVER">><![CDATA[<div class="header">CHIPVER</div><p>Propeller chip version number</p>]]></entry>
+        <entry name="CLKMODE"><![CDATA[<div class="header">CLKMODE</div><p>Current clock mode setting</p>]]></entry>
+        <entry name="_CLKMODE"><![CDATA[<div class="header">_CLKMODE</div><p>Application-defined clock mode (read-only)</p>]]></entry>
+        <entry name="CLKFREQ"><![CDATA[<div class="header">CLKFREQ</div><p>Current clock frequency</p>]]></entry>
+        <entry name="_CLKFREQ"><![CDATA[<div class="header">_CLKFREQ</div><p>Application-defined clock frequency (read-only)</p>]]></entry>
+        <entry name="CLKSET"><![CDATA[<div class="header">CLKSET</div><p>Set clock mode and clock frequency</p>]]></entry>
+        <entry name="_XINFREQ"><![CDATA[<div class="header">_XINFREQ</div><p>Application-defined external clock frequency (read-only)</p>]]></entry>
+        <entry name="_STACK"><![CDATA[<div class="header">_STACK</div><p>Application-defined stack space to reserve (read-only)</p>]]></entry>
+        <entry name="_FREE"><![CDATA[<div class="header">_FREE</div><p>Application-defined free space to reserve (read-only)</p>]]></entry>
+        <entry name="RCFAST"><![CDATA[<div class="header">RCFAST</div><p>Constant for _CLKMODE : internal fast oscillator</p>]]></entry>
+        <entry name="RCSLOW"><![CDATA[<div class="header">RCSLOW</div><p>Constant for _CLKMODE : internal slow oscillator</p>]]></entry>
+        <entry name="XINPUT"><![CDATA[<div class="header">XINPUT</div><p>Constant for _CLKMODE : external clock/osc (XI pin)</p>]]></entry>
+        <entry name="XTAL1"><![CDATA[<div class="header">XTAL1</div><p>Constant for _CLKMODE : external low-speed crystal</p>]]></entry>
+        <entry name="XTAL2"><![CDATA[<div class="header">XTAL2</div><p>Constant for _CLKMODE : external med-speed crystal</p>]]></entry>
+        <entry name="XTAL3"><![CDATA[<div class="header">XTAL3</div><p>Constant for _CLKMODE : external high-speed crystal</p>]]></entry>
+        <entry name="PLL1X"><![CDATA[<div class="header">PLL1X</div><p>Constant for _CLKMODE : external frequency times 1</p>]]></entry>
+        <entry name="PLL2X"><![CDATA[<div class="header">PLL2X</div><p>Constant for _CLKMODE : external frequency times 2</p>]]></entry>
+        <entry name="PLL4X"><![CDATA[<div class="header">PLL4X</div><p>Constant for _CLKMODE : external frequency times 4</p>]]></entry>
+        <entry name="PLL8X"><![CDATA[<div class="header">PLL4X</div><p>Constant for _CLKMODE : external frequency times 8</p>]]></entry>
+        <entry name="PLL16X"><![CDATA[<div class="header">PLL4X</div><p>Constant for _CLKMODE : external frequency times 16</p>]]></entry>
 
-        <entry name="TRUE"><![CDATA[<b>TRUE</b><p>Logical true: -1 ($FFFFFFFF)</p>]]></entry>
-        <entry name="FALSE"><![CDATA[<b>TRUE</b><p>Logical false: 0 ($00000000)</p>]]></entry>
-        <entry name="POSX"><![CDATA[<b>POSX</b><p>Maximum positive integer: 2,147,483,647 ($7FFFFFFF)</p>]]></entry>
-        <entry name="NEGX"><![CDATA[<b>NEGX</b><p>Maximum negative integer: -2,147,483,648 ($80000000)</p>]]></entry>
-        <entry name="PI"><![CDATA[<b>PI</b><p>Floating-point value for PI: ~3.141593 ($40490FDB)</p>]]></entry>
+        <entry name="TRUE"><![CDATA[<div class="header">TRUE</div><p>Logical true: -1 ($FFFFFFFF)</p>]]></entry>
+        <entry name="FALSE"><![CDATA[<div class="header">TRUE</div><p>Logical false: 0 ($00000000)</p>]]></entry>
+        <entry name="POSX"><![CDATA[<div class="header">POSX</div><p>Maximum positive integer: 2,147,483,647 ($7FFFFFFF)</p>]]></entry>
+        <entry name="NEGX"><![CDATA[<div class="header">NEGX</div><p>Maximum negative integer: -2,147,483,648 ($80000000)</p>]]></entry>
+        <entry name="PI"><![CDATA[<div class="header">PI</div><p>Floating-point value for PI: ~3.141593 ($40490FDB)</p>]]></entry>
     </section>
 
     <section class="DataNode,DataLineNode,Instruction">
-        <entry name="org"><![CDATA[<b>ORG</b><p></p>]]></entry>
-        <entry name="res"><![CDATA[<b>RES</b><p></p>]]></entry>
-        <entry name="byte"><![CDATA[<b>BYTE</b><p></p>]]></entry>
-        <entry name="word"><![CDATA[<b>WORD</b><p></p>]]></entry>
-        <entry name="long"><![CDATA[<b>LONG</b><p></p>]]></entry>
-        <entry name="bytefit"><![CDATA[<b>BYTEFIT</b><p></p>]]></entry>
-        <entry name="wordfit"><![CDATA[<b>WORDFIT</b><p></p>]]></entry>
-        <entry name="fit"><![CDATA[<b>FIT</b><p></p>]]></entry>
+        <entry name="org"><![CDATA[<div class="header">ORG</div><p></p>]]></entry>
+        <entry name="res"><![CDATA[<div class="header">RES</div><p></p>]]></entry>
+        <entry name="byte"><![CDATA[<div class="header">BYTE</div><p></p>]]></entry>
+        <entry name="word"><![CDATA[<div class="header">WORD</div><p></p>]]></entry>
+        <entry name="long"><![CDATA[<div class="header">LONG</div><p></p>]]></entry>
+        <entry name="bytefit"><![CDATA[<div class="header">BYTEFIT</div><p></p>]]></entry>
+        <entry name="wordfit"><![CDATA[<div class="header">WORDFIT</div><p></p>]]></entry>
+        <entry name="fit"><![CDATA[<div class="header">FIT</div><p></p>]]></entry>
 
-        <entry name="file"><![CDATA[<b>FILE</b><p></p>]]></entry>
-        <entry name="namesp"><![CDATA[<b>NAMESP</b><p></p>]]></entry>
+        <entry name="file"><![CDATA[<div class="header">FILE</div><p></p>]]></entry>
+        <entry name="namesp"><![CDATA[<div class="header">NAMESP</div><p></p>]]></entry>
 
-        <entry name="add"><![CDATA[<b>ADD     D,{#}S   {WC/WZ/NR}</b><p>Add S into D.                                  D = D + S.        C = carry of (D + S).               *</p>]]></entry>
+        <entry name="add"><![CDATA[<div class="header">ADD     D,{#}S   {WC/WZ/NR}</div><p>Add S into D.                                  D = D + S.        C = carry of (D + S).</p>]]></entry>
         <entry name="absneg"></entry>
         <entry name="add"></entry>
         <entry name="addabs"></entry>
-        <entry name="adds"><![CDATA[<b>ADDS    D,{#}S   {WC/WZ/NR}</b><p>Add S into D, signed.                          D = D + S.        C = correct sign of (D + S).        *</p>]]></entry>
-        <entry name="addsx"><![CDATA[<b>ADDSX   D,{#}S   {WC/WZ/NR}</b><p>Add (S + C) into D, signed and extended.       D = D + S + C.    C = correct sign of (D + S + C).    Z = Z AND (result == 0).</p>]]></entry>
+        <entry name="adds"><![CDATA[<div class="header">ADDS    D,{#}S   {WC/WZ/NR}</div><p>Add S into D, signed.                          D = D + S.        C = correct sign of (D + S).</p>]]></entry>
+        <entry name="addsx"><![CDATA[<div class="header">ADDSX   D,{#}S   {WC/WZ/NR}</div><p>Add (S + C) into D, signed and extended.       D = D + S + C.    C = correct sign of (D + S + C).    Z = Z AND (result == 0).</p>]]></entry>
         <entry name="addx"></entry>
         <entry name="and"></entry>
         <entry name="andn"></entry>
         <entry name="call"></entry>
         <entry name="clkset"></entry>
-        <entry name="cmp"><![CDATA[<b>CMP     D,{#}S   {WC/WZ/NR}</b><p>Compare D to S.                                                  C = borrow of (D - S).              Z = (D == S).</p>]]></entry>
-        <entry name="cmps"><![CDATA[<b>CMPS    D,{#}S   {WC/WZ/NR}</b><p>Compare D to S, signed.                                          C = correct sign of (D - S).        Z = (D == S).</p>]]></entry>
+        <entry name="cmp"><![CDATA[<div class="header">CMP     D,{#}S   {WC/WZ/NR}</div><p>Compare D to S.                                                  C = borrow of (D - S).              Z = (D == S).</p>]]></entry>
+        <entry name="cmps"><![CDATA[<div class="header">CMPS    D,{#}S   {WC/WZ/NR}</div><p>Compare D to S, signed.                                          C = correct sign of (D - S).        Z = (D == S).</p>]]></entry>
         <entry name="cmpsub"></entry>
-        <entry name="cmpsx"><![CDATA[<b>CMPSX   D,{#}S   {WC/WZ/NR}</b><p>Compare D to (S + C), signed and extended.                       C = correct sign of (D - (S + C)).  Z = Z AND (D == S + C).</p>]]></entry>
-        <entry name="cmpx"><![CDATA[<b>CMPX    D,{#}S   {WC/WZ/NR}</b><p>Compare D to (S + C), extended.                                  C = borrow of (D - (S + C)).        Z = Z AND (D == S + C).</p>]]></entry>
+        <entry name="cmpsx"><![CDATA[<div class="header">CMPSX   D,{#}S   {WC/WZ/NR}</div><p>Compare D to (S + C), signed and extended.                       C = correct sign of (D - (S + C)).  Z = Z AND (D == S + C).</p>]]></entry>
+        <entry name="cmpx"><![CDATA[<div class="header">CMPX    D,{#}S   {WC/WZ/NR}</div><p>Compare D to (S + C), extended.                                  C = borrow of (D - (S + C)).        Z = Z AND (D == S + C).</p>]]></entry>
         <entry name="cogid"></entry>
         <entry name="coginit"></entry>
         <entry name="cogstop"></entry>
-        <entry name="djnz"><![CDATA[<b>DJNZ    D,{#}S</b><p>Decrement D and jump to S** if result is not zero.</p>]]></entry>
+        <entry name="djnz"><![CDATA[<div class="header">DJNZ    D,{#}S</div><p>Decrement D and jump to S** if result is not zero.</p>]]></entry>
         <entry name="hubop"></entry>
         <entry name="jmp"></entry>
         <entry name="jmpret"></entry>
@@ -176,7 +170,7 @@ the match value/range must be indented past the match value/range:</p>
         <entry name="maxs"></entry>
         <entry name="min"></entry>
         <entry name="mins"></entry>
-        <entry name="mov"><![CDATA[<b>MOV     D,{#}S   {WC/WZ/NR}</b><p>Move S into D. D = S. C = S[31]. *</p>]]></entry>
+        <entry name="mov"><![CDATA[<div class="header">MOV     D,{#}S   {WC/WZ/NR}</div><p>Move S into D. D = S. C = S[31].</p>]]></entry>
         <entry name="movd"></entry>
         <entry name="movi"></entry>
         <entry name="movs"></entry>
@@ -184,12 +178,22 @@ the match value/range must be indented past the match value/range:</p>
         <entry name="muxnc"></entry>
         <entry name="muxnz"></entry>
         <entry name="muxz"></entry>
-        <entry name="neg"><![CDATA[<b>NEG     D        {WC/WZ}</b><p>Negate D.        D = -D. C = MSB of result. *</p><b>NEG     D,{#}S   {WC/WZ/WCZ}</b><p>Negate S into D. D = -S. C = MSB of result. *</p>]]></entry>
-        <entry name="negc"><![CDATA[<b>NEGC    D        {WC/WZ}</b><p>Negate D by  C.        If C = 1 then D = -D, else D = D. C = MSB of result. *</p><b>NEGC    D,{#}S   {WC/WZ/WCZ}</b><p>Negate S by  C into D. If C = 1 then D = -S, else D = S. C = MSB of result. *</p>]]></entry>
-        <entry name="negnc"><![CDATA[<b>NEGNC   D        {WC/WZ}</b><p>Negate D by !C.        If C = 0 then D = -D, else D = D. C = MSB of result. *</p><b>NEGNC   D,{#}S   {WC/WZ/WCZ}</b><p>Negate S by !C into D. If C = 0 then D = -S, else D = S. C = MSB of result. *</p>]]></entry>
-        <entry name="negnz"><![CDATA[<b>NEGNZ   D        {WC/WZ}</b><p>Negate D by !Z.        If Z = 0 then D = -D, else D = D. C = MSB of result. *</p><b>NEGNZ   D,{#}S   {WC/WZ/WCZ}</b><p>Negate S by !Z into D. If Z = 0 then D = -S, else D = S. C = MSB of result. *</p>]]></entry>
-        <entry name="negz"><![CDATA[<b>NEGZ    D        {WC/WZ}</b><p>Negate D by  Z.        If Z = 1 then D = -D, else D = D. C = MSB of result. *</p><b>NEGZ    D,{#}S   {WC/WZ/WCZ}</b><p>Negate S by  Z into D. If Z = 1 then D = -S, else D = S. C = MSB of result. *</p>]]></entry>
-        <entry name="nop"><![CDATA[<b>NOP</b><p>No operation.</p>]]></entry>
+        <entry name="neg"><![CDATA[
+        <div class="header">NEG     D        {WC/WZ}</div><p>Negate D.        D = -D. C = MSB of result.</p>
+        <div class="header">NEG     D,{#}S   {WC/WZ/WCZ}</div><p>Negate S into D. D = -S. C = MSB of result.</p>]]></entry>
+        <entry name="negc"><![CDATA[
+        <div class="header">NEGC    D        {WC/WZ}</div><p>Negate D by  C.        If C = 1 then D = -D, else D = D. C = MSB of result.</p>
+        <div class="header">NEGC    D,{#}S   {WC/WZ/WCZ}</div><p>Negate S by  C into D. If C = 1 then D = -S, else D = S. C = MSB of result.</p>]]></entry>
+        <entry name="negnc"><![CDATA[
+        <div class="header">NEGNC   D        {WC/WZ}</div><p>Negate D by !C.        If C = 0 then D = -D, else D = D. C = MSB of result.</p>
+        <div class="header">NEGNC   D,{#}S   {WC/WZ/WCZ}</div><p>Negate S by !C into D. If C = 0 then D = -S, else D = S. C = MSB of result.</p>]]></entry>
+        <entry name="negnz"><![CDATA[
+        <div class="header">NEGNZ   D        {WC/WZ}</div><p>Negate D by !Z.        If Z = 0 then D = -D, else D = D. C = MSB of result.</p>
+        <div class="header">NEGNZ   D,{#}S   {WC/WZ/WCZ}</div><p>Negate S by !Z into D. If Z = 0 then D = -S, else D = S. C = MSB of result.</p>]]></entry>
+        <entry name="negz"><![CDATA[
+        <div class="header">NEGZ    D        {WC/WZ}</div><p>Negate D by  Z.        If Z = 1 then D = -D, else D = D. C = MSB of result.</p>
+        <div class="header">NEGZ    D,{#}S   {WC/WZ/WCZ}</div><p>Negate S by  Z into D. If Z = 1 then D = -S, else D = S. C = MSB of result.</p>]]></entry>
+        <entry name="nop"><![CDATA[<div class="header">NOP</div><p>No operation.</p>]]></entry>
         <entry name="or"></entry>
         <entry name="rcl"></entry>
         <entry name="rcr"></entry>
@@ -197,12 +201,12 @@ the match value/range must be indented past the match value/range:</p>
         <entry name="rev"></entry>
         <entry name="rol"></entry>
         <entry name="ror"></entry>
-        <entry name="rdbyte"><![CDATA[<b>RDBYTE  D,{#}S   {WZ}</b><p>Read zero-extended byte from hub address {#}S into D.</p>]]></entry>
-        <entry name="rdword"><![CDATA[<b>RDWORD  D,{#}S   {WZ}</b><p>Read zero-extended word from hub address {#}S into D.</p>]]></entry>
-        <entry name="rdlong"><![CDATA[<b>RDLONG  D,{#}S   {WZ}</b><p>Read long from hub address {#}S into D.</p>]]></entry>
-        <entry name="wrbyte"><![CDATA[<b>WRBYTE  {#}D,{#}S</b><p>Write byte in D[7:0] to hub address {#}S.</p>]]></entry>
-        <entry name="wrword"><![CDATA[<b>WRWORD  {#}D,{#}S</b><p>Write word in D[15:0] to hub address {#}S.</p>]]></entry>
-        <entry name="wrlong"><![CDATA[<b>WRLONG  {#}D,{#}S</b><p>Write long in D[31:0] to hub address {#}S.</p>]]></entry>
+        <entry name="rdbyte"><![CDATA[<div class="header">RDBYTE  D,{#}S   {WZ}</div><p>Read zero-extended byte from hub address {#}S into D.</p>]]></entry>
+        <entry name="rdword"><![CDATA[<div class="header">RDWORD  D,{#}S   {WZ}</div><p>Read zero-extended word from hub address {#}S into D.</p>]]></entry>
+        <entry name="rdlong"><![CDATA[<div class="header">RDLONG  D,{#}S   {WZ}</div><p>Read long from hub address {#}S into D.</p>]]></entry>
+        <entry name="wrbyte"><![CDATA[<div class="header">WRBYTE  D,{#}S</div><p>Write byte in D[7:0] to hub address {#}S.</p>]]></entry>
+        <entry name="wrword"><![CDATA[<div class="header">WRWORD  D,{#}S</div><p>Write word in D[15:0] to hub address {#}S.</p>]]></entry>
+        <entry name="wrlong"><![CDATA[<div class="header">WRLONG  D,{#}S</div><p>Write long in D[31:0] to hub address {#}S.</p>]]></entry>
         <entry name="sar"></entry>
         <entry name="shl"></entry>
         <entry name="shr"></entry>
@@ -223,41 +227,41 @@ the match value/range must be indented past the match value/range:</p>
         <entry name="waitpeq"></entry>
         <entry name="waitpne"></entry>
         <entry name="waitvid"></entry>
-        <entry name="xor"><![CDATA[<b>XOR     D,{#}S   {WC/WZ}</b><p>XOR S into D.    D = D ^ S.    C = parity of result. *</p>]]></entry>
+        <entry name="xor"><![CDATA[<div class="header">XOR     D,{#}S   {WC/WZ}</div><p>XOR S into D.    D = D ^ S.    C = parity of result.</p>]]></entry>
     </section>
     <section class="DataNode,DataLineNode,Condition">
-        <entry name="if_never"><![CDATA[<b>IF_NEVER</b><p>Execute never.</p>]]></entry>
-        <entry name="if_nc_and_nz"><![CDATA[<b>IF_NC_AND_NZ</b><p>Execute if C = 0 and Z = 0.</p>]]></entry>
-        <entry name="if_nz_and_nc"><![CDATA[<b>IF_NZ_AND_NC</b><p>Execute if C = 0 and Z = 0.</p>]]></entry>
-        <entry name="if_a"><![CDATA[<b>IF_A</b><p>Execute if C = 0 and Z = 0, or if 'above' after a comparison/subtraction.</p>]]></entry>
-        <entry name="if_nc_and_z"><![CDATA[<b>IF_NC_AND_Z</b><p>Execute if C = 0 and Z = 1.</p>]]></entry>
-        <entry name="if_z_and_nc"><![CDATA[<b>IF_Z_AND_NC</b><p>Execute if C = 0 and Z = 1.</p>]]></entry>
-        <entry name="if_nc"><![CDATA[<b>IF_NC</b><p>Execute if C = 0.</p>]]></entry>
-        <entry name="if_ae"><![CDATA[<b>IF_AE</b><p>Execute if C = 0, or if 'above or equal' after a comparison/subtraction.</p>]]></entry>
-        <entry name="if_c_and_nz"><![CDATA[<b>IF_C_AND_NZ</b><p>Execute if C =1 and Z = 0.</p>]]></entry>
-        <entry name="if_nz_and_c"><![CDATA[<b>IF_NZ_AND_C</b><p>Execute if C =1 and Z = 0.</p>]]></entry>
-        <entry name="if_nz"><![CDATA[<b>IF_NZ</b><p>Execute if Z = 0.</p>]]></entry>
-        <entry name="if_ne"><![CDATA[<b>IF_NE</b><p>Execute if Z = 0, or if 'not equal' after a comparison/subtraction.</p>]]></entry>
-        <entry name="if_c_ne_z"><![CDATA[<b>IF_C_NE_Z</b><p>Execute if C != Z.</p>]]></entry>
-        <entry name="if_z_ne_c"><![CDATA[<b>IF_Z_NE_C</b><p>Execute if C != Z.</p>]]></entry>
-        <entry name="if_nc_or_nz"><![CDATA[<b>IF_NC_OR_NZ</b><p>Execute if C = 0 or Z = 0.</p>]]></entry>
-        <entry name="if_nz_or_nc"><![CDATA[<b>IF_NZ_OR_NC</b><p>Execute if C = 0 or Z = 0.</p>]]></entry>
-        <entry name="if_c_and_z"><![CDATA[<b>IF_C_AND_Z</b><p>Execute if C = 1 and Z = 1.</p>]]></entry>
-        <entry name="if_z_and_c"><![CDATA[<b>IF_Z_AND_C</b><p>Execute if C = 1 and Z = 1.</p>]]></entry>
-        <entry name="if_c_eq_z"><![CDATA[<b>IF_C_EQ_Z</b><p>Execute if C = Z.</p>]]></entry>
-        <entry name="if_z_eq_c"><![CDATA[<b>IF_Z_EQ_C</b><p>Execute if C = Z.</p>]]></entry>
-        <entry name="if_z"><![CDATA[<b>IF_Z</b><p>Execute if Z = 1.</p>]]></entry>
-        <entry name="if_e"><![CDATA[<b>IF_E</b><p>Execute if Z = 1, or if 'equal' after a comparison/subtraction.</p>]]></entry>
-        <entry name="if_nc_or_z"><![CDATA[<b>IF_NC_OR_Z</b><p>Execute if C = 0 or Z = 1.</p>]]></entry>
-        <entry name="if_z_or_nc"><![CDATA[<b>IF_Z_OR_NC</b><p>Execute if C = 0 or Z = 1.</p>]]></entry>
-        <entry name="if_c"><![CDATA[<b>IF_C</b><p>Execute ifC = 1.</p>]]></entry>
-        <entry name="if_b"><![CDATA[<b>IF_B</b><p>Execute ifC = 1, or if 'below' after a comparison/subtraction.</p>]]></entry>
-        <entry name="if_c_or_nz"><![CDATA[<b>IF_C_OR_NZ</b><p>Execute if C = 1 or Z = 0.</p>]]></entry>
-        <entry name="if_nz_or_c"><![CDATA[<b>IF_NZ_OR_C</b><p>Execute if C = 1 or Z = 0.</p>]]></entry>
-        <entry name="if_c_or_z"><![CDATA[<b>IF_C_OR_Z</b><p>Execute if C = 1 or Z = 1.</p>]]></entry>
-        <entry name="if_z_or_c"><![CDATA[<b>IF_Z_OR_C</b><p>Execute if C = 1 or Z = 1.</p>]]></entry>
-        <entry name="if_be"><![CDATA[<b>IF_BE</b><p>Execute if C = 1 or Z = 1, or if 'below or equal' after a comparison/subtraction.</p>]]></entry>
-        <entry name="if_always"><![CDATA[<b>IF_ALWAYS</b><p>Execute always.</p>]]></entry>
+        <entry name="if_never"><![CDATA[<div class="header">IF_NEVER</div><p>Execute never.</p>]]></entry>
+        <entry name="if_nc_and_nz"><![CDATA[<div class="header">IF_NC_AND_NZ</div><p>Execute if C = 0 and Z = 0.</p>]]></entry>
+        <entry name="if_nz_and_nc"><![CDATA[<div class="header">IF_NZ_AND_NC</div><p>Execute if C = 0 and Z = 0.</p>]]></entry>
+        <entry name="if_a"><![CDATA[<div class="header">IF_A</div><p>Execute if C = 0 and Z = 0, or if 'above' after a comparison/subtraction.</p>]]></entry>
+        <entry name="if_nc_and_z"><![CDATA[<div class="header">IF_NC_AND_Z</div><p>Execute if C = 0 and Z = 1.</p>]]></entry>
+        <entry name="if_z_and_nc"><![CDATA[<div class="header">IF_Z_AND_NC</div><p>Execute if C = 0 and Z = 1.</p>]]></entry>
+        <entry name="if_nc"><![CDATA[<div class="header">IF_NC</div><p>Execute if C = 0.</p>]]></entry>
+        <entry name="if_ae"><![CDATA[<div class="header">IF_AE</div><p>Execute if C = 0, or if 'above or equal' after a comparison/subtraction.</p>]]></entry>
+        <entry name="if_c_and_nz"><![CDATA[<div class="header">IF_C_AND_NZ</div><p>Execute if C =1 and Z = 0.</p>]]></entry>
+        <entry name="if_nz_and_c"><![CDATA[<div class="header">IF_NZ_AND_C</div><p>Execute if C =1 and Z = 0.</p>]]></entry>
+        <entry name="if_nz"><![CDATA[<div class="header">IF_NZ</div><p>Execute if Z = 0.</p>]]></entry>
+        <entry name="if_ne"><![CDATA[<div class="header">IF_NE</div><p>Execute if Z = 0, or if 'not equal' after a comparison/subtraction.</p>]]></entry>
+        <entry name="if_c_ne_z"><![CDATA[<div class="header">IF_C_NE_Z</div><p>Execute if C != Z.</p>]]></entry>
+        <entry name="if_z_ne_c"><![CDATA[<div class="header">IF_Z_NE_C</div><p>Execute if C != Z.</p>]]></entry>
+        <entry name="if_nc_or_nz"><![CDATA[<div class="header">IF_NC_OR_NZ</div><p>Execute if C = 0 or Z = 0.</p>]]></entry>
+        <entry name="if_nz_or_nc"><![CDATA[<div class="header">IF_NZ_OR_NC</div><p>Execute if C = 0 or Z = 0.</p>]]></entry>
+        <entry name="if_c_and_z"><![CDATA[<div class="header">IF_C_AND_Z</div><p>Execute if C = 1 and Z = 1.</p>]]></entry>
+        <entry name="if_z_and_c"><![CDATA[<div class="header">IF_Z_AND_C</div><p>Execute if C = 1 and Z = 1.</p>]]></entry>
+        <entry name="if_c_eq_z"><![CDATA[<div class="header">IF_C_EQ_Z</div><p>Execute if C = Z.</p>]]></entry>
+        <entry name="if_z_eq_c"><![CDATA[<div class="header">IF_Z_EQ_C</div><p>Execute if C = Z.</p>]]></entry>
+        <entry name="if_z"><![CDATA[<div class="header">IF_Z</div><p>Execute if Z = 1.</p>]]></entry>
+        <entry name="if_e"><![CDATA[<div class="header">IF_E</div><p>Execute if Z = 1, or if 'equal' after a comparison/subtraction.</p>]]></entry>
+        <entry name="if_nc_or_z"><![CDATA[<div class="header">IF_NC_OR_Z</div><p>Execute if C = 0 or Z = 1.</p>]]></entry>
+        <entry name="if_z_or_nc"><![CDATA[<div class="header">IF_Z_OR_NC</div><p>Execute if C = 0 or Z = 1.</p>]]></entry>
+        <entry name="if_c"><![CDATA[<div class="header">IF_C</div><p>Execute ifC = 1.</p>]]></entry>
+        <entry name="if_b"><![CDATA[<div class="header">IF_B</div><p>Execute ifC = 1, or if 'below' after a comparison/subtraction.</p>]]></entry>
+        <entry name="if_c_or_nz"><![CDATA[<div class="header">IF_C_OR_NZ</div><p>Execute if C = 1 or Z = 0.</p>]]></entry>
+        <entry name="if_nz_or_c"><![CDATA[<div class="header">IF_NZ_OR_C</div><p>Execute if C = 1 or Z = 0.</p>]]></entry>
+        <entry name="if_c_or_z"><![CDATA[<div class="header">IF_C_OR_Z</div><p>Execute if C = 1 or Z = 1.</p>]]></entry>
+        <entry name="if_z_or_c"><![CDATA[<div class="header">IF_Z_OR_C</div><p>Execute if C = 1 or Z = 1.</p>]]></entry>
+        <entry name="if_be"><![CDATA[<div class="header">IF_BE</div><p>Execute if C = 1 or Z = 1, or if 'below or equal' after a comparison/subtraction.</p>]]></entry>
+        <entry name="if_always"><![CDATA[<div class="header">IF_ALWAYS</div><p>Execute always.</p>]]></entry>
     </section>
     <section class="DataNode,DataLineNode,Registers">
         <entry name="dira"></entry>

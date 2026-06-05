@@ -455,7 +455,7 @@ public abstract class SourceTokenMarker {
                         String identifier = node.getIdentifier().getText();
                         if (refName.equals(identifier)) {
                             StringBuilder sb = new StringBuilder();
-                            sb.append("<b><code>").append(getHtmlSafeString(node.getText())).append("</code></b>");
+                            sb.append("<div class=\"header\">").append(getHtmlSafeString(node.getText())).append("</div>");
                             if (context != null) {
                                 appendValue(sb, symbol);
                             }
@@ -470,7 +470,7 @@ public abstract class SourceTokenMarker {
             String identifier = node.getIdentifier().getText();
             if (symbol.equals(identifier)) {
                 StringBuilder sb = new StringBuilder();
-                sb.append("<b><code>").append(getHtmlSafeString(node.getText())).append("</code></b>");
+                sb.append("<div class=\"header\">").append(getHtmlSafeString(node.getText())).append("</div>");
                 if (context != null) {
                     appendValue(sb, symbol);
                 }
@@ -484,7 +484,7 @@ public abstract class SourceTokenMarker {
     void appendValue(StringBuilder sb, String identifier) {
         Expression expression = context.getLocalSymbol(identifier);
         if (expression != null) {
-            sb.append("<p><code>Value: ");
+            sb.append("<p class=\"code\">Value: ");
             try {
                 if (expression.isString()) {
                     sb.append(expression.getString());
@@ -494,24 +494,24 @@ public abstract class SourceTokenMarker {
                     sb.append(number).append("<br/>");
                     if (number instanceof Double) {
                         long value = Float.floatToRawIntBits(number.floatValue()) & 0xFFFFFFFFL;
-                        sb.append("&nbsp;".repeat(7)).append(String.format("$%08X<br/>", Float.floatToRawIntBits(value)));
+                        sb.repeat(" ", 7).append(String.format("$%08X<br/>", Float.floatToRawIntBits(value)));
                         String bs = Long.toBinaryString(Float.floatToRawIntBits(value));
-                        sb.append("&nbsp;".repeat(7)).append("%").append("0".repeat(32 - bs.length())).append(bs);
+                        sb.repeat(" ", 7).append("%").repeat("0", 32 - bs.length()).append(bs);
                     }
                     else {
                         long value = number.longValue() & 0xFFFFFFFFL;
-                        sb.append("&nbsp;".repeat(7)).append(String.format("$%08X<br/>", value));
+                        sb.repeat(" ", 7).append(String.format("$%08X<br/>", value));
                         String bs = Long.toBinaryString(value);
-                        sb.append("&nbsp;".repeat(7)).append("%").append("0".repeat(32 - bs.length())).append(bs);
+                        sb.repeat(" ", 7).append("%").repeat("0", 32 - bs.length()).append(bs);
                     }
                 }
             } catch (Exception e) {
                 sb.append("Evaluation error");
             }
-            sb.append("</code></p>");
+            sb.append("</p>");
         }
         else {
-            sb.append("<p><code>No Value</code></p>");
+            sb.append("<p class=\"code\">No Value</p>");
         }
     }
 
@@ -940,7 +940,7 @@ public abstract class SourceTokenMarker {
                         int foundAt = Strings.CI.indexOf(text, memberName);
                         if ((startsOnly && foundAt == 0) || (!startsOnly && foundAt > 0)) {
                             StringBuilder sb = new StringBuilder();
-                            sb.append("<b><code>").append(getHtmlSafeString(node.getText())).append("</code></b>");
+                            sb.append("<div class=\"header\">").append(getHtmlSafeString(node.getText())).append("</div>");
                             if (context != null) {
                                 appendValue(sb, objectName + constantSeparator + node.getIdentifier().getText());
                             }
@@ -955,7 +955,7 @@ public abstract class SourceTokenMarker {
                     int foundAt = Strings.CI.indexOf(text, filterText);
                     if ((startsOnly && foundAt == 0) || (!startsOnly && foundAt > 0)) {
                         StringBuilder sb = new StringBuilder();
-                        sb.append("<b><code>").append(getHtmlSafeString(node.getText())).append("</code></b>");
+                        sb.append("<div class=\"header\">").append(getHtmlSafeString(node.getText())).append("</div>");
                         if (context != null) {
                             appendValue(sb, node.getIdentifier().getText());
                         }
@@ -999,52 +999,128 @@ public abstract class SourceTokenMarker {
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append("<pre><b><code>");
+        sb.append("<div class=\"header\">");
         sb.append(getHtmlSafeString(title.toString()));
-        sb.append("</code></b>");
-        sb.append(System.lineSeparator());
+        sb.append("</div>");
 
         Iterator<Token> iter = node.getDocument().iterator();
         if (iter.hasNext()) {
-            sb.append(System.lineSeparator());
-            sb.append("<code>");
+            boolean hasParameters = false;
+            boolean hasReturns = false;
+            boolean closeParagraph = false;
+
+            sb.append("<div class=\"code\">");
             while (iter.hasNext()) {
                 Token token = iter.next();
                 String tokenText = token.getText();
                 if (tokenText.startsWith(("''"))) {
-                    if (tokenText.startsWith(("'' "))) {
-                        tokenText = tokenText.substring(3);
+                    tokenText = tokenText.substring(2);
+                    tokenText = getHtmlSafeString(tokenText.trim());
+
+                    int idx = tokenText.indexOf("@param");
+                    if (idx != -1) {
+                        if (!hasParameters) {
+                            if (closeParagraph) {
+                                sb.append("</p>");
+                                closeParagraph = false;
+                            }
+                            sb.append("<p class=\"subtitle\">Parameters</p>");
+                            hasParameters = true;
+                        }
                     }
-                    else {
-                        tokenText = tokenText.substring(2);
+                    else if ((idx = tokenText.indexOf("@returns")) != -1) {
+                        if (!hasReturns) {
+                            if (closeParagraph) {
+                                sb.append("</p>");
+                                closeParagraph = false;
+                            }
+                            sb.append("<p class=\"subtitle\">Returns</p>");
+                            hasReturns = true;
+                        }
                     }
-                    sb.append(getHtmlSafeString(tokenText.stripTrailing()));
-                    sb.append(System.lineSeparator());
+                    if (idx != -1) {
+                        sb.append("<div>");
+                        int start = tokenText.indexOf(' ', idx + 1);
+                        if (start != -1) {
+                            String className = tokenText.substring(1, start).trim();
+                            int stop = tokenText.indexOf(" -", start + 1);
+                            if (stop > start) {
+                                String name = tokenText.substring(start, stop).trim();
+                                tokenText = "<span class=\"" + className + "\">" + name + "</span>" + tokenText.substring(stop);
+                            }
+                        }
+                        sb.append(tokenText);
+                        sb.append("</div>");
+                    }
+                    else if (!tokenText.trim().isEmpty()) {
+                        if (!closeParagraph) {
+                            sb.append("<p>");
+                            closeParagraph = true;
+                        }
+                        sb.append(tokenText).append(System.lineSeparator());
+                    }
                 }
                 else if (tokenText.startsWith("{{")) {
-                    if (tokenText.startsWith(("{{ "))) {
-                        tokenText = tokenText.substring(3);
-                    }
-                    else {
-                        tokenText = tokenText.substring(2);
-                    }
+                    tokenText = tokenText.substring(2);
                     if (tokenText.endsWith("}}")) {
                         tokenText = tokenText.substring(0, tokenText.length() - 2);
                     }
-                    tokenText = getHtmlSafeString(tokenText);
-                    tokenText = tokenText.replaceAll("[\\r\\n|\\r|\\n]", System.lineSeparator());
-                    while (tokenText.startsWith(System.lineSeparator())) {
-                        tokenText = tokenText.substring(System.lineSeparator().length());
+                    tokenText = getHtmlSafeString(tokenText.trim());
+
+                    String[] textLines = tokenText.split("\\r\\n|\\r|\\n");
+                    for (String line : textLines) {
+                        line = getHtmlSafeString(line.trim());
+
+                        int idx = line.indexOf("@param");
+                        if (idx != -1) {
+                            if (!hasParameters) {
+                                if (closeParagraph) {
+                                    sb.append("</p>");
+                                    closeParagraph = false;
+                                }
+                                sb.append("<p class=\"subtitle\">Parameters</p>");
+                                hasParameters = true;
+                            }
+                        }
+                        else if ((idx = line.indexOf("@returns")) != -1) {
+                            if (!hasReturns) {
+                                if (closeParagraph) {
+                                    sb.append("</p>");
+                                    closeParagraph = false;
+                                }
+                                sb.append("<p class=\"subtitle\">Returns</p>");
+                                hasReturns = true;
+                            }
+                        }
+                        if (idx != -1) {
+                            sb.append("<div>");
+                            int start = line.indexOf(' ', idx + 1);
+                            if (start != -1) {
+                                String className = line.substring(1, start).trim();
+                                int stop = line.indexOf(" -", start + 1);
+                                if (stop > start) {
+                                    String name = line.substring(start, stop).trim();
+                                    line = "<span class=\"" + className + "\">" + name + "</span>" + line.substring(stop);
+                                }
+                            }
+                            sb.append(line);
+                            sb.append("</div>");
+                        }
+                        else if (!line.trim().isEmpty()) {
+                            if (!closeParagraph) {
+                                sb.append("<p>");
+                                closeParagraph = true;
+                            }
+                            sb.append(line).append(System.lineSeparator());
+                        }
                     }
-                    while (tokenText.endsWith(System.lineSeparator())) {
-                        tokenText = tokenText.substring(0, tokenText.length() - System.lineSeparator().length());
-                    }
-                    sb.append(tokenText);
                 }
             }
-            sb.append("</code>");
+            if (closeParagraph) {
+                sb.append("</p>");
+            }
+            sb.append("</div>");
         }
-        sb.append("</pre>");
 
         return sb.toString();
     }
@@ -1069,40 +1145,28 @@ public abstract class SourceTokenMarker {
         title.append(")");
 
         StringBuilder sb = new StringBuilder();
-        sb.append("<pre><b><code>");
+        sb.append("<div class=\"header\">");
         sb.append(getHtmlSafeString(title.toString()));
-        sb.append("</code></b>");
-        sb.append(System.lineSeparator());
+        sb.append("</div>");
 
         Iterator<Token> iter = node.getDocument().iterator();
         if (iter.hasNext()) {
-            sb.append(System.lineSeparator());
-            sb.append("<code>");
+            sb.append("<div class=\"code\">");
             while (iter.hasNext()) {
                 Token token = iter.next();
                 String tokenText = token.getText();
-                if (tokenText.startsWith(("''"))) {
-                    if (tokenText.startsWith(("'' "))) {
-                        tokenText = tokenText.substring(3);
+                if (tokenText.startsWith("/**")) {
+                    if (tokenText.startsWith(("/** "))) {
+                        tokenText = tokenText.substring(4);
                     }
                     else {
-                        tokenText = tokenText.substring(2);
-                    }
-                    sb.append(getHtmlSafeString(tokenText.stripTrailing()));
-                    sb.append(System.lineSeparator());
-                }
-                else if (tokenText.startsWith("{{")) {
-                    if (tokenText.startsWith(("{{ "))) {
                         tokenText = tokenText.substring(3);
                     }
-                    else {
-                        tokenText = tokenText.substring(2);
-                    }
-                    if (tokenText.endsWith("}}")) {
+                    if (tokenText.endsWith("*/")) {
                         tokenText = tokenText.substring(0, tokenText.length() - 2);
                     }
                     tokenText = getHtmlSafeString(tokenText);
-                    tokenText = tokenText.replaceAll("[\\r\\n|\\r|\\n]", System.lineSeparator());
+                    tokenText = tokenText.replaceAll("\\r\\n|\\r|\\n", System.lineSeparator());
                     while (tokenText.startsWith(System.lineSeparator())) {
                         tokenText = tokenText.substring(System.lineSeparator().length());
                     }
@@ -1112,9 +1176,8 @@ public abstract class SourceTokenMarker {
                     sb.append(tokenText);
                 }
             }
-            sb.append("</code>");
+            sb.append("</div>");
         }
-        sb.append("</pre>");
 
         return sb.toString();
     }
