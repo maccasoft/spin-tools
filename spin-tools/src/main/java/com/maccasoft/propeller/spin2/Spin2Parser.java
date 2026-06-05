@@ -1273,7 +1273,7 @@ public class Spin2Parser extends Parser {
                 }
                 continue;
             }
-            if (state == 4 || state == 5 || state == 7) {
+            if (state != 2 && state != 3 && state != 6) {
                 if ("@".equals(token.getText()) || "@@".equals(token.getText()) || "@@@".equals(token.getText())) {
                     if ((nextToken = sourceLine.peekNextToken()) != null) {
                         if (".".equals(nextToken.getText()) && token.isAdjacent(nextToken)) {
@@ -1287,9 +1287,7 @@ public class Spin2Parser extends Parser {
                         }
                     }
                 }
-            }
-            if (state == 1 || state == 4 || state == 5 || state == 7) {
-                if (".".equals(token.getText())) {
+                else if (".".equals(token.getText())) {
                     if ((nextToken = sourceLine.peekNextToken()) != null) {
                         if (nextToken.type != Token.OPERATOR && token.isAdjacent(nextToken)) {
                             token = token.merge(sourceLine.getNextToken());
