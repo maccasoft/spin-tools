@@ -1071,5 +1071,118 @@ a future System Counter target value) right before WAITATN.</p>
         <entry name="_le"><![CDATA[<div class="header">_LE</div><p>C/Z = C OR Z, or 'less than or equal' after a comparison/subtraction.</p>]]></entry>
         <entry name="_set"><![CDATA[<div class="header">_SET</div><p>C/Z = 1</p>]]></entry>
     </section>
+    <section class="Debug">
+        <entry name="fdec" insert="fdec(value)"><![CDATA[<div class="header">fdec(value)</div><p>Output floating-point value.</p>]]></entry>
+        <entry name="fdec_reg_array" insert="fdec_reg_array(reg_pointer,size)"><![CDATA[<div class="header">fdec_reg_array(reg_pointer,size)</div><p>Output register array as floating-point values.</p>]]></entry>
+        <entry name="fdec_array" insert="fdec_array(hub_pointer,size)"><![CDATA[<div class="header">fdec_array(hub_pointer,size)</div><p>Output hub long array as floating-point values.</p>]]></entry>
+
+        <entry name="udec" insert="udec(value)"><![CDATA[<div class="header">udec(value)</div><p>Output unsigned decimal value.</p>]]></entry>
+        <entry name="udec_byte" insert="udec_byte(value)"><![CDATA[<div class="header">udec_byte(value)</div><p>Output byte-size unsigned decimal value.</p>]]></entry>
+        <entry name="udec_word" insert="udec_word(value)"><![CDATA[<div class="header">udec_word(value)</div>Output word-size unsigned decimal value.<p></p>]]></entry>
+        <entry name="udec_long" insert="udec_long(value)"><![CDATA[<div class="header">udec_long(value)</div><p>Output long-size unsigned decimal value.</p>]]></entry>
+        <entry name="sdec" insert="sdec(value)"><![CDATA[<div class="header">sdec(value)</div><p>Output signed decimal value.</p>]]></entry>
+        <entry name="sdec_byte" insert="sdec_byte(value)"><![CDATA[<div class="header">sdec_byte(value)</div><p>Output byte-size signed decimal value.</p>]]></entry>
+        <entry name="sdec_word" insert="sdec_word(value)"><![CDATA[<div class="header">sdec_word(value)</div><p>Output word-size signed decimal value.</p>]]></entry>
+        <entry name="sdec_long" insert="sdec_long(value)"><![CDATA[<div class="header">sdec_long(value)</div><p>Output long-size signed decimal value.</p>]]></entry>
+        <entry name="uhex" insert="uhex(value)"><![CDATA[<div class="header">uhex(value)</div><p>Output auto-size unsigned hex value.</p>]]></entry>
+        <entry name="uhex_byte" insert="uhex_byte(value)"><![CDATA[<div class="header">uhex_byte(value)</div><p>Output byte-size unsigned hex value.</p>]]></entry>
+        <entry name="uhex_word" insert="uhex_word(value)"><![CDATA[<div class="header">uhex_word(value)</div><p>Output word-size unsigned hex value.</p>]]></entry>
+        <entry name="uhex_long" insert="uhex_long(value)"><![CDATA[<div class="header">uhex_long(value)</div><p>Output long-size unsigned hex value.</p>]]></entry>
+        <entry name="shex" insert="shex(value)"><![CDATA[<div class="header">shex(value)</div><p>Output auto-size signed hex value.</p>]]></entry>
+        <entry name="shex_byte" insert="shex_byte(value)"><![CDATA[<div class="header">shex_byte(value)</div><p>Output byte-size signed hex value.</p>]]></entry>
+        <entry name="shex_word" insert="shex_word(value)"><![CDATA[<div class="header">shex_word(value)</div><p>Output word-size signed hex value.</p>]]></entry>
+        <entry name="shex_long" insert="shex_long(value)"><![CDATA[<div class="header">shex_long(value)</div><p>Output long-size signed hex value.</p>]]></entry>
+        <entry name="ubin" insert="ubin(value)"><![CDATA[<div class="header">ubin(value)</div><p>Output auto-size unsigned binary value.</p>]]></entry>
+        <entry name="ubin_byte" insert="ubin_byte(value)"><![CDATA[<div class="header">ubin_byte(value)</div><p>Output byte-size unsigned binary value.</p>]]></entry>
+        <entry name="ubin_word" insert="ubin_word(value)"><![CDATA[<div class="header">ubin_word(value)</div><p>Output word-size unsigned binary value.</p>]]></entry>
+        <entry name="ubin_long" insert="ubin_long(value)"><![CDATA[<div class="header">ubin_long(value)</div><p>Output long-size unsigned binary value.</p>]]></entry>
+        <entry name="sbin" insert="sbin(value)"><![CDATA[<div class="header">sbin(value)</div><p>Output auto-size signed binary value.</p>]]></entry>
+        <entry name="sbin_byte" insert="sbin_byte(value)"><![CDATA[<div class="header">sbin_byte(value)</div><p>Output byte-size signed binary value.</p>]]></entry>
+        <entry name="sbin_word" insert="sbin_word(value)"><![CDATA[<div class="header">sbin_word(value)</div><p>Output word-size signed binary value.</p>]]></entry>
+        <entry name="sbin_long" insert="sbin_long(value)"><![CDATA[<div class="header">sbin_long(value)</div><p>Output long-size signed binary value.</p>]]></entry>
+
+        <entry name="udec_reg_array" insert="udec_reg_array(reg_pointer,size)"><![CDATA[<div class="header">udec_reg_array(reg_pointer,size)</div><p>Output register array as unsigned decimal values.</p>]]></entry>
+        <entry name="udec_byte_array" insert="udec_byte_array(hub_pointer,size)"><![CDATA[<div class="header">udec_byte_array(hub_pointer,size)</div><p>Output hub byte array as unsigned decimal values.</p>]]></entry>
+        <entry name="udec_word_array" insert="udec_word_array(hub_pointer,size)"><![CDATA[<div class="header">udec_word_array(hub_pointer,size)</div><p>Output hub word array as unsigned decimal values.</p>]]></entry>
+        <entry name="udec_long_array" insert="udec_long_array(hub_pointer,size)"><![CDATA[<div class="header">udec_long_array(hub_pointer,size)</div><p>Output hub long array as unsigned decimal values.</p>]]></entry>
+        <entry name="sdec_reg_array" insert="sdec_reg_array(hub_pointer,size)"><![CDATA[<div class="header">sdec_reg_array(hub_pointer,size)</div><p>Output register array as signed decimal values.</p>]]></entry>
+        <entry name="sdec_byte_array" insert="sdec_byte_array(hub_pointer,size)"><![CDATA[<div class="header">sdec_byte_array(hub_pointer,size)</div><p>Output hub byte array as signed decimal values.</p>]]></entry>
+        <entry name="sdec_word_array" insert="sdec_word_array(hub_pointer,size)"><![CDATA[<div class="header">sdec_word_array(hub_pointer,size)</div><p>Output hub word array as signed decimal values.</p>]]></entry>
+        <entry name="sdec_long_array" insert="sdec_long_array(hub_pointer,size)"><![CDATA[<div class="header">sdec_long_array(hub_pointer,size)</div><p>Output hub long array as signed decimal values.</p>]]></entry>
+        <entry name="uhex_reg_array" insert="uhex_reg_array(hub_pointer,size)"><![CDATA[<div class="header">uhex_reg_array(hub_pointer,size)</div><p>Output register array as unsigned hex values.</p>]]></entry>
+        <entry name="uhex_byte_array" insert="uhex_byte_array(hub_pointer,size)"><![CDATA[<div class="header">uhex_byte_array(hub_pointer,size)</div><p>Output hub byte array as unsigned hex values.</p>]]></entry>
+        <entry name="uhex_word_array" insert="uhex_word_array(hub_pointer,size)"><![CDATA[<div class="header">uhex_word_array(hub_pointer,size)</div><p>Output hub word array as unsigned hex values.</p>]]></entry>
+        <entry name="uhex_long_array" insert="uhex_long_array(hub_pointer,size)"><![CDATA[<div class="header">uhex_long_array(hub_pointer,size)</div><p>Output hub long array as unsigned hex values.</p>]]></entry>
+        <entry name="shex_reg_array" insert="shex_reg_array(hub_pointer,size)"><![CDATA[<div class="header">shex_reg_array(hub_pointer,size)</div><p>Output register array as signed hex values.</p>]]></entry>
+        <entry name="shex_byte_array" insert="shex_byte_array(hub_pointer,size)"><![CDATA[<div class="header">shex_byte_array(hub_pointer,size)</div><p>Output hub byte array as signed hex values.</p>]]></entry>
+        <entry name="shex_word_array" insert="shex_word_array(hub_pointer,size)"><![CDATA[<div class="header">shex_word_array(hub_pointer,size)</div><p>Output hub word array as signed hex values.</p>]]></entry>
+        <entry name="shex_long_array" insert="shex_long_array(hub_pointer,size)"><![CDATA[<div class="header">shex_long_array(hub_pointer,size)</div><p>Output hub long array as signed hex values.</p>]]></entry>
+        <entry name="ubin_reg_array" insert="ubin_reg_array(hub_pointer,size)"><![CDATA[<div class="header">ubin_reg_array(hub_pointer,size)</div><p>Output register array as unsigned binary values.</p>]]></entry>
+        <entry name="ubin_byte_array" insert="ubin_byte_array(hub_pointer,size)"><![CDATA[<div class="header">ubin_byte_array(hub_pointer,size)</div><p>Output hub byte array as unsigned binary values.</p>]]></entry>
+        <entry name="ubin_word_array" insert="ubin_word_array(hub_pointer,size)"><![CDATA[<div class="header">ubin_word_array(hub_pointer,size)</div><p>Output hub word array as unsigned binary values.</p>]]></entry>
+        <entry name="ubin_long_array" insert="ubin_long_array(hub_pointer,size)"><![CDATA[<div class="header">ubin_long_array(hub_pointer,size)</div><p>Output hub long array as unsigned binary values.</p>]]></entry>
+        <entry name="sbin_reg_array" insert="sbin_reg_array(hub_pointer,size)"><![CDATA[<div class="header">sbin_reg_array(hub_pointer,size)</div><p>Output register array as signed binary values.</p>]]></entry>
+        <entry name="sbin_byte_array" insert="sbin_byte_array(hub_pointer,size)"><![CDATA[<div class="header">sbin_byte_array(hub_pointer,size)</div><p>Output hub byte array as signed binary values.</p>]]></entry>
+        <entry name="sbin_word_array" insert="sbin_word_array(hub_pointer,size)"><![CDATA[<div class="header">sbin_word_array(hub_pointer,size)</div><p>Output hub word array as signed binary values.</p>]]></entry>
+        <entry name="sbin_long_array" insert="sbin_long_array(hub_pointer,size)"><![CDATA[<div class="header">sbin_long_array(hub_pointer,size)</div><p>Output hub long array as signed binary values.</p>]]></entry>
+
+        <entry name="bool" insert="bool(value)"><![CDATA[<div class="header">bool(value)</div><p>Output "TRUE" if value is not 0 or "FALSE" if 0.</p>]]></entry>
+        <entry name="c_z" insert="c_z"><![CDATA[<div class="header">c_z</div><p>Output the C and Z flags as "C=? Z=?". Useful in PASM code.</p>]]></entry>
+
+        <entry name="dly" insert="dly(milliseconds)"><![CDATA[<div class="header">dly(milliseconds)</div><p>Delay for some milliseconds to slow down continuous message outputs for this cog. DLY is only allowed as the last command
+in a DEBUG() statement, since it releases LOCK[15] before the delay, permitting other cogs to capture LOCK[15] so that they
+may take control of the DEBUG() serial-transmit pin and output their own DEBUG() messages.</p>]]></entry>
+        <entry name="zstr" insert="zstr(hub_pointer)"><![CDATA[<div class="header">zstr(hub_pointer)</div><p>Output zero-terminated string at hub_pointer.</p>]]></entry>
+        <entry name="lstr" insert="lstr(hub_pointer,size)"><![CDATA[<div class="header">lstr(hub_pointer,size)</div><p>Output 'size' characters of string at hub_pointer.</p>]]></entry>
+
+        <entry name="if" insert="if(condition)"><![CDATA[<div class="header">if(condition)</div><p>If condition <> 0 then continue at the next command within the DEBUG() statement, else skip all remaining commands and output
+CR+LF. If used as the first command in the DEBUG() statement, IF will gate ALL output for the statement, including the "CogN
+"+CR+LF. This way, DEBUG() messages can be entirely suppressed, so that you can filter what is important.</p>]]></entry>
+        <entry name="ifnot" insert="ifnot(condition)"><![CDATA[<div class="header">ifnot(condition)</div><p>If condition = 0 then continue at the next command within the DEBUG() statement, else skip all remaining commands and output
+CR+LF. If used as the first command in the DEBUG() statement, IFNOT will gate ALL output for the statement, including the "CogN
+"+CR+LF. This way, DEBUG() messages can be entirely suppressed, so that you can filter what is important.</p>]]></entry>
+
+        <entry name="pc_key" insert="pc_key(pointer_to_long)"><![CDATA[<div class="header">pc_key(pointer_to_long)</div>
+<p>Returns any new host-PC keypress that occurred within the last 100ms into a long inside the chip. The DEBUG() Display
+must have focus for keypresses to be noticed.</p>
+<pre>
+    LONG key    ' Key long which receives keypresses (0 if no keypress)
+
+     0 = &lt;no keypress&gt;
+     1 = Left Arrow
+     2 = Right Arrow
+     3 = Up Arrow
+     4 = Down Arrow
+     5 = Home
+     6 = End
+     7 = Delete
+     8 = Backspace
+     9 = Tab
+    10 = Insert
+    11 = Page Up
+    12 = Page Down
+    13 = Enter
+    27 = Esc
+    32..126 = Space to "~", including all symbols, digits, and letters
+</pre>
+<p>If used in Spin2 code, the long must be in the hub (use @key as the pointer).<br/>
+If used in PASM code, the long must be a cog register (use #key as the pointer).</p>
+]]></entry>
+        <entry name="pc_mouse" insert="pc_mouse(pointer_to_7_longs)"><![CDATA[<div class="header">pc_mouse(pointer_to_7_longs)</div>
+<p>Returns the current host-PC mouse status into a 7-long structure inside the chip, arranged as follows:</p>
+<pre>
+    LONG xpos       ' X position within the DEBUG Display (xpos&lt;0 and ypos&lt;0 if mouse is outside)
+    LONG ypos       ' Y position within the DEBUG Display
+    LONG wheeldelta ' Scroll-wheel delta, 0 or +/-1 if changed (the DEBUG Display must have focus)
+    LONG lbutton    ' Left-button state, 0 or -1 if pressed
+    LONG mbutton    ' Middle-button state, 0 or -1 if pressed
+    LONG rbutton    ' Right-button state, 0 or -1 if pressed
+    LONG pixel      ' Pixel color at mouse position, $00_RR_GG_BB or -1 if outside the DEBUG Display
+</pre>
+<p>If used in Spin2 code, the seven longs must be in the hub (use @xpos as the pointer).<br/>
+If used in PASM code, the seven longs must be cog registers (use #xpos as the pointer).
+<p><b>FOR USE IN GRAPHICAL DEBUG() DISPLAYS - Must be the last command in a DEBUG() statement.</b></p>
+]]></entry>
+    </section>
 
 </content>

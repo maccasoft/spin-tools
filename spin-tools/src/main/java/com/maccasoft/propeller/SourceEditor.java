@@ -872,7 +872,22 @@ public class SourceEditor {
                 }
                 if (text == null && helpProvider != null) {
                     Node context = tokenMarker.getContextAtLine(styledText.getLineAtOffset(offset));
-                    text = helpProvider.getString(context != null ? context.getClass().getSimpleName() : null, token.getText().toLowerCase());
+                    if (context != null) {
+                        Token firstToken = context.getStartToken();
+                        if (firstToken != null && "debug".equals(firstToken.getText())) {
+                            String tokenText = token.getText().toLowerCase();
+                            if (tokenText.startsWith("`")) {
+                                tokenText = tokenText.substring(1);
+                            }
+                            if (tokenText.endsWith("_")) {
+                                tokenText = tokenText.substring(0, tokenText.length() - 1);
+                            }
+                            text = helpProvider.getString("Debug", tokenText);
+                        }
+                    }
+                    if (text == null) {
+                        text = helpProvider.getString(context != null ? context.getClass().getSimpleName() : null, token.getText().toLowerCase());
+                    }
                 }
                 if (text != null && !text.isEmpty()) {
                     popupMouseBounds = styledText.getTextBounds(token.start, token.stop);
@@ -884,7 +899,6 @@ public class SourceEditor {
                     popupWindow = new Shell(styledText.getShell(), SWT.RESIZE | SWT.ON_TOP);
                     FillLayout layout = new FillLayout();
                     layout.marginHeight = layout.marginWidth = 0;
-                    popupWindow.setLayout(layout);
                     popupWindow.setLayout(layout);
                     popupWindow.setForeground(textForeground);
                     popupWindow.setBackground(textBackground);
@@ -2410,8 +2424,11 @@ public class SourceEditor {
                     }
                 }
                 else {
-                    if (Strings.CI.startsWith(dataLineNode.getText(), "mod")) {
+                    if (Strings.CI.startsWith(dataLineNode.instruction.getText(), "mod")) {
                         proposals.addAll(helpProvider.getProposals(dataLineNode.getText().toUpperCase(), filterText, true));
+                    }
+                    if ("debug".equalsIgnoreCase(dataLineNode.instruction.getText())) {
+                        proposals.addAll(helpProvider.getProposals("Debug", filterText, true));
                     }
                     if (node.getParent() instanceof StatementNode || node.getParent() instanceof MethodNode) {
                         proposals.addAll(tokenMarker.getInlinePAsmProposals(node, filterText));
@@ -2423,6 +2440,9 @@ public class SourceEditor {
                     proposals.addAll(tokenMarker.getConstantsProposals(filterText, true));
                     proposals.addAll(helpProvider.getProposals("Constants", filterText, true));
 
+                    if ("debug".equalsIgnoreCase(dataLineNode.instruction.getText())) {
+                        proposals.addAll(helpProvider.getProposals("Debug", filterText, false));
+                    }
                     if (node.getParent() instanceof StatementNode || node.getParent() instanceof MethodNode) {
                         proposals.addAll(tokenMarker.getInlinePAsmProposals(node, filterText));
                     }
@@ -2470,6 +2490,10 @@ public class SourceEditor {
         }
         else if (node != null) {
             if (node instanceof StatementNode || node instanceof FunctionNode) {
+                Token firstToken = node.getStartToken();
+                if (firstToken != null && "debug".equalsIgnoreCase(firstToken.getText())) {
+                    proposals.addAll(helpProvider.getProposals("Debug", filterText, true));
+                }
                 proposals.addAll(tokenMarker.getMethodProposals(node, filterText, true));
                 proposals.addAll(tokenMarker.getPAsmLabelProposals(node, filterText, true));
             }
@@ -2477,6 +2501,10 @@ public class SourceEditor {
             proposals.addAll(helpProvider.getProposals(node.getClass().getSimpleName(), filterText, true));
 
             if (node instanceof StatementNode || node instanceof FunctionNode) {
+                Token firstToken = node.getStartToken();
+                if (firstToken != null && "debug".equalsIgnoreCase(firstToken.getText())) {
+                    proposals.addAll(helpProvider.getProposals("Debug", filterText, false));
+                }
                 containsProposals.addAll(tokenMarker.getMethodProposals(node, filterText, false));
                 containsProposals.addAll(tokenMarker.getPAsmLabelProposals(node, filterText, false));
             }
