@@ -252,6 +252,8 @@ public class Spin1PAsmExpression {
             return new int[] {
                 expression.getNumber().intValue()
             };
+        } catch (CompilerException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException("invalid expression");
         }
@@ -260,6 +262,8 @@ public class Spin1PAsmExpression {
     public String getString() {
         try {
             return expression.getString();
+        } catch (CompilerException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException("invalid expression");
         }
