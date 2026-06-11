@@ -411,8 +411,9 @@ public class SerialTerminal {
 
         Font textFont = JFaceResources.getTextFont();
         FontData fontData = textFont.getFontData()[0];
-        if (preferences.getTerminalFont() != null) {
-            fontData = StringConverter.asFontData(preferences.getTerminalFont());
+        String terminalFont = preferences.getTerminalFont();
+        if (terminalFont != null) {
+            fontData = StringConverter.asFontData(terminalFont);
         }
         font = new Font(display, fontData.getName(), fontData.getHeight(), SWT.NONE);
 

@@ -357,8 +357,9 @@ public class SourceEditor {
 
         Font textFont = JFaceResources.getTextFont();
         FontData fontData = textFont.getFontData()[0];
-        if (preferences.getEditorFont() != null) {
-            fontData = StringConverter.asFontData(preferences.getEditorFont());
+        String editorFont = preferences.getEditorFont();
+        if (editorFont != null) {
+            fontData = StringConverter.asFontData(editorFont);
         }
         fontData.setStyle(SWT.NONE);
         updateFontsFrom(fontData);

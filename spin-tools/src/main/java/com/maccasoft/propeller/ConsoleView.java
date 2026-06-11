@@ -439,8 +439,9 @@ public class ConsoleView {
 
         Font textFont = JFaceResources.getTextFont();
         FontData fontData = textFont.getFontData()[0];
-        if (Preferences.getInstance().getConsoleFont() != null) {
-            fontData = StringConverter.asFontData(Preferences.getInstance().getTerminalFont());
+        String consoleFont = Preferences.getInstance().getConsoleFont();
+        if (consoleFont != null) {
+            fontData = StringConverter.asFontData(consoleFont);
         }
         font = new Font(display, fontData.getName(), fontData.getHeight(), SWT.NONE);
 
