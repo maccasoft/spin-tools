@@ -124,7 +124,7 @@ import com.maccasoft.propeller.spinc.CTokenMarker;
 public class SpinTools {
 
     public static final String APP_TITLE = "Spin Tools IDE";
-    public static final String APP_VERSION = "0.56.0";
+    public static final String APP_VERSION = "0.57.0";
 
     Display display;
     Shell shell;
