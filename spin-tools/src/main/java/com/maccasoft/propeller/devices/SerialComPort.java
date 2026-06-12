@@ -22,16 +22,9 @@ public class SerialComPort extends ComPort {
     boolean rts;
     boolean dtr;
 
-    public SerialComPort(SerialPort serialPort) {
-        String os = System.getProperty("os.name");
-        this.serialPort = serialPort;
-        this.rts = this.dtr = os == null || !os.startsWith("Windows");
-    }
-
     public SerialComPort(String portName) {
-        String os = System.getProperty("os.name");
         this.serialPort = new SerialPort(portName);
-        this.rts = this.dtr = os == null || !os.startsWith("Windows");
+        this.rts = this.dtr = false;
     }
 
     @Override
