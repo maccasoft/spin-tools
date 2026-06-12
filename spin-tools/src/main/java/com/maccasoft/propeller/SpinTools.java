@@ -3026,6 +3026,28 @@ public class SpinTools {
             });
         }
 
+        new MenuItem(menu, SWT.SEPARATOR);
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Clear Bookmarks");
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                try {
+                    CTabItem tabItem = tabFolder.getSelection();
+                    if (tabItem == null) {
+                        return;
+                    }
+                    EditorTab editorTab = (EditorTab) tabItem.getData();
+                    editorTab.getEditor().clearBookmarks();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+
+        });
+
         return menu;
     }
 

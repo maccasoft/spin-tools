@@ -9,6 +9,7 @@
 
 package com.maccasoft.propeller;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -138,8 +139,6 @@ public class LineNumbersRuler {
             public void mouseDown(MouseEvent e) {
                 int lineNumber = text.getLineIndex(e.y);
                 toggleBookmarkAt(lineNumber);
-                fireBookmarksChanged(bookmarks);
-                canvas.redraw();
             }
 
         });
@@ -256,9 +255,7 @@ public class LineNumbersRuler {
     }
 
     public void setBookmarks(Integer[] lines) {
-        for (int i = 0; i < bookmarks.length; i++) {
-            bookmarks[i] = null;
-        }
+        Arrays.fill(bookmarks, null);
         if (lines != null) {
             for (int i = 0; i < bookmarks.length && i < lines.length; i++) {
                 bookmarks[i] = lines[i];
@@ -275,10 +272,11 @@ public class LineNumbersRuler {
         return bookmarks[num];
     }
 
-    public void toggleBookmarkAt(int line) {
+    private void toggleBookmarkAt(int line) {
         for (int i = 0; i < bookmarks.length; i++) {
             if (bookmarks[i] != null && bookmarks[i].equals(line)) {
                 bookmarks[i] = null;
+                fireBookmarksChanged(bookmarks);
                 canvas.redraw();
                 return;
             }
@@ -287,10 +285,17 @@ public class LineNumbersRuler {
         for (int i = 0; i < bookmarks.length; i++) {
             if (bookmarks[i] == null) {
                 bookmarks[i] = line;
+                fireBookmarksChanged(bookmarks);
                 canvas.redraw();
                 return;
             }
         }
+    }
+
+    public void clearBookmarks() {
+        Arrays.fill(bookmarks, null);
+        fireBookmarksChanged(bookmarks);
+        canvas.redraw();
     }
 
 }

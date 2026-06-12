@@ -1664,6 +1664,10 @@ public class SourceEditor {
         return ruler.getBookmarks();
     }
 
+    public void clearBookmarks() {
+        ruler.clearBookmarks();
+    }
+
     public void undo() {
         ignoreUndo = true;
         try {
