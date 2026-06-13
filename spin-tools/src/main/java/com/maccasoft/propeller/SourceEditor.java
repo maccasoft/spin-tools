@@ -915,10 +915,25 @@ public class SourceEditor {
 
                     popupWindow.pack();
 
-                    Rectangle bounds = display.map(styledText, null, styledText.getTextBounds(token.start, token.stop));
-                    bounds.y += bounds.height + 3;
-                    bounds.width = Math.max(640, popupWindow.getSize().x);
-                    bounds.height = 240;
+                    Rectangle textBounds = display.map(styledText, null, styledText.getTextBounds(token.start, token.stop));
+                    Point popupWindowSize = popupWindow.computeSize(640, -1, true);
+                    if (popupWindowSize.y < 200) {
+                        popupWindowSize.y = 200;
+                    }
+
+                    Rectangle bounds = new Rectangle(textBounds.x, textBounds.y + textBounds.height + 3, 640, popupWindowSize.y);
+                    if (bounds.x + bounds.width > display.getClientArea().width) {
+                        bounds.width = display.getClientArea().width - bounds.x;
+                        bounds.height = popupWindow.computeSize(bounds.width, -1, true).y;
+                    }
+                    if (bounds.y + bounds.height > display.getClientArea().height) {
+                        if (bounds.y + 480 < display.getClientArea().height) {
+                            bounds.height = 480;
+                        }
+                        else {
+                            bounds.y = textBounds.y - 3 - bounds.height;
+                        }
+                    }
                     popupWindow.setBounds(bounds);
 
                     popupWindow.setVisible(true);
