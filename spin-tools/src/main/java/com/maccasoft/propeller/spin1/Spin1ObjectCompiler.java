@@ -147,6 +147,8 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                     compileConstant(sourceLine);
                 } catch (CompilerException e) {
                     logMessage(e);
+                } catch (Exception e) {
+                    logMessage(new CompilerException(e, sourceLine));
                 } finally {
                     sourceLine.setIndex(index);
                 }
@@ -160,6 +162,8 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                     compileObject(sourceLine);
                 } catch (CompilerException e) {
                     logMessage(e);
+                } catch (Exception e) {
+                    logMessage(new CompilerException(e, sourceLine));
                 } finally {
                     sourceLine.setIndex(index);
                 }

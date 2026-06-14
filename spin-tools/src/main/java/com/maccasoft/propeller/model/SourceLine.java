@@ -111,6 +111,10 @@ public class SourceLine {
         return tokens.subList(from, to);
     }
 
+    public List<Token> getTokens() {
+        return tokens;
+    }
+
     public String getText() {
         StringBuilder sb = new StringBuilder();
 

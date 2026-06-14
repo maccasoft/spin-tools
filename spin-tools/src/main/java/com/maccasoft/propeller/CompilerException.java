@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Objects;
 
 import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.SourceLine;
 import com.maccasoft.propeller.model.Token;
 
 public class CompilerException extends RuntimeException {
@@ -88,6 +89,30 @@ public class CompilerException extends RuntimeException {
             this.column = token.column;
             this.start = token.start;
             this.stop = token.stop;
+        }
+        else if (data instanceof SourceLine sourceLine) {
+            Iterator<Token> iter = sourceLine.getTokens().iterator();
+            if (iter.hasNext()) {
+                Token token = iter.next();
+                this.start = token.start;
+                this.stop = token.stop;
+                this.line = token.line + 1;
+                this.column = token.column;
+                while (iter.hasNext()) {
+                    token = iter.next();
+                    if (token.type == Token.NL) {
+                        break;
+                    }
+                    if (token.start < this.start) {
+                        this.start = token.start;
+                        this.line = token.line + 1;
+                        this.column = token.column;
+                    }
+                    if (token.stop > this.stop) {
+                        this.stop = token.stop;
+                    }
+                }
+            }
         }
         else if (data instanceof List<?> c) {
             Iterator<?> iter = c.iterator();

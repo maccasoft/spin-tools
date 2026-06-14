@@ -162,6 +162,8 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     compileConstant(sourceLine);
                 } catch (CompilerException e) {
                     logMessage(e);
+                } catch (Exception e) {
+                    logMessage(new CompilerException(e, sourceLine));
                 } finally {
                     sourceLine.setIndex(index);
                 }
@@ -175,6 +177,8 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     compileObject(sourceLine);
                 } catch (CompilerException e) {
                     logMessage(e);
+                } catch (Exception e) {
+                    logMessage(new CompilerException(e, sourceLine));
                 } finally {
                     sourceLine.setIndex(index);
                 }
