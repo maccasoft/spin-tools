@@ -1583,6 +1583,14 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 }
                 else {
                     id = symbols.get(token.getText());
+                    if (id == TokenId.CONSTANT) {
+                        int dot = token.getText().indexOf('.');
+                        if (dot != -1) {
+                            markers.add(new TokenMarker(token.start, token.start + dot - 1, TokenId.OBJECT));
+                            markers.add(new TokenMarker(token.start + dot + 1, token.stop, id));
+                            continue;
+                        }
+                    }
                     if (id == null) {
                         int index = token.getText().indexOf('.');
                         if (index != -1) {
@@ -1591,6 +1599,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                             if (id == TokenId.OBJECT) {
                                 markers.add(new TokenMarker(token.start, token.start + index - 1, id));
                                 //markers.add(new TokenMarker(token.start + index + 1, token.stop, TokenId.CONSTANT));
+                                continue;
                             }
                         }
                     }
