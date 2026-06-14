@@ -82,7 +82,7 @@ public class Rep extends Spin2PAsmInstructionFactory {
             } catch (CompilerException e) {
                 msgs.addMessage(e);
             } catch (Exception e) {
-                msgs.addMessage(new CompilerException(e.getMessage(), src.getData()));
+                msgs.addMessage(new CompilerException(e.getMessage(), dst.getData()));
             }
 
             try {
