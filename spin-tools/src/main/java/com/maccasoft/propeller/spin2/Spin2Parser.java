@@ -1344,9 +1344,11 @@ public class Spin2Parser extends Parser {
                         parameter = new DataLineNode.ParameterNode(node);
                         node.parameters.add(parameter);
                         Token next = sourceLine.peekNextToken();
-                        if ("++".equals(next.getText()) || "--".equals(next.getText()) || "ptra".equals(next.getText()) || "ptrb".equals(next.getText())) {
-                            state = 8;
-                            break;
+                        if (next != null) {
+                            if ("++".equals(next.getText()) || "--".equals(next.getText()) || "ptra".equals(next.getText()) || "ptrb".equals(next.getText())) {
+                                state = 8;
+                                break;
+                            }
                         }
                         break;
                     }

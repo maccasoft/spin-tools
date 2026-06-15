@@ -452,6 +452,9 @@ public abstract class SourceTokenMarker {
                 RootNode objectRoot = rootNodes.get(refObject);
                 if (objectRoot != null) {
                     for (ConstantNode node : objectRoot.getConstants()) {
+                        if (node.getIdentifier() == null) {
+                            continue;
+                        }
                         String identifier = node.getIdentifier().getText();
                         if (refName.equals(identifier)) {
                             StringBuilder sb = new StringBuilder();
@@ -467,6 +470,9 @@ public abstract class SourceTokenMarker {
         }
 
         for (ConstantNode node : root.getConstants()) {
+            if (node.getIdentifier() == null) {
+                continue;
+            }
             String identifier = node.getIdentifier().getText();
             if (symbol.equals(identifier)) {
                 StringBuilder sb = new StringBuilder();
