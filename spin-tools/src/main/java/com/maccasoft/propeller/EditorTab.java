@@ -818,10 +818,8 @@ public class EditorTab {
     public void setFile(File file) {
         File localFile = this.file != null ? this.file : new File(tabItemText).getAbsoluteFile();
 
-        sourcePool.removeSource(localFile);
-        preferences.removeBookmarks(localFile);
-
-        this.file = file;
+        this.file = file.getAbsoluteFile();
+        this.tabItemText = file.getName();
         this.lastModified = file.lastModified();
 
         String suffix = tabItemText.substring(tabItemText.lastIndexOf('.')).toLowerCase();
@@ -831,7 +829,7 @@ public class EditorTab {
                     tokenMarker = new Spin1TokenMarkerAdatper();
                     tokenMarker.setCaseSensitive(preferences.getSpin1CaseSensitiveSymbols());
                     tokenMarker.refreshTokens(editor.getStyledText().getText());
-                    editor.setHelpProvider(new EditorHelp("Spin1Instructions.xml", localFile.getParentFile(), ".spin"));
+                    editor.setHelpProvider(new EditorHelp("Spin1Instructions.xml", file.getParentFile(), ".spin"));
                 }
             }
             case ".spin2", ".p2asm" -> {
@@ -839,7 +837,7 @@ public class EditorTab {
                     tokenMarker = new Spin2TokenMarkerAdatper();
                     tokenMarker.setCaseSensitive(preferences.getSpin2CaseSensitiveSymbols());
                     tokenMarker.refreshTokens(editor.getStyledText().getText());
-                    editor.setHelpProvider(new EditorHelp("Spin2Instructions.xml", localFile.getParentFile(), ".spin2"));
+                    editor.setHelpProvider(new EditorHelp("Spin2Instructions.xml", file.getParentFile(), ".spin2"));
                 }
             }
             case ".c" -> {
@@ -847,28 +845,26 @@ public class EditorTab {
                     tokenMarker = new CTokenMarkerAdatper();
                     tokenMarker.setCaseSensitive(true);
                     tokenMarker.refreshTokens(editor.getStyledText().getText());
-                    editor.setHelpProvider(new EditorHelp("Spin2CInstructions.xml", localFile.getParentFile(), ".spin2"));
+                    editor.setHelpProvider(new EditorHelp("Spin2CInstructions.xml", file.getParentFile(), ".spin2"));
                 }
             }
         }
         editor.setTokenMarker(tokenMarker);
         editor.redraw();
 
+        tabItem.setText(tabItemText);
         if (file.equals(preferences.getTopObject())) {
             tabItem.setFont(boldFont);
         }
         tabItem.setToolTipText(file.getAbsolutePath());
+
+        sourcePool.renameSource(localFile, file);
     }
 
     public void setFocus() {
         if (!editor.getControl().isDisposed()) {
             editor.getControl().setFocus();
         }
-    }
-
-    public void setText(String text) {
-        tabItemText = text;
-        updateTabItemText();
     }
 
     public String getText() {
