@@ -212,7 +212,11 @@ public class FileBrowser {
             @Override
             public void update(ViewerCell cell) {
                 File element = (File) cell.getElement();
-                cell.setText(element.getName());
+                String elementName = element.getName();
+                if (elementName.isEmpty()) {
+                    elementName = element.getAbsolutePath();
+                }
+                cell.setText(elementName);
                 cell.setImage(ImageRegistry.getImageForFile(element));
             }
 
