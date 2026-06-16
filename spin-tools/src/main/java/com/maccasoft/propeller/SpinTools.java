@@ -4335,7 +4335,7 @@ public class SpinTools {
             public void run() {
                 try {
                     Shell shell = new Shell(display);
-                    shell.setText(APP_TITLE);
+                    shell.setText(APP_TITLE + " " + APP_VERSION);
                     shell.setImages(new Image[] {
                         ImageRegistry.getImageFromResources("app64.png"),
                         ImageRegistry.getImageFromResources("app48.png"),
@@ -4389,7 +4389,7 @@ public class SpinTools {
         internalErrorRunning = true;
         try {
             details.printStackTrace();
-            InternalErrorDialog dlg = new InternalErrorDialog(shell, APP_TITLE, null, "An unexpected error has occured.", details, MessageDialog.ERROR, new String[] {
+            InternalErrorDialog dlg = new InternalErrorDialog(shell, APP_TITLE + " " + APP_VERSION, null, "An unexpected error has occured.", details, MessageDialog.ERROR, new String[] {
                 IDialogConstants.OK_LABEL, IDialogConstants.SHOW_DETAILS_LABEL
             }, 0);
             dlg.setDetailButton(1);
