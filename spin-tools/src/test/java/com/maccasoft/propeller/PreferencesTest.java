@@ -534,4 +534,46 @@ class PreferencesTest {
         Assertions.assertEquals("flexspin", tools[0].name);
     }
 
+    @Test
+    void testBookmarkDataInstance() {
+        Preferences subject = new Preferences();
+
+        File file = new File("test.spin2");
+        Integer[] bookmarks = new Integer[] {
+            10, 20, null, null, null, null, null, null, null
+        };
+
+        subject.setBookmarks(file, bookmarks);
+        Assertions.assertArrayEquals(bookmarks, subject.preferences.lruBookmarks.get(file.getAbsolutePath()));
+        Assertions.assertNotSame(bookmarks, subject.preferences.lruBookmarks.get(file.getAbsolutePath()));
+
+        Integer[] newBookmarks = new Integer[] {
+            10, 20, 30, null, null, null, null, null, null
+        };
+
+        subject.setBookmarks(file, newBookmarks);
+        Assertions.assertArrayEquals(newBookmarks, subject.preferences.lruBookmarks.get(file.getAbsolutePath()));
+        Assertions.assertNotSame(newBookmarks, subject.preferences.lruBookmarks.get(file.getAbsolutePath()));
+    }
+
+    @Test
+    void testRemoveBookmarksIfAllNulls() {
+        Preferences subject = new Preferences();
+
+        File file = new File("test.spin2");
+        Integer[] bookmarks = new Integer[] {
+            10, 20, null, null, null, null, null, null, null
+        };
+
+        subject.setBookmarks(file, bookmarks);
+        Assertions.assertArrayEquals(bookmarks, subject.preferences.lruBookmarks.get(file.getAbsolutePath()));
+
+        Integer[] newBookmarks = new Integer[] {
+            null, null, null, null, null, null, null, null, null
+        };
+
+        subject.setBookmarks(file, newBookmarks);
+        Assertions.assertNull(subject.preferences.lruBookmarks.get(file.getAbsolutePath()));
+    }
+
 }

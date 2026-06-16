@@ -412,14 +412,31 @@ public class Preferences {
     }
 
     public Integer[] getBookmarks(File file) {
-        return preferences.lruBookmarks.get(file.getAbsolutePath());
+        Integer[] bookmarks = null;
+
+        Integer[] value = preferences.lruBookmarks.get(file.getAbsolutePath());
+        if (value != null) {
+            bookmarks = new Integer[value.length];
+            System.arraycopy(value, 0, bookmarks, 0, value.length);
+        }
+
+        return bookmarks;
     }
 
     public void setBookmarks(File file, Integer[] bookmarks) {
-        preferences.lruBookmarks.put(file.getAbsolutePath(), bookmarks);
-    }
-
-    public void removeBookmarks(File file) {
+        if (bookmarks != null) {
+            boolean empty = true;
+            Integer[] value = new Integer[bookmarks.length];
+            for (int i = 0; i < bookmarks.length; i++) {
+                if ((value[i] = bookmarks[i]) != null) {
+                    empty = false;
+                }
+            }
+            if (!empty) {
+                preferences.lruBookmarks.put(file.getAbsolutePath(), value);
+                return;
+            }
+        }
         preferences.lruBookmarks.remove(file.getAbsolutePath());
     }
 
