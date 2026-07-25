@@ -243,29 +243,6 @@ public class Spin1TreeBuilder {
             throw new CompilerException("expecting operand", tokens.get(tokens.size() - 1));
         }
 
-        if ("@".equals(token.getText()) || "@@".equals(token.getText()) || "@@@".equals(token.getText())) {
-            Token first = next();
-            if ((token = peek()) == null) {
-                throw new CompilerException("syntax error", tokens.get(tokens.size() - 1));
-            }
-            if (token.type != Token.KEYWORD) {
-                throw new CompilerException("expecting variable", token);
-            }
-            Spin1StatementNode node = parseAtom();
-            node.token = first.merge(node.token);
-            node.token.type = Token.KEYWORD;
-            return node;
-        }
-
-        if (unary.contains(token.getText().toUpperCase())) {
-            Spin1StatementNode node = new Spin1StatementNode(next());
-            node.addChild(parseAtom());
-            return node;
-        }
-        if (precedence.containsKey(token.getText().toUpperCase())) {
-            return null;
-        }
-
         if ("(".equals(token.getText())) {
             next();
             Spin1StatementNode node = parseLevel(parseAtom(), 0);
@@ -284,6 +261,31 @@ public class Spin1TreeBuilder {
                 throw new CompilerException("expecting ]", token == null ? tokens.get(tokens.size() - 1) : token);
             }
             return node;
+        }
+
+        if ("@".equals(token.getText()) || "@@".equals(token.getText()) || "@@@".equals(token.getText())) {
+            Token first = next();
+            if ((token = peek()) == null) {
+                throw new CompilerException("syntax error", tokens.get(tokens.size() - 1));
+            }
+            if (token.type != Token.KEYWORD) {
+                throw new CompilerException("expecting variable", token);
+            }
+            Spin1StatementNode node = parseAtom();
+            node.token = first.merge(node.token);
+            node.token.type = Token.KEYWORD;
+            return node;
+        }
+
+        if (!scope.hasSymbol(token.getText())) {
+            if (unary.contains(token.getText().toUpperCase())) {
+                Spin1StatementNode node = new Spin1StatementNode(next());
+                node.addChild(parseAtom());
+                return node;
+            }
+            if (precedence.containsKey(token.getText().toUpperCase())) {
+                return null;
+            }
         }
 
         if (token.type == Token.KEYWORD) {

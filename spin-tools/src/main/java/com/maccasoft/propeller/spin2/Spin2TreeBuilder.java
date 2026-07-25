@@ -355,22 +355,6 @@ public class Spin2TreeBuilder {
             return new Spin2StatementNode(next());
         }
 
-        if (unary.contains(token.getText().toUpperCase())) {
-            token = next();
-            Spin2StatementNode node = new Spin2StatementNode(token);
-            if ((token = peek()) == null) {
-                return node;
-            }
-            if ("]".equals(token.getText()) || ")".equals(token.getText())) {
-                return node;
-            }
-            node.addChild(parseAtom());
-            return node;
-        }
-        if (precedence.containsKey(token.getText().toUpperCase())) {
-            return null;
-        }
-
         if ("(".equals(token.getText())) {
             Token first = next();
             Spin2StatementNode node = parseLevel(parseAtom(), 0, false);
@@ -490,6 +474,24 @@ public class Spin2TreeBuilder {
             }
 
             return node;
+        }
+
+        if (!scope.hasSymbol(token.getText())) {
+            if (unary.contains(token.getText().toUpperCase())) {
+                token = next();
+                Spin2StatementNode node = new Spin2StatementNode(token);
+                if ((token = peek()) == null) {
+                    return node;
+                }
+                if ("]".equals(token.getText()) || ")".equals(token.getText())) {
+                    return node;
+                }
+                node.addChild(parseAtom());
+                return node;
+            }
+            if (precedence.containsKey(token.getText().toUpperCase())) {
+                return null;
+            }
         }
 
         if (token.type == Token.KEYWORD) {
