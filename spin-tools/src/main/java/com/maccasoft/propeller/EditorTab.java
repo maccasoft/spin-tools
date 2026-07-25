@@ -676,11 +676,6 @@ public class EditorTab {
 
         String suffix = tabItemText.substring(tabItemText.lastIndexOf('.')).toLowerCase();
         switch (suffix) {
-            case ".spin", ".pasm" -> {
-                tokenMarker = new Spin1TokenMarkerAdatper();
-                tokenMarker.setCaseSensitive(preferences.getSpin1CaseSensitiveSymbols());
-                editor.setHelpProvider(new EditorHelp("Spin1Instructions.xml", localFile.getParentFile(), ".spin"));
-            }
             case ".spin2", ".p2asm" -> {
                 tokenMarker = new Spin2TokenMarkerAdatper();
                 tokenMarker.setCaseSensitive(preferences.getSpin2CaseSensitiveSymbols());
@@ -690,6 +685,11 @@ public class EditorTab {
                 tokenMarker = new CTokenMarkerAdatper();
                 tokenMarker.setCaseSensitive(true);
                 editor.setHelpProvider(new EditorHelp("Spin2CInstructions.xml", localFile.getParentFile(), ".spin2"));
+            }
+            default -> {
+                tokenMarker = new Spin1TokenMarkerAdatper();
+                tokenMarker.setCaseSensitive(preferences.getSpin1CaseSensitiveSymbols());
+                editor.setHelpProvider(new EditorHelp("Spin1Instructions.xml", localFile.getParentFile(), ".spin"));
             }
         }
         editor.setTokenMarker(tokenMarker);
@@ -824,14 +824,6 @@ public class EditorTab {
 
         String suffix = tabItemText.substring(tabItemText.lastIndexOf('.')).toLowerCase();
         switch (suffix) {
-            case ".spin", ".pasm" -> {
-                if (!(tokenMarker instanceof Spin1TokenMarkerAdatper)) {
-                    tokenMarker = new Spin1TokenMarkerAdatper();
-                    tokenMarker.setCaseSensitive(preferences.getSpin1CaseSensitiveSymbols());
-                    tokenMarker.refreshTokens(editor.getStyledText().getText());
-                    editor.setHelpProvider(new EditorHelp("Spin1Instructions.xml", file.getParentFile(), ".spin"));
-                }
-            }
             case ".spin2", ".p2asm" -> {
                 if (!(tokenMarker instanceof Spin2TokenMarkerAdatper)) {
                     tokenMarker = new Spin2TokenMarkerAdatper();
@@ -846,6 +838,14 @@ public class EditorTab {
                     tokenMarker.setCaseSensitive(true);
                     tokenMarker.refreshTokens(editor.getStyledText().getText());
                     editor.setHelpProvider(new EditorHelp("Spin2CInstructions.xml", file.getParentFile(), ".spin2"));
+                }
+            }
+            default -> {
+                if (!(tokenMarker instanceof Spin1TokenMarkerAdatper)) {
+                    tokenMarker = new Spin1TokenMarkerAdatper();
+                    tokenMarker.setCaseSensitive(preferences.getSpin1CaseSensitiveSymbols());
+                    tokenMarker.refreshTokens(editor.getStyledText().getText());
+                    editor.setHelpProvider(new EditorHelp("Spin1Instructions.xml", file.getParentFile(), ".spin"));
                 }
             }
         }
