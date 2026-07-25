@@ -4878,6 +4878,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             }
             int structSize = struct.getTypeSize();
             int lastMemberSize = structSize;
+            boolean memberReference = false;
 
             int offset = 0;
             int index = 0;
@@ -4908,6 +4909,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
 
                     offset += member.getOffset();
                     varType = member.getType() != null ? member.getType().getText() : "LONG";
+                    memberReference = true;
 
                     if (member.hasBitfields() && i < ar.length) {
                         member = struct.getMember(ar[i++]);
@@ -5160,7 +5162,19 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         }
                     }
                     else {
-                        source.add(new StructOp(context, op, bb, ss, struct, expression, index + offset, indexMultipliers, push));
+                        StructOp structOp = new StructOp(context, op, bb, ss, struct, expression, index + offset, indexMultipliers, push);
+                        if ((op == Op.Write || op == Op.Read) && expression instanceof Variable && !memberReference && lastMemberSize == 4 && ((index + offset) % 4) == 0) {
+                            VariableOp variableOp = new VariableOp(context, op, false, (Variable) expression, false, (index + offset) / 4);
+                            if (variableOp.getSize() < structOp.getSize()) {
+                                source.add(variableOp);
+                            }
+                            else {
+                                source.add(structOp);
+                            }
+                        }
+                        else {
+                            source.add(structOp);
+                        }
                     }
                 }
 
