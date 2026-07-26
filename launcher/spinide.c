@@ -27,9 +27,9 @@
 #endif
 
 static const char * jar_files[] = {
-    "jackson-annotations-2.21.jar",
-    "jackson-core-2.21.4.jar",
-    "jackson-databind-2.21.4.jar",
+    "jackson-annotations-2.22.jar",
+    "jackson-core-2.22.1.jar",
+    "jackson-databind-2.22.1.jar",
     "jsvg-2.1.0.jar",
     "org.eclipse.core.commands-3.12.500.jar",
     "org.eclipse.core.databinding-1.13.700.jar",
