@@ -401,8 +401,9 @@ public class DebugSpectroWindow extends DebugWindow {
                 case "RED":
                 case "MAGENTA":
                 case "YELLOW":
+                case "GREY":
                 case "GRAY":
-                    colorTune = RGBColor.valueOf(key).ordinal();
+                    colorTune = RGBColor.valueOf(key).value;
                     iter.next();
                     break;
             }

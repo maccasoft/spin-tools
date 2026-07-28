@@ -58,15 +58,23 @@ public abstract class DebugWindow {
         LIME, RED, CYAN, YELLOW, MAGENTA, BLUE, ORANGE, OLIVE
     };
 
-    public static enum RGBColor {
-        ORANGE,
-        BLUE,
-        GREEN,
-        CYAN,
-        RED,
-        MAGENTA,
-        YELLOW,
-        GRAY,
+    public enum RGBColor {
+        ORANGE(0),
+        BLUE(1),
+        GREEN(2),
+        CYAN(3),
+        RED(4),
+        MAGENTA(5),
+        YELLOW(6),
+        GREY(7),
+        GRAY(7);
+
+        public final int value;
+
+        RGBColor(int value) {
+            this.value = value;
+        }
+
     }
 
     public static final int MARGIN_WIDTH = 6;

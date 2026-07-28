@@ -392,8 +392,9 @@ public class DebugBitmapWindow extends DebugWindow {
                 case "RED":
                 case "MAGENTA":
                 case "YELLOW":
+                case "GREY":
                 case "GRAY":
-                    colorTune = RGBColor.valueOf(key).ordinal();
+                    colorTune = RGBColor.valueOf(key).value;
                     iter.next();
                     break;
             }
@@ -415,7 +416,6 @@ public class DebugBitmapWindow extends DebugWindow {
                 String s = iter.next().toUpperCase();
                 switch (s) {
                     case "BLACK":
-                        color = 0x000000;
                         break;
                     case "WHITE":
                         color = 0xFFFFFF;
@@ -427,12 +427,22 @@ public class DebugBitmapWindow extends DebugWindow {
                     case "RED":
                     case "MAGENTA":
                     case "YELLOW":
+                    case "GREY":
                     case "GRAY":
-                        h = RGBColor.valueOf(s).ordinal();
+                        h = RGBColor.valueOf(s).value;
                         if (iter.hasNextNumber()) {
                             p = iter.nextNumber();
                         }
                         color = translateColor((h << 5) | (p << 1), ColorMode.RGBI8X);
+                        break;
+                    default:
+                        if (s.startsWith("$")) {
+                            try {
+                                color = Integer.parseInt(s.substring(1), 16);
+                            } catch (Exception e) {
+                                // Do nothing
+                            }
+                        }
                         break;
                 }
             }

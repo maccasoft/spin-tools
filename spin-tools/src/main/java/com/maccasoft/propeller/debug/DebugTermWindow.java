@@ -471,8 +471,6 @@ public class DebugTermWindow extends DebugWindow {
                     return new Color(0, 0, 0);
                 case "WHITE":
                     return new Color(255, 255, 255);
-                case "GREY":
-                    s = "GRAY";
                 case "ORANGE":
                 case "BLUE":
                 case "GREEN":
@@ -480,12 +478,21 @@ public class DebugTermWindow extends DebugWindow {
                 case "RED":
                 case "MAGENTA":
                 case "YELLOW":
+                case "GREY":
                 case "GRAY":
-                    h = RGBColor.valueOf(s).ordinal();
+                    h = RGBColor.valueOf(s).value;
                     if (iter.hasNextNumber()) {
                         p = iter.nextNumber();
                     }
                     return translateColor((h << 5) | (p << 1), ColorMode.RGBI8X);
+            }
+            if (s.startsWith("$")) {
+                try {
+                    int value = Integer.parseInt(s.substring(1), 16);
+                    return new Color(display, (value >> 16) & 0xFF, (value >> 8) & 0xFF, value & 0xFF);
+                } catch (Exception e) {
+                    // Do nothing
+                }
             }
 
             iter.back();

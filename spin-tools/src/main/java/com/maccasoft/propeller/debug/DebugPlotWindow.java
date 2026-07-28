@@ -416,8 +416,9 @@ public class DebugPlotWindow extends DebugWindow {
                 case "RED":
                 case "MAGENTA":
                 case "YELLOW":
+                case "GREY":
                 case "GRAY":
-                    colorTune = RGBColor.valueOf(key).ordinal();
+                    colorTune = RGBColor.valueOf(key).value;
                     iter.next();
                     break;
             }
@@ -449,12 +450,23 @@ public class DebugPlotWindow extends DebugWindow {
                     case "RED":
                     case "MAGENTA":
                     case "YELLOW":
+                    case "GREY":
                     case "GRAY":
-                        h = RGBColor.valueOf(s).ordinal();
+                        h = RGBColor.valueOf(s).value;
                         if (iter.hasNextNumber()) {
                             p = iter.nextNumber();
                         }
                         lutColors[i] = translateColor((h << 5) | (p << 1), ColorMode.RGBI8X);
+                        break;
+                    default:
+                        if (s.startsWith("$")) {
+                            try {
+                                int value = Integer.parseInt(s.substring(1), 16);
+                                lutColors[i] = new Color(display, (value >> 16) & 0xFF, (value >> 8) & 0xFF, value & 0xFF);
+                            } catch (Exception e) {
+                                // Do nothing
+                            }
+                        }
                         break;
                 }
             }
@@ -902,13 +914,22 @@ public class DebugPlotWindow extends DebugWindow {
                 case "RED":
                 case "MAGENTA":
                 case "YELLOW":
+                case "GREY":
                 case "GRAY":
-                    h = RGBColor.valueOf(s).ordinal();
+                    h = RGBColor.valueOf(s).value;
                     if (iter.hasNextNumber()) {
                         p = iter.nextNumber();
                     }
                     return translateColor((h << 5) | (p << 1), ColorMode.RGBI8X);
                 default:
+                    if (s.startsWith("$")) {
+                        try {
+                            int value = Integer.parseInt(s.substring(1), 16);
+                            return new Color(display, (value >> 16) & 0xFF, (value >> 8) & 0xFF, value & 0xFF);
+                        } catch (Exception e) {
+                            // Do nothing
+                        }
+                    }
                     iter.back();
                     break;
             }
