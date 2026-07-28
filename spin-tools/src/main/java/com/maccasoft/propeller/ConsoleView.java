@@ -580,6 +580,13 @@ public class ConsoleView {
                     SerialPort.DATABITS_8,
                     SerialPort.STOPBITS_1,
                     SerialPort.PARITY_NONE);
+                byte[] rx = serialPort.readBytes();
+                if (rx != null) {
+                    synchronized (receiveBuffer) {
+                        receiveBuffer.write(rx);
+                        receiveBuffer.notifyAll();
+                    }
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
