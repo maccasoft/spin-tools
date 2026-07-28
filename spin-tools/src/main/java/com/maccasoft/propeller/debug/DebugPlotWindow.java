@@ -94,7 +94,7 @@ public class DebugPlotWindow extends DebugWindow {
 
             alphaData = new byte[256];
 
-            imageData = new ImageData(width, height, 8, paletteData, 4, new byte[width * height]);
+            imageData = new ImageData(width, height, 8, paletteData, 1, new byte[width * height]);
         }
 
         Image getImage(int orient, int scale) {
