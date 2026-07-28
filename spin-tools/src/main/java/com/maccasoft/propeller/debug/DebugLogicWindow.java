@@ -70,14 +70,18 @@ public class DebugLogicWindow extends DebugWindow {
     int charHeight;
 
     class Channel {
+        int count;
         int mask;
+        int shift;
         String name;
         Color color;
 
         int[] linePoints;
 
-        Channel(int mask, String name, Color color) {
-            this.mask = mask;
+        Channel(int index, int count, String name, Color color) {
+            this.count = count;
+            this.mask = (1 << count) - 1;
+            this.shift = index;
             this.name = name;
             this.color = color;
             this.linePoints = new int[0];
@@ -91,6 +95,7 @@ public class DebugLogicWindow extends DebugWindow {
                 ptr += sampleData.length;
             }
             int idx = 0;
+            int step = ((charHeight * count) << 8) / mask;
 
             int arraySize = sampleCount * 4;
             if (linePoints.length != arraySize) {
@@ -98,7 +103,7 @@ public class DebugLogicWindow extends DebugWindow {
             }
 
             for (int i = 0; i < sampleCount; i++) {
-                y = (sampleData[ptr] & mask) == 0 ? lineY + charHeight : lineY;
+                y = lineY + (charHeight * count) - ((((sampleData[ptr] >> shift) & mask) * step) >> 8);
                 linePoints[idx++] = x;
                 linePoints[idx++] = y;
                 x += spacing;
@@ -268,7 +273,10 @@ public class DebugLogicWindow extends DebugWindow {
         }
 
         imageSize.x = sampleData.length * spacing;
-        imageSize.y = (charHeight * channelData.length) + (VERTICAL_SPACING * (channelData.length - 1));
+        imageSize.y = VERTICAL_SPACING * (channelData.length - 1);
+        for (int i = 0; i < channelData.length; i++) {
+            imageSize.y += charHeight * channelData[i].count;
+        }
 
         canvas.addPaintListener(new PaintListener() {
 
@@ -295,12 +303,28 @@ public class DebugLogicWindow extends DebugWindow {
     }
 
     void channel(String name, KeywordIterator iter) {
+        int bitCount = 1;
+        boolean range = false;
+
         Color color = defaultColors[defaultColorIndex++];
         if (defaultColorIndex >= defaultColors.length) {
             defaultColorIndex = 0;
         }
 
-        int bitCount = iter.hasNextNumber() ? iter.nextNumber() : 1;
+        if (iter.hasNextNumber()) {
+            int value = iter.nextNumber();
+            if (value >= 1 && value + channelData.length <= 32) {
+                bitCount = value;
+
+                if (iter.hasNext() && "RANGE".equalsIgnoreCase(iter.peekNext())) {
+                    range = true;
+                    iter.next();
+                }
+            }
+            else {
+                iter.back();
+            }
+        }
 
         if (iter.hasNext()) {
             int h = 0;
@@ -344,15 +368,20 @@ public class DebugLogicWindow extends DebugWindow {
             }
         }
 
-        if (bitCount == 1) {
-            add(new Channel(1 << channelData.length, name, color));
+        int bitIndex = 0;
+        for (int i = 0; i < channelData.length; i++) {
+            bitIndex += channelData[i].count;
+        }
+
+        if (bitCount == 1 || range) {
+            add(new Channel(bitIndex, bitCount, name, color));
         }
         else {
             int i = 0;
-            add(new Channel(1 << channelData.length, String.format("%s %d", name, i), color));
+            add(new Channel(bitIndex++, 1, String.format("%s %d", name, i), color));
             i++;
             while (i < bitCount) {
-                add(new Channel(1 << channelData.length, String.format("%d", i), color));
+                add(new Channel(bitIndex++, 1, String.format("%d", i), color));
                 i++;
             }
         }
@@ -433,33 +462,36 @@ public class DebugLogicWindow extends DebugWindow {
         gc.setForeground(gridColor);
         gc.drawRectangle(MARGIN_WIDTH * 2 + textWidth - 1, MARGIN_HEIGHT - 1, imageSize.x + 1, imageSize.y + 1);
 
-        int y = MARGIN_HEIGHT + charHeight;
+        int y = MARGIN_HEIGHT;
 
         gc.setFont(font);
         for (int i = channelData.length - 1; i >= 0; i--) {
             Point extent = gc.stringExtent(channelData[i].name);
+            y += channelData[i].count * charHeight;
             gc.setForeground(channelData[i].color);
-            gc.drawString(channelData[i].name, MARGIN_WIDTH + textWidth - extent.x, y - extent.y - 1, true);
-            y += charHeight + VERTICAL_SPACING;
+            gc.drawString(channelData[i].name, MARGIN_WIDTH + textWidth - extent.x, y - extent.y + 1, true);
+            y += VERTICAL_SPACING;
         }
 
         gc.setLineStyle(SWT.LINE_DOT);
 
-        if (triggerOffset != 0) {
+        if (triggerMask != 0 && triggerOffset != 0) {
             int x = (sampleData.length * spacing / 2) - spacing / 2;
             gc.setForeground(new Color(64, 64, 64));
             gc.drawLine(x, 0, x, imageSize.y);
         }
 
+        int x = MARGIN_WIDTH * 2 + textWidth;
         y = MARGIN_HEIGHT;
         for (int i = channelData.length - 1; i >= 0; i--) {
             gc.setLineStyle(SWT.LINE_DOT);
             gc.setForeground(gridColor);
-            gc.drawLine(MARGIN_WIDTH + textWidth, y, MARGIN_WIDTH + textWidth + imageSize.x, y);
+            gc.drawLine(x, y, x + imageSize.x, y);
+            gc.drawLine(x, y + channelData[i].count * charHeight, x + imageSize.x, y + channelData[i].count * charHeight);
 
             channelData[i].plot(gc);
 
-            y += charHeight + VERTICAL_SPACING - 1;
+            y += (channelData[i].count * charHeight) + VERTICAL_SPACING - 1;
         }
     }
 
@@ -588,18 +620,17 @@ public class DebugLogicWindow extends DebugWindow {
         int y = MARGIN_HEIGHT;
         for (int i = channelData.length - 1; i >= 0; i--) {
             channelData[i].update(y);
-            y += charHeight + VERTICAL_SPACING - 1;
+            y += (charHeight * channelData[i].count) + VERTICAL_SPACING - 1;
         }
         super.update();
     }
 
     static String[] data = new String[] {
-        "samples 32 spacing 12  'TX' 'IN' longs_2bit",
-        "trigger %10 %10 22",
-        "$AAAF_FD55 $FFFF_FFEA",
-        "$AAEF_FD55 $FFFF_FFEA",
-        "$ABAF_FD55 $FFFF_FFEA",
-        "$ABEF_FD55 $FFFF_FFEA",
+        "samples 64 spacing 8  'Low' 'Mid' 4 range 'High'",
+        "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20",
+        "21 22 23 24 25 26 27 28 29 30 31",
+        "32 33 34 35 36 37 38 39 40 41 42 43 44 45 46",
+        "47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63",
     };
 
     public static void main(String[] args) {
