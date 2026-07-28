@@ -37,6 +37,10 @@ public class DebugFFTWindow extends DebugWindow {
         return Math.log(value) / Math.log(2.0);
     }
 
+    static double log2(long value) {
+        return Math.log(value) / Math.log(2.0);
+    }
+
     int FFTexp;
     int FFTfirst;
     int FFTlast;
@@ -121,7 +125,7 @@ public class DebugFFTWindow extends DebugWindow {
             for (int i = FFTfirst, idx = 0; i <= FFTlast; i++) {
                 int v = FFTpower[i];
                 if (logScale) {
-                    v = (int) Math.round(log2(v + 1) / log2((high + 1)) * high);
+                    v = (int) Math.round(log2(v + 1) / log2((long) high + 1) * high);
                 }
 
                 array[idx++] = MARGIN_WIDTH + (int) Math.round(x);
