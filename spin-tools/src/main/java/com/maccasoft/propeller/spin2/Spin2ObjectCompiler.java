@@ -2784,14 +2784,14 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
             }
         }
         else if ("..".equals(arg.getText())) {
-            line.addSource(compileBytecodeExpression(line.getScope(), method, arg.getChild(0), true));
-            line.addSource(compileBytecodeExpression(line.getScope(), method, arg.getChild(1), true));
+            line.addSource(compileConstantExpression(line.getScope(), method, arg.getChild(0)));
+            line.addSource(compileConstantExpression(line.getScope(), method, arg.getChild(1)));
             if (target != null) {
                 line.addSource(new CaseRangeJmp(line.getScope(), new ContextLiteral(target.getScope())));
             }
         }
         else {
-            line.addSource(compileBytecodeExpression(line.getScope(), method, arg, true));
+            line.addSource(compileConstantExpression(line.getScope(), method, arg));
             if (target != null) {
                 line.addSource(new CaseJmp(line.getScope(), new ContextLiteral(target.getScope())));
             }
