@@ -88,7 +88,26 @@ public class Callpb extends Spin2PAsmInstructionFactory {
                     if ((ours < 0x400 && addr >= 0x400) || (ours >= 0x400 && addr < 0x400)) {
                         throw new Exception("relative addresses cann't cross between cog and hub domains");
                     }
-                    offset = (addr < 0x400 ? (addr - ours) : (addr - ours) / 4) - 1;
+                    if (addr < 0x400) {
+                        offset = addr - ours - 1;
+                        if (src.isLongLiteral()) {
+                            offset -= 1;
+                        }
+                        if (dst.isLongLiteral()) {
+                            offset -= 1;
+                        }
+                        value = s.setValue(value, offset);
+                    }
+                    else {
+                        offset = addr - ours - 4;
+                        if (src.isLongLiteral()) {
+                            offset -= 4;
+                        }
+                        if (dst.isLongLiteral()) {
+                            offset -= 4;
+                        }
+                        offset >>= 2;
+                    }
                     if (!src.isLongLiteral() && (offset < -256 || offset > 255)) {
                         throw new Exception("relative offset out of range");
                     }

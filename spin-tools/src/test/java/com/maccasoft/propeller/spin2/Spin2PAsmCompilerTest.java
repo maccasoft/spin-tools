@@ -1554,6 +1554,61 @@ class Spin2PAsmCompilerTest {
             """, compile(text));
     }
 
+    @Test
+    void testCallpXOffsets() throws Exception {
+        String text = """
+            PUB main()
+            
+            DAT             org     $000
+            
+                            callpa  #1, #cog_a
+                            callpa  ##1, #cog_a
+                            callpa  #1, ##cog_a
+                            callpa  ##1, ##cog_a
+            
+            cog_a           ret
+            
+            DAT             orgh
+            
+                            callpa  #1, #hub_a
+                            callpa  ##1, #hub_a
+                            callpa  #1, ##hub_a
+                            callpa  ##1, ##hub_a
+            
+            hub_a           ret
+            """;
+
+        Assertions.assertEquals("""
+            ' Object "test.spin2" header (var size 4)
+            00000 00000       50 00 00 80    Method main @ $00050 (0 parameters, 0 returns)
+            00004 00004       52 00 00 00    End
+            00008 00008   000                                    org     $000
+            00008 00008   000 07 02 4C FB                        callpa  #1, #cog_a
+            0000C 0000C   001 00 00 80 FF                        callpa  ##1, #cog_a
+            00010 00010   002 05 02 4C FB
+            00014 00014   003 00 00 00 FF                        callpa  #1, ##cog_a
+            00018 00018   004 03 02 4C FB
+            0001C 0001C   005 00 00 80 FF                        callpa  ##1, ##cog_a
+            00020 00020   006 00 00 00 FF  \s
+            00024 00024   007 00 02 4C FB
+            00028 00028   008 2D 00 64 FD    cog_a               ret
+            0002C 0002C 00400                                    orgh
+            0002C 0002C 00400 07 02 4C FB                        callpa  #1, #hub_a
+            00030 00030 00404 00 00 80 FF                        callpa  ##1, #hub_a
+            00034 00034 00408 05 02 4C FB
+            00038 00038 0040C 00 00 00 FF                        callpa  #1, ##hub_a
+            0003C 0003C 00410 03 02 4C FB
+            00040 00040 00414 00 00 80 FF                        callpa  ##1, ##hub_a
+            00044 00044 00418 00 00 00 FF  \s
+            00048 00048 0041C 00 02 4C FB
+            0004C 0004C 00420 2D 00 64 FD    hub_a               ret
+            ' PUB main()
+            00050 00050       00             (stack size)
+            00051 00051       04             RETURN
+            00052 00052       00 00          Padding
+            """, compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }
