@@ -328,11 +328,17 @@ public abstract class DebugWindow {
     }
 
     protected boolean isString(String s) {
-        return s.startsWith("'") && s.endsWith("'");
+        return s.startsWith("'");
     }
 
     protected String stringStrip(String s) {
-        return s.substring(1, s.length() - 1);
+        if (s.startsWith("'")) {
+            s = s.substring(1);
+        }
+        if (s.endsWith("'")) {
+            s = s.substring(0, s.length() - 1);
+        }
+        return s;
     }
 
     protected boolean isNumber(String s) {
