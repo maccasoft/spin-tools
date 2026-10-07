@@ -57,7 +57,7 @@ public class DebugTermWindow extends DebugWindow {
     Color currentTextColor;
     Color currentTextBackground;
 
-    int prevCh = 0;
+    int prevCh = -1;
 
     ImageData canvasImageData;
     Image canvasImage;
@@ -237,6 +237,8 @@ public class DebugTermWindow extends DebugWindow {
             gc.setForeground(currentTextColor);
             gc.setBackground(currentTextBackground);
 
+            prevCh = -1;
+
             while (iter.hasNext()) {
                 tempColor = color(iter);
                 if (tempColor != null) {
@@ -261,72 +263,7 @@ public class DebugTermWindow extends DebugWindow {
                     }
                 }
                 else if (isNumber(cmd)) {
-                    int c = stringToNumber(cmd);
-                    switch (c) {
-                        case 0:
-                            gc.setBackground(backColor);
-                            gc.fillRectangle(0, 0, imageSize.x, imageSize.y);
-                            gc.setBackground(textBackground[textColor]);
-                            x = y = 0;
-                            break;
-
-                        case 1:
-                            x = y = 0;
-                            break;
-
-                        case 2:
-                            if (iter.hasNextNumber()) {
-                                x = iter.nextNumber();
-                            }
-                            break;
-                        case 3:
-                            if (iter.hasNextNumber()) {
-                                y = iter.nextNumber();
-                            }
-                            break;
-
-                        case 4:
-                        case 5:
-                        case 6:
-                        case 7:
-                            textColor = c - 4;
-                            gc.setForeground(currentTextColor = textForeground[textColor]);
-                            gc.setBackground(currentTextBackground = textBackground[textColor]);
-                            break;
-
-                        case 8:
-                            if (x > 0) {
-                                x--;
-                            }
-                            break;
-
-                        case 9:
-                            x = (x + 8) & ~3;
-                            if (x >= columns) {
-                                x = 0;
-                                y++;
-                                if (y >= rows) {
-                                    y = 0;
-                                }
-                            }
-                            break;
-
-                        case 10:
-                        case 13:
-                            x = 0;
-                            y++;
-                            if (y >= rows) {
-                                y = 0;
-                            }
-                            prevCh = c;
-                            break;
-
-                        default:
-                            if (c >= ' ' && c <= 255) {
-                                drawChar(gc, c);
-                            }
-                            break;
-                    }
+                    drawChar(gc, stringToNumber(cmd));
                 }
                 else {
                     switch (cmd.toUpperCase()) {
@@ -448,15 +385,81 @@ public class DebugTermWindow extends DebugWindow {
     }
 
     void drawChar(GC gc, int c) {
-        gc.drawText(String.valueOf((char) c), x * fontWidth, y * fontHeight, false);
+        if (prevCh == 2) {
+            x = c;
+            prevCh = -1;
+        }
+        else if (prevCh == 3) {
+            y = c;
+            prevCh = -1;
+        }
+        else {
+            switch (c) {
+                case 0:
+                    gc.setBackground(backColor);
+                    gc.fillRectangle(0, 0, imageSize.x, imageSize.y);
+                    gc.setBackground(textBackground[textColor]);
+                    x = y = 0;
+                    break;
 
-        x++;
-        if (x >= columns) {
-            x = 0;
-            y++;
-            if (y >= rows) {
-                y = 0;
+                case 1:
+                    x = y = 0;
+                    break;
+
+                case 4:
+                case 5:
+                case 6:
+                case 7:
+                    textColor = c - 4;
+                    gc.setForeground(currentTextColor = textForeground[textColor]);
+                    gc.setBackground(currentTextBackground = textBackground[textColor]);
+                    break;
+
+                case 8:
+                    if (x > 0) {
+                        x--;
+                    }
+                    break;
+
+                case 9:
+                    x = (x + 8) & ~3;
+                    if (x >= columns) {
+                        x = 0;
+                        y++;
+                        if (y >= rows) {
+                            y = 0;
+                        }
+                    }
+                    break;
+
+                case 10:
+                    if (prevCh == 13) {
+                        break;
+                    }
+                case 13:
+                    x = 0;
+                    y++;
+                    if (y >= rows) {
+                        y = 0;
+                    }
+                    break;
+
+                default:
+                    if (c >= ' ' && c <= 255) {
+                        gc.drawText(String.valueOf((char) c), x * fontWidth, y * fontHeight, false);
+
+                        x++;
+                        if (x >= columns) {
+                            x = 0;
+                            y++;
+                            if (y >= rows) {
+                                y = 0;
+                            }
+                        }
+                    }
+                    break;
             }
+            prevCh = c;
         }
     }
 
