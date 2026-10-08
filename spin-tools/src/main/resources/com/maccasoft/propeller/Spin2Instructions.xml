@@ -444,23 +444,23 @@ actually be smaller than a normal CASE construct with more than several match va
         <entry name="X_ALT_OFF"></entry>
         <entry name="X_ALT_ON"></entry>
 
-        <entry name="EVENT_INT"></entry>
-        <entry name="INT_OFF"></entry>
-        <entry name="EVENT_CT1"></entry>
-        <entry name="EVENT_CT2"></entry>
-        <entry name="EVENT_CT3"></entry>
-        <entry name="EVENT_SE1"></entry>
-        <entry name="EVENT_SE2"></entry>
-        <entry name="EVENT_SE3"></entry>
-        <entry name="EVENT_SE4"></entry>
-        <entry name="EVENT_PAT"></entry>
-        <entry name="EVENT_FBW"></entry>
-        <entry name="EVENT_XMT"></entry>
-        <entry name="EVENT_XFI"></entry>
-        <entry name="EVENT_XRO"></entry>
-        <entry name="EVENT_XRL"></entry>
-        <entry name="EVENT_ATN"></entry>
-        <entry name="EVENT_QMT"></entry>
+        <entry name="EVENT_INT"><![CDATA[<div class="header">EVENT_INT = 0</div><p>Interrupt occurred.</p>]]></entry>
+        <entry name="INT_OFF"><![CDATA[<div class="header">INT_OFF = 0</div><p></p>]]></entry>
+        <entry name="EVENT_CT1"><![CDATA[<div class="header">EVENT_CT1</div><p>CT1 target reached.</p>]]></entry>
+        <entry name="EVENT_CT2"><![CDATA[<div class="header">EVENT_CT2</div><p>CT2 target reached.</p>]]></entry>
+        <entry name="EVENT_CT3"><![CDATA[<div class="header">EVENT_CT3</div><p>CT3 target reached.</p>]]></entry>
+        <entry name="EVENT_SE1"><![CDATA[<div class="header">EVENT_SE1</div><p>SE1 selected event occurs.</p>]]></entry>
+        <entry name="EVENT_SE2"><![CDATA[<div class="header">EVENT_SE2</div><p>SE2 selected event occurs.</p>]]></entry>
+        <entry name="EVENT_SE3"><![CDATA[<div class="header">EVENT_SE3</div><p>SE3 selected event occurs.</p>]]></entry>
+        <entry name="EVENT_SE4"><![CDATA[<div class="header">EVENT_SE4</div><p>SE4 selected event occurs.</p>]]></entry>
+        <entry name="EVENT_PAT"><![CDATA[<div class="header">EVENT_PAT</div><p>Pattern match/mismatch occurs</p>]]></entry>
+        <entry name="EVENT_FBW"><![CDATA[<div class="header">EVENT_FBW</div><p>FIFO block wrapped</p>]]></entry>
+        <entry name="EVENT_XMT"><![CDATA[<div class="header">EVENT_XMT</div><p>Streamer ready for command</p>]]></entry>
+        <entry name="EVENT_XFI"><![CDATA[<div class="header">EVENT_XFI</div><p>Streamer runs out of commands</p>]]></entry>
+        <entry name="EVENT_XRO"><![CDATA[<div class="header">EVENT_XRO</div><p>Streamer NCO rolls over</p>]]></entry>
+        <entry name="EVENT_XRL"><![CDATA[<div class="header">EVENT_XRL</div><p>Streamer reads LUT address $1FF</p>]]></entry>
+        <entry name="EVENT_ATN"><![CDATA[<div class="header">EVENT_ATN</div><p>COGATN attention strobe occurs</p>]]></entry>
+        <entry name="EVENT_QMT"><![CDATA[<div class="header">EVENT_QMT</div><p>GETQX/GETQY executes without any CORDIC results available or in progress.</p>]]></entry>
 
         <entry name="FALSE"><![CDATA[<div class="header">FALSE</div><p>Same as 0</p>]]></entry>
         <entry name="TRUE"><![CDATA[<div class="header">TRUE</div><p>Same as -1</p>]]></entry>
