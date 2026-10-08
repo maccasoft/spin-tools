@@ -3795,7 +3795,7 @@ public class SpinTools {
 
         item = new MenuItem(propeller1Menu, SWT.PUSH);
         item.setText("Documentation...");
-        item.addListener(SWT.Selection, e -> Program.launch("https://www.parallax.com/download/propeller-1-documentation/"));
+        item.addListener(SWT.Selection, e -> Program.launch("https://downloads.parallax.com/propeller-1-documentation/"));
 
         item = new MenuItem(propeller1Menu, SWT.PUSH);
         item.setText("Forum...");
@@ -3808,7 +3808,7 @@ public class SpinTools {
 
         item = new MenuItem(propeller2Menu, SWT.PUSH);
         item.setText("Documentation...");
-        item.addListener(SWT.Selection, e -> Program.launch("https://www.parallax.com/propeller-2/documentation/"));
+        item.addListener(SWT.Selection, e -> Program.launch("https://downloads.parallax.com/propeller-2-documentation/"));
 
         item = new MenuItem(propeller2Menu, SWT.PUSH);
         item.setText("Forum...");
