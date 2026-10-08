@@ -1367,6 +1367,17 @@ public class SourceEditor {
             }
         });
 
+        styledText.addListener(SWT.Deactivate, event -> {
+
+            if (popupWindow != null) {
+                popupWindow.dispose();
+                popupWindow = null;
+                popupMouseBounds = null;
+            }
+            mousePosition = null;
+
+        });
+
         container.setTabList(new Control[] {
             styledText
         });
