@@ -9,7 +9,7 @@ declare -a JAR_FILES=(
     "commons-io-2.20.0.jar"
     "commons-lang3-3.20.0.jar"
     "jssc-2.10.2.jar"
-    "lz4-java-1.11.1.jar"
+    "lz4-java-1.11.4.jar"
     "native-lib-loader-2.5.0.jar"
     "slf4j-api-2.0.16.jar"
     "slf4j-nop-2.0.16.jar"
