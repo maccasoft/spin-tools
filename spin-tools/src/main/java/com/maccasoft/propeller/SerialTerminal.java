@@ -1612,7 +1612,11 @@ public class SerialTerminal {
     }
 
     public void clear() {
-        scrollUp(screenHeight);
+        for (int y = 0; y < screen.length; y++) {
+            for (int x = 0; x < screenWidth; x++) {
+                screen[y][x].set(' ', foreground, background);
+            }
+        }
         redraw();
         cx = 0;
         cy = screen.length - screenHeight;
