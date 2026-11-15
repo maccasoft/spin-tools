@@ -100,6 +100,7 @@ public class SerializedPreferences {
     public String spin1ObjectTemplate;
     @JsonInclude(Include.NON_ABSENT)
     public Map<String, String> spin1Defines;
+    public DocumentLink[] spin1DocumentLinks;
 
     public String[] spin2LibraryPath;
     public boolean spin2RemovedUnusedMethods;
@@ -113,6 +114,7 @@ public class SerializedPreferences {
     @JsonInclude(Include.NON_ABSENT)
     public Map<String, String> spin2Defines;
     public boolean spin2Compress;
+    public DocumentLink[] spin2DocumentLinks;
 
     public List<String> lru;
     public Map<String, Integer[]> lruPositions;

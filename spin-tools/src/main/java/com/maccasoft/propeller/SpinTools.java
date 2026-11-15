@@ -113,6 +113,7 @@ import com.maccasoft.propeller.model.DirectiveNode;
 import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.preferences.Bounds;
+import com.maccasoft.propeller.preferences.DocumentLink;
 import com.maccasoft.propeller.preferences.ExternalTool;
 import com.maccasoft.propeller.preferences.LruData;
 import com.maccasoft.propeller.preferences.PackageFile;
@@ -3793,32 +3794,14 @@ public class SpinTools {
         item.setText("Propeller 1...");
         item.setMenu(propeller1Menu);
 
-        item = new MenuItem(propeller1Menu, SWT.PUSH);
-        item.setText("Documentation...");
-        item.addListener(SWT.Selection, e -> Program.launch("https://downloads.parallax.com/propeller-1-documentation/"));
-
-        item = new MenuItem(propeller1Menu, SWT.PUSH);
-        item.setText("Forum...");
-        item.addListener(SWT.Selection, e -> Program.launch("https://forums.parallax.com/categories/propeller-1-multicore-microcontroller"));
+        createP1HelpMenu(propeller1Menu);
 
         final Menu propeller2Menu = new Menu(parent.getParent(), SWT.DROP_DOWN);
         item = new MenuItem(menu, SWT.CASCADE);
         item.setText("Propeller 2...");
         item.setMenu(propeller2Menu);
 
-        item = new MenuItem(propeller2Menu, SWT.PUSH);
-        item.setText("Documentation...");
-        item.addListener(SWT.Selection, e -> Program.launch("https://downloads.parallax.com/propeller-2-documentation/"));
-
-        item = new MenuItem(propeller2Menu, SWT.PUSH);
-        item.setText("Forum...");
-        item.addListener(SWT.Selection, e -> Program.launch("https://forums.parallax.com/categories/propeller-2-multicore-microcontroller"));
-
-        new MenuItem(propeller2Menu, SWT.SEPARATOR);
-
-        item = new MenuItem(propeller2Menu, SWT.PUSH);
-        item.setText("IRQsoft Propeller 2 Docs...");
-        item.addListener(SWT.Selection, e -> Program.launch("https://p2docs.github.io/"));
+        createP2HelpMenu(propeller2Menu);
 
         item = new MenuItem(menu, SWT.PUSH);
         item.setText("OBEX Object Exchange...");
@@ -3857,6 +3840,86 @@ public class SpinTools {
             item.setText("&Help");
             item.setMenu(menu);
         }
+    }
+
+    void createP1HelpMenu(Menu parent) {
+        MenuItem item;
+
+        item = new MenuItem(parent, SWT.PUSH);
+        item.setText("Documentation...");
+        item.addListener(SWT.Selection, e -> Program.launch("https://downloads.parallax.com/propeller-1-documentation/"));
+
+        item = new MenuItem(parent, SWT.PUSH);
+        item.setText("Forum...");
+        item.addListener(SWT.Selection, e -> Program.launch("https://forums.parallax.com/categories/propeller-1-multicore-microcontroller"));
+
+        int fixedItems = parent.getItemCount();
+
+        parent.addMenuListener(new MenuAdapter() {
+
+            @Override
+            public void menuShown(MenuEvent e) {
+                MenuItem[] items = parent.getItems();
+                for (int i = fixedItems; i < items.length; i++) {
+                    items[i].dispose();
+                }
+                DocumentLink[] links = preferences.getSpin1DocumentLinks();
+                if (links != null && links.length > 0) {
+                    new MenuItem(parent, SWT.SEPARATOR);
+
+                    for (int i = 0; i < links.length; i++) {
+                        MenuItem item = new MenuItem(parent, SWT.PUSH);
+                        String url = links[i].getUrl();
+                        item.setText(links[i].getLabel());
+                        item.addListener(SWT.Selection, event -> Program.launch(url));
+                    }
+                }
+            }
+
+        });
+    }
+
+    void createP2HelpMenu(Menu parent) {
+        MenuItem item;
+
+        item = new MenuItem(parent, SWT.PUSH);
+        item.setText("Documentation...");
+        item.addListener(SWT.Selection, e -> Program.launch("https://downloads.parallax.com/propeller-2-documentation/"));
+
+        item = new MenuItem(parent, SWT.PUSH);
+        item.setText("Forum...");
+        item.addListener(SWT.Selection, e -> Program.launch("https://forums.parallax.com/categories/propeller-2-multicore-microcontroller"));
+
+        new MenuItem(parent, SWT.SEPARATOR);
+
+        item = new MenuItem(parent, SWT.PUSH);
+        item.setText("IRQsoft Propeller 2 Docs...");
+        item.addListener(SWT.Selection, e -> Program.launch("https://p2docs.github.io/"));
+
+        int fixedItems = parent.getItemCount();
+
+        parent.addMenuListener(new MenuAdapter() {
+
+            @Override
+            public void menuShown(MenuEvent e) {
+                MenuItem[] items = parent.getItems();
+                for (int i = fixedItems; i < items.length; i++) {
+                    items[i].dispose();
+                }
+                DocumentLink[] links = preferences.getSpin2DocumentLinks();
+                if (links != null && links.length > 0) {
+                    new MenuItem(parent, SWT.SEPARATOR);
+
+                    for (int i = 0; i < links.length; i++) {
+                        MenuItem item = new MenuItem(parent, SWT.PUSH);
+                        String url = links[i].getUrl();
+                        item.setText(links[i].getLabel());
+                        item.addListener(SWT.Selection, event -> Program.launch(url));
+                    }
+                }
+            }
+
+        });
     }
 
     void createTabFolderMenu() {

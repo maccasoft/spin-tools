@@ -36,6 +36,7 @@ import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.VariablesNode;
 import com.maccasoft.propeller.preferences.Bounds;
+import com.maccasoft.propeller.preferences.DocumentLink;
 import com.maccasoft.propeller.preferences.ExternalTool;
 import com.maccasoft.propeller.preferences.LruData;
 import com.maccasoft.propeller.preferences.PackageFile;
@@ -597,6 +598,14 @@ public class Preferences {
         }
     }
 
+    public DocumentLink[] getSpin1DocumentLinks() {
+        return preferences.spin1DocumentLinks != null ? preferences.spin1DocumentLinks : new DocumentLink[0];
+    }
+
+    public void setSpin1DocumentLinks(DocumentLink[] documentLinks) {
+        preferences.spin1DocumentLinks = documentLinks;
+    }
+
     public File[] getSpin2LibraryPath() {
         if (preferences.spin2LibraryPath != null) {
             List<File> l = new ArrayList<>();
@@ -713,6 +722,14 @@ public class Preferences {
 
     public void setSpin2WarnUnusedVariables(boolean spin2WarnUnusedVariables) {
         changeSupport.firePropertyChange(PROP_SPIN2_REBUILD, preferences.spin2WarnUnusedVariables, this.preferences.spin2WarnUnusedVariables = spin2WarnUnusedVariables);
+    }
+
+    public DocumentLink[] getSpin2DocumentLinks() {
+        return preferences.spin2DocumentLinks != null ? preferences.spin2DocumentLinks : new DocumentLink[0];
+    }
+
+    public void setSpin2DocumentLinks(DocumentLink[] documentLinks) {
+        preferences.spin2DocumentLinks = documentLinks;
     }
 
     public int[] getTabStops(Class<?> clazz) {

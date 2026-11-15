@@ -85,6 +85,7 @@ import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.VariablesNode;
+import com.maccasoft.propeller.preferences.DocumentLink;
 import com.maccasoft.propeller.preferences.ExternalTool;
 import com.maccasoft.propeller.preferences.RemoteDevice;
 import com.maccasoft.propeller.preferences.SpinFormatPreferences;
@@ -136,6 +137,7 @@ public class PreferencesDialog extends Dialog {
     Button spin1WarnUnusedVariables;
     FileSelector spin1Template;
     FileSelector spin1ObjectTemplate;
+    DocumentList spin1Docs;
 
     PathList spin2Paths;
     Button spin2RemoveUnusedMethods;
@@ -147,6 +149,7 @@ public class PreferencesDialog extends Dialog {
     Button spin2WarnUnusedVariables;
     FileSelector spin2Template;
     FileSelector spin2ObjectTemplate;
+    DocumentList spin2Docs;
 
     Text terminalFont;
     Spinner terminalFontSize;
@@ -572,6 +575,170 @@ public class PreferencesDialog extends Dialog {
         return composite;
     }
 
+    class DocumentList {
+
+        Composite group;
+
+        ListViewer viewer;
+        Button add;
+        Button edit;
+        Button remove;
+        Button moveUp;
+        Button moveDown;
+
+        java.util.List<DocumentLink> elements = new ArrayList<>();
+
+        public DocumentList(Composite parent) {
+            group = new Composite(parent, SWT.NONE);
+            GridLayout layout = new GridLayout(2, false);
+            layout.marginWidth = layout.marginHeight = 0;
+            group.setLayout(layout);
+
+            viewer = new ListViewer(group, SWT.SINGLE | SWT.BORDER | SWT.V_SCROLL);
+            viewer.setContentProvider(new ArrayContentProvider());
+            viewer.setLabelProvider(new LabelProvider());
+            GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
+            gridData.widthHint = convertWidthInCharsToPixels(50);
+            gridData.heightHint = convertHeightInCharsToPixels(5) + viewer.getList().getBorderWidth() * 2;
+            viewer.getControl().setLayoutData(gridData);
+            viewer.addSelectionChangedListener(new ISelectionChangedListener() {
+
+                @Override
+                public void selectionChanged(SelectionChangedEvent event) {
+                    updateButtons();
+                }
+
+            });
+            viewer.addOpenListener(new IOpenListener() {
+
+                @Override
+                public void open(OpenEvent event) {
+                    DocumentLink selection = (DocumentLink) viewer.getStructuredSelection().getFirstElement();
+                    DocumentLinkDialog dlg = new DocumentLinkDialog(parent.getShell(), selection);
+                    if (dlg.open() == DocumentLinkDialog.OK) {
+                        viewer.refresh();
+                    }
+                }
+
+            });
+            viewer.setInput(elements);
+
+            Composite container = new Composite(group, SWT.NONE);
+            layout = new GridLayout(1, true);
+            layout.marginWidth = layout.marginHeight = 0;
+            container.setLayout(layout);
+            container.setLayoutData(new GridData(SWT.FILL, SWT.TOP, false, false));
+
+            add = createPageButton(container, ImageRegistry.getImageFromResources("add.png"), "Add");
+            add.addSelectionListener(new SelectionAdapter() {
+
+                @Override
+                public void widgetSelected(SelectionEvent e) {
+                    DocumentLinkDialog dlg = new DocumentLinkDialog(parent.getShell());
+                    if (dlg.open() == ExternalToolDialog.OK) {
+                        elements.add(dlg.getHelpLink());
+                        viewer.refresh();
+                        updateButtons();
+                    }
+                }
+
+            });
+
+            edit = createPageButton(container, ImageRegistry.getImageFromResources("pencil.png"), "Edit");
+            edit.addSelectionListener(new SelectionAdapter() {
+
+                @Override
+                public void widgetSelected(SelectionEvent e) {
+                    DocumentLink selection = (DocumentLink) viewer.getStructuredSelection().getFirstElement();
+                    DocumentLinkDialog dlg = new DocumentLinkDialog(parent.getShell(), selection);
+                    if (dlg.open() == DocumentLinkDialog.OK) {
+                        viewer.refresh();
+                    }
+                }
+
+            });
+            edit.setEnabled(false);
+
+            remove = createPageButton(container, ImageRegistry.getImageFromResources("delete.png"), "Remove");
+            remove.addSelectionListener(new SelectionAdapter() {
+
+                @Override
+                public void widgetSelected(SelectionEvent e) {
+                    DocumentLink selection = (DocumentLink) viewer.getStructuredSelection().getFirstElement();
+                    elements.remove(selection);
+                    viewer.refresh();
+                    updateButtons();
+                }
+
+            });
+            remove.setEnabled(false);
+
+            moveUp = createPageButton(container, ImageRegistry.getImageFromResources("arrow_up.png"), "Up");
+            moveUp.addSelectionListener(new SelectionAdapter() {
+
+                @Override
+                public void widgetSelected(SelectionEvent e) {
+                    DocumentLink selection = (DocumentLink) viewer.getStructuredSelection().getFirstElement();
+                    int index = elements.indexOf(selection);
+                    elements.remove(index);
+                    elements.add(index - 1, selection);
+                    viewer.refresh();
+                    viewer.setSelection(new StructuredSelection(selection));
+                    updateButtons();
+                }
+
+            });
+            moveUp.setEnabled(false);
+
+            moveDown = createPageButton(container, ImageRegistry.getImageFromResources("arrow_down.png"), "Down");
+            moveDown.addSelectionListener(new SelectionAdapter() {
+
+                @Override
+                public void widgetSelected(SelectionEvent e) {
+                    DocumentLink selection = (DocumentLink) viewer.getStructuredSelection().getFirstElement();
+                    int index = elements.indexOf(selection);
+                    elements.add(index + 2, selection);
+                    elements.remove(index);
+                    viewer.refresh();
+                    viewer.setSelection(new StructuredSelection(selection));
+                    updateButtons();
+                }
+
+            });
+            moveDown.setEnabled(false);
+        }
+
+        void updateButtons() {
+            IStructuredSelection selection = viewer.getStructuredSelection();
+            DocumentLink element = (DocumentLink) viewer.getStructuredSelection().getFirstElement();
+            remove.setEnabled(!selection.isEmpty());
+            edit.setEnabled(!selection.isEmpty());
+            moveUp.setEnabled(!selection.isEmpty() && elements.indexOf(element) > 0);
+            moveDown.setEnabled(!selection.isEmpty() && elements.indexOf(element) < elements.size() - 1);
+        }
+
+        public void setLayoutData(Object layoutData) {
+            group.setLayoutData(layoutData);
+        }
+
+        public Object getLayoutData() {
+            return group.getLayoutData();
+        }
+
+        public void setItems(DocumentLink[] items) {
+            elements.clear();
+            for (int i = 0; i < items.length; i++) {
+                elements.add(new DocumentLink(items[i]));
+            }
+            viewer.refresh();
+        }
+
+        public DocumentLink[] getItems() {
+            return elements.toArray(new DocumentLink[0]);
+        }
+
+    }
+
     void createGeneralPage(Composite parent) {
         Composite composite = createPage(parent, "General");
 
@@ -871,6 +1038,14 @@ public class PreferencesDialog extends Dialog {
             }
 
         });
+
+        label = new Label(composite, SWT.NONE);
+        label.setText("Documentation Links");
+        label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
+
+        spin1Docs = new DocumentList(composite);
+        spin1Docs.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
+        spin1Docs.setItems(preferences.getSpin1DocumentLinks());
     }
 
     void createSpin2CompilerPage(Composite parent) {
@@ -1006,6 +1181,14 @@ public class PreferencesDialog extends Dialog {
             }
 
         });
+
+        label = new Label(composite, SWT.NONE);
+        label.setText("Documentation Links");
+        label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
+
+        spin2Docs = new DocumentList(composite);
+        spin2Docs.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
+        spin2Docs.setItems(preferences.getSpin2DocumentLinks());
     }
 
     class TabStops {
@@ -2449,10 +2632,12 @@ public class PreferencesDialog extends Dialog {
         preferences.setSpin1LibraryPath(spin1Paths.getFileItems());
         preferences.setSpin1Template(spin1Template.getSelection());
         preferences.setSpin1ObjectTemplate(spin1ObjectTemplate.getSelection());
+        preferences.setSpin1DocumentLinks(spin1Docs.getItems());
 
         preferences.setSpin2LibraryPath(spin2Paths.getFileItems());
         preferences.setSpin2Template(spin2Template.getSelection());
         preferences.setSpin2ObjectTemplate(spin2ObjectTemplate.getSelection());
+        preferences.setSpin2DocumentLinks(spin2Docs.getItems());
 
         preferences.setConsoleMaxLines(consoleMaxLines.getSelection());
         preferences.setConsoleWriteLogFile(consoleWriteLogFile.getSelection());
