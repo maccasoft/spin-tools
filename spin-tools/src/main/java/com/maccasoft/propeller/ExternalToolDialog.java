@@ -260,6 +260,7 @@ public class ExternalToolDialog extends Dialog {
 
         browse = new Button(programGroup, SWT.PUSH);
         browse.setImage(ImageRegistry.getImageFromResources("folder-horizontal-open.png"));
+        browse.setLayoutData(new GridData(convertHorizontalDLUsToPixels(16), convertHorizontalDLUsToPixels(16)));
         browse.addSelectionListener(new SelectionAdapter() {
 
             @Override

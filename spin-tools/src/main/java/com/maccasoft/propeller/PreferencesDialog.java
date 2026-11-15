@@ -311,7 +311,7 @@ public class PreferencesDialog extends Dialog {
             list = new List(group, SWT.SINGLE | SWT.BORDER | SWT.V_SCROLL);
             GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
             gridData.widthHint = convertWidthInCharsToPixels(50);
-            gridData.heightHint = convertHeightInCharsToPixels(10) + list.getBorderWidth() * 2;
+            gridData.heightHint = convertHeightInCharsToPixels(5) + list.getBorderWidth() * 2;
             list.setLayoutData(gridData);
             list.addSelectionListener(new SelectionAdapter() {
 
@@ -405,7 +405,7 @@ public class PreferencesDialog extends Dialog {
             int index = list.getSelectionIndex();
             remove.setEnabled(index != -1);
             if (moveUp != null) {
-                moveUp.setEnabled(index != -1 && index > 0);
+                moveUp.setEnabled(index > 0);
             }
             if (moveDown != null) {
                 moveDown.setEnabled(index != -1 && index < (list.getItemCount() - 1));
@@ -424,7 +424,7 @@ public class PreferencesDialog extends Dialog {
             if (moveUp != null && moveDown != null) {
                 java.util.List<String> l = Arrays.asList(items);
                 Collections.sort(l);
-                items = l.toArray(new String[l.size()]);
+                items = l.toArray(new String[0]);
             }
             list.setItems(items);
         }
@@ -901,7 +901,7 @@ public class PreferencesDialog extends Dialog {
                 list.add(elements[i].getAbsolutePath());
             }
             Collections.sort(list);
-            roots.setItems(list.toArray(new String[list.size()]));
+            roots.setItems(list.toArray(new String[0]));
         }
     }
 
@@ -947,6 +947,12 @@ public class PreferencesDialog extends Dialog {
         layout.marginHeight = layout.marginWidth = 0;
         leftGroup.setLayout(layout);
         leftGroup.setLayoutData(new GridData(SWT.LEFT, SWT.TOP, false, true));
+
+        Composite rightGroup = new Composite(group, SWT.NONE);
+        layout = new GridLayout(1, false);
+        layout.marginHeight = layout.marginWidth = 0;
+        rightGroup.setLayout(layout);
+        rightGroup.setLayoutData(new GridData(SWT.LEFT, SWT.TOP, false, true));
 
         spin1RemoveUnusedMethods = new Button(leftGroup, SWT.CHECK);
         spin1RemoveUnusedMethods.setText("Remove unused methods");
@@ -1000,7 +1006,7 @@ public class PreferencesDialog extends Dialog {
 
         });
 
-        spin1WarnUnusedMethods = new Button(leftGroup, SWT.CHECK);
+        spin1WarnUnusedMethods = new Button(rightGroup, SWT.CHECK);
         spin1WarnUnusedMethods.setText("Warn unused methods");
         spin1WarnUnusedMethods.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin1WarnUnusedMethods.setSelection(preferences.getSpin1WarnUnusedMethods());
@@ -1013,7 +1019,7 @@ public class PreferencesDialog extends Dialog {
 
         });
 
-        spin1WarnUnusedMethodVariables = new Button(leftGroup, SWT.CHECK);
+        spin1WarnUnusedMethodVariables = new Button(rightGroup, SWT.CHECK);
         spin1WarnUnusedMethodVariables.setText("Warn unused method variables");
         spin1WarnUnusedMethodVariables.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin1WarnUnusedMethodVariables.setSelection(preferences.getSpin1WarnUnusedMethodVariables());
@@ -1026,7 +1032,7 @@ public class PreferencesDialog extends Dialog {
 
         });
 
-        spin1WarnUnusedVariables = new Button(leftGroup, SWT.CHECK);
+        spin1WarnUnusedVariables = new Button(rightGroup, SWT.CHECK);
         spin1WarnUnusedVariables.setText("Warn unused variables");
         spin1WarnUnusedVariables.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin1WarnUnusedVariables.setSelection(preferences.getSpin1WarnUnusedVariables());
@@ -1091,6 +1097,12 @@ public class PreferencesDialog extends Dialog {
         leftGroup.setLayout(layout);
         leftGroup.setLayoutData(new GridData(SWT.LEFT, SWT.TOP, false, false));
 
+        Composite rightGroup = new Composite(group, SWT.NONE);
+        layout = new GridLayout(1, false);
+        layout.marginHeight = layout.marginWidth = 0;
+        rightGroup.setLayout(layout);
+        rightGroup.setLayoutData(new GridData(SWT.LEFT, SWT.TOP, false, true));
+
         spin2RemoveUnusedMethods = new Button(leftGroup, SWT.CHECK);
         spin2RemoveUnusedMethods.setText("Remove unused methods");
         spin2RemoveUnusedMethods.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
@@ -1143,7 +1155,7 @@ public class PreferencesDialog extends Dialog {
 
         });
 
-        spin2WarnUnusedMethods = new Button(leftGroup, SWT.CHECK);
+        spin2WarnUnusedMethods = new Button(rightGroup, SWT.CHECK);
         spin2WarnUnusedMethods.setText("Warn unused methods");
         spin2WarnUnusedMethods.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin2WarnUnusedMethods.setSelection(preferences.getSpin2WarnUnusedMethods());
@@ -1156,7 +1168,7 @@ public class PreferencesDialog extends Dialog {
 
         });
 
-        spin2WarnUnusedMethodVariables = new Button(leftGroup, SWT.CHECK);
+        spin2WarnUnusedMethodVariables = new Button(rightGroup, SWT.CHECK);
         spin2WarnUnusedMethodVariables.setText("Warn unused method variables");
         spin2WarnUnusedMethodVariables.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin2WarnUnusedMethodVariables.setSelection(preferences.getSpin2WarnUnusedMethodVariables());
@@ -1169,7 +1181,7 @@ public class PreferencesDialog extends Dialog {
 
         });
 
-        spin2WarnUnusedVariables = new Button(leftGroup, SWT.CHECK);
+        spin2WarnUnusedVariables = new Button(rightGroup, SWT.CHECK);
         spin2WarnUnusedVariables.setText("Warn unused variables");
         spin2WarnUnusedVariables.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin2WarnUnusedVariables.setSelection(preferences.getSpin2WarnUnusedVariables());
