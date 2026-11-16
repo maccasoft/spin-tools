@@ -36,6 +36,21 @@
         </fileSet>
         <fileSet>
             <directory>runtime/target/maven-jlink/default</directory>
+            <excludes>
+                <exclude>bin/java</exclude>
+                <exclude>bin/keytool</exclude>
+                <exclude>lib/jspawnhelper</exclude>
+            </excludes>
+            <outputDirectory>Spin Tools IDE.app/Contents/Java</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>runtime/target/maven-jlink/default</directory>
+            <includes>
+                <include>bin/java</include>
+                <include>bin/keytool</include>
+                <include>lib/jspawnhelper</include>
+            </includes>
+            <fileMode>755</fileMode>
             <outputDirectory>Spin Tools IDE.app/Contents/Java</outputDirectory>
         </fileSet>
     </fileSets>
